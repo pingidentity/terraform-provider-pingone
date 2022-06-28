@@ -2,9 +2,11 @@ package provider
 
 import (
 	"context"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func init() {
@@ -23,14 +25,46 @@ func init() {
 	// }
 }
 
+// New provider function
 func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
-			DataSourcesMap: map[string]*schema.Resource{
-				"scaffolding_data_source": dataSourceScaffolding(),
+
+			Schema: map[string]*schema.Schema{
+				"client_id": {
+					Type:        schema.TypeString,
+					Required:    true,
+					DefaultFunc: schema.EnvDefaultFunc("PINGONE_CLIENT_ID", nil),
+					Description: "Client ID for the worker app client",
+				},
+				"client_secret": {
+					Type:        schema.TypeString,
+					Required:    true,
+					DefaultFunc: schema.EnvDefaultFunc("PINGONE_CLIENT_SECRET", nil),
+					Description: "Client secret for the worker app client",
+				},
+				"environment_id": {
+					Type:        schema.TypeString,
+					Required:    true,
+					DefaultFunc: schema.EnvDefaultFunc("PINGONE_ENVIRONMENT_ID", nil),
+					Description: "Environment ID for the worker app client",
+				},
+				"region": {
+					Type:         schema.TypeString,
+					Required:     true,
+					DefaultFunc:  schema.EnvDefaultFunc("PINGONE_REGION", nil),
+					Description:  "The PingOne region to use.  Options are EU, US, ASIA, CA",
+					ValidateFunc: validation.StringInSlice([]string{"EU", "US", "ASIA", "CA"}, false),
+				},
 			},
+
+			DataSourcesMap: map[string]*schema.Resource{
+				"pingone_environment": datasourcePingOneEnvironment(),
+			},
+
 			ResourcesMap: map[string]*schema.Resource{
-				"scaffolding_resource": resourceScaffolding(),
+				"pingone_environment": resourcePingOneEnvironment(),
+				"pingone_population":  resourcePingOnePopulation(),
 			},
 		}
 
@@ -47,11 +81,23 @@ type apiClient struct {
 }
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	return func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		// Setup a User-Agent for your API client (replace the provider name for yours):
-		// userAgent := p.UserAgent("terraform-provider-scaffolding", version)
-		// TODO: myClient.UserAgent = userAgent
+	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 
-		return &apiClient{}, nil
+		log.Printf("[INFO] PingOne Client configuring")
+
+		config := &Config{
+			ClientID:      d.Get("client_id").(string),
+			ClientSecret:  d.Get("client_secret").(string),
+			EnvironmentID: d.Get("environment_id").(string),
+			Region:        d.Get("region").(string),
+		}
+
+		client, err := config.APIClient(ctx)
+
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+
+		return client, nil
 	}
 }
