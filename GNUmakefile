@@ -18,7 +18,6 @@ testacc: fmtcheck
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
 
 sweep:
-	# make sweep SWEEPARGS=-sweep-run=aws_example_thing
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
 	go test $(SWEEP_DIR) -v -sweep="1" $(SWEEPARGS) -timeout 10m
 
