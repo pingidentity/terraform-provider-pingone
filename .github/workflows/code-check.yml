@@ -95,11 +95,14 @@ jobs:
           make depscheck
       
       - name: golang lint
-        run: make golangci-lint
+        run: |
+          make golangci-lint
 
       - name: import lint
-        run: make importlint
+        run: |
+          make importlint
 
       - name: provider lint
-        run: make providerlint
+        run: |
+          make providerlint
 

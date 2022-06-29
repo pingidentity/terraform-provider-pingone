@@ -32,7 +32,7 @@ func TestAccPingOneEnvironment_Full(t *testing.T) {
 	serviceTwoBookmarkNameTwo := "Bookmark 2"
 	serviceTwoBookmarkURLTwo := "https://my-bookmark-2"
 
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheckEnvironment(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
@@ -72,7 +72,7 @@ func TestAccPingOneEnvironment_Minimal(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	region := os.Getenv("PINGONE_REGION")
 
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheckEnvironment(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
