@@ -37,12 +37,12 @@ func datasourcePingOneEnvironment() *schema.Resource {
 				Computed:    true,
 			},
 			"type": {
-				Description: "The type of the environment to create.  Options are SANDBOX for a development/testing environment and PRODUCTION for environments that require protection from deletion.",
+				Description: "The type of the environment.  Options are SANDBOX for a development/testing environment and PRODUCTION for environments that require protection from deletion.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"region": {
-				Description: "The region to create the environment in.  Should be consistent with the PingOne organisation region",
+				Description: "The region the environment is created in.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -51,20 +51,48 @@ func datasourcePingOneEnvironment() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
-			"default_population_id": {
-				Description: "The ID of the environment's default population",
-				Type:        schema.TypeString,
+			// "solution": {
+			// 	Description: "The solution context of the environment.  Blank values indicate a non-workforce solution context.  Valid options are `WORKFORCE` and `CUSTOMER`",
+			// 	Type:        schema.TypeString,
+			// 	Computed:    true,
+			// },
+			"service": {
+				Description: "The services enabled in the environment.",
+				Type:        schema.TypeList,
 				Computed:    true,
-			},
-			"default_population_name": {
-				Description: "The name of the environment's default population",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"default_population_description": {
-				Description: "A description to apply to the environment's default population",
-				Type:        schema.TypeString,
-				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Description: "The service type.  Valid options are `SSO`, `MFA`, `RISK`, `VERIFY`, `CREDENTIALS`, `API_INTELLIGENCE`, `AUTHORIZE`, `FRAUD`, `PING_ID`, `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
+							Type:        schema.TypeString,
+							Computed:    true,
+						},
+						"console_url": {
+							Description: "A custom console URL.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`",
+							Type:        schema.TypeString,
+							Computed:    true,
+						},
+						"bookmark": {
+							Description: "Custom bookmark links for the service",
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"name": {
+										Description: "Bookmark name",
+										Type:        schema.TypeString,
+										Computed:    true,
+									},
+									"url": {
+										Description: "Bookmark URL",
+										Type:        schema.TypeString,
+										Computed:    true,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -123,12 +151,37 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(resp.GetId())
-	d.Set("environment_id", resp.GetId())
 	d.Set("name", resp.GetName())
 	d.Set("description", resp.GetDescription())
 	d.Set("type", resp.GetType())
 	d.Set("region", resp.GetRegion())
 	d.Set("license_id", resp.GetLicense().Id)
+
+	// The bill of materials
+
+	servicesResp, servicesR, servicesErr := apiClient.ManagementAPIsBillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, resp.GetId()).Execute()
+	if servicesErr != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.ReadOneEnvironment``: %v", servicesErr),
+			Detail:   fmt.Sprintf("Full HTTP response: %v\n", servicesR),
+		})
+
+		return diags
+	}
+
+	// d.Set("solution", servicesResp.SolutionType)
+	productBOMItems, err := flattenBOMProducts(servicesResp)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Error mapping platform services with the configured services``: %v", err),
+			Detail:   fmt.Sprintf("Platform services: %v\n", servicesResp),
+		})
+
+		return diags
+	}
+	d.Set("service", productBOMItems)
 
 	return diags
 }

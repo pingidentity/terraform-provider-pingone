@@ -1,7 +1,7 @@
 # PingOne Terraform Provider
 
 ## Requirements
-* Terraform 1.1+
+* Terraform 1.2+
 * Go 1.18+
 
 ## Quickstarts

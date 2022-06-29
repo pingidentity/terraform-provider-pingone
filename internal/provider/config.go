@@ -15,11 +15,13 @@ type Config struct {
 	ClientSecret  string
 	EnvironmentID string
 	Region        string
+	ForceDelete   bool
 }
 
 type Client struct {
 	API          *pingone.APIClient
 	RegionSuffix string
+	ForceDelete  bool
 }
 
 func (c *Config) APIClient(ctx context.Context) (*Client, error) {
@@ -54,6 +56,7 @@ func (c *Config) APIClient(ctx context.Context) (*Client, error) {
 	apiClient := &Client{
 		API:          client,
 		RegionSuffix: regionSuffix,
+		ForceDelete:  c.ForceDelete,
 	}
 
 	log.Printf("[INFO] PingOne Client configured")

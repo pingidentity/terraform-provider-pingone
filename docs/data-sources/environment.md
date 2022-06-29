@@ -32,13 +32,28 @@ data "pingone_environment" "example_by_id" {
 
 ### Read-Only
 
-- `default_population_description` (String) A description to apply to the environment's default population
-- `default_population_id` (String) The ID of the environment's default population
-- `default_population_name` (String) The name of the environment's default population
 - `description` (String) A description of the environment
 - `id` (String) The ID of this resource.
 - `license_id` (String) An ID of a valid license to apply to the environment
-- `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region
-- `type` (String) The type of the environment to create.  Options are SANDBOX for a development/testing environment and PRODUCTION for environments that require protection from deletion.
+- `region` (String) The region the environment is created in.
+- `service` (List of Object) The services enabled in the environment. (see [below for nested schema](#nestedatt--service))
+- `type` (String) The type of the environment.  Options are SANDBOX for a development/testing environment and PRODUCTION for environments that require protection from deletion.
+
+<a id="nestedatt--service"></a>
+### Nested Schema for `service`
+
+Read-Only:
+
+- `bookmark` (Set of Object) (see [below for nested schema](#nestedobjatt--service--bookmark))
+- `console_url` (String)
+- `type` (String)
+
+<a id="nestedobjatt--service--bookmark"></a>
+### Nested Schema for `service.bookmark`
+
+Read-Only:
+
+- `name` (String)
+- `url` (String)
 
 

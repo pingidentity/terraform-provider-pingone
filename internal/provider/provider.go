@@ -2,7 +2,10 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"log"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -56,6 +59,12 @@ func New(version string) func() *schema.Provider {
 					Description:  "The PingOne region to use.  Options are EU, US, ASIA, CA",
 					ValidateFunc: validation.StringInSlice([]string{"EU", "US", "ASIA", "CA"}, false),
 				},
+				"force_delete_production_type": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     false,
+					Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  By default, `PRODUCTION` type configuration will not destroy to protect stored data",
+				},
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
@@ -74,12 +83,6 @@ func New(version string) func() *schema.Provider {
 	}
 }
 
-type apiClient struct {
-	// Add whatever fields, client or connection info, etc. here
-	// you would need to setup to communicate with the upstream
-	// API.
-}
-
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 
@@ -90,6 +93,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			ClientSecret:  d.Get("client_secret").(string),
 			EnvironmentID: d.Get("environment_id").(string),
 			Region:        d.Get("region").(string),
+			ForceDelete:   d.Get("force_delete_production_type").(bool),
 		}
 
 		client, err := config.APIClient(ctx)
@@ -100,4 +104,100 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 
 		return client, nil
 	}
+}
+
+type ServiceMapping struct {
+	PlatformCode  string
+	ProviderCode  string
+	SolutionType  string
+	ConflictsWith []string
+}
+
+func servicesMapping() []ServiceMapping {
+
+	return []ServiceMapping{
+		{
+			PlatformCode: "PING_ONE_BASE",
+			ProviderCode: "SSO",
+		},
+		{
+			PlatformCode: "PING_ONE_PROVISIONING",
+			ProviderCode: "SSO_PROVISIONING",
+		},
+		{
+			PlatformCode: "PING_ONE_MFA",
+			ProviderCode: "MFA",
+		},
+		{
+			PlatformCode: "PING_ONE_RISK",
+			ProviderCode: "RISK",
+		},
+		{
+			PlatformCode: "PING_ONE_VERIFY",
+			ProviderCode: "VERIFY",
+		},
+		{
+			PlatformCode: "PING_ONE_CREDENTIALS",
+			ProviderCode: "CREDENTIALS",
+		},
+		{
+			PlatformCode: "PING_INTELLIGENCE",
+			ProviderCode: "API_INTELLIGENCE",
+		},
+		{
+			PlatformCode: "PING_ONE_AUTHORIZE",
+			ProviderCode: "AUTHORIZE",
+		},
+		{
+			PlatformCode: "PING_ONE_FRAUD",
+			ProviderCode: "FRAUD",
+		},
+		{
+			PlatformCode: "PING_ID",
+			ProviderCode: "PING_ID",
+		},
+		{
+			PlatformCode: "PING_FEDERATE",
+			ProviderCode: "PING_FEDERATE",
+		},
+		{
+			PlatformCode: "PING_ACCESS",
+			ProviderCode: "PING_ACCESS",
+		},
+		{
+			PlatformCode: "PING_DIRECTORY",
+			ProviderCode: "PING_DIRECTORY",
+		},
+		{
+			PlatformCode: "PING_AUTHORIZE",
+			ProviderCode: "PING_AUTHORIZE",
+		},
+		{
+			PlatformCode: "PING_CENTRAL",
+			ProviderCode: "PING_CENTRAL",
+		},
+	}
+
+}
+
+func serviceFromProviderCode(providerCode string) (ServiceMapping, error) {
+
+	idx := slices.IndexFunc(servicesMapping(), func(c ServiceMapping) bool { return c.ProviderCode == providerCode })
+
+	if idx < 0 {
+		return ServiceMapping{}, fmt.Errorf("Cannot find service by provider code %s", providerCode)
+	}
+
+	return servicesMapping()[idx], nil
+}
+
+func serviceFromPlatformCode(platformCode string) (ServiceMapping, error) {
+
+	idx := slices.IndexFunc(servicesMapping(), func(c ServiceMapping) bool { return c.PlatformCode == platformCode })
+
+	if idx < 0 {
+		return ServiceMapping{}, fmt.Errorf("Cannot find service by provider code %s", platformCode)
+	}
+
+	return servicesMapping()[idx], nil
 }

@@ -65,6 +65,8 @@ func testAccPingOnePopulationFull(resourceName, name, description, licenseID, re
 			type = "SANDBOX"
 			license_id = "%[4]s"
 			region = "%[5]s"
+			default_population {}
+			service {}
 		}
 
 		resource "pingone_population" "%[1]s" {
@@ -81,6 +83,8 @@ func testAccPingOnePopulationMinimal(resourceName, name, licenseID, region strin
 			type = "SANDBOX"
 			license_id = "%[3]s"
 			region = "%[4]s"
+			default_population {}
+			service {}
 		}
 
 		resource "pingone_population" "%[1]s" {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go"
 )
 
@@ -29,21 +30,28 @@ func resourcePingOnePopulation() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"environment_id": {
-				Description: "The ID of the environment to create the population in.",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Description:  "The ID of the environment to create the population in.",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotEmpty,
+				ForceNew:     true,
 			},
 			"name": {
-				Description: "The name of the population",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:  "The name of the population",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			"description": {
 				Description: "A description to apply to the population",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+			// "password_policy_id": {
+			// 	Description: "The ID of a password policy to assign to the population",
+			// 	Type:        schema.TypeString,
+			// 	Optional:    true,
+			// },
 		},
 	}
 }
@@ -55,13 +63,17 @@ func resourcePingOnePopulationCreate(ctx context.Context, d *schema.ResourceData
 		"suffix": p1Client.RegionSuffix,
 	})
 
-	description := ""
+	population := *pingone.NewPopulation(d.Get("name").(string)) // Population |  (optional)
 
 	if v, ok := d.GetOk("description"); ok {
-		description = v.(string)
+		population.SetDescription(v.(string))
 	}
 
-	resp, _, err := pingOnePopulationCreate(ctx, apiClient, d.Get("environment_id").(string), d.Get("name").(string), description)
+	// if v, ok := d.GetOk("password_policy_id"); ok {
+	// 	population.SetPasswordPolicyInnerId(v.(string))
+	// }
+
+	resp, _, err := pingOnePopulationCreate(ctx, apiClient, d.Get("environment_id").(string), population)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,6 +103,7 @@ func resourcePingOnePopulationRead(ctx context.Context, d *schema.ResourceData, 
 
 	d.Set("name", resp.GetName())
 	d.Set("description", resp.GetDescription())
+	//d.Set("password_policy_id", resp.SetPasswordPolicyInnerId())
 
 	return diags
 }
@@ -102,13 +115,17 @@ func resourcePingOnePopulationUpdate(ctx context.Context, d *schema.ResourceData
 		"suffix": p1Client.RegionSuffix,
 	})
 
-	description := ""
+	population := *pingone.NewPopulation(d.Get("name").(string)) // Population |  (optional)
 
 	if v, ok := d.GetOk("description"); ok {
-		description = v.(string)
+		population.SetDescription(v.(string))
 	}
 
-	_, _, err := pingOnePopulationUpdate(ctx, apiClient, d.Get("environment_id").(string), d.Id(), d.Get("name").(string), description)
+	// if v, ok := d.GetOk("password_policy_id"); ok {
+	// 	population.SetPasswordPolicyInnerId(v.(string))
+	// }
+
+	_, _, err := pingOnePopulationUpdate(ctx, apiClient, d.Get("environment_id").(string), d.Id(), population)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -154,16 +171,10 @@ func resourcePingOnePopulationImport(ctx context.Context, d *schema.ResourceData
 	return []*schema.ResourceData{d}, nil
 }
 
-func pingOnePopulationCreate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, name string, description string) (*pingone.Population, *http.Response, error) {
+func pingOnePopulationCreate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, population pingone.Population) (*pingone.Population, *http.Response, error) {
 	var diags diag.Diagnostics
 
-	log.Printf("[INFO] Creating PingOne Population: name %s, environment: %s", name, environmentID)
-
-	population := *pingone.NewPopulation(name) // Population |  (optional)
-
-	if description != "" {
-		population.SetDescription(description)
-	}
+	log.Printf("[INFO] Creating PingOne Population: name %s, environment: %s", population.GetName(), environmentID)
 
 	resp, r, err := apiClient.ManagementAPIsPopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
@@ -198,18 +209,10 @@ func pingOnePopulationRead(ctx context.Context, apiClient *pingone.APIClient, en
 	return resp, r, nil
 }
 
-func pingOnePopulationUpdate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, populationID string, name string, description string) (*pingone.Population, *http.Response, error) {
+func pingOnePopulationUpdate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, populationID string, population pingone.Population) (*pingone.Population, *http.Response, error) {
 	var diags diag.Diagnostics
 
-	log.Printf("[INFO] Updating PingOne Population: name %s", name)
-
-	population := *pingone.NewPopulation(name) // Population |  (optional)
-
-	if description != "" {
-		population.SetDescription(description)
-	} else {
-		population.SetDescription("1")
-	}
+	log.Printf("[INFO] Updating PingOne Population: name %s", population.GetName())
 
 	_, r, err := apiClient.ManagementAPIsPopulationsApi.UpdatePopulation(ctx, environmentID, populationID).Population(population).Execute()
 	if err != nil {
