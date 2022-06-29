@@ -70,7 +70,7 @@ jobs:
       - run: go generate ./...
       - name: git diff test
         run: |
-          echo $(git diff --compact-summary)
+          echo $(git diff)
 
       - name: git diff
         run: |
