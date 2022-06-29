@@ -82,6 +82,7 @@ jobs:
           - '0.15.*'
           - '1.0.*'
           - '1.1.*'
+          - '1.2.*'
     steps:
 
     - name: Check out code into the Go module directory
@@ -102,6 +103,11 @@ jobs:
     - name: Get dependencies
       run: |
         go mod download
+
+    - name: Vet
+      timeout-minutes: 10
+      run: |
+        make vet
         
     - name: TF unit tests
       timeout-minutes: 10

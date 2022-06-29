@@ -5,7 +5,7 @@ name: Acceptance Tests
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - 'README.md'
       - '.vscode'
@@ -76,6 +76,7 @@ jobs:
           - '0.15.*'
           - '1.0.*'
           - '1.1.*'
+          - '1.2.*'
     steps:
 
     - name: Check out code into the Go module directory
@@ -96,6 +97,10 @@ jobs:
     - name: Get dependencies
       run: |
         go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep
         
     - name: TF acceptance tests
       timeout-minutes: 10
@@ -110,3 +115,7 @@ jobs:
 
       run: |
         make testacc
+
+    - name: Sweep to clean
+      run: |
+        make sweep
