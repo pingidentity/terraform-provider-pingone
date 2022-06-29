@@ -1,17 +1,11 @@
 # This GitHub action runs your tests for each commit push and/or PR. Optionally
 # you can turn it on using a cron schedule for regular testing.
 #
-name: Tests
+name: Acceptance Tests
 on:
-  pull_request:
-    paths-ignore:
-      - 'README.md'
-      - '.vscode'
-      - '.gitignore'
-      - 'CHANGELOG.md'
-      - 'CONTRIBUTING.md'
-      - 'LICENSE'
   push:
+    branches:
+      - master
     paths-ignore:
       - 'README.md'
       - '.vscode'
@@ -108,10 +102,11 @@ jobs:
       env:
         TF_ACC: "1"
 
-        # Set whatever additional acceptance test env vars here. You can
-        # optionally use data from your repository secrets using the
-        # following syntax:
-        # SOME_VAR: ${{ secrets.SOME_VAR }}
+        PINGONE_CLIENT_ID: ${{ secrets.PINGONE_CLIENT_ID }}
+        PINGONE_CLIENT_SECRET: ${{ secrets.PINGONE_CLIENT_SECRET }}
+        PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
+        PINGONE_REGION: ${{ secrets.PINGONE_REGION }}
+        PINGONE_LICENSE_ID: ${{ secrets.PINGONE_LICENSE_ID }}
 
       run: |
-        go test -v -cover ./internal/provider/
+        make testacc
