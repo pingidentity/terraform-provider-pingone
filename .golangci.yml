@@ -45,7 +45,6 @@ linters-settings:
         ignored-functions:
           - request.ConstantWaiterDelay
           - request.WithWaiterMaxAttempts
-          - nullable.*
           # Terraform Plugin SDK
           - resource.Retry
           - schema.DefaultTimeout

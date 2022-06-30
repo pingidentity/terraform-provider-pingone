@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: PingOne DevOps Community
+    url: https://support.pingidentity.com/s/topic/0TO1W000000IF30WAG/pingdevops
+    about: Ask a question or start a discussion with the DevOps community.
+  - name: Ping Identity Support Portal
+    url: https://support.pingidentity.com/s/
+    about: Visit the Ping Identity Support portal for issues on the platform not related to the PingOne Terraform provider.
