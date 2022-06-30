@@ -1,0 +1,1 @@
+$ terraform import pingone_group.example <environment_id>/<group_id>
