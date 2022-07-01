@@ -1,7 +1,7 @@
 # This GitHub action runs your tests for each commit push and/or PR. Optionally
 # you can turn it on using a cron schedule for regular testing.
 #
-name: Code Check
+name: Provider Code Check
 on:
   pull_request:
     paths-ignore:
@@ -60,6 +60,8 @@ jobs:
         make build
 
   generate:
+    name: go generate
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -68,16 +70,14 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
       - run: go generate ./...
-      - name: git diff test
-        run: |
-          echo $(git diff)
 
       - name: git diff
         run: |
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
 
-  lint:
+  golangci-lint:
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -86,23 +86,90 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      - name: Get dependencies
-        run: |
-          go mod download
+      - run: go generate -tags tools tools/tools.go
 
       - name: Check dependencies
-        run: |
-          make depscheck
+        run: make depscheck
       
       - name: golang lint
         run: |
           make golangci-lint
 
+  importlint:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - run: go generate -tags tools tools/tools.go
+
+      - name: Check dependencies
+        run: make depscheck
+
       - name: import lint
         run: |
           make importlint
+
+  providerlint:
+    name: provider lint
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - run: go generate -tags tools tools/tools.go
+
+      - name: Check dependencies
+        run: make depscheck
 
       - name: provider lint
         run: |
           make providerlint
 
+  tflint:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - run: go generate -tags tools tools/tools.go
+
+      - name: Check dependencies
+        run: make depscheck
+
+      - name: tf lint
+        run: |
+          make tflint
+
+  acctest-lint:
+    name: Acceptance test terrafmt
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - run: go generate -tags tools tools/tools.go
+
+      - name: Check dependencies
+        run: make depscheck
+      
+      - run: |
+          find ./internal/service -type f -name '*_test.go' \
+            | sort -u \
+            | xargs -I {} terrafmt diff --check --fmtcompat {}

@@ -22,7 +22,7 @@ sweep:
 	go test $(SWEEP_DIR) -v -sweep="1" $(SWEEPARGS) -timeout 10m
 
 vet:
-	@echo "==> Running go vet ."
+	@echo "==> Running go vet..."
 	@go vet ./... ; if [ $$? -ne 0 ]; then \
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
@@ -36,41 +36,28 @@ depscheck:
 	@git diff --exit-code -- go.mod go.sum || \
 		(echo; echo "Unexpected difference in go.mod/go.sum files. Run 'go mod tidy' command or revert any go.mod/go.sum changes and commit."; exit 1)
 
-lint: golangci-lint providerlint importlint
+lint: golangci-lint providerlint importlint tflint
 
 golangci-lint:
 	@echo "==> Checking source code with golangci-lint..."
-	@golangci-lint run ./$(PKG_NAME)/...
+	@golangci-lint run ./...
 
 importlint:
 	@echo "==> Checking source code with importlint..."
-	@impi --local . --scheme stdThirdPartyLocal ./$(PKG_NAME)/...
+	@impi --local . --scheme stdThirdPartyLocal ./...
 
 providerlint:
-	@echo "==> Checking source code with providerlint..."
-	@providerlint \
+	@echo "==> Checking source code with tfproviderlintx..."
+	@tfproviderlintx \
 		-c 1 \
 		-AT001.ignored-filename-suffixes=_data_source_test.go \
-		-AWSAT006=false \
-		-AWSR002=false \
-		-AWSV001=false \
-		-R001=false \
-		-R010=false \
 		-R018=false \
-		-R019=false \
-		-V001=false \
-		-V009=false \
-		-V011=false \
-		-V012=false \
-		-V013=false \
-		-V014=false \
-		-XR001=false \
-		-XR002=false \
-		-XR003=false \
 		-XR004=false \
-		-XR005=false \
-		-XS001=false \
 		-XS002=false \
-		./$(PKG_NAME)/provider/...
+		./internal/provider/... ./internal/service/...
 
-.PHONY: build test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint
+tflint:
+	@echo "==> Checking Terraform code with tflint..."
+	@tflint --init
+
+.PHONY: build test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint

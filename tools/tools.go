@@ -3,6 +3,7 @@
 
 package tools
 
+//go:generate go install github.com/bflad/tfproviderlint/cmd/tfproviderlintx
 //go:generate go install github.com/golangci/golangci-lint/cmd/golangci-lint
 //go:generate go install github.com/hashicorp/go-changelog/cmd/changelog-build
 //go:generate go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
@@ -11,7 +12,7 @@ package tools
 //go:generate go install github.com/terraform-linters/tflint
 
 import (
-	// document generation
+	_ "github.com/bflad/tfproviderlint/cmd/tfproviderlintx"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/hashicorp/go-changelog/cmd/changelog-build"
 	_ "github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs"
