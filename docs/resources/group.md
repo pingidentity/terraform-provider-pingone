@@ -37,14 +37,14 @@ resource "pingone_group" "my_group" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to create the group in.
-- `name` (String) The name of the group
+- `name` (String) The name of the group.
 
 ### Optional
 
-- `description` (String) A description to apply to the group
-- `external_id` (String) A user defined ID that represents the counterpart group in an external system
-- `population_id` (String) The ID of the population that the group should be assigned to
-- `user_filter` (String) A SCIM filter to dynamically assign users to the group.  Examples are found in the (PingOne online documentation)[https://docs.pingidentity.com/bundle/pingone/page/kti1564020489340.html]
+- `description` (String) A description to apply to the group.
+- `external_id` (String) A user defined ID that represents the counterpart group in an external system.
+- `population_id` (String) The ID of the population that the group should be assigned to.
+- `user_filter` (String) A SCIM filter to dynamically assign users to the group.  Examples are found in the [PingOne online documentation](https://docs.pingidentity.com/bundle/pingone/page/kti1564020489340.html).
 
 ### Read-Only
 

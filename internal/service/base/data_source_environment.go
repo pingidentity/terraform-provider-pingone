@@ -21,19 +21,19 @@ func DatasourceEnvironment() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"environment_id": {
-				Description:   "The ID of the environment",
+				Description:   "The ID of the environment.",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"name", "license_id"},
 			},
 			"name": {
-				Description:   "The name of the environment",
+				Description:   "The name of the environment.",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"environment_id", "license_id"},
 			},
 			"description": {
-				Description: "A description of the environment",
+				Description: "A description of the environment.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -48,7 +48,7 @@ func DatasourceEnvironment() *schema.Resource {
 				Computed:    true,
 			},
 			"license_id": {
-				Description: "An ID of a valid license to apply to the environment",
+				Description: "An ID of a valid license to apply to the environment.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -69,23 +69,23 @@ func DatasourceEnvironment() *schema.Resource {
 							Computed:    true,
 						},
 						"console_url": {
-							Description: "A custom console URL.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`",
+							Description: "A custom console URL.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"bookmark": {
-							Description: "Custom bookmark links for the service",
+							Description: "Custom bookmark links for the service.",
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"name": {
-										Description: "Bookmark name",
+										Description: "Bookmark name.",
 										Type:        schema.TypeString,
 										Computed:    true,
 									},
 									"url": {
-										Description: "Bookmark URL",
+										Description: "Bookmark URL.",
 										Type:        schema.TypeString,
 										Computed:    true,
 									},
@@ -166,8 +166,8 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Neither environment_id or name are set"),
-			Detail:   fmt.Sprintf("Neither environment_id or name are set"),
+			Summary:  "Neither environment_id or name are set",
+			Detail:   "Neither environment_id or name are set",
 		})
 
 		return diags

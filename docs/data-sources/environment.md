@@ -27,14 +27,14 @@ data "pingone_environment" "example_by_id" {
 
 ### Optional
 
-- `environment_id` (String) The ID of the environment
-- `name` (String) The name of the environment
+- `environment_id` (String) The ID of the environment.
+- `name` (String) The name of the environment.
 
 ### Read-Only
 
-- `description` (String) A description of the environment
+- `description` (String) A description of the environment.
 - `id` (String) The ID of this resource.
-- `license_id` (String) An ID of a valid license to apply to the environment
+- `license_id` (String) An ID of a valid license to apply to the environment.
 - `region` (String) The region the environment is created in.
 - `service` (List of Object) The services enabled in the environment. (see [below for nested schema](#nestedatt--service))
 - `type` (String) The type of the environment.  Options are SANDBOX for a development/testing environment and PRODUCTION for environments that require protection from deletion.

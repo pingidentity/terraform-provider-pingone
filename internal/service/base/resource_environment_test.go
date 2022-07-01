@@ -1,15 +1,54 @@
 package base_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/patrickcping/pingone-go"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
+func testAccCheckEnvironmentDestroy(s *terraform.State) error {
+	var ctx = context.Background()
+
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	apiClient := p1Client.API
+	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
+		"suffix": p1Client.RegionSuffix,
+	})
+
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "pingone_environment" {
+			continue
+		}
+
+		_, r, err := apiClient.ManagementAPIsEnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.ID).Execute()
+
+		if r.StatusCode == 404 {
+			continue
+		}
+
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("PingOne Environment Instance %s still exists", rs.Primary.ID)
+	}
+
+	return nil
+}
+
 func TestAccEnvironment_Full(t *testing.T) {
+	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
@@ -36,6 +75,8 @@ func TestAccEnvironment_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
@@ -64,6 +105,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 }
 
 func TestAccEnvironment_Minimal(t *testing.T) {
+	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
@@ -76,6 +118,8 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),

@@ -44,8 +44,8 @@ resource "pingone_environment" "development" {
 
 ### Optional
 
-- `client_id` (String) Client ID for the worker app client
-- `client_secret` (String) Client secret for the worker app client
-- `environment_id` (String) Environment ID for the worker app client
-- `force_delete_production_type` (Boolean) Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  By default, `PRODUCTION` type configuration will not destroy to protect stored data
-- `region` (String) The PingOne region to use.  Options are EU, US, ASIA, CA
+- `client_id` (String) Client ID for the worker app client.
+- `client_secret` (String) Client secret for the worker app client.
+- `environment_id` (String) Environment ID for the worker app client.
+- `force_delete_production_type` (Boolean) Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  By default, `PRODUCTION` type configuration will not destroy to protect stored data. Defaults to `false`.
+- `region` (String) The PingOne region to use.  Options are EU, US, ASIA, CA.

@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go"
-
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -39,13 +38,13 @@ func ResourcePopulation() *schema.Resource {
 				ForceNew:     true,
 			},
 			"name": {
-				Description:  "The name of the population",
+				Description:  "The name of the population.",
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			"description": {
-				Description: "A description to apply to the population",
+				Description: "A description to apply to the population.",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
@@ -174,15 +173,9 @@ func resourcePingOnePopulationImport(ctx context.Context, d *schema.ResourceData
 }
 
 func PingOnePopulationCreate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, population pingone.Population) (*pingone.Population, *http.Response, error) {
-	var diags diag.Diagnostics
 
 	resp, r, err := apiClient.ManagementAPIsPopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsPopulationsApi.CreatePopulation``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
 
 		return nil, r, err
 	}
@@ -191,15 +184,9 @@ func PingOnePopulationCreate(ctx context.Context, apiClient *pingone.APIClient, 
 }
 
 func PingOnePopulationRead(ctx context.Context, apiClient *pingone.APIClient, environmentID string, populationID string) (*pingone.Population, *http.Response, error) {
-	var diags diag.Diagnostics
 
 	resp, r, err := apiClient.ManagementAPIsPopulationsApi.ReadOnePopulation(ctx, environmentID, populationID).Execute()
 	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsPopulationsApi.ReadOnePopulation``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
 
 		return nil, r, err
 	}
@@ -208,15 +195,9 @@ func PingOnePopulationRead(ctx context.Context, apiClient *pingone.APIClient, en
 }
 
 func PingOnePopulationUpdate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, populationID string, population pingone.Population) (*pingone.Population, *http.Response, error) {
-	var diags diag.Diagnostics
 
 	_, r, err := apiClient.ManagementAPIsPopulationsApi.UpdatePopulation(ctx, environmentID, populationID).Population(population).Execute()
 	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsPopulationsApi.UpdatePopulation``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
 
 		return nil, r, err
 	}

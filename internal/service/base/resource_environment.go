@@ -12,9 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go"
-
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 )
@@ -36,13 +34,13 @@ func ResourceEnvironment() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Description:  "The name of the environment",
+				Description:  "The name of the environment.",
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			"description": {
-				Description: "A description of the environment",
+				Description: "A description of the environment.",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
@@ -54,14 +52,14 @@ func ResourceEnvironment() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"PRODUCTION", "SANDBOX"}, false),
 			},
 			"region": {
-				Description:  "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `NA`, `EU`, `ASIA` and `CA`",
+				Description:  "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `NA`, `EU`, `ASIA` and `CA`.",
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"NA", "EU", "ASIA", "CA"}, false),
 				ForceNew:     true,
 			},
 			"license_id": {
-				Description:  "An ID of a valid license to apply to the environment",
+				Description:  "An ID of a valid license to apply to the environment.",
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
@@ -75,26 +73,26 @@ func ResourceEnvironment() *schema.Resource {
 			// 	ForceNew:     true,
 			// },
 			"default_population_id": {
-				Description: "The ID of the environment's default population",
+				Description: "The ID of the environment's default population.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"default_population": {
-				Description: "The environment's default population",
+				Description: "The environment's default population.",
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Description:  "The name of the environment's default population",
+							Description:  "The name of the environment's default population.",
 							Type:         schema.TypeString,
 							Optional:     true,
 							Default:      "Default",
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
 						"description": {
-							Description: "A description to apply to the environment's default population",
+							Description: "A description to apply to the environment's default population.",
 							Type:        schema.TypeString,
 							Optional:    true,
 						},
@@ -116,25 +114,25 @@ func ResourceEnvironment() *schema.Resource {
 							Default:      "SSO",
 						},
 						"console_url": {
-							Description: "A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`",
+							Description: "A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
 							Type:        schema.TypeString,
 							Optional:    true,
 						},
 						"bookmark": {
-							Description: "Custom bookmark links for the service",
+							Description: "Custom bookmark links for the service.",
 							Type:        schema.TypeSet,
 							Optional:    true,
 							MaxItems:    5,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"name": {
-										Description:  "Bookmark name",
+										Description:  "Bookmark name.",
 										Type:         schema.TypeString,
 										Required:     true,
 										ValidateFunc: validation.StringIsNotEmpty,
 									},
 									"url": {
-										Description:  "Bookmark URL",
+										Description:  "Bookmark URL.",
 										Type:         schema.TypeString,
 										Required:     true,
 										ValidateFunc: validation.StringIsNotEmpty,
@@ -365,7 +363,7 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 	if change := d.HasChange("type"); change {
 		//If type has changed from SANDBOX -> PRODUCTION and vice versa we need a separate API call
 		updateEnvironmentTypeRequest := *pingone.NewUpdateEnvironmentTypeRequest()
-		_, newType := d.GetChange("type")
+		newType := d.Get("type")
 		updateEnvironmentTypeRequest.SetType(newType.(string))
 		_, r, err := apiClient.ManagementAPIsEnvironmentsApi.UpdateEnvironmentType(ctx, environmentID).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
 		if err != nil {

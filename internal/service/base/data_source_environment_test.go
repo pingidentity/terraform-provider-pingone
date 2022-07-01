@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
+	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
@@ -37,6 +38,8 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
@@ -54,6 +57,7 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 }
 
 func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
+	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
@@ -67,6 +71,8 @@ func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByNameMinimal(resourceName, name, environmentType, region, licenseID),
@@ -83,6 +89,7 @@ func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 }
 
 func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
+	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
@@ -110,6 +117,8 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByIDFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
@@ -127,6 +136,7 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 }
 
 func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
+	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
@@ -140,6 +150,8 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByIDMinimal(resourceName, name, environmentType, region, licenseID),

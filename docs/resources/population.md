@@ -37,11 +37,11 @@ resource "pingone_population" "my_population" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to create the population in.
-- `name` (String) The name of the population
+- `name` (String) The name of the population.
 
 ### Optional
 
-- `description` (String) A description to apply to the population
+- `description` (String) A description to apply to the population.
 
 ### Read-Only
 

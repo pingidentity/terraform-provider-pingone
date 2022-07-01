@@ -41,20 +41,20 @@ resource "pingone_environment" "my_environment" {
 
 ### Required
 
-- `default_population` (Block List, Min: 1, Max: 1) The environment's default population (see [below for nested schema](#nestedblock--default_population))
-- `license_id` (String) An ID of a valid license to apply to the environment
-- `name` (String) The name of the environment
-- `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `NA`, `EU`, `ASIA` and `CA`
+- `default_population` (Block List, Min: 1, Max: 1) The environment's default population. (see [below for nested schema](#nestedblock--default_population))
+- `license_id` (String) An ID of a valid license to apply to the environment.
+- `name` (String) The name of the environment.
+- `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `NA`, `EU`, `ASIA` and `CA`.
 - `service` (Block List, Min: 1, Max: 13) The services to enable in the environment. (see [below for nested schema](#nestedblock--service))
 
 ### Optional
 
-- `description` (String) A description of the environment
-- `type` (String) The type of the environment to create.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion.
+- `description` (String) A description of the environment.
+- `type` (String) The type of the environment to create.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion. Defaults to `SANDBOX`.
 
 ### Read-Only
 
-- `default_population_id` (String) The ID of the environment's default population
+- `default_population_id` (String) The ID of the environment's default population.
 - `id` (String) The ID of this resource.
 
 <a id="nestedblock--default_population"></a>
@@ -62,8 +62,8 @@ resource "pingone_environment" "my_environment" {
 
 Optional:
 
-- `description` (String) A description to apply to the environment's default population
-- `name` (String) The name of the environment's default population
+- `description` (String) A description to apply to the environment's default population.
+- `name` (String) The name of the environment's default population. Defaults to `Default`.
 
 
 <a id="nestedblock--service"></a>
@@ -71,17 +71,17 @@ Optional:
 
 Optional:
 
-- `bookmark` (Block Set, Max: 5) Custom bookmark links for the service (see [below for nested schema](#nestedblock--service--bookmark))
-- `console_url` (String) A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`
-- `type` (String) The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `RISK`, `VERIFY`, `CREDENTIALS`, `API_INTELLIGENCE`, `AUTHORIZE`, `FRAUD`, `PING_ID`, `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.
+- `bookmark` (Block Set, Max: 5) Custom bookmark links for the service. (see [below for nested schema](#nestedblock--service--bookmark))
+- `console_url` (String) A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.
+- `type` (String) The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `RISK`, `VERIFY`, `CREDENTIALS`, `API_INTELLIGENCE`, `AUTHORIZE`, `FRAUD`, `PING_ID`, `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`. Defaults to `SSO`.
 
 <a id="nestedblock--service--bookmark"></a>
 ### Nested Schema for `service.bookmark`
 
 Required:
 
-- `name` (String) Bookmark name
-- `url` (String) Bookmark URL
+- `name` (String) Bookmark name.
+- `url` (String) Bookmark URL.
 
 ## Import
 
