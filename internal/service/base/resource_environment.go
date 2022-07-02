@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/patrickcping/pingone-go"
+	pingone "github.com/patrickcping/pingone-go/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
@@ -107,9 +107,9 @@ func ResourceEnvironment() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
-							Description:  "The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `RISK`, `VERIFY`, `CREDENTIALS`, `API_INTELLIGENCE`, `AUTHORIZE`, `FRAUD`, `PING_ID`, `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
+							Description:  "The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
 							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"SSO", "MFA", "RISK", "VERIFY", "CREDENTIALS", "API_INTELLIGENCE", "AUTHORIZE", "FRAUD", "PING_ID", "PING_FEDERATE", "PING_ACCESS", "PING_DIRECTORY", "PING_AUTHORIZE", "PING_CENTRAL"}, false),
+							ValidateFunc: validation.StringInSlice([]string{`SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}, false),
 							Optional:     true,
 							Default:      "SSO",
 						},
@@ -169,11 +169,11 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 		environment.SetDescription(v.(string))
 	}
 
-	resp, r, err := apiClient.ManagementAPIsEnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
+	resp, r, err := apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.CreateEnvironmentActiveLicense``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.CreateEnvironmentActiveLicense``: %v", err),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 		})
 
@@ -200,11 +200,11 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 		// 	billOfMaterials.SetSolutionType(solution.(string))
 		// }
 
-		_, r, err := apiClient.ManagementAPIsBillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, resp.GetId()).BillOfMaterials(billOfMaterials).Execute()
+		_, r, err := apiClient.BillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, resp.GetId()).BillOfMaterials(billOfMaterials).Execute()
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `ManagementAPIsBillOfMaterialsBOMApi.UpdateBillOfMaterials``: %v", err),
+				Summary:  fmt.Sprintf("Error when calling `BillOfMaterialsBOMApi.UpdateBillOfMaterials``: %v", err),
 				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 			})
 
@@ -256,7 +256,7 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 
 	// The environment
 
-	resp, r, err := apiClient.ManagementAPIsEnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+	resp, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
 	if err != nil {
 
 		if r.StatusCode == 404 {
@@ -266,7 +266,7 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 		}
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.ReadOneEnvironment``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.ReadOneEnvironment``: %v", err),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 		})
 
@@ -281,11 +281,11 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 
 	// The bill of materials
 
-	servicesResp, servicesR, servicesErr := apiClient.ManagementAPIsBillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environmentID).Execute()
+	servicesResp, servicesR, servicesErr := apiClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environmentID).Execute()
 	if servicesErr != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.ReadOneEnvironment``: %v", servicesErr),
+			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.ReadOneEnvironment``: %v", servicesErr),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", servicesR),
 		})
 
@@ -365,11 +365,11 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 		updateEnvironmentTypeRequest := *pingone.NewUpdateEnvironmentTypeRequest()
 		newType := d.Get("type")
 		updateEnvironmentTypeRequest.SetType(newType.(string))
-		_, r, err := apiClient.ManagementAPIsEnvironmentsApi.UpdateEnvironmentType(ctx, environmentID).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
+		_, r, err := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environmentID).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.UpdateEnvironmentType``: %v", err),
+				Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.UpdateEnvironmentType``: %v", err),
 				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 			})
 
@@ -377,11 +377,11 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	_, r, err := apiClient.ManagementAPIsEnvironmentsApi.UpdateEnvironment(ctx, environmentID).Environment(environment).Execute()
+	_, r, err := apiClient.EnvironmentsApi.UpdateEnvironment(ctx, environmentID).Environment(environment).Execute()
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.UpdateEnvironment``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.UpdateEnvironment``: %v", err),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 		})
 
@@ -409,11 +409,11 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 		// 	billOfMaterials.SetSolutionType(solution.(string))
 		// }
 
-		_, r, err := apiClient.ManagementAPIsBillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, environmentID).BillOfMaterials(billOfMaterials).Execute()
+		_, r, err := apiClient.BillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, environmentID).BillOfMaterials(billOfMaterials).Execute()
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `ManagementAPIsBillOfMaterialsBOMApi.UpdateBillOfMaterials``: %v", err),
+				Summary:  fmt.Sprintf("Error when calling `BillOfMaterialsBOMApi.UpdateBillOfMaterials``: %v", err),
 				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 			})
 
@@ -456,11 +456,11 @@ func resourcePingOneEnvironmentDelete(ctx context.Context, d *schema.ResourceDat
 
 		updateEnvironmentTypeRequest := *pingone.NewUpdateEnvironmentTypeRequest()
 		updateEnvironmentTypeRequest.SetType("SANDBOX")
-		_, r, err := apiClient.ManagementAPIsEnvironmentsApi.UpdateEnvironmentType(ctx, d.Id()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
+		_, r, err := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, d.Id()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.UpdateEnvironmentType``: %v", err),
+				Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.UpdateEnvironmentType``: %v", err),
 				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 			})
 
@@ -469,11 +469,11 @@ func resourcePingOneEnvironmentDelete(ctx context.Context, d *schema.ResourceDat
 
 	}
 
-	_, err := apiClient.ManagementAPIsEnvironmentsApi.DeleteEnvironment(ctx, d.Id()).Execute()
+	_, err := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, d.Id()).Execute()
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.DeleteEnvironment``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.DeleteEnvironment``: %v", err),
 		})
 
 		return diags

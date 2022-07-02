@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go"
+	pingone "github.com/patrickcping/pingone-go/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
@@ -31,7 +31,7 @@ func testAccCheckEnvironmentDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := apiClient.ManagementAPIsEnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.ID).Execute()
+		_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue
@@ -65,7 +65,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 	populationDescription := "Test population"
 
 	serviceOneType := "SSO"
-	serviceTwoType := "PING_FEDERATE"
+	serviceTwoType := "PingFederate"
 	serviceTwoURL := "https://my-console-url"
 	serviceTwoBookmarkNameOne := "Bookmark 1"
 	serviceTwoBookmarkURLOne := "https://my-bookmark-1"

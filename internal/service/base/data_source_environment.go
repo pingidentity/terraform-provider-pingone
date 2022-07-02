@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/patrickcping/pingone-go"
+	pingone "github.com/patrickcping/pingone-go/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -111,11 +111,11 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 
 	if v, ok := d.GetOk("name"); ok {
 
-		respList, r, err := apiClient.ManagementAPIsEnvironmentsApi.ReadAllEnvironments(ctx).Execute()
+		respList, r, err := apiClient.EnvironmentsApi.ReadAllEnvironments(ctx).Execute()
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.ReadAllEnvironments``: %v", err),
+				Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.ReadAllEnvironments``: %v", err),
 				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 			})
 
@@ -149,11 +149,11 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 
 	} else if v, ok2 := d.GetOk("environment_id"); ok2 {
 
-		environmentResp, r, err := apiClient.ManagementAPIsEnvironmentsApi.ReadOneEnvironment(ctx, v.(string)).Execute()
+		environmentResp, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, v.(string)).Execute()
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.ReadOneEnvironment``: %v", err),
+				Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.ReadOneEnvironment``: %v", err),
 				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 			})
 
@@ -183,11 +183,11 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 
 	// The bill of materials
 
-	servicesResp, servicesR, servicesErr := apiClient.ManagementAPIsBillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, resp.GetId()).Execute()
+	servicesResp, servicesR, servicesErr := apiClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, resp.GetId()).Execute()
 	if servicesErr != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsEnvironmentsApi.ReadOneBillOfMaterials``: %v", servicesErr),
+			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.ReadOneBillOfMaterials``: %v", servicesErr),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", servicesR),
 		})
 

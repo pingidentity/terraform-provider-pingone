@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/patrickcping/pingone-go"
+	pingone "github.com/patrickcping/pingone-go/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -142,11 +142,11 @@ func resourcePingOnePopulationDelete(ctx context.Context, d *schema.ResourceData
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.ManagementAPIsPopulationsApi.DeletePopulation(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+	_, err := apiClient.PopulationsApi.DeletePopulation(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsPopulationsApi.DeletePopulation``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `PopulationsApi.DeletePopulation``: %v", err),
 		})
 
 		return diags
@@ -174,7 +174,7 @@ func resourcePingOnePopulationImport(ctx context.Context, d *schema.ResourceData
 
 func PingOnePopulationCreate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, population pingone.Population) (*pingone.Population, *http.Response, error) {
 
-	resp, r, err := apiClient.ManagementAPIsPopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
+	resp, r, err := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
 
 		return nil, r, err
@@ -185,7 +185,7 @@ func PingOnePopulationCreate(ctx context.Context, apiClient *pingone.APIClient, 
 
 func PingOnePopulationRead(ctx context.Context, apiClient *pingone.APIClient, environmentID string, populationID string) (*pingone.Population, *http.Response, error) {
 
-	resp, r, err := apiClient.ManagementAPIsPopulationsApi.ReadOnePopulation(ctx, environmentID, populationID).Execute()
+	resp, r, err := apiClient.PopulationsApi.ReadOnePopulation(ctx, environmentID, populationID).Execute()
 	if err != nil {
 
 		return nil, r, err
@@ -196,7 +196,7 @@ func PingOnePopulationRead(ctx context.Context, apiClient *pingone.APIClient, en
 
 func PingOnePopulationUpdate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, populationID string, population pingone.Population) (*pingone.Population, *http.Response, error) {
 
-	_, r, err := apiClient.ManagementAPIsPopulationsApi.UpdatePopulation(ctx, environmentID, populationID).Population(population).Execute()
+	_, r, err := apiClient.PopulationsApi.UpdatePopulation(ctx, environmentID, populationID).Population(population).Execute()
 	if err != nil {
 
 		return nil, r, err

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/patrickcping/pingone-go"
+	pingone "github.com/patrickcping/pingone-go/management"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )

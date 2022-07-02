@@ -30,7 +30,7 @@ resource "pingone_environment" "my_environment" {
   }
 
   service {
-    type        = "PING_FEDERATE"
+    type        = "PingFederate"
     console_url = "https://my-pingfederate-console.example.com/pingfederate"
   }
 }
@@ -73,7 +73,7 @@ Optional:
 
 - `bookmark` (Block Set, Max: 5) Custom bookmark links for the service. (see [below for nested schema](#nestedblock--service--bookmark))
 - `console_url` (String) A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.
-- `type` (String) The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `RISK`, `VERIFY`, `CREDENTIALS`, `API_INTELLIGENCE`, `AUTHORIZE`, `FRAUD`, `PING_ID`, `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`. Defaults to `SSO`.
+- `type` (String) The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`. Defaults to `SSO`.
 
 <a id="nestedblock--service--bookmark"></a>
 ### Nested Schema for `service.bookmark`

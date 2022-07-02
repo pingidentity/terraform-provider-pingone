@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/patrickcping/pingone-go"
+	pingone "github.com/patrickcping/pingone-go/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -94,11 +94,11 @@ func resourceGroupCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		group.SetExternalId(v.(string))
 	}
 
-	resp, r, err := apiClient.ManagementAPIsGroupsApi.CreateGroup(ctx, d.Get("environment_id").(string)).Group(group).Execute()
+	resp, r, err := apiClient.GroupsApi.CreateGroup(ctx, d.Get("environment_id").(string)).Group(group).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsGroupsApi.CreateGroup``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `GroupsApi.CreateGroup``: %v", err),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 		})
 
@@ -118,7 +118,7 @@ func resourceGroupRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.ManagementAPIsGroupsApi.ReadOneGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+	resp, r, err := apiClient.GroupsApi.ReadOneGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 	if err != nil {
 
 		if r.StatusCode == 404 {
@@ -128,7 +128,7 @@ func resourceGroupRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsGroupsApi.ReadOneGroup``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `GroupsApi.ReadOneGroup``: %v", err),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 		})
 
@@ -171,11 +171,11 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		group.SetExternalId(v.(string))
 	}
 
-	_, r, err := apiClient.ManagementAPIsGroupsApi.UpdateGroup(ctx, d.Get("environment_id").(string), d.Id()).Group(group).Execute()
+	_, r, err := apiClient.GroupsApi.UpdateGroup(ctx, d.Get("environment_id").(string), d.Id()).Group(group).Execute()
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsGroupsApi.UpdateGroup``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `GroupsApi.UpdateGroup``: %v", err),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 		})
 
@@ -193,11 +193,11 @@ func resourceGroupDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.ManagementAPIsGroupsApi.DeleteGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+	_, err := apiClient.GroupsApi.DeleteGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ManagementAPIsGroupsApi.DeleteGroup``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `GroupsApi.DeleteGroup``: %v", err),
 		})
 
 		return diags

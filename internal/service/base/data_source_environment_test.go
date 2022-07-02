@@ -28,7 +28,7 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 	populationDescription := "Test population"
 
 	serviceOneType := "SSO"
-	serviceTwoType := "PING_FEDERATE"
+	serviceTwoType := "PingFederate"
 	serviceTwoURL := "https://my-console-url"
 	serviceTwoBookmarkNameOne := "Bookmark 1"
 	serviceTwoBookmarkURLOne := "https://my-bookmark-1"
@@ -107,7 +107,7 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 	populationDescription := "Test population"
 
 	serviceOneType := "SSO"
-	serviceTwoType := "PING_FEDERATE"
+	serviceTwoType := "PingFederate"
 	serviceTwoURL := "https://my-console-url"
 	serviceTwoBookmarkNameOne := "Bookmark 1"
 	serviceTwoBookmarkURLOne := "https://my-bookmark-1"

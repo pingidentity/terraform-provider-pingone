@@ -842,8 +842,8 @@ github.com/owenrumney/go-sarif v1.1.1 h1:QNObu6YX1igyFKhdzd7vgzmw7XsWN3/6NMGuDzB
 github.com/owenrumney/go-sarif v1.1.1/go.mod h1:dNDiPlF04ESR/6fHlPyq7gHKmrM0sHUvAGjsoh8ZH0U=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
-github.com/patrickcping/pingone-go v1.8.1 h1:60R+/he3ELwzA3ZaULsmnev4mCczmMVfZ5oCY2GoHks=
-github.com/patrickcping/pingone-go v1.8.1/go.mod h1:YlQbkFX+bMAfiS9ptCCVlGaAXrZpHibs9vLWgQkrLj8=
+github.com/patrickcping/pingone-go/management v0.0.0-20220702165908-07c760e01b77 h1:UPcssFLIVjhIed1IF4dKo7EjQY1fNd4GWyF/bViEMvw=
+github.com/patrickcping/pingone-go/management v0.0.0-20220702165908-07c760e01b77/go.mod h1:7YcZD1yYwepyyAY/9JUlhYqbhrPstR/vl1qXeA93io0=
 github.com/pavius/impi v0.0.3 h1:DND6MzU+BLABhOZXbELR3FU8b+zDgcq4dOCNLhiTYuI=
 github.com/pavius/impi v0.0.3/go.mod h1:x/hU0bfdWIhuOT1SKwiJg++yvkk6EuOtJk8WtDZqgr8=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=

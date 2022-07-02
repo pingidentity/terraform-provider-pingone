@@ -30,51 +30,51 @@ func servicesMapping() []ServiceMapping {
 		},
 		{
 			PlatformCode: "PING_ONE_RISK",
-			ProviderCode: "RISK",
+			ProviderCode: "Risk",
 		},
 		{
 			PlatformCode: "PING_ONE_VERIFY",
-			ProviderCode: "VERIFY",
+			ProviderCode: "Verify",
 		},
 		{
 			PlatformCode: "PING_ONE_CREDENTIALS",
-			ProviderCode: "CREDENTIALS",
+			ProviderCode: "Credentials",
 		},
 		{
 			PlatformCode: "PING_INTELLIGENCE",
-			ProviderCode: "API_INTELLIGENCE",
+			ProviderCode: "APIIntelligence",
 		},
 		{
 			PlatformCode: "PING_ONE_AUTHORIZE",
-			ProviderCode: "AUTHORIZE",
+			ProviderCode: "Authorize",
 		},
 		{
 			PlatformCode: "PING_ONE_FRAUD",
-			ProviderCode: "FRAUD",
+			ProviderCode: "Fraud",
 		},
 		{
 			PlatformCode: "PING_ID",
-			ProviderCode: "PING_ID",
+			ProviderCode: "PingID",
 		},
 		{
 			PlatformCode: "PING_FEDERATE",
-			ProviderCode: "PING_FEDERATE",
+			ProviderCode: "PingFederate",
 		},
 		{
 			PlatformCode: "PING_ACCESS",
-			ProviderCode: "PING_ACCESS",
+			ProviderCode: "PingAccess",
 		},
 		{
 			PlatformCode: "PING_DIRECTORY",
-			ProviderCode: "PING_DIRECTORY",
+			ProviderCode: "PingDirectory",
 		},
 		{
 			PlatformCode: "PING_AUTHORIZE",
-			ProviderCode: "PING_AUTHORIZE",
+			ProviderCode: "PingAuthorize",
 		},
 		{
 			PlatformCode: "PING_CENTRAL",
-			ProviderCode: "PING_CENTRAL",
+			ProviderCode: "PingCentral",
 		},
 	}
 

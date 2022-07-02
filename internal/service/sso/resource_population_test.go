@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go"
+	pingone "github.com/patrickcping/pingone-go/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
@@ -31,7 +31,7 @@ func testAccCheckPopulationDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := apiClient.ManagementAPIsPopulationsApi.ReadOnePopulation(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+		_, r, err := apiClient.PopulationsApi.ReadOnePopulation(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue

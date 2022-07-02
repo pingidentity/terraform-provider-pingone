@@ -9,7 +9,7 @@ func TestServiceFromProviderCode(t *testing.T) {
 	codeTests := map[string]string{
 		"SSO":            "PING_ONE_BASE",
 		"MFA":            "PING_ONE_MFA",
-		"PING_FEDERATE":  "PING_FEDERATE",
+		"PingFederate":   "PING_FEDERATE",
 		"DOES_NOT_EXIST": "",
 	}
 
@@ -32,7 +32,7 @@ func TestServiceFromPlatformCode(t *testing.T) {
 	codeTests := map[string]string{
 		"PING_ONE_BASE":  "SSO",
 		"PING_ONE_MFA":   "MFA",
-		"PING_FEDERATE":  "PING_FEDERATE",
+		"PING_FEDERATE":  "PingFederate",
 		"DOES_NOT_EXIST": "",
 	}
 
