@@ -11,7 +11,7 @@ The PingOne provider interacts with the configuration of the PingOne platform vi
 
 ## Getting Started
 
-To get started using the PingOne Terraform provider, first you'll need an active PingOne cloud subscription.  Get instant access with a [PingOne trial account](https://www.pingidentity.com/en/try-ping.html), or read more at [pingidentity.com](https://www.pingidentity.com)
+To get started using the PingOne Terraform provider, first you'll need an active PingOne cloud subscription.  Get instant access with a [PingOne trial account](https://www.pingidentity.com/en/try-ping.html), or read more about Ping Identity at [pingidentity.com](https://www.pingidentity.com)
 
 ### Configure PingOne for Terraform access
 
