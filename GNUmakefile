@@ -1,5 +1,5 @@
 TEST?=$$(go list ./...)
-SWEEP_DIR=./internal/provider
+SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
@@ -19,7 +19,7 @@ testacc: fmtcheck
 
 sweep:
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
-	go test $(SWEEP_DIR) -v -sweep="1" $(SWEEPARGS) -timeout 10m
+	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
 
 vet:
 	@echo "==> Running go vet..."

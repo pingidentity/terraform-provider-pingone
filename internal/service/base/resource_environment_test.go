@@ -53,7 +53,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
-	name := resourceName
+	name := fmt.Sprintf("tf-testacc-%s", resourceName)
 	description := "Test description"
 	environmentType := "SANDBOX"
 	region := os.Getenv("PINGONE_REGION")
@@ -110,7 +110,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
-	name := resourceName
+	name := fmt.Sprintf("tf-testacc-%s", resourceName)
 	environmentType := "SANDBOX"
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	region := os.Getenv("PINGONE_REGION")

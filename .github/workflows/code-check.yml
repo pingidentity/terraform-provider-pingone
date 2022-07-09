@@ -190,7 +190,7 @@ jobs:
         run: |
           make tflint
 
-  acctest-lint:
+  testacc-lint:
     name: Acceptance test terrafmt
     needs: [build]
     runs-on: ubuntu-latest
