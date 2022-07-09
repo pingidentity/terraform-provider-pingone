@@ -1,9 +1,21 @@
-# Contribution Guidelines
+# Contributing to the PingOne Terraform Provider
 
-Thanks for looking to contribute.  The following links will get you started
+We appreciate your help!  We welcome contributions in the form of creating issues or pull requests.
 
-* Development Setup (coming soon)
-* Provider Design (coming soon)
+Know that:
+1. If you have any questions, please ask!  We'll help as best we can
+2. While we appreciate perfect PRs, it's not essential. We'll fix up any housekeeping changes before merge.  Any PRs that need further work, we'll point you in the right direction.
+3. We may not be able to respond quickly, our development cycles are on a priority basis.
+4. We base our priorities on customer need and the number of votes on issues/PRs by the number of 👍 reactions.  If there is an existing issue or PR for something you'd like, please vote!
 
-Issues and pull requests welcome
+The following guides are there to help you get started with provider development, logging issues and creating PRs.  Following the guides allows us to respond quicker and will result in faster PR merges.
 
+## Getting Started
+
+- [Set Up Your Development Environment](contributing/development-environment.md)
+- [Services Support](contributing/services-support.md)
+- [Provider Design](contributing/provider-design.md)
+
+## Process
+- [Raise Pull Request Checklist](contributing/pr-checklist.md)
+- [Changelog process](contributing/changelog-process.md)

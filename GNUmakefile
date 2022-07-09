@@ -8,8 +8,14 @@ OS_ARCH=linux_amd64
 
 default: build
 
+tools:
+	go generate -tags tools tools/tools.go
+
 build: fmtcheck
 	go install -ldflags="-X github.com/pingidentity/terraform-provider-pingone/main.version=$(VERSION)"
+
+generate: fmtcheck
+	go generate ./...
 
 test: fmtcheck
 	go test $(TEST) $(TESTARGS) -timeout=5m
@@ -60,4 +66,4 @@ tflint:
 	@echo "==> Checking Terraform code with tflint..."
 	@tflint --init
 
-.PHONY: build test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint
+.PHONY: tools build generate test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint
