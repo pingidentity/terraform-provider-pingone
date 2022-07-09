@@ -15,7 +15,7 @@ build: fmtcheck
 	go install -ldflags="-X github.com/pingidentity/terraform-provider-pingone/main.version=$(VERSION)"
 
 generate: fmtcheck
-	go generate ./...
+	PINGONE_CLIENT_ID= PINGONE_CLIENT_SECRET= PINGONE_ENVIRONMENT_ID= PINGONE_REGION= go generate ./...
 
 test: fmtcheck
 	go test $(TEST) $(TESTARGS) -timeout=5m
