@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	pingone "github.com/patrickcping/pingone-go/management"
@@ -34,10 +36,10 @@ func ResourceEnvironment() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Description:  "The name of the environment.",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsNotEmpty,
+				Description:      "The name of the environment.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 			"description": {
 				Description: "A description of the environment.",
@@ -45,30 +47,30 @@ func ResourceEnvironment() *schema.Resource {
 				Optional:    true,
 			},
 			"type": {
-				Description:  "The type of the environment to create.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "SANDBOX",
-				ValidateFunc: validation.StringInSlice([]string{"PRODUCTION", "SANDBOX"}, false),
+				Description:      "The type of the environment to create.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          "SANDBOX",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"PRODUCTION", "SANDBOX"}, false)),
 			},
 			"region": {
-				Description:  "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `NA`, `EU`, `ASIA` and `CA`.",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"NA", "EU", "ASIA", "CA"}, false),
-				ForceNew:     true,
+				Description:      "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `NA`, `EU`, `ASIA` and `CA`.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NA", "EU", "ASIA", "CA"}, false)),
+				ForceNew:         true,
 			},
 			"license_id": {
-				Description:  "An ID of a valid license to apply to the environment.",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsNotEmpty,
-				ForceNew:     true,
+				Description:      "An ID of a valid license to apply to the environment.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ForceNew:         true,
 			},
 			// "solution": {
 			// 	Description:  "The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `WORKFORCE` and `CUSTOMER`",
 			// 	Type:         schema.TypeString,
-			// 	ValidateFunc: validation.StringInSlice([]string{"WORKFORCE", "CUSTOMER"}, false),
+			// 	ValidateDiagFunc: validation.StringInSlice([]string{"WORKFORCE", "CUSTOMER"}, false),
 			// 	Optional:     true,
 			// 	ForceNew:     true,
 			// },
@@ -85,11 +87,11 @@ func ResourceEnvironment() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Description:  "The name of the environment's default population.",
-							Type:         schema.TypeString,
-							Optional:     true,
-							Default:      "Default",
-							ValidateFunc: validation.StringIsNotEmpty,
+							Description:      "The name of the environment's default population.",
+							Type:             schema.TypeString,
+							Optional:         true,
+							Default:          "Default",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
 						"description": {
 							Description: "A description to apply to the environment's default population.",
@@ -107,11 +109,11 @@ func ResourceEnvironment() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
-							Description:  "The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{`SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}, false),
-							Optional:     true,
-							Default:      "SSO",
+							Description:      "The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
+							Type:             schema.TypeString,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{`SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}, false)),
+							Optional:         true,
+							Default:          "SSO",
 						},
 						"console_url": {
 							Description: "A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
@@ -126,16 +128,16 @@ func ResourceEnvironment() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"name": {
-										Description:  "Bookmark name.",
-										Type:         schema.TypeString,
-										Required:     true,
-										ValidateFunc: validation.StringIsNotEmpty,
+										Description:      "Bookmark name.",
+										Type:             schema.TypeString,
+										Required:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 									},
 									"url": {
-										Description:  "Bookmark URL.",
-										Type:         schema.TypeString,
-										Required:     true,
-										ValidateFunc: validation.StringIsNotEmpty,
+										Description:      "Bookmark URL.",
+										Type:             schema.TypeString,
+										Required:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 									},
 								},
 							},
@@ -211,9 +213,6 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 			return diags
 		}
 	}
-
-	// TODO: poll here for default perms to be set up
-	time.Sleep(1 * time.Second) // 1 second hold as temp fix
 
 	// Set the default population
 	// We have to create a default population because the API must require one population in the environment. If we don't do this we have a problem with the 'destroy all' routine
@@ -474,6 +473,37 @@ func resourcePingOneEnvironmentDelete(ctx context.Context, d *schema.ResourceDat
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.DeleteEnvironment``: %v", err),
+		})
+
+		return diags
+	}
+
+	deleteStateConf := &resource.StateChangeConf{
+		Pending: []string{
+			"200",
+			"403",
+		},
+		Target: []string{
+			"404",
+		},
+		Refresh: func() (interface{}, string, error) {
+			resp, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, d.Id()).Execute()
+			if err != nil {
+				return 0, "", err
+			}
+			base := 10
+			return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
+		},
+		Timeout:                   d.Timeout(schema.TimeoutDelete) - time.Minute,
+		Delay:                     10 * time.Second,
+		MinTimeout:                5 * time.Second,
+		ContinuousTargetOccurence: 5,
+	}
+	_, err = deleteStateConf.WaitForState()
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  fmt.Sprintf("Error waiting for environment (%s) to be deleted: %s", d.Id(), err),
 		})
 
 		return diags

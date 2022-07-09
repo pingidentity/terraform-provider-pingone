@@ -50,10 +50,10 @@ func testAccCheckEnvironmentDestroy(s *terraform.State) error {
 func TestAccEnvironment_Full(t *testing.T) {
 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
+	resourceName := acctest.ResourceNameGenEnvironment()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
-	name := fmt.Sprintf("tf-testacc-%s", resourceName)
+	name := resourceName
 	description := "Test description"
 	environmentType := "SANDBOX"
 	region := os.Getenv("PINGONE_REGION")
@@ -61,7 +61,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 
 	solution := "CUSTOMER"
 
-	populationName := acctest.ResourceNameGen()
+	populationName := acctest.ResourceNameGenDefaultPopulation()
 	populationDescription := "Test population"
 
 	serviceOneType := "SSO"
@@ -107,10 +107,10 @@ func TestAccEnvironment_Full(t *testing.T) {
 func TestAccEnvironment_Minimal(t *testing.T) {
 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
+	resourceName := acctest.ResourceNameGenEnvironment()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
-	name := fmt.Sprintf("tf-testacc-%s", resourceName)
+	name := resourceName
 	environmentType := "SANDBOX"
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	region := os.Getenv("PINGONE_REGION")
@@ -131,6 +131,63 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.0.type", "SSO"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccEnvironment_NonPopulationServices(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGenEnvironment()
+	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+	name := resourceName
+	description := "Test description"
+	environmentType := "SANDBOX"
+	region := os.Getenv("PINGONE_REGION")
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	solution := "CUSTOMER"
+
+	populationName := acctest.ResourceNameGenDefaultPopulation()
+	populationDescription := "Test population"
+
+	serviceOneType := "PingAccess"
+	serviceTwoType := "PingFederate"
+	serviceTwoURL := "https://my-console-url"
+	serviceTwoBookmarkNameOne := "Bookmark 1"
+	serviceTwoBookmarkURLOne := "https://my-bookmark-1"
+	serviceTwoBookmarkNameTwo := "Bookmark 2"
+	serviceTwoBookmarkURLTwo := "https://my-bookmark-2"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "description", description),
+					resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
+					resource.TestCheckResourceAttr(resourceFullName, "region", region),
+					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
+					// resource.TestCheckResourceAttr(resourceFullName, "solution", solution),
+					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
+					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", populationDescription),
+					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.type", serviceOneType),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.type", serviceTwoType),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.console_url", serviceTwoURL),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.#", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.0.name", serviceTwoBookmarkNameOne),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.0.url", serviceTwoBookmarkURLOne),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.1.name", serviceTwoBookmarkNameTwo),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.1.url", serviceTwoBookmarkURLTwo),
 				),
 			},
 		},

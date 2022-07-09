@@ -30,17 +30,17 @@ func ResourceGroup() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"environment_id": {
-				Description:  "The ID of the environment to create the group in.",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsNotEmpty,
-				ForceNew:     true,
+				Description:      "The ID of the environment to create the group in.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ForceNew:         true,
 			},
 			"name": {
-				Description:  "The name of the group.",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsNotEmpty,
+				Description:      "The name of the group.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 			"description": {
 				Description: "A description to apply to the group.",

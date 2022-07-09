@@ -12,7 +12,7 @@ import (
 func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
+	resourceName := acctest.ResourceNameGenEnvironment()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
@@ -59,7 +59,7 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
+	resourceName := acctest.ResourceNameGenEnvironment()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
@@ -91,7 +91,7 @@ func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
+	resourceName := acctest.ResourceNameGenEnvironment()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
@@ -138,7 +138,7 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
+	resourceName := acctest.ResourceNameGenEnvironment()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 

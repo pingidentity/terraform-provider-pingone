@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	pingone "github.com/patrickcping/pingone-go/management"
@@ -31,17 +32,18 @@ func testAccCheckGroupDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := apiClient.GroupsApi.ReadOneGroup(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+		body, r, err := apiClient.GroupsApi.ReadOneGroup(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue
 		}
 
 		if err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
 			return err
 		}
 
-		return fmt.Errorf("PingOne Population Instance %s still exists", rs.Primary.ID)
+		return fmt.Errorf("PingOne Group Instance %s still exists", rs.Primary.ID)
 	}
 
 	return nil
@@ -52,6 +54,8 @@ func TestAccGroup_Full(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_group.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
 
 	name := resourceName
 	description := "Test description"
@@ -69,7 +73,7 @@ func TestAccGroup_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGroupConfig_Full(resourceName, name, description, licenseID, region, userFilter, externalID),
+				Config: testAccGroupConfig_Full(environmentName, resourceName, name, description, licenseID, region, userFilter, externalID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", description),
@@ -88,6 +92,8 @@ func TestAccGroup_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_group.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
@@ -100,7 +106,7 @@ func TestAccGroup_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGroupConfig_Minimal(resourceName, name, licenseID, region),
+				Config: testAccGroupConfig_Minimal(environmentName, resourceName, name, licenseID, region),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 				),
@@ -109,10 +115,31 @@ func TestAccGroup_Minimal(t *testing.T) {
 	})
 }
 
-func testAccGroupConfig_Full(resourceName, name, description, licenseID, region, userFilter, externalID string) string {
+func testAccGroupConfig_Full(environmentName, resourceName, name, description, licenseID, region, userFilter, externalID string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
+			name = "%[1]s"
+			type = "SANDBOX"
+			license_id = "%[5]s"
+			region = "%[6]s"
+			default_population {}
+			service {}
+		}
+
+		resource "pingone_group" "%[2]s" {
+			environment_id = "${pingone_environment.%[1]s.id}"
+			name = "%[3]s"
+			description = "%[4]s"
+			population_id = "${pingone_environment.%[1]s.default_population_id}"
+			user_filter = %[7]q
+			external_id = "%[8]s"
+		}`, environmentName, resourceName, name, description, licenseID, region, userFilter, externalID)
+}
+
+func testAccGroupConfig_Minimal(environmentName, resourceName, name, licenseID, region string) string {
+	return fmt.Sprintf(`
+		resource "pingone_environment" "%[1]s" {
+			name = "%[1]s"
 			type = "SANDBOX"
 			license_id = "%[4]s"
 			region = "%[5]s"
@@ -120,29 +147,8 @@ func testAccGroupConfig_Full(resourceName, name, description, licenseID, region,
 			service {}
 		}
 
-		resource "pingone_group" "%[1]s" {
+		resource "pingone_group" "%[2]s" {
 			environment_id = "${pingone_environment.%[1]s.id}"
-			name = "%[2]s"
-			description = "%[3]s"
-			population_id = "${pingone_environment.%[1]s.default_population_id}"
-			user_filter = %[6]q
-			external_id = "%[7]s"
-		}`, resourceName, name, description, licenseID, region, userFilter, externalID)
-}
-
-func testAccGroupConfig_Minimal(resourceName, name, licenseID, region string) string {
-	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
-			type = "SANDBOX"
-			license_id = "%[3]s"
-			region = "%[4]s"
-			default_population {}
-			service {}
-		}
-
-		resource "pingone_group" "%[1]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			name = "%[2]s"
-		}`, resourceName, name, licenseID, region)
+			name = "%[3]s"
+		}`, environmentName, resourceName, name, licenseID, region)
 }

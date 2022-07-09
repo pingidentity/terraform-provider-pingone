@@ -2,9 +2,7 @@ package base
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	pingone "github.com/patrickcping/pingone-go/management"
@@ -15,6 +13,10 @@ func init() {
 	resource.AddTestSweepers("pingone_environment", &resource.Sweeper{
 		Name: "pingone_environment",
 		F:    sweepEnvironments,
+		Dependencies: []string{
+			"pingone_group",
+			"pingone_population",
+		},
 	})
 }
 
@@ -33,39 +35,33 @@ func sweepEnvironments(region string) error {
 		"suffix": p1Client.RegionSuffix,
 	})
 
-	respList, _, err := apiClient.EnvironmentsApi.ReadAllEnvironments(ctx).Execute()
+	environments, err := sweep.FetchTaggedEnvironments(ctx, apiClient, region)
 	if err != nil {
-		return fmt.Errorf("Error getting environments: %s", err)
+		return err
 	}
 
-	if environments, ok := respList.Embedded.GetEnvironmentsOk(); ok {
+	for _, environment := range environments {
 
-		for _, environment := range environments {
+		// Reset back to sandbox
+		if environment.GetType() == "PRODUCTION" {
+			updateEnvironmentTypeRequest := *pingone.NewUpdateEnvironmentTypeRequest()
+			updateEnvironmentTypeRequest.SetType("SANDBOX")
+			_, _, err := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environment.GetId()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
 
-			if (environment.GetName() != "Administrators") && (strings.HasPrefix(environment.GetName(), "tf-testacc-")) {
-
-				// Reset back to sandbox
-				if environment.GetType() == "PRODUCTION" {
-					updateEnvironmentTypeRequest := *pingone.NewUpdateEnvironmentTypeRequest()
-					updateEnvironmentTypeRequest.SetType("SANDBOX")
-					_, _, err := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environment.GetId()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
-
-					if err != nil {
-						log.Printf("Error setting environment %s of type PRODUCTION to SANDBOX during sweep: %s", environment.GetName(), err)
-					}
-				}
-
-				// Delete the environment
-				_, err := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environment.GetId()).Execute()
-
-				if err != nil {
-					log.Printf("Error destroying environment %s during sweep: %s", environment.GetName(), err)
-				}
-
+			if err != nil {
+				log.Printf("Error setting environment %s of type PRODUCTION to SANDBOX during sweep: %s", environment.GetName(), err)
 			}
 		}
 
+		// Delete the environment
+		_, err := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environment.GetId()).Execute()
+
+		if err != nil {
+			log.Printf("Error destroying environment %s during sweep: %s", environment.GetName(), err)
+		}
+
 	}
+
 	return nil
 
 }

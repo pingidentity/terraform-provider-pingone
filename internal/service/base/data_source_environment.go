@@ -3,7 +3,6 @@ package base
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -126,8 +125,6 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 
 			found := false
 			for _, environment := range environments {
-
-				log.Printf("Environment loops: %s || %s", environment.GetName(), v.(string))
 
 				if environment.GetName() == v.(string) {
 					resp = environment

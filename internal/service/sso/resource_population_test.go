@@ -31,6 +31,16 @@ func testAccCheckPopulationDestroy(s *terraform.State) error {
 			continue
 		}
 
+		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
+
+		if rEnv.StatusCode == 404 {
+			continue
+		}
+
+		if err != nil {
+			return err
+		}
+
 		_, r, err := apiClient.PopulationsApi.ReadOnePopulation(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
@@ -53,6 +63,8 @@ func TestAccPopulation_Full(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_population.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 	description := "Test description"
 
@@ -66,7 +78,7 @@ func TestAccPopulation_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPopulationConfig_Full(resourceName, name, description, licenseID, region),
+				Config: testAccPopulationConfig_Full(environmentName, resourceName, name, description, licenseID, region),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", description),
@@ -82,6 +94,8 @@ func TestAccPopulation_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_population.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
@@ -94,7 +108,7 @@ func TestAccPopulation_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPopulationConfig_Minimal(resourceName, name, licenseID, region),
+				Config: testAccPopulationConfig_Minimal(environmentName, resourceName, name, licenseID, region),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 				),
@@ -103,10 +117,28 @@ func TestAccPopulation_Minimal(t *testing.T) {
 	})
 }
 
-func testAccPopulationConfig_Full(resourceName, name, description, licenseID, region string) string {
+func testAccPopulationConfig_Full(environmentName, resourceName, name, description, licenseID, region string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
+			name = "%[1]s"
+			type = "SANDBOX"
+			license_id = "%[5]s"
+			region = "%[6]s"
+			default_population {}
+			service {}
+		}
+
+		resource "pingone_population" "%[2]s" {
+			environment_id = "${pingone_environment.%[1]s.id}"
+			name = "%[3]s"
+			description = "%[4]s"
+		}`, environmentName, resourceName, name, description, licenseID, region)
+}
+
+func testAccPopulationConfig_Minimal(environmentName, resourceName, name, licenseID, region string) string {
+	return fmt.Sprintf(`
+		resource "pingone_environment" "%[1]s" {
+			name = "%[1]s"
 			type = "SANDBOX"
 			license_id = "%[4]s"
 			region = "%[5]s"
@@ -114,26 +146,8 @@ func testAccPopulationConfig_Full(resourceName, name, description, licenseID, re
 			service {}
 		}
 
-		resource "pingone_population" "%[1]s" {
+		resource "pingone_population" "%[2]s" {
 			environment_id = "${pingone_environment.%[1]s.id}"
-			name = "%[2]s"
-			description = "%[3]s"
-		}`, resourceName, name, description, licenseID, region)
-}
-
-func testAccPopulationConfig_Minimal(resourceName, name, licenseID, region string) string {
-	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
-			type = "SANDBOX"
-			license_id = "%[3]s"
-			region = "%[4]s"
-			default_population {}
-			service {}
-		}
-
-		resource "pingone_population" "%[1]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			name = "%[2]s"
-		}`, resourceName, name, licenseID, region)
+			name = "%[3]s"
+		}`, environmentName, resourceName, name, licenseID, region)
 }

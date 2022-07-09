@@ -2,6 +2,7 @@ package acctest
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -82,6 +83,14 @@ func ErrorCheck(t *testing.T) resource.ErrorCheckFunc {
 func ResourceNameGen() string {
 	strlen := 10
 	return acctest.RandStringFromCharSet(strlen, acctest.CharSetAlpha)
+}
+
+func ResourceNameGenEnvironment() string {
+	return fmt.Sprintf("tf-testacc-%s", ResourceNameGen())
+}
+
+func ResourceNameGenDefaultPopulation() string {
+	return fmt.Sprintf("default-%s", ResourceNameGen())
 }
 
 func TestClient(ctx context.Context) (*client.Client, error) {
