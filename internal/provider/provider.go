@@ -57,7 +57,7 @@ func New(version string) func() *schema.Provider {
 					Type:         schema.TypeString,
 					Required:     true,
 					DefaultFunc:  schema.EnvDefaultFunc("PINGONE_REGION", nil),
-					Description:  "The PingOne region to use.  Options are EU, US, ASIA, CA.  Default value can be set with the `PINGONE_REGION` environment variable.",
+					Description:      "The PingOne region to use.  Options are `EU`, `US`, `ASIA`, `CA`.  Default value can be set with the `PINGONE_REGION` environment variable.",
 					ValidateFunc: validation.StringInSlice([]string{"EU", "US", "ASIA", "CA"}, false),
 				},
 				"force_delete_production_type": {
