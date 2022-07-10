@@ -84,7 +84,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   test:
     name: Matrix Test
-    needs: prepare
+    needs: [prepare, build]
     runs-on: ubuntu-latest
 
     env:
