@@ -1,0 +1,7 @@
+```release-note:new-resource
+pingone_role_assignment_user
+```
+
+```release-note:new-data-source
+pingone_role
+```
