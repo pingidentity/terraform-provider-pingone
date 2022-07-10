@@ -54,6 +54,14 @@ jobs:
   prepare:
     name: Prepare
     runs-on: ubuntu-latest
+
+    env:
+      PINGONE_CLIENT_ID: ${{ secrets.PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
+      PINGONE_REGION: ${{ secrets.PINGONE_REGION }}
+      PINGONE_LICENSE_ID: ${{ secrets.PINGONE_LICENSE_ID }}
+
     timeout-minutes: 5
     steps:
 
@@ -139,6 +147,14 @@ jobs:
     name: Clean up
     needs: test
     runs-on: ubuntu-latest
+
+    env:
+      PINGONE_CLIENT_ID: ${{ secrets.PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
+      PINGONE_REGION: ${{ secrets.PINGONE_REGION }}
+      PINGONE_LICENSE_ID: ${{ secrets.PINGONE_LICENSE_ID }}
+
     timeout-minutes: 5
     steps:
 
