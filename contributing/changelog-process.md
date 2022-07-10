@@ -40,9 +40,11 @@ Changelog entry files can have multiple descriptions, for example `.changelog/12
 ```release-note:new-resource
 pingone_risk_policy
 ```
+
 ```release-note:new-data-source
 pingone_risk_policy
 ```
+
 ```release-note:new-guide
 How to configure a PingOne Risk policy
 ```
