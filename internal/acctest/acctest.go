@@ -71,6 +71,14 @@ func PreCheckEnvironment(t *testing.T) {
 	}
 }
 
+func PreCheckEnvironmentAndOrganisation(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_ORGANIZATION_ID"); v == "" {
+		t.Fatal("PINGONE_ORGANIZATION_ID is missing and must be set")
+	}
+}
+
 func ErrorCheck(t *testing.T) resource.ErrorCheckFunc {
 	return func(err error) error {
 		if err == nil {
