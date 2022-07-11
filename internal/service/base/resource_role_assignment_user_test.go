@@ -60,8 +60,6 @@ func TestAccRoleAssignmentUser_Population(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	region := os.Getenv("PINGONE_REGION")
 
-	roleName := "Identity Data Admin"
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -69,7 +67,20 @@ func TestAccRoleAssignmentUser_Population(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleAssignmentUserConfig_Population(environmentName, resourceName, roleName, licenseID, region),
+				Config: testAccRoleAssignmentUserConfig_Population(environmentName, resourceName, "Identity Data Admin", licenseID, region),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "user_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "role_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "scope_population_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+				),
+			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Population(environmentName, resourceName, "Environment Admin", licenseID, region),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
@@ -97,8 +108,6 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 	region := os.Getenv("PINGONE_REGION")
 	organisationID := os.Getenv("PINGONE_ORGANISATION_ID")
 
-	roleName := "Identity Data Admin"
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -106,7 +115,20 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleAssignmentUserConfig_Organisation(environmentName, resourceName, roleName, licenseID, region, organisationID),
+				Config: testAccRoleAssignmentUserConfig_Organisation(environmentName, resourceName, "Identity Data Admin", licenseID, region, organisationID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "user_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "role_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "scope_organization_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+				),
+			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Organisation(environmentName, resourceName, "Environment Admin", licenseID, region, organisationID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
@@ -133,8 +155,6 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	region := os.Getenv("PINGONE_REGION")
 
-	roleName := "Identity Data Admin"
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -142,7 +162,20 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleAssignmentUserConfig_Environment(environmentName, resourceName, roleName, licenseID, region),
+				Config: testAccRoleAssignmentUserConfig_Environment(environmentName, resourceName, "Identity Data Admin", licenseID, region),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "user_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "role_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "scope_environment_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+				),
+			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Environment(environmentName, resourceName, "Environment Admin", licenseID, region),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
@@ -174,6 +207,7 @@ func testAccRoleAssignmentUserConfig_Population(environmentName, resourceName, r
 			population_id = "${pingone_environment.%[1]s.default_population_id}"
 
 			username = "%[2]s"
+			email    = "foouser@pingidentity.com"
 		}
 
 		data "pingone_role" "%[2]s" {
@@ -205,6 +239,7 @@ func testAccRoleAssignmentUserConfig_Organisation(environmentName, resourceName,
 			population_id = "${pingone_environment.%[1]s.default_population_id}"
 
 			username = "%[2]s"
+			email    = "foouser@pingidentity.com"
 		}
 
 		data "pingone_role" "%[2]s" {
@@ -236,6 +271,7 @@ func testAccRoleAssignmentUserConfig_Environment(environmentName, resourceName, 
 			population_id = "${pingone_environment.%[1]s.default_population_id}"
 
 			username = "%[2]s"
+			email    = "foouser@pingidentity.com"
 		}
 
 		data "pingone_role" "%[2]s" {
