@@ -1,0 +1,1 @@
+$ terraform import pingone_user.example <environment_id>/<user_id>

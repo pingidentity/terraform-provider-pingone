@@ -77,6 +77,7 @@ func New(version string) func() *schema.Provider {
 
 				"pingone_group":      sso.ResourceGroup(),
 				"pingone_population": sso.ResourcePopulation(),
+				"pingone_user":       sso.ResourceUser(),
 			},
 		}
 
