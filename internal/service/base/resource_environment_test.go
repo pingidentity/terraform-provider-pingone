@@ -99,6 +99,100 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	})
 }
 
+func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+	environmentType := "SANDBOX"
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := "NA"
+
+	if os.Getenv("PINGONE_REGION") == "NA" {
+		region = "EU"
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the tenant.  Expecting regions \[%s\], region provided: %s`, os.Getenv("PINGONE_REGION"), region)),
+			},
+		},
+	})
+}
+
+// func TestAccEnvironment_DeleteProductionEnvironmentProtection(t *testing.T) {
+// 	t.Parallel()
+
+// 	resourceName := acctest.ResourceNameGenEnvironment()
+// 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+// 	name := resourceName
+// 	environmentType := "SANDBOX"
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+// 	region := os.Getenv("PINGONE_REGION")
+
+// 	os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "false")
+
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+// 		ProviderFactories: acctest.ProviderFactories,
+// 		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+// 		ErrorCheck:        acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+// 				),
+// 			},
+// 			{
+// 				Config:      testAccEnvironmentConfig_BlankPlan(),
+// 				ExpectError: regexp.MustCompile(fmt.Sprintf(`Cannot delete environment "%s" as it is a PRODUCTION type, where the force_delete_production_type is unset or set to false.  Set this provider parameter to true, or change the environment to a SANDBOX to continue.`, name)),
+// 			},
+// 		},
+// 	})
+// }
+
+// func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
+// 	t.Parallel()
+
+// 	resourceName := acctest.ResourceNameGenEnvironment()
+// 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+// 	name := resourceName
+// 	environmentType := "SANDBOX"
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+// 	region := os.Getenv("PINGONE_REGION")
+
+// 	os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "true")
+
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+// 		ProviderFactories: acctest.ProviderFactories,
+// 		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+// 		ErrorCheck:        acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+// 				),
+// 			},
+// 			{
+// 				Config:      testAccEnvironmentConfig_BlankPlan(),
+// 				ExpectError: regexp.MustCompile(fmt.Sprintf(`Cannot delete environment "%s" as it is a PRODUCTION type, where the force_delete_production_type is unset or set to false.  Set this provider parameter to true, or change the environment to a SANDBOX to continue.`, name)),
+// 			},
+// 		},
+// 	})
+// }
+
 func TestAccEnvironment_NonPopulationServices(t *testing.T) {
 	t.Parallel()
 
@@ -134,15 +228,98 @@ func TestAccEnvironment_NonPopulationServices(t *testing.T) {
 				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", description),
-					resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
-					resource.TestCheckResourceAttr(resourceFullName, "region", region),
-					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
-					// resource.TestCheckResourceAttr(resourceFullName, "solution", solution),
+
+func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGenEnvironment()
+	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+	name := resourceName
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := os.Getenv("PINGONE_REGION")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", region, licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
+				),
+			},
+			{
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "PRODUCTION", region, licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "type", "PRODUCTION"),
+				),
+			},
+			{
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", region, licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGenEnvironment()
+	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+	name := resourceName
+	description := "Test description"
+	environmentType := "SANDBOX"
+	region := os.Getenv("PINGONE_REGION")
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	solution := "CUSTOMER"
+
+	populationName := acctest.ResourceNameGenDefaultPopulation()
+	populationDescription := "Test population"
+
+	serviceOneType := "PingAccess"
+	serviceTwoType := "PingFederate"
+	serviceTwoURL := "https://my-console-url"
+	serviceTwoBookmarkNameOne := "Bookmark 1"
+	serviceTwoBookmarkURLOne := "https://my-bookmark-1"
+	serviceTwoBookmarkNameTwo := "Bookmark 2"
+	serviceTwoBookmarkURLTwo := "https://my-bookmark-2"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", region, licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
+					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.type", "SSO"),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.console_url", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.bookmark.#", "0"),
+				),
+			},
+			{
+				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", populationDescription),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.0.type", serviceOneType),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.console_url", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.bookmark.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.1.type", serviceTwoType),
 					resource.TestCheckResourceAttr(resourceFullName, "service.1.console_url", serviceTwoURL),
 					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.#", "2"),
@@ -199,3 +376,7 @@ func testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, regio
 			}
 		}`, resourceName, name, environmentType, region, licenseID)
 }
+
+// func testAccEnvironmentConfig_BlankPlan() string {
+// 	return ""
+// }

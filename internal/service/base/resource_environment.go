@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -173,6 +174,23 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 	resp, r, err := apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
+
+		response := &pingone.P1Error{}
+		errDecode := json.NewDecoder(r.Body).Decode(response)
+		if errDecode == nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
+				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
+			})
+		}
+
+		if r.StatusCode == 400 && response.GetDetails()[0].GetTarget() == "region" {
+			diags = diag.FromErr(fmt.Errorf("Incompatible environment region for the tenant.  Expecting regions %v, region provided: %s", response.GetDetails()[0].GetInnerError().AllowedValues, d.Get("region").(string)))
+
+			return diags
+		}
+
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.CreateEnvironmentActiveLicense``: %v", err),
