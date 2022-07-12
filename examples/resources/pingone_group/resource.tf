@@ -3,7 +3,7 @@ resource "pingone_environment" "my_environment" {
   description = "My new environment"
   type        = "SANDBOX"
   region      = "EU"
-  license_id  = "ffc6b870-9709-4535-a78d-067f31add5e3"
+  license_id  = var.license_id
   default_population {}
   service {}
 }

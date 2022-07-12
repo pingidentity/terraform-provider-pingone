@@ -182,6 +182,9 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 		return diags
 	}
 
+	//lintignore:R018
+	time.Sleep(1 * time.Second) // TODO: replace this with resource.StateChangeConf{/* ... */}
+
 	// Set the Bill of Materials (the services)
 
 	if services, ok := d.GetOk("service"); ok {

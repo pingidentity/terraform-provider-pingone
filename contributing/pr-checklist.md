@@ -44,7 +44,7 @@ $ make vet
 $ make lint
 ```
 
-- [ ] **Changelog summary file**.  The changelog process we follow means that `CHANGELOG.md` does _not_ need to be updated in the PR.  Maintainers generate the `CHANGELOG.md` file based on changelog summaries submitted to the `.changelog` directory.  Please see the [Changelog process] guide for more information.
+- [ ] **Changelog summary file**.  The changelog process we follow means that `CHANGELOG.md` does _not_ need to be updated in the PR.  Maintainers generate the `CHANGELOG.md` file based on changelog summaries submitted to the `.changelog` directory.  Please see the [Changelog process](changelog-process.md) guide for more information.
 
 
 ## Terraform Documentation Changes
