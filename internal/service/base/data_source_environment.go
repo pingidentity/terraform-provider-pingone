@@ -172,8 +172,15 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(resp.GetId())
+	d.Set("environment_id", resp.GetId())
 	d.Set("name", resp.GetName())
-	d.Set("description", resp.GetDescription())
+
+	if v, ok := resp.GetDescriptionOk(); ok {
+		d.Set("description", v)
+	} else {
+		d.Set("description", nil)
+	}
+
 	d.Set("type", resp.GetType())
 	d.Set("region", resp.GetRegion())
 	d.Set("license_id", resp.GetLicense().Id)

@@ -104,6 +104,13 @@ func resourcePingOnePopulationRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	d.Set("name", resp.GetName())
+
+	if v, ok := resp.GetDescriptionOk(); ok {
+		d.Set("description", v)
+	} else {
+		d.Set("description", nil)
+	}
+
 	if v, ok := resp.GetPasswordPolicyOk(); ok {
 		d.Set("password_policy_id", v.GetId())
 	} else {

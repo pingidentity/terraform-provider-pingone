@@ -136,10 +136,30 @@ func resourceGroupRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	d.Set("name", resp.GetName())
-	d.Set("description", resp.GetDescription())
-	d.Set("population_id", resp.GetPopulation().Id)
-	d.Set("user_filter", resp.GetUserFilter())
-	d.Set("external_id", resp.GetExternalId())
+
+	if v, ok := resp.GetDescriptionOk(); ok {
+		d.Set("description", v)
+	} else {
+		d.Set("description", nil)
+	}
+
+	if v, ok := resp.GetPopulationOk(); ok {
+		d.Set("population_id", v.GetId())
+	} else {
+		d.Set("population_id", nil)
+	}
+
+	if v, ok := resp.GetUserFilterOk(); ok {
+		d.Set("user_filter", v)
+	} else {
+		d.Set("user_filter", nil)
+	}
+
+	if v, ok := resp.GetExternalIdOk(); ok {
+		d.Set("external_id", v)
+	} else {
+		d.Set("external_id", nil)
+	}
 
 	return diags
 }

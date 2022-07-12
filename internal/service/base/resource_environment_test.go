@@ -3,6 +3,7 @@ package base_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -43,16 +44,20 @@ func TestAccEnvironment_Full(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", description),
 					resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
 					resource.TestCheckResourceAttr(resourceFullName, "region", region),
 					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 					// resource.TestCheckResourceAttr(resourceFullName, "solution", solution),
+					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", populationDescription),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.0.type", serviceOneType),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.console_url", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.bookmark.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.1.type", serviceTwoType),
 					resource.TestCheckResourceAttr(resourceFullName, "service.1.console_url", serviceTwoURL),
 					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.#", "2"),
@@ -86,13 +91,19 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
 					resource.TestCheckResourceAttr(resourceFullName, "region", region),
 					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
+					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
+					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.0.type", "SSO"),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.console_url", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.bookmark.#", "0"),
 				),
 			},
 		},
@@ -227,7 +238,25 @@ func TestAccEnvironment_NonPopulationServices(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
+					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", populationDescription),
+					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "service.0.type", serviceOneType),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.type", serviceTwoType),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.console_url", serviceTwoURL),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.#", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.0.name", serviceTwoBookmarkNameOne),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.0.url", serviceTwoBookmarkURLOne),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.1.name", serviceTwoBookmarkNameTwo),
+					resource.TestCheckResourceAttr(resourceFullName, "service.1.bookmark.1.url", serviceTwoBookmarkURLTwo),
+				),
+			},
+		},
+	})
+}
 
 func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 	t.Parallel()
