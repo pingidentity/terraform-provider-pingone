@@ -63,8 +63,8 @@ func New(version string) func() *schema.Provider {
 				"force_delete_production_type": {
 					Type:        schema.TypeBool,
 					Optional:    true,
-					Default:     false,
-					Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  By default, `PRODUCTION` type configuration will not destroy to protect stored data.",
+					DefaultFunc: schema.EnvDefaultFunc("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", false),
+					Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
 				},
 			},
 
