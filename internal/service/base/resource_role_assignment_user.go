@@ -182,11 +182,17 @@ func resourcePingOneRoleAssignmentUserRead(ctx context.Context, d *schema.Resour
 
 	if resp.GetScope().Type == "ORGANIZATION" {
 		d.Set("scope_organization_id", resp.GetScope().Id)
+		d.Set("scope_environment_id", nil)
+		d.Set("scope_population_id", nil)
 
 	} else if resp.GetScope().Type == "ENVIRONMENT" {
+		d.Set("scope_organization_id", nil)
 		d.Set("scope_environment_id", resp.GetScope().Id)
+		d.Set("scope_population_id", nil)
 
 	} else if resp.GetScope().Type == "POPULATION" {
+		d.Set("scope_organization_id", nil)
+		d.Set("scope_environment_id", nil)
 		d.Set("scope_population_id", resp.GetScope().Id)
 	}
 

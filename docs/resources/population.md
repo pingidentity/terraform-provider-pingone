@@ -42,6 +42,7 @@ resource "pingone_population" "my_population" {
 ### Optional
 
 - `description` (String) A description to apply to the population.
+- `password_policy_id` (String) The ID of a password policy to assign to the population.
 
 ### Read-Only
 

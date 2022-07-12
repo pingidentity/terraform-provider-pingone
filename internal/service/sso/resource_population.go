@@ -48,11 +48,11 @@ func ResourcePopulation() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
-			// "password_policy_id": {
-			// 	Description: "The ID of a password policy to assign to the population",
-			// 	Type:        schema.TypeString,
-			// 	Optional:    true,
-			// },
+			"password_policy_id": {
+				Description: "The ID of a password policy to assign to the population.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
 		},
 	}
 }
@@ -70,9 +70,10 @@ func resourcePingOnePopulationCreate(ctx context.Context, d *schema.ResourceData
 		population.SetDescription(v.(string))
 	}
 
-	// if v, ok := d.GetOk("password_policy_id"); ok {
-	// 	population.SetPasswordPolicyInnerId(v.(string))
-	// }
+	if v, ok := d.GetOk("password_policy_id"); ok {
+		populationPasswordPolicy := *pingone.NewPopulationPasswordPolicy(v.(string))
+		population.SetPasswordPolicy(populationPasswordPolicy)
+	}
 
 	resp, _, err := PingOnePopulationCreate(ctx, apiClient, d.Get("environment_id").(string), population)
 	if err != nil {
@@ -103,8 +104,18 @@ func resourcePingOnePopulationRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	d.Set("name", resp.GetName())
-	d.Set("description", resp.GetDescription())
-	//d.Set("password_policy_id", resp.SetPasswordPolicyInnerId())
+
+	if v, ok := resp.GetDescriptionOk(); ok {
+		d.Set("description", v)
+	} else {
+		d.Set("description", nil)
+	}
+
+	if v, ok := resp.GetPasswordPolicyOk(); ok {
+		d.Set("password_policy_id", v.GetId())
+	} else {
+		d.Set("password_policy_id", nil)
+	}
 
 	return diags
 }
@@ -122,9 +133,10 @@ func resourcePingOnePopulationUpdate(ctx context.Context, d *schema.ResourceData
 		population.SetDescription(v.(string))
 	}
 
-	// if v, ok := d.GetOk("password_policy_id"); ok {
-	// 	population.SetPasswordPolicyInnerId(v.(string))
-	// }
+	if v, ok := d.GetOk("password_policy_id"); ok {
+		populationPasswordPolicy := *pingone.NewPopulationPasswordPolicy(v.(string))
+		population.SetPasswordPolicy(populationPasswordPolicy)
+	}
 
 	_, _, err := PingOnePopulationUpdate(ctx, apiClient, d.Get("environment_id").(string), d.Id(), population)
 	if err != nil {

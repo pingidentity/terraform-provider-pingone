@@ -80,6 +80,8 @@ func TestAccPopulation_Full(t *testing.T) {
 			{
 				Config: testAccPopulationConfig_Full(environmentName, resourceName, name, description, licenseID, region),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", description),
 				),
@@ -110,7 +112,10 @@ func TestAccPopulation_Minimal(t *testing.T) {
 			{
 				Config: testAccPopulationConfig_Minimal(environmentName, resourceName, name, licenseID, region),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 				),
 			},
 		},

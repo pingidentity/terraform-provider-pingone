@@ -166,10 +166,14 @@ func resourceSchemaAttributeRead(ctx context.Context, d *schema.ResourceData, me
 
 	if v, ok := resp.GetDisplayNameOk(); ok {
 		d.Set("display_name", v)
+	} else {
+		d.Set("display_name", nil)
 	}
 
 	if v, ok := resp.GetDescriptionOk(); ok {
 		d.Set("description", v)
+	} else {
+		d.Set("description", nil)
 	}
 
 	d.Set("enabled", resp.GetEnabled())

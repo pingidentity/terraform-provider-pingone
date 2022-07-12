@@ -2,13 +2,13 @@ package base
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -173,6 +173,23 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 	resp, r, err := apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
+
+		response := &pingone.P1Error{}
+		errDecode := json.NewDecoder(r.Body).Decode(response)
+		if errDecode == nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
+				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
+			})
+		}
+
+		if r.StatusCode == 400 && response.GetDetails()[0].GetTarget() == "region" {
+			diags = diag.FromErr(fmt.Errorf("Incompatible environment region for the tenant.  Expecting regions %v, region provided: %s", response.GetDetails()[0].GetInnerError().AllowedValues, d.Get("region").(string)))
+
+			return diags
+		}
+
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.CreateEnvironmentActiveLicense``: %v", err),
@@ -188,7 +205,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 	// Set the Bill of Materials (the services)
 
 	if services, ok := d.GetOk("service"); ok {
-		productBOMItems, err := buildBOMProductsCreateRequest(services.([]interface{}))
+		productBOMItems, err := expandBOMProducts(services.([]interface{}))
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -224,12 +241,10 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 	if defaultPopulation, defaultPopulationOk := d.GetOk("default_population"); defaultPopulationOk {
 
-		tflog.Debug(ctx, fmt.Sprintf("defaultPopulation: %#v", defaultPopulation))
-
 		population.SetName(defaultPopulation.([]interface{})[0].(map[string]interface{})["name"].(string))
-		description := defaultPopulation.([]interface{})[0].(map[string]interface{})["description"].(string)
-		if description != "" {
-			population.SetDescription(description)
+		description := defaultPopulation.([]interface{})[0].(map[string]interface{})["description"]
+		if description != nil && description.(string) != "" {
+			population.SetDescription(description.(string))
 		}
 
 	}
@@ -276,7 +291,13 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	d.Set("name", resp.GetName())
-	d.Set("description", resp.GetDescription())
+
+	if v, ok := resp.GetDescriptionOk(); ok {
+		d.Set("description", v)
+	} else {
+		d.Set("description", nil)
+	}
+
 	d.Set("type", resp.GetType())
 	d.Set("region", resp.GetRegion())
 	d.Set("license_id", resp.GetLicense().Id)
@@ -323,12 +344,18 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	populationConfigs := []interface{}{}
-	populationConfigs = append(populationConfigs, map[string]interface{}{
-		"name":        populationResp.GetName(),
-		"description": populationResp.GetDescription(),
-	})
 
-	tflog.Debug(ctx, fmt.Sprintf("populationConfigs: %#v", populationConfigs))
+	if v, ok := populationResp.GetDescriptionOk(); ok {
+		populationConfigs = append(populationConfigs, map[string]interface{}{
+			"name":        populationResp.GetName(),
+			"description": v,
+		})
+	} else {
+		populationConfigs = append(populationConfigs, map[string]interface{}{
+			"name":        populationResp.GetName(),
+			"description": nil,
+		})
+	}
 
 	d.Set("default_population", populationConfigs)
 
@@ -356,8 +383,6 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 	environment := *pingone.NewEnvironment(environmentLicense, d.Get("name").(string), d.Get("region").(string), d.Get("type").(string)) // Environment |  (optional)
 	if v, ok := d.GetOk("description"); ok {
 		environment.SetDescription(v.(string))
-	} else {
-		environment.SetDescription("")
 	}
 
 	// Check if we have to change the environment type
@@ -393,7 +418,7 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 	// The bill of materials
 
 	if services, ok := d.GetOk("service"); ok {
-		productBOMItems, err := buildBOMProductsCreateRequest(services.([]interface{}))
+		productBOMItems, err := expandBOMProducts(services.([]interface{}))
 
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
@@ -532,7 +557,7 @@ func resourcePingOneEnvironmentImport(ctx context.Context, d *schema.ResourceDat
 	return []*schema.ResourceData{d}, nil
 }
 
-func buildBOMProductsCreateRequest(items []interface{}) ([]pingone.BillOfMaterialsProductsInner, error) {
+func expandBOMProducts(items []interface{}) ([]pingone.BillOfMaterialsProductsInner, error) {
 	var productBOMItems []pingone.BillOfMaterialsProductsInner
 
 	for _, item := range items {
@@ -570,20 +595,28 @@ func buildBOMProductsCreateRequest(items []interface{}) ([]pingone.BillOfMateria
 func flattenBOMProducts(items *pingone.BillOfMaterials) ([]interface{}, error) {
 	productItems := make([]interface{}, 0)
 
-	if _, ok := items.GetProductsOk(); ok {
+	if products, ok := items.GetProductsOk(); ok {
 
-		for _, product := range items.GetProducts() {
+		for _, product := range products {
 
 			v, err := service.ServiceFromPlatformCode(product.GetType())
 			if err != nil {
 				return nil, fmt.Errorf("Cannot retrieve the service from the service code: %w", err)
 			}
 
-			productItems = append(productItems, map[string]interface{}{
-				"type":        v.ProviderCode,
-				"console_url": product.Console.GetHref(),
-				"bookmark":    flattenBOMProductsBookmarkList(product.GetBookmarks()),
-			})
+			productItemsMap := map[string]interface{}{
+				"type": v.ProviderCode,
+			}
+
+			if v, ok := product.Console.GetHrefOk(); ok {
+				productItemsMap["console_url"] = v
+			}
+
+			if v, ok := product.GetBookmarksOk(); ok {
+				productItemsMap["bookmark"] = flattenBOMProductsBookmarkList(v)
+			}
+
+			productItems = append(productItems, productItemsMap)
 
 		}
 

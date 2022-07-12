@@ -44,6 +44,8 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
@@ -77,7 +79,10 @@ func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByNameMinimal(resourceName, name, environmentType, region, licenseID),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "description", ""),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "region", resourceFullName, "region"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "license_id", resourceFullName, "license_id"),
@@ -123,6 +128,8 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByIDFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
@@ -156,7 +163,10 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByIDMinimal(resourceName, name, environmentType, region, licenseID),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "description", ""),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "region", resourceFullName, "region"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "license_id", resourceFullName, "license_id"),

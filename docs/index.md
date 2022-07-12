@@ -92,4 +92,4 @@ $ terraform plan
 
 ### Optional
 
-- `force_delete_production_type` (Boolean) Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  By default, `PRODUCTION` type configuration will not destroy to protect stored data. Defaults to `false`.
+- `force_delete_production_type` (Boolean) Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.

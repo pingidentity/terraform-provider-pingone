@@ -75,9 +75,11 @@ func TestAccGroup_Full(t *testing.T) {
 			{
 				Config: testAccGroupConfig_Full(environmentName, resourceName, name, description, licenseID, region, userFilter, externalID),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", description),
-					//resource.TestCheckResourceAttr(resourceFullName, "population_id", populationID),
+					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "user_filter", userFilter),
 					resource.TestCheckResourceAttr(resourceFullName, "external_id", externalID),
 				),
@@ -108,7 +110,13 @@ func TestAccGroup_Minimal(t *testing.T) {
 			{
 				Config: testAccGroupConfig_Minimal(environmentName, resourceName, name, licenseID, region),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "population_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "user_filter", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "external_id", ""),
 				),
 			},
 		},
