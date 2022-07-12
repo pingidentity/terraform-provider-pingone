@@ -842,10 +842,6 @@ github.com/owenrumney/go-sarif v1.1.1 h1:QNObu6YX1igyFKhdzd7vgzmw7XsWN3/6NMGuDzB
 github.com/owenrumney/go-sarif v1.1.1/go.mod h1:dNDiPlF04ESR/6fHlPyq7gHKmrM0sHUvAGjsoh8ZH0U=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
-github.com/patrickcping/pingone-go v1.9.1 h1:HclO31adG6nhv54iZp3D8tnwQH7NWrJmt0qKbeWmnMg=
-github.com/patrickcping/pingone-go v1.9.1/go.mod h1:Wp5U7fwqJ59ZX1nC9niO8lqD0l3Vk8H5AKrhZUNyGWg=
-github.com/patrickcping/pingone-go/management v0.0.0-20220711155510-3976e37cae67 h1:oxk/OyzbP74vcNLlD8J4IzVu2lv1oEBXWi9JH3675hA=
-github.com/patrickcping/pingone-go/management v0.0.0-20220711155510-3976e37cae67/go.mod h1:7YcZD1yYwepyyAY/9JUlhYqbhrPstR/vl1qXeA93io0=
 github.com/patrickcping/pingone-go/management v0.0.0-20220712140017-1768b0b676c0 h1:hug6JmBKfXHteyWYhqqwxEQpyW3eCowK+zEnMSgR290=
 github.com/patrickcping/pingone-go/management v0.0.0-20220712140017-1768b0b676c0/go.mod h1:7YcZD1yYwepyyAY/9JUlhYqbhrPstR/vl1qXeA93io0=
 github.com/pavius/impi v0.0.3 h1:DND6MzU+BLABhOZXbELR3FU8b+zDgcq4dOCNLhiTYuI=
