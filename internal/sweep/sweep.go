@@ -16,7 +16,7 @@ func SweepClient(ctx context.Context) (*client.Client, error) {
 		ClientSecret:  os.Getenv("PINGONE_CLIENT_SECRET"),
 		EnvironmentID: os.Getenv("PINGONE_ENVIRONMENT_ID"),
 		Region:        os.Getenv("PINGONE_REGION"),
-		ForceDelete:   false,
+		ForceDelete:   true,
 	}
 
 	return config.APIClient(ctx)

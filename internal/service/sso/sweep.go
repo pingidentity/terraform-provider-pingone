@@ -20,6 +20,9 @@ func init() {
 	resource.AddTestSweepers("pingone_population", &resource.Sweeper{
 		Name: "pingone_population",
 		F:    sweepPopulations,
+		Dependencies: []string{
+			"pingone_group",
+		},
 	})
 }
 
