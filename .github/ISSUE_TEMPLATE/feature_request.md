@@ -18,11 +18,11 @@ labels: enhancement
 <!--- Please provide a helpful description of the feature request here. --->
 
 ### New or Affected Resource(s)
-<!--- Please provide a list of the new and/or affected resources/data sources, for example:
+<!--- Please provide a list of the new and/or affected resources/data sources, for example: -->
 - pingone_environment
 - pingone_population
 
-Optionally include a brief description on the type of change required, but this isn't essential -->
+<!--- Optionally include a brief description on the type of change required, but this isn't essential -->
 
 ### Potential Terraform Configuration
 
