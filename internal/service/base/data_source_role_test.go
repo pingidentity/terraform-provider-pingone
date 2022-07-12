@@ -24,7 +24,7 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

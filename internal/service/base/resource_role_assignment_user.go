@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -120,6 +121,23 @@ func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.Reso
 
 	resp, r, err := apiClient.UsersUserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string)).RoleAssignment(userRoleAssignment).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
+
+		response := &pingone.P1Error{}
+		errDecode := json.NewDecoder(r.Body).Decode(response)
+		if errDecode == nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
+				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
+			})
+		}
+
+		if r.StatusCode == 400 && response.GetDetails()[0].GetTarget() == "scope" {
+			diags = diag.FromErr(fmt.Errorf("Incompatible role and scope combination. Role: %s / Scope: %s", userRoleAssignmentRole.GetId(), userRoleAssignmentScope.GetType()))
+
+			return diags
+		}
+
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Error when calling `UsersUserRoleAssignmentsApi.CreateUserRoleAssignment``: %v", err),
@@ -209,10 +227,10 @@ func resourcePingOneRoleAssignmentUserImport(ctx context.Context, d *schema.Reso
 	attributes := strings.SplitN(d.Id(), "/", 3)
 
 	if len(attributes) != 3 {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/roleAssignmentID/userID\"", d.Id())
+		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/userID/roleAssignmentID\"", d.Id())
 	}
 
-	environmentID, roleAssignmentID, userID := attributes[0], attributes[1], attributes[2]
+	environmentID, userID, roleAssignmentID := attributes[0], attributes[1], attributes[2]
 
 	d.Set("environment_id", environmentID)
 	d.Set("user_id", userID)

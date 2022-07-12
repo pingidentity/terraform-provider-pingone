@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -30,6 +31,16 @@ func testAccCheckRoleAssignmentUserDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_role_assignment_user" {
 			continue
+		}
+
+		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
+
+		if rEnv.StatusCode == 404 {
+			continue
+		}
+
+		if err != nil {
+			return err
 		}
 
 		body, r, err := apiClient.UsersUserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["user_id"], rs.Primary.ID).Execute()
@@ -80,17 +91,12 @@ func TestAccRoleAssignmentUser_Population(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccRoleAssignmentUserConfig_Population(environmentName, resourceName, "Environment Admin", licenseID, region),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "user_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "role_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "scope_population_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Config:      testAccRoleAssignmentUserConfig_Population(environmentName, resourceName, "Environment Admin", licenseID, region),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: POPULATION`),
+			},
+			{
+				Config:      testAccRoleAssignmentUserConfig_Population(environmentName, resourceName, "Organization Admin", licenseID, region),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: POPULATION`),
 			},
 		},
 	})
@@ -106,7 +112,7 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	region := os.Getenv("PINGONE_REGION")
-	organisationID := os.Getenv("PINGONE_ORGANISATION_ID")
+	organisationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -115,7 +121,11 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleAssignmentUserConfig_Organisation(environmentName, resourceName, "Identity Data Admin", licenseID, region, organisationID),
+				Config:      testAccRoleAssignmentUserConfig_Organisation(environmentName, resourceName, "Identity Data Admin", licenseID, region, organisationID),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: ORGANIZATION`),
+			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Organisation(environmentName, resourceName, "Environment Admin", licenseID, region, organisationID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
@@ -128,7 +138,7 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccRoleAssignmentUserConfig_Organisation(environmentName, resourceName, "Environment Admin", licenseID, region, organisationID),
+				Config: testAccRoleAssignmentUserConfig_Organisation(environmentName, resourceName, "Organization Admin", licenseID, region, organisationID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
@@ -186,6 +196,10 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceFullName, "scope_environment_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
 				),
+			},
+			{
+				Config:      testAccRoleAssignmentUserConfig_Environment(environmentName, resourceName, "Organization Admin", licenseID, region),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: ENVIRONMENT`),
 			},
 		},
 	})
