@@ -1,0 +1,7 @@
+```release-note:new-resource
+pingone_schema_attribute
+```
+
+```release-note:new-data-source
+pingone_schema
+```

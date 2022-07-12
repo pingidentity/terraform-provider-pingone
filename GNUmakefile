@@ -65,4 +65,6 @@ tflint:
 	@echo "==> Checking Terraform code with tflint..."
 	@tflint --init
 
+devcheck: build vet tools generate lint test sweep testacc
+
 .PHONY: tools build generate test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint
