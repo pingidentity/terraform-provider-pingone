@@ -6,11 +6,11 @@ require (
 	github.com/bflad/tfproviderlint v0.28.1
 	github.com/golangci/golangci-lint v1.46.2
 	github.com/hashicorp/go-changelog v0.0.0-20220419201213-5edfc0d651d8
-	github.com/hashicorp/terraform-plugin-docs v0.12.0
+	github.com/hashicorp/terraform-plugin-docs v0.13.0
 	github.com/hashicorp/terraform-plugin-log v0.4.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.18.0
 	github.com/katbyte/terrafmt v0.4.0
-	github.com/patrickcping/pingone-go/management v0.0.0-20220702165908-07c760e01b77
+	github.com/patrickcping/pingone-go/management v0.0.0-20220712140017-1768b0b676c0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.38.1
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d

@@ -71,14 +71,18 @@ func New(version string) func() *schema.Provider {
 			DataSourcesMap: map[string]*schema.Resource{
 				"pingone_environment": base.DatasourceEnvironment(),
 				"pingone_role":        base.DatasourceRole(),
+
+				"pingone_schema": sso.DatasourceSchema(),
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
 				"pingone_environment":          base.ResourceEnvironment(),
 				"pingone_role_assignment_user": base.ResourceRoleAssignmentUser(),
 
-				"pingone_group":      sso.ResourceGroup(),
-				"pingone_population": sso.ResourcePopulation(),
+				"pingone_group":            sso.ResourceGroup(),
+				"pingone_population":       sso.ResourcePopulation(),
+				"pingone_user":             sso.ResourceUser(),
+				"pingone_schema_attribute": sso.ResourceSchemaAttribute(),
 			},
 		}
 

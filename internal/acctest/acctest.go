@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	pingone "github.com/patrickcping/pingone-go/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 )
@@ -113,4 +115,39 @@ func TestClient(ctx context.Context) (*client.Client, error) {
 
 	return config.APIClient(ctx)
 
+}
+
+func TestAccCheckEnvironmentDestroy(s *terraform.State) error {
+	var ctx = context.Background()
+
+	p1Client, err := TestClient(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	apiClient := p1Client.API
+	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
+		"suffix": p1Client.RegionSuffix,
+	})
+
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "pingone_environment" {
+			continue
+		}
+
+		_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.ID).Execute()
+
+		if r.StatusCode == 404 {
+			continue
+		}
+
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("PingOne Environment Instance %s still exists", rs.Primary.ID)
+	}
+
+	return nil
 }

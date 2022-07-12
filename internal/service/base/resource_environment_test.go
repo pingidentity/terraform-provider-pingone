@@ -1,51 +1,13 @@
 package base_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	pingone "github.com/patrickcping/pingone-go/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
-
-func testAccCheckEnvironmentDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
-	})
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_environment" {
-			continue
-		}
-
-		_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.ID).Execute()
-
-		if r.StatusCode == 404 {
-			continue
-		}
-
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("PingOne Environment Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
 
 func TestAccEnvironment_Full(t *testing.T) {
 	t.Parallel()
@@ -75,7 +37,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -118,7 +80,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -165,7 +127,7 @@ func TestAccEnvironment_NonPopulationServices(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
