@@ -61,6 +61,7 @@ jobs:
       PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION: ${{ secrets.PINGONE_REGION }}
       PINGONE_LICENSE_ID: ${{ secrets.PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
@@ -101,6 +102,7 @@ jobs:
       PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION: ${{ secrets.PINGONE_REGION }}
       PINGONE_LICENSE_ID: ${{ secrets.PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 15
     strategy:
@@ -154,6 +156,7 @@ jobs:
       PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION: ${{ secrets.PINGONE_REGION }}
       PINGONE_LICENSE_ID: ${{ secrets.PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
