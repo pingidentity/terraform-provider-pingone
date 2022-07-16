@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	pingone "github.com/patrickcping/pingone-go/management"
+	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"

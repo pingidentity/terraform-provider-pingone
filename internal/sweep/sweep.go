@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	pingone "github.com/patrickcping/pingone-go/management"
+	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
