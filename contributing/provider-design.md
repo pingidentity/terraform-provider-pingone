@@ -18,10 +18,10 @@ For each function that requires an SDK call, the client must be retrieved and th
 
 ```
 p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
-	})
+apiClient := p1Client.API.ManagementAPIClient
+ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+	"suffix": p1Client.API.Region.URLSuffix,
+})
 ```
 
 Once initialised in the function (as above), the SDK can be invoked.  An example of how to retrieve groups is as follows:

@@ -10,11 +10,11 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.5.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.18.0
 	github.com/katbyte/terrafmt v0.4.0
+	github.com/patrickcping/pingone-go-sdk-v2 v0.2.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.1.0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.38.1
-	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0
+	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75
 )
 
 require (
@@ -178,6 +178,8 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/owenrumney/go-sarif v1.1.1 // indirect
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.1.0 // indirect
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.1.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.0 // indirect
 	github.com/phayes/checkstyle v0.0.0-20170904204023-bfd46e6a821d // indirect
@@ -246,6 +248,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
+	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
 	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
 	golang.org/x/text v0.3.7 // indirect

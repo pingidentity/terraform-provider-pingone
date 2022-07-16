@@ -18,7 +18,6 @@ resource "pingone_environment" "my_environment" {
   name        = "New Environment"
   description = "My new environment"
   type        = "SANDBOX"
-  region      = "EU"
   license_id  = var.license_id
 
   default_population {
@@ -45,12 +44,12 @@ resource "pingone_environment" "my_environment" {
 - `default_population` (Block List, Min: 1, Max: 1) The environment's default population. (see [below for nested schema](#nestedblock--default_population))
 - `license_id` (String) An ID of a valid license to apply to the environment.
 - `name` (String) The name of the environment.
-- `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `NA`, `EU`, `ASIA` and `CA`.
 - `service` (Block List, Min: 1, Max: 13) The services to enable in the environment. (see [below for nested schema](#nestedblock--service))
 
 ### Optional
 
 - `description` (String) A description of the environment.
+- `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.
 - `type` (String) The type of the environment to create.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion. Defaults to `SANDBOX`.
 
 ### Read-Only

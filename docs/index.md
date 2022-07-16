@@ -88,7 +88,7 @@ $ terraform plan
 - `client_id` (String) Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.
 - `client_secret` (String) Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.
 - `environment_id` (String) Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.
-- `region` (String) The PingOne region to use.  Options are `EU`, `US`, `ASIA`, `CA`.  Default value can be set with the `PINGONE_REGION` environment variable.
+- `region` (String) The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.
 
 ### Optional
 

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
@@ -89,7 +90,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
@@ -118,10 +119,10 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 	name := resourceName
 	environmentType := "SANDBOX"
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := "NA"
+	region := "NorthAmerica"
 
-	if os.Getenv("PINGONE_REGION") == "NA" {
-		region = "EU"
+	if os.Getenv("PINGONE_REGION") == "NorthAmerica" {
+		region = "Europe"
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -131,8 +132,8 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
-				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the tenant.  Expecting regions \[%s\], region provided: %s`, os.Getenv("PINGONE_REGION"), region)),
+				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the tenant.  Expecting regions \[%s\], region provided: %s`, pingone.FindRegionByName(os.Getenv("PINGONE_REGION")).APICode, pingone.FindRegionByName(region).APICode)),
 			},
 		},
 	})
@@ -266,7 +267,6 @@ func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 
 	name := resourceName
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -275,19 +275,19 @@ func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", region, licenseID),
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
 				),
 			},
 			{
-				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "PRODUCTION", region, licenseID),
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "PRODUCTION", licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "type", "PRODUCTION"),
 				),
 			},
 			{
-				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", region, licenseID),
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
 				),
@@ -328,7 +328,7 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", region, licenseID),
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
@@ -392,7 +392,20 @@ func testAccEnvironmentConfig_Full(resourceName, name, description, environmentT
 		}`, resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
 }
 
-func testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID string) string {
+func testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, licenseID string) string {
+	return fmt.Sprintf(`
+		resource "pingone_environment" "%[1]s" {
+			name = "%[2]s"
+			type = "%[3]s"
+			license_id = "%[4]s"
+			default_population {
+			}
+			service {
+			}
+		}`, resourceName, name, environmentType, licenseID)
+}
+
+func testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
 			name = "%[2]s"

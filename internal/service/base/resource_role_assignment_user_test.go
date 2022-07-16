@@ -23,9 +23,9 @@ func testAccCheckRoleAssignmentUserDestroy(s *terraform.State) error {
 		return err
 	}
 
-	apiClient := p1Client.API
+	apiClient := p1Client.API.ManagementAPIClient
 	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
 	for _, rs := range s.RootModule().Resources {

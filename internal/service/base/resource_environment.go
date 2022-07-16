@@ -13,7 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/types"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
@@ -51,13 +53,14 @@ func ResourceEnvironment() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "SANDBOX",
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"PRODUCTION", "SANDBOX"}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(types.EnvironmentTypeList(), false)),
 			},
 			"region": {
-				Description:      "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `NA`, `EU`, `ASIA` and `CA`.",
+				Description:      "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.",
 				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NA", "EU", "ASIA", "CA"}, false)),
+				Optional:         true,
+				DefaultFunc:      schema.EnvDefaultFunc("PINGONE_REGION", nil),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(pingone.AvailableRegionsList(), false)),
 				ForceNew:         true,
 			},
 			"license_id": {
@@ -151,21 +154,27 @@ func ResourceEnvironment() *schema.Resource {
 
 func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
 	var diags diag.Diagnostics
 
 	// Environment creation
 
-	var environmentLicense pingone.EnvironmentLicense
-	if license, ok := d.GetOk("license_id"); ok {
-		environmentLicense = *pingone.NewEnvironmentLicense(license.(string))
+	var environmentLicense management.EnvironmentLicense
+	if v, ok := d.GetOk("license_id"); ok {
+		environmentLicense = *management.NewEnvironmentLicense(v.(string))
 	}
 
-	environment := *pingone.NewEnvironment(environmentLicense, d.Get("name").(string), d.Get("region").(string), d.Get("type").(string)) // Environment |  (optional)
+	region := p1Client.API.Region.APICode
+
+	if v, ok := d.GetOk("region"); ok {
+		region = pingone.FindRegionByName(v.(string)).APICode
+	}
+
+	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, d.Get("type").(string)) // Environment |  (optional)
 
 	if v, ok := d.GetOk("description"); ok {
 		environment.SetDescription(v.(string))
@@ -174,7 +183,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 	resp, r, err := apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
 
-		response := &pingone.P1Error{}
+		response := &management.P1Error{}
 		errDecode := json.NewDecoder(r.Body).Decode(response)
 		if errDecode == nil {
 			diags = append(diags, diag.Diagnostic{
@@ -185,7 +194,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 		}
 
 		if r.StatusCode == 400 && response.GetDetails()[0].GetTarget() == "region" {
-			diags = diag.FromErr(fmt.Errorf("Incompatible environment region for the tenant.  Expecting regions %v, region provided: %s", response.GetDetails()[0].GetInnerError().AllowedValues, d.Get("region").(string)))
+			diags = diag.FromErr(fmt.Errorf("Incompatible environment region for the tenant.  Expecting regions %v, region provided: %s", response.GetDetails()[0].GetInnerError().AllowedValues, region))
 
 			return diags
 		}
@@ -216,7 +225,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 			return diags
 		}
 
-		billOfMaterials := *pingone.NewBillOfMaterials(productBOMItems)
+		billOfMaterials := *management.NewBillOfMaterials(productBOMItems)
 
 		// if solution, ok := d.GetOk("solution"); ok {
 		// 	billOfMaterials.SetSolutionType(solution.(string))
@@ -237,7 +246,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 	// Set the default population
 	// We have to create a default population because the API must require one population in the environment. If we don't do this we have a problem with the 'destroy all' routine
 
-	population := *pingone.NewPopulation("Default") // Population |  (optional)
+	population := *management.NewPopulation("Default") // Population |  (optional)
 
 	if defaultPopulation, defaultPopulationOk := d.GetOk("default_population"); defaultPopulationOk {
 
@@ -262,9 +271,9 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -299,7 +308,7 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	d.Set("type", resp.GetType())
-	d.Set("region", resp.GetRegion())
+	d.Set("region", pingone.FindRegionByAPICode(resp.GetRegion()).Region)
 	d.Set("license_id", resp.GetLicense().Id)
 
 	// The bill of materials
@@ -364,9 +373,9 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 
 func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -375,12 +384,18 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 
 	// The environment
 
-	var environmentLicense pingone.EnvironmentLicense
+	var environmentLicense management.EnvironmentLicense
 	if v, ok := d.GetOk("license_id"); ok {
-		environmentLicense = *pingone.NewEnvironmentLicense(v.(string))
+		environmentLicense = *management.NewEnvironmentLicense(v.(string))
 	}
 
-	environment := *pingone.NewEnvironment(environmentLicense, d.Get("name").(string), d.Get("region").(string), d.Get("type").(string)) // Environment |  (optional)
+	region := p1Client.API.Region.APICode
+
+	if v, ok := d.GetOk("region"); ok {
+		region = pingone.FindRegionByName(v.(string)).APICode
+	}
+
+	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, d.Get("type").(string)) // Environment |  (optional)
 	if v, ok := d.GetOk("description"); ok {
 		environment.SetDescription(v.(string))
 	}
@@ -389,7 +404,7 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 
 	if change := d.HasChange("type"); change {
 		//If type has changed from SANDBOX -> PRODUCTION and vice versa we need a separate API call
-		updateEnvironmentTypeRequest := *pingone.NewUpdateEnvironmentTypeRequest()
+		updateEnvironmentTypeRequest := *management.NewUpdateEnvironmentTypeRequest()
 		newType := d.Get("type")
 		updateEnvironmentTypeRequest.SetType(newType.(string))
 		_, r, err := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environmentID).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
@@ -430,7 +445,7 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 			return diags
 		}
 
-		billOfMaterials := *pingone.NewBillOfMaterials(productBOMItems)
+		billOfMaterials := *management.NewBillOfMaterials(productBOMItems)
 
 		// if solution, ok := d.GetOk("solution"); ok {
 		// 	billOfMaterials.SetSolutionType(solution.(string))
@@ -450,7 +465,7 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 
 	// Default Population
 
-	population := *pingone.NewPopulation("Default") // Population |  (optional)
+	population := *management.NewPopulation("Default") // Population |  (optional)
 
 	if defaultPopulation, defaultPopulationOk := d.GetOk("default_population"); defaultPopulationOk {
 
@@ -472,16 +487,16 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 
 func resourcePingOneEnvironmentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
 	// If we have a production environment, it won't destroy successfully without a switch to "SANDBOX".  We check our provider config for a force delete flag before we do this
 	if d.Get("type").(string) == "PRODUCTION" && p1Client.ForceDelete {
 
-		updateEnvironmentTypeRequest := *pingone.NewUpdateEnvironmentTypeRequest()
+		updateEnvironmentTypeRequest := *management.NewUpdateEnvironmentTypeRequest()
 		updateEnvironmentTypeRequest.SetType("SANDBOX")
 		_, r, err := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, d.Id()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
 		if err != nil {
@@ -557,8 +572,8 @@ func resourcePingOneEnvironmentImport(ctx context.Context, d *schema.ResourceDat
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandBOMProducts(items []interface{}) ([]pingone.BillOfMaterialsProductsInner, error) {
-	var productBOMItems []pingone.BillOfMaterialsProductsInner
+func expandBOMProducts(items []interface{}) ([]management.BillOfMaterialsProductsInner, error) {
+	var productBOMItems []management.BillOfMaterialsProductsInner
 
 	for _, item := range items {
 
@@ -567,19 +582,19 @@ func expandBOMProducts(items []interface{}) ([]pingone.BillOfMaterialsProductsIn
 			return nil, fmt.Errorf("Cannot retrieve the service from the service code: %w", err)
 		}
 
-		productBOM := pingone.NewBillOfMaterialsProductsInner(v.PlatformCode)
+		productBOM := management.NewBillOfMaterialsProductsInner(v.PlatformCode)
 
 		if (item.(map[string]interface{})["console_url"] != nil) && (item.(map[string]interface{})["console_url"] != "") {
-			productBOMItemConsole := pingone.NewBillOfMaterialsProductsInnerConsole(item.(map[string]interface{})["console_url"].(string))
+			productBOMItemConsole := management.NewBillOfMaterialsProductsInnerConsole(item.(map[string]interface{})["console_url"].(string))
 
 			productBOM.SetConsole(*productBOMItemConsole)
 		}
 
-		var productBOMBookmarkItems []pingone.BillOfMaterialsProductsInnerBookmarksInner
+		var productBOMBookmarkItems []management.BillOfMaterialsProductsInnerBookmarksInner
 
 		for _, bookmarkItem := range item.(map[string]interface{})["bookmark"].(*schema.Set).List() {
 
-			productBOMBookmark := pingone.NewBillOfMaterialsProductsInnerBookmarksInner(bookmarkItem.(map[string]interface{})["name"].(string), bookmarkItem.(map[string]interface{})["url"].(string))
+			productBOMBookmark := management.NewBillOfMaterialsProductsInnerBookmarksInner(bookmarkItem.(map[string]interface{})["name"].(string), bookmarkItem.(map[string]interface{})["url"].(string))
 
 			productBOMBookmarkItems = append(productBOMBookmarkItems, *productBOMBookmark)
 		}
@@ -592,7 +607,7 @@ func expandBOMProducts(items []interface{}) ([]pingone.BillOfMaterialsProductsIn
 	return productBOMItems, nil
 }
 
-func flattenBOMProducts(items *pingone.BillOfMaterials) ([]interface{}, error) {
+func flattenBOMProducts(items *management.BillOfMaterials) ([]interface{}, error) {
 	productItems := make([]interface{}, 0)
 
 	if products, ok := items.GetProductsOk(); ok {
@@ -625,7 +640,7 @@ func flattenBOMProducts(items *pingone.BillOfMaterials) ([]interface{}, error) {
 	return productItems, nil
 }
 
-func flattenBOMProductsBookmarkList(bookmarkList []pingone.BillOfMaterialsProductsInnerBookmarksInner) []interface{} {
+func flattenBOMProductsBookmarkList(bookmarkList []management.BillOfMaterialsProductsInnerBookmarksInner) []interface{} {
 	bookmarkItems := make([]interface{}, 0, len(bookmarkList))
 	for _, bookmark := range bookmarkList {
 

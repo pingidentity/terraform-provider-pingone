@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -23,7 +23,7 @@ func SweepClient(ctx context.Context) (*client.Client, error) {
 
 }
 
-func FetchTaggedEnvironments(ctx context.Context, apiClient *pingone.APIClient, region string) ([]pingone.Environment, error) {
+func FetchTaggedEnvironments(ctx context.Context, apiClient *management.APIClient, region string) ([]management.Environment, error) {
 
 	filter := "name sw \"tf-testacc-\""
 
@@ -41,7 +41,7 @@ func FetchTaggedEnvironments(ctx context.Context, apiClient *pingone.APIClient, 
 		}
 		return environments, nil
 	} else {
-		return make([]pingone.Environment, 0), nil
+		return make([]management.Environment, 0), nil
 	}
 
 }
