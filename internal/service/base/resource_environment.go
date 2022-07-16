@@ -53,13 +53,14 @@ func ResourceEnvironment() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "SANDBOX",
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"PRODUCTION", "SANDBOX"}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(types.EnvironmentTypeList(), false)),
 			},
 			"region": {
-				Description:      "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `NA`, `EU`, `ASIA` and `CA`.",
+				Description:      "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.",
 				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NA", "EU", "ASIA", "CA"}, false)),
+				Optional:         true,
+				DefaultFunc:      schema.EnvDefaultFunc("PINGONE_REGION", nil),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(pingone.AvailableRegionsList(), false)),
 				ForceNew:         true,
 			},
 			"license_id": {
@@ -168,6 +169,11 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	region := p1Client.API.Region.URLSuffix
+
+	if v, ok := d.GetOk("region"); ok {
+		region = v.(string)
+	}
+
 	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, d.Get("type").(string)) // Environment |  (optional)
 
 	if v, ok := d.GetOk("description"); ok {
@@ -384,6 +390,10 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	region := p1Client.API.Region.URLSuffix
+
+	if v, ok := d.GetOk("region"); ok {
+		region = v.(string)
+	}
 
 	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, d.Get("type").(string)) // Environment |  (optional)
 	if v, ok := d.GetOk("description"); ok {
