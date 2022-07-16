@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.4.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.18.0
 	github.com/katbyte/terrafmt v0.4.0
-	github.com/patrickcping/pingone-go/management v0.0.0-20220712182004-39e050e84ed5
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.1.0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.38.1
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d

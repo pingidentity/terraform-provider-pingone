@@ -12,7 +12,7 @@ The following describes how the code is organised in the repository
 
 ## PingOne GO SDK and API
 
-The PingOne Terraform provider leverages the [PingOne Platform API](https://apidocs.pingidentity.com/pingone/platform/v1/api/), via an automatically generated [PingOne Go SDK](https://github.com/patrickcping/pingone-go).  The resources in this provider must use the Go SDK to call PingOne platform endpoints, rather than call API endpoints directly.
+The PingOne Terraform provider leverages the [PingOne Platform API](https://apidocs.pingidentity.com/pingone/platform/v1/api/), via an automatically generated [PingOne Go SDK](https://github.com/patrickcping/pingone-go-sdk-v2).  The resources in this provider must use the Go SDK to call PingOne platform endpoints, rather than call API endpoints directly.
 
 For each function that requires an SDK call, the client must be retrieved and the PingOne domain suffix (of the PingOne tenant region) applied:
 
@@ -44,4 +44,4 @@ resp, r, err := apiClient.GroupsApi.ReadOneGroup(ctx, d.Get("environment_id").(s
 	}
 ```
 
-More information can be found on the SDK documentation [PingOne Go SDK Readme](https://github.com/patrickcping/pingone-go/blob/main/README.md)
+More information can be found on the SDK documentation [PingOne Go SDK Readme](https://github.com/patrickcping/pingone-go-sdk-v2/blob/main/README.md)
