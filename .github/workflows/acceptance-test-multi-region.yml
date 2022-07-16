@@ -52,7 +52,7 @@ jobs:
         go build -v .
 
   prepare-ap:
-    name: Prepare
+    name: Prepare AP
     runs-on: ubuntu-latest
 
     env:
@@ -92,7 +92,7 @@ jobs:
 
   # run acceptance tests in a matrix with Terraform core versions
   test-ap:
-    name: Matrix Test
+    name: Acceptance Test AP
     needs: [prepare-ap, build]
     runs-on: ubuntu-latest
 
@@ -144,7 +144,7 @@ jobs:
         make testacc
 
   cleanup-ap:
-    name: Clean up
+    name: Clean up AP
     needs: test-ap
     runs-on: ubuntu-latest
 
@@ -184,7 +184,7 @@ jobs:
         make sweep
 
   prepare-ca:
-    name: Prepare
+    name: Prepare CA
     runs-on: ubuntu-latest
 
     env:
@@ -224,7 +224,7 @@ jobs:
 
   # run acceptance tests in a matrix with Terraform core versions
   test-ca:
-    name: Matrix Test
+    name: Acceptance Test CA
     needs: [prepare-ca, build]
     runs-on: ubuntu-latest
 
@@ -276,7 +276,7 @@ jobs:
         make testacc
 
   cleanup-ca:
-    name: Clean up
+    name: Clean up CA
     needs: test-ca
     runs-on: ubuntu-latest
 
@@ -316,7 +316,7 @@ jobs:
         make sweep
 
   prepare-na:
-    name: Prepare
+    name: Prepare NA
     runs-on: ubuntu-latest
 
     env:
@@ -356,7 +356,7 @@ jobs:
 
   # run acceptance tests in a matrix with Terraform core versions
   test-na:
-    name: Matrix Test
+    name: Acceptance Test NA
     needs: [prepare-na, build]
     runs-on: ubuntu-latest
 
@@ -408,7 +408,7 @@ jobs:
         make testacc
 
   cleanup-na:
-    name: Clean up
+    name: Clean up NA
     needs: test-na
     runs-on: ubuntu-latest
 
