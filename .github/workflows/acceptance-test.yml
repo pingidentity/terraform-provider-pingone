@@ -1,7 +1,7 @@
 # This GitHub action runs your tests for each commit push and/or PR. Optionally
 # you can turn it on using a cron schedule for regular testing.
 #
-name: Acceptance Tests
+name: Acceptance Tests (Matrix - EU)
 on:
   push:
     branches:
@@ -56,12 +56,12 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PINGONE_CLIENT_ID: ${{ secrets.PINGONE_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.PINGONE_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
-      PINGONE_REGION: ${{ secrets.PINGONE_REGION }}
-      PINGONE_LICENSE_ID: ${{ secrets.PINGONE_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.PINGONE_ORGANIZATION_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_ENVIRONMENT_ID }}
+      PINGONE_REGION: Europe
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
@@ -97,12 +97,12 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PINGONE_CLIENT_ID: ${{ secrets.PINGONE_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.PINGONE_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
-      PINGONE_REGION: ${{ secrets.PINGONE_REGION }}
-      PINGONE_LICENSE_ID: ${{ secrets.PINGONE_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.PINGONE_ORGANIZATION_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_ENVIRONMENT_ID }}
+      PINGONE_REGION: Europe
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 15
     strategy:
@@ -151,12 +151,12 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PINGONE_CLIENT_ID: ${{ secrets.PINGONE_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.PINGONE_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
-      PINGONE_REGION: ${{ secrets.PINGONE_REGION }}
-      PINGONE_LICENSE_ID: ${{ secrets.PINGONE_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.PINGONE_ORGANIZATION_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_ENVIRONMENT_ID }}
+      PINGONE_REGION: Europe
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
