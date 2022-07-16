@@ -168,10 +168,10 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 		environmentLicense = *management.NewEnvironmentLicense(v.(string))
 	}
 
-	region := p1Client.API.Region.URLSuffix
+	region := p1Client.API.Region.APICode
 
 	if v, ok := d.GetOk("region"); ok {
-		region = v.(string)
+		region = pingone.FindRegionByName(v.(string)).APICode
 	}
 
 	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, d.Get("type").(string)) // Environment |  (optional)
@@ -308,7 +308,7 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	d.Set("type", resp.GetType())
-	d.Set("region", resp.GetRegion())
+	d.Set("region", pingone.FindRegionByAPICode(resp.GetRegion()).Region)
 	d.Set("license_id", resp.GetLicense().Id)
 
 	// The bill of materials
@@ -389,10 +389,10 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 		environmentLicense = *management.NewEnvironmentLicense(v.(string))
 	}
 
-	region := p1Client.API.Region.URLSuffix
+	region := p1Client.API.Region.APICode
 
 	if v, ok := d.GetOk("region"); ok {
-		region = v.(string)
+		region = pingone.FindRegionByName(v.(string)).APICode
 	}
 
 	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, d.Get("type").(string)) // Environment |  (optional)

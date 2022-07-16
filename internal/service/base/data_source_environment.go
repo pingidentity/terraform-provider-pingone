@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -182,7 +183,7 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.Set("type", resp.GetType())
-	d.Set("region", resp.GetRegion())
+	d.Set("region", pingone.FindRegionByAPICode(resp.GetRegion()).Region)
 	d.Set("license_id", resp.GetLicense().Id)
 
 	// The bill of materials

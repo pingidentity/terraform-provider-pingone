@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
@@ -132,7 +133,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
-				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the tenant.  Expecting regions \[%s\], region provided: %s`, os.Getenv("PINGONE_REGION"), region)),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the tenant.  Expecting regions \[%s\], region provided: %s`, pingone.FindRegionByName(os.Getenv("PINGONE_REGION")).APICode, pingone.FindRegionByName(region).APICode)),
 			},
 		},
 	})
