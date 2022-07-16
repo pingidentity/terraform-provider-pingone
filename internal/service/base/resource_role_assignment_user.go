@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -82,9 +82,9 @@ func ResourceRoleAssignmentUser() *schema.Resource {
 
 func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
 	var diags diag.Diagnostics
@@ -115,14 +115,14 @@ func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.Reso
 		return diags
 	}
 
-	userRoleAssignmentRole := *pingone.NewRoleAssignmentRole(d.Get("role_id").(string))
-	userRoleAssignmentScope := *pingone.NewRoleAssignmentScope(scopeID, scopeType)
-	userRoleAssignment := *pingone.NewRoleAssignment(userRoleAssignmentRole, userRoleAssignmentScope) // UserRoleAssignment |  (optional)
+	userRoleAssignmentRole := *management.NewRoleAssignmentRole(d.Get("role_id").(string))
+	userRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, scopeType)
+	userRoleAssignment := *management.NewRoleAssignment(userRoleAssignmentRole, userRoleAssignmentScope) // UserRoleAssignment |  (optional)
 
 	resp, r, err := apiClient.UsersUserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string)).RoleAssignment(userRoleAssignment).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
 
-		response := &pingone.P1Error{}
+		response := &management.P1Error{}
 		errDecode := json.NewDecoder(r.Body).Decode(response)
 		if errDecode == nil {
 			diags = append(diags, diag.Diagnostic{
@@ -154,9 +154,9 @@ func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.Reso
 
 func resourcePingOneRoleAssignmentUserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -201,9 +201,9 @@ func resourcePingOneRoleAssignmentUserRead(ctx context.Context, d *schema.Resour
 
 func resourcePingOneRoleAssignmentUserDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 

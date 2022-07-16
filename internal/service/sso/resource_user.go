@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -73,15 +73,15 @@ func ResourceUser() *schema.Resource {
 
 func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
-	user := *pingone.NewUser(d.Get("email").(string), d.Get("username").(string))
+	user := *management.NewUser(d.Get("email").(string), d.Get("username").(string))
 
-	population := *pingone.NewUserPopulation(d.Get("population_id").(string))
+	population := *management.NewUserPopulation(d.Get("population_id").(string))
 	user.SetPopulation(population)
 
 	// Create user
@@ -99,7 +99,7 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	// Set status
 
-	userEnabled := *pingone.NewUserEnabled() // UserEnabled |  (optional)
+	userEnabled := *management.NewUserEnabled() // UserEnabled |  (optional)
 	if d.Get("status").(string) == "ENABLED" {
 		userEnabled.SetEnabled(true)
 	} else {
@@ -124,9 +124,9 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta interf
 
 func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -161,14 +161,14 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta interfac
 
 func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
 	// The user
-	user := *pingone.NewUser(d.Get("email").(string), d.Get("username").(string))
+	user := *management.NewUser(d.Get("email").(string), d.Get("username").(string))
 
 	_, r, err := apiClient.UsersUsersApi.UpdateUserPut(ctx, d.Get("environment_id").(string), d.Id()).User(user).Execute()
 	if err != nil {
@@ -183,7 +183,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	// Set status
 
-	userEnabled := *pingone.NewUserEnabled() // UserEnabled |  (optional)
+	userEnabled := *management.NewUserEnabled() // UserEnabled |  (optional)
 	if d.Get("status").(string) == "ENABLED" {
 		userEnabled.SetEnabled(true)
 	} else {
@@ -203,7 +203,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	// Set population
 
-	population := *pingone.NewUserPopulation(d.Get("population_id").(string))
+	population := *management.NewUserPopulation(d.Get("population_id").(string))
 
 	_, r, err = apiClient.UsersUserPopulationsApi.UpdateUserPopulation(ctx, d.Get("environment_id").(string), d.Id()).UserPopulation(population).Execute()
 	if (err != nil) || (r.StatusCode != 200) {
@@ -221,9 +221,9 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 

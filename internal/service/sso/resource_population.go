@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -59,19 +59,19 @@ func ResourcePopulation() *schema.Resource {
 
 func resourcePingOnePopulationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
-	population := *pingone.NewPopulation(d.Get("name").(string)) // Population |  (optional)
+	population := *management.NewPopulation(d.Get("name").(string)) // Population |  (optional)
 
 	if v, ok := d.GetOk("description"); ok {
 		population.SetDescription(v.(string))
 	}
 
 	if v, ok := d.GetOk("password_policy_id"); ok {
-		populationPasswordPolicy := *pingone.NewPopulationPasswordPolicy(v.(string))
+		populationPasswordPolicy := *management.NewPopulationPasswordPolicy(v.(string))
 		population.SetPasswordPolicy(populationPasswordPolicy)
 	}
 
@@ -87,9 +87,9 @@ func resourcePingOnePopulationCreate(ctx context.Context, d *schema.ResourceData
 
 func resourcePingOnePopulationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -122,19 +122,19 @@ func resourcePingOnePopulationRead(ctx context.Context, d *schema.ResourceData, 
 
 func resourcePingOnePopulationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
-	population := *pingone.NewPopulation(d.Get("name").(string)) // Population |  (optional)
+	population := *management.NewPopulation(d.Get("name").(string)) // Population |  (optional)
 
 	if v, ok := d.GetOk("description"); ok {
 		population.SetDescription(v.(string))
 	}
 
 	if v, ok := d.GetOk("password_policy_id"); ok {
-		populationPasswordPolicy := *pingone.NewPopulationPasswordPolicy(v.(string))
+		populationPasswordPolicy := *management.NewPopulationPasswordPolicy(v.(string))
 		population.SetPasswordPolicy(populationPasswordPolicy)
 	}
 
@@ -148,9 +148,9 @@ func resourcePingOnePopulationUpdate(ctx context.Context, d *schema.ResourceData
 
 func resourcePingOnePopulationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -184,7 +184,7 @@ func resourcePingOnePopulationImport(ctx context.Context, d *schema.ResourceData
 	return []*schema.ResourceData{d}, nil
 }
 
-func PingOnePopulationCreate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, population pingone.Population) (*pingone.Population, *http.Response, error) {
+func PingOnePopulationCreate(ctx context.Context, apiClient *management.APIClient, environmentID string, population management.Population) (*management.Population, *http.Response, error) {
 
 	resp, r, err := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
@@ -195,7 +195,7 @@ func PingOnePopulationCreate(ctx context.Context, apiClient *pingone.APIClient, 
 	return resp, r, nil
 }
 
-func PingOnePopulationRead(ctx context.Context, apiClient *pingone.APIClient, environmentID string, populationID string) (*pingone.Population, *http.Response, error) {
+func PingOnePopulationRead(ctx context.Context, apiClient *management.APIClient, environmentID string, populationID string) (*management.Population, *http.Response, error) {
 
 	resp, r, err := apiClient.PopulationsApi.ReadOnePopulation(ctx, environmentID, populationID).Execute()
 	if err != nil {
@@ -206,7 +206,7 @@ func PingOnePopulationRead(ctx context.Context, apiClient *pingone.APIClient, en
 	return resp, r, nil
 }
 
-func PingOnePopulationUpdate(ctx context.Context, apiClient *pingone.APIClient, environmentID string, populationID string, population pingone.Population) (*pingone.Population, *http.Response, error) {
+func PingOnePopulationUpdate(ctx context.Context, apiClient *management.APIClient, environmentID string, populationID string, population management.Population) (*management.Population, *http.Response, error) {
 
 	_, r, err := apiClient.PopulationsApi.UpdatePopulation(ctx, environmentID, populationID).Population(population).Execute()
 	if err != nil {

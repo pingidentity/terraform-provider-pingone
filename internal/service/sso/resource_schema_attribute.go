@@ -9,7 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/types"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -71,7 +72,7 @@ func ResourceSchemaAttribute() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				Default:      "STRING",
-				ValidateFunc: validation.StringInSlice([]string{"STRING", "JSON", "BOOLEAN", "COMPLEX"}, false),
+				ValidateFunc: validation.StringInSlice(types.SchemaAttributeTypeList(), false),
 			},
 			"unique": {
 				Description: "Indicates whether or not the attribute must have a unique value within the PingOne environment.",
@@ -108,9 +109,9 @@ func ResourceSchemaAttribute() *schema.Resource {
 
 func resourceSchemaAttributeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -119,7 +120,7 @@ func resourceSchemaAttributeCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	resp, r, err := apiClient.SchemasApi.CreateAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string)).SchemaAttribute(schemaAttribute.(pingone.SchemaAttribute)).Execute()
+	resp, r, err := apiClient.SchemasApi.CreateAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string)).SchemaAttribute(schemaAttribute.(management.SchemaAttribute)).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -137,9 +138,9 @@ func resourceSchemaAttributeCreate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceSchemaAttributeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -189,9 +190,9 @@ func resourceSchemaAttributeRead(ctx context.Context, d *schema.ResourceData, me
 
 func resourceSchemaAttributeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -200,7 +201,7 @@ func resourceSchemaAttributeUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	_, r, err := apiClient.SchemasApi.UpdateAttributePatch(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).SchemaAttribute(schemaAttribute.(pingone.SchemaAttribute)).Execute()
+	_, r, err := apiClient.SchemasApi.UpdateAttributePatch(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).SchemaAttribute(schemaAttribute.(management.SchemaAttribute)).Execute()
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -216,9 +217,9 @@ func resourceSchemaAttributeUpdate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceSchemaAttributeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -262,7 +263,7 @@ func buildSchemaAttribute(d *schema.ResourceData, action string) (interface{}, e
 		return nil, fmt.Errorf("Cannot create attributes of type BOOLEAN or COMPLEX.  Custom attributes must be either STRING or JSON.  Attribute type found: %s", attrType)
 	}
 
-	schemaAttribute := *pingone.NewSchemaAttribute(d.Get("enabled").(bool), d.Get("name").(string), attrType) // SchemaAttribute |  (optional)
+	schemaAttribute := *management.NewSchemaAttribute(d.Get("enabled").(bool), d.Get("name").(string), attrType) // SchemaAttribute |  (optional)
 
 	if v, ok := d.GetOk("display_name"); ok {
 		schemaAttribute.SetDisplayName(v.(string))
