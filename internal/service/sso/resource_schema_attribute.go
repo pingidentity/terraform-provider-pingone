@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/types"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -72,7 +71,7 @@ func ResourceSchemaAttribute() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				Default:      "STRING",
-				ValidateFunc: validation.StringInSlice(types.SchemaAttributeTypeList(), false),
+				ValidateFunc: validation.StringInSlice([]string{"STRING", "JSON", "BOOLEAN", "COMPLEX"}, false),
 			},
 			"unique": {
 				Description: "Indicates whether or not the attribute must have a unique value within the PingOne environment.",
@@ -263,7 +262,7 @@ func buildSchemaAttribute(d *schema.ResourceData, action string) (interface{}, e
 		return nil, fmt.Errorf("Cannot create attributes of type BOOLEAN or COMPLEX.  Custom attributes must be either STRING or JSON.  Attribute type found: %s", attrType)
 	}
 
-	schemaAttribute := *management.NewSchemaAttribute(d.Get("enabled").(bool), d.Get("name").(string), attrType) // SchemaAttribute |  (optional)
+	schemaAttribute := *management.NewSchemaAttribute(d.Get("enabled").(bool), d.Get("name").(string), management.EnumSchemaAttributeType(attrType)) // SchemaAttribute |  (optional)
 
 	if v, ok := d.GetOk("display_name"); ok {
 		schemaAttribute.SetDisplayName(v.(string))

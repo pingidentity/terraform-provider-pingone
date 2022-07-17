@@ -14,10 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/types"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 )
 
@@ -53,14 +51,14 @@ func ResourceEnvironment() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "SANDBOX",
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(types.EnvironmentTypeList(), false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"SANDBOX", "PRODUCTION"}, false)),
 			},
 			"region": {
 				Description:      "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.",
 				Type:             schema.TypeString,
 				Optional:         true,
 				DefaultFunc:      schema.EnvDefaultFunc("PINGONE_REGION", nil),
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(pingone.AvailableRegionsList(), false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(model.RegionsAvailableList(), false)),
 				ForceNew:         true,
 			},
 			"license_id": {
@@ -114,7 +112,7 @@ func ResourceEnvironment() *schema.Resource {
 						"type": {
 							Description:      "The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
 							Type:             schema.TypeString,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{`SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(model.ProductsSelectableList(), false)),
 							Optional:         true,
 							Default:          "SSO",
 						},
@@ -171,10 +169,10 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 	region := p1Client.API.Region.APICode
 
 	if v, ok := d.GetOk("region"); ok {
-		region = pingone.FindRegionByName(v.(string)).APICode
+		region = model.FindRegionByName(v.(string)).APICode
 	}
 
-	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, d.Get("type").(string)) // Environment |  (optional)
+	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, management.EnumEnvironmentType(d.Get("type").(string))) // Environment |  (optional)
 
 	if v, ok := d.GetOk("description"); ok {
 		environment.SetDescription(v.(string))
@@ -308,7 +306,7 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	d.Set("type", resp.GetType())
-	d.Set("region", pingone.FindRegionByAPICode(resp.GetRegion()).Region)
+	d.Set("region", model.FindRegionByAPICode(resp.GetRegion()).Region)
 	d.Set("license_id", resp.GetLicense().Id)
 
 	// The bill of materials
@@ -392,10 +390,10 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 	region := p1Client.API.Region.APICode
 
 	if v, ok := d.GetOk("region"); ok {
-		region = pingone.FindRegionByName(v.(string)).APICode
+		region = model.FindRegionByName(v.(string)).APICode
 	}
 
-	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, d.Get("type").(string)) // Environment |  (optional)
+	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, management.EnumEnvironmentType(d.Get("type").(string))) // Environment |  (optional)
 	if v, ok := d.GetOk("description"); ok {
 		environment.SetDescription(v.(string))
 	}
@@ -406,7 +404,7 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 		//If type has changed from SANDBOX -> PRODUCTION and vice versa we need a separate API call
 		updateEnvironmentTypeRequest := *management.NewUpdateEnvironmentTypeRequest()
 		newType := d.Get("type")
-		updateEnvironmentTypeRequest.SetType(newType.(string))
+		updateEnvironmentTypeRequest.SetType(management.EnumEnvironmentType(newType.(string)))
 		_, r, err := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environmentID).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
@@ -577,12 +575,12 @@ func expandBOMProducts(items []interface{}) ([]management.BillOfMaterialsProduct
 
 	for _, item := range items {
 
-		v, err := service.ServiceFromProviderCode(item.(map[string]interface{})["type"].(string))
+		v, err := model.FindProductByName(item.(map[string]interface{})["type"].(string))
 		if err != nil {
 			return nil, fmt.Errorf("Cannot retrieve the service from the service code: %w", err)
 		}
 
-		productBOM := management.NewBillOfMaterialsProductsInner(v.PlatformCode)
+		productBOM := management.NewBillOfMaterialsProductsInner(v.APICode)
 
 		if (item.(map[string]interface{})["console_url"] != nil) && (item.(map[string]interface{})["console_url"] != "") {
 			productBOMItemConsole := management.NewBillOfMaterialsProductsInnerConsole(item.(map[string]interface{})["console_url"].(string))
@@ -614,13 +612,13 @@ func flattenBOMProducts(items *management.BillOfMaterials) ([]interface{}, error
 
 		for _, product := range products {
 
-			v, err := service.ServiceFromPlatformCode(product.GetType())
+			v, err := model.FindProductByAPICode(product.GetType())
 			if err != nil {
 				return nil, fmt.Errorf("Cannot retrieve the service from the service code: %w", err)
 			}
 
 			productItemsMap := map[string]interface{}{
-				"type": v.ProviderCode,
+				"type": v.ProductCode,
 			}
 
 			if v, ok := product.Console.GetHrefOk(); ok {

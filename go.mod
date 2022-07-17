@@ -10,11 +10,10 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.5.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.18.0
 	github.com/katbyte/terrafmt v0.4.0
-	github.com/patrickcping/pingone-go-sdk-v2 v0.2.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.1.0
+	github.com/patrickcping/pingone-go-sdk-v2 v0.3.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.2.0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.38.1
-	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75
 )
 
 require (
@@ -104,7 +103,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.0.0-20220520183353-fd19c99a87aa // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
 	github.com/googleapis/go-type-adapters v1.0.0 // indirect
-	github.com/gookit/color v1.5.0 // indirect
+	github.com/gookit/color v1.5.1 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20210914165742-4cc7213b9bc8 // indirect
 	github.com/gostaticanalysis/analysisutil v0.7.1 // indirect
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
@@ -178,8 +177,8 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/owenrumney/go-sarif v1.1.1 // indirect
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.1.0 // indirect
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.1.0 // indirect
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.2.0 // indirect
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.2.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.0 // indirect
 	github.com/phayes/checkstyle v0.0.0-20170904204023-bfd46e6a821d // indirect
@@ -199,7 +198,7 @@ require (
 	github.com/ryancurrah/gomodguard v1.2.3 // indirect
 	github.com/ryanrolds/sqlclosecheck v0.3.0 // indirect
 	github.com/sanposhiho/wastedassign/v2 v2.0.6 // indirect
-	github.com/securego/gosec/v2 v2.11.0 // indirect
+	github.com/securego/gosec/v2 v2.12.0 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shazow/go-diff v0.0.0-20160112020656-b6b7b6733b8c // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
@@ -244,15 +243,16 @@ require (
 	gitlab.com/bosi/decorder v0.2.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
+	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20220218215828-6cf2b201936e // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
 	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
 	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.11-0.20220316014157-77aa08bb151a // indirect
+	golang.org/x/tools v0.1.11 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/api v0.84.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

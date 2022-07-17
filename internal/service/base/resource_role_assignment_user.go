@@ -116,7 +116,7 @@ func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.Reso
 	}
 
 	userRoleAssignmentRole := *management.NewRoleAssignmentRole(d.Get("role_id").(string))
-	userRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, scopeType)
+	userRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
 	userRoleAssignment := *management.NewRoleAssignment(userRoleAssignmentRole, userRoleAssignmentScope) // UserRoleAssignment |  (optional)
 
 	resp, r, err := apiClient.UsersUserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string)).RoleAssignment(userRoleAssignment).Execute()
