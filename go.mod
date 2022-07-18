@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.18.0
 	github.com/katbyte/terrafmt v0.4.0
 	github.com/patrickcping/pingone-go-sdk-v2 v0.2.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.1.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.2.0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.38.1
 	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75
@@ -247,7 +247,7 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20220218215828-6cf2b201936e // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
+	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
 	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
 	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect

@@ -844,8 +844,8 @@ github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FI
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/patrickcping/pingone-go-sdk-v2 v0.2.0 h1:r0vnuLnq09/L+4St8pHiqnpZ9JyMkgRWCfr2OFn19Dk=
 github.com/patrickcping/pingone-go-sdk-v2 v0.2.0/go.mod h1:ELbqFEFuZqBwX0GsD8kiNk+TRI/k4wpI0TB80aQ7J2I=
-github.com/patrickcping/pingone-go-sdk-v2/management v0.1.0 h1:GBuGMdp5ujaoEiId7PBq1t6NRsz0Yt1lL0ktwFRUQ3g=
-github.com/patrickcping/pingone-go-sdk-v2/management v0.1.0/go.mod h1:iQutBPp3KK2WqFpN4KAnBOBTaBN9a2ngHeonYwO1PBI=
+github.com/patrickcping/pingone-go-sdk-v2/management v0.2.0 h1:4hZvg0vuAPZ1u7ae0ISEpZyO8emgV9PIZpplkTWWT7c=
+github.com/patrickcping/pingone-go-sdk-v2/management v0.2.0/go.mod h1:sjjBarlPIOslfFSvAR1ir3ul7Nb5YFKSCyY+MrckgZU=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.1.0 h1:My8JdlZrC+oFTZqj68vMTkSD/cH8LogBZDc0fOgR1u4=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.1.0/go.mod h1:x+rz4IHi4S80rdNOfxt0MpIF3MSrttuGtAhPlK9x8vk=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.1.0 h1:zI0/9Il4XJK6/NHISst/Kfrl5jdB2onDUAp5DCwe1H8=
@@ -1257,8 +1257,9 @@ golang.org/x/net v0.0.0-20220325170049-de3da57026de/go.mod h1:CfG3xpIq0wQ8r1q4Su
 golang.org/x/net v0.0.0-20220412020605-290c469a71a5/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/net v0.0.0-20220607020251-c690dde0001d/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
-golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e h1:TsQ7F31D3bUCLeqPT0u+yjp1guoArKaNKmCr22PYgTQ=
 golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
+golang.org/x/net v0.0.0-20220708220712-1185a9018129 h1:vucSRfWwTsoXro7P+3Cjlr6flUMtzCwzlvkxEQtHHB0=
+golang.org/x/net v0.0.0-20220708220712-1185a9018129/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
