@@ -117,7 +117,7 @@ func ResourceEnvironment() *schema.Resource {
 							Default:          "SSO",
 						},
 						"console_url": {
-							Description: "A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
+							Description: "A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
 							Type:        schema.TypeString,
 							Optional:    true,
 						},

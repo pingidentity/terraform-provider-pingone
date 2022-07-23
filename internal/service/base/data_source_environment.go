@@ -64,12 +64,12 @@ func DatasourceEnvironment() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
-							Description: "The service type.  Valid options are `SSO`, `MFA`, `RISK`, `VERIFY`, `CREDENTIALS`, `API_INTELLIGENCE`, `AUTHORIZE`, `FRAUD`, `PING_ID`, `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
+							Description: "The service type.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"console_url": {
-							Description: "A custom console URL.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
+							Description: "A custom console URL.  Generally used with services that are deployed separately to the PingOne SaaS service.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
