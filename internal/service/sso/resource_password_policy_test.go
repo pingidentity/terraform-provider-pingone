@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
@@ -22,9 +22,9 @@ func testAccCheckPasswordPolicyDestroy(s *terraform.State) error {
 		return err
 	}
 
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
 	for _, rs := range s.RootModule().Resources {
