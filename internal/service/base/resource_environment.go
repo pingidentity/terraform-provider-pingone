@@ -528,17 +528,15 @@ func resourcePingOneEnvironmentDelete(ctx context.Context, d *schema.ResourceDat
 			"404",
 		},
 		Refresh: func() (interface{}, string, error) {
-			resp, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, d.Id()).Execute()
-			if err != nil {
-				return 0, "", err
-			}
+			resp, r, _ := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, d.Id()).Execute()
+
 			base := 10
 			return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
 		},
 		Timeout:                   d.Timeout(schema.TimeoutDelete) - time.Minute,
-		Delay:                     10 * time.Second,
-		MinTimeout:                5 * time.Second,
-		ContinuousTargetOccurence: 5,
+		Delay:                     2 * time.Second,
+		MinTimeout:                2 * time.Second,
+		ContinuousTargetOccurence: 2,
 	}
 	_, err = deleteStateConf.WaitForState()
 	if err != nil {
