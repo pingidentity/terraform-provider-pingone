@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -228,18 +228,15 @@ func ResourcePasswordPolicy() *schema.Resource {
 
 func resourcePasswordPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
-	passwordPolicy, err := expandPasswordPolicy(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	passwordPolicy := expandPasswordPolicy(d)
 
-	resp, r, err := apiClient.PasswordPoliciesApi.CreatePasswordPolicy(ctx, d.Get("environment_id").(string)).PasswordPolicy(passwordPolicy.(pingone.PasswordPolicy)).Execute()
+	resp, r, err := apiClient.PasswordPoliciesApi.CreatePasswordPolicy(ctx, d.Get("environment_id").(string)).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -257,9 +254,9 @@ func resourcePasswordPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 
 func resourcePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -400,9 +397,9 @@ func resourcePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, met
 
 func resourcePasswordPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -411,7 +408,7 @@ func resourcePasswordPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	_, r, err := apiClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).PasswordPolicy(passwordPolicy.(pingone.PasswordPolicy)).Execute()
+	_, r, err := apiClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -427,9 +424,9 @@ func resourcePasswordPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 
 func resourcePasswordPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
@@ -465,7 +462,7 @@ func resourcePasswordPolicyImport(ctx context.Context, d *schema.ResourceData, m
 
 func expandPasswordPolicy(d *schema.ResourceData) (interface{}, error) {
 
-	passwordPolicy := *pingone.NewPasswordPolicy(d.Get("exclude_commonly_used_passwords").(bool), d.Get("exclude_profile_data").(bool), d.Get("name").(string), d.Get("not_similar_to_current").(bool)) // PasswordPolicy |  (optional)
+	passwordPolicy := *management.NewPasswordPolicy(d.Get("exclude_commonly_used_passwords").(bool), d.Get("exclude_profile_data").(bool), d.Get("name").(string), d.Get("not_similar_to_current").(bool)) // PasswordPolicy |  (optional)
 
 	if v, ok := d.GetOk("description"); ok {
 		passwordPolicy.SetDescription(v.(string))
@@ -486,7 +483,7 @@ func expandPasswordPolicy(d *schema.ResourceData) (interface{}, error) {
 
 		if passwordPolicyHistoryCount != nil || passwordPolicyHistoryRetention != nil {
 
-			passwordPolicyHistory := *pingone.NewPasswordPolicyHistory()
+			passwordPolicyHistory := *management.NewPasswordPolicyHistory()
 
 			if passwordPolicyHistoryCount != nil {
 				passwordPolicyHistory.SetCount(int32(passwordPolicyHistoryCount.(int)))
@@ -508,7 +505,7 @@ func expandPasswordPolicy(d *schema.ResourceData) (interface{}, error) {
 
 		if passwordPolicyLengthMax != nil || passwordPolicyLengthMin != nil {
 
-			passwordPolicyLength := *pingone.NewPasswordPolicyLength()
+			passwordPolicyLength := *management.NewPasswordPolicyLength()
 
 			if passwordPolicyLengthMax != nil {
 				passwordPolicyLength.SetMax(int32(passwordPolicyLengthMax.(int)))
@@ -530,7 +527,7 @@ func expandPasswordPolicy(d *schema.ResourceData) (interface{}, error) {
 
 		if passwordPolicyLockoutDuration != nil || passwordPolicyLockoutFailCount != nil {
 
-			passwordPolicyLockout := *pingone.NewPasswordPolicyLockout()
+			passwordPolicyLockout := *management.NewPasswordPolicyLockout()
 
 			if passwordPolicyLockoutDuration != nil {
 				passwordPolicyLockout.SetDurationSeconds(int32(passwordPolicyLockoutDuration.(int)))
@@ -554,7 +551,7 @@ func expandPasswordPolicy(d *schema.ResourceData) (interface{}, error) {
 
 		if passwordPolicyMinCharsAlphaUpper != nil || passwordPolicyMinCharsAlphaLower != nil {
 
-			passwordPolicyMinChars := *pingone.NewPasswordPolicyMinCharacters()
+			passwordPolicyMinChars := *management.NewPasswordPolicyMinCharacters()
 
 			if passwordPolicyMinCharsAlphaUpper != nil {
 				passwordPolicyMinChars.SetABCDEFGHIJKLMNOPQRSTUVWXYZ(int32(passwordPolicyMinCharsAlphaUpper.(int)))
@@ -600,7 +597,7 @@ func expandPasswordPolicy(d *schema.ResourceData) (interface{}, error) {
 	return passwordPolicy, nil
 }
 
-func flattenPasswordHistory(passwordPolicyHistory *pingone.PasswordPolicyHistory) ([]interface{}, error) {
+func flattenPasswordHistory(passwordPolicyHistory *management.PasswordPolicyHistory) []interface{} {
 
 	item := make(map[string]interface{})
 
@@ -618,7 +615,7 @@ func flattenPasswordHistory(passwordPolicyHistory *pingone.PasswordPolicyHistory
 	return items, nil
 }
 
-func flattenPasswordLength(passwordPolicyLength *pingone.PasswordPolicyLength) ([]interface{}, error) {
+func flattenPasswordLength(passwordPolicyLength *management.PasswordPolicyLength) []interface{} {
 
 	item := make(map[string]interface{})
 
@@ -637,7 +634,7 @@ func flattenPasswordLength(passwordPolicyLength *pingone.PasswordPolicyLength) (
 
 }
 
-func flattenUserLockout(passwordPolicyLockout *pingone.PasswordPolicyLockout) ([]interface{}, error) {
+func flattenUserLockout(passwordPolicyLockout *management.PasswordPolicyLockout) []interface{} {
 
 	item := make(map[string]interface{})
 
@@ -656,7 +653,7 @@ func flattenUserLockout(passwordPolicyLockout *pingone.PasswordPolicyLockout) ([
 
 }
 
-func flattenMinCharacters(passwordPolicyMinChars *pingone.PasswordPolicyMinCharacters) ([]interface{}, error) {
+func flattenMinCharacters(passwordPolicyMinChars *management.PasswordPolicyMinCharacters) []interface{} {
 
 	item := make(map[string]interface{})
 

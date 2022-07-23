@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -197,13 +197,13 @@ func DatasourcePasswordPolicy() *schema.Resource {
 
 func datasourcePingOnePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
-		"suffix": p1Client.RegionSuffix,
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
 
-	var resp pingone.PasswordPolicy
+	var resp management.PasswordPolicy
 
 	if v, ok := d.GetOk("name"); ok {
 
