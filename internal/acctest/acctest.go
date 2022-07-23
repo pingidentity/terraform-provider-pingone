@@ -40,7 +40,12 @@ func init() {
 	// ProviderConfigure() can overwrite configuration during concurrent testing.
 	ProviderFactories = map[string]func() (*schema.Provider, error){
 		"pingone": func() (*schema.Provider, error) {
-			return provider.New("dev")(), nil
+			provider := provider.New("dev")()
+
+			if provider == nil {
+				return nil, fmt.Errorf("Cannot initiate provider factory")
+			}
+			return provider, nil
 		},
 	}
 }

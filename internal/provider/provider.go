@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
@@ -59,7 +59,7 @@ func New(version string) func() *schema.Provider {
 					Required:         true,
 					DefaultFunc:      schema.EnvDefaultFunc("PINGONE_REGION", nil),
 					Description:      "The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(pingone.AvailableRegionsList(), false)),
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(model.RegionsAvailableList(), false)),
 				},
 				"force_delete_production_type": {
 					Type:        schema.TypeBool,

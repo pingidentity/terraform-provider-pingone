@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -64,12 +64,12 @@ func DatasourceEnvironment() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
-							Description: "The service type.  Valid options are `SSO`, `MFA`, `RISK`, `VERIFY`, `CREDENTIALS`, `API_INTELLIGENCE`, `AUTHORIZE`, `FRAUD`, `PING_ID`, `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
+							Description: "The service type.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"console_url": {
-							Description: "A custom console URL.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.",
+							Description: "A custom console URL.  Generally used with services that are deployed separately to the PingOne SaaS service.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
@@ -183,7 +183,7 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.Set("type", resp.GetType())
-	d.Set("region", pingone.FindRegionByAPICode(resp.GetRegion()).Region)
+	d.Set("region", model.FindRegionByAPICode(resp.GetRegion()).Region)
 	d.Set("license_id", resp.GetLicense().Id)
 
 	// The bill of materials

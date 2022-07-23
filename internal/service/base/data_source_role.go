@@ -61,7 +61,7 @@ func datasourcePingOneRoleRead(ctx context.Context, d *schema.ResourceData, meta
 		found := false
 		for _, role := range roles {
 
-			if role.GetName() == d.Get("name").(string) {
+			if role.GetName() == management.EnumRoleName(d.Get("name").(string)) {
 				resp = role
 				found = true
 				break

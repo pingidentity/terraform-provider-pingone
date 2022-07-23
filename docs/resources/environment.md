@@ -72,7 +72,7 @@ Optional:
 Optional:
 
 - `bookmark` (Block Set, Max: 5) Custom bookmark links for the service. (see [below for nested schema](#nestedblock--service--bookmark))
-- `console_url` (String) A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PING_FEDERATE`, `PING_ACCESS`, `PING_DIRECTORY`, `PING_AUTHORIZE` and `PING_CENTRAL`.
+- `console_url` (String) A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
 - `type` (String) The service type to enable in the environment.  Valid options are `SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingID`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`. Defaults to `SSO`.
 
 <a id="nestedblock--service--bookmark"></a>
