@@ -310,40 +310,28 @@ func resourcePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	if v, ok := resp.GetHistoryOk(); ok {
-		flattenedVal, err := flattenPasswordHistory(v)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenPasswordHistory(v)
 		d.Set("password_history", flattenedVal)
 	} else {
 		d.Set("password_history", nil)
 	}
 
 	if v, ok := resp.GetLengthOk(); ok {
-		flattenedVal, err := flattenPasswordLength(v)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenPasswordLength(v)
 		d.Set("password_length", flattenedVal)
 	} else {
 		d.Set("password_length", nil)
 	}
 
 	if v, ok := resp.GetLockoutOk(); ok {
-		flattenedVal, err := flattenUserLockout(v)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenUserLockout(v)
 		d.Set("account_lockout", flattenedVal)
 	} else {
 		d.Set("account_lockout", nil)
 	}
 
 	if v, ok := resp.GetMinCharactersOk(); ok {
-		flattenedVal, err := flattenMinCharacters(v)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenMinCharacters(v)
 		d.Set("min_characters", flattenedVal)
 	} else {
 		d.Set("min_characters", nil)
@@ -353,10 +341,7 @@ func resourcePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, met
 	passwordAgeMinV, passwordAgeMinOk := resp.GetMinAgeDaysOk()
 
 	if passwordAgeMaxOk || passwordAgeMinOk {
-		flattenedVal, err := flattenPasswordAge(passwordAgeMaxV, passwordAgeMinV)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenPasswordAge(passwordAgeMaxV, passwordAgeMinV)
 		d.Set("password_age", flattenedVal)
 	} else {
 		d.Set("password_age", nil)
@@ -403,10 +388,7 @@ func resourcePasswordPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	})
 	var diags diag.Diagnostics
 
-	passwordPolicy, err := expandPasswordPolicy(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	passwordPolicy := expandPasswordPolicy(d)
 
 	_, r, err := apiClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
 	if err != nil {
@@ -460,7 +442,7 @@ func resourcePasswordPolicyImport(ctx context.Context, d *schema.ResourceData, m
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandPasswordPolicy(d *schema.ResourceData) (interface{}, error) {
+func expandPasswordPolicy(d *schema.ResourceData) interface{} {
 
 	passwordPolicy := *management.NewPasswordPolicy(d.Get("exclude_commonly_used_passwords").(bool), d.Get("exclude_profile_data").(bool), d.Get("name").(string), d.Get("not_similar_to_current").(bool)) // PasswordPolicy |  (optional)
 
@@ -594,7 +576,7 @@ func expandPasswordPolicy(d *schema.ResourceData) (interface{}, error) {
 		passwordPolicy.SetMinUniqueCharacters(int32(v.(int)))
 	}
 
-	return passwordPolicy, nil
+	return passwordPolicy
 }
 
 func flattenPasswordHistory(passwordPolicyHistory *management.PasswordPolicyHistory) []interface{} {
@@ -612,7 +594,7 @@ func flattenPasswordHistory(passwordPolicyHistory *management.PasswordPolicyHist
 	items := make([]interface{}, 0)
 	items = append(items, item)
 
-	return items, nil
+	return items
 }
 
 func flattenPasswordLength(passwordPolicyLength *management.PasswordPolicyLength) []interface{} {
@@ -630,7 +612,7 @@ func flattenPasswordLength(passwordPolicyLength *management.PasswordPolicyLength
 	items := make([]interface{}, 0)
 	items = append(items, item)
 
-	return items, nil
+	return items
 
 }
 
@@ -649,7 +631,7 @@ func flattenUserLockout(passwordPolicyLockout *management.PasswordPolicyLockout)
 	items := make([]interface{}, 0)
 	items = append(items, item)
 
-	return items, nil
+	return items
 
 }
 
@@ -676,11 +658,11 @@ func flattenMinCharacters(passwordPolicyMinChars *management.PasswordPolicyMinCh
 	items := make([]interface{}, 0)
 	items = append(items, item)
 
-	return items, nil
+	return items
 
 }
 
-func flattenPasswordAge(max, min *int32) ([]interface{}, error) {
+func flattenPasswordAge(max, min *int32) []interface{} {
 
 	item := make(map[string]interface{})
 
@@ -695,6 +677,6 @@ func flattenPasswordAge(max, min *int32) ([]interface{}, error) {
 	items := make([]interface{}, 0)
 	items = append(items, item)
 
-	return items, nil
+	return items
 
 }

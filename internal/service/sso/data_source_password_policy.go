@@ -303,40 +303,28 @@ func datasourcePingOnePasswordPolicyRead(ctx context.Context, d *schema.Resource
 	}
 
 	if v, ok := resp.GetHistoryOk(); ok {
-		flattenedVal, err := flattenPasswordHistory(v)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenPasswordHistory(v)
 		d.Set("password_history", flattenedVal)
 	} else {
 		d.Set("password_history", nil)
 	}
 
 	if v, ok := resp.GetLengthOk(); ok {
-		flattenedVal, err := flattenPasswordLength(v)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenPasswordLength(v)
 		d.Set("password_length", flattenedVal)
 	} else {
 		d.Set("password_length", nil)
 	}
 
 	if v, ok := resp.GetLockoutOk(); ok {
-		flattenedVal, err := flattenUserLockout(v)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenUserLockout(v)
 		d.Set("account_lockout", flattenedVal)
 	} else {
 		d.Set("account_lockout", nil)
 	}
 
 	if v, ok := resp.GetMinCharactersOk(); ok {
-		flattenedVal, err := flattenMinCharacters(v)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenMinCharacters(v)
 		d.Set("min_characters", flattenedVal)
 	} else {
 		d.Set("min_characters", nil)
@@ -346,10 +334,7 @@ func datasourcePingOnePasswordPolicyRead(ctx context.Context, d *schema.Resource
 	passwordAgeMinV, passwordAgeMinOk := resp.GetMinAgeDaysOk()
 
 	if passwordAgeMaxOk || passwordAgeMinOk {
-		flattenedVal, err := flattenPasswordAge(passwordAgeMaxV, passwordAgeMinV)
-		if err != nil {
-			diags = diag.FromErr(err)
-		}
+		flattenedVal := flattenPasswordAge(passwordAgeMaxV, passwordAgeMinV)
 		d.Set("password_age", flattenedVal)
 	} else {
 		d.Set("password_age", nil)
