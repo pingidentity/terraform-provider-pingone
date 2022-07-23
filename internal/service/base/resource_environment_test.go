@@ -362,6 +362,47 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 	})
 }
 
+func TestAccEnvironment_Services(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGenEnvironment()
+	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+	name := resourceName
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	services1 := []string{`SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `Fraud`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}
+	services2 := []string{`SSO`, `MFA`, `Risk`, `Verify`}
+	services3 := []string{`SSO`, `MFA`, `Risk`, `Verify`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services1),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "service.#", "13"), // check all the custom services provision, except the WORKFORCE services
+				),
+			},
+			{
+				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services2),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "service.#", "4"), // check they can be modified downward
+				),
+			},
+			{
+				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services3),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "service.#", "9"), // check they can be modified upward
+				),
+			},
+		},
+	})
+}
+
 func testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
@@ -392,6 +433,20 @@ func testAccEnvironmentConfig_Full(resourceName, name, description, environmentT
 		}`, resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
 }
 
+func testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID string, services []string) string {
+
+	composedServices := composeServices(services)
+
+	return fmt.Sprintf(`
+		resource "pingone_environment" "%[1]s" {
+			name = "%[2]s"
+			license_id = "%[3]s"
+			default_population {
+			}
+			%[4]s
+		}`, resourceName, name, licenseID, composedServices)
+}
+
 func testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, licenseID string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
@@ -417,6 +472,21 @@ func testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentT
 			service {
 			}
 		}`, resourceName, name, environmentType, region, licenseID)
+}
+
+func composeServices(services []string) string {
+
+	var composedServices = ""
+	for _, service := range services {
+		composedServices += fmt.Sprintf(`
+		service {
+			type = "%s"
+		}
+		`, service)
+	}
+
+	return composedServices
+
 }
 
 // func testAccEnvironmentConfig_BlankPlan() string {
