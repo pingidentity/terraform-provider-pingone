@@ -17,7 +17,7 @@ The PingOne Terraform provider is a plugin for [Terraform](https://www.terraform
 ## Documentation
 
 Extended documentation can be found at:
-* Terraform Registry (coming soon)
+* [Terraform Registry](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs)
 * [PingOne API and Developer Documentation](https://apidocs.pingidentity.com/pingone/platform/v1/api/)
 * [Introduction to PingOne](https://docs.pingidentity.com/bundle/pingone/page/als1564020488261.html)
 * [Ping Identity Developer Portal](https://developer.pingidentity.com/en.html)
