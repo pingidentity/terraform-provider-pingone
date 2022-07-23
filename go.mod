@@ -7,7 +7,7 @@ require (
 	github.com/golangci/golangci-lint v1.47.2
 	github.com/hashicorp/go-changelog v0.0.0-20220419201213-5edfc0d651d8
 	github.com/hashicorp/terraform-plugin-docs v0.13.0
-	github.com/hashicorp/terraform-plugin-log v0.5.0
+	github.com/hashicorp/terraform-plugin-log v0.6.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.18.0
 	github.com/katbyte/terrafmt v0.4.0
 	github.com/patrickcping/pingone-go-sdk-v2 v0.3.0
