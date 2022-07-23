@@ -1,4 +1,4 @@
-## 0.1.0 (Unreleased)
+## 0.1.0 (23 July 2022)
 
 :fire: Initial provider release :fire:
 
