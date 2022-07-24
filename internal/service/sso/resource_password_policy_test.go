@@ -71,10 +71,17 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 	description := "Test description"
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
 
-	userFilter := `email ew "@test.com"`
-	externalID := "external_1234"
+	priorPasswordCount := 10
+	retentionDays := 150
+	ageMax := 35
+	ageMin := 2
+	lockoutDuration := 30
+	lockoutFailCount := 5
+
+	excludeCommonPasswords := true
+	excludeProfileData := true
+	notSimilarToCurrent := true
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -83,15 +90,38 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyConfig_Full(environmentName, resourceName, name, description, licenseID, region, userFilter, externalID),
+				Config: testAccPasswordPolicyConfig_Full(environmentName, licenseID, resourceName, description, priorPasswordCount, retentionDays, ageMax, ageMin, lockoutDuration, lockoutFailCount, excludeCommonPasswords, excludeProfileData, notSimilarToCurrent),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", description),
-					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "user_filter", userFilter),
-					resource.TestCheckResourceAttr(resourceFullName, "external_id", externalID),
+					resource.TestCheckResourceAttr(resourceFullName, "environment_default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "bypass_policy", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "exclude_commonly_used_passwords", fmt.Sprintf("%t", excludeCommonPasswords)),
+					resource.TestCheckResourceAttr(resourceFullName, "exclude_profile_data", fmt.Sprintf("%t", excludeProfileData)),
+					resource.TestCheckResourceAttr(resourceFullName, "password_history.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "password_history.0.prior_password_count", fmt.Sprintf("%d", priorPasswordCount)),
+					resource.TestCheckResourceAttr(resourceFullName, "password_history.0.retention_days", fmt.Sprintf("%d", retentionDays)),
+					resource.TestCheckResourceAttr(resourceFullName, "password_length.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "password_length.0.min", "8"),
+					resource.TestCheckResourceAttr(resourceFullName, "password_length.0.max", "255"),
+					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.0.duration_seconds", fmt.Sprintf("%d", lockoutDuration)),
+					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.0.fail_count", fmt.Sprintf("%d", lockoutFailCount)),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.0.alphabetical_uppercase", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.0.alphabetical_lowercase", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.0.numeric", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.0.special_characters", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "password_age.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "password_age.0.max", fmt.Sprintf("%d", ageMax)),
+					resource.TestCheckResourceAttr(resourceFullName, "password_age.0.min", fmt.Sprintf("%d", ageMin)),
+					resource.TestCheckResourceAttr(resourceFullName, "max_repeated_characters", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_complexity", "7"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_unique_characters", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "not_similar_to_current", fmt.Sprintf("%t", notSimilarToCurrent)),
+					resource.TestCheckResourceAttr(resourceFullName, "population_count", "0"),
 				),
 			},
 		},
@@ -109,7 +139,6 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 	name := resourceName
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -118,7 +147,7 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyConfig_Minimal(environmentName, resourceName, name, licenseID, region),
+				Config: testAccPasswordPolicyConfig_Minimal(environmentName, resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
@@ -133,9 +162,9 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "password_age.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "max_repeated_characters", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "min_complexity", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "min_unique_characters", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "max_repeated_characters", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_complexity", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_unique_characters", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "not_similar_to_current", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "population_count", "0"),
 				),
@@ -144,30 +173,29 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 	})
 }
 
-func testAccPasswordPolicyConfig_Full(environmentName, resourceName, name, description, licenseID, region, userFilter, externalID string) string {
+func testAccPasswordPolicyConfig_Full(environmentName, licenseID, resourceName, description string, priorPasswordCount, retentionDays, ageMax, ageMin, lockoutDuration, lockoutFailCount int, excludeCommonPasswords, excludeProfileData, notSimilarToCurrent bool) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
 			name = "%[1]s"
 			type = "SANDBOX"
-			license_id = "%[5]s"
-			region = "%[6]s"
+			license_id = "%[2]s"
 			default_population {}
 			service {}
 		}
 
-		resource "pingone_password_policy" "%[2]s" {
+		resource "pingone_password_policy" "%[3]s" {
 			environment_id = "${pingone_environment.%[1]s.id}"
 			name = "%[3]s"
 			
-			description = "My new password policy"
+			description = "%[4]s"
 
-			exclude_commonly_used_passwords = true
-			exclude_profile_data = true
-			not_similar_to_current = true
+			exclude_commonly_used_passwords = %[11]t
+			exclude_profile_data = %[12]t
+			not_similar_to_current = %[13]t
 
 			password_history {
-				prior_password_count = 6
-				retention_days = 365
+				prior_password_count = %[5]d
+				retention_days = %[6]d
 			}
 
 			password_length {
@@ -176,13 +204,13 @@ func testAccPasswordPolicyConfig_Full(environmentName, resourceName, name, descr
 			}
 
 			password_age {
-				max = 182
-				min = 1
+				max = %[7]d
+				min = %[8]d
 			}
 
 			account_lockout {
-				duration_seconds = 900
-				fail_count = 5
+				duration_seconds = %[9]d
+				fail_count = %[10]d
 			}
 
 			min_characters {
@@ -195,16 +223,15 @@ func testAccPasswordPolicyConfig_Full(environmentName, resourceName, name, descr
 			max_repeated_characters = 2
 			min_complexity = 7
 			min_unique_characters = 5
-		}`, environmentName, resourceName, name, description, licenseID, region, userFilter, externalID)
+		}`, environmentName, licenseID, resourceName, description, priorPasswordCount, retentionDays, ageMax, ageMin, lockoutDuration, lockoutFailCount, excludeCommonPasswords, excludeProfileData, notSimilarToCurrent)
 }
 
-func testAccPasswordPolicyConfig_Minimal(environmentName, resourceName, name, licenseID, region string) string {
+func testAccPasswordPolicyConfig_Minimal(environmentName, resourceName, name, licenseID string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
 			name = "%[1]s"
 			type = "SANDBOX"
 			license_id = "%[4]s"
-			region = "%[5]s"
 			default_population {}
 			service {}
 		}
@@ -212,5 +239,5 @@ func testAccPasswordPolicyConfig_Minimal(environmentName, resourceName, name, li
 		resource "pingone_password_policy" "%[2]s" {
 			environment_id = "${pingone_environment.%[1]s.id}"
 			name = "%[3]s"
-		}`, environmentName, resourceName, name, licenseID, region)
+		}`, environmentName, resourceName, name, licenseID)
 }

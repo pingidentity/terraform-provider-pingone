@@ -20,7 +20,6 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 
-	region := os.Getenv("PINGONE_REGION")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
@@ -30,7 +29,7 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceName, name, region, licenseID),
+				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -68,7 +67,6 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	region := os.Getenv("PINGONE_REGION")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
@@ -78,7 +76,7 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceName, name, region, licenseID),
+				Config: testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -105,17 +103,16 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
-func testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceName, name, region, licenseID string) string {
+func testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceName, name, licenseID string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
 			name = "%[1]s"
 			type = "SANDBOX"
-			license_id = "%[5]s"
-			region = "%[4]s"
+			license_id = "%[4]s"
 			default_population {}
 			service {}
 		}
-		resource "pingone_password_policy" "%[1]s" {
+		resource "pingone_password_policy" "%[2]s" {
 			environment_id = "${pingone_environment.%[1]s.id}"
 			name = "%[3]s"
 			
@@ -162,22 +159,21 @@ func testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceN
 			name = "%[3]s"
 
 			depends_on = [
-				pingone_password_policy.%[1]s
+				pingone_password_policy.%[2]s
 			]
-		}`, environmentName, resourceName, name, region, licenseID)
+		}`, environmentName, resourceName, name, licenseID)
 }
 
-func testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceName, name, region, licenseID string) string {
+func testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceName, name, licenseID string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
 			name = "%[1]s"
 			type = "SANDBOX"
-			license_id = "%[5]s"
-			region = "%[4]s"
+			license_id = "%[4]s"
 			default_population {}
 			service {}
 		}
-		resource "pingone_password_policy" "%[1]s" {
+		resource "pingone_password_policy" "%[2]s" {
 			environment_id = "${pingone_environment.%[1]s.id}"
 			name = "%[3]s"
 			
@@ -221,6 +217,6 @@ func testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceNam
 		data "pingone_password_policy" "%[2]s" {
 			environment_id = "${pingone_environment.%[1]s.id}"
 
-			password_policy_id = "${pingone_password_policy.%[1]s.id}"
-		}`, environmentName, resourceName, name, region, licenseID)
+			password_policy_id = "${pingone_password_policy.%[2]s.id}"
+		}`, environmentName, resourceName, name, licenseID)
 }
