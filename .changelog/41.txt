@@ -1,0 +1,7 @@
+```release-note:new-resource
+pingone_password_policy
+```
+
+```release-note:new-data-source
+pingone_password_policy
+```
