@@ -460,19 +460,19 @@ func expandPasswordPolicy(d *schema.ResourceData) interface{} {
 
 	if v, ok := d.GetOk("password_history"); ok {
 
-		passwordPolicyHistoryCount := v.([]interface{})[0].(map[string]interface{})["prior_password_count"]
-		passwordPolicyHistoryRetention := v.([]interface{})[0].(map[string]interface{})["retention_days"]
+		priorCount := v.([]interface{})[0].(map[string]interface{})["prior_password_count"]
+		retentionDays := v.([]interface{})[0].(map[string]interface{})["retention_days"]
 
-		if passwordPolicyHistoryCount != nil || passwordPolicyHistoryRetention != nil {
+		if priorCount != nil || retentionDays != nil {
 
 			passwordPolicyHistory := *management.NewPasswordPolicyHistory()
 
-			if passwordPolicyHistoryCount != nil {
-				passwordPolicyHistory.SetCount(int32(passwordPolicyHistoryCount.(int)))
+			if priorCount != nil {
+				passwordPolicyHistory.SetCount(int32(priorCount.(int)))
 			}
 
-			if passwordPolicyHistoryRetention != nil {
-				passwordPolicyHistory.SetRetentionDays(int32(passwordPolicyHistoryRetention.(int)))
+			if retentionDays != nil {
+				passwordPolicyHistory.SetRetentionDays(int32(retentionDays.(int)))
 			}
 
 			passwordPolicy.SetHistory(passwordPolicyHistory)
@@ -482,19 +482,19 @@ func expandPasswordPolicy(d *schema.ResourceData) interface{} {
 
 	if v, ok := d.GetOk("password_length"); ok {
 
-		passwordPolicyLengthMax := v.([]interface{})[0].(map[string]interface{})["max"]
-		passwordPolicyLengthMin := v.([]interface{})[0].(map[string]interface{})["min"]
+		max := v.([]interface{})[0].(map[string]interface{})["max"]
+		min := v.([]interface{})[0].(map[string]interface{})["min"]
 
-		if passwordPolicyLengthMax != nil || passwordPolicyLengthMin != nil {
+		if max != nil || min != nil {
 
 			passwordPolicyLength := *management.NewPasswordPolicyLength()
 
-			if passwordPolicyLengthMax != nil {
-				passwordPolicyLength.SetMax(int32(passwordPolicyLengthMax.(int)))
+			if max != nil {
+				passwordPolicyLength.SetMax(int32(max.(int)))
 			}
 
-			if passwordPolicyLengthMin != nil {
-				passwordPolicyLength.SetMin(int32(passwordPolicyLengthMin.(int)))
+			if min != nil {
+				passwordPolicyLength.SetMin(int32(min.(int)))
 			}
 
 			passwordPolicy.SetLength(passwordPolicyLength)
@@ -504,19 +504,19 @@ func expandPasswordPolicy(d *schema.ResourceData) interface{} {
 
 	if v, ok := d.GetOk("account_lockout"); ok {
 
-		passwordPolicyLockoutDuration := v.([]interface{})[0].(map[string]interface{})["duration_seconds"]
-		passwordPolicyLockoutFailCount := v.([]interface{})[0].(map[string]interface{})["fail_count"]
+		duration := v.([]interface{})[0].(map[string]interface{})["duration_seconds"]
+		failCount := v.([]interface{})[0].(map[string]interface{})["fail_count"]
 
-		if passwordPolicyLockoutDuration != nil || passwordPolicyLockoutFailCount != nil {
+		if duration != nil || failCount != nil {
 
 			passwordPolicyLockout := *management.NewPasswordPolicyLockout()
 
-			if passwordPolicyLockoutDuration != nil {
-				passwordPolicyLockout.SetDurationSeconds(int32(passwordPolicyLockoutDuration.(int)))
+			if duration != nil {
+				passwordPolicyLockout.SetDurationSeconds(int32(duration.(int)))
 			}
 
-			if passwordPolicyLockoutFailCount != nil {
-				passwordPolicyLockout.SetFailureCount(int32(passwordPolicyLockoutFailCount.(int)))
+			if failCount != nil {
+				passwordPolicyLockout.SetFailureCount(int32(failCount.(int)))
 			}
 
 			passwordPolicy.SetLockout(passwordPolicyLockout)
@@ -526,29 +526,29 @@ func expandPasswordPolicy(d *schema.ResourceData) interface{} {
 
 	if v, ok := d.GetOk("min_characters"); ok {
 
-		passwordPolicyMinCharsAlphaUpper := v.([]interface{})[0].(map[string]interface{})["alphabetical_uppercase"]
-		passwordPolicyMinCharsAlphaLower := v.([]interface{})[0].(map[string]interface{})["alphabetical_lowercase"]
-		passwordPolicyMinCharsNumeric := v.([]interface{})[0].(map[string]interface{})["numeric"]
-		passwordPolicyMinCharsSpecial := v.([]interface{})[0].(map[string]interface{})["special_characters"]
+		alphaUpper := v.([]interface{})[0].(map[string]interface{})["alphabetical_uppercase"]
+		alphaLower := v.([]interface{})[0].(map[string]interface{})["alphabetical_lowercase"]
+		numeric := v.([]interface{})[0].(map[string]interface{})["numeric"]
+		special := v.([]interface{})[0].(map[string]interface{})["special_characters"]
 
-		if passwordPolicyMinCharsAlphaUpper != nil || passwordPolicyMinCharsAlphaLower != nil {
+		if alphaUpper != nil || alphaLower != nil {
 
 			passwordPolicyMinChars := *management.NewPasswordPolicyMinCharacters()
 
-			if passwordPolicyMinCharsAlphaUpper != nil {
-				passwordPolicyMinChars.SetABCDEFGHIJKLMNOPQRSTUVWXYZ(int32(passwordPolicyMinCharsAlphaUpper.(int)))
+			if alphaUpper != nil {
+				passwordPolicyMinChars.SetABCDEFGHIJKLMNOPQRSTUVWXYZ(int32(alphaUpper.(int)))
 			}
 
-			if passwordPolicyMinCharsAlphaLower != nil {
-				passwordPolicyMinChars.SetAbcdefghijklmnopqrstuvwxyz(int32(passwordPolicyMinCharsAlphaLower.(int)))
+			if alphaLower != nil {
+				passwordPolicyMinChars.SetAbcdefghijklmnopqrstuvwxyz(int32(alphaLower.(int)))
 			}
 
-			if passwordPolicyMinCharsNumeric != nil {
-				passwordPolicyMinChars.SetVar0123456789(int32(passwordPolicyMinCharsNumeric.(int)))
+			if numeric != nil {
+				passwordPolicyMinChars.SetVar0123456789(int32(numeric.(int)))
 			}
 
-			if passwordPolicyMinCharsSpecial != nil {
-				passwordPolicyMinChars.Set______(int32(passwordPolicyMinCharsSpecial.(int))) // SetSpecial()
+			if special != nil {
+				passwordPolicyMinChars.Set______(int32(special.(int)))
 			}
 
 			passwordPolicy.SetMinCharacters(passwordPolicyMinChars)
@@ -556,12 +556,23 @@ func expandPasswordPolicy(d *schema.ResourceData) interface{} {
 
 	}
 
-	if v, ok := d.GetOk("max_age_days"); ok {
-		passwordPolicy.SetMaxAgeDays(int32(v.(int)))
-	}
+	if v, ok := d.GetOk("password_age"); ok {
 
-	if v, ok := d.GetOk("min_age_days"); ok {
-		passwordPolicy.SetMinAgeDays(int32(v.(int)))
+		max := v.([]interface{})[0].(map[string]interface{})["max"]
+		min := v.([]interface{})[0].(map[string]interface{})["min"]
+
+		if max != nil || min != nil {
+
+			if max != nil {
+				passwordPolicy.SetMaxAgeDays(int32(max.(int)))
+			}
+
+			if min != nil {
+				passwordPolicy.SetMinAgeDays(int32(min.(int)))
+			}
+
+		}
+
 	}
 
 	if v, ok := d.GetOk("max_repeated_characters"); ok {
