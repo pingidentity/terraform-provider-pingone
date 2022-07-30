@@ -1,0 +1,1 @@
+$ terraform import pingone_authentication_policy.example <environment_id>/<authentication_policy_id>
