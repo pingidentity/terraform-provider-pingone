@@ -39,7 +39,7 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 				},
 			},
 		},
-		"identifier_first": {
+		"identifier_first_options": {
 			Description: fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_IDENTIFIER_FIRST)),
 			Type:        schema.TypeList,
 			MaxItems:    1,
@@ -93,7 +93,7 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 				},
 			},
 		},
-		"login": {
+		"login_options": {
 			Description: fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_LOGIN)),
 			Type:        schema.TypeList,
 			MaxItems:    1,
@@ -109,7 +109,7 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 				},
 			},
 		},
-		"mfa": {
+		"mfa_options": {
 			Description: fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION)),
 			Type:        schema.TypeList,
 			MaxItems:    1,
@@ -132,7 +132,7 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 				},
 			},
 		},
-		"identity_provider": {
+		"identity_provider_options": {
 			Description: fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER)),
 			Type:        schema.TypeList,
 			MaxItems:    1,
@@ -161,7 +161,7 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 				},
 			},
 		},
-		"agreement": {
+		"agreement_options": {
 			Description: fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_AGREEMENT)),
 			Type:        schema.TypeList,
 			MaxItems:    1,
@@ -178,7 +178,7 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 				},
 			},
 		},
-		"progressive_profiling": {
+		"progressive_profiling_options": {
 			Description: fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_PROGRESSIVE_PROFILING)),
 			Type:        schema.TypeList,
 			MaxItems:    1,

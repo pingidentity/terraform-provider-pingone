@@ -95,8 +95,6 @@ func resourceAuthenticationPolicyCreate(ctx context.Context, d *schema.ResourceD
 			return diag.FromErr(err)
 		}
 
-		log.Printf("RETURNRETURN: %v", sopAction)
-
 		_, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), resp.GetId()).SignOnPolicyAction(*sopAction).Execute()
 		if (err != nil) || (r.StatusCode != 201) {
 			diags = append(diags, diag.Diagnostic{

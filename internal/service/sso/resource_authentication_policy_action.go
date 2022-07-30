@@ -43,7 +43,7 @@ func expandSOPAction(d interface{}, sopPriority int32) (*management.SignOnPolicy
 
 func expandSOPActionProgressiveProfiling(d interface{}, sopPriority int32) (*management.SignOnPolicyActionProgressiveProfiling, error) {
 
-	if v, ok := d.(map[string]interface{})["progressive_profiling"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+	if v, ok := d.(map[string]interface{})["progressive_profiling_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
 		sopActionType := management.NewSignOnPolicyActionProgressiveProfiling(
@@ -77,7 +77,7 @@ func expandSOPActionMFA(d interface{}, sopPriority int32) *management.SignOnPoli
 		sopActionType.SetConditions(expandSOPActionConditions(vc))
 	}
 
-	if v, ok := d.(map[string]interface{})["mfa"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+	if v, ok := d.(map[string]interface{})["mfa_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
 		devicePolicyID := vp["device_authentication_policy_id"]
@@ -108,7 +108,7 @@ func expandSOPActionLogin(d interface{}, sopPriority int32) *management.SignOnPo
 	}
 
 	// block is optional
-	if v, ok := d.(map[string]interface{})["login"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+	if v, ok := d.(map[string]interface{})["login_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
 		idpAttributes := vp["confirm_identity_provider_attributes"]
@@ -152,7 +152,7 @@ func expandSOPActionLogin(d interface{}, sopPriority int32) *management.SignOnPo
 
 func expandSOPActionIDP(d interface{}, sopPriority int32) (*management.SignOnPolicyActionIDP, error) {
 
-	if v, ok := d.(map[string]interface{})["identity_provider"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+	if v, ok := d.(map[string]interface{})["identity_provider_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
 		sopActionType := management.NewSignOnPolicyActionIDP(
@@ -202,7 +202,7 @@ func expandSOPActionIDFirst(d interface{}, sopPriority int32) *management.SignOn
 		sopActionType.SetConditions(expandSOPActionConditions(vc))
 	}
 
-	if v, ok := d.(map[string]interface{})["identifier_first"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+	if v, ok := d.(map[string]interface{})["identifier_first_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
 		idpAttributes := vp["confirm_identity_provider_attributes"]
@@ -251,7 +251,7 @@ func expandSOPActionIDFirst(d interface{}, sopPriority int32) *management.SignOn
 
 func expandSOPActionAgreement(d interface{}, sopPriority int32) (*management.SignOnPolicyActionAgreement, error) {
 
-	if v, ok := d.(map[string]interface{})["agreement"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+	if v, ok := d.(map[string]interface{})["agreement_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
 		sopActionType := management.NewSignOnPolicyActionAgreement(
@@ -359,7 +359,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 			if v, ok := action.SignOnPolicyActionAgreement.GetConditionsOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
-			actionMap["agreement"] = flattenActionAgreement(action.SignOnPolicyActionAgreement)
+			actionMap["agreement_options"] = flattenActionAgreement(action.SignOnPolicyActionAgreement)
 
 			match++
 		}
@@ -371,7 +371,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 			if v, ok := action.SignOnPolicyActionIDFirst.GetConditionsOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
-			actionMap["identifier_first"] = flattenActionIDFirst(action.SignOnPolicyActionIDFirst)
+			actionMap["identifier_first_options"] = flattenActionIDFirst(action.SignOnPolicyActionIDFirst)
 
 			match++
 		}
@@ -383,7 +383,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 			if v, ok := action.SignOnPolicyActionIDP.GetConditionsOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
-			actionMap["identity_provider"] = flattenActionIDP(action.SignOnPolicyActionIDP)
+			actionMap["identity_provider_options"] = flattenActionIDP(action.SignOnPolicyActionIDP)
 
 			match++
 		}
@@ -395,7 +395,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 			if v, ok := action.SignOnPolicyActionLogin.GetConditionsOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
-			actionMap["login"] = flattenActionLogin(action.SignOnPolicyActionLogin)
+			actionMap["login_options"] = flattenActionLogin(action.SignOnPolicyActionLogin)
 
 			match++
 		}
@@ -407,7 +407,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 			if v, ok := action.SignOnPolicyActionMFA.GetConditionsOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
-			actionMap["mfa"] = flattenActionMFA(action.SignOnPolicyActionMFA)
+			actionMap["mfa_options"] = flattenActionMFA(action.SignOnPolicyActionMFA)
 
 			match++
 		}
@@ -419,7 +419,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 			if v, ok := action.SignOnPolicyActionProgressiveProfiling.GetConditionsOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
-			actionMap["progressive_profiling"] = flattenActionProgressiveProfiling(action.SignOnPolicyActionProgressiveProfiling)
+			actionMap["progressive_profiling_options"] = flattenActionProgressiveProfiling(action.SignOnPolicyActionProgressiveProfiling)
 
 			match++
 		}
