@@ -2,9 +2,9 @@ package sso
 
 import (
 	"fmt"
-	"log"
 	"sort"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 )
 
@@ -16,7 +16,6 @@ func expandSOPAction(d interface{}, sopPriority int32) (*management.SignOnPolicy
 
 	var err error
 
-	log.Printf("Action type: %s", actionType)
 	switch actionType {
 	case string(management.ENUMSIGNONPOLICYTYPE_AGREEMENT):
 		signOnPolicyAction.SignOnPolicyActionAgreement, err = expandSOPActionAgreement(d, sopPriority)
@@ -49,7 +48,7 @@ func expandSOPActionProgressiveProfiling(d interface{}, sopPriority int32) (*man
 		sopActionType := management.NewSignOnPolicyActionProgressiveProfiling(
 			sopPriority,
 			management.ENUMSIGNONPOLICYTYPE_PROGRESSIVE_PROFILING,
-			expandSOPActionAttributes(v[0].([]interface{})),
+			expandSOPActionAttributes(vp["attribute"].(*schema.Set)),
 			vp["prevent_multiple_prompts_per_flow"].(bool),
 			int32(vp["prompt_interval_seconds"].(int)),
 			vp["prompt_text"].(string),
@@ -134,7 +133,18 @@ func expandSOPActionLogin(d interface{}, sopPriority int32) *management.SignOnPo
 
 			externalHref := v1[0].(map[string]interface{})["external_href"]
 			if externalHref != nil {
-				registrationObj.External.SetHref(externalHref.(string))
+
+				registrationExternalObj := *management.NewSignOnPolicyActionLoginAllOfRegistrationExternal(externalHref.(string))
+				registrationObj.SetExternal(registrationExternalObj)
+
+			}
+
+			populationID := v1[0].(map[string]interface{})["population_id"]
+			if populationID != nil {
+
+				registrationPopulationObj := *management.NewSignOnPolicyActionLoginAllOfRegistrationPopulation(populationID.(string))
+				registrationObj.SetPopulation(registrationPopulationObj)
+
 			}
 
 			sopActionType.SetRegistration(registrationObj)
@@ -228,7 +238,18 @@ func expandSOPActionIDFirst(d interface{}, sopPriority int32) *management.SignOn
 
 			externalHref := v1[0].(map[string]interface{})["external_href"]
 			if externalHref != nil {
-				registrationObj.External.SetHref(externalHref.(string))
+
+				registrationExternalObj := *management.NewSignOnPolicyActionLoginAllOfRegistrationExternal(externalHref.(string))
+				registrationObj.SetExternal(registrationExternalObj)
+
+			}
+
+			populationID := v1[0].(map[string]interface{})["population_id"]
+			if populationID != nil {
+
+				registrationPopulationObj := *management.NewSignOnPolicyActionLoginAllOfRegistrationPopulation(populationID.(string))
+				registrationObj.SetPopulation(registrationPopulationObj)
+
 			}
 
 			sopActionType.SetRegistration(registrationObj)
@@ -290,11 +311,11 @@ func expandSOPActionDiscoveryRules(items []interface{}) []management.SignOnPolic
 
 }
 
-func expandSOPActionAttributes(items []interface{}) []management.SignOnPolicyActionProgressiveProfilingAllOfAttributes {
+func expandSOPActionAttributes(items *schema.Set) []management.SignOnPolicyActionProgressiveProfilingAllOfAttributes {
 
 	var attributes []management.SignOnPolicyActionProgressiveProfilingAllOfAttributes
 
-	for _, item := range items {
+	for _, item := range items.List() {
 
 		attributes = append(attributes, *management.NewSignOnPolicyActionProgressiveProfilingAllOfAttributes(item.(map[string]interface{})["name"].(string), item.(map[string]interface{})["required"].(bool)))
 
@@ -339,7 +360,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 
 	// Sort by priorty first
 	sort.Slice(actions, func(i, j int) bool {
-		return actions[i].GetActualInstance().(map[string]interface{})["priority"].(int32) < actions[j].GetActualInstance().(map[string]interface{})["priority"].(int32)
+		return getActionPriority(actions[i]) < getActionPriority(actions[j])
 	})
 
 	// Set the return var
@@ -686,4 +707,44 @@ func flattenActionSocialProvidersInner(signOnPolicyActionLoginAllOfSocialProvide
 	}
 
 	return providerList
+}
+
+func getActionPriority(instance management.SignOnPolicyAction) int32 {
+	var priority int32
+	switch instance.GetActualInstance().(type) {
+	case *management.SignOnPolicyActionLogin:
+		priority = instance.SignOnPolicyActionLogin.GetPriority()
+	case *management.SignOnPolicyActionAgreement:
+		priority = instance.SignOnPolicyActionAgreement.GetPriority()
+	case *management.SignOnPolicyActionIDFirst:
+		priority = instance.SignOnPolicyActionIDFirst.GetPriority()
+	case *management.SignOnPolicyActionIDP:
+		priority = instance.SignOnPolicyActionIDP.GetPriority()
+	case *management.SignOnPolicyActionProgressiveProfiling:
+		priority = instance.SignOnPolicyActionProgressiveProfiling.GetPriority()
+	case *management.SignOnPolicyActionMFA:
+		priority = instance.SignOnPolicyActionMFA.GetPriority()
+	}
+
+	return priority
+}
+
+func getActionID(instance management.SignOnPolicyAction) string {
+	var actionID string
+	switch instance.GetActualInstance().(type) {
+	case *management.SignOnPolicyActionLogin:
+		actionID = instance.SignOnPolicyActionLogin.GetId()
+	case *management.SignOnPolicyActionAgreement:
+		actionID = instance.SignOnPolicyActionAgreement.GetId()
+	case *management.SignOnPolicyActionIDFirst:
+		actionID = instance.SignOnPolicyActionIDFirst.GetId()
+	case *management.SignOnPolicyActionIDP:
+		actionID = instance.SignOnPolicyActionIDP.GetId()
+	case *management.SignOnPolicyActionProgressiveProfiling:
+		actionID = instance.SignOnPolicyActionProgressiveProfiling.GetId()
+	case *management.SignOnPolicyActionMFA:
+		actionID = instance.SignOnPolicyActionMFA.GetId()
+	}
+
+	return actionID
 }
