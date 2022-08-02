@@ -4,204 +4,80 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 )
 
-func expandSOPAction(d interface{}, sopPriority int32) (*management.SignOnPolicyAction, error) {
+func expandSOPAction(d interface{}, sopPriority int32) (*management.SignOnPolicyAction, diag.Diagnostics) {
 
 	signOnPolicyAction := &management.SignOnPolicyAction{}
+	var diags diag.Diagnostics
 
 	actionType := d.(map[string]interface{})["action_type"].(string)
 
-	var err error
-
 	switch actionType {
 	case string(management.ENUMSIGNONPOLICYTYPE_AGREEMENT):
-		signOnPolicyAction.SignOnPolicyActionAgreement, err = expandSOPActionAgreement(d, sopPriority)
+		signOnPolicyAction.SignOnPolicyActionAgreement, diags = expandSOPActionAgreement(d, sopPriority)
 	case string(management.ENUMSIGNONPOLICYTYPE_IDENTIFIER_FIRST):
-		signOnPolicyAction.SignOnPolicyActionIDFirst = expandSOPActionIDFirst(d, sopPriority)
+		signOnPolicyAction.SignOnPolicyActionIDFirst, diags = expandSOPActionIDFirst(d, sopPriority)
 	case string(management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER):
-		signOnPolicyAction.SignOnPolicyActionIDP, err = expandSOPActionIDP(d, sopPriority)
+		signOnPolicyAction.SignOnPolicyActionIDP, diags = expandSOPActionIDP(d, sopPriority)
 	case string(management.ENUMSIGNONPOLICYTYPE_LOGIN):
-		signOnPolicyAction.SignOnPolicyActionLogin = expandSOPActionLogin(d, sopPriority)
+		signOnPolicyAction.SignOnPolicyActionLogin, diags = expandSOPActionLogin(d, sopPriority)
 	case string(management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION):
-		signOnPolicyAction.SignOnPolicyActionMFA = expandSOPActionMFA(d, sopPriority)
+		signOnPolicyAction.SignOnPolicyActionMFA, diags = expandSOPActionMFA(d, sopPriority)
 	case string(management.ENUMSIGNONPOLICYTYPE_PROGRESSIVE_PROFILING):
-		signOnPolicyAction.SignOnPolicyActionProgressiveProfiling, err = expandSOPActionProgressiveProfiling(d, sopPriority)
+		signOnPolicyAction.SignOnPolicyActionProgressiveProfiling, diags = expandSOPActionProgressiveProfiling(d, sopPriority)
 	default:
-		return nil, fmt.Errorf("Policy action %s not supported", actionType)
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Policy action %s not supported", actionType),
+		})
+		return nil, diags
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("Error parsing Authentication policy action: %v", err)
-	}
-
-	return signOnPolicyAction, nil
+	return signOnPolicyAction, diags
 }
 
-func expandSOPActionProgressiveProfiling(d interface{}, sopPriority int32) (*management.SignOnPolicyActionProgressiveProfiling, error) {
+func expandSOPActionAgreement(d interface{}, sopPriority int32) (*management.SignOnPolicyActionAgreement, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	if v, ok := d.(map[string]interface{})["progressive_profiling_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+	if v, ok := d.(map[string]interface{})["agreement_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
-		sopActionType := management.NewSignOnPolicyActionProgressiveProfiling(
+		sopActionType := management.NewSignOnPolicyActionAgreement(
 			sopPriority,
-			management.ENUMSIGNONPOLICYTYPE_PROGRESSIVE_PROFILING,
-			expandSOPActionAttributes(vp["attribute"].(*schema.Set)),
-			vp["prevent_multiple_prompts_per_flow"].(bool),
-			int32(vp["prompt_interval_seconds"].(int)),
-			vp["prompt_text"].(string),
+			management.ENUMSIGNONPOLICYTYPE_AGREEMENT,
+			*management.NewSignOnPolicyActionAgreementAllOfAgreement(vp["agreement_id"].(string)),
 		)
 
 		if vc, ok := d.(map[string]interface{})["conditions"].([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
-			sopActionType.SetConditions(expandSOPActionConditions(vc))
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Block `conditions` has no effect when using the agreement action type",
+			})
+		}
+
+		if vd, ok := vp["show_decline_option"].(bool); ok {
+			sopActionType.SetDisableDeclineOption(!vd)
 		}
 
 		return sopActionType, nil
 
 	}
 
-	return nil, fmt.Errorf("Block `progressive_profiling` with `prevent_multiple_prompts_per_flow`, `prompt_interval_seconds` and `prompt_text` must be defined when using the progressive profiling action type")
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  "Block `agreement` with `agreement_id` must be defined when using the agreement action type",
+	})
+
+	return nil, diags
 }
 
-func expandSOPActionMFA(d interface{}, sopPriority int32) *management.SignOnPolicyActionMFA {
+func expandSOPActionIDFirst(d interface{}, sopPriority int32) (*management.SignOnPolicyActionIDFirst, diag.Diagnostics) {
 
-	sopActionType := management.NewSignOnPolicyActionMFA(
-		sopPriority,
-		management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION,
-	)
-
-	if vc, ok := d.(map[string]interface{})["conditions"].([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
-		sopActionType.SetConditions(expandSOPActionConditions(vc))
-	}
-
-	if v, ok := d.(map[string]interface{})["mfa_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
-		vp := v[0].(map[string]interface{})
-
-		devicePolicyID := vp["device_authentication_policy_id"]
-		if devicePolicyID != nil {
-			sopDevicePolicy := *management.NewSignOnPolicyActionMFAAllOfDeviceAuthenticationPolicy(devicePolicyID.(string))
-			sopActionType.SetDeviceAuthenticationPolicy(sopDevicePolicy)
-		}
-
-		noDeviceMode := vp["no_device_mode"]
-		if noDeviceMode != nil {
-			sopActionType.SetNoDeviceMode(management.EnumSignOnPolicyNoDeviceMode(noDeviceMode.(string)))
-		}
-
-	}
-
-	return sopActionType
-}
-
-func expandSOPActionLogin(d interface{}, sopPriority int32) *management.SignOnPolicyActionLogin {
-
-	sopActionType := management.NewSignOnPolicyActionLogin(
-		sopPriority,
-		management.ENUMSIGNONPOLICYTYPE_LOGIN,
-	)
-
-	if v, ok := d.(map[string]interface{})["conditions"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
-		sopActionType.SetConditions(expandSOPActionConditions(v))
-	}
-
-	// block is optional
-	if v, ok := d.(map[string]interface{})["login_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
-		vp := v[0].(map[string]interface{})
-
-		idpAttributes := vp["confirm_identity_provider_attributes"]
-		if idpAttributes != nil {
-			sopActionType.SetConfirmIdentityProviderAttributes(idpAttributes.(bool))
-		}
-
-		idpLockout := vp["enforce_lockout_for_identity_providers"]
-		if idpLockout != nil {
-			sopActionType.SetEnforceLockoutForIdentityProviders(idpLockout.(bool))
-		}
-
-		if v1, ok := vp["recovery"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
-
-			recoveryObj := *management.NewSignOnPolicyActionLoginAllOfRecovery(v1[0].(map[string]interface{})["enabled"].(bool))
-			sopActionType.SetRecovery(recoveryObj)
-
-		}
-
-		if v1, ok := vp["registration"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
-
-			registrationObj := *management.NewSignOnPolicyActionLoginAllOfRegistration(v1[0].(map[string]interface{})["enabled"].(bool))
-
-			externalHref := v1[0].(map[string]interface{})["external_href"]
-			if externalHref != nil {
-
-				registrationExternalObj := *management.NewSignOnPolicyActionLoginAllOfRegistrationExternal(externalHref.(string))
-				registrationObj.SetExternal(registrationExternalObj)
-
-			}
-
-			populationID := v1[0].(map[string]interface{})["population_id"]
-			if populationID != nil {
-
-				registrationPopulationObj := *management.NewSignOnPolicyActionLoginAllOfRegistrationPopulation(populationID.(string))
-				registrationObj.SetPopulation(registrationPopulationObj)
-
-			}
-
-			sopActionType.SetRegistration(registrationObj)
-
-		}
-
-		if v1, ok := vp["social_providers"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
-			sopActionType.SetSocialProviders(expandSOPActionSocialProviders(v1))
-		}
-
-	}
-
-	return sopActionType
-}
-
-func expandSOPActionIDP(d interface{}, sopPriority int32) (*management.SignOnPolicyActionIDP, error) {
-
-	if v, ok := d.(map[string]interface{})["identity_provider_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
-		vp := v[0].(map[string]interface{})
-
-		sopActionType := management.NewSignOnPolicyActionIDP(
-			sopPriority,
-			management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER,
-			*management.NewSignOnPolicyActionIDPAllOfIdentityProvider(vp["identity_provider_id"].(string)),
-		)
-
-		if vc, ok := d.(map[string]interface{})["conditions"].([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
-			sopActionType.SetConditions(expandSOPActionConditions(vc))
-		}
-
-		acrValues := vp["acr_values"]
-		if acrValues != nil {
-			sopActionType.SetAcrValues(acrValues.(string))
-		}
-
-		passUserCtx := vp["pass_user_context"]
-		if passUserCtx != nil {
-			sopActionType.SetPassUserContext(passUserCtx.(bool))
-		}
-
-		registration := vp["registration"]
-		if registration != nil {
-
-			registrationObj := *management.NewSignOnPolicyActionIDPAllOfRegistration(registration.(map[string]interface{})["enabled"].(bool))
-
-			sopActionType.SetRegistration(registrationObj)
-
-		}
-
-		return sopActionType, nil
-
-	}
-
-	return nil, fmt.Errorf("Block `identity_provider` with `identity_provider_id` must be defined when using the identity provider action type")
-}
-
-func expandSOPActionIDFirst(d interface{}, sopPriority int32) *management.SignOnPolicyActionIDFirst {
+	var diags diag.Diagnostics
 
 	sopActionType := management.NewSignOnPolicyActionIDFirst(
 		sopPriority,
@@ -209,7 +85,9 @@ func expandSOPActionIDFirst(d interface{}, sopPriority int32) *management.SignOn
 	)
 
 	if vc, ok := d.(map[string]interface{})["conditions"].([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
-		sopActionType.SetConditions(expandSOPActionConditions(vc))
+		var conditions *management.SignOnPolicyActionCommonConditionOrOrInner
+		conditions, diags = expandSOPActionCondition(vc[0], management.ENUMSIGNONPOLICYTYPE_IDENTIFIER_FIRST, sopPriority)
+		sopActionType.SetCondition(*conditions)
 	}
 
 	if v, ok := d.(map[string]interface{})["identifier_first_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
@@ -266,30 +144,192 @@ func expandSOPActionIDFirst(d interface{}, sopPriority int32) *management.SignOn
 
 	}
 
-	return sopActionType
+	return sopActionType, diags
 
 }
 
-func expandSOPActionAgreement(d interface{}, sopPriority int32) (*management.SignOnPolicyActionAgreement, error) {
+func expandSOPActionIDP(d interface{}, sopPriority int32) (*management.SignOnPolicyActionIDP, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	if v, ok := d.(map[string]interface{})["agreement_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+	if v, ok := d.(map[string]interface{})["identity_provider_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
-		sopActionType := management.NewSignOnPolicyActionAgreement(
+		sopActionType := management.NewSignOnPolicyActionIDP(
 			sopPriority,
-			management.ENUMSIGNONPOLICYTYPE_AGREEMENT,
-			*management.NewSignOnPolicyActionAgreementAllOfAgreement(vp["agreement_id"].(string)),
+			management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER,
+			*management.NewSignOnPolicyActionIDPAllOfIdentityProvider(vp["identity_provider_id"].(string)),
 		)
 
 		if vc, ok := d.(map[string]interface{})["conditions"].([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
-			sopActionType.SetConditions(expandSOPActionConditions(vc))
+			var conditions *management.SignOnPolicyActionCommonConditionOrOrInner
+			conditions, diags = expandSOPActionCondition(vc[0], management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER, sopPriority)
+			sopActionType.SetCondition(*conditions)
+		}
+
+		acrValues := vp["acr_values"]
+		if acrValues != nil {
+			sopActionType.SetAcrValues(acrValues.(string))
+		}
+
+		passUserCtx := vp["pass_user_context"]
+		if passUserCtx != nil {
+			sopActionType.SetPassUserContext(passUserCtx.(bool))
+		}
+
+		registration := vp["registration"]
+		if registration != nil {
+
+			registrationObj := *management.NewSignOnPolicyActionIDPAllOfRegistration(registration.(map[string]interface{})["enabled"].(bool))
+
+			sopActionType.SetRegistration(registrationObj)
+
 		}
 
 		return sopActionType, nil
 
 	}
 
-	return nil, fmt.Errorf("Block `agreement` with `agreement_id` must be defined when using the agreement action type")
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  "Block `identity_provider` with `identity_provider_id` must be defined when using the identity provider action type",
+	})
+
+	return nil, diags
+}
+
+func expandSOPActionLogin(d interface{}, sopPriority int32) (*management.SignOnPolicyActionLogin, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	sopActionType := management.NewSignOnPolicyActionLogin(
+		sopPriority,
+		management.ENUMSIGNONPOLICYTYPE_LOGIN,
+	)
+
+	if v, ok := d.(map[string]interface{})["conditions"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+		var conditions *management.SignOnPolicyActionCommonConditionOrOrInner
+		conditions, diags = expandSOPActionCondition(v[0], management.ENUMSIGNONPOLICYTYPE_LOGIN, sopPriority)
+		sopActionType.SetCondition(*conditions)
+	}
+
+	// block is optional
+	if v, ok := d.(map[string]interface{})["login_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+		vp := v[0].(map[string]interface{})
+
+		idpAttributes := vp["confirm_identity_provider_attributes"]
+		if idpAttributes != nil {
+			sopActionType.SetConfirmIdentityProviderAttributes(idpAttributes.(bool))
+		}
+
+		idpLockout := vp["enforce_lockout_for_identity_providers"]
+		if idpLockout != nil {
+			sopActionType.SetEnforceLockoutForIdentityProviders(idpLockout.(bool))
+		}
+
+		if v1, ok := vp["recovery"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+
+			recoveryObj := *management.NewSignOnPolicyActionLoginAllOfRecovery(v1[0].(map[string]interface{})["enabled"].(bool))
+			sopActionType.SetRecovery(recoveryObj)
+
+		}
+
+		if v1, ok := vp["registration"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+
+			registrationObj := *management.NewSignOnPolicyActionLoginAllOfRegistration(v1[0].(map[string]interface{})["enabled"].(bool))
+
+			externalHref := v1[0].(map[string]interface{})["external_href"]
+			if externalHref != nil {
+
+				registrationExternalObj := *management.NewSignOnPolicyActionLoginAllOfRegistrationExternal(externalHref.(string))
+				registrationObj.SetExternal(registrationExternalObj)
+
+			}
+
+			populationID := v1[0].(map[string]interface{})["population_id"]
+			if populationID != nil {
+
+				registrationPopulationObj := *management.NewSignOnPolicyActionLoginAllOfRegistrationPopulation(populationID.(string))
+				registrationObj.SetPopulation(registrationPopulationObj)
+
+			}
+
+			sopActionType.SetRegistration(registrationObj)
+
+		}
+
+		if v1, ok := vp["social_providers"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			sopActionType.SetSocialProviders(expandSOPActionSocialProviders(v1))
+		}
+
+	}
+
+	return sopActionType, diags
+}
+
+func expandSOPActionMFA(d interface{}, sopPriority int32) (*management.SignOnPolicyActionMFA, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	sopActionType := management.NewSignOnPolicyActionMFA(
+		sopPriority,
+		management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION,
+	)
+
+	if vc, ok := d.(map[string]interface{})["conditions"].([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
+		var conditions *management.SignOnPolicyActionCommonConditionOrOrInner
+		conditions, diags = expandSOPActionCondition(vc[0], management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION, sopPriority)
+		sopActionType.SetCondition(*conditions)
+	}
+
+	if v, ok := d.(map[string]interface{})["mfa_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+		vp := v[0].(map[string]interface{})
+
+		devicePolicyID := vp["device_authentication_policy_id"]
+		if devicePolicyID != nil {
+			sopDevicePolicy := *management.NewSignOnPolicyActionMFAAllOfDeviceAuthenticationPolicy(devicePolicyID.(string))
+			sopActionType.SetDeviceAuthenticationPolicy(sopDevicePolicy)
+		}
+
+		noDeviceMode := vp["no_device_mode"]
+		if noDeviceMode != nil {
+			sopActionType.SetNoDeviceMode(management.EnumSignOnPolicyNoDeviceMode(noDeviceMode.(string)))
+		}
+
+	}
+
+	return sopActionType, diags
+}
+
+func expandSOPActionProgressiveProfiling(d interface{}, sopPriority int32) (*management.SignOnPolicyActionProgressiveProfiling, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if v, ok := d.(map[string]interface{})["progressive_profiling_options"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+		vp := v[0].(map[string]interface{})
+
+		sopActionType := management.NewSignOnPolicyActionProgressiveProfiling(
+			sopPriority,
+			management.ENUMSIGNONPOLICYTYPE_PROGRESSIVE_PROFILING,
+			expandSOPActionAttributes(vp["attribute"].(*schema.Set)),
+			vp["prevent_multiple_prompts_per_flow"].(bool),
+			int32(vp["prompt_interval_seconds"].(int)),
+			vp["prompt_text"].(string),
+		)
+
+		if vc, ok := d.(map[string]interface{})["conditions"].([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Block `conditions` has no effect when using the progressive profiling action type",
+			})
+		}
+
+		return sopActionType, nil
+
+	}
+
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  "Block `progressive_profiling` with `prompt_text` must be defined when using the progressive profiling action type",
+	})
+
+	return nil, diags
 }
 
 func expandSOPActionDiscoveryRules(items []interface{}) []management.SignOnPolicyActionIDFirstAllOfDiscoveryRules {
@@ -339,21 +379,131 @@ func expandSOPActionSocialProviders(items []interface{}) []management.SignOnPoli
 
 }
 
-func expandSOPActionConditions(condition []interface{}) management.SignOnPolicyActionCommonConditions {
+func expandSOPActionCondition(condition interface{}, actionType management.EnumSignOnPolicyType, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
 
-	sopConditions := *management.NewSignOnPolicyActionCommonConditions()
+	sopConditions := &management.SignOnPolicyActionCommonConditionOrOrInner{}
+	var diags diag.Diagnostics
 
-	ipRange := condition[0].(map[string]interface{})["ip_range"]
-	if ipRange != nil {
-		sopConditions.SetIpRange(ipRange.(string))
+	switch actionType {
+	case management.ENUMSIGNONPOLICYTYPE_IDENTIFIER_FIRST:
+		sopConditions, diags = expandSOPActionConditionIDFirst(condition, sopPriority)
+	case management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER:
+		sopConditions, diags = expandSOPActionConditionIDP(condition, sopPriority)
+	case management.ENUMSIGNONPOLICYTYPE_LOGIN:
+		sopConditions, diags = expandSOPActionConditionLogin(condition, sopPriority)
+	case management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION:
+		sopConditions, diags = expandSOPActionConditionMFA(condition, sopPriority)
+	default:
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Policy action %s not supported when evaluating condition block", actionType),
+		})
+		return nil, diags
 	}
 
-	sessionLength := condition[0].(map[string]interface{})["action_session_length_mins"]
-	if sessionLength != nil {
-		sopConditions.SetSecondsSince(int32(sessionLength.(int)))
+	return sopConditions, diags
+}
+
+func expandSOPActionConditionIDFirstAndLogin(condition interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	conditionStruct := &management.SignOnPolicyActionCommonConditionOrOrInner{}
+
+	var lastSignOnCond *management.SignOnPolicyActionCommonConditionGreater
+	var populationMembership *management.SignOnPolicyActionCommonConditionOr
+	var userAttributes *management.SignOnPolicyActionCommonConditionOr
+
+	processed := 0
+
+	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than"].(int); ok {
+		lastSignOnCond = management.NewSignOnPolicyActionCommonConditionGreater(int32(v), "${session.lastSignOn.withAuthenticator.pwd.at}")
+		processed += 1
 	}
 
-	return sopConditions
+	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].([]string); ok {
+
+		if sopPriority < 2 {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Condition `user_is_member_of_any_population_id` is defined but has no effect where the action priority is 1.",
+			})
+		} else {
+
+			//loop the things
+
+			processed += 1
+		}
+	}
+
+	if v, ok := condition.(map[string]interface{})["user_attribute_equals"].(*schema.Set); ok {
+
+		if sopPriority < 2 {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Condition `user_attribute_equals` is defined but has no effect where the action priority is 1.",
+			})
+		} else {
+
+			//loop the things
+
+			processed += 1
+		}
+	}
+
+	if processed > 1 {
+
+	} else {
+
+	}
+
+	return conditionStruct, diags
+}
+
+func expandSOPActionConditionIDFirst(condition interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
+	return expandSOPActionConditionIDFirstAndLogin(condition, sopPriority)
+}
+
+func expandSOPActionConditionIDP(condition interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	conditionStruct := &management.SignOnPolicyActionCommonConditionOrOrInner{}
+
+	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than"].(int); ok {
+
+		conditionAggregateStruct := &management.SignOnPolicyActionCommonConditionAggregate{
+			SignOnPolicyActionCommonConditionGreater: management.NewSignOnPolicyActionCommonConditionGreater(int32(v), "${session.lastSignOn.withAuthenticator.pwd.at}"),
+		}
+
+		conditionStruct.SignOnPolicyActionCommonConditionAggregate = conditionAggregateStruct
+	}
+
+	return conditionStruct, diags
+
+}
+
+func expandSOPActionConditionLogin(condition interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
+	return expandSOPActionConditionIDFirstAndLogin(condition, sopPriority)
+}
+
+func expandSOPActionConditionMFA(condition interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	conditionStruct := &management.SignOnPolicyActionCommonConditionOrOrInner{}
+
+	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than"].(int); ok {
+		condition := management.NewSignOnPolicyActionCommonConditionGreater(int32(v), "${session.lastSignOn.withAuthenticator.pwd.at}")
+	}
+
+	ip_out_of_range_cidr.([]string)
+	ip_reputation_high_risk.(bool)
+	geovelocity_anomaly_detected.(bool)
+	anonymous_network_detected.(bool)
+	anonymous_network_detected_allowed_cidr.([]string)
+
+	user_is_member_of_any_population_id.([]string)
+	user_attribute_equals.(*schema.Set)
+
+	return conditionStruct, diags
 }
 
 func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, error) {
@@ -377,7 +527,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 
 			actionMap["action_type"] = string(management.ENUMSIGNONPOLICYTYPE_AGREEMENT)
 
-			if v, ok := action.SignOnPolicyActionAgreement.GetConditionsOk(); ok {
+			if v, ok := action.SignOnPolicyActionAgreement.GetConditionOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
 			actionMap["agreement_options"] = flattenActionAgreement(action.SignOnPolicyActionAgreement)
@@ -389,7 +539,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 
 			actionMap["action_type"] = string(management.ENUMSIGNONPOLICYTYPE_IDENTIFIER_FIRST)
 
-			if v, ok := action.SignOnPolicyActionIDFirst.GetConditionsOk(); ok {
+			if v, ok := action.SignOnPolicyActionIDFirst.GetConditionOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
 			actionMap["identifier_first_options"] = flattenActionIDFirst(action.SignOnPolicyActionIDFirst)
@@ -401,7 +551,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 
 			actionMap["action_type"] = string(management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER)
 
-			if v, ok := action.SignOnPolicyActionIDP.GetConditionsOk(); ok {
+			if v, ok := action.SignOnPolicyActionIDP.GetConditionOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
 			actionMap["identity_provider_options"] = flattenActionIDP(action.SignOnPolicyActionIDP)
@@ -413,7 +563,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 
 			actionMap["action_type"] = string(management.ENUMSIGNONPOLICYTYPE_LOGIN)
 
-			if v, ok := action.SignOnPolicyActionLogin.GetConditionsOk(); ok {
+			if v, ok := action.SignOnPolicyActionLogin.GetConditionOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
 			actionMap["login_options"] = flattenActionLogin(action.SignOnPolicyActionLogin)
@@ -425,7 +575,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 
 			actionMap["action_type"] = string(management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION)
 
-			if v, ok := action.SignOnPolicyActionMFA.GetConditionsOk(); ok {
+			if v, ok := action.SignOnPolicyActionMFA.GetConditionOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
 			actionMap["mfa_options"] = flattenActionMFA(action.SignOnPolicyActionMFA)
@@ -437,7 +587,7 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 
 			actionMap["action_type"] = string(management.ENUMSIGNONPOLICYTYPE_PROGRESSIVE_PROFILING)
 
-			if v, ok := action.SignOnPolicyActionProgressiveProfiling.GetConditionsOk(); ok {
+			if v, ok := action.SignOnPolicyActionProgressiveProfiling.GetConditionOk(); ok {
 				actionMap["conditions"] = flattenConditions(*v)
 			}
 			actionMap["progressive_profiling_options"] = flattenActionProgressiveProfiling(action.SignOnPolicyActionProgressiveProfiling)
@@ -461,25 +611,26 @@ func flattenSOPActions(actions []management.SignOnPolicyAction) ([]interface{}, 
 
 }
 
-func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolicyActionCommonConditions) []interface{} {
+func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolicyActionCommonConditionOrOrInner) []interface{} {
 
+	// TODO: this whole thing
 	conditionsList := make([]interface{}, 0, 1)
 
-	conditions := map[string]interface{}{}
+	// conditions := map[string]interface{}{}
 
-	if v, ok := signOnPolicyActionCommonConditions.GetIpRangeOk(); ok {
-		conditions["ip_range"] = v
-	} else {
-		conditions["ip_range"] = nil
-	}
+	// if v, ok := signOnPolicyActionCommonConditions.GetIpRangeOk(); ok {
+	// 	conditions["ip_range"] = v
+	// } else {
+	// 	conditions["ip_range"] = nil
+	// }
 
-	if v, ok := signOnPolicyActionCommonConditions.GetSecondsSinceOk(); ok {
-		conditions["action_session_length_mins"] = v
-	} else {
-		conditions["action_session_length_mins"] = nil
-	}
+	// if v, ok := signOnPolicyActionCommonConditions.GetSecondsSinceOk(); ok {
+	// 	conditions["action_session_length_mins"] = v
+	// } else {
+	// 	conditions["action_session_length_mins"] = nil
+	// }
 
-	conditionsList = append(conditionsList, conditions)
+	// conditionsList = append(conditionsList, conditions)
 	return conditionsList
 }
 
@@ -618,6 +769,10 @@ func flattenActionAgreement(signOnPolicyActionAgreement *management.SignOnPolicy
 	action := map[string]interface{}{}
 
 	action["agreement_id"] = signOnPolicyActionAgreement.Agreement.GetId()
+
+	if v, ok := signOnPolicyActionAgreement.GetDisableDeclineOptionOk(); ok {
+		action["show_decline_option"] = !*v
+	}
 
 	actionList = append(actionList, action)
 	return actionList

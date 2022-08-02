@@ -24,17 +24,80 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"ip_range": {
-						Description:      "A string that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.",
-						Type:             schema.TypeString,
-						Optional:         true,
-						ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDR),
-					},
-					"action_session_length_mins": {
-						Description:      "An integer that specifies the maximum number of minutes to wait since the last sign on before prompting for a new sign-on action.",
+					"last_sign_on_older_than": {
+						Description:      "",
 						Type:             schema.TypeInt,
 						Optional:         true,
 						ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
+					},
+					"user_is_member_of_any_population_id": {
+						Description: "",
+						Type:        schema.TypeList,
+						MaxItems:    100,
+						Optional:    true,
+						Elem: &schema.Schema{
+							Type:             schema.TypeString,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+						},
+					},
+					"user_attribute_equals": {
+						Description: "",
+						Type:        schema.TypeSet,
+						Optional:    true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"attribute_reference": {
+									Description:      "",
+									Type:             schema.TypeString,
+									Required:         true,
+									ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+								},
+								"value": {
+									Description:      "",
+									Type:             schema.TypeString,
+									Required:         true,
+									ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+								},
+							},
+						},
+					},
+					"ip_out_of_range_cidr": {
+						Description: "",
+						Type:        schema.TypeList,
+						MaxItems:    100,
+						Optional:    true,
+						Elem: &schema.Schema{
+							Type:             schema.TypeString,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDR),
+						},
+					},
+					"ip_reputation_high_risk": {
+						Description: "",
+						Type:        schema.TypeBool,
+						Optional:    true,
+						Default:     false,
+					},
+					"geovelocity_anomaly_detected": {
+						Description: "",
+						Type:        schema.TypeBool,
+						Optional:    true,
+						Default:     false,
+					},
+					"anonymous_network_detected": {
+						Description: "",
+						Type:        schema.TypeBool,
+						Optional:    true,
+						Default:     false,
+					},
+					"anonymous_network_detected_allowed_cidr": {
+						Description: "",
+						Type:        schema.TypeList,
+						MaxItems:    100,
+						Optional:    true,
+						Elem: &schema.Schema{
+							Type:             schema.TypeString,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDR),
+						},
 					},
 				},
 			},
@@ -175,6 +238,13 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 						Required:         true,
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 					},
+					"show_decline_option": {
+						Description:      "When enabled, the `Do Not Accept` button will terminate the Flow and display an error message to the user.",
+						Type:             schema.TypeBool,
+						Optional:         true,
+						Default:          true,
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+					},
 				},
 			},
 		},
@@ -209,12 +279,14 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 					"prevent_multiple_prompts_per_flow": {
 						Description: "A boolean that specifies whether the progressive profiling action will not be executed if another progressive profiling action has already been executed during the flow.",
 						Type:        schema.TypeBool,
-						Required:    true,
+						Optional:    true,
+						Default:     true,
 					},
 					"prompt_interval_seconds": {
 						Description:      "An integer that specifies how often to prompt the user to provide profile data for the configured attributes for which they do not have values.",
 						Type:             schema.TypeInt,
-						Required:         true,
+						Optional:         true,
+						Default:          7776000,
 						ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
 					},
 					"prompt_text": {

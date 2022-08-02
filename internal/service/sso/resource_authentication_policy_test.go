@@ -1,5 +1,7 @@
 package sso_test
 
+// TODO test conditions
+
 import (
 	"context"
 	"fmt"
@@ -157,9 +159,6 @@ func TestAccAuthenticationPolicy_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "LOGIN"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.ip_range", "192.168.0.0/32"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.action_session_length_mins", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.confirm_identity_provider_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.enforce_lockout_for_identity_providers", "true"),
@@ -181,7 +180,6 @@ func TestAccAuthenticationPolicy_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "LOGIN"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.#", "0"),
 				),
 			},
@@ -194,7 +192,6 @@ func TestAccAuthenticationPolicy_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "LOGIN"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.confirm_identity_provider_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.enforce_lockout_for_identity_providers", "true"),
@@ -212,9 +209,6 @@ func TestAccAuthenticationPolicy_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "LOGIN"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.ip_range", "192.168.0.0/32"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.action_session_length_mins", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.confirm_identity_provider_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.enforce_lockout_for_identity_providers", "true"),
@@ -258,9 +252,6 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "IDENTIFIER_FIRST"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.ip_range", "192.168.0.0/32"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.action_session_length_mins", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.confirm_identity_provider_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.enforce_lockout_for_identity_providers", "true"),
@@ -283,7 +274,6 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "IDENTIFIER_FIRST"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.#", "0"),
 				),
 			},
@@ -296,7 +286,6 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "IDENTIFIER_FIRST"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.confirm_identity_provider_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.enforce_lockout_for_identity_providers", "true"),
@@ -315,9 +304,6 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "IDENTIFIER_FIRST"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.ip_range", "192.168.0.0/32"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.action_session_length_mins", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.confirm_identity_provider_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.enforce_lockout_for_identity_providers", "true"),
@@ -518,9 +504,6 @@ func TestAccAuthenticationPolicy_ProgressiveProfilingAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "PROGRESSIVE_PROFILING"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.ip_range", "192.168.0.0/32"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.action_session_length_mins", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.progressive_profiling_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.progressive_profiling_options.0.prevent_multiple_prompts_per_flow", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.progressive_profiling_options.0.prompt_interval_seconds", "5"),
@@ -541,7 +524,6 @@ func TestAccAuthenticationPolicy_ProgressiveProfilingAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "PROGRESSIVE_PROFILING"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.progressive_profiling_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.progressive_profiling_options.0.prevent_multiple_prompts_per_flow", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.progressive_profiling_options.0.prompt_interval_seconds", "5"),
@@ -562,9 +544,6 @@ func TestAccAuthenticationPolicy_ProgressiveProfilingAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.action_type", "PROGRESSIVE_PROFILING"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.ip_range", "192.168.0.0/32"),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.conditions.0.action_session_length_mins", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.progressive_profiling_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.progressive_profiling_options.0.prevent_multiple_prompts_per_flow", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.progressive_profiling_options.0.prompt_interval_seconds", "5"),
@@ -683,11 +662,6 @@ func testAccAuthenticationPolicyConfig_LoginFullNoExt(environmentName, licenseID
 			policy_action {
 				action_type = "LOGIN"
 
-				conditions {
-					ip_range = "192.168.0.0/32"
-					action_session_length_mins = 30
-				}
-
 				login_options {
 					confirm_identity_provider_attributes = true
 					enforce_lockout_for_identity_providers = true
@@ -723,11 +697,6 @@ func testAccAuthenticationPolicyConfig_LoginFullWithExt(environmentName, license
 
 			policy_action {
 				action_type = "LOGIN"
-
-				conditions {
-					ip_range = "192.168.0.0/32"
-					action_session_length_mins = 30
-				}
 
 				login_options {
 					confirm_identity_provider_attributes = true
@@ -813,11 +782,6 @@ func testAccAuthenticationPolicyConfig_IDFirstFullWithExt(environmentName, licen
 			policy_action {
 				action_type = "IDENTIFIER_FIRST"
 
-				conditions {
-					ip_range = "192.168.0.0/32"
-					action_session_length_mins = 30
-				}
-
 				identifier_first_options {
 					confirm_identity_provider_attributes = true
 					enforce_lockout_for_identity_providers = true
@@ -861,11 +825,6 @@ func testAccAuthenticationPolicyConfig_IDFirstFullNoExt(environmentName, license
 
 			policy_action {
 				action_type = "IDENTIFIER_FIRST"
-
-				conditions {
-					ip_range = "192.168.0.0/32"
-					action_session_length_mins = 30
-				}
 
 				identifier_first_options {
 					confirm_identity_provider_attributes = true
@@ -958,11 +917,6 @@ func testAccAuthenticationPolicyConfig_IDFirstMinimal2(environmentName, licenseI
 // 			policy_action {
 // 				action_type = "MULTI_FACTOR_AUTHENTICATION"
 
-// 				conditions {
-// 					ip_range = "192.168.0.0/32"
-// 					action_session_length_mins = 30
-// 				}
-
 // 				mfa_options {
 // 					device_authentication_policy_id = data.device_policy.id
 // 					no_device_mode = "BLOCK"
@@ -1018,11 +972,6 @@ func testAccAuthenticationPolicyConfig_IDFirstMinimal2(environmentName, licenseI
 
 // 			policy_action {
 // 				action_type = "IDENTITY_PROVIDER"
-
-// 				conditions {
-// 					ip_range = "192.168.0.0/32"
-// 					action_session_length_mins = 30
-// 				}
 
 // 				identity_provider_options {
 // 					acr_values = "Level_3 Level_2 Level_1"
@@ -1086,13 +1035,9 @@ func testAccAuthenticationPolicyConfig_IDFirstMinimal2(environmentName, licenseI
 // 			policy_action {
 // 				action_type = "AGREEMENT"
 
-// 				conditions {
-// 					ip_range = "192.168.0.0/32"
-// 					action_session_length_mins = 30
-// 				}
-
 // 				agreement_options {
 // 					agreement_id =
+//					show_decline_option = false
 // 				}
 
 // 			}
@@ -1145,11 +1090,6 @@ func testAccAuthenticationPolicyConfig_ProgressiveProfilingFull(environmentName,
 			policy_action {
 				action_type = "PROGRESSIVE_PROFILING"
 
-				conditions {
-					ip_range = "192.168.0.0/32"
-					action_session_length_mins = 30
-				}
-
 				progressive_profiling_options {
 					prevent_multiple_prompts_per_flow = true
 					prompt_interval_seconds = 5
@@ -1190,8 +1130,6 @@ func testAccAuthenticationPolicyConfig_ProgressiveProfilingMinimal(environmentNa
 				action_type = "PROGRESSIVE_PROFILING"
 
 				progressive_profiling_options {
-					prevent_multiple_prompts_per_flow = true
-					prompt_interval_seconds = 5
 					prompt_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
 					attribute {
