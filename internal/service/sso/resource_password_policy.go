@@ -548,7 +548,7 @@ func expandPasswordPolicy(d *schema.ResourceData) interface{} {
 			}
 
 			if special != nil {
-				passwordPolicyMinChars.Set______(int32(special.(int)))
+				passwordPolicyMinChars.SetSpecialChar(int32(special.(int)))
 			}
 
 			passwordPolicy.SetMinCharacters(passwordPolicyMinChars)
@@ -662,7 +662,7 @@ func flattenMinCharacters(passwordPolicyMinChars *management.PasswordPolicyMinCh
 		item["numeric"] = v
 	}
 
-	if v, ok := passwordPolicyMinChars.Get______Ok(); ok {
+	if v, ok := passwordPolicyMinChars.GetSpecialCharOk(); ok {
 		item["special_characters"] = v
 	}
 
