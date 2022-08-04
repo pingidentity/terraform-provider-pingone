@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -53,6 +52,7 @@ func ResourceAuthenticationPolicy() *schema.Resource {
 				Type:        schema.TypeList,
 				MaxItems:    10,
 				Required:    true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: resourceAuthenticationPolicyActionSchema(),
 				},
@@ -91,10 +91,7 @@ func resourceAuthenticationPolicyCreate(ctx context.Context, d *schema.ResourceD
 	// Policy actions
 	for itemIndex, item := range d.Get("policy_action").([]interface{}) {
 
-		sopAction, err := expandSOPAction(item, int32(itemIndex+1))
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		sopAction, diags := expandSOPAction(item, int32(itemIndex+1))
 
 		_, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), resp.GetId()).SignOnPolicyAction(*sopAction).Execute()
 		if (err != nil) || (r.StatusCode != 201) {
@@ -199,113 +196,113 @@ func resourceAuthenticationPolicyUpdate(ctx context.Context, d *schema.ResourceD
 	}
 
 	// Policy actions
-	policyActions := d.Get("policy_action").([]interface{})
+	// policyActions := d.Get("policy_action").([]interface{})
 
-	respActions, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.ReadAllSignOnPolicyActions(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.ReadAllSignOnPolicyActions``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	// respActions, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.ReadAllSignOnPolicyActions(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+	// if err != nil {
+	// 	diags = append(diags, diag.Diagnostic{
+	// 		Severity: diag.Warning,
+	// 		Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.ReadAllSignOnPolicyActions``: %v", err),
+	// 		Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
+	// 	})
 
-		return diags
-	} else {
+	// 	return diags
+	// } else {
 
-		// get the list of actions
-		if v, ok := respActions.Embedded.GetActionsOk(); ok {
+	// 	// get the list of actions
+	// 	if v, ok := respActions.Embedded.GetActionsOk(); ok {
 
-			// count difference. +ve is to add to api, -ve is to delete from api
-			indexDiff := len(policyActions) - len(v)
+	// 		// count difference. +ve is to add to api, -ve is to delete from api
+	// 		indexDiff := len(policyActions) - len(v)
 
-			// Sort by priority first, this way we can keep the ID by priority consistent
-			sort.Slice(v, func(i, j int) bool {
-				return getActionPriority(v[i]) < getActionPriority(v[j])
-			})
+	// 		// Sort by priority first, this way we can keep the ID by priority consistent
+	// 		sort.Slice(v, func(i, j int) bool {
+	// 			return getActionPriority(v[i]) < getActionPriority(v[j])
+	// 		})
 
-			// Loop the API actions, we update as we go and remove excess if necessary
-			for itemIndex, item := range v {
+	// 		// Loop the API actions, we update as we go and remove excess if necessary
+	// 		for itemIndex, item := range v {
 
-				// Get the action ID to use in further API calls
-				actionID := getActionID(item)
-				if actionID == "" {
-					diags = append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  fmt.Sprintf("Cannot get action ID for action %v", item),
-					})
+	// 			// Get the action ID to use in further API calls
+	// 			actionID := getActionID(item)
+	// 			if actionID == "" {
+	// 				diags = append(diags, diag.Diagnostic{
+	// 					Severity: diag.Error,
+	// 					Summary:  fmt.Sprintf("Cannot get action ID for action %v", item),
+	// 				})
 
-					return diags
-				} else {
+	// 				return diags
+	// 			} else {
 
-					// update any api actions that have an associated configured action
-					if itemIndex < len(policyActions) {
-						sopAction, err := expandSOPAction(policyActions[itemIndex], int32(itemIndex+1))
-						if err != nil {
-							diags = append(diags, diag.Diagnostic{
-								Severity: diag.Warning,
-								Summary:  fmt.Sprintf("Cannot expand policy action: %v", err),
-							})
-						} else {
+	// 				// update any api actions that have an associated configured action
+	// 				if itemIndex < len(policyActions) {
+	// 					sopAction, err := expandSOPAction(policyActions[itemIndex], int32(itemIndex+1))
+	// 					if err != nil {
+	// 						diags = append(diags, diag.Diagnostic{
+	// 							Severity: diag.Warning,
+	// 							Summary:  fmt.Sprintf("Cannot expand policy action: %v", err),
+	// 						})
+	// 					} else {
 
-							_, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Id(), actionID).SignOnPolicyAction(*sopAction).Execute()
-							if (err != nil) || (r.StatusCode != 201) {
-								diags = append(diags, diag.Diagnostic{
-									Severity: diag.Warning,
-									Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.UpdateSignOnPolicyAction``: %v", err),
-									Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-								})
-							}
-						}
+	// 						_, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Id(), actionID).SignOnPolicyAction(*sopAction).Execute()
+	// 						if (err != nil) || (r.StatusCode != 201) {
+	// 							diags = append(diags, diag.Diagnostic{
+	// 								Severity: diag.Warning,
+	// 								Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.UpdateSignOnPolicyAction``: %v", err),
+	// 								Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
+	// 							})
+	// 						}
+	// 					}
 
-					} else { // delete any api actions that exist without a configured action
+	// 				} else { // delete any api actions that exist without a configured action
 
-						r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Id(), actionID).Execute()
-						if (err != nil) || (r.StatusCode != 204) {
-							diags = append(diags, diag.Diagnostic{
-								Severity: diag.Warning,
-								Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.DeleteSignOnPolicyAction``: %v", err),
-								Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-							})
-						}
+	// 					r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Id(), actionID).Execute()
+	// 					if (err != nil) || (r.StatusCode != 204) {
+	// 						diags = append(diags, diag.Diagnostic{
+	// 							Severity: diag.Warning,
+	// 							Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.DeleteSignOnPolicyAction``: %v", err),
+	// 							Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
+	// 						})
+	// 					}
 
-					}
-				}
+	// 				}
+	// 			}
 
-			}
+	// 		}
 
-			// add any new actions
-			for i := 0; i >= 0 && i < indexDiff; i += 1 {
+	// 		// add any new actions
+	// 		for i := 0; i >= 0 && i < indexDiff; i += 1 {
 
-				policyActionIndex := i + len(v)
+	// 			policyActionIndex := i + len(v)
 
-				sopAction, err := expandSOPAction(policyActions[policyActionIndex], int32(policyActionIndex+1))
-				if err != nil {
-					return diag.FromErr(err)
-				}
+	// 			sopAction, err := expandSOPAction(policyActions[policyActionIndex], int32(policyActionIndex+1))
+	// 			if err != nil {
+	// 				return diag.FromErr(err)
+	// 			}
 
-				_, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Id()).SignOnPolicyAction(*sopAction).Execute()
-				if (err != nil) || (r.StatusCode != 201) {
-					diags = append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction``: %v", err),
-						Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-					})
+	// 			_, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Id()).SignOnPolicyAction(*sopAction).Execute()
+	// 			if (err != nil) || (r.StatusCode != 201) {
+	// 				diags = append(diags, diag.Diagnostic{
+	// 					Severity: diag.Error,
+	// 					Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction``: %v", err),
+	// 					Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
+	// 				})
 
-					return diags
-				}
+	// 				return diags
+	// 			}
 
-			}
+	// 		}
 
-		} else {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No existing authentication policy actions found, this is a bug in the provider",
-				Detail:   fmt.Sprintf("Authentication policies must have at least one action configured.  Policy %s has returned no policy actions", d.Id()),
-			})
+	// 	} else {
+	// 		diags = append(diags, diag.Diagnostic{
+	// 			Severity: diag.Error,
+	// 			Summary:  "No existing authentication policy actions found, this is a bug in the provider",
+	// 			Detail:   fmt.Sprintf("Authentication policies must have at least one action configured.  Policy %s has returned no policy actions", d.Id()),
+	// 		})
 
-			return diags
-		}
-	}
+	// 		return diags
+	// 	}
+	// }
 
 	return resourceAuthenticationPolicyRead(ctx, d, meta)
 }

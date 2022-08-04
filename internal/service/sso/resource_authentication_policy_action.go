@@ -63,7 +63,7 @@ func expandSOPActionAgreement(d interface{}, sopPriority int32) (*management.Sig
 			sopActionType.SetDisableDeclineOption(!vd)
 		}
 
-		return sopActionType, nil
+		return sopActionType, diags
 
 	}
 
@@ -185,7 +185,7 @@ func expandSOPActionIDP(d interface{}, sopPriority int32) (*management.SignOnPol
 
 		}
 
-		return sopActionType, nil
+		return sopActionType, diags
 
 	}
 
@@ -320,7 +320,7 @@ func expandSOPActionProgressiveProfiling(d interface{}, sopPriority int32) (*man
 			})
 		}
 
-		return sopActionType, nil
+		return sopActionType, diags
 
 	}
 
@@ -381,14 +381,14 @@ func expandSOPActionSocialProviders(items []interface{}) []management.SignOnPoli
 
 func expandSOPActionCondition(condition interface{}, actionType management.EnumSignOnPolicyType, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
 
-	sopConditions := &management.SignOnPolicyActionCommonConditionOrOrInner{}
+	var sopConditions *management.SignOnPolicyActionCommonConditionOrOrInner
 	var diags diag.Diagnostics
 
 	switch actionType {
 	case management.ENUMSIGNONPOLICYTYPE_IDENTIFIER_FIRST:
 		sopConditions, diags = expandSOPActionConditionIDFirst(condition, sopPriority)
 	case management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER:
-		sopConditions, diags = expandSOPActionConditionIDP(condition, sopPriority)
+		sopConditions = expandSOPActionConditionIDP(condition)
 	case management.ENUMSIGNONPOLICYTYPE_LOGIN:
 		sopConditions, diags = expandSOPActionConditionLogin(condition, sopPriority)
 	case management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION:
@@ -407,20 +407,18 @@ func expandSOPActionCondition(condition interface{}, actionType management.EnumS
 func expandSOPActionConditionIDFirstAndLogin(condition interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	conditionStruct := &management.SignOnPolicyActionCommonConditionOrOrInner{}
-
-	var lastSignOnCond *management.SignOnPolicyActionCommonConditionGreater
-	var populationMembership *management.SignOnPolicyActionCommonConditionOr
-	var userAttributes *management.SignOnPolicyActionCommonConditionOr
-
-	processed := 0
+	var conditionStructList = make([]management.SignOnPolicyActionCommonConditionOrOrInner, 0)
 
 	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than"].(int); ok {
-		lastSignOnCond = management.NewSignOnPolicyActionCommonConditionGreater(int32(v), "${session.lastSignOn.withAuthenticator.pwd.at}")
-		processed += 1
+
+		conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+			SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+				SignOnPolicyActionCommonConditionGreater: management.NewSignOnPolicyActionCommonConditionGreater(int32(v), "${session.lastSignOn.withAuthenticator.pwd.at}"),
+			},
+		})
 	}
 
-	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].([]string); ok {
+	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].([]string); ok && v != nil && len(v) > 0 && v[0] != "" {
 
 		if sopPriority < 2 {
 			diags = append(diags, diag.Diagnostic{
@@ -429,13 +427,38 @@ func expandSOPActionConditionIDFirstAndLogin(condition interface{}, sopPriority 
 			})
 		} else {
 
-			//loop the things
+			if len(v) > 1 {
 
-			processed += 1
+				conditionList := make([]management.SignOnPolicyActionCommonConditionOrOrInner, 0)
+
+				for _, population := range v {
+
+					conditionList = append(conditionList, management.SignOnPolicyActionCommonConditionOrOrInner{
+						SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+							SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(population, "${user.population.id}"),
+						},
+					})
+
+				}
+
+				conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+					SignOnPolicyActionCommonConditionOr: &management.SignOnPolicyActionCommonConditionOr{
+						Or: conditionList,
+					},
+				})
+
+			} else {
+
+				conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+					SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+						SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(v[0], "${user.population.id}"),
+					},
+				})
+			}
 		}
 	}
 
-	if v, ok := condition.(map[string]interface{})["user_attribute_equals"].(*schema.Set); ok {
+	if v, ok := condition.(map[string]interface{})["user_attribute_equals"].(*schema.Set); ok && v != nil && len(v.List()) > 0 && v.List()[0] != nil {
 
 		if sopPriority < 2 {
 			diags = append(diags, diag.Diagnostic{
@@ -444,16 +467,49 @@ func expandSOPActionConditionIDFirstAndLogin(condition interface{}, sopPriority 
 			})
 		} else {
 
-			//loop the things
+			if len(v.List()) > 1 {
 
-			processed += 1
+				conditionList := make([]management.SignOnPolicyActionCommonConditionOrOrInner, 0)
+
+				for _, attribute := range v.List() {
+
+					conditionList = append(conditionList, management.SignOnPolicyActionCommonConditionOrOrInner{
+						SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+							SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(attribute.(map[string]interface{})["value"].(string), attribute.(map[string]interface{})["attribute_reference"].(string)),
+						},
+					})
+
+				}
+
+				conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+					SignOnPolicyActionCommonConditionOr: &management.SignOnPolicyActionCommonConditionOr{
+						Or: conditionList,
+					},
+				})
+
+			} else {
+
+				conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+					SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+						SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(v.List()[0].(map[string]interface{})["value"].(string), v.List()[0].(map[string]interface{})["attribute_reference"].(string)),
+					},
+				})
+			}
 		}
 	}
 
-	if processed > 1 {
+	var conditionStruct = &management.SignOnPolicyActionCommonConditionOrOrInner{}
 
-	} else {
+	if len(conditionStructList) > 1 {
 
+		conditionStruct = &management.SignOnPolicyActionCommonConditionOrOrInner{
+			SignOnPolicyActionCommonConditionOr: &management.SignOnPolicyActionCommonConditionOr{
+				Or: conditionStructList,
+			},
+		}
+
+	} else if len(conditionStructList) == 1 {
+		conditionStruct = &conditionStructList[0]
 	}
 
 	return conditionStruct, diags
@@ -463,8 +519,7 @@ func expandSOPActionConditionIDFirst(condition interface{}, sopPriority int32) (
 	return expandSOPActionConditionIDFirstAndLogin(condition, sopPriority)
 }
 
-func expandSOPActionConditionIDP(condition interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func expandSOPActionConditionIDP(condition interface{}) *management.SignOnPolicyActionCommonConditionOrOrInner {
 
 	conditionStruct := &management.SignOnPolicyActionCommonConditionOrOrInner{}
 
@@ -477,7 +532,7 @@ func expandSOPActionConditionIDP(condition interface{}, sopPriority int32) (*man
 		conditionStruct.SignOnPolicyActionCommonConditionAggregate = conditionAggregateStruct
 	}
 
-	return conditionStruct, diags
+	return conditionStruct
 
 }
 
@@ -488,20 +543,162 @@ func expandSOPActionConditionLogin(condition interface{}, sopPriority int32) (*m
 func expandSOPActionConditionMFA(condition interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	conditionStruct := &management.SignOnPolicyActionCommonConditionOrOrInner{}
+	// heres johnny
+	var conditionStructList = make([]management.SignOnPolicyActionCommonConditionOrOrInner, 0)
 
 	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than"].(int); ok {
-		condition := management.NewSignOnPolicyActionCommonConditionGreater(int32(v), "${session.lastSignOn.withAuthenticator.pwd.at}")
+
+		conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+			SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+				SignOnPolicyActionCommonConditionGreater: management.NewSignOnPolicyActionCommonConditionGreater(int32(v), "${session.lastSignOn.withAuthenticator.pwd.at}"),
+			},
+		})
 	}
 
-	ip_out_of_range_cidr.([]string)
-	ip_reputation_high_risk.(bool)
-	geovelocity_anomaly_detected.(bool)
-	anonymous_network_detected.(bool)
-	anonymous_network_detected_allowed_cidr.([]string)
+	if v, ok := condition.(map[string]interface{})["ip_out_of_range_cidr"].([]string); ok && v != nil && len(v) > 0 && v[0] != "" {
 
-	user_is_member_of_any_population_id.([]string)
-	user_attribute_equals.(*schema.Set)
+		conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+			SignOnPolicyActionCommonConditionNot: &management.SignOnPolicyActionCommonConditionNot{
+				Not: &management.SignOnPolicyActionCommonConditionAggregate{
+					SignOnPolicyActionCommonConditionIPRange: management.NewSignOnPolicyActionCommonConditionIPRange("${flow.request.http.remoteIp}", v),
+				},
+			},
+		})
+
+	}
+
+	if v, ok := condition.(map[string]interface{})["ip_reputation_high_risk"].(bool); ok && v {
+
+		min := 80
+		max := 100
+		ipRisk := *management.NewSignOnPolicyActionCommonConditionIPRiskIpRisk(int32(min), int32(max))
+
+		conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+			SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+				SignOnPolicyActionCommonConditionIPRisk: management.NewSignOnPolicyActionCommonConditionIPRisk(ipRisk, "${flow.request.http.remoteIp}"),
+			},
+		})
+	}
+
+	if v, ok := condition.(map[string]interface{})["geovelocity_anomaly_detected"].(bool); ok && v {
+
+		validObj := *management.NewSignOnPolicyActionCommonConditionGeovelocityValid("${user.lastSignOn.remoteIp}", "${user.lastSignOn.at}")
+
+		conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+			SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+				SignOnPolicyActionCommonConditionGeovelocity: management.NewSignOnPolicyActionCommonConditionGeovelocity("${flow.request.http.remoteIp}", validObj),
+			},
+		})
+	}
+
+	if v, ok := condition.(map[string]interface{})["anonymous_network_detected"].(bool); ok && v {
+
+		anonymousNetworkList := make([]string, 0)
+
+		if j, ok := condition.(map[string]interface{})["anonymous_network_detected_allowed_cidr"].([]string); ok && j != nil && len(j) > 0 && j[0] != "" {
+			anonymousNetworkList = j
+		}
+
+		conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+			SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+				SignOnPolicyActionCommonConditionAnonymousNetwork: management.NewSignOnPolicyActionCommonConditionAnonymousNetwork(anonymousNetworkList, "${flow.request.http.remoteIp}"),
+			},
+		})
+	}
+
+	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].([]string); ok && v != nil && len(v) > 0 && v[0] != "" {
+
+		if sopPriority < 2 {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Condition `user_is_member_of_any_population_id` is defined but has no effect where the action priority is 1.",
+			})
+		} else {
+
+			if len(v) > 1 {
+
+				conditionList := make([]management.SignOnPolicyActionCommonConditionOrOrInner, 0)
+
+				for _, population := range v {
+
+					conditionList = append(conditionList, management.SignOnPolicyActionCommonConditionOrOrInner{
+						SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+							SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(population, "${user.population.id}"),
+						},
+					})
+
+				}
+
+				conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+					SignOnPolicyActionCommonConditionOr: &management.SignOnPolicyActionCommonConditionOr{
+						Or: conditionList,
+					},
+				})
+
+			} else {
+
+				conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+					SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+						SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(v[0], "${user.population.id}"),
+					},
+				})
+			}
+		}
+	}
+
+	if v, ok := condition.(map[string]interface{})["user_attribute_equals"].(*schema.Set); ok && v != nil && len(v.List()) > 0 && v.List()[0] != nil {
+
+		if sopPriority < 2 {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Condition `user_attribute_equals` is defined but has no effect where the action priority is 1.",
+			})
+		} else {
+
+			if len(v.List()) > 1 {
+
+				conditionList := make([]management.SignOnPolicyActionCommonConditionOrOrInner, 0)
+
+				for _, attribute := range v.List() {
+
+					conditionList = append(conditionList, management.SignOnPolicyActionCommonConditionOrOrInner{
+						SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+							SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(attribute.(map[string]interface{})["value"].(string), attribute.(map[string]interface{})["attribute_reference"].(string)),
+						},
+					})
+
+				}
+
+				conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+					SignOnPolicyActionCommonConditionOr: &management.SignOnPolicyActionCommonConditionOr{
+						Or: conditionList,
+					},
+				})
+
+			} else {
+
+				conditionStructList = append(conditionStructList, management.SignOnPolicyActionCommonConditionOrOrInner{
+					SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+						SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(v.List()[0].(map[string]interface{})["value"].(string), v.List()[0].(map[string]interface{})["attribute_reference"].(string)),
+					},
+				})
+			}
+		}
+	}
+
+	var conditionStruct = &management.SignOnPolicyActionCommonConditionOrOrInner{}
+
+	if len(conditionStructList) > 1 {
+
+		conditionStruct = &management.SignOnPolicyActionCommonConditionOrOrInner{
+			SignOnPolicyActionCommonConditionOr: &management.SignOnPolicyActionCommonConditionOr{
+				Or: conditionStructList,
+			},
+		}
+
+	} else if len(conditionStructList) == 1 {
+		conditionStruct = &conditionStructList[0]
+	}
 
 	return conditionStruct, diags
 }
@@ -884,22 +1081,22 @@ func getActionPriority(instance management.SignOnPolicyAction) int32 {
 	return priority
 }
 
-func getActionID(instance management.SignOnPolicyAction) string {
-	var actionID string
-	switch instance.GetActualInstance().(type) {
-	case *management.SignOnPolicyActionLogin:
-		actionID = instance.SignOnPolicyActionLogin.GetId()
-	case *management.SignOnPolicyActionAgreement:
-		actionID = instance.SignOnPolicyActionAgreement.GetId()
-	case *management.SignOnPolicyActionIDFirst:
-		actionID = instance.SignOnPolicyActionIDFirst.GetId()
-	case *management.SignOnPolicyActionIDP:
-		actionID = instance.SignOnPolicyActionIDP.GetId()
-	case *management.SignOnPolicyActionProgressiveProfiling:
-		actionID = instance.SignOnPolicyActionProgressiveProfiling.GetId()
-	case *management.SignOnPolicyActionMFA:
-		actionID = instance.SignOnPolicyActionMFA.GetId()
-	}
+// func getActionID(instance management.SignOnPolicyAction) string {
+// 	var actionID string
+// 	switch instance.GetActualInstance().(type) {
+// 	case *management.SignOnPolicyActionLogin:
+// 		actionID = instance.SignOnPolicyActionLogin.GetId()
+// 	case *management.SignOnPolicyActionAgreement:
+// 		actionID = instance.SignOnPolicyActionAgreement.GetId()
+// 	case *management.SignOnPolicyActionIDFirst:
+// 		actionID = instance.SignOnPolicyActionIDFirst.GetId()
+// 	case *management.SignOnPolicyActionIDP:
+// 		actionID = instance.SignOnPolicyActionIDP.GetId()
+// 	case *management.SignOnPolicyActionProgressiveProfiling:
+// 		actionID = instance.SignOnPolicyActionProgressiveProfiling.GetId()
+// 	case *management.SignOnPolicyActionMFA:
+// 		actionID = instance.SignOnPolicyActionMFA.GetId()
+// 	}
 
-	return actionID
-}
+// 	return actionID
+// }

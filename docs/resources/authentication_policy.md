@@ -98,14 +98,33 @@ Required:
 
 - `agreement_id` (String) A string that specifies the ID of the agreement to which the user must consent.
 
+Optional:
+
+- `show_decline_option` (Boolean) When enabled, the `Do Not Accept` button will terminate the Flow and display an error message to the user. Defaults to `true`.
+
 
 <a id="nestedblock--policy_action--conditions"></a>
 ### Nested Schema for `policy_action.conditions`
 
 Optional:
 
-- `action_session_length_mins` (Number) An integer that specifies the maximum number of minutes to wait since the last sign on before prompting for a new sign-on action.
-- `ip_range` (String) A string that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.
+- `anonymous_network_detected` (Boolean) Defaults to `false`.
+- `anonymous_network_detected_allowed_cidr` (List of String)
+- `geovelocity_anomaly_detected` (Boolean) Defaults to `false`.
+- `ip_out_of_range_cidr` (List of String)
+- `ip_reputation_high_risk` (Boolean) Defaults to `false`.
+- `last_sign_on_older_than` (Number)
+- `user_attribute_equals` (Block Set) (see [below for nested schema](#nestedblock--policy_action--conditions--user_attribute_equals))
+- `user_is_member_of_any_population_id` (List of String)
+
+<a id="nestedblock--policy_action--conditions--user_attribute_equals"></a>
+### Nested Schema for `policy_action.conditions.user_attribute_equals`
+
+Required:
+
+- `attribute_reference` (String)
+- `value` (String)
+
 
 
 <a id="nestedblock--policy_action--identifier_first_options"></a>
@@ -238,9 +257,12 @@ Optional:
 Required:
 
 - `attribute` (Block Set, Min: 1) (see [below for nested schema](#nestedblock--policy_action--progressive_profiling_options--attribute))
-- `prevent_multiple_prompts_per_flow` (Boolean) A boolean that specifies whether the progressive profiling action will not be executed if another progressive profiling action has already been executed during the flow.
-- `prompt_interval_seconds` (Number) An integer that specifies how often to prompt the user to provide profile data for the configured attributes for which they do not have values.
 - `prompt_text` (String) A string that specifies text to display to the user when prompting for attribute values.
+
+Optional:
+
+- `prevent_multiple_prompts_per_flow` (Boolean) A boolean that specifies whether the progressive profiling action will not be executed if another progressive profiling action has already been executed during the flow. Defaults to `true`.
+- `prompt_interval_seconds` (Number) An integer that specifies how often to prompt the user to provide profile data for the configured attributes for which they do not have values. Defaults to `7776000`.
 
 <a id="nestedblock--policy_action--progressive_profiling_options--attribute"></a>
 ### Nested Schema for `policy_action.progressive_profiling_options.attribute`
