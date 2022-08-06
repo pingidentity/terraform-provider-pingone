@@ -71,7 +71,7 @@ func ResourceApplication() *schema.Resource {
 			"assign_actor_roles": {
 				Description: "A boolean that specifies whether the permissions service should assign default roles to the application. This property is set only on the POST request.  Any update to this attribute will trigger force re-creation of the application.",
 				Type:        schema.TypeBool,
-				Optional:    true,
+				Optional:    false,
 				ForceNew:    true,
 			},
 			"icon": {
@@ -423,12 +423,18 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta
 	if _, ok := d.GetOk("oidc_options"); ok {
 		var application *management.ApplicationOIDC
 		application, diags = expandApplicationOIDC(d)
+		if diags.HasError() {
+			return diags
+		}
 		applicationRequest.ApplicationOIDC = application
 	}
 
 	if _, ok := d.GetOk("saml_options"); ok {
 		var application *management.ApplicationSAML
 		application, diags = expandApplicationSAML(d)
+		if diags.HasError() {
+			return diags
+		}
 		applicationRequest.ApplicationSAML = application
 	}
 
@@ -544,7 +550,11 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			d.Set("access_control", nil)
 		}
 
-		d.Set("oidc_options", flattenOIDCOptions(application, respSecret))
+		oidcOptions, diags := flattenOIDCOptions(application, respSecret)
+		if diags.HasError() {
+			return diags
+		}
+		d.Set("oidc_options", oidcOptions)
 
 	} else if resp.ApplicationSAML != nil && resp.ApplicationSAML.GetId() != "" {
 
@@ -589,7 +599,11 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			d.Set("access_control", nil)
 		}
 
-		d.Set("saml_options", flattenSAMLOptions(application))
+		samlOptions, diags := flattenSAMLOptions(application)
+		if diags.HasError() {
+			return diags
+		}
+		d.Set("saml_options", samlOptions)
 
 	} else {
 		diags = append(diags, diag.Diagnostic{
@@ -617,12 +631,18 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 	if _, ok := d.GetOk("oidc_options"); ok {
 		var application *management.ApplicationOIDC
 		application, diags = expandApplicationOIDC(d)
+		if diags.HasError() {
+			return diags
+		}
 		applicationRequest.ApplicationOIDC = application
 	}
 
 	if _, ok := d.GetOk("saml_options"); ok {
 		var application *management.ApplicationSAML
 		application, diags = expandApplicationSAML(d)
+		if diags.HasError() {
+			return diags
+		}
 		applicationRequest.ApplicationSAML = application
 	}
 
@@ -778,7 +798,12 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		}
 
 		if v, ok := oidcOptions["mobile_app"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
-			application.SetMobile(expandMobile(v[0].(map[string]interface{})))
+			var mobile management.ApplicationOIDCAllOfMobile
+			mobile, diags = expandMobile(v[0].(map[string]interface{}))
+			if diags.HasError() {
+				return nil, diags
+			}
+			application.SetMobile(mobile)
 		}
 
 		if v, ok := oidcOptions["bundle_id"].(string); ok && v != "" {
@@ -816,7 +841,8 @@ func expandGrantTypes(s interface{}) ([]management.EnumApplicationOIDCGrantType,
 	return grantTypes, nil
 }
 
-func expandMobile(s map[string]interface{}) management.ApplicationOIDCAllOfMobile {
+func expandMobile(s map[string]interface{}) (management.ApplicationOIDCAllOfMobile, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	mobile := *management.NewApplicationOIDCAllOfMobile()
 	if v, ok := s["bundle_id"].(string); ok && v != "" {
@@ -850,7 +876,7 @@ func expandMobile(s map[string]interface{}) management.ApplicationOIDCAllOfMobil
 		mobile.SetIntegrityDetection(integrityDetection)
 	}
 
-	return mobile
+	return mobile, diags
 }
 
 func expandMobileIntegrityCacheDuration(s map[string]interface{}) management.ApplicationOIDCAllOfMobileIntegrityDetectionCacheDuration {
@@ -1090,7 +1116,8 @@ func flattenAccessControl(s *management.ApplicationAccessControl) []interface{} 
 	return append(items, item)
 }
 
-func flattenOIDCOptions(application *management.ApplicationOIDC, secret *management.ApplicationSecret) interface{} {
+func flattenOIDCOptions(application *management.ApplicationOIDC, secret *management.ApplicationSecret) (interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	// Required
 	item := map[string]interface{}{
@@ -1156,7 +1183,13 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 	}
 
 	if v, ok := application.GetMobileOk(); ok {
-		item["mobile_app"] = flattenMobile(v)
+		var mobile interface{}
+		mobile, diags = flattenMobile(v)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		item["mobile_app"] = mobile
 	} else {
 		item["mobile_app"] = nil
 	}
@@ -1174,11 +1207,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 	}
 
 	items := make([]interface{}, 0)
-	return append(items, item)
+	return append(items, item), diags
 
 }
 
-func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) interface{} {
+func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) (interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	item := map[string]interface{}{}
 
@@ -1195,16 +1229,23 @@ func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) interface{} {
 	}
 
 	if v, ok := mobile.GetIntegrityDetectionOk(); ok {
-		item["integrity_detection"] = flattenMobileIntegrityDetection(v)
+		var integrityDetection interface{}
+		integrityDetection, diags = flattenMobileIntegrityDetection(v)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		item["integrity_detection"] = integrityDetection
 	} else {
 		item["integrity_detection"] = nil
 	}
 
 	items := make([]interface{}, 0)
-	return append(items, item)
+	return append(items, item), diags
 }
 
-func flattenMobileIntegrityDetection(obj *management.ApplicationOIDCAllOfMobileIntegrityDetection) interface{} {
+func flattenMobileIntegrityDetection(obj *management.ApplicationOIDCAllOfMobileIntegrityDetection) (interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	item := map[string]interface{}{}
 
@@ -1228,10 +1269,11 @@ func flattenMobileIntegrityDetection(obj *management.ApplicationOIDCAllOfMobileI
 	}
 
 	items := make([]interface{}, 0)
-	return append(items, item)
+	return append(items, item), diags
 }
 
-func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
+func flattenSAMLOptions(application *management.ApplicationSAML) (interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	// Requried
 	item := map[string]interface{}{
@@ -1297,6 +1339,6 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	}
 
 	items := make([]interface{}, 0)
-	return append(items, item)
+	return append(items, item), diags
 
 }
