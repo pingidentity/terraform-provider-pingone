@@ -1,0 +1,3 @@
+```release-note:bug
+resource/pingone_environment: Fix `region` attribute nil value on replan causing resource re-creation
+```
