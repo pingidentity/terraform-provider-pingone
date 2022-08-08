@@ -2,6 +2,7 @@ package sso
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -82,6 +83,22 @@ func resourcePingOneApplicationAttributeMappingCreate(ctx context.Context, d *sc
 
 	resp, r, err := apiClient.ApplicationsApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
+		response := &management.P1Error{}
+		errDecode := json.NewDecoder(r.Body).Decode(response)
+		if errDecode == nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
+				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
+			})
+		}
+
+		if r.StatusCode == 400 && response.GetDetails()[0].GetCode() == "INVALID_VALUE" && response.GetDetails()[0].GetTarget() == "name" {
+			diags = diag.FromErr(fmt.Errorf(response.GetDetails()[0].GetMessage()))
+
+			return diags
+		}
+
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationAttributeMappingApi.CreateApplicationAttributeMapping``: %v", err),
@@ -141,6 +158,22 @@ func resourcePingOneApplicationAttributeMappingUpdate(ctx context.Context, d *sc
 
 	_, r, err := apiClient.ApplicationsApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
 	if err != nil {
+		response := &management.P1Error{}
+		errDecode := json.NewDecoder(r.Body).Decode(response)
+		if errDecode == nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
+				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
+			})
+		}
+
+		if r.StatusCode == 400 && response.GetDetails()[0].GetCode() == "INVALID_VALUE" && response.GetDetails()[0].GetTarget() == "name" {
+			diags = diag.FromErr(fmt.Errorf(response.GetDetails()[0].GetMessage()))
+
+			return diags
+		}
+
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationAttributeMappingApi.UpdateApplicationAttributeMapping``: %v", err),
