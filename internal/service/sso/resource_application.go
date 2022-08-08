@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -68,12 +69,6 @@ func ResourceApplication() *schema.Resource {
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
 			},
-			"assign_actor_roles": {
-				Description: "A boolean that specifies whether the permissions service should assign default roles to the application. This property is set only on the POST request.  Any update to this attribute will trigger force re-creation of the application.",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
-			},
 			"icon": {
 				Description: "The HREF and the ID for the application icon.",
 				Type:        schema.TypeList,
@@ -101,12 +96,14 @@ func ResourceApplication() *schema.Resource {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Optional:    true,
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role_type": {
 							Description:  "A string that specifies the user role required to access the application. Options are ADMIN_USERS_ONLY. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.",
 							Type:         schema.TypeString,
 							Optional:     true,
+							Computed:     true,
 							ValidateFunc: validation.StringInSlice([]string{"ADMIN_USERS_ONLY"}, false),
 						},
 						"group": {
@@ -174,6 +171,7 @@ func ResourceApplication() *schema.Resource {
 								ValidateFunc: validation.StringInSlice([]string{"TOKEN", "ID_TOKEN", "CODE"}, false),
 							},
 							Optional: true,
+							Computed: true,
 						},
 						"token_endpoint_authn_method": {
 							Description:  "A string that specifies the client authentication methods supported by the token endpoint.  Options are `NONE`, `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_POST`",
@@ -196,6 +194,7 @@ func ResourceApplication() *schema.Resource {
 								ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
 							},
 							Optional: true,
+							Computed: true,
 						},
 						"post_logout_redirect_uris": {
 							Description: "A string that specifies the URLs that the browser can be redirected to after logout.",
@@ -205,20 +204,23 @@ func ResourceApplication() *schema.Resource {
 								ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
 							},
 							Optional: true,
+							Computed: true,
 						},
 						"refresh_token_duration": {
-							Description:  "An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is 2592000, or 30 days. Valid values are between 60 and 2147483647. If the refresh_token_rolling_duration property is specified for the application, then this property must be less than or equal to the value of refreshTokenRollingDuration. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
-							Type:         schema.TypeInt,
-							Optional:     true,
-							Default:      2592000,
-							ValidateFunc: validation.IntBetween(60, 2147483647),
+							Description:      "An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is 2592000, or 30 days. Valid values are between 60 and 2147483647. If the refresh_token_rolling_duration property is specified for the application, then this property must be less than or equal to the value of refreshTokenRollingDuration. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Default:          2592000,
+							DiffSuppressFunc: refreshTokenDiffSuppression,
+							ValidateFunc:     validation.IntBetween(60, 2147483647),
 						},
 						"refresh_token_rolling_duration": {
-							Description:  "An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. If a value is not provided, the default value is 15552000, or 180 days. Valid values are between 60 and 2147483647. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
-							Type:         schema.TypeInt,
-							Optional:     true,
-							Default:      15552000,
-							ValidateFunc: validation.IntBetween(60, 2147483647),
+							Description:      "An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. If a value is not provided, the default value is 15552000, or 180 days. Valid values are between 60 and 2147483647. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Default:          15552000,
+							DiffSuppressFunc: refreshTokenDiffSuppression,
+							ValidateFunc:     validation.IntBetween(60, 2147483647),
 						},
 						"client_id": {
 							Description: "A string that specifies the application ID used to authenticate to the authorization server.",
@@ -258,6 +260,13 @@ func ResourceApplication() *schema.Resource {
 										Optional:         true,
 										ForceNew:         true,
 										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+									},
+									"passcode_refresh_seconds": {
+										Description:  "The amount of time a passcode should be displayed before being replaced with a new passcode - must be between 30 and 60.",
+										Type:         schema.TypeInt,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validation.IntBetween(30, 60),
 									},
 									"integrity_detection": {
 										Description: "Mobile application integrity detection settings.",
@@ -395,7 +404,7 @@ func ResourceApplication() *schema.Resource {
 						"sp_verification_certificate_ids": {
 							Description: "A list that specifies the certificate IDs used to verify the service provider signature.",
 							Type:        schema.TypeList,
-							Required:    true,
+							Optional:    true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -405,6 +414,19 @@ func ResourceApplication() *schema.Resource {
 			},
 		},
 	}
+}
+
+func refreshTokenDiffSuppression(k, old, new string, d *schema.ResourceData) bool {
+
+	grantTypes := d.Get("oidc_options").([]interface{})[0].(map[string]interface{})["grant_types"].([]interface{})
+
+	for _, v := range grantTypes {
+		if v.(string) == string(management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -529,12 +551,6 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			d.Set("login_page_url", nil)
 		}
 
-		if v, ok := application.GetAssignActorRolesOk(); ok {
-			d.Set("assign_actor_roles", v)
-		} else {
-			d.Set("assign_actor_roles", nil)
-		}
-
 		if v, ok := application.GetIconOk(); ok {
 			d.Set("icon", flattenIcon(v))
 		} else {
@@ -547,7 +563,12 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			d.Set("access_control", nil)
 		}
 
-		d.Set("oidc_options", flattenOIDCOptions(application, respSecret))
+		v, diags := flattenOIDCOptions(application, respSecret)
+		if diags.HasError() {
+			return diags
+		}
+
+		d.Set("oidc_options", v)
 
 	} else if resp.ApplicationSAML != nil && resp.ApplicationSAML.GetId() != "" {
 
@@ -572,12 +593,6 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			d.Set("login_page_url", v)
 		} else {
 			d.Set("login_page_url", nil)
-		}
-
-		if v, ok := application.GetAssignActorRolesOk(); ok {
-			d.Set("assign_actor_roles", v)
-		} else {
-			d.Set("assign_actor_roles", nil)
 		}
 
 		if v, ok := application.GetIconOk(); ok {
@@ -708,15 +723,7 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			return nil, diags
 		}
 
-		grantTypes, err := expandGrantTypes(oidcOptions["grant_types"])
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Cannot determine application `grant_types`: %v", err),
-			})
-
-			return nil, diags
-		}
+		grantTypes, refreshTokenEnabled := expandGrantTypes(oidcOptions["grant_types"].([]interface{}))
 
 		// Set the object
 		application = *management.NewApplicationOIDC(d.Get("enabled").(bool), d.Get("name").(string), management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT, *applicationType, grantTypes, management.EnumApplicationOIDCTokenAuthMethod(oidcOptions["token_endpoint_authn_method"].(string)))
@@ -724,83 +731,107 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		// set the common optional options
 		applicationCommon := expandCommonOptionalAttributes(d)
 
-		if v, ok := applicationCommon.GetDescriptionOk(); ok {
-			application.SetDescription(*v)
+		if v1, ok := applicationCommon.GetDescriptionOk(); ok {
+			application.SetDescription(*v1)
 		}
 
-		if v, ok := applicationCommon.GetTagsOk(); ok {
-			application.SetTags(v)
+		if v1, ok := applicationCommon.GetTagsOk(); ok {
+			application.SetTags(v1)
 		}
 
-		if v, ok := applicationCommon.GetLoginPageUrlOk(); ok {
-			application.SetLoginPageUrl(*v)
+		if v1, ok := applicationCommon.GetLoginPageUrlOk(); ok {
+			application.SetLoginPageUrl(*v1)
 		}
 
-		if v, ok := applicationCommon.GetAssignActorRolesOk(); ok {
-			application.SetAssignActorRoles(*v)
+		if v1, ok := applicationCommon.GetAssignActorRolesOk(); ok {
+			application.SetAssignActorRoles(*v1)
 		}
 
-		if v, ok := applicationCommon.GetIconOk(); ok {
-			application.SetIcon(*v)
+		if v1, ok := applicationCommon.GetIconOk(); ok {
+			application.SetIcon(*v1)
 		}
 
-		if v, ok := applicationCommon.GetAccessControlOk(); ok {
-			application.SetAccessControl(*v)
+		if v1, ok := applicationCommon.GetAccessControlOk(); ok {
+			application.SetAccessControl(*v1)
 		}
 
 		// Set the OIDC specific optional options
 
-		if v, ok := oidcOptions["home_page_url"].(string); ok && v != "" {
-			application.SetHomePageUrl(v)
+		if v1, ok := oidcOptions["home_page_url"].(string); ok && v1 != "" {
+			application.SetHomePageUrl(v1)
 		}
 
-		if v, ok := oidcOptions["response_types"].([]string); ok && v != nil && v[0] != "" {
+		if v1, ok := oidcOptions["response_types"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
 			obj := make([]management.EnumApplicationOIDCResponseType, 0)
-			for _, j := range v {
-				obj = append(obj, management.EnumApplicationOIDCResponseType(j))
+			for _, j := range v1 {
+				obj = append(obj, management.EnumApplicationOIDCResponseType(j.(string)))
 			}
 			application.SetResponseTypes(obj)
 		}
 
-		if v, ok := oidcOptions["pkce_enforcement"].(string); ok && v != "" {
-			application.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(v))
+		if v1, ok := oidcOptions["pkce_enforcement"].(string); ok && v1 != "" {
+			if application.GetType() == management.ENUMAPPLICATIONTYPE_WEB_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_CUSTOM_APP {
+				application.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(v1))
+			}
 		}
 
-		if v, ok := oidcOptions["redirect_uris"].([]string); ok && v != nil {
-			application.SetRedirectUris(v)
+		if v1, ok := oidcOptions["redirect_uris"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			obj := make([]string, 0)
+			for _, j := range v1 {
+				obj = append(obj, j.(string))
+			}
+			application.SetRedirectUris(obj)
 		}
 
-		if v, ok := oidcOptions["post_logout_redirect_uris"].([]string); ok && v != nil {
-			application.SetPostLogoutRedirectUris(v)
+		if v1, ok := oidcOptions["post_logout_redirect_uris"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			obj := make([]string, 0)
+			for _, j := range v1 {
+				obj = append(obj, j.(string))
+			}
+			application.SetPostLogoutRedirectUris(obj)
 		}
 
-		if v, ok := oidcOptions["refresh_token_duration"].(int); ok {
-			application.SetRefreshTokenDuration(int32(v))
+		if v1, ok := oidcOptions["refresh_token_duration"].(int); ok {
+			if refreshTokenEnabled {
+				application.SetRefreshTokenDuration(int32(v1))
+			} else {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Warning,
+					Summary:  fmt.Sprintf("`refresh_token_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
+				})
+			}
 		}
 
-		if v, ok := oidcOptions["refresh_token_rolling_duration"].(int); ok {
-			application.SetRefreshTokenDuration(int32(v))
+		if v1, ok := oidcOptions["refresh_token_rolling_duration"].(int); ok {
+			if refreshTokenEnabled {
+				application.SetRefreshTokenRollingDuration(int32(v1))
+			} else {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Warning,
+					Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
+				})
+			}
 		}
 
-		if v, ok := oidcOptions["support_unsigned_request_object"].(bool); ok {
-			application.SetSupportUnsignedRequestObject(v)
+		if v1, ok := oidcOptions["support_unsigned_request_object"].(bool); ok {
+			application.SetSupportUnsignedRequestObject(v1)
 		}
 
-		if v, ok := oidcOptions["mobile_app"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+		if v1, ok := oidcOptions["mobile_app"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
 			var mobile *management.ApplicationOIDCAllOfMobile
-			mobile, diags = expandMobile(v[0].(map[string]interface{}))
+			mobile, diags = expandMobile(v1[0].(map[string]interface{}))
 			if diags.HasError() {
 				return nil, diags
 			}
 			application.SetMobile(*mobile)
 		}
 
-		if v, ok := oidcOptions["bundle_id"].(string); ok && v != "" {
-			application.SetBundleId(v)
+		if v1, ok := oidcOptions["bundle_id"].(string); ok && v1 != "" {
+			application.SetBundleId(v1)
 		}
 
-		if v, ok := oidcOptions["package_name"].(string); ok && v != "" {
-			application.SetPackageName(v)
+		if v1, ok := oidcOptions["package_name"].(string); ok && v1 != "" {
+			application.SetPackageName(v1)
 		}
 
 	} else {
@@ -815,19 +846,17 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 	return &application, diags
 }
 
-func expandGrantTypes(s interface{}) ([]management.EnumApplicationOIDCGrantType, error) {
-	// Grant types
-	grantTypesStr, ok := s.([]string)
-	if !ok {
-		return nil, fmt.Errorf("Cannot cast `grant_type` values to list")
-	}
-
+func expandGrantTypes(s []interface{}) ([]management.EnumApplicationOIDCGrantType, bool) {
 	grantTypes := make([]management.EnumApplicationOIDCGrantType, 0)
-	for _, j := range grantTypesStr {
-		grantTypes = append(grantTypes, management.EnumApplicationOIDCGrantType(j))
+	refreshToken := false
+	for _, j := range s {
+		grantTypes = append(grantTypes, management.EnumApplicationOIDCGrantType(j.(string)))
+		if management.EnumApplicationOIDCGrantType(j.(string)) == management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN {
+			refreshToken = true
+		}
 	}
 
-	return grantTypes, nil
+	return grantTypes, refreshToken
 }
 
 func expandMobile(s map[string]interface{}) (*management.ApplicationOIDCAllOfMobile, diag.Diagnostics) {
@@ -840,6 +869,10 @@ func expandMobile(s map[string]interface{}) (*management.ApplicationOIDCAllOfMob
 
 	if v, ok := s["package_name"].(string); ok && v != "" {
 		mobile.SetPackageName(v)
+	}
+
+	if v, ok := s["passcode_refresh_seconds"].(int); ok {
+		mobile.SetPasscodeRefreshDuration(*management.NewApplicationOIDCAllOfMobilePasscodeRefreshDuration(int32(v), management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS))
 	}
 
 	if v, ok := s["integrity_detection"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
@@ -909,74 +942,77 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 		}
 
 		// Set the object
-		application = *management.NewApplicationSAML(d.Get("enabled").(bool), d.Get("name").(string), management.ENUMAPPLICATIONPROTOCOL_SAML, *applicationType, samlOptions["acs_urls"].([]string), int32(samlOptions["assertion_duration"].(int)), samlOptions["sp_entity_id"].(string))
+		acsUrls := make([]string, 0)
+		for _, v := range samlOptions["acs_urls"].([]interface{}) {
+			acsUrls = append(acsUrls, v.(string))
+		}
+		application = *management.NewApplicationSAML(d.Get("enabled").(bool), d.Get("name").(string), management.ENUMAPPLICATIONPROTOCOL_SAML, *applicationType, acsUrls, int32(samlOptions["assertion_duration"].(int)), samlOptions["sp_entity_id"].(string))
 
 		// set the common optional options
 		applicationCommon := expandCommonOptionalAttributes(d)
 
-		if v, ok := applicationCommon.GetDescriptionOk(); ok {
-			application.SetDescription(*v)
+		if v1, ok := applicationCommon.GetDescriptionOk(); ok {
+			application.SetDescription(*v1)
 		}
 
-		if v, ok := applicationCommon.GetTagsOk(); ok {
-			application.SetTags(v)
+		if v1, ok := applicationCommon.GetTagsOk(); ok {
+			application.SetTags(v1)
 		}
 
-		if v, ok := applicationCommon.GetLoginPageUrlOk(); ok {
-			application.SetLoginPageUrl(*v)
+		if v1, ok := applicationCommon.GetLoginPageUrlOk(); ok {
+			application.SetLoginPageUrl(*v1)
 		}
 
-		if v, ok := applicationCommon.GetAssignActorRolesOk(); ok {
-			application.SetAssignActorRoles(*v)
+		if v1, ok := applicationCommon.GetAssignActorRolesOk(); ok {
+			application.SetAssignActorRoles(*v1)
 		}
 
-		if v, ok := applicationCommon.GetIconOk(); ok {
-			application.SetIcon(*v)
+		if v1, ok := applicationCommon.GetIconOk(); ok {
+			application.SetIcon(*v1)
 		}
 
-		if v, ok := applicationCommon.GetAccessControlOk(); ok {
-			application.SetAccessControl(*v)
+		if v1, ok := applicationCommon.GetAccessControlOk(); ok {
+			application.SetAccessControl(*v1)
 		}
 
 		// Set the SAML specific optional options
 
-		if v, ok := samlOptions["assertion_signed_enabled"].(bool); ok {
-			application.SetAssertionSigned(v)
+		if v1, ok := samlOptions["assertion_signed_enabled"].(bool); ok {
+			application.SetAssertionSigned(v1)
 		}
 
-		if v, ok := samlOptions["idp_signing_key_id"].(string); ok && v != "" {
-			application.SetIdpSigningtype(*management.NewApplicationSAMLAllOfIdpSigningtype(*management.NewApplicationSAMLAllOfIdpSigningtypeKey(v)))
+		if v1, ok := samlOptions["idp_signing_key_id"].(string); ok && v1 != "" {
+			application.SetIdpSigningtype(*management.NewApplicationSAMLAllOfIdpSigningtype(*management.NewApplicationSAMLAllOfIdpSigningtypeKey(v1)))
 		}
 
-		if v, ok := samlOptions["nameid_format"].(string); ok && v != "" {
-			application.SetNameIdFormat(v)
+		if v1, ok := samlOptions["nameid_format"].(string); ok && v1 != "" {
+			application.SetNameIdFormat(v1)
 		}
 
-		if v, ok := samlOptions["response_is_signed"].(bool); ok {
-			application.SetResponseSigned(v)
+		if v1, ok := samlOptions["response_is_signed"].(bool); ok {
+			application.SetResponseSigned(v1)
 		}
 
-		if v, ok := samlOptions["slo_binding"].(string); ok && v != "" {
-			application.SetSloBinding(management.EnumApplicationSAMLSloBinding(v))
+		if v1, ok := samlOptions["slo_binding"].(string); ok && v1 != "" {
+			application.SetSloBinding(management.EnumApplicationSAMLSloBinding(v1))
 		}
 
-		if v, ok := samlOptions["slo_endpoint"].(string); ok && v != "" {
-			application.SetSloEndpoint(v)
+		if v1, ok := samlOptions["slo_endpoint"].(string); ok && v1 != "" {
+			application.SetSloEndpoint(v1)
 		}
 
-		if v, ok := samlOptions["slo_endpoint"].(string); ok && v != "" {
-			application.SetSloEndpoint(v)
+		if v1, ok := samlOptions["slo_endpoint"].(string); ok && v1 != "" {
+			application.SetSloEndpoint(v1)
 		}
 
-		if v, ok := samlOptions["slo_response_endpoint"].(string); ok && v != "" {
-			application.SetSloResponseEndpoint(v)
+		if v1, ok := samlOptions["slo_response_endpoint"].(string); ok && v1 != "" {
+			application.SetSloResponseEndpoint(v1)
 		}
 
-		if v, ok := samlOptions["sp_verification_certificate_ids"].([]string); ok && v != nil && v[0] != "" {
+		if v1, ok := samlOptions["sp_verification_certificate_ids"].([]string); ok && v1 != nil && v1[0] != "" {
 			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
-			for _, j := range v {
-				certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates()
-				certificate.SetId(j)
+			for _, j := range v1 {
+				certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(j)
 				certificates = append(certificates, certificate)
 			}
 
@@ -1022,9 +1058,7 @@ func expandCommonOptionalAttributes(d *schema.ResourceData) management.Applicati
 		}
 	}
 
-	if v, ok := d.GetOk("assign_actor_roles"); ok {
-		application.SetAssignActorRoles(v.(bool))
-	}
+	application.SetAssignActorRoles(false)
 
 	if v, ok := d.GetOk("icon"); ok {
 		if j, okJ := v.([]interface{}); okJ && j != nil && len(j) > 0 {
@@ -1114,13 +1148,14 @@ func flattenAccessControl(s *management.ApplicationAccessControl) []interface{} 
 	return append(items, item)
 }
 
-func flattenOIDCOptions(application *management.ApplicationOIDC, secret *management.ApplicationSecret) interface{} {
+func flattenOIDCOptions(application *management.ApplicationOIDC, secret *management.ApplicationSecret) (interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	// Required
 	item := map[string]interface{}{
 		"client_id":                   application.GetId(),
 		"type":                        application.GetType(),
-		"grant_types":                 application.GetGrantTypes(),
+		"grant_types":                 flattenGrantTypes(application),
 		"token_endpoint_authn_method": application.GetTokenEndpointAuthMethod(),
 	}
 
@@ -1180,7 +1215,11 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 	}
 
 	if v, ok := application.GetMobileOk(); ok {
-		item["mobile_app"] = flattenMobile(v)
+		j, diags := flattenMobile(v)
+		if diags.HasError() {
+			return nil, diags
+		}
+		item["mobile_app"] = j
 	} else {
 		item["mobile_app"] = nil
 	}
@@ -1198,11 +1237,27 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 	}
 
 	items := make([]interface{}, 0)
-	return append(items, item)
+	return append(items, item), diags
 
 }
 
-func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) interface{} {
+func flattenGrantTypes(application *management.ApplicationOIDC) []string {
+
+	grantTypes := application.GetGrantTypes()
+
+	sort.SliceStable(grantTypes, func(i, j int) bool {
+		return string(grantTypes[i]) < string(grantTypes[j])
+	})
+
+	returnGrants := make([]string, 0)
+	for _, v := range grantTypes {
+		returnGrants = append(returnGrants, string(v))
+	}
+	return returnGrants
+}
+
+func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) (interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	item := map[string]interface{}{}
 
@@ -1218,6 +1273,19 @@ func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) interface{} {
 		item["package_name"] = nil
 	}
 
+	if v, ok := mobile.GetPasscodeRefreshDurationOk(); ok {
+		item["passcode_refresh_seconds"] = v.GetDuration()
+		if j, okJ := v.GetTimeUnitOk(); okJ && *j != management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Expecting time unit of %s for attribute `passcode_refresh_seconds`, got %v", management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS, j),
+			})
+			return nil, diags
+		}
+	} else {
+		item["passcode_refresh_seconds"] = nil
+	}
+
 	if v, ok := mobile.GetIntegrityDetectionOk(); ok {
 		item["integrity_detection"] = flattenMobileIntegrityDetection(v)
 	} else {
@@ -1225,7 +1293,7 @@ func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) interface{} {
 	}
 
 	items := make([]interface{}, 0)
-	return append(items, item)
+	return append(items, item), diags
 }
 
 func flattenMobileIntegrityDetection(obj *management.ApplicationOIDCAllOfMobileIntegrityDetection) interface{} {
@@ -1272,11 +1340,15 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["assertion_signed_enabled"] = nil
 	}
 
-	if v, ok := application.IdpSigningtype.Key.GetIdOk(); ok {
-		item["idp_signing_key_id"] = v
-	} else {
-		item["idp_signing_key_id"] = nil
+	var signingKeyID interface{}
+	if v, ok := application.GetIdpSigningtypeOk(); ok {
+		if j, okJ := v.GetKeyOk(); okJ {
+			if k, okK := j.GetIdOk(); okK {
+				signingKeyID = k
+			}
+		}
 	}
+	item["idp_signing_key_id"] = signingKeyID
 
 	if v, ok := application.GetNameIdFormatOk(); ok {
 		item["nameid_format"] = v

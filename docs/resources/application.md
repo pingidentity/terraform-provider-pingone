@@ -91,7 +91,6 @@ resource "pingone_application" "my_awesome_worker_app" {
 ### Optional
 
 - `access_control` (Block List, Max: 1) Define access control rules for the application. (see [below for nested schema](#nestedblock--access_control))
-- `assign_actor_roles` (Boolean) A boolean that specifies whether the permissions service should assign default roles to the application. This property is set only on the POST request.  Any update to this attribute will trigger force re-creation of the application.
 - `description` (String) A string that specifies the description of the application.
 - `enabled` (Boolean) A boolean that specifies whether the environment is enabled in the environment. Defaults to `false`.
 - `icon` (Block List, Max: 1) The HREF and the ID for the application icon. (see [below for nested schema](#nestedblock--icon))
@@ -167,6 +166,7 @@ Optional:
 - `bundle_id` (String) A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the bundle_id property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `bundle_id` field
 - `integrity_detection` (Block List, Max: 1) Mobile application integrity detection settings. (see [below for nested schema](#nestedblock--oidc_options--mobile_app--integrity_detection))
 - `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `package_name` field.
+- `passcode_refresh_seconds` (Number) The amount of time a passcode should be displayed before being replaced with a new passcode - must be between 30 and 60.
 
 <a id="nestedblock--oidc_options--mobile_app--integrity_detection"></a>
 ### Nested Schema for `oidc_options.mobile_app.integrity_detection`
@@ -199,7 +199,6 @@ Required:
 - `acs_urls` (List of String) A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).
 - `assertion_duration` (Number) An integer that specifies the assertion validity duration in seconds.
 - `sp_entity_id` (String) A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.
-- `sp_verification_certificate_ids` (List of String) A list that specifies the certificate IDs used to verify the service provider signature.
 
 Optional:
 
@@ -210,6 +209,7 @@ Optional:
 - `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response. Options are `HTTP_REDIRECT` or `HTTP_POST`. The default is `HTTP_POST`; existing configurations with no data default to `HTTP_POST`. Defaults to `HTTP_POST`.
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a sloEndpoint logout endpoint URL is not defined, logout actions result in an error.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the sloEndpoint property value is used to submit SLO response.
+- `sp_verification_certificate_ids` (List of String) A list that specifies the certificate IDs used to verify the service provider signature.
 - `type` (String) A string that specifies the type associated with the application. Defaults to `WEB_APP`.
 
 ## Import

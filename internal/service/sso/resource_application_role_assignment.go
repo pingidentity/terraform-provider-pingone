@@ -117,9 +117,9 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 
 	applicationRoleAssignmentRole := *management.NewRoleAssignmentRole(d.Get("role_id").(string))
 	applicationRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
-	applicationRoleAssignment := *management.NewRoleAssignment(applicationRoleAssignmentRole, applicationRoleAssignmentScope) // UserRoleAssignment |  (optional)
+	applicationRoleAssignment := *management.NewRoleAssignment(applicationRoleAssignmentRole, applicationRoleAssignmentScope) // ApplicationRoleAssignment |  (optional)
 
-	resp, r, err := apiClient.UsersUserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
+	resp, r, err := apiClient.ApplicationsApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
 
 		response := &management.P1Error{}
@@ -140,7 +140,7 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `UsersUserRoleAssignmentsApi.CreateUserRoleAssignment``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment``: %v", err),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 		})
 
@@ -160,7 +160,7 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.UsersUserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+	resp, r, err := apiClient.ApplicationsApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 	if err != nil {
 
 		if r.StatusCode == 404 {
@@ -170,7 +170,7 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 		}
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `UsersUserRoleAssignmentsApi.ReadOneRoleAssignment``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationRoleAssignmentsApi.ReadOneRoleAssignment``: %v", err),
 			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
 		})
 
@@ -216,11 +216,11 @@ func resourcePingOneApplicationRoleAssignmentDelete(ctx context.Context, d *sche
 		return diags
 	}
 
-	_, err := apiClient.UsersUserRoleAssignmentsApi.DeleteUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+	_, err := apiClient.ApplicationsApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `UsersUserRoleAssignmentsApi.DeleteUserRoleAssignment``: %v", err),
+			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment``: %v", err),
 		})
 
 		return diags

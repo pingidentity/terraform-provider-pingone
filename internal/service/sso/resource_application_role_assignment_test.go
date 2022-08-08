@@ -217,11 +217,15 @@ func testAccRoleAssignmentApplicationConfig_Population(environmentName, resource
 		}
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			population_id = "${pingone_environment.%[1]s.default_population_id}"
-
-			applicationname = "%[2]s"
-			email    = "fooapplication@pingidentity.com"
+			environment_id  = "${pingone_environment.%[1]s.id}"
+			name 			= "%[2]s"
+			enabled 		= true
+		  
+			oidc_options {
+				type                        = "WORKER"
+				grant_types                 = ["CLIENT_CREDENTIALS"]
+				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+			}
 		}
 
 		data "pingone_role" "%[2]s" {
@@ -249,11 +253,15 @@ func testAccRoleAssignmentApplicationConfig_Organisation(environmentName, resour
 		}
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			population_id = "${pingone_environment.%[1]s.default_population_id}"
-
-			applicationname = "%[2]s"
-			email    = "fooapplication@pingidentity.com"
+			environment_id  = "${pingone_environment.%[1]s.id}"
+			name 			= "%[2]s"
+			enabled 		= true
+		  
+			oidc_options {
+				type                        = "WORKER"
+				grant_types                 = ["CLIENT_CREDENTIALS"]
+				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+			}
 		}
 
 		data "pingone_role" "%[2]s" {
@@ -281,11 +289,15 @@ func testAccRoleAssignmentApplicationConfig_Environment(environmentName, resourc
 		}
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			population_id = "${pingone_environment.%[1]s.default_population_id}"
-
-			applicationname = "%[2]s"
-			email    = "fooapplication@pingidentity.com"
+			environment_id  = "${pingone_environment.%[1]s.id}"
+			name 			= "%[2]s"
+			enabled 		= true
+		  
+			oidc_options {
+				type                        = "WORKER"
+				grant_types                 = ["CLIENT_CREDENTIALS"]
+				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+			}
 		}
 
 		data "pingone_role" "%[2]s" {
