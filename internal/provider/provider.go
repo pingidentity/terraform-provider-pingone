@@ -73,7 +73,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_environment": base.DatasourceEnvironment(),
 				"pingone_role":        base.DatasourceRole(),
 
-				//"pingone_application":     sso.DatasourceApplication(),
 				"pingone_password_policy": sso.DatasourcePasswordPolicy(),
 				"pingone_schema":          sso.DatasourceSchema(),
 			},
@@ -91,8 +90,7 @@ func New(version string) func() *schema.Provider {
 				"pingone_password_policy":                              sso.ResourcePasswordPolicy(),
 				"pingone_population":                                   sso.ResourcePopulation(),
 				"pingone_schema_attribute":                             sso.ResourceSchemaAttribute(),
-				//"pingone_system_application":                           sso.ResourceSystemApplication(),
-				"pingone_user": sso.ResourceUser(),
+				"pingone_user":                                         sso.ResourceUser(),
 			},
 		}
 
