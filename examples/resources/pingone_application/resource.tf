@@ -5,6 +5,7 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_application" "my_awesome_web_app" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Web App"
+  enabled        = true
 
   oidc_options {
     type                        = "WEB_APP"
@@ -18,6 +19,7 @@ resource "pingone_application" "my_awesome_web_app" {
 resource "pingone_application" "my_awesome_spa" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Single Page App"
+  enabled        = true
 
   oidc_options {
     type                        = "SINGLE_PAGE_APP"
@@ -32,9 +34,10 @@ resource "pingone_application" "my_awesome_spa" {
 resource "pingone_application" "my_awesome_saml_app" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome SAML App"
+  enabled        = true
 
   saml_options {
-    acs_urls           = ["https://pingidentity.com"]
+    acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:localhost"
 
@@ -45,6 +48,7 @@ resource "pingone_application" "my_awesome_saml_app" {
 resource "pingone_application" "my_awesome_native_app" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Native App"
+  enabled        = true
 
   oidc_options {
     type                        = "NATIVE_APP"
@@ -56,6 +60,7 @@ resource "pingone_application" "my_awesome_native_app" {
 resource "pingone_application" "my_awesome_worker_app" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Worker App"
+  enabled        = true
 
   oidc_options {
     type                        = "WORKER"
