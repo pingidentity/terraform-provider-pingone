@@ -3,10 +3,6 @@ pingone_application
 ```
 
 ```release-note:new-resource
-pingone_system_application
-```
-
-```release-note:new-resource
 pingone_application_role_assignment
 ```
 
@@ -20,12 +16,4 @@ pingone_application_authentication_policy_assignment
 
 ```release-note:new-resource
 pingone_application_attribute_mapping
-```
-
-```release-note:new-data-source
-pingone_application
-```
-
-```release-note:new-data-source
-pingone_system_application
 ```
