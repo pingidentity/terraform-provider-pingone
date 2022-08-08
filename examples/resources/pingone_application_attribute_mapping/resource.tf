@@ -23,3 +23,11 @@ resource "pingone_application_attribute_mapping" "foo" {
   name  = "email"
   value = "$${user.email}"
 }
+
+resource "pingone_application_attribute_mapping" "bar" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_awesome_spa
+
+  name  = "full_name"
+  value = "$${user.name.given + ', ' + user.name.family}"
+}
