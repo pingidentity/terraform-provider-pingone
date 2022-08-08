@@ -171,8 +171,6 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 	if v, ok := d.GetOk("region"); ok && v != "" {
 		region = model.FindRegionByName(v.(string)).APICode
-	} else {
-		region = p1Client.API.Region.APICode
 	}
 
 	environment := *management.NewEnvironment(environmentLicense, d.Get("name").(string), region, management.EnumEnvironmentType(d.Get("type").(string))) // Environment |  (optional)
