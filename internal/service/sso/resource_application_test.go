@@ -393,54 +393,54 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 	})
 }
 
-func testAccApplicationConfig_OIDCFull(environmentName, licenseID, resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-		resource "pingone_application" "%[3]s-web" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s-web"
+// func testAccApplicationConfig_OIDCFull(environmentName, licenseID, resourceName, name string) string {
+// 	return fmt.Sprintf(`
+// 		%[1]s
+// 		resource "pingone_application" "%[3]s-web" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
+// 			name = "%[4]s-web"
 
-			oidc_options {
-				type = "WEB_APP"
-				grant_types = ["AUTHORIZATION_CODE"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
+// 			oidc_options {
+// 				type = "WEB_APP"
+// 				grant_types = ["AUTHORIZATION_CODE"]
+// 				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+// 			}
+// 		}
 
-		resource "pingone_application" "%[3]s-native" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s-native"
+// 		resource "pingone_application" "%[3]s-native" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
+// 			name = "%[4]s-native"
 
-			oidc_options {
-				type = "NATIVE_APP"
-				grant_types = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
+// 			oidc_options {
+// 				type = "NATIVE_APP"
+// 				grant_types = ["CLIENT_CREDENTIALS"]
+// 				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+// 			}
+// 		}
 
-		resource "pingone_application" "%[3]s-spa" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s-spa"
+// 		resource "pingone_application" "%[3]s-spa" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
+// 			name = "%[4]s-spa"
 
-			oidc_options {
-				type = "SINGLE_PAGE_APP"
-				grant_types = ["IMPLICIT"]
-				token_endpoint_authn_method = "NONE"
-			}
-		}
+// 			oidc_options {
+// 				type = "SINGLE_PAGE_APP"
+// 				grant_types = ["IMPLICIT"]
+// 				token_endpoint_authn_method = "NONE"
+// 			}
+// 		}
 
-		resource "pingone_application" "%[3]s-worker" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s-worker"
+// 		resource "pingone_application" "%[3]s-worker" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
+// 			name = "%[4]s-worker"
 
-			oidc_options {
-				type = "WORKER"
-				grant_types = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
+// 			oidc_options {
+// 				type = "WORKER"
+// 				grant_types = ["CLIENT_CREDENTIALS"]
+// 				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+// 			}
+// 		}
+// 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// }
 
 func testAccApplicationConfig_OIDCMinimalWeb(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
@@ -515,30 +515,30 @@ func testAccApplicationConfig_OIDCMinimalWorker(environmentName, licenseID, reso
 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			enabled = true
+// func testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName, name string) string {
+// 	return fmt.Sprintf(`
+// 		%[1]s
+// 		resource "pingone_application" "%[3]s" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
+// 			name = "%[4]s"
+// 			enabled = true
 
-			saml_options {
-				acs_urls = ["https://pingidentity.com"]
-				assertion_duration = 3600
-				sp_entity_id = "sp:entity:localhost"
-				sp_verification_certificate_ids = ""
+// 			saml_options {
+// 				acs_urls = ["https://pingidentity.com"]
+// 				assertion_duration = 3600
+// 				sp_entity_id = "sp:entity:localhost"
+// 				sp_verification_certificate_ids = ""
 
-				assertion_signed_enabled = false
-				idp_signing_key_id = ""
-				nameid_format = ""
-				response_is_signed = true
-				slo_binding = "HTTP_REDIRECT"
-				slo_endpoint = "https://pingidentity.com"
-				slo_response_endpoint = "https://pingidentity.com"
-			}
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
+// 				assertion_signed_enabled = false
+// 				idp_signing_key_id = ""
+// 				nameid_format = ""
+// 				response_is_signed = true
+// 				slo_binding = "HTTP_REDIRECT"
+// 				slo_endpoint = "https://pingidentity.com"
+// 				slo_response_endpoint = "https://pingidentity.com"
+// 			}
+// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// }
 
 func testAccApplicationConfig_SAMLMinimal(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
