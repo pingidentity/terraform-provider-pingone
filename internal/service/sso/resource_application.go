@@ -91,44 +91,33 @@ func ResourceApplication() *schema.Resource {
 					},
 				},
 			},
-			"access_control": {
-				Description: "Define access control rules for the application.",
+			"access_control_role_type": {
+				Description:  "A string that specifies the user role required to access the application. Options are `ADMIN_USERS_ONLY`. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"ADMIN_USERS_ONLY"}, false),
+			},
+			"access_control_group_options": {
+				Description: "Group access control settings.",
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Optional:    true,
-				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"role_type": {
-							Description:  "A string that specifies the user role required to access the application. Options are ADMIN_USERS_ONLY. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.",
+						"type": {
+							Description:  "A string that specifies the group type required to access the application. Options are `ANY_GROUP` (the actor must belong to at least one group listed in the `groups` property) and `ALL_GROUPS` (the actor must belong to all groups listed in the `groups` property).",
 							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ADMIN_USERS_ONLY"}, false),
+							Required:     true,
+							ValidateFunc: validation.StringInSlice([]string{"ANY_GROUP", "ALL_GROUPS"}, false),
 						},
-						"group": {
-							Description: "Group access control settings.",
+						"groups": {
+							Description: "A set that specifies the group IDs for the groups the actor must belong to for access to the application.",
 							Type:        schema.TypeList,
-							MaxItems:    1,
-							Optional:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"type": {
-										Description:  "A string that specifies the group type required to access the application. Options are `ANY_GROUP` (the actor must belong to at least one group listed in the `groups` property) and `ALL_GROUPS` (the actor must belong to all groups listed in the `groups` property).",
-										Type:         schema.TypeString,
-										Required:     true,
-										ValidateFunc: validation.StringInSlice([]string{"ANY_GROUP", "ALL_GROUPS"}, false),
-									},
-									"groups": {
-										Description: "A set that specifies the group IDs for the groups the actor must belong to for access to the application.",
-										Type:        schema.TypeList,
-										Elem: &schema.Schema{
-											Type: schema.TypeString,
-										},
-										Required: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
+							Required: true,
 						},
 					},
 				},
@@ -146,7 +135,7 @@ func ResourceApplication() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"WEB_APP", "NATIVE_APP", "SINGLE_PAGE_APP", "WORKER"}, false),
+							ValidateFunc: validation.StringInSlice([]string{"WEB_APP", "NATIVE_APP", "SINGLE_PAGE_APP", "WORKER", "CUSTOM"}, false),
 						},
 						"home_page_url": {
 							Description:      "A string that specifies the custom home page URL for the application.",
@@ -194,7 +183,6 @@ func ResourceApplication() *schema.Resource {
 								ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
 							},
 							Optional: true,
-							Computed: true,
 						},
 						"post_logout_redirect_uris": {
 							Description: "A string that specifies the URLs that the browser can be redirected to after logout.",
@@ -204,7 +192,6 @@ func ResourceApplication() *schema.Resource {
 								ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
 							},
 							Optional: true,
-							Computed: true,
 						},
 						"refresh_token_duration": {
 							Description:      "An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is 2592000, or 30 days. Valid values are between 60 and 2147483647. If the refresh_token_rolling_duration property is specified for the application, then this property must be less than or equal to the value of refreshTokenRollingDuration. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
@@ -342,7 +329,7 @@ func ResourceApplication() *schema.Resource {
 							Optional:     true,
 							Default:      "WEB_APP",
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"WEB_APP"}, false),
+							ValidateFunc: validation.StringInSlice([]string{"WEB_APP", "CUSTOM"}, false),
 						},
 						"acs_urls": {
 							Description: "A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).",
@@ -558,9 +545,34 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 		}
 
 		if v, ok := application.GetAccessControlOk(); ok {
-			d.Set("access_control", flattenAccessControl(v))
+
+			if j, ok := v.Role.GetTypeOk(); ok {
+				d.Set("access_control_role_type", j)
+			} else {
+				d.Set("access_control_role_type", nil)
+			}
+
+			if j, ok := v.GetGroupOk(); ok {
+
+				groups := make([]string, 0)
+				for _, k := range j.GetGroups() {
+					groups = append(groups, k.GetId())
+				}
+
+				groupObj := map[string]interface{}{
+					"type":   j.GetType(),
+					"groups": groups,
+				}
+
+				groupsObj := make([]interface{}, 0)
+
+				d.Set("access_control_group_options", append(groupsObj, groupObj))
+			} else {
+				d.Set("access_control_group_options", nil)
+			}
 		} else {
-			d.Set("access_control", nil)
+			d.Set("access_control_role_type", nil)
+			d.Set("access_control_group_options", nil)
 		}
 
 		v, diags := flattenOIDCOptions(application, respSecret)
@@ -602,9 +614,34 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 		}
 
 		if v, ok := application.GetAccessControlOk(); ok {
-			d.Set("access_control", flattenAccessControl(v))
+
+			if j, ok := v.Role.GetTypeOk(); ok {
+				d.Set("access_control_role_type", j)
+			} else {
+				d.Set("access_control_role_type", nil)
+			}
+
+			if j, ok := v.GetGroupOk(); ok {
+
+				groups := make([]string, 0)
+				for _, k := range j.GetGroups() {
+					groups = append(groups, k.GetId())
+				}
+
+				groupObj := map[string]interface{}{
+					"type":   j.GetType(),
+					"groups": groups,
+				}
+
+				groupsObj := make([]interface{}, 0)
+
+				d.Set("access_control_group_options", append(groupsObj, groupObj))
+			} else {
+				d.Set("access_control_group_options", nil)
+			}
 		} else {
-			d.Set("access_control", nil)
+			d.Set("access_control_role_type", nil)
+			d.Set("access_control_group_options", nil)
 		}
 
 		d.Set("saml_options", flattenSAMLOptions(application))
@@ -1067,37 +1104,34 @@ func expandCommonOptionalAttributes(d *schema.ResourceData) management.Applicati
 		}
 	}
 
-	if v, ok := d.GetOk("access_control"); ok {
+	accessControl := *management.NewApplicationAccessControl()
+	accessControlCount := 0
+
+	if v, ok := d.GetOk("access_control_role_type"); ok {
+		accessControl.SetRole(*management.NewApplicationAccessControlRole(v.(string)))
+		accessControlCount += 1
+	}
+
+	if v, ok := d.GetOk("access_control_group_options"); ok {
 		if j, okJ := v.([]interface{}); okJ && j != nil && len(j) > 0 {
-			attrs := j[0].(map[string]interface{})
-			application.SetAccessControl(expandAccessControl(attrs))
+			obj := j[0].(map[string]interface{})
+
+			groups := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
+			for _, j := range obj["groups"].([]interface{}) {
+				groups = append(groups, *management.NewApplicationAccessControlGroupGroupsInner(j.(string)))
+			}
+
+			accessControl.SetGroup(*management.NewApplicationAccessControlGroup(obj["type"].(string), groups))
+
+			accessControlCount += 1
 		}
+	}
+
+	if accessControlCount > 0 {
+		application.SetAccessControl(accessControl)
 	}
 
 	return application
-
-}
-
-func expandAccessControl(s map[string]interface{}) management.ApplicationAccessControl {
-
-	accessControl := *management.NewApplicationAccessControl()
-
-	if v, ok := s["role_type"].(string); ok && v != "" {
-		accessControl.Role.SetType(v)
-	}
-
-	if v, ok := s["group"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
-		obj := v[0].(map[string]interface{})
-
-		groups := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
-		for _, j := range obj["groups"].([]string) {
-			groups = append(groups, *management.NewApplicationAccessControlGroupGroupsInner(j))
-		}
-
-		accessControl.SetGroup(*management.NewApplicationAccessControlGroup(obj["type"].(string), groups))
-	}
-
-	return accessControl
 
 }
 
@@ -1119,29 +1153,6 @@ func flattenIcon(s *management.ApplicationIcon) []interface{} {
 	item := map[string]interface{}{
 		"id":   s.GetId(),
 		"href": s.GetHref(),
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenAccessControl(s *management.ApplicationAccessControl) []interface{} {
-
-	item := map[string]interface{}{}
-
-	if v, ok := s.Role.GetTypeOk(); ok {
-		item["role_type"] = v
-	} else {
-		item["role_type"] = nil
-	}
-
-	if v, ok := s.GetGroupOk(); ok {
-		item["group"] = map[string]interface{}{
-			"type":   v.GetGroups(),
-			"groups": v.GetType(),
-		}
-	} else {
-		item["group"] = nil
 	}
 
 	items := make([]interface{}, 0)
@@ -1179,12 +1190,22 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 	}
 
 	if v, ok := application.GetRedirectUrisOk(); ok {
+
+		sort.SliceStable(v, func(i, j int) bool {
+			return v[i] < v[j]
+		})
+
 		item["redirect_uris"] = v
 	} else {
 		item["redirect_uris"] = nil
 	}
 
 	if v, ok := application.GetPostLogoutRedirectUrisOk(); ok {
+
+		sort.SliceStable(v, func(i, j int) bool {
+			return v[i] < v[j]
+		})
+
 		item["post_logout_redirect_uris"] = v
 	} else {
 		item["post_logout_redirect_uris"] = nil
@@ -1311,10 +1332,13 @@ func flattenMobileIntegrityDetection(obj *management.ApplicationOIDCAllOfMobileI
 	}
 
 	if v, ok := obj.GetCacheDurationOk(); ok {
-		item["cache_duration"] = map[string]interface{}{
+		cache := map[string]interface{}{
 			"amount": v.GetAmount(),
 			"units":  v.GetUnits(),
 		}
+
+		caches := make([]interface{}, 0)
+		item["cache_duration"] = append(caches, cache)
 	} else {
 		item["cache_duration"] = nil
 	}

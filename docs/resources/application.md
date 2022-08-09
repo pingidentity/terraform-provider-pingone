@@ -95,7 +95,8 @@ resource "pingone_application" "my_awesome_worker_app" {
 
 ### Optional
 
-- `access_control` (Block List, Max: 1) Define access control rules for the application. (see [below for nested schema](#nestedblock--access_control))
+- `access_control_group_options` (Block List, Max: 1) Group access control settings. (see [below for nested schema](#nestedblock--access_control_group_options))
+- `access_control_role_type` (String) A string that specifies the user role required to access the application. Options are `ADMIN_USERS_ONLY`. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.
 - `description` (String) A string that specifies the description of the application.
 - `enabled` (Boolean) A boolean that specifies whether the environment is enabled in the environment. Defaults to `false`.
 - `icon` (Block List, Max: 1) The HREF and the ID for the application icon. (see [below for nested schema](#nestedblock--icon))
@@ -108,22 +109,13 @@ resource "pingone_application" "my_awesome_worker_app" {
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--access_control"></a>
-### Nested Schema for `access_control`
-
-Optional:
-
-- `group` (Block List, Max: 1) Group access control settings. (see [below for nested schema](#nestedblock--access_control--group))
-- `role_type` (String) A string that specifies the user role required to access the application. Options are ADMIN_USERS_ONLY. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.
-
-<a id="nestedblock--access_control--group"></a>
-### Nested Schema for `access_control.group`
+<a id="nestedblock--access_control_group_options"></a>
+### Nested Schema for `access_control_group_options`
 
 Required:
 
 - `groups` (List of String) A set that specifies the group IDs for the groups the actor must belong to for access to the application.
 - `type` (String) A string that specifies the group type required to access the application. Options are `ANY_GROUP` (the actor must belong to at least one group listed in the `groups` property) and `ALL_GROUPS` (the actor must belong to all groups listed in the `groups` property).
-
 
 
 <a id="nestedblock--icon"></a>
