@@ -56,6 +56,7 @@ func ResourceEnvironment() *schema.Resource {
 			"region": {
 				Description:      "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.",
 				Type:             schema.TypeString,
+				Computed:         true,
 				Optional:         true,
 				DefaultFunc:      schema.EnvDefaultFunc("PINGONE_REGION", nil),
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(model.RegionsAvailableList(), false)),
@@ -168,7 +169,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 	region := p1Client.API.Region.APICode
 
-	if v, ok := d.GetOk("region"); ok {
+	if v, ok := d.GetOk("region"); ok && v != "" {
 		region = model.FindRegionByName(v.(string)).APICode
 	}
 

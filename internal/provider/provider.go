@@ -73,17 +73,24 @@ func New(version string) func() *schema.Provider {
 				"pingone_environment": base.DatasourceEnvironment(),
 				"pingone_role":        base.DatasourceRole(),
 
-				"pingone_schema": sso.DatasourceSchema(),
+				"pingone_password_policy": sso.DatasourcePasswordPolicy(),
+				"pingone_schema":          sso.DatasourceSchema(),
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
 				"pingone_environment":          base.ResourceEnvironment(),
 				"pingone_role_assignment_user": base.ResourceRoleAssignmentUser(),
 
-				"pingone_group":            sso.ResourceGroup(),
-				"pingone_population":       sso.ResourcePopulation(),
-				"pingone_user":             sso.ResourceUser(),
-				"pingone_schema_attribute": sso.ResourceSchemaAttribute(),
+				"pingone_application":                                  sso.ResourceApplication(),
+				"pingone_application_attribute_mapping":                sso.ResourceApplicationAttributeMapping(),
+				"pingone_application_authentication_policy_assignment": sso.ResourceApplicationAuthenticationPolicyAssignment(),
+				"pingone_application_resource_grant":                   sso.ResourceApplicationResourceGrant(),
+				"pingone_application_role_assignment":                  sso.ResourceApplicationRoleAssignment(),
+				"pingone_group":                                        sso.ResourceGroup(),
+				"pingone_password_policy":                              sso.ResourcePasswordPolicy(),
+				"pingone_population":                                   sso.ResourcePopulation(),
+				"pingone_schema_attribute":                             sso.ResourceSchemaAttribute(),
+				"pingone_user":                                         sso.ResourceUser(),
 			},
 		}
 

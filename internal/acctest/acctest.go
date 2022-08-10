@@ -156,3 +156,16 @@ func TestAccCheckEnvironmentDestroy(s *terraform.State) error {
 
 	return nil
 }
+
+func MinimalSandboxEnvironment(resourceName, licenseID string) string {
+	return fmt.Sprintf(`
+		resource "pingone_environment" "%[1]s" {
+			name = "%[1]s"
+			type = "SANDBOX"
+			license_id = "%[2]s"
+			default_population {
+			}
+			service {
+			}
+		}`, resourceName, licenseID)
+}
