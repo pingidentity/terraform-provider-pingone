@@ -1233,7 +1233,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 func testAccApplicationConfig_OIDCFullWeb(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_group" "group_1" {
+		resource "pingone_group" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "Group 1"
 		}
@@ -1255,7 +1255,7 @@ func testAccApplicationConfig_OIDCFullWeb(environmentName, licenseID, resourceNa
 				type = "ANY_GROUP"
 
 				groups = [
-					pingone_group.group_1.id
+					"${pingone_group.%[3]s.id}"
 				]
 			}
 			
@@ -1306,7 +1306,7 @@ func testAccApplicationConfig_OIDCMinimalWeb(environmentName, licenseID, resourc
 func testAccApplicationConfig_OIDCFullNative(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_group" "group_1" {
+		resource "pingone_group" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "Group 1"
 		}
@@ -1328,7 +1328,7 @@ func testAccApplicationConfig_OIDCFullNative(environmentName, licenseID, resourc
 				type = "ANY_GROUP"
 
 				groups = [
-					pingone_group.group_1.id
+					"${pingone_group.%[3]s.id}"
 				]
 			}
 			
@@ -1381,7 +1381,7 @@ func testAccApplicationConfig_OIDCMinimalNative(environmentName, licenseID, reso
 func testAccApplicationConfig_OIDCFullSPA(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_group" "group_1" {
+		resource "pingone_group" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "Group 1"
 		}
@@ -1403,7 +1403,7 @@ func testAccApplicationConfig_OIDCFullSPA(environmentName, licenseID, resourceNa
 				type = "ANY_GROUP"
 
 				groups = [
-					pingone_group.group_1.id
+					"${pingone_group.%[3]s.id}"
 				]
 			}
 			
@@ -1449,7 +1449,7 @@ func testAccApplicationConfig_OIDCMinimalSPA(environmentName, licenseID, resourc
 func testAccApplicationConfig_OIDCFullWorker(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_group" "group_1" {
+		resource "pingone_group" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "Group 1"
 		}
@@ -1471,7 +1471,7 @@ func testAccApplicationConfig_OIDCFullWorker(environmentName, licenseID, resourc
 				type = "ANY_GROUP"
 
 				groups = [
-					pingone_group.group_1.id
+					"${pingone_group.%[3]s.id}"
 				]
 			}
 			
@@ -1489,7 +1489,7 @@ func testAccApplicationConfig_OIDCFullWorker(environmentName, licenseID, resourc
 func testAccApplicationConfig_OIDCMinimalWorker(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_group" "group_1" {
+		resource "pingone_group" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "Group 1"
 		}
@@ -1510,7 +1510,7 @@ func testAccApplicationConfig_OIDCMinimalWorker(environmentName, licenseID, reso
 func testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_group" "group_1" {
+		resource "pingone_group" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "Group 1"
 		}
@@ -1532,7 +1532,7 @@ func testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName,
 				type = "ANY_GROUP"
 
 				groups = [
-					pingone_group.group_1.id
+					"${pingone_group.%[3]s.id}"
 				]
 			}
 
