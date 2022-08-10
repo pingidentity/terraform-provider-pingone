@@ -81,11 +81,16 @@ func New(version string) func() *schema.Provider {
 				"pingone_environment":          base.ResourceEnvironment(),
 				"pingone_role_assignment_user": base.ResourceRoleAssignmentUser(),
 
-				"pingone_group":            sso.ResourceGroup(),
-				"pingone_password_policy":  sso.ResourcePasswordPolicy(),
-				"pingone_population":       sso.ResourcePopulation(),
-				"pingone_schema_attribute": sso.ResourceSchemaAttribute(),
-				"pingone_user":             sso.ResourceUser(),
+				"pingone_application":                                  sso.ResourceApplication(),
+				"pingone_application_attribute_mapping":                sso.ResourceApplicationAttributeMapping(),
+				"pingone_application_authentication_policy_assignment": sso.ResourceApplicationAuthenticationPolicyAssignment(),
+				"pingone_application_resource_grant":                   sso.ResourceApplicationResourceGrant(),
+				"pingone_application_role_assignment":                  sso.ResourceApplicationRoleAssignment(),
+				"pingone_group":                                        sso.ResourceGroup(),
+				"pingone_password_policy":                              sso.ResourcePasswordPolicy(),
+				"pingone_population":                                   sso.ResourcePopulation(),
+				"pingone_schema_attribute":                             sso.ResourceSchemaAttribute(),
+				"pingone_user":                                         sso.ResourceUser(),
 			},
 		}
 

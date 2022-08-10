@@ -803,8 +803,8 @@ github.com/owenrumney/go-sarif v1.1.1 h1:QNObu6YX1igyFKhdzd7vgzmw7XsWN3/6NMGuDzB
 github.com/owenrumney/go-sarif v1.1.1/go.mod h1:dNDiPlF04ESR/6fHlPyq7gHKmrM0sHUvAGjsoh8ZH0U=
 github.com/patrickcping/pingone-go-sdk-v2 v0.3.1 h1:NiVQgiJKx9liOIsjujGYbysEFREtMZpnv3A1i9WQMYI=
 github.com/patrickcping/pingone-go-sdk-v2 v0.3.1/go.mod h1:2ArYvaLHEoMkYR7+WOkB0ShYESmMBusDTS+pJi0Pw+8=
-github.com/patrickcping/pingone-go-sdk-v2/management v0.3.0 h1:6XzH21GKJfE4AEBiCV4nMApr4zqZ6z1pT0UblLEVX/4=
-github.com/patrickcping/pingone-go-sdk-v2/management v0.3.0/go.mod h1:VGyuH3CTqx1qcnwXMxuZMCUpZpXuVPIew2ophPajpqs=
+github.com/patrickcping/pingone-go-sdk-v2/management v0.3.1-0.20220808190243-fc4646800dbb h1:XFmQUXvkrbUs0RF6OzqfPNprbEiaNKHWrAUJBQqHlv0=
+github.com/patrickcping/pingone-go-sdk-v2/management v0.3.1-0.20220808190243-fc4646800dbb/go.mod h1:VyqGnMIwWwyQRBWQ7l6+CN42j0RUyc57CwenZ934LDo=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.3.0 h1:fLV7BEPSWRDN7o40jHhZ101fubdC5Vgxdzz/+zf8EW0=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.3.0/go.mod h1:a6yzbvrfPdNd37OcaJ1KFFRQScMIRvIUXOkGPji0yFI=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.2.0 h1:gf3hoOIb5JuZSxOkIYMqPf50zkEQe0GdenGfxfg4tUA=
@@ -1206,8 +1206,9 @@ golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4/go.mod h1:CfG3xpIq0wQ8r1q4Su
 golang.org/x/net v0.0.0-20220607020251-c690dde0001d/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
 golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
 golang.org/x/net v0.0.0-20220708220712-1185a9018129/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
-golang.org/x/net v0.0.0-20220728211354-c7608f3a8462 h1:UreQrH7DbFXSi9ZFox6FNT3WBooWmdANpU+IfkT1T4I=
 golang.org/x/net v0.0.0-20220728211354-c7608f3a8462/go.mod h1:YDH+HFinaLZZlnHAfSS6ZXJJ9M9t4Dl22yv3iI2vPwk=
+golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48 h1:N9Vc/rorQUDes6B9CNdIxAn5jODGj2wzfrei2x4wNj4=
+golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48/go.mod h1:YDH+HFinaLZZlnHAfSS6ZXJJ9M9t4Dl22yv3iI2vPwk=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
@@ -1229,8 +1230,9 @@ golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a/go.mod h1:DAh4E804XQdzx2j
 golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5/go.mod h1:DAh4E804XQdzx2j+YRIaUnCqCV2RuMz24cGBJ5QYIrc=
 golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb/go.mod h1:jaDAt6Dkxork7LmZnYtzbRWj0W47D86a3TGe0YHBvmE=
 golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0/go.mod h1:h4gKUeWbJ4rQPri7E0u6Gs4e9Ri2zaLxzw5DI5XGrYg=
-golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c h1:q3gFqPqH7NVofKo3c3yETAP//pPI+G5mvB7qqj1Y5kY=
 golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c/go.mod h1:h4gKUeWbJ4rQPri7E0u6Gs4e9Ri2zaLxzw5DI5XGrYg=
+golang.org/x/oauth2 v0.0.0-20220808172628-8227340efae7 h1:dtndE8FcEta75/4kHF3AbpuWzV6f1LjnLrM4pe2SZrw=
+golang.org/x/oauth2 v0.0.0-20220808172628-8227340efae7/go.mod h1:h4gKUeWbJ4rQPri7E0u6Gs4e9Ri2zaLxzw5DI5XGrYg=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
