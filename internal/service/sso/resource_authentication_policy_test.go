@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -83,8 +84,8 @@ func TestAccAuthenticationPolicy_Full(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_Full(environmentName, licenseID, resourceName, name, description),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", description),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -118,8 +119,8 @@ func TestAccAuthenticationPolicy_Minimal(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_Minimal(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -153,8 +154,8 @@ func TestAccAuthenticationPolicy_LoginAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_LoginFullWithExt(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -167,15 +168,15 @@ func TestAccAuthenticationPolicy_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.registration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.registration.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.registration.0.external_href", "https://pingidentity.com"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "policy_action.0.login_options.0.registration.0.population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "policy_action.0.login_options.0.registration.0.population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					//resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.social_providers.#", "1"),
 				),
 			},
 			{
 				Config: testAccAuthenticationPolicyConfig_LoginMinimal1(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -186,8 +187,8 @@ func TestAccAuthenticationPolicy_LoginAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_LoginMinimal2(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -203,8 +204,8 @@ func TestAccAuthenticationPolicy_LoginAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_LoginFullNoExt(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -217,7 +218,7 @@ func TestAccAuthenticationPolicy_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.registration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.registration.0.enabled", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "policy_action.0.login_options.0.registration.0.external_href"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "policy_action.0.login_options.0.registration.0.population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "policy_action.0.login_options.0.registration.0.population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					//resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.login_options.0.social_providers.#", "1"),
 				),
 			},
@@ -246,8 +247,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_IDFirstFullWithExt(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -260,7 +261,7 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.registration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.registration.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.registration.0.external_href", "https://pingidentity.com"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "policy_action.0.identifier_first_options.0.registration.0.population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.registration.0.population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					//resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.social_providers.#", "1"),
 					//resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.discovery_rule.#", "1"),
 				),
@@ -268,8 +269,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_IDFirstMinimal1(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -280,8 +281,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_IDFirstMinimal2(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -298,8 +299,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_IDFirstFullNoExt(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -312,7 +313,7 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.registration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.registration.0.enabled", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.registration.0.external_href"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "policy_action.0.identifier_first_options.0.registration.0.population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.registration.0.population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					//resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.social_providers.#", "1"),
 					//resource.TestCheckResourceAttr(resourceFullName, "policy_action.0.identifier_first_options.0.discovery_rule.#", "1"),
 				),
@@ -342,8 +343,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 // 			{
 // 				Config: testAccAuthenticationPolicyConfig_MFAFull(environmentName, licenseID, resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 // 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 // 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -352,8 +353,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 // 			{
 // 				Config: testAccAuthenticationPolicyConfig_MFAMinimal(environmentName, licenseID, resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 // 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 // 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -362,8 +363,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 // 			{
 // 				Config: testAccAuthenticationPolicyConfig_MFAFull(environmentName, licenseID, resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 // 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 // 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -394,8 +395,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 // 			{
 // 				Config: testAccAuthenticationPolicyConfig_IDPFull(environmentName, licenseID, resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 // 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 // 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -404,8 +405,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 // 			{
 // 				Config: testAccAuthenticationPolicyConfig_IDPMinimal(environmentName, licenseID, resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 // 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 // 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -414,8 +415,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 // 			{
 // 				Config: testAccAuthenticationPolicyConfig_IDPFull(environmentName, licenseID, resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 // 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 // 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -446,8 +447,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 // 			{
 // 				Config: testAccAuthenticationPolicyConfig_AgreementFull(environmentName, licenseID, resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 // 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 // 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -456,8 +457,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 // 			{
 // 				Config: testAccAuthenticationPolicyConfig_AgreementMinimal(environmentName, licenseID, resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 // 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 // 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -466,8 +467,8 @@ func TestAccAuthenticationPolicy_IDFirstAction(t *testing.T) {
 // 			{
 // 				Config: testAccAuthenticationPolicyConfig_AgreementFull(environmentName, licenseID, resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 // 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 // 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -498,8 +499,8 @@ func TestAccAuthenticationPolicy_ProgressiveProfilingAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_ProgressiveProfilingFull(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -518,8 +519,8 @@ func TestAccAuthenticationPolicy_ProgressiveProfilingAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_ProgressiveProfilingMinimal(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -538,8 +539,8 @@ func TestAccAuthenticationPolicy_ProgressiveProfilingAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_ProgressiveProfilingFull(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "1"),
@@ -580,8 +581,8 @@ func TestAccAuthenticationPolicy_MultipleAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_Multiple1(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "2"),
@@ -593,8 +594,8 @@ func TestAccAuthenticationPolicy_MultipleAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_Multiple2(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "2"),
@@ -606,8 +607,8 @@ func TestAccAuthenticationPolicy_MultipleAction(t *testing.T) {
 			{
 				Config: testAccAuthenticationPolicyConfig_Multiple1(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "policy_action.#", "2"),

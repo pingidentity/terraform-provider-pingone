@@ -107,7 +107,6 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"confirm_identity_provider_attributes": confirmIdentityProviderAttributesSchema(),
@@ -161,7 +160,6 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"confirm_identity_provider_attributes":   confirmIdentityProviderAttributesSchema(),
@@ -177,7 +175,6 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"device_authentication_policy_id": {
@@ -200,7 +197,6 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"acr_values": {
@@ -229,7 +225,6 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"agreement_id": {
@@ -253,7 +248,6 @@ func resourceAuthenticationPolicyActionSchema() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"attribute": {
