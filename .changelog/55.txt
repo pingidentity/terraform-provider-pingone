@@ -1,0 +1,3 @@
+```release-note:bug
+resource/pingone_environment: Fix error `PING_ONE_DAVINCI is not a valid EnumProductType`
+```

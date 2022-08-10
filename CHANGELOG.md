@@ -1,5 +1,11 @@
 ## 0.2.0 (Unreleased)
 
+## 0.1.1 (10 August 2022)
+
+BUG FIXES:
+
+* resource/pingone_environment: Fix error `PING_ONE_DAVINCI is not a valid EnumProductType` ([#55](https://github.com/pingidentity/terraform-provider-pingone/issues/55))
+
 ## 0.1.0 (23 July 2022)
 
 :fire: Initial provider release :fire:
