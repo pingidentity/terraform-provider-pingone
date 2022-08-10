@@ -1,0 +1,3 @@
+```release-note:note
+resource/pingone_environment: Now sets the services (bill of materials) at the point of environment creation
+```
