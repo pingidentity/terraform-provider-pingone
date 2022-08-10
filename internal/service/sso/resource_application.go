@@ -547,7 +547,7 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 		if v, ok := application.GetAccessControlOk(); ok {
 
 			if j, ok := v.Role.GetTypeOk(); ok {
-				d.Set("access_control_role_type", j)
+				d.Set("access_control_role_type", string(*j))
 			} else {
 				d.Set("access_control_role_type", nil)
 			}
@@ -616,7 +616,7 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 		if v, ok := application.GetAccessControlOk(); ok {
 
 			if j, ok := v.Role.GetTypeOk(); ok {
-				d.Set("access_control_role_type", j)
+				d.Set("access_control_role_type", string(*j))
 			} else {
 				d.Set("access_control_role_type", nil)
 			}
@@ -1108,7 +1108,7 @@ func expandCommonOptionalAttributes(d *schema.ResourceData) management.Applicati
 	accessControlCount := 0
 
 	if v, ok := d.GetOk("access_control_role_type"); ok {
-		accessControl.SetRole(*management.NewApplicationAccessControlRole(v.(string)))
+		accessControl.SetRole(*management.NewApplicationAccessControlRole(management.EnumApplicationAccessControlType(v.(string))))
 		accessControlCount += 1
 	}
 
