@@ -110,7 +110,7 @@ jobs:
       PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_LICENSE_ID }}
       PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_ORGANIZATION_ID }}
 
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -147,7 +147,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 10
+      timeout-minutes: 30
       run: |
         make testacc
 
