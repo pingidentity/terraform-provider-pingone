@@ -110,7 +110,7 @@ jobs:
       PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_LICENSE_ID }}
       PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_ORGANIZATION_ID }}
 
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
