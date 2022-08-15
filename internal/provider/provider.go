@@ -80,7 +80,8 @@ func New(version string) func() *schema.Provider {
 				"pingone_environment":          base.ResourceEnvironment(),
 				"pingone_role_assignment_user": base.ResourceRoleAssignmentUser(),
 
-				"pingone_authentication_policy": sso.ResourceAuthenticationPolicy(),
+				"pingone_sign_on_policy":        sso.ResourceSignOnPolicy(),
+				"pingone_sign_on_policy_action": sso.ResourceSignOnPolicyAction(),
 				"pingone_group":                 sso.ResourceGroup(),
 				"pingone_population":            sso.ResourcePopulation(),
 				"pingone_user":                  sso.ResourceUser(),
