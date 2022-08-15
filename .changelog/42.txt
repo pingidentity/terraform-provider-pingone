@@ -1,3 +1,7 @@
 ```release-note:new-resource
-pingone_authentication_policy
+pingone_sign_on_policy
+```
+
+```release-note:new-resource
+pingone_sign_on_policy_action
 ```
