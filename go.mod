@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-docs v0.13.0
 	github.com/hashicorp/terraform-plugin-log v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.20.0
-	github.com/katbyte/terrafmt v0.4.0
+	github.com/katbyte/terrafmt v0.5.1
 	github.com/patrickcping/pingone-go-sdk-v2 v0.3.2
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.4.0
 	github.com/pavius/impi v0.0.3
@@ -202,7 +202,7 @@ require (
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shazow/go-diff v0.0.0-20160112020656-b6b7b6733b8c // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/sivchari/containedctx v1.0.2 // indirect
 	github.com/sivchari/nosnakecase v1.5.0 // indirect
 	github.com/sivchari/tenv v1.7.0 // indirect
