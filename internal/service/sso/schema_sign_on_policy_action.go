@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
@@ -16,14 +17,14 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Required:         true,
 			ForceNew:         true,
-			ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+			ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 		},
 		"sign_on_policy_id": {
 			Description:      "The ID of the sign on policy to associate the sign on policy action to.",
 			Type:             schema.TypeString,
 			Required:         true,
 			ForceNew:         true,
-			ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+			ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 		},
 		"priority": {
 			Description:      "",
@@ -38,26 +39,31 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"last_sign_on_older_than": {
+					"last_sign_on_older_than_seconds": {
 						Description:      "",
 						Type:             schema.TypeInt,
 						Optional:         true,
+						ConflictsWith:    []string{"progressive_profiling", "agreement"},
 						ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
+						AtLeastOneOf:     []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"user_is_member_of_any_population_id": {
-						Description: "",
-						Type:        schema.TypeList,
-						MaxItems:    100,
-						Optional:    true,
+						Description:   "",
+						Type:          schema.TypeList,
+						MaxItems:      100,
+						Optional:      true,
+						ConflictsWith: []string{"progressive_profiling", "agreement", "identity_provider"},
 						Elem: &schema.Schema{
 							Type:             schema.TypeString,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 						},
+						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"user_attribute_equals": {
-						Description: "",
-						Type:        schema.TypeSet,
-						Optional:    true,
+						Description:   "",
+						Type:          schema.TypeSet,
+						Optional:      true,
+						ConflictsWith: []string{"progressive_profiling", "agreement", "identity_provider"},
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"attribute_reference": {
@@ -74,40 +80,50 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 								},
 							},
 						},
+						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"ip_out_of_range_cidr": {
-						Description: "",
-						Type:        schema.TypeList,
-						MaxItems:    100,
-						Optional:    true,
+						Description:   "",
+						Type:          schema.TypeList,
+						MaxItems:      100,
+						Optional:      true,
+						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
 						Elem: &schema.Schema{
 							Type:             schema.TypeString,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDR),
 						},
+						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"ip_reputation_high_risk": {
-						Description: "",
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Default:     false,
+						Description:   "",
+						Type:          schema.TypeBool,
+						Optional:      true,
+						Default:       false,
+						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
+						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"geovelocity_anomaly_detected": {
-						Description: "",
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Default:     false,
+						Description:   "",
+						Type:          schema.TypeBool,
+						Optional:      true,
+						Default:       false,
+						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
+						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"anonymous_network_detected": {
-						Description: "",
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Default:     false,
+						Description:   "",
+						Type:          schema.TypeBool,
+						Optional:      true,
+						Default:       false,
+						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
+						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"anonymous_network_detected_allowed_cidr": {
-						Description: "",
-						Type:        schema.TypeList,
-						MaxItems:    100,
-						Optional:    true,
+						Description:   "",
+						Type:          schema.TypeList,
+						MaxItems:      100,
+						Optional:      true,
+						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
 						Elem: &schema.Schema{
 							Type:             schema.TypeString,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDR),
@@ -128,7 +144,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			ConflictsWith:    []string{"registration_external_href", "agreement", "mfa", "progressive_profiling"},
-			ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+			ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 		},
 		"social_provider_ids": {
 			Description:   "The IDs of the identity providers that can be used for the social login sign-on flow.",
@@ -138,7 +154,8 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Computed:      true,
 			ConflictsWith: []string{"agreement", "mfa", "progressive_profiling"},
 			Elem: &schema.Schema{
-				Type: schema.TypeString,
+				Type:             schema.TypeString,
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 		},
 		"confirm_identity_provider_attributes": {
@@ -168,7 +185,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Description:      "A string that specifies the ID of the agreement to which the user must consent.",
 						Type:             schema.TypeString,
 						Required:         true,
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+						ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 					},
 					"show_decline_option": {
 						Description:      "When enabled, the `Do Not Accept` button will terminate the Flow and display an error message to the user.",
@@ -222,7 +239,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 									Description:      "The ID that specifies the identity provider that will be used to authenticate the user if the condition is matched.",
 									Type:             schema.TypeString,
 									Required:         true,
-									ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+									ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 								},
 							},
 						},
@@ -250,7 +267,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Description:      "A string that specifies the ID of the external identity provider to which the user is redirected for sign-on.",
 						Type:             schema.TypeString,
 						Required:         true,
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+						ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 					},
 					"pass_user_context": {
 						Description: "A boolean that specifies whether to pass in a login hint to the identity provider on the sign on request. Based on user context, the login hint is set if (1) the user is set on the flow, and (2) the user already has an account link for the identity provider. If both of these conditions are true, then the user is sent to the identity provider with a login hint equal to their externalId for the identity provider (saved on the account link). If these conditions are not true, then the API checks see if there is an OIDC login hint on the flow. If so, that login hint is used. If none of these conditions are true, the login hint parameter is not included on the authorization request to the identity provider.",
@@ -286,7 +303,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Description:      "The ID of the MFA policy that should be used.",
 						Type:             schema.TypeString,
 						Required:         true,
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+						ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 					},
 					"no_device_mode": {
 						Description:      "A string that specifies the device mode for the MFA flow. Options are `BYPASS` to allow MFA without a specified device, or `BLOCK` to block the MFA flow if no device is specified. To use this configuration option, the authorize request must include a signed `login_hint_token` property. For more information, see Authorize (Browserless and MFA Only Flows).",

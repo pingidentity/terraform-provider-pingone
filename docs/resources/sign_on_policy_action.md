@@ -94,7 +94,7 @@ Optional:
 - `geovelocity_anomaly_detected` (Boolean) Defaults to `false`.
 - `ip_out_of_range_cidr` (List of String)
 - `ip_reputation_high_risk` (Boolean) Defaults to `false`.
-- `last_sign_on_older_than` (Number)
+- `last_sign_on_older_than_seconds` (Number)
 - `user_attribute_equals` (Block Set) (see [below for nested schema](#nestedblock--conditions--user_attribute_equals))
 - `user_is_member_of_any_population_id` (List of String)
 
