@@ -164,7 +164,7 @@ Optional:
 
 Required:
 
-- `attribute_reference` (String) Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an addtional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`
+- `attribute_reference` (String) Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an additional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`
 - `value` (String) The value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.
 
 

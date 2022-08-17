@@ -67,7 +67,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"attribute_reference": {
-									Description:      "Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an addtional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`",
+									Description:      "Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an additional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`",
 									Type:             schema.TypeString,
 									Required:         true,
 									ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
