@@ -84,7 +84,7 @@ resource/pingone_risk_policy: Add policy definition weights
 
 ### Bug fix
 
-A new documentation guide has the `release-note:new-guide` header and the description will be the title of the guide that has been created.  Example:
+A new documentation guide has the `release-note:new-guide` header and the description will highlight the fix that has been applied.  Example:
 
 ``````markdown
 ```release-note:bug
@@ -104,7 +104,7 @@ How to configure a PingOne Risk policy
 
 ### Notes / Deprecations / Dependencies
 
-A general note or deprecation notice should follow the `release-note:note` header and the description will be the title of the guide that has been created.  Example:
+A general note or deprecation notice should follow the `release-note:note` header and the description relevant to the note.  Example:
 
 ``````markdown
 ```release-note:note
@@ -114,7 +114,7 @@ resource/pingone_risk_policy: Deprecate attribute EXAMPLE in favour of EXAMPLE
 
 ### Breaking Change
 
-A breaking change notice should follow the `release-note:breaking-change` header and the description will be the title of the guide that has been created.  Example:
+A breaking change notice should follow the `release-note:breaking-change` header and the description will provide detail on the breaking change.  Example:
 
 ``````markdown
 ```release-note:breaking-change

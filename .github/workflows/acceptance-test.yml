@@ -13,6 +13,12 @@ on:
       - 'CHANGELOG.md'
       - 'CONTRIBUTING.md'
       - 'LICENSE'
+      - '.changelog/**'
+      - 'contributing/**'
+      - 'docs/**'
+      - 'examples/**'
+      - 'scripts/**'
+      - 'templates/**'
   # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
   # we recommend testing at a regular interval not necessarily tied to code changes. This will 
   # ensure you are alerted to something breaking due to an API change, even if the code did not
@@ -104,7 +110,7 @@ jobs:
       PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_LICENSE_ID }}
       PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_ORGANIZATION_ID }}
 
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -141,7 +147,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 10
+      timeout-minutes: 30
       run: |
         make testacc
 

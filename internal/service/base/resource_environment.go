@@ -56,6 +56,7 @@ func ResourceEnvironment() *schema.Resource {
 			"region": {
 				Description:      "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.",
 				Type:             schema.TypeString,
+				Computed:         true,
 				Optional:         true,
 				DefaultFunc:      schema.EnvDefaultFunc("PINGONE_REGION", nil),
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(model.RegionsAvailableList(), false)),
@@ -168,7 +169,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 	region := p1Client.API.Region.APICode
 
-	if v, ok := d.GetOk("region"); ok {
+	if v, ok := d.GetOk("region"); ok && v != "" {
 		region = model.FindRegionByName(v.(string)).APICode
 	}
 
@@ -176,6 +177,21 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 	if v, ok := d.GetOk("description"); ok {
 		environment.SetDescription(v.(string))
+	}
+
+	if services, ok := d.GetOk("service"); ok {
+		productBOMItems, err := expandBOMProducts(services.([]interface{}))
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Error mapping configured services with the platform services``: %v", err),
+				Detail:   fmt.Sprintf("Configured services: %v\n", services),
+			})
+
+			return diags
+		}
+
+		environment.SetBillOfMaterials(*management.NewBillOfMaterials(productBOMItems))
 	}
 
 	resp, r, err := apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
@@ -208,38 +224,6 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 	//lintignore:R018
 	time.Sleep(1 * time.Second) // TODO: replace this with resource.StateChangeConf{/* ... */}
-
-	// Set the Bill of Materials (the services)
-
-	if services, ok := d.GetOk("service"); ok {
-		productBOMItems, err := expandBOMProducts(services.([]interface{}))
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error mapping configured services with the platform services``: %v", err),
-				Detail:   fmt.Sprintf("Configured services: %v\n", services),
-			})
-
-			return diags
-		}
-
-		billOfMaterials := *management.NewBillOfMaterials(productBOMItems)
-
-		// if solution, ok := d.GetOk("solution"); ok {
-		// 	billOfMaterials.SetSolutionType(solution.(string))
-		// }
-
-		_, r, err := apiClient.BillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, resp.GetId()).BillOfMaterials(billOfMaterials).Execute()
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `BillOfMaterialsBOMApi.UpdateBillOfMaterials``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
-
-			return diags
-		}
-	}
 
 	// Set the default population
 	// We have to create a default population because the API must require one population in the environment. If we don't do this we have a problem with the 'destroy all' routine

@@ -1,0 +1,1 @@
+$ terraform import pingone_application_attribute_mapping.example <environment_id>/<application_id>/<attribute_mapping_id>
