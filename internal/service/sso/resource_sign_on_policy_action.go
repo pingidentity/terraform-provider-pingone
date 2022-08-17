@@ -93,7 +93,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 		"registration_external_href":             nil,
 		"registration_local_population_id":       nil,
 		"social_provider_ids":                    nil,
-		"confirm_identity_provider_attributes":   nil,
+		"registration_confirm_user_attributes":   nil,
 		"enforce_lockout_for_identity_providers": nil,
 		"agreement":                              nil,
 		"identifier_first":                       nil,
@@ -125,14 +125,14 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			if v1, ok := v.GetPopulationOk(); ok {
 				values["registration_local_population_id"] = v1.GetId()
 			}
+
+			if v1, ok := v.GetConfirmIdentityProviderAttributesOk(); ok {
+				values["registration_confirm_user_attributes"] = v1
+			}
 		}
 
 		if v, ok := resp.SignOnPolicyActionLogin.GetSocialProvidersOk(); ok {
 			values["social_provider_ids"] = flattenActionSocialProvidersInner(v)
-		}
-
-		if v, ok := resp.SignOnPolicyActionLogin.GetConfirmIdentityProviderAttributesOk(); ok {
-			values["confirm_identity_provider_attributes"] = v
 		}
 
 		if v, ok := resp.SignOnPolicyActionLogin.GetEnforceLockoutForIdentityProvidersOk(); ok {
@@ -177,21 +177,26 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			if v1, ok := v.GetPopulationOk(); ok {
 				values["registration_local_population_id"] = v1.GetId()
 			}
+
+			if v1, ok := v.GetConfirmIdentityProviderAttributesOk(); ok {
+				values["registration_confirm_user_attributes"] = v1
+			}
 		}
 
 		if v, ok := resp.SignOnPolicyActionIDFirst.GetSocialProvidersOk(); ok {
 			values["social_provider_ids"] = flattenActionSocialProvidersInner(v)
 		}
 
-		if v, ok := resp.SignOnPolicyActionIDFirst.GetConfirmIdentityProviderAttributesOk(); ok {
-			values["confirm_identity_provider_attributes"] = v
-		}
-
 		if v, ok := resp.SignOnPolicyActionIDFirst.GetEnforceLockoutForIdentityProvidersOk(); ok {
 			values["enforce_lockout_for_identity_providers"] = v
 		}
 
-		values["identifier_first"] = flattenActionIDFirst(resp.SignOnPolicyActionIDFirst)
+		var idFirst []interface{}
+		idFirst, diags = flattenActionIDFirst(resp.SignOnPolicyActionIDFirst)
+		if diags.HasError() {
+			return diags
+		}
+		values["identifier_first"] = idFirst
 
 	case *management.SignOnPolicyActionIDP:
 
@@ -209,6 +214,10 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 		if v, ok := resp.SignOnPolicyActionIDP.GetRegistrationOk(); ok {
 			if v1, ok := v.GetPopulationOk(); ok {
 				values["registration_local_population_id"] = v1.GetId()
+			}
+
+			if v1, ok := v.GetConfirmIdentityProviderAttributesOk(); ok {
+				values["registration_confirm_user_attributes"] = v1
 			}
 		}
 
@@ -251,9 +260,9 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 	d.Set("registration_external_href", values["registration_external_href"])
 	d.Set("registration_local_population_id", values["registration_local_population_id"])
+	d.Set("registration_confirm_user_attributes", values["registration_confirm_user_attributes"])
 
 	d.Set("social_provider_ids", values["social_provider_ids"])
-	d.Set("confirm_identity_provider_attributes", values["confirm_identity_provider_attributes"])
 	d.Set("enforce_lockout_for_identity_providers", values["enforce_lockout_for_identity_providers"])
 
 	d.Set("agreement", values["agreement"])
@@ -474,6 +483,11 @@ func expandSOPActionIDFirst(d *schema.ResourceData, sopPriority int32) (*managem
 	if v, ok := d.GetOk("registration_local_population_id"); ok && v != "" {
 		obj := *management.NewSignOnPolicyActionLoginAllOfRegistration(true)
 		obj.SetPopulation(*management.NewSignOnPolicyActionLoginAllOfRegistrationPopulation(v.(string)))
+
+		if v1, ok := d.GetOk("registration_confirm_user_attributes"); ok {
+			obj.SetConfirmIdentityProviderAttributes(v1.(bool))
+		}
+
 		sopActionType.SetRegistration(obj)
 	}
 
@@ -486,17 +500,6 @@ func expandSOPActionIDFirst(d *schema.ResourceData, sopPriority int32) (*managem
 			}
 			sopActionType.SetSocialProviders(expandSOPActionSocialProviders(obj))
 			socialIDSet = true
-		}
-	}
-
-	if v, ok := d.GetOk("confirm_identity_provider_attributes"); ok {
-		if socialIDSet {
-			sopActionType.SetConfirmIdentityProviderAttributes(v.(bool))
-		} else {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  "`confirm_identity_provider_attributes`, where `social_provider_ids` is not set, has no effect.",
-			})
 		}
 	}
 
@@ -614,17 +617,6 @@ func expandSOPActionLogin(d *schema.ResourceData, sopPriority int32) (*managemen
 		}
 	}
 
-	if v, ok := d.GetOk("confirm_identity_provider_attributes"); ok {
-		if socialIDSet {
-			sopActionType.SetConfirmIdentityProviderAttributes(v.(bool))
-		} else {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  "`confirm_identity_provider_attributes`, where `social_provider_ids` is not set, has no effect.",
-			})
-		}
-	}
-
 	if v, ok := d.GetOk("enforce_lockout_for_identity_providers"); ok {
 		if socialIDSet {
 			sopActionType.SetEnforceLockoutForIdentityProviders(v.(bool))
@@ -725,8 +717,8 @@ func expandSOPActionDiscoveryRules(items []interface{}) []management.SignOnPolic
 
 	for _, item := range items {
 
-		condition := item.(map[string]interface{})["condition"]
-		conditionObj := *management.NewSignOnPolicyActionIDFirstAllOfCondition(condition.(map[string]interface{})["contains"].(string), condition.(map[string]interface{})["value"].(string))
+		condition := item.(map[string]interface{})["attribute_contains_text"]
+		conditionObj := *management.NewSignOnPolicyActionIDFirstAllOfCondition(condition.(string), "${identifier}")
 
 		identityProviderObj := *management.NewSignOnPolicyActionIDFirstAllOfIdentityProvider(item.(map[string]interface{})["identity_provider_id"].(string))
 
@@ -1451,20 +1443,27 @@ func flattenActionIDP(signOnPolicyActionIDP *management.SignOnPolicyActionIDP) [
 	return append(actionList, action)
 }
 
-func flattenActionIDFirst(signOnPolicyActionIDFirst *management.SignOnPolicyActionIDFirst) []interface{} {
+func flattenActionIDFirst(signOnPolicyActionIDFirst *management.SignOnPolicyActionIDFirst) ([]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	actionList := make([]interface{}, 0, 1)
 
 	action := map[string]interface{}{}
 
 	if v, ok := signOnPolicyActionIDFirst.GetDiscoveryRulesOk(); ok {
-		action["discovery_rule"] = flattenDiscoveryRulesInner(v)
+		var discoveryRules []interface{}
+		discoveryRules, diags = flattenDiscoveryRulesInner(v)
+		if diags.HasError() {
+			return nil, diags
+		}
+		action["discovery_rule"] = discoveryRules
 	}
 
 	if v, ok := signOnPolicyActionIDFirst.GetRecoveryOk(); ok {
 		action["recovery_enabled"] = v.GetEnabled()
 	}
 
-	return append(actionList, action)
+	return append(actionList, action), diags
 }
 
 func flattenActionAgreement(signOnPolicyActionAgreement *management.SignOnPolicyActionAgreement) []interface{} {
@@ -1481,30 +1480,29 @@ func flattenActionAgreement(signOnPolicyActionAgreement *management.SignOnPolicy
 	return append(actionList, action)
 }
 
-func flattenDiscoveryRulesInner(signOnPolicyActionIDFirstAllOfDiscoveryRules []management.SignOnPolicyActionIDFirstAllOfDiscoveryRules) []interface{} {
+func flattenDiscoveryRulesInner(signOnPolicyActionIDFirstAllOfDiscoveryRules []management.SignOnPolicyActionIDFirstAllOfDiscoveryRules) ([]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	rules := make([]interface{}, 0, len(signOnPolicyActionIDFirstAllOfDiscoveryRules))
 	for _, rule := range signOnPolicyActionIDFirstAllOfDiscoveryRules {
 
-		condition := flattenDiscoveryRulesInnerCondition(rule.GetCondition())
-		idpID := rule.IdentityProvider.GetId()
+		condition := rule.GetCondition()
+
+		if condition.GetValue() != "${identifier}" {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "`discovery_rule` has unknown field %s, but expecting value ${identifier}.  This is not supported in the provider.  Please raise an issue.",
+			})
+
+			return nil, diags
+		}
 
 		rules = append(rules, map[string]interface{}{
-			"condition":            condition,
-			"identity_provider_id": idpID,
+			"attribute_contains_text": condition.GetContains(),
+			"identity_provider_id":    rule.GetIdentityProvider().Id,
 		})
 	}
-	return rules
-}
-
-func flattenDiscoveryRulesInnerCondition(signOnPolicyActionIDFirstAllOfCondition management.SignOnPolicyActionIDFirstAllOfCondition) []interface{} {
-	conditionList := make([]interface{}, 0, 1)
-
-	condition := map[string]interface{}{
-		"contains": signOnPolicyActionIDFirstAllOfCondition.GetContains(),
-		"value":    signOnPolicyActionIDFirstAllOfCondition.GetValue(),
-	}
-
-	return append(conditionList, condition)
+	return rules, diags
 }
 
 func flattenActionSocialProvidersInner(signOnPolicyActionLoginAllOfSocialProviders []management.SignOnPolicyActionLoginAllOfSocialProviders) []string {

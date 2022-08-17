@@ -57,13 +57,13 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
 
 - `agreement` (Block List, Max: 1) Options specific to the **AGREEMENT** policy action. (see [below for nested schema](#nestedblock--agreement))
 - `conditions` (Block List, Max: 1) Conditions to apply to the sign on policy action. (see [below for nested schema](#nestedblock--conditions))
-- `confirm_identity_provider_attributes` (Boolean) A boolean that specifies whether users must confirm data returned from an identity provider prior to registration. Users can modify the data and omit non-required attributes. Modified attributes are added to the user's profile during account creation. Defaults to `false`.
 - `enforce_lockout_for_identity_providers` (Boolean) A boolean that if set to true and if the user's account is locked (the account.canAuthenticate attribute is set to false), then social sign on with an external identity provider is prevented. Defaults to `false`.
 - `identifier_first` (Block List, Max: 1) Options specific to the **IDENTIFIER_FIRST** policy action. (see [below for nested schema](#nestedblock--identifier_first))
 - `identity_provider` (Block List, Max: 1) Options specific to the **IDENTITY_PROVIDER** policy action. (see [below for nested schema](#nestedblock--identity_provider))
 - `login` (Block List, Max: 1) Options specific to the **LOGIN** policy action. (see [below for nested schema](#nestedblock--login))
 - `mfa` (Block List, Max: 1) Options specific to the **MULTI_FACTOR_AUTHENTICATION** policy action. (see [below for nested schema](#nestedblock--mfa))
 - `progressive_profiling` (Block List, Max: 1) Options specific to the **PROGRESSIVE_PROFILING** policy action. (see [below for nested schema](#nestedblock--progressive_profiling))
+- `registration_confirm_user_attributes` (Boolean) A boolean that specifies whether users must confirm data returned from an identity provider prior to registration. Users can modify the data and omit non-required attributes. Modified attributes are added to the user's profile during account creation. Defaults to `false`.
 - `registration_external_href` (String) A string that specifies the link to the external identity provider's identity store. This property is set when the administrator chooses to have users register in an external identity store. This attribute can be set only when the registration.enabled property is set to false.
 - `registration_local_population_id` (String) A string that specifies the population ID associated with the newly registered user. Setting this enables local registration features.
 - `social_provider_ids` (List of String) The IDs of the identity providers that can be used for the social login sign-on flow.
@@ -121,17 +121,8 @@ Optional:
 
 Required:
 
-- `condition` (Block List, Min: 1, Max: 1) Set the sign on policy action to be the `Identifier First` type. (see [below for nested schema](#nestedblock--identifier_first--discovery_rule--condition))
+- `attribute_contains_text` (String)
 - `identity_provider_id` (String) The ID that specifies the identity provider that will be used to authenticate the user if the condition is matched.
-
-<a id="nestedblock--identifier_first--discovery_rule--condition"></a>
-### Nested Schema for `identifier_first.discovery_rule.condition`
-
-Required:
-
-- `contains` (String)
-- `value` (String)
-
 
 
 

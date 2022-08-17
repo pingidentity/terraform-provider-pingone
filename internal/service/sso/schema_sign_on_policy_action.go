@@ -146,6 +146,13 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			ConflictsWith:    []string{"registration_external_href", "agreement", "mfa", "progressive_profiling"},
 			ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 		},
+		"registration_confirm_user_attributes": {
+			Description:   "A boolean that specifies whether users must confirm data returned from an identity provider prior to registration. Users can modify the data and omit non-required attributes. Modified attributes are added to the user's profile during account creation.",
+			Type:          schema.TypeBool,
+			Optional:      true,
+			Default:       false,
+			ConflictsWith: []string{"registration_external_href", "agreement", "mfa", "progressive_profiling"},
+		},
 		"social_provider_ids": {
 			Description:   "The IDs of the identity providers that can be used for the social login sign-on flow.",
 			Type:          schema.TypeList,
@@ -157,13 +164,6 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 				Type:             schema.TypeString,
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
-		},
-		"confirm_identity_provider_attributes": {
-			Description:   "A boolean that specifies whether users must confirm data returned from an identity provider prior to registration. Users can modify the data and omit non-required attributes. Modified attributes are added to the user's profile during account creation.",
-			Type:          schema.TypeBool,
-			Optional:      true,
-			Default:       false,
-			ConflictsWith: []string{"agreement", "mfa", "progressive_profiling"},
 		},
 		"enforce_lockout_for_identity_providers": {
 			Description:   "A boolean that if set to true and if the user's account is locked (the account.canAuthenticate attribute is set to false), then social sign on with an external identity provider is prevented.",
@@ -212,27 +212,11 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Optional:    true,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
-								"condition": {
-									Description: "Set the sign on policy action to be the `Identifier First` type.",
-									Type:        schema.TypeList,
-									MaxItems:    1,
-									Required:    true,
-									Elem: &schema.Resource{
-										Schema: map[string]*schema.Schema{
-											"contains": {
-												Description:      "",
-												Type:             schema.TypeString,
-												Required:         true,
-												ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-											},
-											"value": {
-												Description:      "",
-												Type:             schema.TypeString,
-												Required:         true,
-												ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-											},
-										},
-									},
+								"attribute_contains_text": {
+									Description:      "",
+									Type:             schema.TypeString,
+									Required:         true,
+									ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 								},
 								"identity_provider_id": {
 									Description:      "The ID that specifies the identity provider that will be used to authenticate the user if the condition is matched.",
