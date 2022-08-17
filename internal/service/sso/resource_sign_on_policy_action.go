@@ -675,7 +675,7 @@ func expandSOPActionMFA(d *schema.ResourceData, sopPriority int32) (*management.
 		}
 
 		if v1, ok := vp["no_device_mode"].(string); ok && v1 != "" {
-			sopActionType.SetNoDeviceMode(management.EnumSignOnPolicyNoDeviceMode(v1))
+			sopActionType.SetNoDevicesMode(management.EnumSignOnPolicyNoDeviceMode(v1))
 		}
 
 	}
@@ -1060,18 +1060,20 @@ func expandSOPActionConditionMFA(condition interface{}, sopPriority int32) (*man
 }
 
 type flattenedConditions struct {
-	last_sign_on_older_than_seconds         int32
-	user_is_member_of_any_population_id     string
+	last_sign_on_older_than_seconds         *int32
+	user_is_member_of_any_population_id     []string
 	user_attribute_equals                   []attributeEquality
 	ip_out_of_range_cidr                    []string
-	ip_reputation_high_risk                 bool
-	geovelocity_anomaly_detected            bool
-	anonymous_network_detected              bool
+	ip_reputation_high_risk                 *bool
+	geovelocity_anomaly_detected            *bool
+	anonymous_network_detected              *bool
 	anonymous_network_detected_allowed_cidr []string
 }
 
 func processConditions(conditions *flattenedConditions, v management.SignOnPolicyActionCommonConditionOrOrInner) (*flattenedConditions, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	returnCondition := conditions
 
 	if v.SignOnPolicyActionCommonConditionAnd != nil {
 		// AND doesn't feature in the conditions set by the UI
@@ -1084,13 +1086,37 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 	}
 
 	if j := v.SignOnPolicyActionCommonConditionNot; j != nil {
-		// This is only the IP risk rule
+		// This is only the IP CIDR range rule
+
+		if vc := j.GetNot().SignOnPolicyActionCommonConditionIPRange; vc != nil {
+
+			if condition, ok := vc.GetContainsOk(); ok {
+				if *condition != "${flow.request.http.remoteIp}" {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  fmt.Sprintf("Condition `ip_out_of_range_cidr` has unknown field %s, but expecting value ${flow.request.http.remoteIp}.  This is not supported in the provider.  Please raise an issue.", *condition),
+					})
+
+					return nil, diags
+				}
+			}
+
+			if returnCondition.ip_out_of_range_cidr != nil {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Condition `ip_out_of_range_cidr` has has multiple nested values.  This is not supported in the provider.  Please raise an issue.",
+				})
+
+				return nil, diags
+			}
+			returnCondition.ip_out_of_range_cidr = vc.GetIpRange()
+		}
 
 	}
 
 	if j := v.SignOnPolicyActionCommonConditionOr; j != nil {
 		for _, orCondition := range j.GetOr() {
-			conditions, diags = processConditions(conditions, orCondition)
+			returnCondition, diags = processConditions(returnCondition, orCondition)
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -1110,7 +1136,15 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 					return nil, diags
 				}
 
-				conditions.last_sign_on_older_than_seconds = vc.GetGreater()
+				if returnCondition.last_sign_on_older_than_seconds != nil {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Condition `last_sign_on_older_than_seconds` has has multiple nested values.  This is not supported in the provider.  Please raise an issue.",
+					})
+
+					return nil, diags
+				}
+				returnCondition.last_sign_on_older_than_seconds = func() *int32 { b := vc.GetGreater(); return &b }()
 			}
 		}
 
@@ -1120,13 +1154,22 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 				if *condition != "${flow.request.http.remoteIp}" {
 					diags = append(diags, diag.Diagnostic{
 						Severity: diag.Error,
-						Summary:  fmt.Sprintf("Condition `last_sign_on_older_than_seconds` has unknown field %s, but expecting value ${flow.request.http.remoteIp}.  This is not supported in the provider.  Please raise an issue.", *condition),
+						Summary:  fmt.Sprintf("Condition `ip_out_of_range_cidr` has unknown field %s, but expecting value ${flow.request.http.remoteIp}.  This is not supported in the provider.  Please raise an issue.", *condition),
 					})
 
 					return nil, diags
 				}
 
-				conditions.ip_out_of_range_cidr = vc.GetIpRange()
+				if returnCondition.ip_out_of_range_cidr != nil {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Condition `ip_out_of_range_cidr` has has multiple nested values.  This is not supported in the provider.  Please raise an issue.",
+					})
+
+					return nil, diags
+				}
+
+				returnCondition.ip_out_of_range_cidr = vc.GetIpRange()
 			}
 		}
 
@@ -1151,7 +1194,16 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 					return nil, diags
 				}
 
-				conditions.ip_reputation_high_risk = true
+				if returnCondition.ip_reputation_high_risk != nil {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Condition `ip_reputation_high_risk` has has multiple nested values.  This is not supported in the provider.  Please raise an issue.",
+					})
+
+					return nil, diags
+				}
+
+				returnCondition.ip_reputation_high_risk = func() *bool { b := true; return &b }()
 
 			}
 		}
@@ -1186,14 +1238,23 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 					return nil, diags
 				}
 
-				conditions.geovelocity_anomaly_detected = true
+				if returnCondition.geovelocity_anomaly_detected != nil {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Condition `geovelocity_anomaly_detected` has has multiple nested values.  This is not supported in the provider.  Please raise an issue.",
+					})
+
+					return nil, diags
+				}
+
+				returnCondition.geovelocity_anomaly_detected = func() *bool { b := true; return &b }()
 			}
 		}
 
 		if vc := j.SignOnPolicyActionCommonConditionAnonymousNetwork; vc != nil {
 
 			if condition, ok := vc.GetAnonymousNetworkOk(); ok {
-				conditions.anonymous_network_detected_allowed_cidr = condition
+				returnCondition.anonymous_network_detected_allowed_cidr = condition
 			}
 
 			if condition, ok := vc.GetValidOk(); ok {
@@ -1206,31 +1267,38 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 					return nil, diags
 				}
 
-				conditions.anonymous_network_detected = true
+				if returnCondition.anonymous_network_detected != nil {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Condition `anonymous_network_detected` has has multiple nested values.  This is not supported in the provider.  Please raise an issue.",
+					})
+
+					return nil, diags
+				}
+
+				returnCondition.anonymous_network_detected = func() *bool { b := true; return &b }()
 			}
 		}
 
 		if vc := j.SignOnPolicyActionCommonConditionEquals; vc != nil {
 
 			if populationField := vc.GetValue(); populationField == "${user.population.id}" {
-				populations := make([]string, 0)
-				conditions = append(userIsMemberOfPopulation, vc.GetEquals())
-
-				conditions.user_is_member_of_any_population_id
+				returnCondition.user_is_member_of_any_population_id = append(returnCondition.user_is_member_of_any_population_id, vc.GetEquals())
 
 			} else {
-				condition := map[string]interface{}{
-					"value":               vc.GetEquals(),
-					"attribute_condition": vc.GetValue(),
+				condition := attributeEquality{
+					attributeValue:     vc.GetEquals(),
+					attributeReference: vc.GetValue(),
 				}
 
-				userAttributeEquals = append(userAttributeEquals, condition)
+				returnCondition.user_attribute_equals = append(returnCondition.user_attribute_equals, condition)
+
 			}
 
 		}
 	}
 
-	return &conditions, diags
+	return returnCondition, diags
 
 }
 
@@ -1253,7 +1321,7 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 		conditionStruct = &signOnPolicyActionCommonConditions
 	}
 
-	conditions, diags := processConditions(conditions, *conditionStruct)
+	conditions, diags := processConditions(&flattenedConditions{}, *conditionStruct)
 
 	flattenedConditions := map[string]interface{}{
 		"last_sign_on_older_than_seconds":         nil,
@@ -1267,7 +1335,7 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 	}
 
 	if conditions.last_sign_on_older_than_seconds != nil {
-		flattenedConditions["last_sign_on_older_than_seconds"] = conditions.last_sign_on_older_than_seconds
+		flattenedConditions["last_sign_on_older_than_seconds"] = *conditions.last_sign_on_older_than_seconds
 	}
 
 	if conditions.user_is_member_of_any_population_id != nil {
@@ -1275,7 +1343,14 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 	}
 
 	if conditions.user_attribute_equals != nil {
-		flattenedConditions["user_attribute_equals"] = conditions.user_attribute_equals
+		attributeList := make([]map[string]interface{}, 0)
+		for _, attributeStruct := range conditions.user_attribute_equals {
+			attributeList = append(attributeList, map[string]interface{}{
+				"attribute_reference": attributeStruct.attributeReference,
+				"value":               attributeStruct.attributeValue,
+			})
+		}
+		flattenedConditions["user_attribute_equals"] = attributeList
 	}
 
 	if conditions.ip_out_of_range_cidr != nil {
@@ -1283,15 +1358,15 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 	}
 
 	if conditions.ip_reputation_high_risk != nil {
-		flattenedConditions["ip_reputation_high_risk"] = conditions.ip_reputation_high_risk
+		flattenedConditions["ip_reputation_high_risk"] = *conditions.ip_reputation_high_risk
 	}
 
 	if conditions.geovelocity_anomaly_detected != nil {
-		flattenedConditions["geovelocity_anomaly_detected"] = conditions.geovelocity_anomaly_detected
+		flattenedConditions["geovelocity_anomaly_detected"] = *conditions.geovelocity_anomaly_detected
 	}
 
 	if conditions.anonymous_network_detected != nil {
-		flattenedConditions["anonymous_network_detected"] = conditions.anonymous_network_detected
+		flattenedConditions["anonymous_network_detected"] = *conditions.anonymous_network_detected
 	}
 
 	if conditions.anonymous_network_detected_allowed_cidr != nil {
@@ -1299,7 +1374,7 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 	}
 
 	conditionsList := make([]interface{}, 0, 1)
-	return append(conditionsList, conditions), diags
+	return append(conditionsList, flattenedConditions), diags
 }
 
 func flattenActionProgressiveProfiling(signOnPolicyActionProgressiveProfiling *management.SignOnPolicyActionProgressiveProfiling) []interface{} {
@@ -1337,7 +1412,7 @@ func flattenActionMFA(signOnPolicyActionMFA *management.SignOnPolicyActionMFA) [
 		"device_sign_on_policy_id": signOnPolicyActionMFA.DeviceAuthenticationPolicy.GetId(),
 	}
 
-	if v, ok := signOnPolicyActionMFA.GetNoDeviceModeOk(); ok {
+	if v, ok := signOnPolicyActionMFA.GetNoDevicesModeOk(); ok {
 		action["no_device_mode"] = v
 	}
 

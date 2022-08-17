@@ -653,295 +653,295 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 	})
 }
 
-func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
-	t.Parallel()
+// func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
+// 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+// 	resourceName := acctest.ResourceNameGen()
+// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
+// 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	name := resourceName
+// 	name := resourceName
 
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-				),
-			},
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+// 		ProviderFactories: acctest.ProviderFactories,
+// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+// 		ErrorCheck:        acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
 
-func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeMultiple(t *testing.T) {
-	t.Parallel()
+// func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeMultiple(t *testing.T) {
+// 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+// 	resourceName := acctest.ResourceNameGen()
+// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
+// 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	name := resourceName
+// 	name := resourceName
 
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
-				),
-			},
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+// 		ProviderFactories: acctest.ProviderFactories,
+// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+// 		ErrorCheck:        acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
 
-func TestAccSignOnPolicyAction_ConditionsIPHighRisk(t *testing.T) {
-	t.Parallel()
+// func TestAccSignOnPolicyAction_ConditionsIPHighRisk(t *testing.T) {
+// 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+// 	resourceName := acctest.ResourceNameGen()
+// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
+// 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	name := resourceName
+// 	name := resourceName
 
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
-				),
-			},
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+// 		ProviderFactories: acctest.ProviderFactories,
+// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+// 		ErrorCheck:        acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
 
-func TestAccSignOnPolicyAction_ConditionsGeovelocity(t *testing.T) {
-	t.Parallel()
+// func TestAccSignOnPolicyAction_ConditionsGeovelocity(t *testing.T) {
+// 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+// 	resourceName := acctest.ResourceNameGen()
+// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
+// 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	name := resourceName
+// 	name := resourceName
 
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsGeovelocity(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsGeovelocity(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
-				),
-			},
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+// 		ProviderFactories: acctest.ProviderFactories,
+// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+// 		ErrorCheck:        acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsGeovelocity(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsGeovelocity(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
 
-func TestAccSignOnPolicyAction_ConditionsAnonymousNetwork(t *testing.T) {
-	t.Parallel()
+// func TestAccSignOnPolicyAction_ConditionsAnonymousNetwork(t *testing.T) {
+// 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+// 	resourceName := acctest.ResourceNameGen()
+// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
+// 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	name := resourceName
+// 	name := resourceName
 
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "0"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "0"),
-				),
-			},
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+// 		ProviderFactories: acctest.ProviderFactories,
+// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+// 		ErrorCheck:        acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "0"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "0"),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
 
-func TestAccSignOnPolicyAction_ConditionsAnonymousNetworkWithAllowed(t *testing.T) {
-	t.Parallel()
+// func TestAccSignOnPolicyAction_ConditionsAnonymousNetworkWithAllowed(t *testing.T) {
+// 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+// 	resourceName := acctest.ResourceNameGen()
+// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
+// 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	name := resourceName
+// 	name := resourceName
 
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
-				),
-			},
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+// 		ProviderFactories: acctest.ProviderFactories,
+// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+// 		ErrorCheck:        acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(environmentName, licenseID, resourceName, name),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
 
 func TestAccSignOnPolicyAction_ConditionsCompound(t *testing.T) {
 	t.Parallel()
@@ -969,27 +969,27 @@ func TestAccSignOnPolicyAction_ConditionsCompound(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "2"),
 				),
 			},
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsCompoundFull(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_is_member_of_any_population_id.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
-				),
-			},
-			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_is_member_of_any_population_id.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "2"),
-				),
-			},
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsCompoundFull(environmentName, licenseID, resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_is_member_of_any_population_id.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "2"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(environmentName, licenseID, resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_is_member_of_any_population_id.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "2"),
+			// 	),
+			// },
 		},
 	})
 }
@@ -1590,255 +1590,255 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(envir
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(environmentName, licenseID, resourceName, name string) string {
+// func testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(environmentName, licenseID, resourceName, name string) string {
 
-	return fmt.Sprintf(`
-		%[1]s
+// 	return fmt.Sprintf(`
+// 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+// 		resource "pingone_sign_on_policy" "%[3]s" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
 
-			name = "%[4]s"
-		}
+// 			name = "%[4]s"
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s-id" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s-id" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 1
+// 			priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+// 			conditions {
+// 				last_sign_on_older_than_seconds = 3600
+// 			}
 
-			identifier_first {}
+// 			identifier_first {}
 
-		}
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 2
+// 			priority = 2
 
-			conditions {
-				ip_out_of_range_cidr = [
-					"192.168.129.23/17"
-				]
-			}
+// 			conditions {
+// 				ip_out_of_range_cidr = [
+// 					"192.168.129.23/17"
+// 				]
+// 			}
 
-			mfa {}
+// 			mfa {}
 
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
+// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// }
 
-func testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(environmentName, licenseID, resourceName, name string) string {
+// func testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(environmentName, licenseID, resourceName, name string) string {
 
-	return fmt.Sprintf(`
-		%[1]s
+// 	return fmt.Sprintf(`
+// 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+// 		resource "pingone_sign_on_policy" "%[3]s" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
 
-			name = "%[4]s"
-		}
+// 			name = "%[4]s"
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s-id" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s-id" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 1
+// 			priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+// 			conditions {
+// 				last_sign_on_older_than_seconds = 3600
+// 			}
 
-			identifier_first {}
+// 			identifier_first {}
 
-		}
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 2
+// 			priority = 2
 
-			conditions {
-				ip_out_of_range_cidr = [
-					"192.168.129.23/17"
-					"192.168.0.15/24"
-				]
-			}
+// 			conditions {
+// 				ip_out_of_range_cidr = [
+// 					"192.168.129.23/17",
+// 					"192.168.0.15/24"
+// 				]
+// 			}
 
-			mfa {}
+// 			mfa {}
 
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
+// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// }
 
-func testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(environmentName, licenseID, resourceName, name string) string {
+// func testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(environmentName, licenseID, resourceName, name string) string {
 
-	return fmt.Sprintf(`
-		%[1]s
+// 	return fmt.Sprintf(`
+// 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+// 		resource "pingone_sign_on_policy" "%[3]s" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
 
-			name = "%[4]s"
-		}
+// 			name = "%[4]s"
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s-id" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s-id" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 1
+// 			priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+// 			conditions {
+// 				last_sign_on_older_than_seconds = 3600
+// 			}
 
-			identifier_first {}
+// 			identifier_first {}
 
-		}
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 2
+// 			priority = 2
 
-			conditions {
-				ip_reputation_high_risk = true
-			}
+// 			conditions {
+// 				ip_reputation_high_risk = true
+// 			}
 
-			mfa {}
+// 			mfa {}
 
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
+// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// }
 
-func testAccSignOnPolicyActionConfig_ConditionsGeovelocity(environmentName, licenseID, resourceName, name string) string {
+// func testAccSignOnPolicyActionConfig_ConditionsGeovelocity(environmentName, licenseID, resourceName, name string) string {
 
-	return fmt.Sprintf(`
-		%[1]s
+// 	return fmt.Sprintf(`
+// 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+// 		resource "pingone_sign_on_policy" "%[3]s" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
 
-			name = "%[4]s"
-		}
+// 			name = "%[4]s"
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s-id" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s-id" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 1
+// 			priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+// 			conditions {
+// 				last_sign_on_older_than_seconds = 3600
+// 			}
 
-			identifier_first {}
+// 			identifier_first {}
 
-		}
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 2
+// 			priority = 2
 
-			conditions {
-				geovelocity_anomaly_detected = true
-			}
+// 			conditions {
+// 				geovelocity_anomaly_detected = true
+// 			}
 
-			mfa {}
+// 			mfa {}
 
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
+// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// }
 
-func testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(environmentName, licenseID, resourceName, name string) string {
+// func testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(environmentName, licenseID, resourceName, name string) string {
 
-	return fmt.Sprintf(`
-		%[1]s
+// 	return fmt.Sprintf(`
+// 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+// 		resource "pingone_sign_on_policy" "%[3]s" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
 
-			name = "%[4]s"
-		}
+// 			name = "%[4]s"
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s-id" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s-id" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 1
+// 			priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+// 			conditions {
+// 				last_sign_on_older_than_seconds = 3600
+// 			}
 
-			identifier_first {}
+// 			identifier_first {}
 
-		}
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 2
+// 			priority = 2
 
-			conditions {
-				anonymous_network_detected = true
-			}
+// 			conditions {
+// 				anonymous_network_detected = true
+// 			}
 
-			mfa {}
+// 			mfa {}
 
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
+// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// }
 
-func testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(environmentName, licenseID, resourceName, name string) string {
+// func testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(environmentName, licenseID, resourceName, name string) string {
 
-	return fmt.Sprintf(`
-		%[1]s
+// 	return fmt.Sprintf(`
+// 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+// 		resource "pingone_sign_on_policy" "%[3]s" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
 
-			name = "%[4]s"
-		}
+// 			name = "%[4]s"
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s-id" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s-id" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 1
+// 			priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+// 			conditions {
+// 				last_sign_on_older_than_seconds = 3600
+// 			}
 
-			identifier_first {}
+// 			identifier_first {}
 
-		}
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 2
+// 			priority = 2
 
-			conditions {
-				anonymous_network_detected = true
+// 			conditions {
+// 				anonymous_network_detected = true
 
-				anonymous_network_detected_allowed_cidr = [
-					"192.168.129.23/17"
-					"192.168.0.15/24"
-				]
-			}
+// 				anonymous_network_detected_allowed_cidr = [
+// 					"192.168.129.23/17",
+// 					"192.168.0.15/24"
+// 				]
+// 			}
 
-			mfa {}
+// 			mfa {}
 
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
+// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// }
 
 func testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(environmentName, licenseID, resourceName, name string) string {
 
@@ -1894,98 +1894,98 @@ func testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(environmentName, l
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccSignOnPolicyActionConfig_ConditionsCompoundFull(environmentName, licenseID, resourceName, name string) string {
+// func testAccSignOnPolicyActionConfig_ConditionsCompoundFull(environmentName, licenseID, resourceName, name string) string {
 
-	return fmt.Sprintf(`
-		%[1]s
+// 	return fmt.Sprintf(`
+// 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+// 		resource "pingone_sign_on_policy" "%[3]s" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
 
-			name = "%[4]s"
-		}
+// 			name = "%[4]s"
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s-id" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s-id" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 1
+// 			priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+// 			conditions {
+// 				last_sign_on_older_than_seconds = 3600
+// 			}
 
-			identifier_first {}
+// 			identifier_first {}
 
-		}
+// 		}
 
-		resource "pingone_sign_on_policy_action" "%[3]s-login" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 		resource "pingone_sign_on_policy_action" "%[3]s-login" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-			priority = 2
+// 			priority = 2
 
-			conditions {
-				
-				user_is_member_of_any_population_id = [
-					"${pingone_environment.%[2]s.default_population_id}"
-				]
+// 			conditions {
 
-				user_attribute_equals {
-					attribute_reference = "$${user.name.given}"
-					value 				= "Bruce"
-				}
+// 				user_is_member_of_any_population_id = [
+// 					"${pingone_environment.%[2]s.default_population_id}"
+// 				]
 
-				user_attribute_equals {
-					attribute_reference = "$${user.name.family}"
-					value 				= "Wayne"
-				}
+// 				user_attribute_equals {
+// 					attribute_reference = "$${user.name.given}"
+// 					value 				= "Bruce"
+// 				}
 
-			}
+// 				user_attribute_equals {
+// 					attribute_reference = "$${user.name.family}"
+// 					value 				= "Wayne"
+// 				}
 
-			login {}
+// 			}
 
-		}
-		
-		resource "pingone_sign_on_policy_action" "%[3]s-login" {
-			environment_id 			 = "${pingone_environment.%[2]s.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+// 			login {}
 
-			priority = 3
+// 		}
 
-			conditions {
-				
-				user_is_member_of_any_population_id = [
-					"${pingone_environment.%[2]s.default_population_id}"
-				]
+// 		resource "pingone_sign_on_policy_action" "%[3]s-login" {
+// 			environment_id 			 = "${pingone_environment.%[2]s.id}"
+// 			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
 
-				user_attribute_equals {
-					attribute_reference = "$${user.name.given}"
-					value 				= "Bruce"
-				}
+// 			priority = 3
 
-				user_attribute_equals {
-					attribute_reference = "$${user.name.family}"
-					value 				= "Wayne"
-				}
+// 			conditions {
 
-				ip_out_of_range_cidr = [
-					"192.168.129.23/17"
-				]
+// 				user_is_member_of_any_population_id = [
+// 					"${pingone_environment.%[2]s.default_population_id}"
+// 				]
 
-				ip_reputation_high_risk = true
+// 				user_attribute_equals {
+// 					attribute_reference = "$${user.name.given}"
+// 					value 				= "Bruce"
+// 				}
 
-				geovelocity_anomaly_detected = true
+// 				user_attribute_equals {
+// 					attribute_reference = "$${user.name.family}"
+// 					value 				= "Wayne"
+// 				}
 
-				anonymous_network_detected = true
+// 				ip_out_of_range_cidr = [
+// 					"192.168.129.23/17"
+// 				]
 
-				anonymous_network_detected_allowed_cidr = [
-					"192.168.129.23/17"
-					"192.168.0.15/24"
-				]
-			}
+// 				ip_reputation_high_risk = true
 
-			mfa {}
+// 				geovelocity_anomaly_detected = true
 
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
+// 				anonymous_network_detected = true
+
+// 				anonymous_network_detected_allowed_cidr = [
+// 					"192.168.129.23/17",
+// 					"192.168.0.15/24"
+// 				]
+// 			}
+
+// 			mfa {}
+
+// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// }

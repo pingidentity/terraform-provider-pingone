@@ -165,7 +165,7 @@ Required:
 
 Optional:
 
-- `no_device_mode` (String) A string that specifies the device mode for the MFA flow. Options are `BYPASS` to allow MFA without a specified device, or `BLOCK` to block the MFA flow if no device is specified. To use this configuration option, the authorize request must include a signed `login_hint_token` property. For more information, see Authorize (Browserless and MFA Only Flows).
+- `no_device_mode` (String) A string that specifies the device mode for the MFA flow. Options are `BYPASS` to allow MFA without a specified device, or `BLOCK` to block the MFA flow if no device is specified. To use this configuration option, the authorize request must include a signed `login_hint_token` property. For more information, see Authorize (Browserless and MFA Only Flows). Defaults to `BLOCK`.
 
 
 <a id="nestedblock--progressive_profiling"></a>
