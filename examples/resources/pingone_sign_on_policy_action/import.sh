@@ -1,0 +1,1 @@
+$ terraform import pingone_sign_on_policy_action.example <environment_id>/<sign_on_policy_id>/<sign_on_policy_action_id>

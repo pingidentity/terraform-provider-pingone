@@ -1,0 +1,15 @@
+```release-note:new-resource
+pingone_sign_on_policy
+```
+
+```release-note:new-resource
+pingone_sign_on_policy_action
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.2 => v0.3.3
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.4.0 => v0.5.0
+```
