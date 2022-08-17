@@ -35,13 +35,13 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
   conditions {
     last_sign_on_older_than_seconds = 86400 // 24 hours
 
-    ip_reputation_high_risk = true
+    ip_reputation_high_risk      = true
     geovelocity_anomaly_detected = true
-    anonymous_network_detected = true
+    anonymous_network_detected   = true
 
     user_attribute_equals {
       attribute_reference = "$${user.lifecycle.status}"
-      value = "VERIFICATION_REQUIRED"
+      value               = "VERIFICATION_REQUIRED"
     }
 
   }
@@ -53,33 +53,33 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
 }
 
 resource "pingone_sign_on_policy_action" "my_policy_agreement" {
-  environment_id           = pingone_environment.my_environment.id
+  environment_id    = pingone_environment.my_environment.id
   sign_on_policy_id = pingone_sign_on_policy.my_policy.id
 
   priority = 3
 
-	agreement {
-    agreement_id = var.my_agreement_id
+  agreement {
+    agreement_id        = var.my_agreement_id
     show_decline_option = false
   }
 
 }
 
 resource "pingone_sign_on_policy_action" "my_policy_progressive_profiling" {
-  environment_id           = pingone_environment.my_environment.id
+  environment_id    = pingone_environment.my_environment.id
   sign_on_policy_id = pingone_sign_on_policy.my_policy.id
 
   priority = 4
 
-	progressive_profiling {
+  progressive_profiling {
 
     attribute {
-      name = "name.given"
+      name     = "name.given"
       required = false
     }
 
     attribute {
-      name = "name.family"
+      name     = "name.family"
       required = true
     }
 

@@ -29,6 +29,12 @@ resource "pingone_sign_on_policy_action" "my_policy_first_factor" {
   environment_id    = pingone_environment.my_environment.id
   sign_on_policy_id = pingone_sign_on_policy.my_policy.id
 
+  priority = 1
+
+  conditions {
+    last_sign_on_older_than_seconds = 604800 // 7 days
+  }
+
   login {
     recovery_enabled = true
   }
@@ -39,7 +45,62 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
   environment_id    = pingone_environment.my_environment.id
   sign_on_policy_id = pingone_sign_on_policy.my_policy.id
 
-  mfa {}
+  priority = 2
+
+  conditions {
+    last_sign_on_older_than_seconds = 86400 // 24 hours
+
+    ip_reputation_high_risk      = true
+    geovelocity_anomaly_detected = true
+    anonymous_network_detected   = true
+
+    user_attribute_equals {
+      attribute_reference = "$${user.lifecycle.status}"
+      value               = "VERIFICATION_REQUIRED"
+    }
+
+  }
+
+  mfa {
+    device_sign_on_policy_id = var.my_device_sign_on_policy_id
+  }
+
+}
+
+resource "pingone_sign_on_policy_action" "my_policy_agreement" {
+  environment_id    = pingone_environment.my_environment.id
+  sign_on_policy_id = pingone_sign_on_policy.my_policy.id
+
+  priority = 3
+
+  agreement {
+    agreement_id        = var.my_agreement_id
+    show_decline_option = false
+  }
+
+}
+
+resource "pingone_sign_on_policy_action" "my_policy_progressive_profiling" {
+  environment_id    = pingone_environment.my_environment.id
+  sign_on_policy_id = pingone_sign_on_policy.my_policy.id
+
+  priority = 4
+
+  progressive_profiling {
+
+    attribute {
+      name     = "name.given"
+      required = false
+    }
+
+    attribute {
+      name     = "name.family"
+      required = true
+    }
+
+    prompt_text = "For the best experience, we need a couple things from you."
+
+  }
 
 }
 ```
@@ -50,7 +111,7 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to create the sign on policy action in.
-- `priority` (Number)
+- `priority` (Number) An integer that specifies the order in which the policy referenced by this assignment is evaluated during an authentication flow relative to other policies. An assignment with a lower priority will be evaluated first.
 - `sign_on_policy_id` (String) The ID of the sign on policy to associate the sign on policy action to.
 
 ### Optional
@@ -66,7 +127,7 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
 - `registration_confirm_user_attributes` (Boolean) A boolean that specifies whether users must confirm data returned from an identity provider prior to registration. Users can modify the data and omit non-required attributes. Modified attributes are added to the user's profile during account creation. Defaults to `false`.
 - `registration_external_href` (String) A string that specifies the link to the external identity provider's identity store. This property is set when the administrator chooses to have users register in an external identity store. This attribute can be set only when the registration.enabled property is set to false.
 - `registration_local_population_id` (String) A string that specifies the population ID associated with the newly registered user. Setting this enables local registration features.
-- `social_provider_ids` (List of String) The IDs of the identity providers that can be used for the social login sign-on flow.
+- `social_provider_ids` (List of String) One or more IDs of the identity providers that can be used for the social login sign-on flow.
 
 ### Read-Only
 
@@ -89,22 +150,22 @@ Optional:
 
 Optional:
 
-- `anonymous_network_detected` (Boolean) Defaults to `false`.
-- `anonymous_network_detected_allowed_cidr` (List of String)
-- `geovelocity_anomaly_detected` (Boolean) Defaults to `false`.
-- `ip_out_of_range_cidr` (List of String)
-- `ip_reputation_high_risk` (Boolean) Defaults to `false`.
-- `last_sign_on_older_than_seconds` (Number)
-- `user_attribute_equals` (Block Set) (see [below for nested schema](#nestedblock--conditions--user_attribute_equals))
-- `user_is_member_of_any_population_id` (List of String)
+- `anonymous_network_detected` (Boolean) A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected anonymous network. Defaults to `false`.
+- `anonymous_network_detected_allowed_cidr` (List of String) A list of allowed CIDR when an anonymous network is detected.
+- `geovelocity_anomaly_detected` (Boolean) A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected geovelocity anomaly. Defaults to `false`.
+- `ip_out_of_range_cidr` (List of String) A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.
+- `ip_reputation_high_risk` (Boolean) A boolean that specifies whether the user's IP risk should be used when evaluating this policy action.  A value of `HIGH` will prompt the user to authenticate with this action. Defaults to `false`.
+- `last_sign_on_older_than_seconds` (Number) Set the number of seconds by which the user will not be prompted for this action following the last successful authentication.
+- `user_attribute_equals` (Block Set) One or more conditions where an attribute on the user's profile must match the configured value. (see [below for nested schema](#nestedblock--conditions--user_attribute_equals))
+- `user_is_member_of_any_population_id` (List of String) Activate this action only for users within the specified list of population IDs.
 
 <a id="nestedblock--conditions--user_attribute_equals"></a>
 ### Nested Schema for `conditions.user_attribute_equals`
 
 Required:
 
-- `attribute_reference` (String)
-- `value` (String)
+- `attribute_reference` (String) Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an addtional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`
+- `value` (String) The value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.
 
 
 
@@ -113,15 +174,15 @@ Required:
 
 Optional:
 
-- `discovery_rule` (Block List, Max: 100) An IDP discovery rule invoked when no user is associated with the user identifier. The condition on which this identity provider is used to authenticate the user is expressed using the PingOne policy condition language. (see [below for nested schema](#nestedblock--identifier_first--discovery_rule))
-- `recovery_enabled` (Boolean) Defaults to `true`.
+- `discovery_rule` (Block List, Max: 100) One or more IDP discovery rules invoked when no user is associated with the user identifier. The condition on which this identity provider is used to authenticate the user is expressed using the PingOne policy condition language. (see [below for nested schema](#nestedblock--identifier_first--discovery_rule))
+- `recovery_enabled` (Boolean) A boolean that specifies whether account recovery features are active on the policy action. Defaults to `true`.
 
 <a id="nestedblock--identifier_first--discovery_rule"></a>
 ### Nested Schema for `identifier_first.discovery_rule`
 
 Required:
 
-- `attribute_contains_text` (String)
+- `attribute_contains_text` (String) Text to match on a user's username. Any users that don't match a discovery rule will authenticate against PingOne.  E.g `@pingidentity.com`
 - `identity_provider_id` (String) The ID that specifies the identity provider that will be used to authenticate the user if the condition is matched.
 
 
@@ -144,7 +205,7 @@ Optional:
 
 Optional:
 
-- `recovery_enabled` (Boolean) Defaults to `true`.
+- `recovery_enabled` (Boolean) A boolean that specifies whether account recovery features are active on the policy action. Defaults to `true`.
 
 
 <a id="nestedblock--mfa"></a>
@@ -164,7 +225,7 @@ Optional:
 
 Required:
 
-- `attribute` (Block Set, Min: 1) (see [below for nested schema](#nestedblock--progressive_profiling--attribute))
+- `attribute` (Block Set, Min: 1) One or more attribute(s) that the user should be prompted to complete as part of the progressive profiling action. (see [below for nested schema](#nestedblock--progressive_profiling--attribute))
 - `prompt_text` (String) A string that specifies text to display to the user when prompting for attribute values.
 
 Optional:
