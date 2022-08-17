@@ -1,0 +1,3 @@
+```release-note:note
+bump `github.com/golangci/golangci-lint` v1.47.2 => v1.48.0
+```
