@@ -11,7 +11,7 @@ pingone_application_resource_grant
 ```
 
 ```release-note:new-resource
-pingone_application_authentication_policy_assignment
+pingone_application_sign_on_policy_assignment
 ```
 
 ```release-note:new-resource
