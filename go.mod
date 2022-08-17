@@ -13,7 +13,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2 v0.3.3
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.5.0
 	github.com/pavius/impi v0.0.3
-	github.com/terraform-linters/tflint v0.39.1
+	github.com/terraform-linters/tflint v0.39.3
 )
 
 require (
