@@ -6,6 +6,7 @@ import (
 	"log"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -496,6 +497,9 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 
 		return diags
 	}
+
+	//lintignore:R018
+	time.Sleep(1 * time.Second) // TODO: replace this with resource.StateChangeConf{/* ... */}
 
 	respSecret, r, err := apiClient.ApplicationsApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 	if err != nil {
