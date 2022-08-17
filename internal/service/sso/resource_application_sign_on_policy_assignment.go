@@ -13,38 +13,38 @@ import (
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
-func ResourceApplicationAuthenticationPolicyAssignment() *schema.Resource {
+func ResourceApplicationSignOnPolicyAssignment() *schema.Resource {
 	return &schema.Resource{
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage an authentication policy assignment for applications configured in PingOne.",
+		Description: "Resource to create and manage a sign-on policy assignment for applications configured in PingOne.",
 
-		CreateContext: resourcePingOneApplicationAuthenticationPolicyAssignmentCreate,
-		ReadContext:   resourcePingOneApplicationAuthenticationPolicyAssignmentRead,
-		UpdateContext: resourcePingOneApplicationAuthenticationPolicyAssignmentUpdate,
-		DeleteContext: resourcePingOneApplicationAuthenticationPolicyAssignmentDelete,
+		CreateContext: resourcePingOneApplicationSignOnPolicyAssignmentCreate,
+		ReadContext:   resourcePingOneApplicationSignOnPolicyAssignmentRead,
+		UpdateContext: resourcePingOneApplicationSignOnPolicyAssignmentUpdate,
+		DeleteContext: resourcePingOneApplicationSignOnPolicyAssignmentDelete,
 
 		Importer: &schema.ResourceImporter{
-			StateContext: resourcePingOneApplicationAuthenticationPolicyAssignmentImport,
+			StateContext: resourcePingOneApplicationSignOnPolicyAssignmentImport,
 		},
 
 		Schema: map[string]*schema.Schema{
 			"environment_id": {
-				Description:      "The ID of the environment to create the application authentication policy assignment in.",
+				Description:      "The ID of the environment to create the application sign-on policy assignment in.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 				ForceNew:         true,
 			},
 			"application_id": {
-				Description:      "The ID of the application to create the authentication policy assignment for.",
+				Description:      "The ID of the application to create the sign-on policy assignment for.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
-			"authentication_policy_id": {
-				Description:      "The ID of the authentication policy resource to associate.",
+			"sign_on_policy_id": {
+				Description:      "The ID of the sign-on policy resource to associate.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
@@ -60,7 +60,7 @@ func ResourceApplicationAuthenticationPolicyAssignment() *schema.Resource {
 	}
 }
 
-func resourcePingOneApplicationAuthenticationPolicyAssignmentCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePingOneApplicationSignOnPolicyAssignmentCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
 	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
@@ -68,10 +68,10 @@ func resourcePingOneApplicationAuthenticationPolicyAssignmentCreate(ctx context.
 	})
 	var diags diag.Diagnostics
 
-	signOnPolicy := *management.NewSignOnPolicyActionCommonSignOnPolicy(d.Get("authentication_policy_id").(string))
-	applicationAuthenticationPolicyAssignment := *management.NewSignOnPolicyAssignment(int32(d.Get("priority").(int)), signOnPolicy)
+	signOnPolicy := *management.NewSignOnPolicyActionCommonSignOnPolicy(d.Get("sign_on_policy_id").(string))
+	applicationSignOnPolicyAssignment := *management.NewSignOnPolicyAssignment(int32(d.Get("priority").(int)), signOnPolicy)
 
-	resp, r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationAuthenticationPolicyAssignment).Execute()
+	resp, r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
 	if (err != nil) || (r.StatusCode != 201) {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -84,10 +84,10 @@ func resourcePingOneApplicationAuthenticationPolicyAssignmentCreate(ctx context.
 
 	d.SetId(resp.GetId())
 
-	return resourcePingOneApplicationAuthenticationPolicyAssignmentRead(ctx, d, meta)
+	return resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx, d, meta)
 }
 
-func resourcePingOneApplicationAuthenticationPolicyAssignmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
 	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
@@ -117,7 +117,7 @@ func resourcePingOneApplicationAuthenticationPolicyAssignmentRead(ctx context.Co
 	return diags
 }
 
-func resourcePingOneApplicationAuthenticationPolicyAssignmentUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePingOneApplicationSignOnPolicyAssignmentUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
 	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
@@ -125,10 +125,10 @@ func resourcePingOneApplicationAuthenticationPolicyAssignmentUpdate(ctx context.
 	})
 	var diags diag.Diagnostics
 
-	signOnPolicy := *management.NewSignOnPolicyActionCommonSignOnPolicy(d.Get("authentication_policy_id").(string))
-	applicationAuthenticationPolicyAssignment := *management.NewSignOnPolicyAssignment(int32(d.Get("priority").(int)), signOnPolicy)
+	signOnPolicy := *management.NewSignOnPolicyActionCommonSignOnPolicy(d.Get("sign_on_policy_id").(string))
+	applicationSignOnPolicyAssignment := *management.NewSignOnPolicyAssignment(int32(d.Get("priority").(int)), signOnPolicy)
 
-	_, r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationAuthenticationPolicyAssignment).Execute()
+	_, r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -139,10 +139,10 @@ func resourcePingOneApplicationAuthenticationPolicyAssignmentUpdate(ctx context.
 		return diags
 	}
 
-	return resourcePingOneApplicationAuthenticationPolicyAssignmentRead(ctx, d, meta)
+	return resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx, d, meta)
 }
 
-func resourcePingOneApplicationAuthenticationPolicyAssignmentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePingOneApplicationSignOnPolicyAssignmentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
 	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
@@ -163,20 +163,20 @@ func resourcePingOneApplicationAuthenticationPolicyAssignmentDelete(ctx context.
 	return nil
 }
 
-func resourcePingOneApplicationAuthenticationPolicyAssignmentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePingOneApplicationSignOnPolicyAssignmentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	attributes := strings.SplitN(d.Id(), "/", 2)
 
 	if len(attributes) != 2 {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/applicationID/authenticationPolicyAssignmentID\"", d.Id())
+		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/applicationID/SignOnPolicyAssignmentID\"", d.Id())
 	}
 
-	environmentID, applicationID, authenticationPolicyAssignmentID := attributes[0], attributes[1], attributes[2]
+	environmentID, applicationID, SignOnPolicyAssignmentID := attributes[0], attributes[1], attributes[2]
 
 	d.Set("environment_id", environmentID)
 	d.Set("application_id", applicationID)
-	d.SetId(authenticationPolicyAssignmentID)
+	d.SetId(SignOnPolicyAssignmentID)
 
-	resourcePingOneApplicationAuthenticationPolicyAssignmentRead(ctx, d, meta)
+	resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx, d, meta)
 
 	return []*schema.ResourceData{d}, nil
 }

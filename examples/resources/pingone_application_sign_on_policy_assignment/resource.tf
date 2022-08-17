@@ -16,11 +16,11 @@ resource "pingone_application" "my_awesome_spa" {
   }
 }
 
-resource "pingone_application_authentication_policy_assignment" "foo" {
+resource "pingone_application_sign_on_policy_assignment" "foo" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_spa
 
-  authentication_policy_id = var.authentication_policy_id
+  sign_on_policy_id = var.sign_on_policy_id
 
   priority = 1
 }
