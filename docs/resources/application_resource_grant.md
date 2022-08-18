@@ -67,7 +67,7 @@ resource "pingone_application_resource_grant" "foo" {
 - `application_id` (String) The ID of the application to create the resource grant for.
 - `environment_id` (String) The ID of the environment to create the application resource grant in.
 - `resource_id` (String) The ID of the protected resource associated with this grant.
-- `scopes` (List of String) A list of IDs of the scopes associated with this grant.
+- `scopes` (Set of String) A list of IDs of the scopes associated with this grant.
 
 ### Read-Only
 
