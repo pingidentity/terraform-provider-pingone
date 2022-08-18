@@ -74,6 +74,7 @@ func New(version string) func() *schema.Provider {
 				"pingone_role":        base.DatasourceRole(),
 
 				"pingone_password_policy": sso.DatasourcePasswordPolicy(),
+				"pingone_resource":        sso.DatasourceResource(),
 				"pingone_schema":          sso.DatasourceSchema(),
 			},
 
@@ -89,6 +90,7 @@ func New(version string) func() *schema.Provider {
 				"pingone_group":                                 sso.ResourceGroup(),
 				"pingone_password_policy":                       sso.ResourcePasswordPolicy(),
 				"pingone_population":                            sso.ResourcePopulation(),
+				"pingone_resource":                              sso.ResourceResource(),
 				"pingone_schema_attribute":                      sso.ResourceSchemaAttribute(),
 				"pingone_sign_on_policy":                        sso.ResourceSignOnPolicy(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
