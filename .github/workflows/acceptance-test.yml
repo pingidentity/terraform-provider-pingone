@@ -42,12 +42,6 @@ jobs:
         go-version-file: 'go.mod'
         cache: true
       id: go
-    - uses: actions/cache@v3
-      continue-on-error: true
-      timeout-minutes: 2
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-pkg-mod-${{ hashFiles('go.sum') }}
 
     - name: Get dependencies
       run: |
@@ -81,12 +75,6 @@ jobs:
         go-version-file: 'go.mod'
         cache: true
       id: go
-    - uses: actions/cache@v3
-      continue-on-error: true
-      timeout-minutes: 2
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-pkg-mod-${{ hashFiles('go.sum') }}
 
     - name: Get dependencies
       run: |
@@ -130,12 +118,6 @@ jobs:
         go-version-file: 'go.mod'
         cache: true
       id: go
-    - uses: actions/cache@v3
-      continue-on-error: true
-      timeout-minutes: 2
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-pkg-mod-${{ hashFiles('go.sum') }}
 
     - uses: hashicorp/setup-terraform@v2
       with:
@@ -176,12 +158,6 @@ jobs:
         go-version-file: 'go.mod'
         cache: true
       id: go
-    - uses: actions/cache@v3
-      continue-on-error: true
-      timeout-minutes: 2
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-pkg-mod-${{ hashFiles('go.sum') }}
 
     - name: Get dependencies
       run: |
