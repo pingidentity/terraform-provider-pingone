@@ -1,8 +1,12 @@
-## 0.2.1 (Unreleased)
+## 0.2.1 (18 August 2022)
 
 NOTES:
 
 * Added a regexp validation to any schema attribute that represents a PingOne ID.  Applies to all resources and data sources. ([#72](https://github.com/pingidentity/terraform-provider-pingone/issues/72))
+
+BUG FIXES:
+
+* resource/pingone_application_resource_grant: Fix for `pingone_application_resource_grant` `scopes` showing changes when the values are the same but in different order. ([#74](https://github.com/pingidentity/terraform-provider-pingone/issues/74))
 
 ## 0.2.0 (18 August 2022)
 
