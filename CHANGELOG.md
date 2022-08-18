@@ -1,5 +1,9 @@
 ## 0.3.0 (Unreleased)
 
+NOTES:
+
+* Added a regexp validation to any schema attribute that represents a PingOne ID.  Applies to all resources and data sources. ([#72](https://github.com/pingidentity/terraform-provider-pingone/issues/72))
+
 ## 0.2.0 (18 August 2022)
 
 NOTES:
