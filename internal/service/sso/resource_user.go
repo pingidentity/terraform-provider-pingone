@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func ResourceUser() *schema.Resource {
@@ -33,7 +34,7 @@ func ResourceUser() *schema.Resource {
 				Description:      "The ID of the environment to create the user in.",
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 				ForceNew:         true,
 			},
 			"username": {
@@ -63,7 +64,7 @@ func ResourceUser() *schema.Resource {
 			"population_id": {
 				Description:      "The population ID to add the user to.",
 				Type:             schema.TypeString,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 				Required:         true,
 			},
 			// TODO: Full schema as-and-when needed

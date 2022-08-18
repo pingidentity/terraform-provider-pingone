@@ -6,9 +6,11 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func DatasourceEnvironment() *schema.Resource {
@@ -21,10 +23,11 @@ func DatasourceEnvironment() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"environment_id": {
-				Description:   "The ID of the environment.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"name", "license_id"},
+				Description:      "The ID of the environment.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ConflictsWith:    []string{"name", "license_id"},
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"name": {
 				Description:   "The name of the environment.",

@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func ResourcePopulation() *schema.Resource {
@@ -34,7 +35,7 @@ func ResourcePopulation() *schema.Resource {
 				Description:      "The ID of the environment to create the population in.",
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 				ForceNew:         true,
 			},
 			"name": {
@@ -49,9 +50,10 @@ func ResourcePopulation() *schema.Resource {
 				Optional:    true,
 			},
 			"password_policy_id": {
-				Description: "The ID of a password policy to assign to the population.",
-				Type:        schema.TypeString,
-				Optional:    true,
+				Description:      "The ID of a password policy to assign to the population.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 		},
 	}

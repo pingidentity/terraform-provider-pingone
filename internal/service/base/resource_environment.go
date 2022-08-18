@@ -17,6 +17,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func ResourceEnvironment() *schema.Resource {
@@ -66,7 +67,7 @@ func ResourceEnvironment() *schema.Resource {
 				Description:      "An ID of a valid license to apply to the environment.",
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 				ForceNew:         true,
 			},
 			// "solution": {
