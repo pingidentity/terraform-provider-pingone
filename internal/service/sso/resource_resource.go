@@ -190,10 +190,8 @@ func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	if v, ok := d.GetOk("audience"); ok {
-		fmt.Printf("\n\nHERE: %s\n\n", v.(string))
 		resource.SetAudience(v.(string))
 	} else {
-		fmt.Printf("\n\nHERE2: %s\n\n", v.(string))
 		resource.SetAudience(d.Get("name").(string))
 	}
 
