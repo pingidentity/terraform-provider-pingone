@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -49,16 +48,18 @@ func ResourceApplicationResourceGrant() *schema.Resource {
 				Description:      "The ID of the protected resource associated with this grant.",
 				Type:             schema.TypeString,
 				Required:         true,
+				ForceNew:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"scopes": {
 				Description: "A list of IDs of the scopes associated with this grant.",
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
 				Elem: &schema.Schema{
 					Type:             schema.TypeString,
 					ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 				},
+				Set: schema.HashString,
 			},
 		},
 	}
@@ -73,7 +74,7 @@ func resourcePingOneApplicationResourceGrantCreate(ctx context.Context, d *schem
 	var diags diag.Diagnostics
 
 	resource := *management.NewApplicationResourceGrantResource(d.Get("resource_id").(string))
-	scopes := expandApplicationResourceGrant(d.Get("scopes").([]interface{}))
+	scopes := expandApplicationResourceGrant(d.Get("scopes").(*schema.Set))
 
 	applicationResourceGrant := *management.NewApplicationResourceGrant(resource, scopes)
 
@@ -133,7 +134,7 @@ func resourcePingOneApplicationResourceGrantUpdate(ctx context.Context, d *schem
 	var diags diag.Diagnostics
 
 	resource := *management.NewApplicationResourceGrantResource(d.Get("resource_id").(string))
-	scopes := expandApplicationResourceGrant(d.Get("scopes").([]interface{}))
+	scopes := expandApplicationResourceGrant(d.Get("scopes").(*schema.Set))
 
 	applicationResourceGrant := *management.NewApplicationResourceGrant(resource, scopes)
 
@@ -190,18 +191,14 @@ func resourcePingOneApplicationResourceGrantImport(ctx context.Context, d *schem
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandApplicationResourceGrant(scopesIn []interface{}) []management.ApplicationResourceGrantScopesInner {
+func expandApplicationResourceGrant(scopesIn *schema.Set) []management.ApplicationResourceGrantScopesInner {
 
-	scopes := make([]management.ApplicationResourceGrantScopesInner, 0, len(scopesIn))
-	for _, scope := range scopesIn {
+	scopes := make([]management.ApplicationResourceGrantScopesInner, 0, len(scopesIn.List()))
+	for _, scope := range scopesIn.List() {
 		scopes = append(scopes, management.ApplicationResourceGrantScopesInner{
 			Id: scope.(string),
 		})
 	}
-
-	sort.Slice(scopes, func(i, j int) bool {
-		return scopes[i].GetId() < scopes[j].GetId()
-	})
 
 	return scopes
 }
@@ -214,6 +211,5 @@ func flattenAppResourceGrantScopes(in []management.ApplicationResourceGrantScope
 		items = append(items, v.GetId())
 	}
 
-	sort.Strings(items)
 	return items
 }
