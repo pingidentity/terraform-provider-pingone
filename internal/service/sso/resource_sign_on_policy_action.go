@@ -326,7 +326,8 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 			if match, _ := regexp.MatchString("Cannot delete last action from the policy", response.GetDetails()[0].GetMessage()); match {
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Warning,
-					Summary:  "Cannot delete last action from the policy.  The remaining policy action is left with no state.",
+					Summary:  fmt.Sprintf("Cannot delete last action from the sign-on policy %s.  The last remaining policy action is left in place but no longer managed by the provider. This warning can be safely ignored if the sign-on policy %s was also destroyed.", d.Get("sign_on_policy_id").(string), d.Get("sign_on_policy_id").(string)),
+					Detail:   "For more details about this warning, please see https://github.com/pingidentity/terraform-provider-pingone/issues/68",
 				})
 
 				return diags
