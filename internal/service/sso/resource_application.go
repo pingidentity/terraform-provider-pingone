@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func ResourceApplication() *schema.Resource {
@@ -35,7 +36,7 @@ func ResourceApplication() *schema.Resource {
 				Description:      "The ID of the environment to create the application in.",
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 				ForceNew:         true,
 			},
 			"name": {
@@ -81,7 +82,7 @@ func ResourceApplication() *schema.Resource {
 							Description:      "The ID for the application icon.",
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 						},
 						"href": {
 							Description:      "The HREF for the application icon.",
@@ -352,9 +353,10 @@ func ResourceApplication() *schema.Resource {
 							Default:     true,
 						},
 						"idp_signing_key_id": {
-							Description: "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
-							Type:        schema.TypeString,
-							Optional:    true,
+							Description:      "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 						},
 						"nameid_format": {
 							Description: "A string that specifies the format of the Subject NameID attibute in the SAML assertion.",
@@ -394,7 +396,8 @@ func ResourceApplication() *schema.Resource {
 							Type:        schema.TypeList,
 							Optional:    true,
 							Elem: &schema.Schema{
-								Type: schema.TypeString,
+								Type:             schema.TypeString,
+								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 							},
 						},
 					},

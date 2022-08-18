@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func ResourceApplicationRoleAssignment() *schema.Resource {
@@ -34,42 +35,45 @@ func ResourceApplicationRoleAssignment() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"application_id": {
 				Description:      "The ID of an application to assign an admin role to.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"role_id": {
 				Description:      "The ID of an admin role to assign to the application.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"scope_organization_id": {
-				Description:  "Limit the scope of the admin role assignment to the specified organisation ID.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"scope_organization_id", "scope_environment_id", "scope_population_id"},
+				Description:      "Limit the scope of the admin role assignment to the specified organisation ID.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				ExactlyOneOf:     []string{"scope_organization_id", "scope_environment_id", "scope_population_id"},
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"scope_environment_id": {
-				Description:  "Limit the scope of the admin role assignment to the specified environment ID.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"scope_organization_id", "scope_environment_id", "scope_population_id"},
+				Description:      "Limit the scope of the admin role assignment to the specified environment ID.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				ExactlyOneOf:     []string{"scope_organization_id", "scope_environment_id", "scope_population_id"},
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"scope_population_id": {
-				Description:  "Limit the scope of the admin role assignment to the specified population ID.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"scope_organization_id", "scope_environment_id", "scope_population_id"},
+				Description:      "Limit the scope of the admin role assignment to the specified population ID.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				ExactlyOneOf:     []string{"scope_organization_id", "scope_environment_id", "scope_population_id"},
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"read_only": {
 				Description: "A flag to show whether the admin role assignment is read only or can be changed.",

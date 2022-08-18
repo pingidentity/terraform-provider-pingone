@@ -6,8 +6,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func DatasourceSchema() *schema.Resource {
@@ -20,15 +22,17 @@ func DatasourceSchema() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"environment_id": {
-				Description: "The ID of the environment.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "The ID of the environment.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"schema_id": {
-				Description:   "The ID of the schema.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"name"},
+				Description:      "The ID of the schema.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ConflictsWith:    []string{"name"},
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"name": {
 				Description:   "The name of the schema.",
