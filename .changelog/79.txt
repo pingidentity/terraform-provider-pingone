@@ -1,0 +1,7 @@
+```release-note:new-resource
+pingone_identity_provider
+```
+
+```release-note:new-resource
+pingone_identity_provider_attribute
+```
