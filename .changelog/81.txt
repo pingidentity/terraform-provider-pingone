@@ -1,0 +1,3 @@
+```release-note:note
+resource/pingone_application: Correction to documentation text
+```
