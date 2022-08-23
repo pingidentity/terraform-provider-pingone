@@ -1,0 +1,15 @@
+```release-note:new-resource
+pingone_resource
+```
+
+```release-note:new-resource
+pingone_resource_scope
+```
+
+```release-note:new-data-source
+pingone_resource
+```
+
+```release-note:new-data-source
+pingone_resource_scope
+```

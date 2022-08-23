@@ -804,8 +804,8 @@ github.com/owenrumney/go-sarif v1.1.1 h1:QNObu6YX1igyFKhdzd7vgzmw7XsWN3/6NMGuDzB
 github.com/owenrumney/go-sarif v1.1.1/go.mod h1:dNDiPlF04ESR/6fHlPyq7gHKmrM0sHUvAGjsoh8ZH0U=
 github.com/patrickcping/pingone-go-sdk-v2 v0.3.3 h1:kUCYTY0MVheTx4ISa9sIkhrDU62xVmC0MvWPI02gXjw=
 github.com/patrickcping/pingone-go-sdk-v2 v0.3.3/go.mod h1:ArIwZ/haj0DsKdjz0Yk4BZqvoYUukjQL2ujV1t5Pa7A=
-github.com/patrickcping/pingone-go-sdk-v2/management v0.5.0 h1:L84KMKAu39WuhFRfHoPd8oUfOfrwzkUZXypmxG6Tc/c=
-github.com/patrickcping/pingone-go-sdk-v2/management v0.5.0/go.mod h1:k6GWaPjK5shWSRHumqtOlk7PnbbLZmg8ScKOABwJFqs=
+github.com/patrickcping/pingone-go-sdk-v2/management v0.5.1-0.20220818121934-3d24e1a8cbcc h1:nN0jvf4QBbgoXv+q1wu85Y7xW4okdACHtp87VEP9msk=
+github.com/patrickcping/pingone-go-sdk-v2/management v0.5.1-0.20220818121934-3d24e1a8cbcc/go.mod h1:k6GWaPjK5shWSRHumqtOlk7PnbbLZmg8ScKOABwJFqs=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.3.0 h1:fLV7BEPSWRDN7o40jHhZ101fubdC5Vgxdzz/+zf8EW0=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.3.0/go.mod h1:a6yzbvrfPdNd37OcaJ1KFFRQScMIRvIUXOkGPji0yFI=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.2.0 h1:gf3hoOIb5JuZSxOkIYMqPf50zkEQe0GdenGfxfg4tUA=
