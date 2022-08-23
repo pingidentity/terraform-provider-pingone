@@ -98,7 +98,7 @@ resource "pingone_application" "my_awesome_worker_app" {
 - `access_control_group_options` (Block List, Max: 1) Group access control settings. (see [below for nested schema](#nestedblock--access_control_group_options))
 - `access_control_role_type` (String) A string that specifies the user role required to access the application. Options are `ADMIN_USERS_ONLY`. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.
 - `description` (String) A string that specifies the description of the application.
-- `enabled` (Boolean) A boolean that specifies whether the environment is enabled in the environment. Defaults to `false`.
+- `enabled` (Boolean) A boolean that specifies whether the application is enabled in the environment. Defaults to `false`.
 - `icon` (Block List, Max: 1) The HREF and the ID for the application icon. (see [below for nested schema](#nestedblock--icon))
 - `login_page_url` (String) A string that specifies the custom login page URL for the application. If you set the `login_page_url` property for applications in an environment that sets a custom domain, the URL should include the top-level domain and at least one additional domain level. **Warning** To avoid issues with third-party cookies in some browsers, a custom domain must be used, giving your PingOne environment the same parent domain as your authentication application. For more information about custom domains, see Custom domains.
 - `oidc_options` (Block List, Max: 1) OIDC/OAuth application specific settings. (see [below for nested schema](#nestedblock--oidc_options))

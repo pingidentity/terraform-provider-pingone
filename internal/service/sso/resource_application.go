@@ -51,7 +51,7 @@ func ResourceApplication() *schema.Resource {
 				Optional:    true,
 			},
 			"enabled": {
-				Description: "A boolean that specifies whether the environment is enabled in the environment.",
+				Description: "A boolean that specifies whether the application is enabled in the environment.",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
