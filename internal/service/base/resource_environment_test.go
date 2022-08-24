@@ -133,7 +133,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
-				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the tenant.  Expecting regions \[%s\], region provided: %s`, model.FindRegionByName(os.Getenv("PINGONE_REGION")).APICode, model.FindRegionByName(region).APICode)),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the organization tenant.  Expecting regions \[%s\], region provided: %s`, model.FindRegionByName(os.Getenv("PINGONE_REGION")).Region, model.FindRegionByName(region).Region)),
 			},
 		},
 	})

@@ -54,7 +54,7 @@ func testAccCheckApplicationAttributeMappingDestroy(s *terraform.State) error {
 			return err
 		}
 
-		return fmt.Errorf("PingOne Application Role Assignment %s still exists", rs.Primary.ID)
+		return fmt.Errorf("PingOne Application Attribute Mapping %s still exists", rs.Primary.ID)
 	}
 
 	return nil
