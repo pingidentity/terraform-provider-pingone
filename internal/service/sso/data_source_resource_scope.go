@@ -81,7 +81,7 @@ func datasourcePingOneResourceScopeRead(ctx context.Context, d *schema.ResourceD
 			ctx,
 
 			func() (interface{}, *http.Response, error) {
-				return apiClient.ResourcesResourceScopesApi.ReadAllResourceScopes(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string)).Execute()
+				return apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string)).Execute()
 			},
 			"ReadAllResourceScopes",
 			sdk.DefaultCustomError,
@@ -120,7 +120,7 @@ func datasourcePingOneResourceScopeRead(ctx context.Context, d *schema.ResourceD
 			ctx,
 
 			func() (interface{}, *http.Response, error) {
-				return apiClient.ResourcesResourceScopesApi.ReadOneResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), v.(string)).Execute()
+				return apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), v.(string)).Execute()
 			},
 			"ReadOneResourceScope",
 			sdk.DefaultCustomError,

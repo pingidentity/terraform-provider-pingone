@@ -50,7 +50,7 @@ func resourceSignOnPolicyActionCreate(ctx context.Context, d *schema.ResourceDat
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			return apiClient.SignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
 		},
 		"CreateSignOnPolicyAction",
 		sdk.DefaultCustomError,
@@ -79,7 +79,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.SignOnPoliciesSignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+			return apiClient.SignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
 		},
 		"ReadOneSignOnPolicyAction",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -301,7 +301,7 @@ func resourceSignOnPolicyActionUpdate(ctx context.Context, d *schema.ResourceDat
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.SignOnPoliciesSignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			return apiClient.SignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
 		},
 		"UpdateSignOnPolicyAction",
 		sdk.DefaultCustomError,
@@ -326,7 +326,7 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+			r, err := apiClient.SignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteSignOnPolicyAction",

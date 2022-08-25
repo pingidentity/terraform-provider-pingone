@@ -86,7 +86,7 @@ func resourcePingOneIdentityProviderAttributeCreate(ctx context.Context, d *sche
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.IdentityProviderManagementIdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string)).IdentityProviderAttribute(idpAttributeMapping).Execute()
+			return apiClient.IdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string)).IdentityProviderAttribute(idpAttributeMapping).Execute()
 		},
 		"CreateIdentityProviderAttribute",
 		sdk.CustomErrorInvalidValue,
@@ -115,7 +115,7 @@ func resourcePingOneIdentityProviderAttributeRead(ctx context.Context, d *schema
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.IdentityProviderManagementIdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).Execute()
+			return apiClient.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).Execute()
 		},
 		"ReadOneIdentityProviderAttribute",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -154,7 +154,7 @@ func resourcePingOneIdentityProviderAttributeUpdate(ctx context.Context, d *sche
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.IdentityProviderManagementIdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).IdentityProviderAttribute(idpAttributeMapping).Execute()
+			return apiClient.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).IdentityProviderAttribute(idpAttributeMapping).Execute()
 		},
 		"UpdateIdentityProviderAttribute",
 		sdk.CustomErrorInvalidValue,
@@ -179,7 +179,7 @@ func resourcePingOneIdentityProviderAttributeDelete(ctx context.Context, d *sche
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.IdentityProviderManagementIdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).Execute()
+			r, err := apiClient.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteIdentityProviderAttribute",

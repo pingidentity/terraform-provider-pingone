@@ -106,7 +106,7 @@ func resourceResourceCreate(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ResourcesResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
+			return apiClient.ResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
 		},
 		"CreateResource",
 		sdk.DefaultCustomError,
@@ -135,7 +135,7 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ResourcesResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneResource",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -213,7 +213,7 @@ func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ResourcesResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
+			return apiClient.ResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
 		},
 		"UpdateResource",
 		sdk.DefaultCustomError,
@@ -238,7 +238,7 @@ func resourceResourceDelete(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.ResourcesResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			r, err := apiClient.ResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteResource",

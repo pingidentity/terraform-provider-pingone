@@ -453,7 +453,7 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
+			return apiClient.ApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
 		},
 		"CreateApplication",
 		sdk.DefaultCustomError,
@@ -494,7 +494,7 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationsApi.ReadOneApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return apiClient.ApplicationsApi.ReadOneApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneApplication",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -517,7 +517,7 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			ctx,
 
 			func() (interface{}, *http.Response, error) {
-				return apiClient.ApplicationsApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+				return apiClient.ApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			},
 			"ReadApplicationSecret",
 			sdk.CustomErrorResourceNotFoundWarning,
@@ -712,7 +712,7 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
+			return apiClient.ApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
 		},
 		"UpdateApplication",
 		sdk.DefaultCustomError,
@@ -737,7 +737,7 @@ func resourceApplicationDelete(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.ApplicationsApplicationsApi.DeleteApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			r, err := apiClient.ApplicationsApi.DeleteApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteApplication",

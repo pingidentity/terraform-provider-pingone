@@ -92,7 +92,7 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersUsersApi.CreateUser(ctx, d.Get("environment_id").(string)).User(user).Execute()
+			return apiClient.UsersApi.CreateUser(ctx, d.Get("environment_id").(string)).User(user).Execute()
 		},
 		"CreateUser",
 		sdk.DefaultCustomError,
@@ -117,7 +117,7 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersEnableUsersApi.UpdateUserEnabled(ctx, d.Get("environment_id").(string), respObject.GetId()).UserEnabled(userEnabled).Execute()
+			return apiClient.EnableUsersApi.UpdateUserEnabled(ctx, d.Get("environment_id").(string), respObject.GetId()).UserEnabled(userEnabled).Execute()
 		},
 		"UpdateUserEnabled",
 		sdk.DefaultCustomError,
@@ -144,7 +144,7 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta interfac
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersUsersApi.ReadUser(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return apiClient.UsersApi.ReadUser(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadUser",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -188,7 +188,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersUsersApi.UpdateUserPut(ctx, d.Get("environment_id").(string), d.Id()).User(user).Execute()
+			return apiClient.UsersApi.UpdateUserPut(ctx, d.Get("environment_id").(string), d.Id()).User(user).Execute()
 		},
 		"UpdateUserPut",
 		sdk.DefaultCustomError,
@@ -211,7 +211,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersEnableUsersApi.UpdateUserEnabled(ctx, d.Get("environment_id").(string), d.Id()).UserEnabled(userEnabled).Execute()
+			return apiClient.EnableUsersApi.UpdateUserEnabled(ctx, d.Get("environment_id").(string), d.Id()).UserEnabled(userEnabled).Execute()
 		},
 		"UpdateUserEnabled",
 		sdk.DefaultCustomError,
@@ -229,7 +229,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersUserPopulationsApi.UpdateUserPopulation(ctx, d.Get("environment_id").(string), d.Id()).UserPopulation(population).Execute()
+			return apiClient.UserPopulationsApi.UpdateUserPopulation(ctx, d.Get("environment_id").(string), d.Id()).UserPopulation(population).Execute()
 		},
 		"UpdateUserPopulation",
 		sdk.DefaultCustomError,
@@ -254,7 +254,7 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta interf
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.UsersUsersApi.DeleteUser(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			r, err := apiClient.UsersApi.DeleteUser(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteUser",

@@ -43,7 +43,7 @@ func testAccCheckApplicationSignOnPolicyAssignmentDestroy(s *terraform.State) er
 			return err
 		}
 
-		body, r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID).Execute()
+		body, r, err := apiClient.ApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue

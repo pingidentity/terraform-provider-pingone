@@ -43,7 +43,7 @@ func testAccCheckApplicationAttributeMappingDestroy(s *terraform.State) error {
 			return err
 		}
 
-		body, r, err := apiClient.ApplicationsApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID).Execute()
+		body, r, err := apiClient.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue

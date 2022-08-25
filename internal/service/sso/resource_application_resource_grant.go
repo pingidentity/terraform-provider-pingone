@@ -83,7 +83,7 @@ func resourcePingOneApplicationResourceGrantCreate(ctx context.Context, d *schem
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationResourceGrantsApi.CreateApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).ApplicationResourceGrant(applicationResourceGrant).Execute()
+			return apiClient.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).ApplicationResourceGrant(applicationResourceGrant).Execute()
 		},
 		"CreateApplicationGrant",
 		sdk.DefaultCustomError,
@@ -112,7 +112,7 @@ func resourcePingOneApplicationResourceGrantRead(ctx context.Context, d *schema.
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return apiClient.ApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 		},
 		"ReadOneApplicationGrant",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -152,7 +152,7 @@ func resourcePingOneApplicationResourceGrantUpdate(ctx context.Context, d *schem
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).ApplicationResourceGrant(applicationResourceGrant).Execute()
+			return apiClient.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).ApplicationResourceGrant(applicationResourceGrant).Execute()
 		},
 		"UpdateApplicationGrant",
 		sdk.DefaultCustomError,
@@ -177,7 +177,7 @@ func resourcePingOneApplicationResourceGrantDelete(ctx context.Context, d *schem
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.ApplicationsApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			r, err := apiClient.ApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteApplicationGrant",

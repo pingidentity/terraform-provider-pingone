@@ -72,7 +72,7 @@ func resourceSignOnPolicyCreate(ctx context.Context, d *schema.ResourceData, met
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.SignOnPoliciesSignOnPoliciesApi.CreateSignOnPolicy(ctx, d.Get("environment_id").(string)).SignOnPolicy(signOnPolicy).Execute()
+			return apiClient.SignOnPoliciesApi.CreateSignOnPolicy(ctx, d.Get("environment_id").(string)).SignOnPolicy(signOnPolicy).Execute()
 		},
 		"CreateSignOnPolicy",
 		sdk.DefaultCustomError,
@@ -101,7 +101,7 @@ func resourceSignOnPolicyRead(ctx context.Context, d *schema.ResourceData, meta 
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.SignOnPoliciesSignOnPoliciesApi.ReadOneSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return apiClient.SignOnPoliciesApi.ReadOneSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneSignOnPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -147,7 +147,7 @@ func resourceSignOnPolicyUpdate(ctx context.Context, d *schema.ResourceData, met
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.SignOnPoliciesSignOnPoliciesApi.UpdateSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).SignOnPolicy(signOnPolicy).Execute()
+			return apiClient.SignOnPoliciesApi.UpdateSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).SignOnPolicy(signOnPolicy).Execute()
 		},
 		"UpdateSignOnPolicy",
 		sdk.DefaultCustomError,
@@ -172,7 +172,7 @@ func resourceSignOnPolicyDelete(ctx context.Context, d *schema.ResourceData, met
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.SignOnPoliciesSignOnPoliciesApi.DeleteSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			r, err := apiClient.SignOnPoliciesApi.DeleteSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteSignOnPolicy",

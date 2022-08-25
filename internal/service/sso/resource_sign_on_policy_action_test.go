@@ -45,7 +45,7 @@ func testAccCheckSignOnPolicyActionDestroy(s *terraform.State) error {
 			return err
 		}
 
-		body, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID).Execute()
+		body, r, err := apiClient.SignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue

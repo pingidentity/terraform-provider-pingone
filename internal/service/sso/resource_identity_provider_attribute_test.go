@@ -43,7 +43,7 @@ func testAccCheckIdentityProviderAttributeDestroy(s *terraform.State) error {
 			return err
 		}
 
-		body, r, err := apiClient.IdentityProviderManagementIdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["identity_provider_id"], rs.Primary.ID).Execute()
+		body, r, err := apiClient.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["identity_provider_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue
