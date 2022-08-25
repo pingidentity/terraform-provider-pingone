@@ -879,7 +879,7 @@ func expandIdentityProvider(d *schema.ResourceData) (*management.IdentityProvide
 func expandIdPFacebook(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderFacebook, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if v != nil && len(v) > 0 && v[0] != nil {
+	if len(v) > 0 && v[0] != nil {
 
 		idp := v[0].(map[string]interface{})
 
@@ -907,7 +907,7 @@ func expandIdPFacebook(v []interface{}, common management.IdentityProviderCommon
 func expandIdPClientIdClientSecret(v []interface{}, common management.IdentityProviderCommon, idpType management.EnumIdentityProviderExt) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if v != nil && len(v) > 0 && v[0] != nil {
+	if len(v) > 0 && v[0] != nil {
 
 		idp := v[0].(map[string]interface{})
 
@@ -955,7 +955,7 @@ func expandIdPTwitter(v []interface{}, common management.IdentityProviderCommon)
 func expandIdPApple(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderApple, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if v != nil && len(v) > 0 && v[0] != nil {
+	if len(v) > 0 && v[0] != nil {
 
 		idp := v[0].(map[string]interface{})
 
@@ -985,7 +985,7 @@ func expandIdPApple(v []interface{}, common management.IdentityProviderCommon) (
 func expandIdPPaypal(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderPaypal, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if v != nil && len(v) > 0 && v[0] != nil {
+	if len(v) > 0 && v[0] != nil {
 
 		idp := v[0].(map[string]interface{})
 
@@ -1022,7 +1022,7 @@ func expandIdPGithub(v []interface{}, common management.IdentityProviderCommon) 
 func expandIdPOIDC(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderOIDC, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if v != nil && len(v) > 0 && v[0] != nil {
+	if len(v) > 0 && v[0] != nil {
 
 		idp := v[0].(map[string]interface{})
 
@@ -1069,7 +1069,7 @@ func expandIdPOIDC(v []interface{}, common management.IdentityProviderCommon) (*
 func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderSAML, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if v != nil && len(v) > 0 && v[0] != nil {
+	if len(v) > 0 && v[0] != nil {
 
 		idp := v[0].(map[string]interface{})
 
@@ -1175,7 +1175,7 @@ func flattenSAML(idpObject *management.IdentityProviderSAML) []interface{} {
 	}
 
 	if v, ok := idpObject.GetSpEntityIdOk(); ok {
-		item["sp_entity_id"] = string(*v)
+		item["sp_entity_id"] = *v
 	} else {
 		item["sp_entity_id"] = nil
 	}

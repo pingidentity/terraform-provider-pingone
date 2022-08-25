@@ -43,7 +43,7 @@ func testAccCheckRoleAssignmentUserDestroy(s *terraform.State) error {
 			return err
 		}
 
-		body, r, err := apiClient.UsersUserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["user_id"], rs.Primary.ID).Execute()
+		body, r, err := apiClient.UserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["user_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue
