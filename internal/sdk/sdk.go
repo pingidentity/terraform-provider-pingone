@@ -32,6 +32,21 @@ var (
 
 		return nil
 	}
+
+	CustomErrorInvalidValue = func(error management.P1Error) diag.Diagnostics {
+		var diags diag.Diagnostics
+
+		// Value not allowed
+		if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "name" {
+				diags = diag.FromErr(fmt.Errorf(details[0].GetMessage()))
+
+				return diags
+			}
+		}
+
+		return nil
+	}
 )
 
 func ParseResponse(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, customError CustomError, retryable Retryable) (interface{}, diag.Diagnostics) {
