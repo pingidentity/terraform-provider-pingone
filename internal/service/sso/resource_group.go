@@ -3,7 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -96,18 +97,23 @@ func resourceGroupCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		group.SetExternalId(v.(string))
 	}
 
-	resp, r, err := apiClient.GroupsApi.CreateGroup(ctx, d.Get("environment_id").(string)).Group(group).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `GroupsApi.CreateGroup``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.GroupsApi.CreateGroup(ctx, d.Get("environment_id").(string)).Group(group).Execute()
+		},
+		"CreateGroup",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(resp.GetId())
+	respObject := resp.(*management.Group)
+
+	d.SetId(respObject.GetId())
 
 	return resourceGroupRead(ctx, d, meta)
 }
@@ -120,44 +126,48 @@ func resourceGroupRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.GroupsApi.ReadOneGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Group %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `GroupsApi.ReadOneGroup``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.GroupsApi.ReadOneGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+		},
+		"ReadOneGroup",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("name", resp.GetName())
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
 
-	if v, ok := resp.GetDescriptionOk(); ok {
+	respObject := resp.(*management.Group)
+
+	d.Set("name", respObject.GetName())
+
+	if v, ok := respObject.GetDescriptionOk(); ok {
 		d.Set("description", v)
 	} else {
 		d.Set("description", nil)
 	}
 
-	if v, ok := resp.GetPopulationOk(); ok {
+	if v, ok := respObject.GetPopulationOk(); ok {
 		d.Set("population_id", v.GetId())
 	} else {
 		d.Set("population_id", nil)
 	}
 
-	if v, ok := resp.GetUserFilterOk(); ok {
+	if v, ok := respObject.GetUserFilterOk(); ok {
 		d.Set("user_filter", v)
 	} else {
 		d.Set("user_filter", nil)
 	}
 
-	if v, ok := resp.GetExternalIdOk(); ok {
+	if v, ok := respObject.GetExternalIdOk(); ok {
 		d.Set("external_id", v)
 	} else {
 		d.Set("external_id", nil)
@@ -193,14 +203,17 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		group.SetExternalId(v.(string))
 	}
 
-	_, r, err := apiClient.GroupsApi.UpdateGroup(ctx, d.Get("environment_id").(string), d.Id()).Group(group).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `GroupsApi.UpdateGroup``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.GroupsApi.UpdateGroup(ctx, d.Get("environment_id").(string), d.Id()).Group(group).Execute()
+		},
+		"UpdateGroup",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -215,17 +228,22 @@ func resourceGroupDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.GroupsApi.DeleteGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `GroupsApi.DeleteGroup``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.GroupsApi.DeleteGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteGroup",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourceGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

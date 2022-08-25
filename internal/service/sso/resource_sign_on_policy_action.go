@@ -2,9 +2,8 @@ package sso
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 func ResourceSignOnPolicyAction() *schema.Resource {
@@ -46,18 +46,23 @@ func resourceSignOnPolicyActionCreate(ctx context.Context, d *schema.ResourceDat
 		return diags
 	}
 
-	resp, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.SignOnPoliciesSignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
+		},
+		"CreateSignOnPolicyAction",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(getActionID(*resp))
+	respObject := resp.(*management.SignOnPolicyAction)
+
+	d.SetId(getActionID(*respObject))
 
 	return resourceSignOnPolicyActionRead(ctx, d, meta)
 }
@@ -70,22 +75,26 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Sign on policy action %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.ReadOneSignOnPolicyAction``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.SignOnPoliciesSignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+		},
+		"ReadOneSignOnPolicyAction",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
+
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
+
+	respObject := resp.(*management.SignOnPolicyAction)
 
 	values := map[string]interface{}{
 		"priority":                               nil,
@@ -103,12 +112,12 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 		"progressive_profiling":                  nil,
 	}
 
-	switch resp.GetActualInstance().(type) {
+	switch respObject.GetActualInstance().(type) {
 	case *management.SignOnPolicyActionLogin:
 
-		values["priority"] = resp.SignOnPolicyActionLogin.GetPriority()
+		values["priority"] = respObject.SignOnPolicyActionLogin.GetPriority()
 
-		if v, ok := resp.SignOnPolicyActionLogin.GetConditionOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionLogin.GetConditionOk(); ok {
 			var conditions interface{}
 			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
@@ -117,7 +126,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			values["conditions"] = conditions
 		}
 
-		if v, ok := resp.SignOnPolicyActionLogin.GetRegistrationOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionLogin.GetRegistrationOk(); ok {
 			if v1, ok := v.GetExternalOk(); ok {
 				values["registration_external_href"] = v1.GetHref()
 			}
@@ -131,21 +140,21 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			}
 		}
 
-		if v, ok := resp.SignOnPolicyActionLogin.GetSocialProvidersOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionLogin.GetSocialProvidersOk(); ok {
 			values["social_provider_ids"] = flattenActionSocialProvidersInner(v)
 		}
 
-		if v, ok := resp.SignOnPolicyActionLogin.GetEnforceLockoutForIdentityProvidersOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionLogin.GetEnforceLockoutForIdentityProvidersOk(); ok {
 			values["enforce_lockout_for_identity_providers"] = v
 		}
 
-		values["login"] = flattenActionLogin(resp.SignOnPolicyActionLogin)
+		values["login"] = flattenActionLogin(respObject.SignOnPolicyActionLogin)
 
 	case *management.SignOnPolicyActionAgreement:
 
-		values["priority"] = resp.SignOnPolicyActionAgreement.GetPriority()
+		values["priority"] = respObject.SignOnPolicyActionAgreement.GetPriority()
 
-		if v, ok := resp.SignOnPolicyActionAgreement.GetConditionOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionAgreement.GetConditionOk(); ok {
 			var conditions interface{}
 			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
@@ -154,13 +163,13 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			values["conditions"] = conditions
 		}
 
-		values["agreement"] = flattenActionAgreement(resp.SignOnPolicyActionAgreement)
+		values["agreement"] = flattenActionAgreement(respObject.SignOnPolicyActionAgreement)
 
 	case *management.SignOnPolicyActionIDFirst:
 
-		values["priority"] = resp.SignOnPolicyActionIDFirst.GetPriority()
+		values["priority"] = respObject.SignOnPolicyActionIDFirst.GetPriority()
 
-		if v, ok := resp.SignOnPolicyActionIDFirst.GetConditionOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionIDFirst.GetConditionOk(); ok {
 			var conditions interface{}
 			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
@@ -169,7 +178,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			values["conditions"] = conditions
 		}
 
-		if v, ok := resp.SignOnPolicyActionIDFirst.GetRegistrationOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionIDFirst.GetRegistrationOk(); ok {
 			if v1, ok := v.GetExternalOk(); ok {
 				values["registration_external_href"] = v1.GetHref()
 			}
@@ -183,16 +192,16 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			}
 		}
 
-		if v, ok := resp.SignOnPolicyActionIDFirst.GetSocialProvidersOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionIDFirst.GetSocialProvidersOk(); ok {
 			values["social_provider_ids"] = flattenActionSocialProvidersInner(v)
 		}
 
-		if v, ok := resp.SignOnPolicyActionIDFirst.GetEnforceLockoutForIdentityProvidersOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionIDFirst.GetEnforceLockoutForIdentityProvidersOk(); ok {
 			values["enforce_lockout_for_identity_providers"] = v
 		}
 
 		var idFirst []interface{}
-		idFirst, diags = flattenActionIDFirst(resp.SignOnPolicyActionIDFirst)
+		idFirst, diags = flattenActionIDFirst(respObject.SignOnPolicyActionIDFirst)
 		if diags.HasError() {
 			return diags
 		}
@@ -200,9 +209,9 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 	case *management.SignOnPolicyActionIDP:
 
-		values["priority"] = resp.SignOnPolicyActionIDP.GetPriority()
+		values["priority"] = respObject.SignOnPolicyActionIDP.GetPriority()
 
-		if v, ok := resp.SignOnPolicyActionIDP.GetConditionOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionIDP.GetConditionOk(); ok {
 			var conditions interface{}
 			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
@@ -211,7 +220,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			values["conditions"] = conditions
 		}
 
-		if v, ok := resp.SignOnPolicyActionIDP.GetRegistrationOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionIDP.GetRegistrationOk(); ok {
 			if v1, ok := v.GetPopulationOk(); ok {
 				values["registration_local_population_id"] = v1.GetId()
 			}
@@ -221,13 +230,13 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			}
 		}
 
-		values["identity_provider"] = flattenActionIDP(resp.SignOnPolicyActionIDP)
+		values["identity_provider"] = flattenActionIDP(respObject.SignOnPolicyActionIDP)
 
 	case *management.SignOnPolicyActionProgressiveProfiling:
 
-		values["priority"] = resp.SignOnPolicyActionProgressiveProfiling.GetPriority()
+		values["priority"] = respObject.SignOnPolicyActionProgressiveProfiling.GetPriority()
 
-		if v, ok := resp.SignOnPolicyActionProgressiveProfiling.GetConditionOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionProgressiveProfiling.GetConditionOk(); ok {
 			var conditions interface{}
 			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
@@ -236,13 +245,13 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			values["conditions"] = conditions
 		}
 
-		values["progressive_profiling"] = flattenActionProgressiveProfiling(resp.SignOnPolicyActionProgressiveProfiling)
+		values["progressive_profiling"] = flattenActionProgressiveProfiling(respObject.SignOnPolicyActionProgressiveProfiling)
 
 	case *management.SignOnPolicyActionMFA:
 
-		values["priority"] = resp.SignOnPolicyActionMFA.GetPriority()
+		values["priority"] = respObject.SignOnPolicyActionMFA.GetPriority()
 
-		if v, ok := resp.SignOnPolicyActionMFA.GetConditionOk(); ok {
+		if v, ok := respObject.SignOnPolicyActionMFA.GetConditionOk(); ok {
 			var conditions interface{}
 			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
@@ -251,7 +260,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 			values["conditions"] = conditions
 		}
 
-		values["mfa"] = flattenActionMFA(resp.SignOnPolicyActionMFA)
+		values["mfa"] = flattenActionMFA(respObject.SignOnPolicyActionMFA)
 
 	}
 
@@ -288,14 +297,17 @@ func resourceSignOnPolicyActionUpdate(ctx context.Context, d *schema.ResourceDat
 		return diags
 	}
 
-	_, r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.UpdateSignOnPolicyAction``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.SignOnPoliciesSignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
+		},
+		"UpdateSignOnPolicyAction",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -310,40 +322,51 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 	})
 	var diags diag.Diagnostics
 
-	r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
-	if err != nil || r.StatusCode != 204 {
-		response := &management.P1Error{}
-		errDecode := json.NewDecoder(r.Body).Decode(response)
-		if errDecode == nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
-		}
+	_, diags = sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 400 && response.GetDetails()[0].GetCode() == "CONSTRAINT_VIOLATION" {
-			if match, _ := regexp.MatchString("Cannot delete last action from the policy", response.GetDetails()[0].GetMessage()); match {
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.SignOnPoliciesSignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteSignOnPolicyAction",
+		func(error management.P1Error) diag.Diagnostics {
+			var diags diag.Diagnostics
+
+			// Deleted outside of TF
+			if error.GetCode() == "NOT_FOUND" {
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Warning,
-					Summary:  fmt.Sprintf("Cannot delete last action from the sign-on policy %s.  The last remaining policy action is left in place but no longer managed by the provider. This warning can be safely ignored if the sign-on policy %s was also destroyed.", d.Get("sign_on_policy_id").(string), d.Get("sign_on_policy_id").(string)),
-					Detail:   "For more details about this warning, please see https://github.com/pingidentity/terraform-provider-pingone/issues/68",
+					Summary:  error.GetMessage(),
 				})
 
 				return diags
 			}
-		}
 
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `SignOnPoliciesSignOnPolicyActionsApi.DeleteSignOnPolicyAction``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+			// Last action in the policy
+			if v, ok := error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+				if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+					if match, _ := regexp.MatchString("Cannot delete last action from the policy", v[0].GetMessage()); match {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Warning,
+							Summary:  fmt.Sprintf("Cannot delete last action from the sign-on policy %s.  The last remaining policy action is left in place but no longer managed by the provider. This warning can be safely ignored if the sign-on policy %s was also destroyed.", d.Get("sign_on_policy_id").(string), d.Get("sign_on_policy_id").(string)),
+							Detail:   "For more details about this warning, please see https://github.com/pingidentity/terraform-provider-pingone/issues/68",
+						})
 
+						return diags
+					}
+				}
+			}
+
+			return nil
+		},
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourceSignOnPolicyActionImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

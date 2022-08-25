@@ -3,12 +3,14 @@ package base
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 func DatasourceRole() *schema.Resource {
@@ -45,18 +47,20 @@ func datasourcePingOneRoleRead(ctx context.Context, d *schema.ResourceData, meta
 
 	var resp management.Role
 
-	respList, r, err := apiClient.RolesApi.ReadAllRoles(ctx).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `RolesApi.ReadAllRoles``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+	respList, diags := sdk.ParseResponse(
+		ctx,
+		func() (interface{}, *http.Response, error) {
+			return apiClient.RolesApi.ReadAllRoles(ctx).Execute()
+		},
+		"ReadAllRoles",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	if roles, ok := respList.Embedded.GetRolesOk(); ok {
+	if roles, ok := respList.(*management.EntityArray).Embedded.GetRolesOk(); ok {
 
 		found := false
 		for _, role := range roles {

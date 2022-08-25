@@ -2,9 +2,8 @@ package sso
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -12,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -123,35 +123,35 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 	applicationRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
 	applicationRoleAssignment := *management.NewRoleAssignment(applicationRoleAssignmentRole, applicationRoleAssignmentScope) // ApplicationRoleAssignment |  (optional)
 
-	resp, r, err := apiClient.ApplicationsApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		response := &management.P1Error{}
-		errDecode := json.NewDecoder(r.Body).Decode(response)
-		if errDecode == nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
-		}
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
+		},
+		"CreateApplicationRoleAssignment",
+		func(error management.P1Error) diag.Diagnostics {
 
-		if r.StatusCode == 400 && response.GetDetails()[0].GetTarget() == "scope" {
-			diags = diag.FromErr(fmt.Errorf("Incompatible role and scope combination. Role: %s / Scope: %s", applicationRoleAssignmentRole.GetId(), applicationRoleAssignmentScope.GetType()))
+			// Invalid role/scope combination
+			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+				if target, ok := details[0].GetTargetOk(); ok && *target == "scope" {
+					diags = diag.FromErr(fmt.Errorf("Incompatible role and scope combination. Role: %s / Scope: %s", applicationRoleAssignmentRole.GetId(), applicationRoleAssignmentScope.GetType()))
 
-			return diags
-		}
+					return diags
+				}
+			}
 
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+			return nil
+		},
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(resp.GetId())
+	respObject := resp.(*management.RoleAssignment)
+
+	d.SetId(respObject.GetId())
 
 	return resourcePingOneApplicationRoleAssignmentRead(ctx, d, meta)
 }
@@ -164,40 +164,44 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.ApplicationsApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Role Assignment %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationRoleAssignmentsApi.ReadOneRoleAssignment``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+		},
+		"ReadOneApplicationRoleAssignment",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("role_id", resp.GetRole().Id)
-	d.Set("read_only", resp.GetReadOnly())
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
 
-	if resp.GetScope().Type == "ORGANIZATION" {
-		d.Set("scope_organization_id", resp.GetScope().Id)
+	respObject := resp.(*management.RoleAssignment)
+
+	d.Set("role_id", respObject.GetRole().Id)
+	d.Set("read_only", respObject.GetReadOnly())
+
+	if respObject.GetScope().Type == "ORGANIZATION" {
+		d.Set("scope_organization_id", respObject.GetScope().Id)
 		d.Set("scope_environment_id", nil)
 		d.Set("scope_population_id", nil)
 
-	} else if resp.GetScope().Type == "ENVIRONMENT" {
+	} else if respObject.GetScope().Type == "ENVIRONMENT" {
 		d.Set("scope_organization_id", nil)
-		d.Set("scope_environment_id", resp.GetScope().Id)
+		d.Set("scope_environment_id", respObject.GetScope().Id)
 		d.Set("scope_population_id", nil)
 
-	} else if resp.GetScope().Type == "POPULATION" {
+	} else if respObject.GetScope().Type == "POPULATION" {
 		d.Set("scope_organization_id", nil)
 		d.Set("scope_environment_id", nil)
-		d.Set("scope_population_id", resp.GetScope().Id)
+		d.Set("scope_population_id", respObject.GetScope().Id)
 	}
 
 	return diags
@@ -220,17 +224,22 @@ func resourcePingOneApplicationRoleAssignmentDelete(ctx context.Context, d *sche
 		return diags
 	}
 
-	_, err := apiClient.ApplicationsApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.ApplicationsApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteApplicationRoleAssignment",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourcePingOneApplicationRoleAssignmentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

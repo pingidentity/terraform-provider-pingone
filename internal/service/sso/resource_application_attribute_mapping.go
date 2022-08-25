@@ -2,9 +2,8 @@ package sso
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -12,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -82,34 +82,23 @@ func resourcePingOneApplicationAttributeMappingCreate(ctx context.Context, d *sc
 
 	applicationAttributeMapping := *management.NewApplicationAttributeMapping(d.Get("name").(string), d.Get("required").(bool), d.Get("value").(string))
 
-	resp, r, err := apiClient.ApplicationsApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		response := &management.P1Error{}
-		errDecode := json.NewDecoder(r.Body).Decode(response)
-		if errDecode == nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
-		}
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 400 && response.GetDetails()[0].GetCode() == "INVALID_VALUE" && response.GetDetails()[0].GetTarget() == "name" {
-			diags = diag.FromErr(fmt.Errorf(response.GetDetails()[0].GetMessage()))
-
-			return diags
-		}
-
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationAttributeMappingApi.CreateApplicationAttributeMapping``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
+		},
+		"CreateApplicationAttributeMapping",
+		sdk.CustomErrorInvalidValue,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(resp.GetId())
+	respObject := resp.(*management.ApplicationAttributeMapping)
+
+	d.SetId(respObject.GetId())
 
 	return resourcePingOneApplicationAttributeMappingRead(ctx, d, meta)
 }
@@ -122,27 +111,31 @@ func resourcePingOneApplicationAttributeMappingRead(ctx context.Context, d *sche
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.ApplicationsApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Application Attribute Mapping %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+		},
+		"ReadOneApplicationAttributeMapping",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("name", resp.GetName())
-	d.Set("required", resp.GetRequired())
-	d.Set("value", resp.GetValue())
-	d.Set("mapping_type", resp.GetMappingType())
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
+
+	respObject := resp.(*management.ApplicationAttributeMapping)
+
+	d.Set("name", respObject.GetName())
+	d.Set("required", respObject.GetRequired())
+	d.Set("value", respObject.GetValue())
+	d.Set("mapping_type", respObject.GetMappingType())
 
 	return diags
 }
@@ -157,30 +150,17 @@ func resourcePingOneApplicationAttributeMappingUpdate(ctx context.Context, d *sc
 
 	applicationAttributeMapping := *management.NewApplicationAttributeMapping(d.Get("name").(string), d.Get("required").(bool), d.Get("value").(string))
 
-	_, r, err := apiClient.ApplicationsApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
-	if err != nil {
-		response := &management.P1Error{}
-		errDecode := json.NewDecoder(r.Body).Decode(response)
-		if errDecode == nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
-		}
+	_, diags = sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 400 && response.GetDetails()[0].GetCode() == "INVALID_VALUE" && response.GetDetails()[0].GetTarget() == "name" {
-			diags = diag.FromErr(fmt.Errorf(response.GetDetails()[0].GetMessage()))
-
-			return diags
-		}
-
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationAttributeMappingApi.UpdateApplicationAttributeMapping``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
+		},
+		"UpdateApplicationAttributeMapping",
+		sdk.CustomErrorInvalidValue,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -195,21 +175,26 @@ func resourcePingOneApplicationAttributeMappingDelete(ctx context.Context, d *sc
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.ApplicationsApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationAttributeMappingApi.DeleteApplicationAttributeMapping``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.ApplicationsApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteApplicationAttributeMapping",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourcePingOneApplicationAttributeMappingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	attributes := strings.SplitN(d.Id(), "/", 2)
+	attributes := strings.SplitN(d.Id(), "/", 3)
 
 	if len(attributes) != 2 {
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/applicationID/attributeMappingID\"", d.Id())

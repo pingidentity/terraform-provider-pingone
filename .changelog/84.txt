@@ -1,0 +1,31 @@
+```release-note:bug
+resource/pingone_environment: Fix index out of range panic on environment creation error.
+```
+
+```release-note:note
+All resources/datasources: Fix `Cannot decode error response` warning on some API errors.
+```
+
+```release-note:note
+All resources/datasources: API errors become more readable and show better detail.
+```
+
+```release-note:note
+All resources/datasources: Added structure to automatically retry API calls where returned errors are retryable.
+```
+
+```release-note:bug
+resource/pingone_application_attribute_mapping: Fix import ID parsing error.
+```
+
+```release-note:bug
+resource/pingone_application_resource_grant: Fix import ID parsing error.
+```
+
+```release-note:bug
+resource/pingone_application_sign_on_policy_assignment: Fix import ID parsing error.
+```
+
+```release-note:bug
+resource/pingone_sign_on_policy: Fix import ID parsing error.
+```

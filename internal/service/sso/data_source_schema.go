@@ -3,12 +3,14 @@ package sso
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -61,18 +63,21 @@ func datasourcePingOneSchemaRead(ctx context.Context, d *schema.ResourceData, me
 
 	if v, ok := d.GetOk("name"); ok {
 
-		respList, r, err := apiClient.SchemasApi.ReadAllSchemas(ctx, d.Get("environment_id").(string)).Execute()
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `SchemasApi.ReadAllSchemas``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
+		respList, diags := sdk.ParseResponse(
+			ctx,
 
+			func() (interface{}, *http.Response, error) {
+				return apiClient.SchemasApi.ReadAllSchemas(ctx, d.Get("environment_id").(string)).Execute()
+			},
+			"ReadAllSchemas",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
 			return diags
 		}
 
-		if schemas, ok := respList.Embedded.GetSchemasOk(); ok {
+		if schemas, ok := respList.(*management.EntityArray).Embedded.GetSchemasOk(); ok {
 
 			found := false
 			for _, schema := range schemas {
@@ -97,18 +102,21 @@ func datasourcePingOneSchemaRead(ctx context.Context, d *schema.ResourceData, me
 
 	} else if v, ok2 := d.GetOk("schema_id"); ok2 {
 
-		schemaResp, r, err := apiClient.SchemasApi.ReadOneSchema(ctx, d.Get("environment_id").(string), v.(string)).Execute()
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `SchemasApi.ReadOneSchema``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
+		schemaResp, diags := sdk.ParseResponse(
+			ctx,
 
+			func() (interface{}, *http.Response, error) {
+				return apiClient.SchemasApi.ReadOneSchema(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+			},
+			"ReadOneSchema",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
 			return diags
 		}
 
-		resp = *schemaResp
+		resp = *schemaResp.(*management.Schema)
 
 	} else {
 

@@ -3,7 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -237,18 +238,23 @@ func resourcePasswordPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 
 	passwordPolicy := expandPasswordPolicy(d)
 
-	resp, r, err := apiClient.PasswordPoliciesApi.CreatePasswordPolicy(ctx, d.Get("environment_id").(string)).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `PasswordPoliciesApi.CreatePasswordPolicy``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.PasswordPoliciesApi.CreatePasswordPolicy(ctx, d.Get("environment_id").(string)).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+		},
+		"CreatePasswordPolicy",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(resp.GetId())
+	respObject := resp.(*management.PasswordPolicy)
+
+	d.SetId(respObject.GetId())
 
 	return resourcePasswordPolicyRead(ctx, d, meta)
 }
@@ -261,85 +267,89 @@ func resourcePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, met
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne PasswordPolicy %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `PasswordPoliciesApi.ReadOnePasswordPolicy``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+		},
+		"ReadOnePasswordPolicy",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("name", resp.GetName())
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
 
-	if v, ok := resp.GetDescriptionOk(); ok {
+	respObject := resp.(*management.PasswordPolicy)
+
+	d.Set("name", respObject.GetName())
+
+	if v, ok := respObject.GetDescriptionOk(); ok {
 		d.Set("description", v)
 	} else {
 		d.Set("description", nil)
 	}
 
-	if v, ok := resp.GetDefaultOk(); ok {
+	if v, ok := respObject.GetDefaultOk(); ok {
 		d.Set("environment_default", v)
 	} else {
 		d.Set("environment_default", nil)
 	}
 
-	if v, ok := resp.GetBypassPolicyOk(); ok {
+	if v, ok := respObject.GetBypassPolicyOk(); ok {
 		d.Set("bypass_policy", v)
 	} else {
 		d.Set("bypass_policy", nil)
 	}
 
-	if v, ok := resp.GetExcludesCommonlyUsedOk(); ok {
+	if v, ok := respObject.GetExcludesCommonlyUsedOk(); ok {
 		d.Set("exclude_commonly_used_passwords", v)
 	} else {
 		d.Set("exclude_commonly_used_passwords", nil)
 	}
 
-	if v, ok := resp.GetExcludesProfileDataOk(); ok {
+	if v, ok := respObject.GetExcludesProfileDataOk(); ok {
 		d.Set("exclude_profile_data", v)
 	} else {
 		d.Set("exclude_profile_data", nil)
 	}
 
-	if v, ok := resp.GetHistoryOk(); ok {
+	if v, ok := respObject.GetHistoryOk(); ok {
 		flattenedVal := flattenPasswordHistory(v)
 		d.Set("password_history", flattenedVal)
 	} else {
 		d.Set("password_history", nil)
 	}
 
-	if v, ok := resp.GetLengthOk(); ok {
+	if v, ok := respObject.GetLengthOk(); ok {
 		flattenedVal := flattenPasswordLength(v)
 		d.Set("password_length", flattenedVal)
 	} else {
 		d.Set("password_length", nil)
 	}
 
-	if v, ok := resp.GetLockoutOk(); ok {
+	if v, ok := respObject.GetLockoutOk(); ok {
 		flattenedVal := flattenUserLockout(v)
 		d.Set("account_lockout", flattenedVal)
 	} else {
 		d.Set("account_lockout", nil)
 	}
 
-	if v, ok := resp.GetMinCharactersOk(); ok {
+	if v, ok := respObject.GetMinCharactersOk(); ok {
 		flattenedVal := flattenMinCharacters(v)
 		d.Set("min_characters", flattenedVal)
 	} else {
 		d.Set("min_characters", nil)
 	}
 
-	passwordAgeMaxV, passwordAgeMaxOk := resp.GetMaxAgeDaysOk()
-	passwordAgeMinV, passwordAgeMinOk := resp.GetMinAgeDaysOk()
+	passwordAgeMaxV, passwordAgeMaxOk := respObject.GetMaxAgeDaysOk()
+	passwordAgeMinV, passwordAgeMinOk := respObject.GetMinAgeDaysOk()
 
 	if passwordAgeMaxOk || passwordAgeMinOk {
 		flattenedVal := flattenPasswordAge(passwordAgeMaxV, passwordAgeMinV)
@@ -348,31 +358,31 @@ func resourcePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, met
 		d.Set("password_age", nil)
 	}
 
-	if v, ok := resp.GetMaxRepeatedCharactersOk(); ok {
+	if v, ok := respObject.GetMaxRepeatedCharactersOk(); ok {
 		d.Set("max_repeated_characters", v)
 	} else {
 		d.Set("max_repeated_characters", nil)
 	}
 
-	if v, ok := resp.GetMinComplexityOk(); ok {
+	if v, ok := respObject.GetMinComplexityOk(); ok {
 		d.Set("min_complexity", v)
 	} else {
 		d.Set("min_complexity", nil)
 	}
 
-	if v, ok := resp.GetMinUniqueCharactersOk(); ok {
+	if v, ok := respObject.GetMinUniqueCharactersOk(); ok {
 		d.Set("min_unique_characters", v)
 	} else {
 		d.Set("min_unique_characters", nil)
 	}
 
-	if v, ok := resp.GetNotSimilarToCurrentOk(); ok {
+	if v, ok := respObject.GetNotSimilarToCurrentOk(); ok {
 		d.Set("not_similar_to_current", v)
 	} else {
 		d.Set("not_similar_to_current", nil)
 	}
 
-	if v, ok := resp.GetPopulationCountOk(); ok {
+	if v, ok := respObject.GetPopulationCountOk(); ok {
 		d.Set("population_count", v)
 	} else {
 		d.Set("population_count", nil)
@@ -391,14 +401,17 @@ func resourcePasswordPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 
 	passwordPolicy := expandPasswordPolicy(d)
 
-	_, r, err := apiClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `PasswordPoliciesApi.UpdatePasswordPolicy``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+		},
+		"UpdatePasswordPolicy",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -413,17 +426,22 @@ func resourcePasswordPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.PasswordPoliciesApi.DeletePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `PasswordPoliciesApi.DeletePasswordPolicy``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.PasswordPoliciesApi.DeletePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeletePasswordPolicy",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourcePasswordPolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

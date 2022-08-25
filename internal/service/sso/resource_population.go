@@ -3,7 +3,6 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -77,9 +77,9 @@ func resourcePingOnePopulationCreate(ctx context.Context, d *schema.ResourceData
 		population.SetPasswordPolicy(populationPasswordPolicy)
 	}
 
-	resp, _, err := PingOnePopulationCreate(ctx, apiClient, d.Get("environment_id").(string), population)
-	if err != nil {
-		return diag.FromErr(err)
+	resp, diags := PingOnePopulationCreate(ctx, apiClient, d.Get("environment_id").(string), population)
+	if diags.HasError() {
+		return diags
 	}
 
 	d.SetId(resp.GetId())
@@ -95,14 +95,9 @@ func resourcePingOnePopulationRead(ctx context.Context, d *schema.ResourceData, 
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := PingOnePopulationRead(ctx, apiClient, d.Get("environment_id").(string), d.Id())
-	if err != nil {
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Population %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		return diag.FromErr(err)
+	resp, diags := PingOnePopulationRead(ctx, apiClient, d.Get("environment_id").(string), d.Id())
+	if diags.HasError() {
+		return diags
 	}
 
 	d.Set("name", resp.GetName())
@@ -140,9 +135,9 @@ func resourcePingOnePopulationUpdate(ctx context.Context, d *schema.ResourceData
 		population.SetPasswordPolicy(populationPasswordPolicy)
 	}
 
-	_, _, err := PingOnePopulationUpdate(ctx, apiClient, d.Get("environment_id").(string), d.Id(), population)
-	if err != nil {
-		return diag.FromErr(err)
+	_, diags := PingOnePopulationUpdate(ctx, apiClient, d.Get("environment_id").(string), d.Id(), population)
+	if diags.HasError() {
+		return diags
 	}
 
 	return resourcePingOnePopulationRead(ctx, d, meta)
@@ -156,17 +151,22 @@ func resourcePingOnePopulationDelete(ctx context.Context, d *schema.ResourceData
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.PopulationsApi.DeletePopulation(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `PopulationsApi.DeletePopulation``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.PopulationsApi.DeletePopulation(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeletePopulation",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourcePingOnePopulationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
@@ -186,35 +186,68 @@ func resourcePingOnePopulationImport(ctx context.Context, d *schema.ResourceData
 	return []*schema.ResourceData{d}, nil
 }
 
-func PingOnePopulationCreate(ctx context.Context, apiClient *management.APIClient, environmentID string, population management.Population) (*management.Population, *http.Response, error) {
+func PingOnePopulationCreate(ctx context.Context, apiClient *management.APIClient, environmentID string, population management.Population) (*management.Population, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		return nil, r, err
+		func() (interface{}, *http.Response, error) {
+			return apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
+		},
+		"CreatePopulation",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
+		return nil, diags
 	}
 
-	return resp, r, nil
+	respObject := resp.(*management.Population)
+
+	return respObject, diags
 }
 
-func PingOnePopulationRead(ctx context.Context, apiClient *management.APIClient, environmentID string, populationID string) (*management.Population, *http.Response, error) {
+func PingOnePopulationRead(ctx context.Context, apiClient *management.APIClient, environmentID string, populationID string) (*management.Population, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.PopulationsApi.ReadOnePopulation(ctx, environmentID, populationID).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		return nil, r, err
+		func() (interface{}, *http.Response, error) {
+			return apiClient.PopulationsApi.ReadOnePopulation(ctx, environmentID, populationID).Execute()
+		},
+		"ReadOnePopulation",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
+		return nil, diags
 	}
 
-	return resp, r, nil
+	respObject := resp.(*management.Population)
+
+	return respObject, diags
 }
 
-func PingOnePopulationUpdate(ctx context.Context, apiClient *management.APIClient, environmentID string, populationID string, population management.Population) (*management.Population, *http.Response, error) {
+func PingOnePopulationUpdate(ctx context.Context, apiClient *management.APIClient, environmentID string, populationID string, population management.Population) (*management.Population, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	_, r, err := apiClient.PopulationsApi.UpdatePopulation(ctx, environmentID, populationID).Population(population).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		return nil, r, err
+		func() (interface{}, *http.Response, error) {
+			return apiClient.PopulationsApi.UpdatePopulation(ctx, environmentID, populationID).Population(population).Execute()
+		},
+		"UpdatePopulation",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
+		return nil, diags
 	}
 
-	return nil, r, nil
+	respObject := resp.(*management.Population)
+
+	return respObject, diags
 }

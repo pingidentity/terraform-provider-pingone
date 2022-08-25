@@ -3,6 +3,7 @@ package base
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -10,6 +11,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -114,18 +116,23 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 
 	if v, ok := d.GetOk("name"); ok {
 
-		respList, r, err := apiClient.EnvironmentsApi.ReadAllEnvironments(ctx).Execute()
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.ReadAllEnvironments``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
+		respList, diags := sdk.ParseResponse(
+			ctx,
 
+			func() (interface{}, *http.Response, error) {
+				return apiClient.EnvironmentsApi.ReadAllEnvironments(ctx).Execute()
+			},
+			"ReadAllEnvironments",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
 			return diags
 		}
 
-		if environments, ok := respList.Embedded.GetEnvironmentsOk(); ok {
+		respObject := respList.(*management.EntityArray)
+
+		if environments, ok := respObject.Embedded.GetEnvironmentsOk(); ok {
 
 			found := false
 			for _, environment := range environments {
@@ -150,18 +157,21 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 
 	} else if v, ok2 := d.GetOk("environment_id"); ok2 {
 
-		environmentResp, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, v.(string)).Execute()
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.ReadOneEnvironment``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
+		environmentResp, diags := sdk.ParseResponse(
+			ctx,
 
+			func() (interface{}, *http.Response, error) {
+				return apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, v.(string)).Execute()
+			},
+			"ReadOneEnvironment",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
 			return diags
 		}
 
-		resp = *environmentResp
+		resp = *environmentResp.(*management.Environment)
 
 	} else {
 
@@ -191,24 +201,26 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 
 	// The bill of materials
 
-	servicesResp, servicesR, servicesErr := apiClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, resp.GetId()).Execute()
-	if servicesErr != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `EnvironmentsApi.ReadOneBillOfMaterials``: %v", servicesErr),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", servicesR),
-		})
-
+	servicesResp, diags := sdk.ParseResponse(
+		ctx,
+		func() (interface{}, *http.Response, error) {
+			return apiClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, resp.GetId()).Execute()
+		},
+		"ReadOneBillOfMaterials",
+		sdk.DefaultCustomError,
+		retryEnvironmentDefault,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
 	// d.Set("solution", servicesResp.SolutionType)
-	productBOMItems, err := flattenBOMProducts(servicesResp)
+	productBOMItems, err := flattenBOMProducts(servicesResp.(*management.BillOfMaterials))
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Error mapping platform services with the configured services``: %v", err),
-			Detail:   fmt.Sprintf("Platform services: %v\n", servicesResp),
+			Detail:   fmt.Sprintf("Platform services: %v\n", servicesResp.(*management.BillOfMaterials)),
 		})
 
 		return diags
