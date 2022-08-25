@@ -3,12 +3,14 @@ package sso
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -211,18 +213,21 @@ func datasourcePingOnePasswordPolicyRead(ctx context.Context, d *schema.Resource
 
 	if v, ok := d.GetOk("name"); ok {
 
-		respList, r, err := apiClient.PasswordPoliciesApi.ReadAllPasswordPolicies(ctx, d.Get("environment_id").(string)).Execute()
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `PasswordPoliciesApi.ReadAllPasswordPolicys``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
+		respList, diags := sdk.ParseResponse(
+			ctx,
 
+			func() (interface{}, *http.Response, error) {
+				return apiClient.PasswordPoliciesApi.ReadAllPasswordPolicies(ctx, d.Get("environment_id").(string)).Execute()
+			},
+			"ReadAllPasswordPolicies",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
 			return diags
 		}
 
-		if passwordPolicies, ok := respList.Embedded.GetPasswordPoliciesOk(); ok {
+		if passwordPolicies, ok := respList.(*management.EntityArray).Embedded.GetPasswordPoliciesOk(); ok {
 
 			found := false
 			for _, passwordPolicy := range passwordPolicies {
@@ -247,18 +252,21 @@ func datasourcePingOnePasswordPolicyRead(ctx context.Context, d *schema.Resource
 
 	} else if v, ok2 := d.GetOk("password_policy_id"); ok2 {
 
-		passwordPolicyResp, r, err := apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), v.(string)).Execute()
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `PasswordPoliciesApi.ReadOnePasswordPolicy``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
+		passwordPolicyResp, diags := sdk.ParseResponse(
+			ctx,
 
+			func() (interface{}, *http.Response, error) {
+				return apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+			},
+			"ReadOnePasswordPolicy",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
 			return diags
 		}
 
-		resp = *passwordPolicyResp
+		resp = *passwordPolicyResp.(*management.PasswordPolicy)
 
 	} else {
 

@@ -3,16 +3,17 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
+	"net/http"
 	"sort"
 	"strings"
-	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -448,21 +449,26 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta
 		applicationRequest.ApplicationSAML = application
 	}
 
-	resp, r, err := apiClient.ApplicationsApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationsApi.CreateApplication``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
+		},
+		"CreateApplication",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	if resp.ApplicationOIDC != nil && resp.ApplicationOIDC.GetId() != "" {
-		d.SetId(resp.ApplicationOIDC.GetId())
-	} else if resp.ApplicationSAML != nil && resp.ApplicationSAML.GetId() != "" {
-		d.SetId(resp.ApplicationSAML.GetId())
+	respObject := resp.(*management.CreateApplication201Response)
+
+	if respObject.ApplicationOIDC != nil && respObject.ApplicationOIDC.GetId() != "" {
+		d.SetId(respObject.ApplicationOIDC.GetId())
+	} else if respObject.ApplicationSAML != nil && respObject.ApplicationSAML.GetId() != "" {
+		d.SetId(respObject.ApplicationSAML.GetId())
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -484,45 +490,53 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.ApplicationsApplicationsApi.ReadOneApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Application %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationsApi.ReadOneApplication``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationsApi.ReadOneApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+		},
+		"ReadOneApplication",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	//lintignore:R018
-	time.Sleep(1 * time.Second) // TODO: replace this with resource.StateChangeConf{/* ... */}
-
-	respSecret, r, err := apiClient.ApplicationsApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
-
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Application %s has no secret", d.Id())
-		} else {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationsApi.ReadOneApplication``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
-
-			return diags
-		}
+	if resp == nil {
+		d.SetId("")
+		return nil
 	}
 
-	if resp.ApplicationOIDC != nil && resp.ApplicationOIDC.GetId() != "" {
+	respObject := resp.(*management.CreateApplication201Response)
 
-		application := resp.ApplicationOIDC
+	if respObject.ApplicationOIDC != nil && respObject.ApplicationOIDC.GetId() != "" {
+
+		respSecret, diags := sdk.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return apiClient.ApplicationsApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			},
+			"ReadApplicationSecret",
+			sdk.CustomErrorResourceNotFoundWarning,
+			func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+
+				// The secret may take a short time to propagate
+				if r.StatusCode == 404 {
+					tflog.Warn(ctx, "Application secret not found, available for retry")
+					return true
+				}
+
+				return false
+			},
+		)
+		if diags.HasError() {
+			return diags
+		}
+
+		application := respObject.ApplicationOIDC
 
 		d.Set("name", application.GetName())
 		d.Set("enabled", application.GetEnabled())
@@ -582,16 +596,16 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			d.Set("access_control_group_options", nil)
 		}
 
-		v, diags := flattenOIDCOptions(application, respSecret)
+		v, diags := flattenOIDCOptions(application, respSecret.(*management.ApplicationSecret))
 		if diags.HasError() {
 			return diags
 		}
 
 		d.Set("oidc_options", v)
 
-	} else if resp.ApplicationSAML != nil && resp.ApplicationSAML.GetId() != "" {
+	} else if respObject.ApplicationSAML != nil && respObject.ApplicationSAML.GetId() != "" {
 
-		application := resp.ApplicationSAML
+		application := respObject.ApplicationSAML
 
 		d.Set("name", application.GetName())
 		d.Set("enabled", application.GetEnabled())
@@ -694,14 +708,17 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 		applicationRequest.ApplicationSAML = application
 	}
 
-	_, r, err := apiClient.ApplicationsApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationsApi.UpdateApplication``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
+		},
+		"UpdateApplication",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -716,17 +733,22 @@ func resourceApplicationDelete(ctx context.Context, d *schema.ResourceData, meta
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.ApplicationsApplicationsApi.DeleteApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationsApi.DeleteApplication``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.ApplicationsApplicationsApi.DeleteApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteApplication",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourceApplicationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

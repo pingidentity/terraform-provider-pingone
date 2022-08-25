@@ -3,7 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -120,18 +121,23 @@ func resourceSchemaAttributeCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	resp, r, err := apiClient.SchemasApi.CreateAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string)).SchemaAttribute(schemaAttribute.(management.SchemaAttribute)).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `SchemasApi.CreateAttribute``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.SchemasApi.CreateAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string)).SchemaAttribute(schemaAttribute.(management.SchemaAttribute)).Execute()
+		},
+		"CreateAttribute",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(resp.GetId())
+	respObject := resp.(*management.SchemaAttribute)
+
+	d.SetId(respObject.GetId())
 
 	return resourceSchemaAttributeRead(ctx, d, meta)
 }
@@ -144,46 +150,48 @@ func resourceSchemaAttributeRead(ctx context.Context, d *schema.ResourceData, me
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.SchemasApi.ReadOneAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Schema Attribute %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `SchemasApi.ReadOneSchemaAttribute``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.SchemasApi.ReadOneAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).Execute()
+		},
+		"ReadOneAttribute",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	log.Printf("resp.GetDisplayName(): %s", resp.GetDisplayName())
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
 
-	d.Set("name", resp.GetName())
+	respObject := resp.(*management.SchemaAttribute)
 
-	if v, ok := resp.GetDisplayNameOk(); ok {
+	d.Set("name", respObject.GetName())
+
+	if v, ok := respObject.GetDisplayNameOk(); ok {
 		d.Set("display_name", v)
 	} else {
 		d.Set("display_name", nil)
 	}
 
-	if v, ok := resp.GetDescriptionOk(); ok {
+	if v, ok := respObject.GetDescriptionOk(); ok {
 		d.Set("description", v)
 	} else {
 		d.Set("description", nil)
 	}
 
-	d.Set("enabled", resp.GetEnabled())
-	d.Set("type", resp.GetType())
-	d.Set("unique", resp.GetUnique())
-	d.Set("multivalued", resp.GetMultiValued())
-	d.Set("ldap_attribute", resp.GetLdapAttribute())
-	d.Set("required", resp.GetRequired())
-	d.Set("schema_type", resp.GetSchemaType())
+	d.Set("enabled", respObject.GetEnabled())
+	d.Set("type", respObject.GetType())
+	d.Set("unique", respObject.GetUnique())
+	d.Set("multivalued", respObject.GetMultiValued())
+	d.Set("ldap_attribute", respObject.GetLdapAttribute())
+	d.Set("required", respObject.GetRequired())
+	d.Set("schema_type", respObject.GetSchemaType())
 
 	return diags
 }
@@ -201,14 +209,17 @@ func resourceSchemaAttributeUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	_, r, err := apiClient.SchemasApi.UpdateAttributePatch(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).SchemaAttribute(schemaAttribute.(management.SchemaAttribute)).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `SchemasApi.UpdateAttributePatch``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.SchemasApi.UpdateAttributePatch(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).SchemaAttribute(schemaAttribute.(management.SchemaAttribute)).Execute()
+		},
+		"UpdateAttributePatch",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -223,17 +234,22 @@ func resourceSchemaAttributeDelete(ctx context.Context, d *schema.ResourceData, 
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.SchemasApi.DeleteAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `SchemasApi.DeleteAttribute``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.SchemasApi.DeleteAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteAttribute",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourceSchemaAttributeImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

@@ -3,7 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -72,18 +73,23 @@ func resourcePingOneApplicationSignOnPolicyAssignmentCreate(ctx context.Context,
 	signOnPolicy := *management.NewSignOnPolicyActionCommonSignOnPolicy(d.Get("sign_on_policy_id").(string))
 	applicationSignOnPolicyAssignment := *management.NewSignOnPolicyAssignment(int32(d.Get("priority").(int)), signOnPolicy)
 
-	resp, r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+		},
+		"CreateSignOnPolicyAssignment",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(resp.GetId())
+	respObject := resp.(*management.SignOnPolicyAssignment)
+
+	d.SetId(respObject.GetId())
 
 	return resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx, d, meta)
 }
@@ -96,24 +102,28 @@ func resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx context.Context, d
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Application Sign on Policy Mapping %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+		},
+		"ReadOneSignOnPolicyAssignment",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("priority", resp.GetPriority())
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
+
+	respObject := resp.(*management.SignOnPolicyAssignment)
+
+	d.Set("priority", respObject.GetPriority())
 
 	return diags
 }
@@ -129,14 +139,17 @@ func resourcePingOneApplicationSignOnPolicyAssignmentUpdate(ctx context.Context,
 	signOnPolicy := *management.NewSignOnPolicyActionCommonSignOnPolicy(d.Get("sign_on_policy_id").(string))
 	applicationSignOnPolicyAssignment := *management.NewSignOnPolicyAssignment(int32(d.Get("priority").(int)), signOnPolicy)
 
-	_, r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+		},
+		"UpdateSignOnPolicyAssignment",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -151,21 +164,26 @@ func resourcePingOneApplicationSignOnPolicyAssignmentDelete(ctx context.Context,
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteSignOnPolicyAssignment",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourcePingOneApplicationSignOnPolicyAssignmentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	attributes := strings.SplitN(d.Id(), "/", 2)
+	attributes := strings.SplitN(d.Id(), "/", 3)
 
 	if len(attributes) != 2 {
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/applicationID/SignOnPolicyAssignmentID\"", d.Id())

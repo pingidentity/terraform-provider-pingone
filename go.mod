@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.21.0
 	github.com/katbyte/terrafmt v0.4.0
 	github.com/patrickcping/pingone-go-sdk-v2 v0.3.4-0.20220824220051-dafb7171f3ea
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.5.1-0.20220824220051-dafb7171f3ea
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.5.1-0.20220825111923-1cbb55bb23cb
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.39.3
 )

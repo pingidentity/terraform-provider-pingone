@@ -239,7 +239,7 @@ func resourcePingOneRoleAssignmentUserDelete(ctx context.Context, d *schema.Reso
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourcePingOneRoleAssignmentUserImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

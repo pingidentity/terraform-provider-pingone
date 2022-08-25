@@ -3,7 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -101,18 +102,23 @@ func resourceResourceCreate(ctx context.Context, d *schema.ResourceData, meta in
 		resource.SetAccessTokenValiditySeconds(int32(v.(int)))
 	}
 
-	resp, r, err := apiClient.ResourcesResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ResourcesResourcesApi.CreateResource``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ResourcesResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
+		},
+		"CreateResource",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(resp.GetId())
+	respObject := resp.(*management.Resource)
+
+	d.SetId(respObject.GetId())
 
 	return resourceResourceRead(ctx, d, meta)
 }
@@ -125,44 +131,48 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.ResourcesResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Resource %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ResourcesResourcesApi.ReadOneResource``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ResourcesResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+		},
+		"ReadOneResource",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("name", resp.GetName())
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
 
-	if v, ok := resp.GetDescriptionOk(); ok {
+	respObject := resp.(*management.Resource)
+
+	d.Set("name", respObject.GetName())
+
+	if v, ok := respObject.GetDescriptionOk(); ok {
 		d.Set("description", v)
 	} else {
 		d.Set("description", nil)
 	}
 
-	if v, ok := resp.GetTypeOk(); ok {
+	if v, ok := respObject.GetTypeOk(); ok {
 		d.Set("type", string(*v))
 	} else {
 		d.Set("type", nil)
 	}
 
-	if v, ok := resp.GetAudienceOk(); ok {
+	if v, ok := respObject.GetAudienceOk(); ok {
 		d.Set("audience", v)
 	} else {
 		d.Set("audience", nil)
 	}
 
-	if v, ok := resp.GetAccessTokenValiditySecondsOk(); ok {
+	if v, ok := respObject.GetAccessTokenValiditySecondsOk(); ok {
 		d.Set("access_token_validity_seconds", v)
 	} else {
 		d.Set("access_token_validity_seconds", nil)
@@ -199,14 +209,17 @@ func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		resource.SetAccessTokenValiditySeconds(int32(v.(int)))
 	}
 
-	_, r, err := apiClient.ResourcesResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ResourcesResourcesApi.UpdateResource``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ResourcesResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
+		},
+		"UpdateResource",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -221,17 +234,22 @@ func resourceResourceDelete(ctx context.Context, d *schema.ResourceData, meta in
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.ResourcesResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ResourcesResourcesApi.DeleteResource``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.ResourcesResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteResource",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourceResourceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

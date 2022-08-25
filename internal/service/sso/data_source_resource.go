@@ -3,12 +3,14 @@ package sso
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -76,18 +78,21 @@ func datasourcePingOneResourceRead(ctx context.Context, d *schema.ResourceData, 
 
 	if v, ok := d.GetOk("name"); ok {
 
-		respList, r, err := apiClient.ResourcesResourcesApi.ReadAllResources(ctx, d.Get("environment_id").(string)).Execute()
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `ResourcesResourcesApi.ReadAllResources``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
+		respList, diags := sdk.ParseResponse(
+			ctx,
 
+			func() (interface{}, *http.Response, error) {
+				return apiClient.ResourcesResourcesApi.ReadAllResources(ctx, d.Get("environment_id").(string)).Execute()
+			},
+			"ReadAllResources",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
 			return diags
 		}
 
-		if resources, ok := respList.Embedded.GetResourcesOk(); ok {
+		if resources, ok := respList.(*management.EntityArray).Embedded.GetResourcesOk(); ok {
 
 			found := false
 			for _, resource := range resources {
@@ -112,18 +117,21 @@ func datasourcePingOneResourceRead(ctx context.Context, d *schema.ResourceData, 
 
 	} else if v, ok2 := d.GetOk("resource_id"); ok2 {
 
-		resourceResp, r, err := apiClient.ResourcesResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), v.(string)).Execute()
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `ResourcesResourcesApi.ReadOneResource``: %v", err),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
+		resourceResp, diags := sdk.ParseResponse(
+			ctx,
 
+			func() (interface{}, *http.Response, error) {
+				return apiClient.ResourcesResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+			},
+			"ReadOneResource",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
 			return diags
 		}
 
-		resp = *resourceResp
+		resp = *resourceResp.(*management.Resource)
 
 	} else {
 

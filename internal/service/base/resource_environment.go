@@ -3,13 +3,13 @@ package base
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -242,7 +242,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 	respObject := resp.(*management.Environment)
 
 	//lintignore:R018
-	time.Sleep(1 * time.Second) // TODO: replace this with resource.StateChangeConf{/* ... */}
+	//time.Sleep(250 * time.Millisecond) // We wait a short period to relieve retry pressure downstream
 
 	// Set the default population
 	// We have to create a default population because the API must require one population in the environment. If we don't do this we have a problem with the 'destroy all' routine
@@ -259,9 +259,9 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 
 	}
 
-	populationResp, _, err := sso.PingOnePopulationCreate(ctx, apiClient, respObject.GetId(), population)
-	if err != nil {
-		return diag.FromErr(err)
+	populationResp, diags := sso.PingOnePopulationCreate(ctx, apiClient, respObject.GetId(), population)
+	if diags.HasError() {
+		return diags
 	}
 
 	d.SetId(respObject.GetId())
@@ -289,7 +289,7 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 		},
 		"ReadOneEnvironment",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		retryEnvironmentDefault,
 	)
 	if diags.HasError() {
 		return diags
@@ -322,7 +322,7 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 		},
 		"ReadOneBillOfMaterials",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		retryEnvironmentDefault,
 	)
 	if diags.HasError() {
 		return diags
@@ -344,16 +344,9 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 
 	// The population
 
-	populationResp, populationR, populationErr := sso.PingOnePopulationRead(ctx, apiClient, environmentID, populationID)
-	if populationErr != nil {
-
-		if populationR.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Application Default Population no %s longer exists", populationID)
-			d.Set("default_population_id", "")
-			return diags
-		}
-
-		return diag.FromErr(populationErr)
+	populationResp, diags := sso.PingOnePopulationRead(ctx, apiClient, environmentID, populationID)
+	if diags.HasError() {
+		return diags
 	}
 
 	populationConfigs := []interface{}{}
@@ -487,9 +480,9 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 
 	}
 
-	_, _, populationErr := sso.PingOnePopulationUpdate(ctx, apiClient, environmentID, populationID, population)
-	if populationErr != nil {
-		return diag.FromErr(populationErr)
+	_, diags = sso.PingOnePopulationUpdate(ctx, apiClient, environmentID, populationID, population)
+	if diags.HasError() {
+		return diags
 	}
 
 	return resourcePingOneEnvironmentRead(ctx, d, meta)
@@ -514,7 +507,7 @@ func resourcePingOneEnvironmentDelete(ctx context.Context, d *schema.ResourceDat
 				return apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, d.Id()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
 			},
 			"UpdateEnvironmentType",
-			sdk.DefaultCustomError,
+			sdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultRetryable,
 		)
 		if diags.HasError() {
@@ -530,7 +523,7 @@ func resourcePingOneEnvironmentDelete(ctx context.Context, d *schema.ResourceDat
 			return nil, r, err
 		},
 		"DeleteEnvironment",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultRetryable,
 	)
 	if diags.HasError() {
@@ -553,7 +546,7 @@ func resourcePingOneEnvironmentDelete(ctx context.Context, d *schema.ResourceDat
 		},
 		Timeout:                   d.Timeout(schema.TimeoutDelete) - time.Minute,
 		Delay:                     1 * time.Second,
-		MinTimeout:                2 * time.Second,
+		MinTimeout:                500 * time.Millisecond,
 		ContinuousTargetOccurence: 2,
 	}
 	_, err := deleteStateConf.WaitForState()
@@ -585,6 +578,28 @@ func resourcePingOneEnvironmentImport(ctx context.Context, d *schema.ResourceDat
 
 	return []*schema.ResourceData{d}, nil
 }
+
+var (
+	retryEnvironmentDefault = func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+
+		if p1error != nil {
+			var err error
+
+			// Permissions may not have propagated by this point
+			if m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", p1error.GetMessage()); err == nil && m {
+				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+				return true
+			}
+			if err != nil {
+				tflog.Warn(ctx, "Cannot match error string for retry")
+				return false
+			}
+
+		}
+
+		return false
+	}
+)
 
 func expandBOMProducts(items []interface{}) ([]management.BillOfMaterialsProductsInner, error) {
 	var productBOMItems []management.BillOfMaterialsProductsInner

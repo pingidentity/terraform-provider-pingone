@@ -3,7 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -78,18 +79,23 @@ func resourcePingOneApplicationResourceGrantCreate(ctx context.Context, d *schem
 
 	applicationResourceGrant := *management.NewApplicationResourceGrant(resource, scopes)
 
-	resp, r, err := apiClient.ApplicationsApplicationResourceGrantsApi.CreateApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).ApplicationResourceGrant(applicationResourceGrant).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationResourceGrantsApi.CreateApplicationGrant``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationResourceGrantsApi.CreateApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).ApplicationResourceGrant(applicationResourceGrant).Execute()
+		},
+		"CreateApplicationGrant",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(resp.GetId())
+	respObject := resp.(*management.ApplicationResourceGrant)
+
+	d.SetId(respObject.GetId())
 
 	return resourcePingOneApplicationResourceGrantRead(ctx, d, meta)
 }
@@ -102,25 +108,29 @@ func resourcePingOneApplicationResourceGrantRead(ctx context.Context, d *schema.
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.ApplicationsApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Application Grant %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationResourceGrantsApi.ReadOneApplicationGrant``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+		},
+		"ReadOneApplicationGrant",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("resource_id", resp.Resource.GetId())
-	d.Set("scopes", flattenAppResourceGrantScopes(resp.GetScopes()))
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
+
+	respObject := resp.(*management.ApplicationResourceGrant)
+
+	d.Set("resource_id", respObject.Resource.GetId())
+	d.Set("scopes", flattenAppResourceGrantScopes(respObject.GetScopes()))
 
 	return diags
 }
@@ -138,14 +148,17 @@ func resourcePingOneApplicationResourceGrantUpdate(ctx context.Context, d *schem
 
 	applicationResourceGrant := *management.NewApplicationResourceGrant(resource, scopes)
 
-	_, r, err := apiClient.ApplicationsApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).ApplicationResourceGrant(applicationResourceGrant).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationResourceGrantsApi.UpdateApplicationGrant``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).ApplicationResourceGrant(applicationResourceGrant).Execute()
+		},
+		"UpdateApplicationGrant",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -160,21 +173,26 @@ func resourcePingOneApplicationResourceGrantDelete(ctx context.Context, d *schem
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.ApplicationsApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `ApplicationsApplicationResourceGrantsApi.DeleteApplicationGrant``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.ApplicationsApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteApplicationGrant",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourcePingOneApplicationResourceGrantImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	attributes := strings.SplitN(d.Id(), "/", 2)
+	attributes := strings.SplitN(d.Id(), "/", 3)
 
 	if len(attributes) != 2 {
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/applicationID/grantID\"", d.Id())
