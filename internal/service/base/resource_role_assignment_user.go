@@ -143,7 +143,7 @@ func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.Reso
 
 			return nil
 		},
-		sdk.DefaultRetryable,
+		sdk.RoleAssignmentRetryable,
 	)
 	if diags.HasError() {
 		return diags

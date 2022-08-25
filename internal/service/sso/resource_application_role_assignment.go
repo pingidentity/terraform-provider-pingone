@@ -143,7 +143,7 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 
 			return nil
 		},
-		sdk.DefaultCreateReadRetryable,
+		sdk.RoleAssignmentRetryable,
 	)
 	if diags.HasError() {
 		return diags
