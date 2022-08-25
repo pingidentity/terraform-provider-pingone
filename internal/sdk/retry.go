@@ -16,9 +16,9 @@ type Retryable func(context.Context, *http.Response, *management.P1Error) bool
 var (
 	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
 
-		// Gateway timeout
-		if r.StatusCode == 504 {
-			tflog.Warn(ctx, "Gateway timeout detected, available for retry")
+		// Gateway errors
+		if r.StatusCode >= 502 && r.StatusCode <= 504 {
+			tflog.Warn(ctx, "Gateway error detected, available for retry")
 			return true
 		}
 
