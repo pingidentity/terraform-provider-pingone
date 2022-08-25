@@ -124,7 +124,7 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 			},
 			"ReadAllEnvironments",
 			sdk.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
+			retryEnvironmentDefault,
 		)
 		if diags.HasError() {
 			return diags
@@ -165,7 +165,7 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 			},
 			"ReadOneEnvironment",
 			sdk.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
+			retryEnvironmentDefault,
 		)
 		if diags.HasError() {
 			return diags
