@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -527,6 +528,21 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 				if r.StatusCode == 404 {
 					tflog.Warn(ctx, "Application secret not found, available for retry")
 					return true
+				}
+
+				if p1error != nil {
+					var err error
+
+					// Permissions may not have propagated by this point
+					if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+						tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+						return true
+					}
+					if err != nil {
+						tflog.Warn(ctx, "Cannot match error string for retry")
+						return false
+					}
+
 				}
 
 				return false
