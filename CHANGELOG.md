@@ -1,5 +1,27 @@
 ## 0.3.0 (Unreleased)
 
+NOTES:
+
+* All resources/datasources: API errors become more readable and show better detail. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
+* All resources/datasources: Added structure to automatically retry API calls where returned errors are retryable. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
+* All resources/datasources: Fix `Cannot decode error response` warning on some API errors. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
+* resource/pingone_application: Correction to documentation text ([#81](https://github.com/pingidentity/terraform-provider-pingone/issues/81))
+
+FEATURES:
+
+* **New Data Source:** `pingone_resource` ([#71](https://github.com/pingidentity/terraform-provider-pingone/issues/71))
+* **New Data Source:** `pingone_resource_scope` ([#71](https://github.com/pingidentity/terraform-provider-pingone/issues/71))
+* **New Resource:** `pingone_resource` ([#71](https://github.com/pingidentity/terraform-provider-pingone/issues/71))
+* **New Resource:** `pingone_resource_scope` ([#71](https://github.com/pingidentity/terraform-provider-pingone/issues/71))
+
+BUG FIXES:
+
+* resource/pingone_application_attribute_mapping: Fix import ID parsing error. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
+* resource/pingone_application_resource_grant: Fix import ID parsing error. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
+* resource/pingone_application_sign_on_policy_assignment: Fix import ID parsing error. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
+* resource/pingone_environment: Fix index out of range panic on environment creation error. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
+* resource/pingone_sign_on_policy: Fix import ID parsing error. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
+
 ## 0.2.1 (18 August 2022)
 
 NOTES:
