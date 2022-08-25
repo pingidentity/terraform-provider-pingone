@@ -17,7 +17,7 @@ import (
 
 func ResourceIdentityProvider() *schema.Resource {
 
-	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "generic_oidc", "saml_options"}
+	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "generic_oidc", "generic_saml"}
 
 	return &schema.Resource{
 
@@ -344,7 +344,7 @@ func ResourceIdentityProvider() *schema.Resource {
 						"idp_entity_id": {
 							Description: "A string that specifies the entity ID URI that is checked against the issuerId tag in the incoming response.",
 							Type:        schema.TypeString,
-							Optional:    true,
+							Required:    true,
 						},
 						"sp_entity_id": {
 							Description: "A string that specifies the service provider's entity ID, used to look up the application.",
@@ -369,13 +369,13 @@ func ResourceIdentityProvider() *schema.Resource {
 						"sso_binding": {
 							Description:      fmt.Sprintf("A string that specifies the binding for the authentication request. Options are `%s` and `%s`.", string(management.ENUMIDENTITYPROVIDERSAMLSSOBINDING_POST), string(management.ENUMIDENTITYPROVIDERSAMLSSOBINDING_REDIRECT)),
 							Type:             schema.TypeString,
-							Optional:         true,
+							Required:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMIDENTITYPROVIDERSAMLSSOBINDING_POST), string(management.ENUMIDENTITYPROVIDERSAMLSSOBINDING_REDIRECT)}, false)),
 						},
 						"sso_endpoint": {
 							Description:      "A string that specifies the SSO endpoint for the authentication request.",
 							Type:             schema.TypeString,
-							Optional:         true,
+							Required:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
 						},
 					},
@@ -421,7 +421,7 @@ func resourceIdentityProviderCreate(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.IdentityProviderManagementIdentityProvidersApi.CreateIdentityProvider(ctx, d.Get("environment_id").(string)).IdentityProvider(*idpRequest).Execute()
+			return apiClient.IdentityProvidersApi.CreateIdentityProvider(ctx, d.Get("environment_id").(string)).IdentityProvider(*idpRequest).Execute()
 		},
 		"CreateIdentityProvider",
 		sdk.DefaultCustomError,
@@ -462,7 +462,7 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.IdentityProviderManagementIdentityProvidersApi.ReadOneIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneIdentityProvider",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -480,6 +480,206 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 	respObject := resp.(*management.IdentityProvider)
 
 	// flatten
+	values := map[string]interface{}{
+		"name":                       nil,
+		"description":                nil,
+		"enabled":                    nil,
+		"registration_population_id": nil,
+		"login_button_icon":          nil,
+		"icon":                       nil,
+		"facebook":                   nil,
+		"google":                     nil,
+		"linkedin":                   nil,
+		"yahoo":                      nil,
+		"amazon":                     nil,
+		"twitter":                    nil,
+		"apple":                      nil,
+		"paypal":                     nil,
+		"microsoft":                  nil,
+		"github":                     nil,
+		"generic_oidc":               nil,
+		"generic_saml":               nil,
+	}
+
+	switch respObject.GetActualInstance().(type) {
+	case *management.IdentityProviderClientIDClientSecret:
+		idpObject := respObject.IdentityProviderClientIDClientSecret
+		schemaAttribute := "amazon"
+
+		values["name"] = idpObject.GetName()
+
+		values["enabled"] = idpObject.GetEnabled()
+
+		if v, ok := idpObject.GetDescriptionOk(); ok {
+			values["description"] = v
+		}
+
+		if v, ok := idpObject.GetRegistrationOk(); ok {
+			values["registration_population_id"] = v.GetPopulation().Id
+		}
+
+		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
+			values["login_button_icon"] = flattenLoginButtonIcon(v)
+		}
+
+		if v, ok := idpObject.GetIconOk(); ok {
+			values["icon"] = flattenIdPIcon(v)
+		}
+
+		values[schemaAttribute] = flattenClientIdClientSecret(idpObject.GetClientId(), idpObject.GetClientSecret())
+
+	case *management.IdentityProviderApple:
+		idpObject := respObject.IdentityProviderApple
+		schemaAttribute := "apple"
+
+		values["name"] = idpObject.GetName()
+
+		values["enabled"] = idpObject.GetEnabled()
+
+		if v, ok := idpObject.GetDescriptionOk(); ok {
+			values["description"] = v
+		}
+
+		if v, ok := idpObject.GetRegistrationOk(); ok {
+			values["registration_population_id"] = v.GetPopulation().Id
+		}
+
+		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
+			values["login_button_icon"] = flattenLoginButtonIcon(v)
+		}
+
+		if v, ok := idpObject.GetIconOk(); ok {
+			values["icon"] = flattenIdPIcon(v)
+		}
+
+		values[schemaAttribute] = flattenApple(idpObject.GetClientId(), idpObject.GetClientSecretSigningKey(), idpObject.GetKeyId(), idpObject.GetTeamId())
+
+	case *management.IdentityProviderFacebook:
+		idpObject := respObject.IdentityProviderFacebook
+		schemaAttribute := "facebook"
+
+		values["name"] = idpObject.GetName()
+
+		values["enabled"] = idpObject.GetEnabled()
+
+		if v, ok := idpObject.GetDescriptionOk(); ok {
+			values["description"] = v
+		}
+
+		if v, ok := idpObject.GetRegistrationOk(); ok {
+			values["registration_population_id"] = v.GetPopulation().Id
+		}
+
+		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
+			values["login_button_icon"] = flattenLoginButtonIcon(v)
+		}
+
+		if v, ok := idpObject.GetIconOk(); ok {
+			values["icon"] = flattenIdPIcon(v)
+		}
+
+		values[schemaAttribute] = flattenFacebook(idpObject.GetAppId(), idpObject.GetAppSecret())
+
+	case *management.IdentityProviderOIDC:
+		idpObject := respObject.IdentityProviderOIDC
+		schemaAttribute := "generic_oidc"
+
+		values["name"] = idpObject.GetName()
+
+		values["enabled"] = idpObject.GetEnabled()
+
+		if v, ok := idpObject.GetDescriptionOk(); ok {
+			values["description"] = v
+		}
+
+		if v, ok := idpObject.GetRegistrationOk(); ok {
+			values["registration_population_id"] = v.GetPopulation().Id
+		}
+
+		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
+			values["login_button_icon"] = flattenLoginButtonIcon(v)
+		}
+
+		if v, ok := idpObject.GetIconOk(); ok {
+			values["icon"] = flattenIdPIcon(v)
+		}
+
+		values[schemaAttribute] = flattenOIDC(idpObject)
+
+	case *management.IdentityProviderPaypal:
+		idpObject := respObject.IdentityProviderPaypal
+		schemaAttribute := "paypal"
+
+		values["name"] = idpObject.GetName()
+
+		values["enabled"] = idpObject.GetEnabled()
+
+		if v, ok := idpObject.GetDescriptionOk(); ok {
+			values["description"] = v
+		}
+
+		if v, ok := idpObject.GetRegistrationOk(); ok {
+			values["registration_population_id"] = v.GetPopulation().Id
+		}
+
+		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
+			values["login_button_icon"] = flattenLoginButtonIcon(v)
+		}
+
+		if v, ok := idpObject.GetIconOk(); ok {
+			values["icon"] = flattenIdPIcon(v)
+		}
+
+		values[schemaAttribute] = flattenPaypal(idpObject.GetClientId(), idpObject.GetClientSecret(), idpObject.GetClientEnvironment())
+
+	case *management.IdentityProviderSAML:
+		idpObject := respObject.IdentityProviderSAML
+		schemaAttribute := "generic_saml"
+
+		values["name"] = idpObject.GetName()
+
+		values["enabled"] = idpObject.GetEnabled()
+
+		if v, ok := idpObject.GetDescriptionOk(); ok {
+			values["description"] = v
+		}
+
+		if v, ok := idpObject.GetRegistrationOk(); ok {
+			values["registration_population_id"] = v.GetPopulation().Id
+		}
+
+		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
+			values["login_button_icon"] = flattenLoginButtonIcon(v)
+		}
+
+		if v, ok := idpObject.GetIconOk(); ok {
+			values["icon"] = flattenIdPIcon(v)
+		}
+
+		values[schemaAttribute] = flattenSAML(idpObject)
+	}
+
+	d.Set("name", values["name"])
+	d.Set("description", values["description"])
+	d.Set("enabled", values["enabled"])
+
+	d.Set("registration_population_id", values["registration_population_id"])
+
+	d.Set("login_button_icon", values["login_button_icon"])
+	d.Set("icon", values["icon"])
+
+	d.Set("facebook", values["facebook"])
+	d.Set("google", values["google"])
+	d.Set("linkedin", values["linkedin"])
+	d.Set("yahoo", values["yahoo"])
+	d.Set("amazon", values["amazon"])
+	d.Set("twitter", values["twitter"])
+	d.Set("apple", values["apple"])
+	d.Set("paypal", values["paypal"])
+	d.Set("microsoft", values["microsoft"])
+	d.Set("github", values["github"])
+	d.Set("generic_oidc", values["generic_oidc"])
+	d.Set("generic_saml", values["generic_saml"])
 
 	return diags
 }
@@ -501,7 +701,7 @@ func resourceIdentityProviderUpdate(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.IdentityProviderManagementIdentityProvidersApi.UpdateIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).IdentityProvider(*idpRequest).Execute()
+			return apiClient.IdentityProvidersApi.UpdateIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).IdentityProvider(*idpRequest).Execute()
 		},
 		"UpdateIdentityProvider",
 		sdk.DefaultCustomError,
@@ -526,7 +726,7 @@ func resourceIdentityProviderDelete(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.IdentityProviderManagementIdentityProvidersApi.DeleteIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			r, err := apiClient.IdentityProvidersApi.DeleteIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteIdentityProvider",
@@ -560,13 +760,7 @@ func resourceIdentityProviderImport(ctx context.Context, d *schema.ResourceData,
 func expandIdentityProvider(d *schema.ResourceData) (*management.IdentityProvider, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	enabled := management.ENUMENABLEDSTATUS_DISABLED
-
-	if d.Get("enabled").(bool) {
-		enabled = management.ENUMENABLEDSTATUS_ENABLED
-	}
-
-	common := *management.NewIdentityProviderCommon(enabled, d.Get("name").(string), management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT)
+	common := *management.NewIdentityProviderCommon(d.Get("enabled").(bool), d.Get("name").(string), management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT)
 
 	if v, ok := d.GetOk("description"); ok {
 		common.SetDescription(v.(string))
@@ -610,27 +804,27 @@ func expandIdentityProvider(d *schema.ResourceData) (*management.IdentityProvide
 	}
 
 	if v, ok := d.GetOk("google"); ok {
-		requestObject.IdentityProviderGoogle, diags = expandIdPGoogle(v.([]interface{}), common)
+		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPGoogle(v.([]interface{}), common)
 		processedCount += 1
 	}
 
 	if v, ok := d.GetOk("linkedin"); ok {
-		requestObject.IdentityProviderLinkedIn, diags = expandIdPLinkedIn(v.([]interface{}), common)
+		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPLinkedIn(v.([]interface{}), common)
 		processedCount += 1
 	}
 
 	if v, ok := d.GetOk("yahoo"); ok {
-		requestObject.IdentityProviderYahoo, diags = expandIdPYahoo(v.([]interface{}), common)
+		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPYahoo(v.([]interface{}), common)
 		processedCount += 1
 	}
 
 	if v, ok := d.GetOk("amazon"); ok {
-		requestObject.IdentityProviderAmazon, diags = expandIdPAmazon(v.([]interface{}), common)
+		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPAmazon(v.([]interface{}), common)
 		processedCount += 1
 	}
 
 	if v, ok := d.GetOk("twitter"); ok {
-		requestObject.IdentityProviderTwitter, diags = expandIdPTwitter(v.([]interface{}), common)
+		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPTwitter(v.([]interface{}), common)
 		processedCount += 1
 	}
 
@@ -645,12 +839,12 @@ func expandIdentityProvider(d *schema.ResourceData) (*management.IdentityProvide
 	}
 
 	if v, ok := d.GetOk("microsoft"); ok {
-		requestObject.IdentityProviderMicrosoft, diags = expandIdPMicrosoft(v.([]interface{}), common)
+		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPMicrosoft(v.([]interface{}), common)
 		processedCount += 1
 	}
 
 	if v, ok := d.GetOk("github"); ok {
-		requestObject.IdentityProviderGithub, diags = expandIdPGithub(v.([]interface{}), common)
+		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPGithub(v.([]interface{}), common)
 		processedCount += 1
 	}
 
@@ -710,7 +904,7 @@ func expandIdPFacebook(v []interface{}, common management.IdentityProviderCommon
 
 }
 
-func expandIdPGoogle(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderGoogle, diag.Diagnostics) {
+func expandIdPClientIdClientSecret(v []interface{}, common management.IdentityProviderCommon, idpType management.EnumIdentityProviderExt) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if v != nil && len(v) > 0 && v[0] != nil {
@@ -720,7 +914,7 @@ func expandIdPGoogle(v []interface{}, common management.IdentityProviderCommon) 
 		clientId := idp["client_id"].(string)
 		clientSecret := idp["client_secret"].(string)
 
-		idpObj := management.NewIdentityProviderGoogle(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_GOOGLE, clientId, clientSecret)
+		idpObj := management.NewIdentityProviderClientIDClientSecret(common.GetEnabled(), common.GetName(), idpType, clientId, clientSecret)
 
 		idpObj.SetDescription(common.GetDescription())
 		idpObj.SetRegistration(common.GetRegistration())
@@ -731,123 +925,31 @@ func expandIdPGoogle(v []interface{}, common management.IdentityProviderCommon) 
 	}
 	diags = append(diags, diag.Diagnostic{
 		Severity: diag.Error,
-		Summary:  "Block `google` must be defined when using the google identity provider type",
+		Summary:  "Identity provider block not defined correctly.  Please raise an issue.",
 	})
 
 	return nil, diags
 
 }
 
-func expandIdPLinkedIn(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderLinkedIn, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if v != nil && len(v) > 0 && v[0] != nil {
-
-		idp := v[0].(map[string]interface{})
-
-		clientId := idp["client_id"].(string)
-		clientSecret := idp["client_secret"].(string)
-
-		idpObj := management.NewIdentityProviderLinkedIn(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_LINKEDIN, clientId, clientSecret)
-
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
-
-		return idpObj, diags
-	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `linkedin` must be defined when using the LinkedIn identity provider type",
-	})
-
-	return nil, diags
-
+func expandIdPGoogle(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
+	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_GOOGLE)
 }
 
-func expandIdPYahoo(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderYahoo, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if v != nil && len(v) > 0 && v[0] != nil {
-
-		idp := v[0].(map[string]interface{})
-
-		clientId := idp["client_id"].(string)
-		clientSecret := idp["client_secret"].(string)
-
-		idpObj := management.NewIdentityProviderYahoo(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_YAHOO, clientId, clientSecret)
-
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
-
-		return idpObj, diags
-	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `yahoo` must be defined when using the Yahoo identity provider type",
-	})
-
-	return nil, diags
-
+func expandIdPLinkedIn(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
+	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN)
 }
 
-func expandIdPAmazon(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderAmazon, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if v != nil && len(v) > 0 && v[0] != nil {
-
-		idp := v[0].(map[string]interface{})
-
-		clientId := idp["client_id"].(string)
-		clientSecret := idp["client_secret"].(string)
-
-		idpObj := management.NewIdentityProviderAmazon(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_AMAZON, clientId, clientSecret)
-
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
-
-		return idpObj, diags
-	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `amazon` must be defined when using the Amazon identity provider type",
-	})
-
-	return nil, diags
-
+func expandIdPYahoo(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
+	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_YAHOO)
 }
 
-func expandIdPTwitter(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderTwitter, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func expandIdPAmazon(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
+	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_AMAZON)
+}
 
-	if v != nil && len(v) > 0 && v[0] != nil {
-
-		idp := v[0].(map[string]interface{})
-
-		clientId := idp["client_id"].(string)
-		clientSecret := idp["client_secret"].(string)
-
-		idpObj := management.NewIdentityProviderTwitter(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_TWITTER, clientId, clientSecret)
-
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
-
-		return idpObj, diags
-	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `twitter` must be defined when using the Twitter identity provider type",
-	})
-
-	return nil, diags
-
+func expandIdPTwitter(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
+	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_TWITTER)
 }
 
 func expandIdPApple(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderApple, diag.Diagnostics) {
@@ -909,60 +1011,12 @@ func expandIdPPaypal(v []interface{}, common management.IdentityProviderCommon) 
 
 }
 
-func expandIdPMicrosoft(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderMicrosoft, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if v != nil && len(v) > 0 && v[0] != nil {
-
-		idp := v[0].(map[string]interface{})
-
-		clientId := idp["client_id"].(string)
-		clientSecret := idp["client_secret"].(string)
-
-		idpObj := management.NewIdentityProviderMicrosoft(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_MICROSOFT, clientId, clientSecret)
-
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
-
-		return idpObj, diags
-	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `microsoft` must be defined when using the Microsoft identity provider type",
-	})
-
-	return nil, diags
-
+func expandIdPMicrosoft(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
+	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_MICROSOFT)
 }
 
-func expandIdPGithub(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderGithub, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if v != nil && len(v) > 0 && v[0] != nil {
-
-		idp := v[0].(map[string]interface{})
-
-		clientId := idp["client_id"].(string)
-		clientSecret := idp["client_secret"].(string)
-
-		idpObj := management.NewIdentityProviderGithub(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_GITHUB, clientId, clientSecret)
-
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
-
-		return idpObj, diags
-	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `github` must be defined when using the Github identity provider type",
-	})
-
-	return nil, diags
-
+func expandIdPGithub(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
+	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_GITHUB)
 }
 
 func expandIdPOIDC(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderOIDC, diag.Diagnostics) {
@@ -1071,4 +1125,151 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 
 	return nil, diags
 
+}
+
+func flattenLoginButtonIcon(s *management.IdentityProviderCommonLoginButtonIcon) []interface{} {
+
+	item := map[string]interface{}{
+		"id":   s.GetId(),
+		"href": s.GetHref(),
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenIdPIcon(s *management.IdentityProviderCommonIcon) []interface{} {
+
+	item := map[string]interface{}{
+		"id":   s.GetId(),
+		"href": s.GetHref(),
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenClientIdClientSecret(clientId, clientSecret string) []interface{} {
+
+	item := map[string]interface{}{
+		"client_id":     clientId,
+		"client_secret": clientSecret,
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenSAML(idpObject *management.IdentityProviderSAML) []interface{} {
+
+	item := map[string]interface{}{
+		"idp_entity_id": idpObject.GetIdpEntityId(),
+		"sso_binding":   string(idpObject.GetSsoBinding()),
+		"sso_endpoint":  idpObject.GetSsoEndpoint(),
+	}
+
+	if v, ok := idpObject.GetAuthnRequestSignedOk(); ok {
+		item["authentication_request_signed"] = v
+	} else {
+		item["authentication_request_signed"] = nil
+	}
+
+	if v, ok := idpObject.GetSpEntityIdOk(); ok {
+		item["sp_entity_id"] = string(*v)
+	} else {
+		item["sp_entity_id"] = nil
+	}
+
+	if v, ok := idpObject.GetIdpVerificationOk(); ok {
+		if v1, ok := v.GetCertificatesOk(); ok {
+			ids := make([]string, 0)
+			for _, certificate := range v1 {
+				ids = append(ids, certificate.GetId())
+			}
+			item["idp_verification_certificate_ids"] = ids
+		} else {
+			item["idp_verification_certificate_ids"] = nil
+		}
+	} else {
+		item["idp_verification_certificate_ids"] = nil
+	}
+
+	if v, ok := idpObject.GetSpSigningOk(); ok {
+		item["sp_signing_key_id"] = v.GetKey().Id
+	} else {
+		item["sp_signing_key_id"] = nil
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenOIDC(idpObject *management.IdentityProviderOIDC) []interface{} {
+
+	item := map[string]interface{}{
+		"authorization_endpoint": idpObject.GetAuthorizationEndpoint(),
+		"client_id":              idpObject.GetClientId(),
+		"client_secret":          idpObject.GetClientSecret(),
+		"issuer":                 idpObject.GetIssuer(),
+		"jwks_endpoint":          idpObject.GetJwksEndpoint(),
+		"scopes":                 idpObject.GetScopes(),
+		"token_endpoint":         idpObject.GetTokenEndpoint(),
+	}
+
+	if v, ok := idpObject.GetDiscoveryEndpointOk(); ok {
+		item["discovery_endpoint"] = v
+	} else {
+		item["discovery_endpoint"] = nil
+	}
+
+	if v, ok := idpObject.GetTokenEndpointAuthMethodOk(); ok {
+		item["token_endpoint_auth_method"] = string(*v)
+	} else {
+		item["token_endpoint_auth_method"] = nil
+	}
+
+	if v, ok := idpObject.GetUserInfoEndpointOk(); ok {
+		item["userinfo_endpoint"] = v
+	} else {
+		item["userinfo_endpoint"] = nil
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenPaypal(clientId, clientSecret, clientEnvironment string) []interface{} {
+
+	item := map[string]interface{}{
+		"client_id":          clientId,
+		"client_secret":      clientSecret,
+		"client_environment": clientEnvironment,
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenFacebook(appId, appSecret string) []interface{} {
+
+	item := map[string]interface{}{
+		"app_id":     appId,
+		"app_secret": appSecret,
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenApple(clientId, clientSecretSigningKey, keyId, teamId string) []interface{} {
+
+	item := map[string]interface{}{
+		"client_id":                 clientId,
+		"client_secret_signing_key": clientSecretSigningKey,
+		"key_id":                    keyId,
+		"team_id":                   teamId,
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
 }
