@@ -3,7 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -416,21 +417,26 @@ func resourceIdentityProviderCreate(ctx context.Context, d *schema.ResourceData,
 		return diags
 	}
 
-	resp, r, err := apiClient.IdentityProviderManagementIdentityProvidersApi.CreateIdentityProvider(ctx, d.Get("environment_id").(string)).IdentityProvider(*idpRequest).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `IdentityProviderManagementIdentityProvidersApi.CreateIdentityProvider``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.IdentityProviderManagementIdentityProvidersApi.CreateIdentityProvider(ctx, d.Get("environment_id").(string)).IdentityProvider(*idpRequest).Execute()
+		},
+		"CreateIdentityProvider",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	if resp.IdentityProviderOIDC != nil && resp.IdentityProviderOIDC.GetId() != "" {
-		d.SetId(resp.IdentityProviderOIDC.GetId())
-	} else if resp.IdentityProviderSAML != nil && resp.IdentityProviderSAML.GetId() != "" {
-		d.SetId(resp.IdentityProviderSAML.GetId())
+	respObject := resp.(*management.IdentityProvider)
+
+	if respObject.IdentityProviderOIDC != nil && respObject.IdentityProviderOIDC.GetId() != "" {
+		d.SetId(respObject.IdentityProviderOIDC.GetId())
+	} else if respObject.IdentityProviderSAML != nil && respObject.IdentityProviderSAML.GetId() != "" {
+		d.SetId(respObject.IdentityProviderSAML.GetId())
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -452,22 +458,26 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.IdentityProviderManagementIdentityProvidersApi.ReadOneIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Identity Provider %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `IdentityProviderManagementIdentityProvidersApi.ReadOneIdentityProvider``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.IdentityProviderManagementIdentityProvidersApi.ReadOneIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+		},
+		"ReadOneIdentityProvider",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
+
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
+
+	respObject := resp.(*management.IdentityProvider)
 
 	// flatten
 
@@ -487,14 +497,17 @@ func resourceIdentityProviderUpdate(ctx context.Context, d *schema.ResourceData,
 		return diags
 	}
 
-	_, r, err := apiClient.IdentityProviderManagementIdentityProvidersApi.UpdateIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).IdentityProvider(*idpRequest).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `IdentityProviderManagementIdentityProvidersApi.UpdateIdentityProvider``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			return apiClient.IdentityProviderManagementIdentityProvidersApi.UpdateIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).IdentityProvider(*idpRequest).Execute()
+		},
+		"UpdateIdentityProvider",
+		sdk.DefaultCustomError,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -509,17 +522,22 @@ func resourceIdentityProviderDelete(ctx context.Context, d *schema.ResourceData,
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.IdentityProviderManagementIdentityProvidersApi.DeleteIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `IdentityProviderManagementIdentityProvidersApi.DeleteIdentityProvider``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.IdentityProviderManagementIdentityProvidersApi.DeleteIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteIdentityProvider",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourceIdentityProviderImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

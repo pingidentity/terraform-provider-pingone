@@ -2,9 +2,8 @@ package sso
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -12,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -82,34 +82,23 @@ func resourcePingOneIdentityProviderAttributeCreate(ctx context.Context, d *sche
 
 	idpAttributeMapping := *management.NewIdentityProviderAttribute(d.Get("name").(string), d.Get("value").(string), management.EnumIdentityProviderAttributeMappingType(d.Get("update").(string)))
 
-	resp, r, err := apiClient.IdentityProviderManagementIdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string)).IdentityProviderAttribute(idpAttributeMapping).Execute()
-	if (err != nil) || (r.StatusCode != 201) {
-		response := &management.P1Error{}
-		errDecode := json.NewDecoder(r.Body).Decode(response)
-		if errDecode == nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
-		}
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 400 && response.GetDetails()[0].GetCode() == "INVALID_VALUE" && response.GetDetails()[0].GetTarget() == "name" {
-			diags = diag.FromErr(fmt.Errorf(response.GetDetails()[0].GetMessage()))
-
-			return diags
-		}
-
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `IdentityProviderManagementIdentityProviderAttributesApi.CreateIdentityProviderAttribute``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.IdentityProviderManagementIdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string)).IdentityProviderAttribute(idpAttributeMapping).Execute()
+		},
+		"CreateIdentityProviderAttribute",
+		sdk.CustomErrorInvalidValue,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.SetId(resp.GetId())
+	respObject := resp.(*management.IdentityProviderAttribute)
+
+	d.SetId(respObject.GetId())
 
 	return resourcePingOneIdentityProviderAttributeRead(ctx, d, meta)
 }
@@ -122,27 +111,31 @@ func resourcePingOneIdentityProviderAttributeRead(ctx context.Context, d *schema
 	})
 	var diags diag.Diagnostics
 
-	resp, r, err := apiClient.IdentityProviderManagementIdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).Execute()
-	if err != nil {
+	resp, diags := sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 404 {
-			log.Printf("[INFO] PingOne Identity Provider Attribute %s no longer exists", d.Id())
-			d.SetId("")
-			return nil
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `IdentityProviderManagementIdentityProviderAttributesApi.ReadOneIdentityProviderAttribute``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.IdentityProviderManagementIdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).Execute()
+		},
+		"ReadOneIdentityProviderAttribute",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("name", resp.GetName())
-	d.Set("value", resp.GetValue())
-	d.Set("update", resp.GetUpdate())
-	d.Set("mapping_type", resp.GetMappingType())
+	if resp == nil {
+		d.SetId("")
+		return nil
+	}
+
+	respObject := resp.(*management.IdentityProviderAttribute)
+
+	d.Set("name", respObject.GetName())
+	d.Set("value", respObject.GetValue())
+	d.Set("update", respObject.GetUpdate())
+	d.Set("mapping_type", respObject.GetMappingType())
 
 	return diags
 }
@@ -157,30 +150,17 @@ func resourcePingOneIdentityProviderAttributeUpdate(ctx context.Context, d *sche
 
 	idpAttributeMapping := *management.NewIdentityProviderAttribute(d.Get("name").(string), d.Get("value").(string), management.EnumIdentityProviderAttributeMappingType(d.Get("update").(string)))
 
-	_, r, err := apiClient.IdentityProviderManagementIdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).IdentityProviderAttribute(idpAttributeMapping).Execute()
-	if err != nil {
-		response := &management.P1Error{}
-		errDecode := json.NewDecoder(r.Body).Decode(response)
-		if errDecode == nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("Cannot decode error response: %v", errDecode),
-				Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-			})
-		}
+	_, diags = sdk.ParseResponse(
+		ctx,
 
-		if r.StatusCode == 400 && response.GetDetails()[0].GetCode() == "INVALID_VALUE" && response.GetDetails()[0].GetTarget() == "name" {
-			diags = diag.FromErr(fmt.Errorf(response.GetDetails()[0].GetMessage()))
-
-			return diags
-		}
-
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `IdentityProviderManagementIdentityProviderAttributesApi.UpdateIdentityProviderAttribute``: %v", err),
-			Detail:   fmt.Sprintf("Full HTTP response: %v\n", r.Body),
-		})
-
+		func() (interface{}, *http.Response, error) {
+			return apiClient.IdentityProviderManagementIdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).IdentityProviderAttribute(idpAttributeMapping).Execute()
+		},
+		"UpdateIdentityProviderAttribute",
+		sdk.CustomErrorInvalidValue,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
@@ -195,17 +175,22 @@ func resourcePingOneIdentityProviderAttributeDelete(ctx context.Context, d *sche
 	})
 	var diags diag.Diagnostics
 
-	_, err := apiClient.IdentityProviderManagementIdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).Execute()
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `IdentityProviderManagementIdentityProviderAttributesApi.DeleteIdentityProviderAttribute``: %v", err),
-		})
+	_, diags = sdk.ParseResponse(
+		ctx,
 
+		func() (interface{}, *http.Response, error) {
+			r, err := apiClient.IdentityProviderManagementIdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, d.Get("environment_id").(string), d.Get("identity_provider_id").(string), d.Id()).Execute()
+			return nil, r, err
+		},
+		"DeleteIdentityProviderAttribute",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultRetryable,
+	)
+	if diags.HasError() {
 		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourcePingOneIdentityProviderAttributeImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
