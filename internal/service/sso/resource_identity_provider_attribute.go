@@ -80,7 +80,7 @@ func resourcePingOneIdentityProviderAttributeCreate(ctx context.Context, d *sche
 	})
 	var diags diag.Diagnostics
 
-	idpAttributeMapping := *management.NewIdentityProviderAttribute(d.Get("name").(string), d.Get("value").(string), management.EnumIdentityProviderAttributeMappingType(d.Get("update").(string)))
+	idpAttributeMapping := *management.NewIdentityProviderAttribute(d.Get("name").(string), d.Get("value").(string), management.EnumIdentityProviderAttributeMappingUpdate(d.Get("update").(string)))
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
@@ -148,7 +148,7 @@ func resourcePingOneIdentityProviderAttributeUpdate(ctx context.Context, d *sche
 	})
 	var diags diag.Diagnostics
 
-	idpAttributeMapping := *management.NewIdentityProviderAttribute(d.Get("name").(string), d.Get("value").(string), management.EnumIdentityProviderAttributeMappingType(d.Get("update").(string)))
+	idpAttributeMapping := *management.NewIdentityProviderAttribute(d.Get("name").(string), d.Get("value").(string), management.EnumIdentityProviderAttributeMappingUpdate(d.Get("update").(string)))
 
 	_, diags = sdk.ParseResponse(
 		ctx,

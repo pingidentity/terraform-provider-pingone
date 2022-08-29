@@ -116,6 +116,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				MaxItems:     1,
 				Optional:     true,
 				ExactlyOneOf: providerAttributeList,
+				ForceNew:     true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"app_id": {
@@ -138,6 +139,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem:         clientIdClientSecretSchema("Google"),
 			},
@@ -146,6 +148,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem:         clientIdClientSecretSchema("LinkedIn"),
 			},
@@ -154,6 +157,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem:         clientIdClientSecretSchema("Yahoo"),
 			},
@@ -162,6 +166,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem:         clientIdClientSecretSchema("Amazon"),
 			},
@@ -170,6 +175,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem:         clientIdClientSecretSchema("Twitter"),
 			},
@@ -178,6 +184,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -213,6 +220,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -242,6 +250,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem:         clientIdClientSecretSchema("Microsoft"),
 			},
@@ -250,6 +259,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem:         clientIdClientSecretSchema("Github"),
 			},
@@ -258,6 +268,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -333,6 +344,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
+				ForceNew:     true,
 				ExactlyOneOf: providerAttributeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -433,14 +445,22 @@ func resourceIdentityProviderCreate(ctx context.Context, d *schema.ResourceData,
 
 	respObject := resp.(*management.IdentityProvider)
 
-	if respObject.IdentityProviderOIDC != nil && respObject.IdentityProviderOIDC.GetId() != "" {
+	if respObject.IdentityProviderApple != nil && respObject.IdentityProviderApple.GetId() != "" {
+		d.SetId(respObject.IdentityProviderApple.GetId())
+	} else if respObject.IdentityProviderClientIDClientSecret != nil && respObject.IdentityProviderClientIDClientSecret.GetId() != "" {
+		d.SetId(respObject.IdentityProviderClientIDClientSecret.GetId())
+	} else if respObject.IdentityProviderFacebook != nil && respObject.IdentityProviderFacebook.GetId() != "" {
+		d.SetId(respObject.IdentityProviderFacebook.GetId())
+	} else if respObject.IdentityProviderOIDC != nil && respObject.IdentityProviderOIDC.GetId() != "" {
 		d.SetId(respObject.IdentityProviderOIDC.GetId())
+	} else if respObject.IdentityProviderPaypal != nil && respObject.IdentityProviderPaypal.GetId() != "" {
+		d.SetId(respObject.IdentityProviderPaypal.GetId())
 	} else if respObject.IdentityProviderSAML != nil && respObject.IdentityProviderSAML.GetId() != "" {
 		d.SetId(respObject.IdentityProviderSAML.GetId())
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Cannot determine application ID from API response for application: %s", d.Get("name")),
+			Summary:  fmt.Sprintf("Cannot determine ID from API response for identity provider: %s", d.Get("name")),
 			Detail:   fmt.Sprintf("Full response object: %v\n", resp),
 		})
 
@@ -504,7 +524,24 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 	switch respObject.GetActualInstance().(type) {
 	case *management.IdentityProviderClientIDClientSecret:
 		idpObject := respObject.IdentityProviderClientIDClientSecret
-		schemaAttribute := "amazon"
+
+		var schemaAttribute string
+		switch idpObject.GetType() {
+		case management.ENUMIDENTITYPROVIDEREXT_AMAZON:
+			schemaAttribute = "amazon"
+		case management.ENUMIDENTITYPROVIDEREXT_GITHUB:
+			schemaAttribute = "github"
+		case management.ENUMIDENTITYPROVIDEREXT_GOOGLE:
+			schemaAttribute = "google"
+		case management.ENUMIDENTITYPROVIDEREXT_LINKEDIN:
+			schemaAttribute = "linkedin"
+		case management.ENUMIDENTITYPROVIDEREXT_MICROSOFT:
+			schemaAttribute = "microsoft"
+		case management.ENUMIDENTITYPROVIDEREXT_TWITTER:
+			schemaAttribute = "twitter"
+		case management.ENUMIDENTITYPROVIDEREXT_YAHOO:
+			schemaAttribute = "yahoo"
+		}
 
 		values["name"] = idpObject.GetName()
 
@@ -888,10 +925,21 @@ func expandIdPFacebook(v []interface{}, common management.IdentityProviderCommon
 
 		idpObj := management.NewIdentityProviderFacebook(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_FACEBOOK, appId, appSecret)
 
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
+		if v, ok := common.GetDescriptionOk(); ok {
+			idpObj.SetDescription(*v)
+		}
+
+		if v, ok := common.GetRegistrationOk(); ok {
+			idpObj.SetRegistration(*v)
+		}
+
+		if v, ok := common.GetLoginButtonIconOk(); ok {
+			idpObj.SetLoginButtonIcon(*v)
+		}
+
+		if v, ok := common.GetIconOk(); ok {
+			idpObj.SetIcon(*v)
+		}
 
 		return idpObj, diags
 	}
@@ -916,10 +964,21 @@ func expandIdPClientIdClientSecret(v []interface{}, common management.IdentityPr
 
 		idpObj := management.NewIdentityProviderClientIDClientSecret(common.GetEnabled(), common.GetName(), idpType, clientId, clientSecret)
 
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
+		if v, ok := common.GetDescriptionOk(); ok {
+			idpObj.SetDescription(*v)
+		}
+
+		if v, ok := common.GetRegistrationOk(); ok {
+			idpObj.SetRegistration(*v)
+		}
+
+		if v, ok := common.GetLoginButtonIconOk(); ok {
+			idpObj.SetLoginButtonIcon(*v)
+		}
+
+		if v, ok := common.GetIconOk(); ok {
+			idpObj.SetIcon(*v)
+		}
 
 		return idpObj, diags
 	}
@@ -966,10 +1025,21 @@ func expandIdPApple(v []interface{}, common management.IdentityProviderCommon) (
 
 		idpObj := management.NewIdentityProviderApple(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_APPLE, clientId, clientSecretSigningKey, keyId, teamId)
 
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
+		if v, ok := common.GetDescriptionOk(); ok {
+			idpObj.SetDescription(*v)
+		}
+
+		if v, ok := common.GetRegistrationOk(); ok {
+			idpObj.SetRegistration(*v)
+		}
+
+		if v, ok := common.GetLoginButtonIconOk(); ok {
+			idpObj.SetLoginButtonIcon(*v)
+		}
+
+		if v, ok := common.GetIconOk(); ok {
+			idpObj.SetIcon(*v)
+		}
 
 		return idpObj, diags
 	}
@@ -995,10 +1065,21 @@ func expandIdPPaypal(v []interface{}, common management.IdentityProviderCommon) 
 
 		idpObj := management.NewIdentityProviderPaypal(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_PAYPAL, clientId, clientSecret, clientEnvironment)
 
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
+		if v, ok := common.GetDescriptionOk(); ok {
+			idpObj.SetDescription(*v)
+		}
+
+		if v, ok := common.GetRegistrationOk(); ok {
+			idpObj.SetRegistration(*v)
+		}
+
+		if v, ok := common.GetLoginButtonIconOk(); ok {
+			idpObj.SetLoginButtonIcon(*v)
+		}
+
+		if v, ok := common.GetIconOk(); ok {
+			idpObj.SetIcon(*v)
+		}
 
 		return idpObj, diags
 	}
@@ -1050,10 +1131,21 @@ func expandIdPOIDC(v []interface{}, common management.IdentityProviderCommon) (*
 			idpObj.SetUserInfoEndpoint(v)
 		}
 
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
+		if v, ok := common.GetDescriptionOk(); ok {
+			idpObj.SetDescription(*v)
+		}
+
+		if v, ok := common.GetRegistrationOk(); ok {
+			idpObj.SetRegistration(*v)
+		}
+
+		if v, ok := common.GetLoginButtonIconOk(); ok {
+			idpObj.SetLoginButtonIcon(*v)
+		}
+
+		if v, ok := common.GetIconOk(); ok {
+			idpObj.SetIcon(*v)
+		}
 
 		return idpObj, diags
 	}
@@ -1111,10 +1203,21 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 			idpObj.SetSsoEndpoint(v)
 		}
 
-		idpObj.SetDescription(common.GetDescription())
-		idpObj.SetRegistration(common.GetRegistration())
-		idpObj.SetLoginButtonIcon(common.GetLoginButtonIcon())
-		idpObj.SetIcon(common.GetIcon())
+		if v, ok := common.GetDescriptionOk(); ok {
+			idpObj.SetDescription(*v)
+		}
+
+		if v, ok := common.GetRegistrationOk(); ok {
+			idpObj.SetRegistration(*v)
+		}
+
+		if v, ok := common.GetLoginButtonIconOk(); ok {
+			idpObj.SetLoginButtonIcon(*v)
+		}
+
+		if v, ok := common.GetIconOk(); ok {
+			idpObj.SetIcon(*v)
+		}
 
 		return idpObj, diags
 	}

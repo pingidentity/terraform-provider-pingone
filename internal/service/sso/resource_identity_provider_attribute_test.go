@@ -68,6 +68,8 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
+	name := resourceName
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
@@ -77,14 +79,14 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderAttributeConfig_Full(environmentName, resourceName, licenseID),
+				Config: testAccIdentityProviderAttributeConfig_Full(environmentName, resourceName, licenseID, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "identity_provider_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "update", "EMPTY_ONLY"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.user.emailAddress}"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.emailAddress.value}"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CUSTOM"),
 				),
 			},
@@ -100,6 +102,8 @@ func TestAccIdentityProviderAttribute_Minimal(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
+	name := resourceName
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
@@ -109,14 +113,14 @@ func TestAccIdentityProviderAttribute_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderAttributeConfig_Minimal(environmentName, resourceName, licenseID),
+				Config: testAccIdentityProviderAttributeConfig_Minimal(environmentName, resourceName, licenseID, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "identity_provider_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "update", "ALWAYS"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.user.emailAddress}"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.emailAddress.value}"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CUSTOM"),
 				),
 			},
@@ -132,6 +136,8 @@ func TestAccIdentityProviderAttribute_Expression(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
+	name := resourceName
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
@@ -141,14 +147,14 @@ func TestAccIdentityProviderAttribute_Expression(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderAttributeConfig_Expression(environmentName, resourceName, licenseID),
+				Config: testAccIdentityProviderAttributeConfig_Expression(environmentName, resourceName, licenseID, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "identity_provider_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "name.given"),
 					resource.TestCheckResourceAttr(resourceFullName, "update", "ALWAYS"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.first_name}"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.name.givenName}"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CUSTOM"),
 				),
 			},
@@ -164,6 +170,8 @@ func TestAccIdentityProviderAttribute_Change(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
+	name := resourceName
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
@@ -173,39 +181,39 @@ func TestAccIdentityProviderAttribute_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderAttributeConfig_Minimal(environmentName, resourceName, licenseID),
+				Config: testAccIdentityProviderAttributeConfig_Minimal(environmentName, resourceName, licenseID, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "update", "ALWAYS"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.user.emailAddress}"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.emailAddress.value}"),
 				),
 			},
 			{
-				Config: testAccIdentityProviderAttributeConfig_Expression(environmentName, resourceName, licenseID),
+				Config: testAccIdentityProviderAttributeConfig_Expression(environmentName, resourceName, licenseID, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "name.given"),
 					resource.TestCheckResourceAttr(resourceFullName, "update", "ALWAYS"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.first_name}"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.name.givenName}"),
 				),
 			},
 			{
-				Config: testAccIdentityProviderAttributeConfig_Full(environmentName, resourceName, licenseID),
+				Config: testAccIdentityProviderAttributeConfig_Full(environmentName, resourceName, licenseID, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "update", "EMPTY_ONLY"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.user.emailAddress}"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.emailAddress.value}"),
 				),
 			},
 			{
-				Config:      testAccIdentityProviderAttributeConfig_ReservedAttributeName(environmentName, resourceName, licenseID),
-				ExpectError: regexp.MustCompile("Attribute name '[a-zA-Z]*' is not valid for the '[A-Z_]*' application"),
+				Config:      testAccIdentityProviderAttributeConfig_ReservedAttributeName(environmentName, resourceName, licenseID, name),
+				ExpectError: regexp.MustCompile(`expected name to not be any of \[[a-zA-Z ]*\], got [a-zA-Z]*`),
 			},
 			{
-				Config: testAccIdentityProviderAttributeConfig_Minimal(environmentName, resourceName, licenseID),
+				Config: testAccIdentityProviderAttributeConfig_Minimal(environmentName, resourceName, licenseID, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "update", "ALWAYS"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.user.emailAddress}"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.emailAddress.value}"),
 				),
 			},
 		},
@@ -219,6 +227,8 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
+	name := resourceName
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
@@ -228,122 +238,105 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccIdentityProviderAttributeConfig_ReservedAttributeName(environmentName, resourceName, licenseID),
-				ExpectError: regexp.MustCompile("Attribute name '[a-zA-Z]*' is not valid for the '[A-Z_]*' application"),
+				Config:      testAccIdentityProviderAttributeConfig_ReservedAttributeName(environmentName, resourceName, licenseID, name),
+				ExpectError: regexp.MustCompile(`expected name to not be any of \[[a-zA-Z ]*\], got [a-zA-Z]*`),
 			},
 		},
 	})
 }
 
-func testAccIdentityProviderAttributeConfig_Full(environmentName, resourceName, licenseID string) string {
+func testAccIdentityProviderAttributeConfig_Full(environmentName, resourceName, licenseID, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
+		resource "pingone_identity_provider" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s"
+			
+			google {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
 			}
 		}
 
-		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+		resource "pingone_identity_provider_attribute" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			identity_provider_id = "${pingone_identity_provider.%[3]s.id}"
 			
 			name 		= "email"
-			required 	= true
-			value		= "$${providerAttributes.user.emailAddress}"
-		}`, environmentName, resourceName, licenseID)
+			update 		= "EMPTY_ONLY"
+			value		= "$${providerAttributes.emailAddress.value}"
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccIdentityProviderAttributeConfig_Minimal(environmentName, resourceName, licenseID string) string {
+func testAccIdentityProviderAttributeConfig_Minimal(environmentName, resourceName, licenseID, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
+		resource "pingone_identity_provider" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s"
+			
+			google {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
 			}
 		}
 
-		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+		resource "pingone_identity_provider_attribute" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			identity_provider_id = "${pingone_identity_provider.%[3]s.id}"
 			
 			name 		= "email"
-			value		= "$${providerAttributes.user.emailAddress}"
-		}`, environmentName, resourceName, licenseID)
+			update 		= "ALWAYS"
+			value		= "$${providerAttributes.emailAddress.value}"
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccIdentityProviderAttributeConfig_Expression(environmentName, resourceName, licenseID string) string {
+func testAccIdentityProviderAttributeConfig_Expression(environmentName, resourceName, licenseID, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
+		resource "pingone_identity_provider" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s"
+			
+			google {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
 			}
 		}
 
-		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+		resource "pingone_identity_provider_attribute" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			identity_provider_id = "${pingone_identity_provider.%[3]s.id}"
 			
 			name 		= "name.given"
-			value		= "$${providerAttributes.first_name}"
-		}`, environmentName, resourceName, licenseID)
+			update 		= "ALWAYS"
+			value		= "$${providerAttributes.name.givenName}"
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccIdentityProviderAttributeConfig_ReservedAttributeName(environmentName, resourceName, licenseID string) string {
+func testAccIdentityProviderAttributeConfig_ReservedAttributeName(environmentName, resourceName, licenseID, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
+		resource "pingone_identity_provider" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s"
+			
+			google {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
 			}
 		}
 
-		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+		resource "pingone_identity_provider_attribute" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			identity_provider_id = "${pingone_identity_provider.%[3]s.id}"
 			
 			name 		= "account"
+			update 		= "ALWAYS"
 			value		= "$${'test'}"
-		}`, environmentName, resourceName, licenseID)
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

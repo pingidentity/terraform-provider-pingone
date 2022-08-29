@@ -22,7 +22,7 @@ resource "pingone_identity_provider_attribute" "apple_email" {
 
   name   = "email"
   update = "EMPTY_ONLY"
-  value  = "$${providerAttributes.user.email}"
+  value  = "$${providerAttributes.email}"
 }
 
 resource "pingone_identity_provider_attribute" "apple_email_verified" {
@@ -31,5 +31,5 @@ resource "pingone_identity_provider_attribute" "apple_email_verified" {
 
   name   = "email_verified"
   update = "ALWAYS"
-  value  = "$${providerAttributes.user.email_verified}"
+  value  = "$${providerAttributes.email_verified}"
 }
