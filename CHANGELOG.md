@@ -20,6 +20,7 @@ FEATURES:
 
 BUG FIXES:
 
+* resource/pingone_application: Fix `pingone_application` error: `Once specified, refreshTokenDuration cannot be nullified` ([#88](https://github.com/pingidentity/terraform-provider-pingone/issues/88))
 * resource/pingone_application_attribute_mapping: Fix import ID parsing error. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
 * resource/pingone_application_resource_grant: Fix import ID parsing error. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
 * resource/pingone_application_sign_on_policy_assignment: Fix import ID parsing error. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
