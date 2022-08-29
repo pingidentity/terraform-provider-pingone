@@ -17,7 +17,7 @@ import (
 
 func ResourceIdentityProvider() *schema.Resource {
 
-	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "generic_oidc", "generic_saml"}
+	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "openid_connect", "saml"}
 
 	return &schema.Resource{
 
@@ -266,7 +266,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				ExactlyOneOf: providerAttributeList,
 				Elem:         clientIdClientSecretSchema("Github"),
 			},
-			"generic_oidc": {
+			"openid_connect": {
 				Description:  "Options for Identity provider connectivity to a generic OpenID Connect service.",
 				Type:         schema.TypeList,
 				MaxItems:     1,
@@ -343,7 +343,7 @@ func ResourceIdentityProvider() *schema.Resource {
 					},
 				},
 			},
-			"generic_saml": {
+			"saml": {
 				Description:  "Options for Identity provider connectivity to a generic SAML service.",
 				Type:         schema.TypeList,
 				MaxItems:     1,
@@ -522,8 +522,8 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 		"paypal":                     nil,
 		"microsoft":                  nil,
 		"github":                     nil,
-		"generic_oidc":               nil,
-		"generic_saml":               nil,
+		"openid_connect":             nil,
+		"saml":                       nil,
 	}
 
 	switch respObject.GetActualInstance().(type) {
@@ -624,7 +624,7 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 
 	case *management.IdentityProviderOIDC:
 		idpObject := respObject.IdentityProviderOIDC
-		schemaAttribute := "generic_oidc"
+		schemaAttribute := "openid_connect"
 
 		values["name"] = idpObject.GetName()
 
@@ -676,7 +676,7 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 
 	case *management.IdentityProviderSAML:
 		idpObject := respObject.IdentityProviderSAML
-		schemaAttribute := "generic_saml"
+		schemaAttribute := "saml"
 
 		values["name"] = idpObject.GetName()
 
@@ -720,8 +720,8 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set("paypal", values["paypal"])
 	d.Set("microsoft", values["microsoft"])
 	d.Set("github", values["github"])
-	d.Set("generic_oidc", values["generic_oidc"])
-	d.Set("generic_saml", values["generic_saml"])
+	d.Set("openid_connect", values["openid_connect"])
+	d.Set("saml", values["saml"])
 
 	return diags
 }
@@ -890,12 +890,12 @@ func expandIdentityProvider(d *schema.ResourceData) (*management.IdentityProvide
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("generic_oidc"); ok {
+	if v, ok := d.GetOk("openid_connect"); ok {
 		requestObject.IdentityProviderOIDC, diags = expandIdPOIDC(v.([]interface{}), common)
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("generic_saml"); ok {
+	if v, ok := d.GetOk("saml"); ok {
 		requestObject.IdentityProviderSAML, diags = expandIdPSAML(v.([]interface{}), common)
 		processedCount += 1
 	}
@@ -1156,7 +1156,7 @@ func expandIdPOIDC(v []interface{}, common management.IdentityProviderCommon) (*
 	}
 	diags = append(diags, diag.Diagnostic{
 		Severity: diag.Error,
-		Summary:  "Block `generic_oidc` must be defined when using the OpenID Connect identity provider type",
+		Summary:  "Block `openid_connect` must be defined when using the OpenID Connect identity provider type",
 	})
 
 	return nil, diags
@@ -1228,7 +1228,7 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 	}
 	diags = append(diags, diag.Diagnostic{
 		Severity: diag.Error,
-		Summary:  "Block `generic_saml` must be defined when using the SAML identity provider type",
+		Summary:  "Block `saml` must be defined when using the SAML identity provider type",
 	})
 
 	return nil, diags
