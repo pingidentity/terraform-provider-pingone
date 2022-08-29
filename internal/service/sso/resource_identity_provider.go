@@ -129,6 +129,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description:      "A string that specifies the application secret from Facebook.",
 							Type:             schema.TypeString,
 							Required:         true,
+							Sensitive:        true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
 					},
@@ -198,6 +199,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description:      "A string that specifies the private key that is used to generate a client secret.",
 							Type:             schema.TypeString,
 							Required:         true,
+							Sensitive:        true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
 						"key_id": {
@@ -234,6 +236,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description:      "A string that specifies the application secret from PayPal.",
 							Type:             schema.TypeString,
 							Required:         true,
+							Sensitive:        true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
 						"client_environment": {
@@ -288,6 +291,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description:      "A string that specifies the application secret from the OIDC identity provider.",
 							Type:             schema.TypeString,
 							Required:         true,
+							Sensitive:        true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
 						"discovery_endpoint": {
@@ -410,6 +414,7 @@ func clientIdClientSecretSchema(providerName string) *schema.Resource {
 				Description:      fmt.Sprintf("A string that specifies the application secret from %s.", providerName),
 				Type:             schema.TypeString,
 				Required:         true,
+				Sensitive:        true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 		},

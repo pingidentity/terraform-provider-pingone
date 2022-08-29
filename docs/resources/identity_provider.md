@@ -94,7 +94,7 @@ resource "pingone_identity_provider" "apple" {
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Amazon.
-- `client_secret` (String) A string that specifies the application secret from Amazon.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Amazon.
 
 
 <a id="nestedblock--apple"></a>
@@ -103,7 +103,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Apple. This is the identifier obtained after registering a services ID in the Apple developer portal.
-- `client_secret_signing_key` (String) A string that specifies the private key that is used to generate a client secret.
+- `client_secret_signing_key` (String, Sensitive) A string that specifies the private key that is used to generate a client secret.
 - `key_id` (String) A 10-character string that Apple uses to identify an authentication key.
 - `team_id` (String) A 10-character string that Apple uses to identify teams.
 
@@ -114,7 +114,7 @@ Required:
 Required:
 
 - `app_id` (String) A string that specifies the application ID from Facebook.
-- `app_secret` (String) A string that specifies the application secret from Facebook.
+- `app_secret` (String, Sensitive) A string that specifies the application secret from Facebook.
 
 
 <a id="nestedblock--generic_oidc"></a>
@@ -124,7 +124,7 @@ Required:
 
 - `authorization_endpoint` (String) A string that specifies the the OIDC identity provider's authorization endpoint. This value must be a URL that uses https.
 - `client_id` (String) A string that specifies the application ID from the OIDC identity provider.
-- `client_secret` (String) A string that specifies the application secret from the OIDC identity provider.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from the OIDC identity provider.
 - `issuer` (String) A string that specifies the issuer to which the authentication is sent for the OIDC identity provider. This value must be a URL that uses https.
 - `jwks_endpoint` (String) A string that specifies the OIDC identity provider's jwks endpoint. This value must be a URL that uses https.
 - `scopes` (Set of String) An array that specifies the scopes to include in the authentication request to the OIDC identity provider.
@@ -160,7 +160,7 @@ Optional:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Github.
-- `client_secret` (String) A string that specifies the application secret from Github.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Github.
 
 
 <a id="nestedblock--google"></a>
@@ -169,7 +169,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Google.
-- `client_secret` (String) A string that specifies the application secret from Google.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Google.
 
 
 <a id="nestedblock--icon"></a>
@@ -187,7 +187,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from LinkedIn.
-- `client_secret` (String) A string that specifies the application secret from LinkedIn.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from LinkedIn.
 
 
 <a id="nestedblock--login_button_icon"></a>
@@ -205,7 +205,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Microsoft.
-- `client_secret` (String) A string that specifies the application secret from Microsoft.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Microsoft.
 
 
 <a id="nestedblock--paypal"></a>
@@ -215,7 +215,7 @@ Required:
 
 - `client_environment` (String) A string that specifies the PayPal environment. Options are `sandbox`, and `live`.
 - `client_id` (String) A string that specifies the application ID from PayPal.
-- `client_secret` (String) A string that specifies the application secret from PayPal.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from PayPal.
 
 
 <a id="nestedblock--twitter"></a>
@@ -224,7 +224,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Twitter.
-- `client_secret` (String) A string that specifies the application secret from Twitter.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Twitter.
 
 
 <a id="nestedblock--yahoo"></a>
@@ -233,7 +233,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Yahoo.
-- `client_secret` (String) A string that specifies the application secret from Yahoo.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Yahoo.
 
 ## Import
 
