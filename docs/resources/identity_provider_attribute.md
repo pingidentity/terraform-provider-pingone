@@ -52,7 +52,7 @@ The following are IdP attributes expected per identity provider:
 | Permission | Provider attributes                                                         |
 |------------|-----------------------------------------------------------------------------|
 | `name`     | Options are: `sub`, `iss`, `iat`, `expt`, `aud`, `nonce`, `nonce_supported` |
-| `email`    | Options are: `age_range`.                                                   |
+| `email`    | Options are: `email`, `email_verified`                                      |
 
 
 ### Facebook
@@ -201,16 +201,7 @@ resource "pingone_identity_provider_attribute" "apple_email" {
 
   name   = "email"
   update = "EMPTY_ONLY"
-  value  = "$${providerAttributes.email}"
-}
-
-resource "pingone_identity_provider_attribute" "apple_email_verified" {
-  environment_id       = pingone_environment.my_environment.id
-  identity_provider_id = pingone_identity_provider.apple.id
-
-  name   = "email_verified"
-  update = "ALWAYS"
-  value  = "$${providerAttributes.email_verified}"
+  value  = "$${providerAttributes.user.email}"
 }
 ```
 

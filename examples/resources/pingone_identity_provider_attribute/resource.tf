@@ -22,14 +22,5 @@ resource "pingone_identity_provider_attribute" "apple_email" {
 
   name   = "email"
   update = "EMPTY_ONLY"
-  value  = "$${providerAttributes.email}"
-}
-
-resource "pingone_identity_provider_attribute" "apple_email_verified" {
-  environment_id       = pingone_environment.my_environment.id
-  identity_provider_id = pingone_identity_provider.apple.id
-
-  name   = "email_verified"
-  update = "ALWAYS"
-  value  = "$${providerAttributes.email_verified}"
+  value  = "$${providerAttributes.user.email}"
 }
