@@ -32,7 +32,7 @@ func testAccCheckUserDestroy(s *terraform.State) error {
 			continue
 		}
 
-		body, r, err := apiClient.UsersUsersApi.ReadUser(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+		body, r, err := apiClient.UsersApi.ReadUser(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue

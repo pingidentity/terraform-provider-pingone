@@ -86,7 +86,7 @@ func resourcePingOneApplicationAttributeMappingCreate(ctx context.Context, d *sc
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
+			return apiClient.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
 		},
 		"CreateApplicationAttributeMapping",
 		sdk.CustomErrorInvalidValue,
@@ -115,7 +115,7 @@ func resourcePingOneApplicationAttributeMappingRead(ctx context.Context, d *sche
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return apiClient.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 		},
 		"ReadOneApplicationAttributeMapping",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -154,7 +154,7 @@ func resourcePingOneApplicationAttributeMappingUpdate(ctx context.Context, d *sc
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
+			return apiClient.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).ApplicationAttributeMapping(applicationAttributeMapping).Execute()
 		},
 		"UpdateApplicationAttributeMapping",
 		sdk.CustomErrorInvalidValue,
@@ -179,7 +179,7 @@ func resourcePingOneApplicationAttributeMappingDelete(ctx context.Context, d *sc
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.ApplicationsApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			r, err := apiClient.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteApplicationAttributeMapping",

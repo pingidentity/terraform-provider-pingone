@@ -127,7 +127,7 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
+			return apiClient.ApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
 		},
 		"CreateApplicationRoleAssignment",
 		func(error management.P1Error) diag.Diagnostics {
@@ -168,7 +168,7 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return apiClient.ApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 		},
 		"ReadOneApplicationRoleAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -228,7 +228,7 @@ func resourcePingOneApplicationRoleAssignmentDelete(ctx context.Context, d *sche
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.ApplicationsApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			r, err := apiClient.ApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteApplicationRoleAssignment",

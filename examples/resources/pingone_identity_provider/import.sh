@@ -1,0 +1,1 @@
+$ terraform import pingone_identity_provider.example <environment_id>/<identity_provider_id>

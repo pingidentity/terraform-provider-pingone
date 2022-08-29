@@ -43,7 +43,7 @@ func testAccCheckResourceDestroy(s *terraform.State) error {
 			return err
 		}
 
-		body, r, err := apiClient.ResourcesResourcesApi.ReadOneResource(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+		body, r, err := apiClient.ResourcesApi.ReadOneResource(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
 
 		if r.StatusCode == 404 {
 			continue

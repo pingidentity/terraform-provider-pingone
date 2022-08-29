@@ -77,7 +77,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentCreate(ctx context.Context,
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			return apiClient.ApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
 		},
 		"CreateSignOnPolicyAssignment",
 		sdk.DefaultCustomError,
@@ -106,7 +106,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx context.Context, d
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return apiClient.ApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 		},
 		"ReadOneSignOnPolicyAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -143,7 +143,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentUpdate(ctx context.Context,
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			return apiClient.ApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
 		},
 		"UpdateSignOnPolicyAssignment",
 		sdk.DefaultCustomError,
@@ -168,7 +168,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentDelete(ctx context.Context,
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.ApplicationsApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			r, err := apiClient.ApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteSignOnPolicyAssignment",

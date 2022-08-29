@@ -90,7 +90,7 @@ func resourceResourceScopeCreate(ctx context.Context, d *schema.ResourceData, me
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ResourcesResourceScopesApi.CreateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string)).ResourceScope(resourceScope).Execute()
+			return apiClient.ResourceScopesApi.CreateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string)).ResourceScope(resourceScope).Execute()
 		},
 		"CreateResourceScope",
 		sdk.DefaultCustomError,
@@ -119,7 +119,7 @@ func resourceResourceScopeRead(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ResourcesResourceScopesApi.ReadOneResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).Execute()
+			return apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).Execute()
 		},
 		"ReadOneResourceScope",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -175,7 +175,7 @@ func resourceResourceScopeUpdate(ctx context.Context, d *schema.ResourceData, me
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ResourcesResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).ResourceScope(resourceScope).Execute()
+			return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).ResourceScope(resourceScope).Execute()
 		},
 		"UpdateResourceScope",
 		sdk.DefaultCustomError,
@@ -200,7 +200,7 @@ func resourceResourceScopeDelete(ctx context.Context, d *schema.ResourceData, me
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.ResourcesResourceScopesApi.DeleteResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).Execute()
+			r, err := apiClient.ResourceScopesApi.DeleteResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
 		"DeleteResourceScope",
