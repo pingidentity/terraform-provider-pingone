@@ -207,14 +207,14 @@ Required:
 Required:
 
 - `idp_entity_id` (String) A string that specifies the entity ID URI that is checked against the issuerId tag in the incoming response.
+- `idp_verification_certificate_ids` (Set of String) A list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.
+- `sp_entity_id` (String) A string that specifies the service provider's entity ID, used to look up the application.
 - `sso_binding` (String) A string that specifies the binding for the authentication request. Options are `HTTP_POST` and `HTTP_REDIRECT`.
 - `sso_endpoint` (String) A string that specifies the SSO endpoint for the authentication request.
 
 Optional:
 
-- `authentication_request_signed` (Boolean) A boolean that specifies whether the SAML authentication request will be signed when sending to the identity provider. Set this to true if the external IDP is included in an authentication policy to be used by applications that are accessed using a mix of default URLS and custom Domains URLs.
-- `idp_verification_certificate_ids` (Set of String) A list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.
-- `sp_entity_id` (String) A string that specifies the service provider's entity ID, used to look up the application.
+- `authentication_request_signed` (Boolean) A boolean that specifies whether the SAML authentication request will be signed when sending to the identity provider. Set this to true if the external IDP is included in an authentication policy to be used by applications that are accessed using a mix of default URLS and custom Domains URLs. Defaults to `false`.
 - `sp_signing_key_id` (String) A string that specifies the service provider's signing key ID.
 
 

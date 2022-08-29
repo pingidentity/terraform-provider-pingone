@@ -356,6 +356,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description: "A boolean that specifies whether the SAML authentication request will be signed when sending to the identity provider. Set this to true if the external IDP is included in an authentication policy to be used by applications that are accessed using a mix of default URLS and custom Domains URLs.",
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Default:     false,
 						},
 						"idp_entity_id": {
 							Description: "A string that specifies the entity ID URI that is checked against the issuerId tag in the incoming response.",
@@ -365,12 +366,12 @@ func ResourceIdentityProvider() *schema.Resource {
 						"sp_entity_id": {
 							Description: "A string that specifies the service provider's entity ID, used to look up the application.",
 							Type:        schema.TypeString,
-							Optional:    true,
+							Required:    true,
 						},
 						"idp_verification_certificate_ids": {
 							Description: "A list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.",
 							Type:        schema.TypeSet,
-							Optional:    true,
+							Required:    true,
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
 								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
@@ -1184,27 +1185,32 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 			idpObj.SetSpEntityId(v)
 		}
 
-		if v, ok := idp["idp_verification_certificate_ids"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
-			certificates := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
+		if v, ok := idp["idp_verification_certificate_ids"].(*schema.Set); ok {
 
-			for _, certificate := range v {
-				certificates = append(certificates, *management.NewApplicationAccessControlGroupGroupsInner(certificate.(string)))
+			planCertificates := v.List()
+
+			if len(planCertificates) > 0 && planCertificates[0] != nil {
+				certificates := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
+
+				for _, certificate := range planCertificates {
+					certificates = append(certificates, *management.NewApplicationAccessControlGroupGroupsInner(certificate.(string)))
+				}
+
+				verification := *management.NewIdentityProviderSAMLAllOfIdpVerification()
+				verification.SetCertificates(certificates)
+				idpObj.SetIdpVerification(verification)
 			}
-
-			verification := *management.NewIdentityProviderSAMLAllOfIdpVerification()
-			verification.SetCertificates(certificates)
-			idpObj.SetIdpVerification(verification)
 		}
 
-		if v, ok := idp["sp_signing_key_id"].(string); ok {
+		if v, ok := idp["sp_signing_key_id"].(string); ok && v != "" {
 			idpObj.SetSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigningKey(v)))
 		}
 
-		if v, ok := idp["sso_binding"].(string); ok {
+		if v, ok := idp["sso_binding"].(string); ok && v != "" {
 			idpObj.SetSsoBinding(management.EnumIdentityProviderSAMLSSOBinding(v))
 		}
 
-		if v, ok := idp["sso_endpoint"].(string); ok {
+		if v, ok := idp["sso_endpoint"].(string); ok && v != "" {
 			idpObj.SetSsoEndpoint(v)
 		}
 
