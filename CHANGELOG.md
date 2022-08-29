@@ -5,12 +5,16 @@ NOTES:
 * All resources/datasources: API errors become more readable and show better detail. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
 * All resources/datasources: Added structure to automatically retry API calls where returned errors are retryable. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
 * All resources/datasources: Fix `Cannot decode error response` warning on some API errors. ([#84](https://github.com/pingidentity/terraform-provider-pingone/issues/84))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.5.0 => v0.6.0 ([#79](https://github.com/pingidentity/terraform-provider-pingone/issues/79))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.3 => v0.3.4 ([#79](https://github.com/pingidentity/terraform-provider-pingone/issues/79))
 * resource/pingone_application: Correction to documentation text ([#81](https://github.com/pingidentity/terraform-provider-pingone/issues/81))
 
 FEATURES:
 
 * **New Data Source:** `pingone_resource` ([#71](https://github.com/pingidentity/terraform-provider-pingone/issues/71))
 * **New Data Source:** `pingone_resource_scope` ([#71](https://github.com/pingidentity/terraform-provider-pingone/issues/71))
+* **New Resource:** `pingone_identity_provider` ([#79](https://github.com/pingidentity/terraform-provider-pingone/issues/79))
+* **New Resource:** `pingone_identity_provider_attribute` ([#79](https://github.com/pingidentity/terraform-provider-pingone/issues/79))
 * **New Resource:** `pingone_resource` ([#71](https://github.com/pingidentity/terraform-provider-pingone/issues/71))
 * **New Resource:** `pingone_resource_scope` ([#71](https://github.com/pingidentity/terraform-provider-pingone/issues/71))
 
