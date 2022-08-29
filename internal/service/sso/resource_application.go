@@ -198,20 +198,18 @@ func ResourceApplication() *schema.Resource {
 							Optional: true,
 						},
 						"refresh_token_duration": {
-							Description:      "An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is 2592000, or 30 days. Valid values are between 60 and 2147483647. If the refresh_token_rolling_duration property is specified for the application, then this property must be less than or equal to the value of refreshTokenRollingDuration. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
-							Type:             schema.TypeInt,
-							Optional:         true,
-							Default:          2592000,
-							DiffSuppressFunc: refreshTokenDiffSuppression,
-							ValidateFunc:     validation.IntBetween(60, 2147483647),
+							Description:  "An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is 2592000, or 30 days. Valid values are between 60 and 2147483647. If the refresh_token_rolling_duration property is specified for the application, then this property must be less than or equal to the value of refreshTokenRollingDuration. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      2592000,
+							ValidateFunc: validation.IntBetween(60, 2147483647),
 						},
 						"refresh_token_rolling_duration": {
-							Description:      "An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. If a value is not provided, the default value is 15552000, or 180 days. Valid values are between 60 and 2147483647. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
-							Type:             schema.TypeInt,
-							Optional:         true,
-							Default:          15552000,
-							DiffSuppressFunc: refreshTokenDiffSuppression,
-							ValidateFunc:     validation.IntBetween(60, 2147483647),
+							Description:  "An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. If a value is not provided, the default value is 15552000, or 180 days. Valid values are between 60 and 2147483647. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      15552000,
+							ValidateFunc: validation.IntBetween(60, 2147483647),
 						},
 						"client_id": {
 							Description: "A string that specifies the application ID used to authenticate to the authorization server.",
@@ -407,19 +405,6 @@ func ResourceApplication() *schema.Resource {
 			},
 		},
 	}
-}
-
-func refreshTokenDiffSuppression(k, old, new string, d *schema.ResourceData) bool {
-
-	grantTypes := d.Get("oidc_options").([]interface{})[0].(map[string]interface{})["grant_types"].([]interface{})
-
-	for _, v := range grantTypes {
-		if v.(string) == string(management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN) {
-			return false
-		}
-	}
-
-	return true
 }
 
 func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -805,7 +790,7 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			return nil, diags
 		}
 
-		grantTypes, refreshTokenEnabled := expandGrantTypes(oidcOptions["grant_types"].([]interface{}))
+		grantTypes, _ := expandGrantTypes(oidcOptions["grant_types"].([]interface{}))
 
 		// Set the object
 		application = *management.NewApplicationOIDC(d.Get("enabled").(bool), d.Get("name").(string), management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT, *applicationType, grantTypes, management.EnumApplicationOIDCTokenAuthMethod(oidcOptions["token_endpoint_authn_method"].(string)))
@@ -874,25 +859,25 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		}
 
 		if v1, ok := oidcOptions["refresh_token_duration"].(int); ok {
-			if refreshTokenEnabled {
-				application.SetRefreshTokenDuration(int32(v1))
-			} else {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Warning,
-					Summary:  fmt.Sprintf("`refresh_token_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-				})
-			}
+			//if refreshTokenEnabled {
+			application.SetRefreshTokenDuration(int32(v1))
+			//} else {
+			//	diags = append(diags, diag.Diagnostic{
+			//		Severity: diag.Warning,
+			//		Summary:  fmt.Sprintf("`refresh_token_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
+			//	})
+			//}
 		}
 
 		if v1, ok := oidcOptions["refresh_token_rolling_duration"].(int); ok {
-			if refreshTokenEnabled {
-				application.SetRefreshTokenRollingDuration(int32(v1))
-			} else {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Warning,
-					Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-				})
-			}
+			//if refreshTokenEnabled {
+			application.SetRefreshTokenRollingDuration(int32(v1))
+			//} else {
+			//	diags = append(diags, diag.Diagnostic{
+			//		Severity: diag.Warning,
+			//		Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
+			//	})
+			//}
 		}
 
 		if v1, ok := oidcOptions["support_unsigned_request_object"].(bool); ok {
