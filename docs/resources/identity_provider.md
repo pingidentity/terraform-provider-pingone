@@ -71,16 +71,16 @@ resource "pingone_identity_provider" "apple" {
 - `description` (String) A string that specifies the description of the identity provider.
 - `enabled` (Boolean) A boolean that specifies whether the identity provider is enabled in the environment. Defaults to `false`.
 - `facebook` (Block List, Max: 1) Options for Identity provider connectivity to Facebook. (see [below for nested schema](#nestedblock--facebook))
-- `generic_oidc` (Block List, Max: 1) Options for Identity provider connectivity to a generic OpenID Connect service. (see [below for nested schema](#nestedblock--generic_oidc))
-- `generic_saml` (Block List, Max: 1) Options for Identity provider connectivity to a generic SAML service. (see [below for nested schema](#nestedblock--generic_saml))
 - `github` (Block List, Max: 1) Options for Identity provider connectivity to Github. (see [below for nested schema](#nestedblock--github))
 - `google` (Block List, Max: 1) Options for Identity provider connectivity to Google. (see [below for nested schema](#nestedblock--google))
 - `icon` (Block List, Max: 1) The HREF and the ID for the identity provider icon. (see [below for nested schema](#nestedblock--icon))
 - `linkedin` (Block List, Max: 1) Options for Identity provider connectivity to LinkedIn. (see [below for nested schema](#nestedblock--linkedin))
 - `login_button_icon` (Block List, Max: 1) The HREF and the ID for the identity provider icon to use as the login button. (see [below for nested schema](#nestedblock--login_button_icon))
 - `microsoft` (Block List, Max: 1) Options for Identity provider connectivity to Microsoft. (see [below for nested schema](#nestedblock--microsoft))
+- `openid_connect` (Block List, Max: 1) Options for Identity provider connectivity to a generic OpenID Connect service. (see [below for nested schema](#nestedblock--openid_connect))
 - `paypal` (Block List, Max: 1) Options for Identity provider connectivity to Paypal. (see [below for nested schema](#nestedblock--paypal))
 - `registration_population_id` (String) Setting this attribute gives management of linked users to the IdP and also triggers just-in-time provisioning of new users to the population ID provided.
+- `saml` (Block List, Max: 1) Options for Identity provider connectivity to a generic SAML service. (see [below for nested schema](#nestedblock--saml))
 - `twitter` (Block List, Max: 1) Options for Identity provider connectivity to Twitter. (see [below for nested schema](#nestedblock--twitter))
 - `yahoo` (Block List, Max: 1) Options for Identity provider connectivity to Yahoo. (see [below for nested schema](#nestedblock--yahoo))
 
@@ -94,7 +94,7 @@ resource "pingone_identity_provider" "apple" {
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Amazon.
-- `client_secret` (String) A string that specifies the application secret from Amazon.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Amazon.
 
 
 <a id="nestedblock--apple"></a>
@@ -103,7 +103,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Apple. This is the identifier obtained after registering a services ID in the Apple developer portal.
-- `client_secret_signing_key` (String) A string that specifies the private key that is used to generate a client secret.
+- `client_secret_signing_key` (String, Sensitive) A string that specifies the private key that is used to generate a client secret.
 - `key_id` (String) A 10-character string that Apple uses to identify an authentication key.
 - `team_id` (String) A 10-character string that Apple uses to identify teams.
 
@@ -114,44 +114,7 @@ Required:
 Required:
 
 - `app_id` (String) A string that specifies the application ID from Facebook.
-- `app_secret` (String) A string that specifies the application secret from Facebook.
-
-
-<a id="nestedblock--generic_oidc"></a>
-### Nested Schema for `generic_oidc`
-
-Required:
-
-- `authorization_endpoint` (String) A string that specifies the the OIDC identity provider's authorization endpoint. This value must be a URL that uses https.
-- `client_id` (String) A string that specifies the application ID from the OIDC identity provider.
-- `client_secret` (String) A string that specifies the application secret from the OIDC identity provider.
-- `issuer` (String) A string that specifies the issuer to which the authentication is sent for the OIDC identity provider. This value must be a URL that uses https.
-- `jwks_endpoint` (String) A string that specifies the OIDC identity provider's jwks endpoint. This value must be a URL that uses https.
-- `scopes` (Set of String) An array that specifies the scopes to include in the authentication request to the OIDC identity provider.
-- `token_endpoint` (String) A string that specifies the OIDC identity provider's token endpoint.
-
-Optional:
-
-- `discovery_endpoint` (String) A string that specifies the OIDC identity provider's discovery endpoint. This value must be a URL that uses https.
-- `token_endpoint_auth_method` (String) A string that specifies the OIDC identity provider's token endpoint authentication method. Options are `CLIENT_SECRET_BASIC` (default), `CLIENT_SECRET_POST`, and `NONE`. Defaults to `CLIENT_SECRET_BASIC`.
-- `userinfo_endpoint` (String) A string that specifies the OIDC identity provider's userInfo endpoint.
-
-
-<a id="nestedblock--generic_saml"></a>
-### Nested Schema for `generic_saml`
-
-Required:
-
-- `idp_entity_id` (String) A string that specifies the entity ID URI that is checked against the issuerId tag in the incoming response.
-- `sso_binding` (String) A string that specifies the binding for the authentication request. Options are `HTTP_POST` and `HTTP_REDIRECT`.
-- `sso_endpoint` (String) A string that specifies the SSO endpoint for the authentication request.
-
-Optional:
-
-- `authentication_request_signed` (Boolean) A boolean that specifies whether the SAML authentication request will be signed when sending to the identity provider. Set this to true if the external IDP is included in an authentication policy to be used by applications that are accessed using a mix of default URLS and custom Domains URLs.
-- `idp_verification_certificate_ids` (Set of String) A list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.
-- `sp_entity_id` (String) A string that specifies the service provider's entity ID, used to look up the application.
-- `sp_signing_key_id` (String) A string that specifies the service provider's signing key ID.
+- `app_secret` (String, Sensitive) A string that specifies the application secret from Facebook.
 
 
 <a id="nestedblock--github"></a>
@@ -160,7 +123,7 @@ Optional:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Github.
-- `client_secret` (String) A string that specifies the application secret from Github.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Github.
 
 
 <a id="nestedblock--google"></a>
@@ -169,7 +132,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Google.
-- `client_secret` (String) A string that specifies the application secret from Google.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Google.
 
 
 <a id="nestedblock--icon"></a>
@@ -187,7 +150,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from LinkedIn.
-- `client_secret` (String) A string that specifies the application secret from LinkedIn.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from LinkedIn.
 
 
 <a id="nestedblock--login_button_icon"></a>
@@ -205,7 +168,27 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Microsoft.
-- `client_secret` (String) A string that specifies the application secret from Microsoft.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Microsoft.
+
+
+<a id="nestedblock--openid_connect"></a>
+### Nested Schema for `openid_connect`
+
+Required:
+
+- `authorization_endpoint` (String) A string that specifies the the OIDC identity provider's authorization endpoint. This value must be a URL that uses https.
+- `client_id` (String) A string that specifies the application ID from the OIDC identity provider.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from the OIDC identity provider.
+- `issuer` (String) A string that specifies the issuer to which the authentication is sent for the OIDC identity provider. This value must be a URL that uses https.
+- `jwks_endpoint` (String) A string that specifies the OIDC identity provider's jwks endpoint. This value must be a URL that uses https.
+- `scopes` (Set of String) An array that specifies the scopes to include in the authentication request to the OIDC identity provider.
+- `token_endpoint` (String) A string that specifies the OIDC identity provider's token endpoint.
+
+Optional:
+
+- `discovery_endpoint` (String) A string that specifies the OIDC identity provider's discovery endpoint. This value must be a URL that uses https.
+- `token_endpoint_auth_method` (String) A string that specifies the OIDC identity provider's token endpoint authentication method. Options are `CLIENT_SECRET_BASIC` (default), `CLIENT_SECRET_POST`, and `NONE`. Defaults to `CLIENT_SECRET_BASIC`.
+- `userinfo_endpoint` (String) A string that specifies the OIDC identity provider's userInfo endpoint.
 
 
 <a id="nestedblock--paypal"></a>
@@ -215,7 +198,24 @@ Required:
 
 - `client_environment` (String) A string that specifies the PayPal environment. Options are `sandbox`, and `live`.
 - `client_id` (String) A string that specifies the application ID from PayPal.
-- `client_secret` (String) A string that specifies the application secret from PayPal.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from PayPal.
+
+
+<a id="nestedblock--saml"></a>
+### Nested Schema for `saml`
+
+Required:
+
+- `idp_entity_id` (String) A string that specifies the entity ID URI that is checked against the issuerId tag in the incoming response.
+- `idp_verification_certificate_ids` (Set of String) A list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.
+- `sp_entity_id` (String) A string that specifies the service provider's entity ID, used to look up the application.
+- `sso_binding` (String) A string that specifies the binding for the authentication request. Options are `HTTP_POST` and `HTTP_REDIRECT`.
+- `sso_endpoint` (String) A string that specifies the SSO endpoint for the authentication request.
+
+Optional:
+
+- `authentication_request_signed` (Boolean) A boolean that specifies whether the SAML authentication request will be signed when sending to the identity provider. Set this to true if the external IDP is included in an authentication policy to be used by applications that are accessed using a mix of default URLS and custom Domains URLs. Defaults to `false`.
+- `sp_signing_key_id` (String) A string that specifies the service provider's signing key ID.
 
 
 <a id="nestedblock--twitter"></a>
@@ -224,7 +224,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Twitter.
-- `client_secret` (String) A string that specifies the application secret from Twitter.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Twitter.
 
 
 <a id="nestedblock--yahoo"></a>
@@ -233,7 +233,7 @@ Required:
 Required:
 
 - `client_id` (String) A string that specifies the application ID from Yahoo.
-- `client_secret` (String) A string that specifies the application secret from Yahoo.
+- `client_secret` (String, Sensitive) A string that specifies the application secret from Yahoo.
 
 ## Import
 

@@ -17,7 +17,7 @@ import (
 
 func ResourceIdentityProvider() *schema.Resource {
 
-	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "generic_oidc", "generic_saml"}
+	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "openid_connect", "saml"}
 
 	return &schema.Resource{
 
@@ -129,6 +129,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description:      "A string that specifies the application secret from Facebook.",
 							Type:             schema.TypeString,
 							Required:         true,
+							Sensitive:        true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
 					},
@@ -198,6 +199,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description:      "A string that specifies the private key that is used to generate a client secret.",
 							Type:             schema.TypeString,
 							Required:         true,
+							Sensitive:        true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
 						"key_id": {
@@ -234,6 +236,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description:      "A string that specifies the application secret from PayPal.",
 							Type:             schema.TypeString,
 							Required:         true,
+							Sensitive:        true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
 						"client_environment": {
@@ -263,7 +266,7 @@ func ResourceIdentityProvider() *schema.Resource {
 				ExactlyOneOf: providerAttributeList,
 				Elem:         clientIdClientSecretSchema("Github"),
 			},
-			"generic_oidc": {
+			"openid_connect": {
 				Description:  "Options for Identity provider connectivity to a generic OpenID Connect service.",
 				Type:         schema.TypeList,
 				MaxItems:     1,
@@ -288,6 +291,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description:      "A string that specifies the application secret from the OIDC identity provider.",
 							Type:             schema.TypeString,
 							Required:         true,
+							Sensitive:        true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
 						"discovery_endpoint": {
@@ -339,7 +343,7 @@ func ResourceIdentityProvider() *schema.Resource {
 					},
 				},
 			},
-			"generic_saml": {
+			"saml": {
 				Description:  "Options for Identity provider connectivity to a generic SAML service.",
 				Type:         schema.TypeList,
 				MaxItems:     1,
@@ -352,6 +356,7 @@ func ResourceIdentityProvider() *schema.Resource {
 							Description: "A boolean that specifies whether the SAML authentication request will be signed when sending to the identity provider. Set this to true if the external IDP is included in an authentication policy to be used by applications that are accessed using a mix of default URLS and custom Domains URLs.",
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Default:     false,
 						},
 						"idp_entity_id": {
 							Description: "A string that specifies the entity ID URI that is checked against the issuerId tag in the incoming response.",
@@ -361,12 +366,12 @@ func ResourceIdentityProvider() *schema.Resource {
 						"sp_entity_id": {
 							Description: "A string that specifies the service provider's entity ID, used to look up the application.",
 							Type:        schema.TypeString,
-							Optional:    true,
+							Required:    true,
 						},
 						"idp_verification_certificate_ids": {
 							Description: "A list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.",
 							Type:        schema.TypeSet,
-							Optional:    true,
+							Required:    true,
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
 								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
@@ -410,6 +415,7 @@ func clientIdClientSecretSchema(providerName string) *schema.Resource {
 				Description:      fmt.Sprintf("A string that specifies the application secret from %s.", providerName),
 				Type:             schema.TypeString,
 				Required:         true,
+				Sensitive:        true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 		},
@@ -517,8 +523,8 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 		"paypal":                     nil,
 		"microsoft":                  nil,
 		"github":                     nil,
-		"generic_oidc":               nil,
-		"generic_saml":               nil,
+		"openid_connect":             nil,
+		"saml":                       nil,
 	}
 
 	switch respObject.GetActualInstance().(type) {
@@ -619,7 +625,7 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 
 	case *management.IdentityProviderOIDC:
 		idpObject := respObject.IdentityProviderOIDC
-		schemaAttribute := "generic_oidc"
+		schemaAttribute := "openid_connect"
 
 		values["name"] = idpObject.GetName()
 
@@ -671,7 +677,7 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 
 	case *management.IdentityProviderSAML:
 		idpObject := respObject.IdentityProviderSAML
-		schemaAttribute := "generic_saml"
+		schemaAttribute := "saml"
 
 		values["name"] = idpObject.GetName()
 
@@ -715,8 +721,8 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set("paypal", values["paypal"])
 	d.Set("microsoft", values["microsoft"])
 	d.Set("github", values["github"])
-	d.Set("generic_oidc", values["generic_oidc"])
-	d.Set("generic_saml", values["generic_saml"])
+	d.Set("openid_connect", values["openid_connect"])
+	d.Set("saml", values["saml"])
 
 	return diags
 }
@@ -885,12 +891,12 @@ func expandIdentityProvider(d *schema.ResourceData) (*management.IdentityProvide
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("generic_oidc"); ok {
+	if v, ok := d.GetOk("openid_connect"); ok {
 		requestObject.IdentityProviderOIDC, diags = expandIdPOIDC(v.([]interface{}), common)
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("generic_saml"); ok {
+	if v, ok := d.GetOk("saml"); ok {
 		requestObject.IdentityProviderSAML, diags = expandIdPSAML(v.([]interface{}), common)
 		processedCount += 1
 	}
@@ -1151,7 +1157,7 @@ func expandIdPOIDC(v []interface{}, common management.IdentityProviderCommon) (*
 	}
 	diags = append(diags, diag.Diagnostic{
 		Severity: diag.Error,
-		Summary:  "Block `generic_oidc` must be defined when using the OpenID Connect identity provider type",
+		Summary:  "Block `openid_connect` must be defined when using the OpenID Connect identity provider type",
 	})
 
 	return nil, diags
@@ -1179,27 +1185,32 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 			idpObj.SetSpEntityId(v)
 		}
 
-		if v, ok := idp["idp_verification_certificate_ids"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
-			certificates := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
+		if v, ok := idp["idp_verification_certificate_ids"].(*schema.Set); ok {
 
-			for _, certificate := range v {
-				certificates = append(certificates, *management.NewApplicationAccessControlGroupGroupsInner(certificate.(string)))
+			planCertificates := v.List()
+
+			if len(planCertificates) > 0 && planCertificates[0] != nil {
+				certificates := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
+
+				for _, certificate := range planCertificates {
+					certificates = append(certificates, *management.NewApplicationAccessControlGroupGroupsInner(certificate.(string)))
+				}
+
+				verification := *management.NewIdentityProviderSAMLAllOfIdpVerification()
+				verification.SetCertificates(certificates)
+				idpObj.SetIdpVerification(verification)
 			}
-
-			verification := *management.NewIdentityProviderSAMLAllOfIdpVerification()
-			verification.SetCertificates(certificates)
-			idpObj.SetIdpVerification(verification)
 		}
 
-		if v, ok := idp["sp_signing_key_id"].(string); ok {
+		if v, ok := idp["sp_signing_key_id"].(string); ok && v != "" {
 			idpObj.SetSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigningKey(v)))
 		}
 
-		if v, ok := idp["sso_binding"].(string); ok {
+		if v, ok := idp["sso_binding"].(string); ok && v != "" {
 			idpObj.SetSsoBinding(management.EnumIdentityProviderSAMLSSOBinding(v))
 		}
 
-		if v, ok := idp["sso_endpoint"].(string); ok {
+		if v, ok := idp["sso_endpoint"].(string); ok && v != "" {
 			idpObj.SetSsoEndpoint(v)
 		}
 
@@ -1223,7 +1234,7 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 	}
 	diags = append(diags, diag.Diagnostic{
 		Severity: diag.Error,
-		Summary:  "Block `generic_saml` must be defined when using the SAML identity provider type",
+		Summary:  "Block `saml` must be defined when using the SAML identity provider type",
 	})
 
 	return nil, diags
