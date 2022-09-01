@@ -1171,19 +1171,7 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 
 		idp := v[0].(map[string]interface{})
 
-		idpObj := management.NewIdentityProviderSAML(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_SAML)
-
-		if v, ok := idp["authentication_request_signed"].(bool); ok {
-			idpObj.SetAuthnRequestSigned(v)
-		}
-
-		if v, ok := idp["idp_entity_id"].(string); ok {
-			idpObj.SetIdpEntityId(v)
-		}
-
-		if v, ok := idp["sp_entity_id"].(string); ok {
-			idpObj.SetSpEntityId(v)
-		}
+		var idpVerification management.IdentityProviderSAMLAllOfIdpVerification
 
 		if v, ok := idp["idp_verification_certificate_ids"].(*schema.Set); ok {
 
@@ -1196,22 +1184,18 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 					certificates = append(certificates, *management.NewApplicationAccessControlGroupGroupsInner(certificate.(string)))
 				}
 
-				verification := *management.NewIdentityProviderSAMLAllOfIdpVerification()
-				verification.SetCertificates(certificates)
-				idpObj.SetIdpVerification(verification)
+				idpVerification = *management.NewIdentityProviderSAMLAllOfIdpVerification(certificates)
 			}
+		}
+
+		idpObj := management.NewIdentityProviderSAML(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_SAML, idp["idp_entity_id"].(string), idpVerification, idp["sp_entity_id"].(string), management.EnumIdentityProviderSAMLSSOBinding(idp["sso_binding"].(string)), idp["sso_endpoint"].(string))
+
+		if v, ok := idp["authentication_request_signed"].(bool); ok {
+			idpObj.SetAuthnRequestSigned(v)
 		}
 
 		if v, ok := idp["sp_signing_key_id"].(string); ok && v != "" {
 			idpObj.SetSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigningKey(v)))
-		}
-
-		if v, ok := idp["sso_binding"].(string); ok && v != "" {
-			idpObj.SetSsoBinding(management.EnumIdentityProviderSAMLSSOBinding(v))
-		}
-
-		if v, ok := idp["sso_endpoint"].(string); ok && v != "" {
-			idpObj.SetSsoEndpoint(v)
 		}
 
 		if v, ok := common.GetDescriptionOk(); ok {
