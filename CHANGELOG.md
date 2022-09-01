@@ -1,5 +1,14 @@
 ## 0.3.1 (Unreleased)
 
+NOTES:
+
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.6.0 => v0.7.0 ([#98](https://github.com/pingidentity/terraform-provider-pingone/issues/98))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.4 => v0.3.5 ([#98](https://github.com/pingidentity/terraform-provider-pingone/issues/98))
+
+BUG FIXES:
+
+* resource/pingone_application: Fix `idp_signing_key_id` on `pingone_application` resource has no effect ([#98](https://github.com/pingidentity/terraform-provider-pingone/issues/98))
+
 ## 0.3.0 (30 August 2022)
 
 NOTES:
