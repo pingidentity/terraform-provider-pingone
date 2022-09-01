@@ -42,7 +42,7 @@ resource "pingone_key" "my_key" {
 - `environment_id` (String) The ID of the environment to create the key in.
 - `key_length` (Number) An integer that specifies the key length. For RSA keys, options are `2048`, `3072`, `4096` and `7680`. For elliptical curve (EC) keys, options are `224`, `256`, `384` and `521`.
 - `name` (String) The system name of the key (or Common Name).
-- `signature_algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA224withRSA`, `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA224with_ECDSA`, `SHA256with_ECDSA`, `SHA384with_ECDSA` and `SHA512with_ECDSA`
+- `signature_algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA224withRSA`, `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA224withECDSA`, `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`
 - `subject_dn` (String) A string that specifies the distinguished name of the subject being secured.
 - `usage_type` (String) A string that specifies how the certificate is used. Options are `ENCRYPTION`, SIGNING, SSL/TLS and `ISSUANCE`.
 

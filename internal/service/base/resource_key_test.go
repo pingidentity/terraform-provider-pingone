@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
@@ -33,7 +34,17 @@ func testAccCheckKeyDestroy(s *terraform.State) error {
 			continue
 		}
 
-		body, r, err := apiClient.CertificateManagementApi.GetKey(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
+
+		if rEnv.StatusCode == 404 {
+			continue
+		}
+
+		if err != nil {
+			return err
+		}
+
+		body, r, err := apiClient.CertificateManagementApi.GetKey(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Accept(management.ENUMGETKEYACCEPTHEADER_JSON).Execute()
 
 		if r.StatusCode == 404 {
 			continue
@@ -69,7 +80,7 @@ func TestAccKey_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -82,10 +93,44 @@ func TestAccKey_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "3650"),
 					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "serial_number", "5000"),
+					resource.TestCheckResourceAttr(resourceFullName, "serial_number", "1662023413215"),
 					resource.TestMatchResourceAttr(resourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "VALID"),
+				),
+			},
+			{
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "SIGNING", false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "key_length", "3072"),
+					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA512withRSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SIGNING"),
+					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "3650"),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "serial_number", "1662023413215"),
+					resource.TestMatchResourceAttr(resourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "status", "VALID"),
+				),
+			},
+			{
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "SSL/TLS", false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SSL/TLS"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"),
+				),
+			},
+			{
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ISSUANCE", false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "ISSUANCE"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"),
 				),
 			},
 		},
@@ -134,7 +179,7 @@ func TestAccKey_Minimal(t *testing.T) {
 	})
 }
 
-func testAccKeyConfig_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, usage string, defaultKey bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -146,13 +191,13 @@ func testAccKeyConfig_Full(environmentName, licenseID, resourceName, name string
 			key_length = 3072
 			signature_algorithm = "SHA512withRSA"
 			subject_dn = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-			usage_type = "ENCRYPTION"
+			usage_type = "%[5]s"
 
-			default = true
+			default = %[6]t
   			issuer_dn = "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-			serial_number = 5000
+			serial_number = 1662023413215
 			validity_period = 3650
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, usage, defaultKey)
 }
 
 func testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name string) string {

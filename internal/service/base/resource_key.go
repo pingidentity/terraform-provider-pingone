@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -153,7 +154,7 @@ func resourceKeyCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	if v, ok := d.GetOk("serial_number"); ok {
-		certificateKey.SetSerialNumber(int32(v.(int)))
+		certificateKey.SetSerialNumber(int64(v.(int)))
 	}
 
 	resp, diags := sdk.ParseResponse(
@@ -189,7 +190,7 @@ func resourceKeyRead(ctx context.Context, d *schema.ResourceData, meta interface
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.CertificateManagementApi.GetKey(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return apiClient.CertificateManagementApi.GetKey(ctx, d.Get("environment_id").(string), d.Id()).Accept(management.ENUMGETKEYACCEPTHEADER_JSON).Execute()
 		},
 		"GetKey",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -209,16 +210,16 @@ func resourceKeyRead(ctx context.Context, d *schema.ResourceData, meta interface
 	d.Set("name", respObject.GetName())
 	d.Set("algorithm", string(respObject.GetAlgorithm()))
 	d.Set("default", respObject.GetDefault())
-	d.Set("expires_at", respObject.GetExpiresAt())
+	d.Set("expires_at", respObject.GetExpiresAt().Format(time.RFC3339))
 	d.Set("issuer_dn", respObject.GetIssuerDN())
 	d.Set("key_length", respObject.GetKeyLength())
 	d.Set("serial_number", respObject.GetSerialNumber())
 	d.Set("signature_algorithm", string(respObject.GetSignatureAlgorithm()))
-	d.Set("starts_at", respObject.GetStartsAt())
+	d.Set("starts_at", respObject.GetStartsAt().Format(time.RFC3339))
 	d.Set("status", string(respObject.GetStatus()))
 	d.Set("subject_dn", respObject.GetSubjectDN())
 	d.Set("usage_type", string(respObject.GetUsageType()))
-	d.Set("validity_period", string(respObject.GetValidityPeriod()))
+	d.Set("validity_period", respObject.GetValidityPeriod())
 
 	return diags
 }
@@ -232,6 +233,10 @@ func resourceKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	var diags diag.Diagnostics
 
 	keyUpdate := *management.NewCertificateKeyUpdate(d.Get("default").(bool), management.EnumCertificateKeyUsageType(d.Get("usage_type").(string)))
+
+	if v, ok := d.GetOk("issuer_dn"); ok {
+		keyUpdate.SetIssuerDN(v.(string))
+	}
 
 	_, diags = sdk.ParseResponse(
 		ctx,
