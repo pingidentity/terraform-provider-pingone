@@ -1124,7 +1124,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.acs_urls.1", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_REDIRECT"),
@@ -1137,48 +1137,6 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 		},
 	})
 }
-
-func TestAccApplication_Enabled(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-				),
-			},
-			{
-				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, true),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-				),
-			},
-			{
-				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-				),
-			},
-		},
-	})
-}
-
-// Application enabled / disabled
 
 func TestAccApplication_SAMLMinimal(t *testing.T) {
 	t.Parallel()
@@ -1224,6 +1182,46 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", "sp:entity:localhost"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_Enabled(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+				),
+			},
+			{
+				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+				),
+			},
+			{
+				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 				),
 			},
 		},
@@ -1506,10 +1504,24 @@ func testAccApplicationConfig_OIDCMinimalWorker(environmentName, licenseID, reso
 func testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+		
 		resource "pingone_group" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "Group 1"
 		}
+
+		resource "pingone_key" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+	
+			name = "%[4]s"
+			algorithm = "EC"
+			key_length = 256
+			signature_algorithm = "SHA224withECDSA"
+			subject_dn = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+			usage_type = "SIGNING"
+			validity_period = 365
+		}
+
 		resource "pingone_application" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "%[4]s"
@@ -1541,7 +1553,7 @@ func testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName,
 				sp_entity_id = "sp:entity:localhost"
 
 				assertion_signed_enabled = false
-				// idp_signing_key_id = 
+				idp_signing_key_id = "${pingone_key.%[3]s.id}"
 				nameid_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
 				response_is_signed = true
 				slo_binding = "HTTP_REDIRECT"
