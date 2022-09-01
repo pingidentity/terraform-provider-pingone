@@ -5,7 +5,9 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_gateway" "my_awesome_pingfederate_gateway" {
   environment_id = pingone_environment.my_environment.id
   name           = "Advanced Services SSO"
-  type           = "PING_FEDERATE"
+  enabled        = true
+
+  type = "PING_FEDERATE"
 }
 
 data "pingone_role" "environment_admin" {

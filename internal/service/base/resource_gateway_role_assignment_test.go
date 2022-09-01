@@ -68,8 +68,9 @@ func TestAccRoleAssignmentGateway_Population(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
+	name := resourceName
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -78,81 +79,82 @@ func TestAccRoleAssignmentGateway_Population(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleAssignmentGatewayConfig_Population(environmentName, resourceName, "Identity Data Admin", licenseID, region),
+				Config: testAccRoleAssignmentGatewayConfig_Population(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "gateway_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "role_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "scope_population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "gateway_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "role_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "scope_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "scope_organization_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "scope_environment_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
 				),
 			},
 			{
-				Config:      testAccRoleAssignmentGatewayConfig_Population(environmentName, resourceName, "Environment Admin", licenseID, region),
+				Config:      testAccRoleAssignmentGatewayConfig_Population(environmentName, licenseID, resourceName, name, "Environment Admin"),
 				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: POPULATION`),
 			},
 			{
-				Config:      testAccRoleAssignmentGatewayConfig_Population(environmentName, resourceName, "Organization Admin", licenseID, region),
+				Config:      testAccRoleAssignmentGatewayConfig_Population(environmentName, licenseID, resourceName, name, "Organization Admin"),
 				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: POPULATION`),
 			},
 		},
 	})
 }
 
-func TestAccRoleAssignmentGateway_Organisation(t *testing.T) {
-	t.Parallel()
+// func TestAccRoleAssignmentGateway_Organisation(t *testing.T) {
+// 	t.Parallel()
 
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_gateway_role_assignment.%s", resourceName)
+// 	resourceName := acctest.ResourceNameGen()
+// 	resourceFullName := fmt.Sprintf("pingone_gateway_role_assignment.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
+// 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
-	organisationID := os.Getenv("PINGONE_ORGANIZATION_ID")
+// 	name := resourceName
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckRoleAssignmentGatewayDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccRoleAssignmentGatewayConfig_Organisation(environmentName, resourceName, "Identity Data Admin", licenseID, region, organisationID),
-				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: ORGANIZATION`),
-			},
-			{
-				Config: testAccRoleAssignmentGatewayConfig_Organisation(environmentName, resourceName, "Environment Admin", licenseID, region, organisationID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "gateway_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "role_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
-					resource.TestCheckResourceAttrSet(resourceFullName, "scope_organization_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_environment_id", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
-			},
-			{
-				Config: testAccRoleAssignmentGatewayConfig_Organisation(environmentName, resourceName, "Organization Admin", licenseID, region, organisationID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "gateway_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "role_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
-					resource.TestCheckResourceAttrSet(resourceFullName, "scope_organization_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_environment_id", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
-			},
-		},
-	})
-}
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+// 	organisationID := os.Getenv("PINGONE_ORGANIZATION_ID")
+
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+// 		ProviderFactories: acctest.ProviderFactories,
+// 		CheckDestroy:      testAccCheckRoleAssignmentGatewayDestroy,
+// 		ErrorCheck:        acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config:      testAccRoleAssignmentGatewayConfig_Organisation(environmentName, licenseID, resourceName, name, "Identity Data Admin", organisationID),
+// 				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: ORGANIZATION`),
+// 			},
+// 			{
+// 				Config: testAccRoleAssignmentGatewayConfig_Organisation(environmentName, licenseID, resourceName, name, "Environment Admin", organisationID),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "gateway_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "role_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
+// 					resource.TestMatchResourceAttr(resourceFullName, "scope_organization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestCheckResourceAttr(resourceFullName, "scope_environment_id", ""),
+// 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+// 				),
+// 			},
+// 			{
+// 				Config: testAccRoleAssignmentGatewayConfig_Organisation(environmentName, licenseID, resourceName, name, "Organization Admin", organisationID),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "gateway_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestMatchResourceAttr(resourceFullName, "role_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
+// 					resource.TestMatchResourceAttr(resourceFullName, "scope_organization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+// 					resource.TestCheckResourceAttr(resourceFullName, "scope_environment_id", ""),
+// 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
 
 func TestAccRoleAssignmentGateway_Environment(t *testing.T) {
 	t.Parallel()
@@ -162,8 +164,9 @@ func TestAccRoleAssignmentGateway_Environment(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
+	name := resourceName
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
@@ -172,143 +175,116 @@ func TestAccRoleAssignmentGateway_Environment(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, resourceName, "Identity Data Admin", licenseID, region),
+				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "gateway_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "role_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "gateway_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "role_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "scope_organization_id", ""),
-					resource.TestCheckResourceAttrSet(resourceFullName, "scope_environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
 				),
 			},
 			{
-				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, resourceName, "Environment Admin", licenseID, region),
+				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Environment Admin"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "gateway_id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "role_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "gateway_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "role_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "scope_organization_id", ""),
-					resource.TestCheckResourceAttrSet(resourceFullName, "scope_environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
 				),
 			},
 			{
-				Config:      testAccRoleAssignmentGatewayConfig_Environment(environmentName, resourceName, "Organization Admin", licenseID, region),
+				Config:      testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Organization Admin"),
 				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: ENVIRONMENT`),
 			},
 		},
 	})
 }
 
-func testAccRoleAssignmentGatewayConfig_Population(environmentName, resourceName, roleName, licenseID, region string) string {
+func testAccRoleAssignmentGatewayConfig_Population(environmentName, licenseID, resourceName, name, roleName string) string {
+	environment2Name := fmt.Sprintf("%s-2", environmentName)
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[4]s"
-			region = "%[5]s"
-			default_population {}
-			service {}
+		%[1]s
+
+		%[6]s
+
+		resource "pingone_gateway" "%[3]s" {
+			environment_id  = "${pingone_environment.%[2]s.id}"
+			name 			= "%[4]s"
+			enabled         = true
+			
+ 			type           = "PING_FEDERATE"
 		}
 
-		resource "pingone_gateway" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
+		data "pingone_role" "%[3]s" {
+			name = "%[5]s"
 		}
 
-		data "pingone_role" "%[2]s" {
-			name = "%[3]s"
-		}
+		resource "pingone_gateway_role_assignment" "%[3]s" {
+			environment_id  = "${pingone_environment.%[2]s.id}"
+			gateway_id = "${pingone_gateway.%[3]s.id}"
+			role_id = "${data.pingone_role.%[3]s.id}"
 
-		resource "pingone_gateway_role_assignment" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			gateway_id = "${pingone_gateway.%[2]s.id}"
-			role_id = "${data.pingone_role.%[2]s.id}"
-
-			scope_population_id = "${pingone_environment.%[1]s.default_population_id}"
-		}`, environmentName, resourceName, roleName, licenseID, region)
+			scope_population_id = "${pingone_environment.%[7]s.default_population_id}"
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, roleName, acctest.MinimalSandboxEnvironment(environment2Name, licenseID), environment2Name)
 }
 
-func testAccRoleAssignmentGatewayConfig_Organisation(environmentName, resourceName, roleName, licenseID, region, organisationID string) string {
+// func testAccRoleAssignmentGatewayConfig_Organisation(environmentName, licenseID, resourceName, name, roleName, organisationID string) string {
+// 	return fmt.Sprintf(`
+// 		%[1]s
+
+// 		resource "pingone_gateway" "%[3]s" {
+// 			environment_id  = "${pingone_environment.%[2]s.id}"
+// 			name 			= "%[4]s"
+// 			enabled         = true
+
+//  			type           = "PING_FEDERATE"
+// 		}
+
+// 		data "pingone_role" "%[3]s" {
+// 			name = "%[5]s"
+// 		}
+
+// 		resource "pingone_gateway_role_assignment" "%[3]s" {
+// 			environment_id  = "${pingone_environment.%[2]s.id}"
+// 			gateway_id = "${pingone_gateway.%[3]s.id}"
+// 			role_id = "${data.pingone_role.%[3]s.id}"
+
+// 			scope_organization_id = "%[6]s"
+// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, roleName, organisationID)
+// }
+
+func testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, roleName string) string {
+	environment2Name := fmt.Sprintf("%s-2", environmentName)
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[4]s"
-			region = "%[5]s"
-			default_population {}
-			service {}
+		%[1]s
+
+		%[6]s
+
+		resource "pingone_gateway" "%[3]s" {
+			environment_id  = "${pingone_environment.%[2]s.id}"
+			name 			= "%[4]s"
+			enabled         = true
+			
+ 			type           = "PING_FEDERATE"
 		}
 
-		resource "pingone_gateway" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
+		data "pingone_role" "%[3]s" {
+			name = "%[5]s"
 		}
 
-		data "pingone_role" "%[2]s" {
-			name = "%[3]s"
-		}
+		resource "pingone_gateway_role_assignment" "%[3]s" {
+			environment_id  = "${pingone_environment.%[2]s.id}"
+			gateway_id = "${pingone_gateway.%[3]s.id}"
+			role_id = "${data.pingone_role.%[3]s.id}"
 
-		resource "pingone_gateway_role_assignment" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			gateway_id = "${pingone_gateway.%[2]s.id}"
-			role_id = "${data.pingone_role.%[2]s.id}"
-
-			scope_organization_id = "%[6]s"
-		}`, environmentName, resourceName, roleName, licenseID, region, organisationID)
-}
-
-func testAccRoleAssignmentGatewayConfig_Environment(environmentName, resourceName, roleName, licenseID, region string) string {
-	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[4]s"
-			region = "%[5]s"
-			default_population {}
-			service {}
-		}
-
-		resource "pingone_gateway" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
-
-		data "pingone_role" "%[2]s" {
-			name = "%[3]s"
-		}
-
-		resource "pingone_gateway_role_assignment" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			gateway_id = "${pingone_gateway.%[2]s.id}"
-			role_id = "${data.pingone_role.%[2]s.id}"
-
-			scope_environment_id = "${pingone_environment.%[1]s.id}"
-		}`, environmentName, resourceName, roleName, licenseID, region)
+			scope_environment_id = "${pingone_environment.%[7]s.id}"
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, roleName, acctest.MinimalSandboxEnvironment(environment2Name, licenseID), environment2Name)
 }
