@@ -67,7 +67,7 @@ resource "pingone_key" "my_tls_key" {
 - `expires_at` (String) The time the key resource expires.
 - `id` (String) The ID of this resource.
 - `starts_at` (String) The time the validity period starts.
-- `status` (String) A string that specifies the status of the key. Options are `VALID`, `EXPIRED`, `NOT_YET_VALID`, and `REVOKED`.
+- `status` (String) A string that specifies the status of the key. Options are `VALID`, `EXPIRING`, `EXPIRED`, `NOT_YET_VALID`, and `REVOKED`.
 
 ## Import
 

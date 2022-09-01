@@ -117,7 +117,7 @@ func ResourceKey() *schema.Resource {
 			},
 			"status": {
 				Type:        schema.TypeString,
-				Description: fmt.Sprintf("A string that specifies the status of the key. Options are `%s`, `%s`, `%s`, and `%s`.", string(management.ENUMCERTIFICATEKEYSTATUS_VALID), string(management.ENUMCERTIFICATEKEYSTATUS_EXPIRED), string(management.ENUMCERTIFICATEKEYSTATUS_NOT_YET_VALID), string(management.ENUMCERTIFICATEKEYSTATUS_REVOKED)),
+				Description: fmt.Sprintf("A string that specifies the status of the key. Options are `%s`, `%s`, `%s`, `%s`, and `%s`.", string(management.ENUMCERTIFICATEKEYSTATUS_VALID), string(management.ENUMCERTIFICATEKEYSTATUS_EXPIRING), string(management.ENUMCERTIFICATEKEYSTATUS_EXPIRED), string(management.ENUMCERTIFICATEKEYSTATUS_NOT_YET_VALID), string(management.ENUMCERTIFICATEKEYSTATUS_REVOKED)),
 				Computed:    true,
 			},
 			"subject_dn": {
