@@ -80,8 +80,9 @@ func New(version string) func() *schema.Provider {
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
-				"pingone_environment":          base.ResourceEnvironment(),
-				"pingone_role_assignment_user": base.ResourceRoleAssignmentUser(),
+				"pingone_environment":             base.ResourceEnvironment(),
+				"pingone_gateway_role_assignment": base.ResourceGatewayRoleAssignment(),
+				"pingone_role_assignment_user":    base.ResourceRoleAssignmentUser(),
 
 				"pingone_application":                           sso.ResourceApplication(),
 				"pingone_application_attribute_mapping":         sso.ResourceApplicationAttributeMapping(),
