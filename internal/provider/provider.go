@@ -82,6 +82,7 @@ func New(version string) func() *schema.Provider {
 			ResourcesMap: map[string]*schema.Resource{
 				"pingone_environment":             base.ResourceEnvironment(),
 				"pingone_gateway":                 base.ResourceGateway(),
+				"pingone_gateway_credential":      base.ResourceGatewayCredential(),
 				"pingone_gateway_role_assignment": base.ResourceGatewayRoleAssignment(),
 				"pingone_role_assignment_user":    base.ResourceRoleAssignmentUser(),
 
