@@ -78,6 +78,14 @@ func PreCheckEnvironment(t *testing.T) {
 	}
 }
 
+func PreCheckEnvironmentAndPKCS12(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_KEY_PKCS12"); v == "" {
+		t.Fatal("PINGONE_KEY_PKCS12 is missing and must be set")
+	}
+}
+
 func PreCheckEnvironmentAndOrganisation(t *testing.T) {
 
 	PreCheckEnvironment(t)

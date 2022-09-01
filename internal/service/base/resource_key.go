@@ -2,8 +2,11 @@ package base
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"math/big"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -40,18 +43,24 @@ func ResourceKey() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"name": {
-				Description:      "The system name of the key (or Common Name).",
+				Description:      "The system name of the key.  Cannot be used with `pkcs12_file_base64`.",
 				Type:             schema.TypeString,
-				Required:         true,
+				Optional:         true,
+				Computed:         true,
+				RequiredWith:     []string{"name", "algorithm", "key_length", "signature_algorithm", "subject_dn"},
 				ForceNew:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ConflictsWith:    []string{"pkcs12_file_base64"},
 			},
 			"algorithm": {
-				Type:         schema.TypeString,
-				Description:  fmt.Sprintf("Specifies the key algorithm. Options are `%s`, `%s`, and `%s`.", string(management.ENUMCERTIFICATEKEYALGORITHM_RSA), string(management.ENUMCERTIFICATEKEYALGORITHM_EC), string(management.ENUMCERTIFICATEKEYALGORITHM_UNKNOWN)),
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{string(management.ENUMCERTIFICATEKEYALGORITHM_RSA), string(management.ENUMCERTIFICATEKEYALGORITHM_EC), string(management.ENUMCERTIFICATEKEYALGORITHM_UNKNOWN)}, false),
+				Type:             schema.TypeString,
+				Description:      fmt.Sprintf("Specifies the key algorithm. Options are `%s`, `%s`, and `%s`.  Cannot be used with `pkcs12_file_base64`.", string(management.ENUMCERTIFICATEKEYALGORITHM_RSA), string(management.ENUMCERTIFICATEKEYALGORITHM_EC), string(management.ENUMCERTIFICATEKEYALGORITHM_UNKNOWN)),
+				Optional:         true,
+				Computed:         true,
+				RequiredWith:     []string{"name", "algorithm", "key_length", "signature_algorithm", "subject_dn", "validity_period"},
+				ForceNew:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMCERTIFICATEKEYALGORITHM_RSA), string(management.ENUMCERTIFICATEKEYALGORITHM_EC), string(management.ENUMCERTIFICATEKEYALGORITHM_UNKNOWN)}, false)),
+				ConflictsWith:    []string{"pkcs12_file_base64"},
 			},
 			"default": {
 				Type:        schema.TypeBool,
@@ -65,32 +74,41 @@ func ResourceKey() *schema.Resource {
 				Computed:    true,
 			},
 			"issuer_dn": {
-				Type:        schema.TypeString,
-				Description: "A string that specifies the distinguished name of the certificate issuer.",
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
+				Type:          schema.TypeString,
+				Description:   "A string that specifies the distinguished name of the certificate issuer.  Cannot be used with `pkcs12_file_base64`.",
+				Optional:      true,
+				Computed:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"pkcs12_file_base64"},
 			},
 			"key_length": {
-				Type:         schema.TypeInt,
-				Description:  "An integer that specifies the key length. For RSA keys, options are `2048`, `3072`, `4096` and `7680`. For elliptical curve (EC) keys, options are `224`, `256`, `384` and `521`.",
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.IntInSlice([]int{2048, 3072, 4096, 7680, 224, 256, 384, 521}),
+				Type:             schema.TypeInt,
+				Description:      "An integer that specifies the key length. For RSA keys, options are `2048`, `3072`, `4096` and `7680`. For elliptical curve (EC) keys, options are `224`, `256`, `384` and `521`.  Cannot be used with `pkcs12_file_base64`.",
+				Optional:         true,
+				Computed:         true,
+				RequiredWith:     []string{"name", "algorithm", "key_length", "signature_algorithm", "subject_dn", "validity_period"},
+				ForceNew:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntInSlice([]int{2048, 3072, 4096, 7680, 224, 256, 384, 521})),
+				ConflictsWith:    []string{"pkcs12_file_base64"},
 			},
 			"serial_number": {
-				Type:        schema.TypeInt,
-				Description: "An integer that specifies the serial number of the key or certificate.",
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
+				Type:             schema.TypeString,
+				Description:      "An integer (in string data type) that specifies the serial number of the key or certificate.  Cannot be used with `pkcs12_file_base64`.",
+				Optional:         true,
+				Computed:         true,
+				ForceNew:         true,
+				ConflictsWith:    []string{"pkcs12_file_base64"},
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^\d+$`), "`serial_number` must be an integer data type in string format.")),
 			},
 			"signature_algorithm": {
-				Type:         schema.TypeString,
-				Description:  fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s`, `%s` and `%s`", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)}, false),
+				Type:             schema.TypeString,
+				Description:      fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s`, `%s` and `%s`.  Cannot be used with `pkcs12_file_base64`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
+				Optional:         true,
+				Computed:         true,
+				RequiredWith:     []string{"name", "algorithm", "key_length", "signature_algorithm", "subject_dn", "validity_period"},
+				ForceNew:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)}, false)),
+				ConflictsWith:    []string{"pkcs12_file_base64"},
 			},
 			"starts_at": {
 				Type:        schema.TypeString,
@@ -104,24 +122,37 @@ func ResourceKey() *schema.Resource {
 			},
 			"subject_dn": {
 				Type:             schema.TypeString,
-				Description:      "A string that specifies the distinguished name of the subject being secured.",
-				Required:         true,
+				Description:      "A string that specifies the distinguished name of the subject being secured.  Cannot be used with `pkcs12_file_base64`.",
+				Optional:         true,
+				Computed:         true,
+				RequiredWith:     []string{"name", "algorithm", "key_length", "signature_algorithm", "subject_dn", "validity_period"},
 				ForceNew:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				ConflictsWith:    []string{"pkcs12_file_base64"},
 			},
 			"usage_type": {
-				Type:         schema.TypeString,
-				Description:  fmt.Sprintf("A string that specifies how the certificate is used. Options are `%s`, %s, %s and `%s`.", string(management.ENUMCERTIFICATEKEYUSAGETYPE_ENCRYPTION), string(management.ENUMCERTIFICATEKEYUSAGETYPE_SIGNING), string(management.ENUMCERTIFICATEKEYUSAGETYPE_SSL_TLS), string(management.ENUMCERTIFICATEKEYUSAGETYPE_ISSUANCE)),
-				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{string(management.ENUMCERTIFICATEKEYUSAGETYPE_ENCRYPTION), string(management.ENUMCERTIFICATEKEYUSAGETYPE_SIGNING), string(management.ENUMCERTIFICATEKEYUSAGETYPE_SSL_TLS), string(management.ENUMCERTIFICATEKEYUSAGETYPE_ISSUANCE)}, false),
+				Type:             schema.TypeString,
+				Description:      fmt.Sprintf("A string that specifies how the certificate is used. Options are `%s`, `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYUSAGETYPE_ENCRYPTION), string(management.ENUMCERTIFICATEKEYUSAGETYPE_SIGNING), string(management.ENUMCERTIFICATEKEYUSAGETYPE_SSL_TLS), string(management.ENUMCERTIFICATEKEYUSAGETYPE_ISSUANCE)),
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMCERTIFICATEKEYUSAGETYPE_ENCRYPTION), string(management.ENUMCERTIFICATEKEYUSAGETYPE_SIGNING), string(management.ENUMCERTIFICATEKEYUSAGETYPE_SSL_TLS), string(management.ENUMCERTIFICATEKEYUSAGETYPE_ISSUANCE)}, false)),
 			},
 			"validity_period": {
-				Type:         schema.TypeInt,
-				Description:  "An integer that specifies the number of days the key is valid.",
-				Optional:     true,
-				Default:      365,
-				ForceNew:     true,
-				ValidateFunc: validation.IntAtLeast(1),
+				Type:             schema.TypeInt,
+				Description:      "An integer that specifies the number of days the key is valid.  Cannot be used with `pkcs12_file_base64`.",
+				Optional:         true,
+				Computed:         true,
+				RequiredWith:     []string{"name", "algorithm", "key_length", "signature_algorithm", "subject_dn", "validity_period"},
+				ForceNew:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
+				ConflictsWith:    []string{"pkcs12_file_base64"},
+			},
+			"pkcs12_file_base64": {
+				Description:   "A base64 encoded PKCS12 file.  Cannot be used with `name`, `algorithm`, `issuer_dn`, `key_length`, `serial_number`, `signature_algorithm`, `subject_dn` or `validity_period`.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Sensitive:     true,
+				ConflictsWith: []string{"name", "algorithm", "issuer_dn", "key_length", "serial_number", "signature_algorithm", "subject_dn", "validity_period"},
 			},
 		},
 	}
@@ -135,40 +166,74 @@ func resourceKeyCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	})
 	var diags diag.Diagnostics
 
-	certificateKey := *management.NewCertificate(
-		management.EnumCertificateKeyAlgorithm(d.Get("algorithm").(string)),
-		int32(d.Get("key_length").(int)),
-		d.Get("name").(string),
-		management.EnumCertificateKeySignagureAlgorithm(d.Get("signature_algorithm").(string)),
-		d.Get("subject_dn").(string),
-		management.EnumCertificateKeyUsageType(d.Get("usage_type").(string)),
-		int32(d.Get("validity_period").(int)),
-	)
+	var resp interface{}
 
-	if v, ok := d.GetOk("default"); ok {
-		certificateKey.SetDefault(v.(bool))
-	}
+	if v, ok := d.GetOk("pkcs12_file_base64"); ok {
 
-	if v, ok := d.GetOk("issuer_dn"); ok {
-		certificateKey.SetIssuerDN(v.(string))
-	}
+		archive, err := base64.StdEncoding.DecodeString(v.(string))
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Cannot base64 decode provided PKCS12 key file.",
+			})
 
-	if v, ok := d.GetOk("serial_number"); ok {
-		certificateKey.SetSerialNumber(int64(v.(int)))
-	}
+			return diags
+		}
 
-	resp, diags := sdk.ParseResponse(
-		ctx,
+		resp, diags = sdk.ParseResponse(
+			ctx,
 
-		func() (interface{}, *http.Response, error) {
-			return apiClient.CertificateManagementApi.CreateKey(ctx, d.Get("environment_id").(string)).Certificate(certificateKey).Execute()
-		},
-		"CreateKey",
-		sdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+			func() (interface{}, *http.Response, error) {
+				return apiClient.CertificateManagementApi.CreateKey(ctx, d.Get("environment_id").(string)).ContentType("multipart/form-data").UsageType(d.Get("usage_type").(string)).File(&archive).Execute()
+			},
+			"CreateKey",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
+			return diags
+		}
+
+	} else {
+
+		certificateKey := *management.NewCertificate(
+			management.EnumCertificateKeyAlgorithm(d.Get("algorithm").(string)),
+			int32(d.Get("key_length").(int)),
+			d.Get("name").(string),
+			management.EnumCertificateKeySignagureAlgorithm(d.Get("signature_algorithm").(string)),
+			d.Get("subject_dn").(string),
+			management.EnumCertificateKeyUsageType(d.Get("usage_type").(string)),
+			int32(d.Get("validity_period").(int)),
+		)
+
+		if v, ok := d.GetOk("default"); ok {
+			certificateKey.SetDefault(v.(bool))
+		}
+
+		if v, ok := d.GetOk("issuer_dn"); ok {
+			certificateKey.SetIssuerDN(v.(string))
+		}
+
+		if v, ok := d.GetOk("serial_number"); ok {
+			if j, ok := new(big.Int).SetString(v.(string), 0); ok {
+				certificateKey.SetSerialNumber(*j)
+			}
+		}
+
+		resp, diags = sdk.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return apiClient.CertificateManagementApi.CreateKey(ctx, d.Get("environment_id").(string)).Certificate(certificateKey).Execute()
+			},
+			"CreateKey",
+			sdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		if diags.HasError() {
+			return diags
+		}
+
 	}
 
 	respObject := resp.(*management.Certificate)
@@ -207,13 +272,15 @@ func resourceKeyRead(ctx context.Context, d *schema.ResourceData, meta interface
 
 	respObject := resp.(*management.Certificate)
 
+	serialNumber := respObject.GetSerialNumber()
+
 	d.Set("name", respObject.GetName())
 	d.Set("algorithm", string(respObject.GetAlgorithm()))
 	d.Set("default", respObject.GetDefault())
 	d.Set("expires_at", respObject.GetExpiresAt().Format(time.RFC3339))
 	d.Set("issuer_dn", respObject.GetIssuerDN())
 	d.Set("key_length", respObject.GetKeyLength())
-	d.Set("serial_number", respObject.GetSerialNumber())
+	d.Set("serial_number", serialNumber.String())
 	d.Set("signature_algorithm", string(respObject.GetSignatureAlgorithm()))
 	d.Set("starts_at", respObject.GetStartsAt().Format(time.RFC3339))
 	d.Set("status", string(respObject.GetStatus()))

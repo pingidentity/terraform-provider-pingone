@@ -167,9 +167,179 @@ func TestAccKey_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SIGNING"),
 					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "365"),
-					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "serial_number"),
+					resource.TestMatchResourceAttr(resourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "status", "VALID"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKey_PKCS12(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_key.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	pkcs12 := os.Getenv("PINGONE_KEY_PKCS12")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironmentAndPKCS12(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckKeyDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "terraform"),
+					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "key_length", "4096"),
+					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA256withRSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", "CN=terraform, OU=Non-Production Testing, O=Ping Identity, C=GB"),
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SIGNING"),
+					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=terraform, OU=Non-Production Testing, O=Ping Identity, C=GB"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "serial_number"),
+					resource.TestMatchResourceAttr(resourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "status", "EXPIRING"),
+				),
+			},
+			{
+				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "terraform"),
+					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "key_length", "4096"),
+					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA256withRSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", "CN=terraform, OU=Non-Production Testing, O=Ping Identity, C=GB"),
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SIGNING"),
+					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=terraform, OU=Non-Production Testing, O=Ping Identity, C=GB"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "serial_number"),
+					resource.TestMatchResourceAttr(resourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "status", "EXPIRING"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKey_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_key.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	pkcs12 := os.Getenv("PINGONE_KEY_PKCS12")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironmentAndPKCS12(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckKeyDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "key_length", "3072"),
+					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA512withRSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "ENCRYPTION"),
+					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "3650"),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "serial_number", "1662023413215"),
+					resource.TestMatchResourceAttr(resourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "status", "VALID"),
+				),
+			},
+			{
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+				),
+			},
+			{
+				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "EC"),
+					resource.TestCheckResourceAttr(resourceFullName, "key_length", "256"),
+					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA224withECDSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SIGNING"),
+					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "365"),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "serial_number"),
+					resource.TestMatchResourceAttr(resourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "status", "VALID"),
+				),
+			},
+			{
+				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "terraform"),
+					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "key_length", "4096"),
+					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA256withRSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", "CN=terraform, OU=Non-Production Testing, O=Ping Identity, C=GB"),
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SIGNING"),
+					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=terraform, OU=Non-Production Testing, O=Ping Identity, C=GB"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "serial_number"),
+					resource.TestMatchResourceAttr(resourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "status", "EXPIRING"),
+				),
+			},
+			{
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "key_length", "3072"),
+					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA512withRSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "ENCRYPTION"),
+					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "3650"),
+					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "serial_number", "1662023413215"),
 					resource.TestMatchResourceAttr(resourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "VALID"),
@@ -195,7 +365,7 @@ func testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, usage
 
 			default = %[6]t
   			issuer_dn = "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-			serial_number = 1662023413215
+			serial_number = "1662023413215"
 			validity_period = 3650
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, usage, defaultKey)
 }
@@ -213,5 +383,21 @@ func testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name str
 		signature_algorithm = "SHA224withECDSA"
 		subject_dn = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
 		usage_type = "SIGNING"
+		validity_period = 365
 	}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12 string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+	resource "pingone_key" "%[3]s" {
+		environment_id = "${pingone_environment.%[2]s.id}"
+
+		pkcs12_file_base64 = <<EOT
+%[4]s
+EOT
+
+		usage_type = "SIGNING"
+	}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12)
 }
