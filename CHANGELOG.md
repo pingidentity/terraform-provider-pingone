@@ -4,6 +4,10 @@ NOTES:
 
 * Documentation: Updates and corrections to examples ([#107](https://github.com/pingidentity/terraform-provider-pingone/issues/107))
 
+FEATURES:
+
+* **New Resource:** `pingone_key` ([#96](https://github.com/pingidentity/terraform-provider-pingone/issues/96))
+
 ## 0.3.1 (02 September 2022)
 
 NOTES:
