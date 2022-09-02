@@ -10,8 +10,15 @@ NOTES:
 BUG FIXES:
 
 * resource/pingone_application: Fix `idp_signing_key_id` on `pingone_application` resource has no effect ([#98](https://github.com/pingidentity/terraform-provider-pingone/issues/98))
+* resource/pingone_application_attribute_mapping: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_application_resource_grant: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_application_sign_on_policy_assignment: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_identity_provider_attribute: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_resource_scope: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_schema_attribute: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
 * resource/pingone_sign_on_policy_action: Fix `registration_confirm_user_attributes` (`identity_provider` typed sign on policy action) has no effect ([#103](https://github.com/pingidentity/terraform-provider-pingone/issues/103))
 * resource/pingone_sign_on_policy_action: Fix for `social_provider_ids` showing changes when the values are the same but in different order. ([#103](https://github.com/pingidentity/terraform-provider-pingone/issues/103))
+* resource/pingone_sign_on_policy_action: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
 
 ## 0.3.0 (30 August 2022)
 
