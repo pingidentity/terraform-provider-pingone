@@ -1,0 +1,38 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage - Single Page Application (SPA)
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-spa.tf") }}
+
+## Example Usage - Web Application
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-web.tf") }}
+
+## Example Usage - SAML Application
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-saml.tf") }}
+
+## Example Usage - Native Application
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-native.tf") }}
+
+## Example Usage - Worker Application
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-worker.tf") }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Import is supported using the following syntax:
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}

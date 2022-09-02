@@ -11,21 +11,9 @@ Resource to create and manage PingOne sign on policy actions.
 
 ~> A warning will be issued following `terraform apply` when attempting to remove the final sign-on policy action from an associated sign-on policy.  When removing the final sign-on policy action from a sign-on policy, it's recommended to also remove the associated sign-on policy at the same time.  Further information can be found [here](https://github.com/pingidentity/terraform-provider-pingone/issues/68).
 
-## Example Usage
+## Example Usage - First Factor (Username/Password)
 
 ```terraform
-resource "pingone_environment" "my_environment" {
-  # ...
-}
-
-resource "pingone_sign_on_policy" "my_policy" {
-  environment_id = pingone_environment.my_environment.id
-
-  name        = "foo"
-  description = "My awesome Sign-on policy, username and password followed by MFA"
-
-}
-
 resource "pingone_sign_on_policy_action" "my_policy_first_factor" {
   environment_id    = pingone_environment.my_environment.id
   sign_on_policy_id = pingone_sign_on_policy.my_policy.id
@@ -39,9 +27,36 @@ resource "pingone_sign_on_policy_action" "my_policy_first_factor" {
   login {
     recovery_enabled = true
   }
-
 }
+```
 
+## Example Usage - Identifier First
+
+```terraform
+resource "pingone_sign_on_policy_action" "my_policy_identifier_first" {
+  environment_id    = pingone_environment.my_environment.id
+  sign_on_policy_id = pingone_sign_on_policy.my_policy.id
+
+  priority = 1
+
+  conditions {
+    last_sign_on_older_than_seconds = 604800 // 7 days
+  }
+
+  identifier_first {
+    recovery_enabled = true
+
+    discovery_rule {
+      attribute_contains_text = "@pingidentity.com"
+      identity_provider_id    = pingone_identity_provider.my_identity_provider.id
+    }
+  }
+}
+```
+
+## Example Usage - MFA
+
+```terraform
 resource "pingone_sign_on_policy_action" "my_policy_mfa" {
   environment_id    = pingone_environment.my_environment.id
   sign_on_policy_id = pingone_sign_on_policy.my_policy.id
@@ -54,38 +69,44 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
     ip_reputation_high_risk      = true
     geovelocity_anomaly_detected = true
     anonymous_network_detected   = true
-
-    user_attribute_equals {
-      attribute_reference = "$${user.lifecycle.status}"
-      value               = "VERIFICATION_REQUIRED"
-    }
-
   }
 
   mfa {
     device_sign_on_policy_id = var.my_device_sign_on_policy_id
   }
-
 }
+```
 
-resource "pingone_sign_on_policy_action" "my_policy_agreement" {
+## Example Usage - Identity Provider
+
+```terraform
+resource "pingone_sign_on_policy_action" "my_policy_identity_provider" {
   environment_id    = pingone_environment.my_environment.id
   sign_on_policy_id = pingone_sign_on_policy.my_policy.id
 
-  priority = 3
+  priority = 1
 
-  agreement {
-    agreement_id        = var.my_agreement_id
-    show_decline_option = false
+  conditions {
+    last_sign_on_older_than_seconds = 604800 // 7 days
   }
 
-}
+  identity_provider {
+    identity_provider_id = pingone_identity_provider.my_identity_provider.id
 
+    acr_values        = "MFA"
+    pass_user_context = true
+  }
+}
+```
+
+## Example Usage - Progressive Profiling
+
+```terraform
 resource "pingone_sign_on_policy_action" "my_policy_progressive_profiling" {
   environment_id    = pingone_environment.my_environment.id
   sign_on_policy_id = pingone_sign_on_policy.my_policy.id
 
-  priority = 4
+  priority = 3
 
   progressive_profiling {
 
@@ -102,7 +123,22 @@ resource "pingone_sign_on_policy_action" "my_policy_progressive_profiling" {
     prompt_text = "For the best experience, we need a couple things from you."
 
   }
+}
+```
 
+## Example Usage - Agreement
+
+```terraform
+resource "pingone_sign_on_policy_action" "my_policy_agreement" {
+  environment_id    = pingone_environment.my_environment.id
+  sign_on_policy_id = pingone_sign_on_policy.my_policy.id
+
+  priority = 3
+
+  agreement {
+    agreement_id        = var.my_agreement_id
+    show_decline_option = false
+  }
 }
 ```
 

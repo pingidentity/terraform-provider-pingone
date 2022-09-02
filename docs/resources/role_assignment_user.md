@@ -14,12 +14,7 @@ Resource to create and manage PingOne admin role assignments to users.
 
 ```terraform
 resource "pingone_environment" "my_environment" {
-  name        = "New Environment"
-  description = "My new environment"
-  type        = "SANDBOX"
-  license_id  = var.license_id
-  default_population {}
-  service {}
+  # ...
 }
 
 data "pingone_role" "identity_data_admin" {
