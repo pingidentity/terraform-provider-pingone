@@ -1,0 +1,7 @@
+```release-note:note
+All resources/datasources: Certain HTTP level API errors become more readable and show better detail.
+```
+
+```release-note:note
+Added structure to automatically retry OAuth token calls where returned errors are retryable.
+```
