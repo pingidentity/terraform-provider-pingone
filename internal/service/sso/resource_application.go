@@ -753,9 +753,10 @@ func resourceApplicationDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceApplicationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	attributes := strings.SplitN(d.Id(), "/", 2)
+	splitLength := 2
+	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != 2 {
+	if len(attributes) != splitLength {
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/applicationID\"", d.Id())
 	}
 
@@ -1049,7 +1050,7 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 		}
 
 		if v1, ok := samlOptions["idp_signing_key_id"].(string); ok && v1 != "" {
-			application.SetIdpSigningtype(*management.NewApplicationSAMLAllOfIdpSigningtype(*management.NewApplicationSAMLAllOfIdpSigningtypeKey(v1)))
+			application.SetIdpSigning(*management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(v1)))
 		}
 
 		if v1, ok := samlOptions["nameid_format"].(string); ok && v1 != "" {
@@ -1395,7 +1396,7 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	}
 
 	var signingKeyID interface{}
-	if v, ok := application.GetIdpSigningtypeOk(); ok {
+	if v, ok := application.GetIdpSigningOk(); ok {
 		if j, okJ := v.GetKeyOk(); okJ {
 			if k, okK := j.GetIdOk(); okK {
 				signingKeyID = k
