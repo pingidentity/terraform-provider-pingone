@@ -7,5 +7,4 @@ resource "pingone_sign_on_policy" "foo" {
 
   name        = "foo"
   description = "My awesome Sign-on policy, username and password followed by MFA"
-
 }
