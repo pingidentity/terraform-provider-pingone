@@ -370,9 +370,10 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceSignOnPolicyActionImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	attributes := strings.SplitN(d.Id(), "/", 3)
+	splitLength := 3
+	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != 2 {
+	if len(attributes) != splitLength {
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/signOnPolicyID/policyActionID\"", d.Id())
 	}
 
