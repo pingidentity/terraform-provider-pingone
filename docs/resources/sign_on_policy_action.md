@@ -128,7 +128,7 @@ resource "pingone_sign_on_policy_action" "my_policy_progressive_profiling" {
 - `registration_confirm_user_attributes` (Boolean) A boolean that specifies whether users must confirm data returned from an identity provider prior to registration. Users can modify the data and omit non-required attributes. Modified attributes are added to the user's profile during account creation. Defaults to `false`.
 - `registration_external_href` (String) A string that specifies the link to the external identity provider's identity store. This property is set when the administrator chooses to have users register in an external identity store. This attribute can be set only when the registration.enabled property is set to false.
 - `registration_local_population_id` (String) A string that specifies the population ID associated with the newly registered user. Setting this enables local registration features.
-- `social_provider_ids` (List of String) One or more IDs of the identity providers that can be used for the social login sign-on flow.
+- `social_provider_ids` (Set of String) One or more IDs of the identity providers that can be used for the social login sign-on flow.
 
 ### Read-Only
 
