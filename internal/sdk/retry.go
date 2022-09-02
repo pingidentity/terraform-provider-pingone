@@ -2,7 +2,9 @@ package sdk
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"time"
 
@@ -89,15 +91,25 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 		resp, r, err = f()
 
 		if err != nil || r.StatusCode >= 300 {
-			error := err.(*management.GenericOpenAPIError)
 
 			var model management.P1Error
 
-			if error.Model() != nil {
-				model = error.Model().(management.P1Error)
+			switch t := err.(type) {
+			case *management.GenericOpenAPIError:
+				error := t
+
+				if error.Model() != nil {
+					model = error.Model().(management.P1Error)
+				}
+
+			case *url.Error:
+				tflog.Warn(ctx, fmt.Sprintf("Detected URL error %s", t.Err.Error()))
+
+			default:
+				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error %+v", t))
 			}
 
-			if isRetryable(ctx, r, &model) || DefaultRetryable(ctx, r, &model) {
+			if (model.Id != nil || r != nil) && (isRetryable(ctx, r, &model) || DefaultRetryable(ctx, r, &model)) {
 				tflog.Warn(ctx, "Retrying ... ")
 				return resource.RetryableError(err)
 			}

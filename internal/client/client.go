@@ -2,7 +2,11 @@ package client
 
 import (
 	"context"
+	"regexp"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 )
 
@@ -20,7 +24,27 @@ func (c *Config) APIClient(ctx context.Context) (*Client, error) {
 		Region:        c.Region,
 	}
 
-	client, err := config.APIClient(ctx)
+	var client *pingone.Client
+
+	defaultTimeout := 30
+
+	err := resource.RetryContext(ctx, time.Duration(defaultTimeout)*time.Second, func() *resource.RetryError {
+		var err error
+
+		client, err = config.APIClient(ctx)
+
+		if err != nil {
+
+			if isClientRetryable(ctx, err) {
+				tflog.Warn(ctx, "Client Retrying ... ")
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+
+		}
+		return nil
+	})
 
 	if err != nil {
 		return nil, err
@@ -33,3 +57,16 @@ func (c *Config) APIClient(ctx context.Context) (*Client, error) {
 
 	return tfClient, nil
 }
+
+var (
+	isClientRetryable = func(ctx context.Context, err error) bool {
+
+		// Gateway errors
+		if m, mErr := regexp.MatchString("504 Gateway Timeout", err.Error()); mErr == nil && m {
+			tflog.Warn(ctx, "Gateway error detected on retrieving client token, available for retry")
+			return true
+		}
+
+		return false
+	}
+)
