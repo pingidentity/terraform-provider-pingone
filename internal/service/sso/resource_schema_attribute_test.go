@@ -83,7 +83,7 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, true, true, true),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, true, true, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -99,7 +99,7 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, false, true, true),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, false, true, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -115,7 +115,7 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, false, false, true),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, false, false, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -131,7 +131,7 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, false, false, false),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, false, false, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -147,7 +147,7 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, true, false, false),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, true, false, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -163,7 +163,7 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, true, true, false),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, true, true, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -179,7 +179,7 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, true, true, true),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, true, true, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -221,11 +221,11 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, true, true, true),
+				Config:      testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, true, true, true),
 				ExpectError: regexp.MustCompile(`Cannot set attribute unique parameter when the attribute type is not STRING.  Attribute type found: JSON`),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, false, true, true),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, false, true, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -241,7 +241,7 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, false, false, true),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, false, false, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -257,7 +257,7 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, false, false, false),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, false, false, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -273,11 +273,11 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 				),
 			},
 			{
-				Config:      testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, true, false, false),
+				Config:      testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, true, false, false),
 				ExpectError: regexp.MustCompile(`Cannot set attribute unique parameter when the attribute type is not STRING.  Attribute type found: JSON`),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, false, true, false),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, false, true, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -293,7 +293,7 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, false, true, true),
+				Config: testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType, false, true, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -350,7 +350,7 @@ func TestAccSchemaAttribute_Minimal(t *testing.T) {
 	})
 }
 
-func testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name string, unique, required, multivalued bool) string {
+func testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName, name, attrType string, unique, required, multivalued bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -365,14 +365,14 @@ func testAccSchemaAttributeConfig_Full(environmentName, licenseID, resourceName,
 			schema_id = "${data.pingone_schema.%[3]s.id}"
 
 			name = "%[4]s"
-			display_name = "%[4]s Attr"
-			description = "My test attribute"
+			display_name = "Attribute %[4]s"
+			description = "Test description"
 
-			type = "STRING"
-			unique = %[5]t
-			# required = %[6]t
-			multivalued = %[7]t
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, unique, required, multivalued)
+			type = "%[5]s"
+			unique = %[6]t
+			# required = %[7]t
+			multivalued = %[8]t
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, attrType, unique, required, multivalued)
 }
 
 func testAccSchemaAttributeConfig_Minimal(environmentName, licenseID, resourceName, name string) string {

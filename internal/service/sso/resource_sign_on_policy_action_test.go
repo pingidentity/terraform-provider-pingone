@@ -180,6 +180,8 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.recovery_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.attribute_contains_text", "domain.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 				),
 			},
 			{
@@ -212,6 +214,8 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.recovery_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.attribute_contains_text", "pingidentity.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 				),
 			},
 			{
@@ -228,6 +232,8 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.recovery_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.attribute_contains_text", "domain.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 				),
 			},
 		},
@@ -1105,7 +1111,7 @@ func testAccSignOnPolicyActionConfig_LoginFullNoExt(environmentName, licenseID, 
 
 			registration_local_population_id = "${pingone_environment.%[2]s.default_population_id}"
 
-			social_provider_ids = [,
+			social_provider_ids = [
 				"${pingone_identity_provider.%[3]s-2.id}",
 				"${pingone_identity_provider.%[3]s-1.id}"
 			]
@@ -1155,7 +1161,7 @@ func testAccSignOnPolicyActionConfig_LoginFullWithExt(environmentName, licenseID
 
 			registration_external_href = "https://www.pingidentity.com"
 
-			social_provider_ids = [,
+			social_provider_ids = [
 				"${pingone_identity_provider.%[3]s-2.id}",
 				"${pingone_identity_provider.%[3]s-1.id}"
 			]
@@ -1227,7 +1233,7 @@ func testAccSignOnPolicyActionConfig_IDFirstFullWithExt(environmentName, license
 
 			registration_external_href = "https://www.pingidentity.com"
 
-			social_provider_ids = [,
+			social_provider_ids = [
 				"${pingone_identity_provider.%[3]s-2.id}",
 				"${pingone_identity_provider.%[3]s-1.id}"
 			]
@@ -1235,10 +1241,7 @@ func testAccSignOnPolicyActionConfig_IDFirstFullWithExt(environmentName, license
 			identifier_first {
 				recovery_enabled = false // we set this to false because the calculated default from the api is true
 				discovery_rule {
-				 	condition {
-				 		contains = "domain.com"
-				 		value = "value"
-					}
+					attribute_contains_text = "domain.com"
 					identity_provider_id ="${pingone_identity_provider.%[3]s-1.id}"
 				}
 			}
@@ -1284,7 +1287,7 @@ func testAccSignOnPolicyActionConfig_IDFirstFullNoExt(environmentName, licenseID
 
 			registration_local_population_id = "${pingone_environment.%[2]s.default_population_id}"
 
-			social_provider_ids = [,
+			social_provider_ids = [
 				"${pingone_identity_provider.%[3]s-2.id}",
 				"${pingone_identity_provider.%[3]s-1.id}"
 			]
@@ -1292,11 +1295,8 @@ func testAccSignOnPolicyActionConfig_IDFirstFullNoExt(environmentName, licenseID
 			identifier_first {
 				recovery_enabled = false // we set this to false because the calculated default from the api is true
 				discovery_rule {
-					condition {
-						contains = "domain.com"
-						value = "value"
-				   }
-				   identity_provider_id ="${pingone_identity_provider.%[3]s-1.id}"
+					attribute_contains_text = "pingidentity.com"
+					identity_provider_id ="${pingone_identity_provider.%[3]s-2.id}"
 			   }
 			}
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -1339,9 +1339,15 @@ func testAccSignOnPolicyActionConfig_IDPFull(environmentName, licenseID, resourc
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "%[4]s"
 			
-			google {
+			openid_connect {
 				client_id = "testclientid"
 				client_secret = "testclientsecret"
+
+				authorization_endpoint = "https://pingidentity.com/authz"
+				issuer = "https://pingidentity.com/issuer"
+				jwks_endpoint = "https://pingidentity.com/jwks"
+				scopes = ["openid", "profile"]
+				token_endpoint = "https://pingidentity.com/token"
 			}
 		}
 

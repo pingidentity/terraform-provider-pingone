@@ -1138,48 +1138,6 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 	})
 }
 
-func TestAccApplication_Enabled(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-				),
-			},
-			{
-				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, true),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-				),
-			},
-			{
-				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-				),
-			},
-		},
-	})
-}
-
-// Application enabled / disabled
-
 func TestAccApplication_SAMLMinimal(t *testing.T) {
 	t.Parallel()
 
@@ -1224,6 +1182,46 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", "sp:entity:localhost"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_Enabled(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+				),
+			},
+			{
+				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+				),
+			},
+			{
+				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 				),
 			},
 		},
@@ -1595,8 +1593,8 @@ func testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, 
 // func testAccApplicationConfig_NoType(environmentName, licenseID, resourceName, name string) string {
 // 	return fmt.Sprintf(`
 // 		%[1]s
-// 		resource "pingone_application" "%[2]s" {
-// 			environment_id = "${pingone_environment.%[1]s.id}"
+// 		resource "pingone_application" "%[3]s" {
+// 			environment_id = "${pingone_environment.%[2]s.id}"
 // 			name = "%[3]s"
 // 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name)
 // }

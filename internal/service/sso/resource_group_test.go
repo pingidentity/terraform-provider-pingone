@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -58,13 +59,8 @@ func TestAccGroup_Full(t *testing.T) {
 	environmentName := acctest.ResourceNameGenEnvironment()
 
 	name := resourceName
-	description := "Test description"
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
-
-	userFilter := `email ew "@test.com"`
-	externalID := "external_1234"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -73,15 +69,15 @@ func TestAccGroup_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGroupConfig_Full(environmentName, resourceName, name, description, licenseID, region, userFilter, externalID),
+				Config: testAccGroupConfig_Full(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", description),
-					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "user_filter", userFilter),
-					resource.TestCheckResourceAttr(resourceFullName, "external_id", externalID),
+					resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "user_filter", `email ew "@test.com"`),
+					resource.TestCheckResourceAttr(resourceFullName, "external_id", "external_1234"),
 				),
 			},
 		},
@@ -99,7 +95,6 @@ func TestAccGroup_Minimal(t *testing.T) {
 	name := resourceName
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -108,10 +103,10 @@ func TestAccGroup_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGroupConfig_Minimal(environmentName, resourceName, name, licenseID, region),
+				Config: testAccGroupConfig_Minimal(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "population_id", ""),
@@ -123,40 +118,26 @@ func TestAccGroup_Minimal(t *testing.T) {
 	})
 }
 
-func testAccGroupConfig_Full(environmentName, resourceName, name, description, licenseID, region, userFilter, externalID string) string {
+func testAccGroupConfig_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[5]s"
-			region = "%[6]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
-		resource "pingone_group" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
+		resource "pingone_group" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "%[3]s"
-			description = "%[4]s"
-			population_id = "${pingone_environment.%[1]s.default_population_id}"
-			user_filter = %[7]q
-			external_id = "%[8]s"
-		}`, environmentName, resourceName, name, description, licenseID, region, userFilter, externalID)
+			description = "Test description"
+			population_id = "${pingone_environment.%[2]s.default_population_id}"
+			user_filter = "email ew \"@test.com\""
+			external_id = "external_1234"
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccGroupConfig_Minimal(environmentName, resourceName, name, licenseID, region string) string {
+func testAccGroupConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[4]s"
-			region = "%[5]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
-		resource "pingone_group" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
+		resource "pingone_group" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "%[3]s"
-		}`, environmentName, resourceName, name, licenseID, region)
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
