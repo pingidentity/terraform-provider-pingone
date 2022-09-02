@@ -9,7 +9,7 @@ resource "pingone_application" "my_application" {
 resource "pingone_sign_on_policy" "my_sign_on_policy" {
   environment_id = pingone_environment.my_environment.id
 
-  name        = "foo"
+  name = "foo"
 }
 
 resource "pingone_application_sign_on_policy_assignment" "foo" {
