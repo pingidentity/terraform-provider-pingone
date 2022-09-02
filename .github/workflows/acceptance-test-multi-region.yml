@@ -24,7 +24,7 @@ on:
   # ensure you are alerted to something breaking due to an API change, even if the code did not
   # change.
   schedule:
-    - cron: '0 14 * * *'
+    - cron: '0 4 * * *'
 jobs:
   # ensure the code builds...
   build:
