@@ -1124,7 +1124,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.acs_urls.1", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_REDIRECT"),
@@ -1504,10 +1504,24 @@ func testAccApplicationConfig_OIDCMinimalWorker(environmentName, licenseID, reso
 func testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+		
 		resource "pingone_group" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "Group 1"
 		}
+
+		resource "pingone_key" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+	
+			name = "%[4]s"
+			algorithm = "EC"
+			key_length = 256
+			signature_algorithm = "SHA224withECDSA"
+			subject_dn = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+			usage_type = "SIGNING"
+			validity_period = 365
+		}
+
 		resource "pingone_application" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "%[4]s"
@@ -1539,7 +1553,7 @@ func testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName,
 				sp_entity_id = "sp:entity:localhost"
 
 				assertion_signed_enabled = false
-				// idp_signing_key_id = 
+				idp_signing_key_id = "${pingone_key.%[3]s.id}"
 				nameid_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
 				response_is_signed = true
 				slo_binding = "HTTP_REDIRECT"
