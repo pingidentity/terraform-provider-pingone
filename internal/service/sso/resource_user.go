@@ -269,9 +269,10 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func resourceUserImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	attributes := strings.SplitN(d.Id(), "/", 2)
+	splitLength := 2
+	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != 2 {
+	if len(attributes) != splitLength {
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/userID\"", d.Id())
 	}
 
