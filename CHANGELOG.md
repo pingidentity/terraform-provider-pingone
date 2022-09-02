@@ -1,5 +1,9 @@
 ## 0.4.0 (Unreleased)
 
+NOTES:
+
+* Documentation: Updates and corrections to examples ([#107](https://github.com/pingidentity/terraform-provider-pingone/issues/107))
+
 ## 0.3.1 (02 September 2022)
 
 NOTES:
