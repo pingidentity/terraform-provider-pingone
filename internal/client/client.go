@@ -62,6 +62,16 @@ var (
 	isClientRetryable = func(ctx context.Context, err error) bool {
 
 		// Gateway errors
+		if m, mErr := regexp.MatchString("502 Bad Gateway", err.Error()); mErr == nil && m {
+			tflog.Warn(ctx, "Gateway error detected on retrieving client token, available for retry")
+			return true
+		}
+
+		if m, mErr := regexp.MatchString("503 Service Unavailable", err.Error()); mErr == nil && m {
+			tflog.Warn(ctx, "Service error detected on retrieving client token, available for retry")
+			return true
+		}
+
 		if m, mErr := regexp.MatchString("504 Gateway Timeout", err.Error()); mErr == nil && m {
 			tflog.Warn(ctx, "Gateway error detected on retrieving client token, available for retry")
 			return true
