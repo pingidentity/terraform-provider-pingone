@@ -1,0 +1,15 @@
+```release-note:bug
+resource/pingone_sign_on_policy_action: Fix for `social_provider_ids` showing changes when the values are the same but in different order.
+```
+
+```release-note:bug
+resource/pingone_sign_on_policy_action: Fix `registration_confirm_user_attributes` (`identity_provider` typed sign on policy action) has no effect
+```
+
+```release-note:note
+resource/pingone_sign_on_policy_action: Added schema conflict advice for `social_provider_ids` when using the `identity_provider` typed sign on policy action
+```
+
+```release-note:note
+resource/pingone_sign_on_policy_action: Added schema conflict advice for `enforce_lockout_for_identity_providers` when using the `identity_provider` typed sign on policy action
+```

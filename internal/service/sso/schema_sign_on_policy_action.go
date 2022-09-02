@@ -155,11 +155,10 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 		},
 		"social_provider_ids": {
 			Description:   "One or more IDs of the identity providers that can be used for the social login sign-on flow.",
-			Type:          schema.TypeList,
+			Type:          schema.TypeSet,
 			MaxItems:      100,
 			Optional:      true,
-			Computed:      true,
-			ConflictsWith: []string{"agreement", "mfa", "progressive_profiling"},
+			ConflictsWith: []string{"agreement", "mfa", "identity_provider", "progressive_profiling"},
 			Elem: &schema.Schema{
 				Type:             schema.TypeString,
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
@@ -170,7 +169,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Type:          schema.TypeBool,
 			Optional:      true,
 			Default:       false,
-			ConflictsWith: []string{"agreement", "mfa", "progressive_profiling"},
+			ConflictsWith: []string{"agreement", "mfa", "identity_provider", "progressive_profiling"},
 		},
 		"agreement": {
 			Description:  fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_AGREEMENT)),

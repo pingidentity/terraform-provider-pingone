@@ -29,7 +29,7 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceName, name, licenseID),
+				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -76,7 +76,7 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceName, name, licenseID),
+				Config: testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -103,18 +103,13 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
-func testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceName, name, licenseID string) string {
+func testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[4]s"
-			default_population {}
-			service {}
-		}
-		resource "pingone_password_policy" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			name = "%[3]s"
+		%[1]s
+
+		resource "pingone_password_policy" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s"
 			
 			description = "My new password policy"
 
@@ -153,29 +148,25 @@ func testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceN
 			min_complexity = 7
 			min_unique_characters = 5
 		}
-		data "pingone_password_policy" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
 
-			name = "%[3]s"
+		data "pingone_password_policy" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+
+			name = "%[4]s"
 
 			depends_on = [
-				pingone_password_policy.%[2]s
+				pingone_password_policy.%[3]s
 			]
-		}`, environmentName, resourceName, name, licenseID)
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceName, name, licenseID string) string {
+func testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[4]s"
-			default_population {}
-			service {}
-		}
-		resource "pingone_password_policy" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			name = "%[3]s"
+		%[1]s
+
+		resource "pingone_password_policy" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s"
 			
 			description = "My new password policy"
 
@@ -214,9 +205,10 @@ func testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceNam
 			min_complexity = 7
 			min_unique_characters = 5
 		}
-		data "pingone_password_policy" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
 
-			password_policy_id = "${pingone_password_policy.%[2]s.id}"
-		}`, environmentName, resourceName, name, licenseID)
+		data "pingone_password_policy" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+
+			password_policy_id = "${pingone_password_policy.%[3]s.id}"
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

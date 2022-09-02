@@ -90,7 +90,7 @@ func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_local_population_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
-					//resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "login.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "login.0.recovery_enabled", "false"),
@@ -122,7 +122,7 @@ func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", ""),
 					resource.TestMatchResourceAttr(resourceFullName, "registration_local_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
-					//resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "login.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "login.0.recovery_enabled", "false"),
@@ -138,7 +138,7 @@ func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_local_population_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
-					//resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "login.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "login.0.recovery_enabled", "false"),
@@ -175,11 +175,13 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_local_population_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
-					//resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.recovery_enabled", "false"),
-					//resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.attribute_contains_text", "domain.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 				),
 			},
 			{
@@ -207,11 +209,13 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", ""),
 					resource.TestMatchResourceAttr(resourceFullName, "registration_local_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
-					//resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.recovery_enabled", "false"),
-					//resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.attribute_contains_text", "pingidentity.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 				),
 			},
 			{
@@ -223,11 +227,13 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_local_population_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
-					//resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.recovery_enabled", "false"),
-					//resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.attribute_contains_text", "domain.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 				),
 			},
 		},
@@ -237,8 +243,75 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 // func TestAccSignOnPolicyAction_MFAAction(t *testing.T) {
 // }
 
-// func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
-// }
+func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSignOnPolicyActionConfig_IDPFull(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "registration_local_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "identity_provider.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.acr_values", "MFA"),
+					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.pass_user_context", "true"),
+				),
+			},
+			{
+				Config: testAccSignOnPolicyActionConfig_IDPMinimal(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "registration_local_population_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "identity_provider.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.acr_values", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.pass_user_context", "false"),
+				),
+			},
+			{
+				Config: testAccSignOnPolicyActionConfig_IDPFull(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "registration_local_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "identity_provider.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.acr_values", "MFA"),
+					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.pass_user_context", "true"),
+				),
+			},
+		},
+	})
+}
 
 // func TestAccSignOnPolicyAction_AgreementAction(t *testing.T) {
 // }
@@ -996,11 +1069,30 @@ func TestAccSignOnPolicyAction_ConditionsCompound(t *testing.T) {
 	})
 }
 
-// TODO: idp
 func testAccSignOnPolicyActionConfig_LoginFullNoExt(environmentName, licenseID, resourceName, name string) string {
 
 	return fmt.Sprintf(`
 		%[1]s
+
+		resource "pingone_identity_provider" "%[3]s-1" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s-1"
+			
+			google {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
+			}
+		}
+
+		resource "pingone_identity_provider" "%[3]s-2" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s-2"
+			
+			facebook {
+				app_id = "testclientid"
+				app_secret = "testclientsecret"
+			}
+		}
 
 		resource "pingone_sign_on_policy" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
@@ -1016,6 +1108,11 @@ func testAccSignOnPolicyActionConfig_LoginFullNoExt(environmentName, licenseID, 
 
 			registration_local_population_id = "${pingone_environment.%[2]s.default_population_id}"
 
+			social_provider_ids = [
+				"${pingone_identity_provider.%[3]s-2.id}",
+				"${pingone_identity_provider.%[3]s-1.id}"
+			]
+
 			login {
 				recovery_enabled = false // we set this to false because the calculated default from the api is true
 			}
@@ -1026,6 +1123,26 @@ func testAccSignOnPolicyActionConfig_LoginFullWithExt(environmentName, licenseID
 
 	return fmt.Sprintf(`
 		%[1]s
+
+		resource "pingone_identity_provider" "%[3]s-1" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s-1"
+			
+			google {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
+			}
+		}
+
+		resource "pingone_identity_provider" "%[3]s-2" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s-2"
+			
+			facebook {
+				app_id = "testclientid"
+				app_secret = "testclientsecret"
+			}
+		}
 
 		resource "pingone_sign_on_policy" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
@@ -1040,6 +1157,11 @@ func testAccSignOnPolicyActionConfig_LoginFullWithExt(environmentName, licenseID
 			priority = 1
 
 			registration_external_href = "https://www.pingidentity.com"
+
+			social_provider_ids = [
+				"${pingone_identity_provider.%[3]s-2.id}",
+				"${pingone_identity_provider.%[3]s-1.id}"
+			]
 
 			login {
 				recovery_enabled = false // we set this to false because the calculated default from the api is true
@@ -1074,6 +1196,26 @@ func testAccSignOnPolicyActionConfig_IDFirstFullWithExt(environmentName, license
 	return fmt.Sprintf(`
 		%[1]s
 
+		resource "pingone_identity_provider" "%[3]s-1" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s-1"
+			
+			google {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
+			}
+		}
+
+		resource "pingone_identity_provider" "%[3]s-2" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s-2"
+			
+			facebook {
+				app_id = "testclientid"
+				app_secret = "testclientsecret"
+			}
+		}
+
 		resource "pingone_sign_on_policy" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 
@@ -1088,15 +1230,17 @@ func testAccSignOnPolicyActionConfig_IDFirstFullWithExt(environmentName, license
 
 			registration_external_href = "https://www.pingidentity.com"
 
+			social_provider_ids = [
+				"${pingone_identity_provider.%[3]s-2.id}",
+				"${pingone_identity_provider.%[3]s-1.id}"
+			]
+
 			identifier_first {
 				recovery_enabled = false // we set this to false because the calculated default from the api is true
-				// discovery_rule {
-				// 	condition {
-				// 		contains = "domain.com"
-				// 		value = "value"
-				// 	}
-				// 	identity_provider_id =
-				// }
+				discovery_rule {
+					attribute_contains_text = "domain.com"
+					identity_provider_id ="${pingone_identity_provider.%[3]s-1.id}"
+				}
 			}
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -1105,6 +1249,26 @@ func testAccSignOnPolicyActionConfig_IDFirstFullNoExt(environmentName, licenseID
 
 	return fmt.Sprintf(`
 		%[1]s
+
+		resource "pingone_identity_provider" "%[3]s-1" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s-1"
+			
+			google {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
+			}
+		}
+
+		resource "pingone_identity_provider" "%[3]s-2" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s-2"
+			
+			facebook {
+				app_id = "testclientid"
+				app_secret = "testclientsecret"
+			}
+		}
 
 		resource "pingone_sign_on_policy" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
@@ -1120,15 +1284,17 @@ func testAccSignOnPolicyActionConfig_IDFirstFullNoExt(environmentName, licenseID
 
 			registration_local_population_id = "${pingone_environment.%[2]s.default_population_id}"
 
+			social_provider_ids = [
+				"${pingone_identity_provider.%[3]s-2.id}",
+				"${pingone_identity_provider.%[3]s-1.id}"
+			]
+
 			identifier_first {
 				recovery_enabled = false // we set this to false because the calculated default from the api is true
-				// discovery_rule {
-				// 	condition {
-				// 		contains = "domain.com"
-				// 		value = "value"
-				// 	}
-				// 	identity_provider_id =
-				// }
+				discovery_rule {
+					attribute_contains_text = "pingidentity.com"
+					identity_provider_id ="${pingone_identity_provider.%[3]s-2.id}"
+			   }
 			}
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -1162,12 +1328,90 @@ func testAccSignOnPolicyActionConfig_IDFirstMinimal(environmentName, licenseID, 
 // func testAccSignOnPolicyActionConfig_MFAMinimal(environmentName, licenseID, resourceName, name string) string {
 // }
 
-// TODO: idp
-// func testAccSignOnPolicyActionConfig_IDPFull(environmentName, licenseID, resourceName, name string) string {
-// }
+func testAccSignOnPolicyActionConfig_IDPFull(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
 
-// func testAccSignOnPolicyActionConfig_IDPMinimal(environmentName, licenseID, resourceName, name string) string {
-// }
+		resource "pingone_identity_provider" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s"
+			
+			openid_connect {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
+
+				authorization_endpoint = "https://pingidentity.com/authz"
+				issuer = "https://pingidentity.com/issuer"
+				jwks_endpoint = "https://pingidentity.com/jwks"
+				scopes = ["openid", "profile"]
+				token_endpoint = "https://pingidentity.com/token"
+			}
+		}
+
+		resource "pingone_sign_on_policy" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+
+			name = "%[4]s"
+		}
+
+		resource "pingone_sign_on_policy_action" "%[3]s" {
+			environment_id 			 = "${pingone_environment.%[2]s.id}"
+			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+
+			priority = 1
+
+			registration_local_population_id = "${pingone_environment.%[2]s.default_population_id}"
+
+			registration_confirm_user_attributes = true
+
+			identity_provider {
+				identity_provider_id = "${pingone_identity_provider.%[3]s.id}"
+
+				acr_values        = "MFA"
+				pass_user_context = true
+			}
+			
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_IDPMinimal(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+		resource "pingone_identity_provider" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+			name = "%[4]s"
+			
+			openid_connect {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
+
+				authorization_endpoint = "https://pingidentity.com/authz"
+				issuer = "https://pingidentity.com/issuer"
+				jwks_endpoint = "https://pingidentity.com/jwks"
+				scopes = ["openid", "profile"]
+				token_endpoint = "https://pingidentity.com/token"
+			}
+		}
+
+		resource "pingone_sign_on_policy" "%[3]s" {
+			environment_id = "${pingone_environment.%[2]s.id}"
+
+			name = "%[4]s"
+		}
+
+		resource "pingone_sign_on_policy_action" "%[3]s" {
+			environment_id 			 = "${pingone_environment.%[2]s.id}"
+			sign_on_policy_id = "${pingone_sign_on_policy.%[3]s.id}"
+
+			priority = 1
+
+			identity_provider {
+				identity_provider_id = "${pingone_identity_provider.%[3]s.id}"
+			}
+			
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
 
 // TODO: agreements
 // func testAccSignOnPolicyActionConfig_AgreementFull(environmentName, licenseID, resourceName, name string) string {
