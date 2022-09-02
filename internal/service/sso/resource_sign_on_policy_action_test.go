@@ -271,7 +271,6 @@ func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "registration_local_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "identity_provider.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.acr_values", "MFA"),
@@ -288,7 +287,6 @@ func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "registration_local_population_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "identity_provider.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.acr_values", ""),
@@ -305,7 +303,6 @@ func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "registration_local_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "identity_provider.0.identity_provider_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.acr_values", "MFA"),
@@ -1385,9 +1382,15 @@ func testAccSignOnPolicyActionConfig_IDPMinimal(environmentName, licenseID, reso
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "%[4]s"
 			
-			google {
+			openid_connect {
 				client_id = "testclientid"
 				client_secret = "testclientsecret"
+
+				authorization_endpoint = "https://pingidentity.com/authz"
+				issuer = "https://pingidentity.com/issuer"
+				jwks_endpoint = "https://pingidentity.com/jwks"
+				scopes = ["openid", "profile"]
+				token_endpoint = "https://pingidentity.com/token"
 			}
 		}
 
