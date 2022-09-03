@@ -200,35 +200,35 @@ func testAccResourceConfig_NewEnv(environmentName, licenseID, resourceName, name
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_resource" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
+resource "pingone_resource" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-			name = "%[4]s"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+  name = "%[4]s"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccResourceConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_resource" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			
-			name = "%[3]s"
-			description = "Test Resource"
-			
-			audience = "my_aud"
-			access_token_validity_seconds = 7200
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name        = "%[3]s"
+  description = "Test Resource"
+
+  audience                      = "my_aud"
+  access_token_validity_seconds = 7200
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccResourceConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_resource" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  name = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

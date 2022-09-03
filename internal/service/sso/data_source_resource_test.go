@@ -106,55 +106,55 @@ func testAccResourceDataSourceConfig_ByNameFull(resourceName, name string) strin
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_resource" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-		
-		name = "%[3]s"
-		description = "Test Resource"
-		
-		audience = "my_aud"
-		access_token_validity_seconds = 7200
-	}
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-	data "pingone_resource" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
+  name        = "%[3]s"
+  description = "Test Resource"
 
-		name = "%[3]s"
+  audience                      = "my_aud"
+  access_token_validity_seconds = 7200
+}
 
-		depends_on = [
-			pingone_resource.%[2]s
-		]
-	}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  depends_on = [
+    pingone_resource.%[2]s
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccResourceDataSourceConfig_ByIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_resource" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-		
-		name = "%[3]s"
-		description = "Test Resource"
-		
-		audience = "my_aud"
-		access_token_validity_seconds = 7200
-	}
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-	data "pingone_resource" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
+  name        = "%[3]s"
+  description = "Test Resource"
 
-		resource_id = pingone_resource.%[2]s.id
-	}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  audience                      = "my_aud"
+  access_token_validity_seconds = 7200
+}
+
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  resource_id = pingone_resource.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccResourceDataSourceConfig_ByNameSystem(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-	data "pingone_resource" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		name = "openid"
-	}`, acctest.GenericSandboxEnvironment(), resourceName)
+  name = "openid"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }

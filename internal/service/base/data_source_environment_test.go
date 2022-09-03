@@ -179,106 +179,106 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 
 func testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
-			description = "%[3]s"
-			type = "%[4]s"
-			region = "%[5]s"
-			license_id = "%[6]s"
-			default_population {
-				name = "%[8]s"
-				description = "%[9]s"
-			}
-			service {
-				type = "%[10]s"
-			}
-			service {
-				type = "%[11]s"
-				console_url = "%[12]s"
-				bookmark {
-					name = "%[13]s"
-					url = "%[14]s"
-				}
-				bookmark {
-					name = "%[15]s"
-					url = "%[16]s"
-				}
-			}
-		}
-		data "pingone_environment" "%[1]s" {
-			name = "%[2]s"
+resource "pingone_environment" "%[1]s" {
+  name        = "%[2]s"
+  description = "%[3]s"
+  type        = "%[4]s"
+  region      = "%[5]s"
+  license_id  = "%[6]s"
+  default_population {
+    name        = "%[8]s"
+    description = "%[9]s"
+  }
+  service {
+    type = "%[10]s"
+  }
+  service {
+    type        = "%[11]s"
+    console_url = "%[12]s"
+    bookmark {
+      name = "%[13]s"
+      url  = "%[14]s"
+    }
+    bookmark {
+      name = "%[15]s"
+      url  = "%[16]s"
+    }
+  }
+}
+data "pingone_environment" "%[1]s" {
+  name = "%[2]s"
 
-			depends_on = [
-				pingone_environment.%[1]s
-			]
-		}`, resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
+  depends_on = [
+    pingone_environment.%[1]s
+  ]
+}`, resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
 }
 
 func testAccEnvironmentDataSourceConfig_ByNameMinimal(resourceName, name, environmentType, region, licenseID string) string {
 	return fmt.Sprintf(`
-	resource "pingone_environment" "%[1]s" {
-		name = "%[2]s"
-		type = "%[3]s"
-		region = "%[4]s"
-		license_id = "%[5]s"
-		default_population {}
-		service {}
-	}
-	data "pingone_environment" "%[1]s" {
-		name = "%[2]s"
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  type       = "%[3]s"
+  region     = "%[4]s"
+  license_id = "%[5]s"
+  default_population {}
+  service {}
+}
+data "pingone_environment" "%[1]s" {
+  name = "%[2]s"
 
-		depends_on = [
-			pingone_environment.%[1]s
-		]
-	}
+  depends_on = [
+    pingone_environment.%[1]s
+  ]
+}
 `, resourceName, name, environmentType, region, licenseID)
 }
 
 func testAccEnvironmentDataSourceConfig_ByIDFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
-			description = "%[3]s"
-			type = "%[4]s"
-			region = "%[5]s"
-			license_id = "%[6]s"
-			default_population {
-				name = "%[8]s"
-				description = "%[9]s"
-			}
-			service {
-				type = "%[10]s"
-			}
-			service {
-				type = "%[11]s"
-				console_url = "%[12]s"
-				bookmark {
-					name = "%[13]s"
-					url = "%[14]s"
-				}
-				bookmark {
-					name = "%[15]s"
-					url = "%[16]s"
-				}
-			}
-		}
-		data "pingone_environment" "%[1]s" {
-			environment_id = pingone_environment.%[1]s.id
-		}`, resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
+resource "pingone_environment" "%[1]s" {
+  name        = "%[2]s"
+  description = "%[3]s"
+  type        = "%[4]s"
+  region      = "%[5]s"
+  license_id  = "%[6]s"
+  default_population {
+    name        = "%[8]s"
+    description = "%[9]s"
+  }
+  service {
+    type = "%[10]s"
+  }
+  service {
+    type        = "%[11]s"
+    console_url = "%[12]s"
+    bookmark {
+      name = "%[13]s"
+      url  = "%[14]s"
+    }
+    bookmark {
+      name = "%[15]s"
+      url  = "%[16]s"
+    }
+  }
+}
+data "pingone_environment" "%[1]s" {
+  environment_id = pingone_environment.%[1]s.id
+}`, resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
 }
 
 func testAccEnvironmentDataSourceConfig_ByIDMinimal(resourceName, name, environmentType, region, licenseID string) string {
 	return fmt.Sprintf(`
-	resource "pingone_environment" "%[1]s" {
-		name = "%[2]s"
-		type = "%[3]s"
-		region = "%[4]s"
-		license_id = "%[5]s"
-		default_population {}
-		service {}
-	}
-	data "pingone_environment" "%[1]s" {
-		environment_id = pingone_environment.%[1]s.id
-	}
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  type       = "%[3]s"
+  region     = "%[4]s"
+  license_id = "%[5]s"
+  default_population {}
+  service {}
+}
+data "pingone_environment" "%[1]s" {
+  environment_id = pingone_environment.%[1]s.id
+}
 `, resourceName, name, environmentType, region, licenseID)
 }

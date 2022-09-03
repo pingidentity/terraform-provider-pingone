@@ -367,68 +367,68 @@ func testAccKeyConfig_NewEnv(environmentName, licenseID, resourceName, name stri
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_key" "%[3]s" {
-		environment_id = pingone_environment.%[2]s.id
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-		name = "%[4]s"
-		algorithm = "EC"
-		key_length = 256
-		signature_algorithm = "SHA224withECDSA"
-		subject_dn = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-		usage_type = "SIGNING"
-		validity_period = 365
-	}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA224withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccKeyConfig_Full(resourceName, name, usage string, defaultKey bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_key" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-			algorithm = "RSA"
-			key_length = 3072
-			signature_algorithm = "SHA512withRSA"
-			subject_dn = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-			usage_type = "%[4]s"
+  name                = "%[3]s"
+  algorithm           = "RSA"
+  key_length          = 3072
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "%[4]s"
 
-			default = %[5]t
-  			issuer_dn = "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-			serial_number = "1662023413215"
-			validity_period = 3650
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name, usage, defaultKey)
+  default         = %[5]t
+  issuer_dn       = "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  serial_number   = "1662023413215"
+  validity_period = 3650
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, usage, defaultKey)
 }
 
 func testAccKeyConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_key" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		name = "%[3]s"
-		algorithm = "EC"
-		key_length = 256
-		signature_algorithm = "SHA224withECDSA"
-		subject_dn = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-		usage_type = "SIGNING"
-		validity_period = 365
-	}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  name                = "%[3]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA224withECDSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccKeyConfig_PKCS12(resourceName, pkcs12 string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_key" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		pkcs12_file_base64 = <<EOT
+  pkcs12_file_base64 = <<EOT
 %[3]s
 EOT
 
-		usage_type = "SIGNING"
-	}`, acctest.GenericSandboxEnvironment(), resourceName, pkcs12)
+  usage_type = "SIGNING"
+}`, acctest.GenericSandboxEnvironment(), resourceName, pkcs12)
 }

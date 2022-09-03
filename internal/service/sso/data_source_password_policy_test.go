@@ -98,108 +98,108 @@ func testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name string)
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_password_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			description = "My new password policy"
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-			exclude_commonly_used_passwords = true
-			exclude_profile_data = true
-			not_similar_to_current = true
+  description = "My new password policy"
 
-			password_history {
-				prior_password_count = 6
-				retention_days = 365
-			}
+  exclude_commonly_used_passwords = true
+  exclude_profile_data            = true
+  not_similar_to_current          = true
 
-			password_length {
-				min = 8
-				max = 255
-			}
+  password_history {
+    prior_password_count = 6
+    retention_days       = 365
+  }
 
-			password_age {
-				max = 182
-				min = 1
-			}
+  password_length {
+    min = 8
+    max = 255
+  }
 
-			account_lockout {
-				duration_seconds = 900
-				fail_count = 5
-			}
+  password_age {
+    max = 182
+    min = 1
+  }
 
-			min_characters {
-				alphabetical_uppercase = 1
-				alphabetical_lowercase = 1
-				numeric = 1
-				special_characters = 1
-			}
+  account_lockout {
+    duration_seconds = 900
+    fail_count       = 5
+  }
 
-			max_repeated_characters = 2
-			min_complexity = 7
-			min_unique_characters = 5
-		}
+  min_characters {
+    alphabetical_uppercase = 1
+    alphabetical_lowercase = 1
+    numeric                = 1
+    special_characters     = 1
+  }
 
-		data "pingone_password_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+  max_repeated_characters = 2
+  min_complexity          = 7
+  min_unique_characters   = 5
+}
 
-			name = "%[3]s"
+data "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			depends_on = [
-				pingone_password_policy.%[2]s
-			]
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  name = "%[3]s"
+
+  depends_on = [
+    pingone_password_policy.%[2]s
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccPasswordPolicyDataSourceConfig_ByIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_password_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			description = "My new password policy"
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-			exclude_commonly_used_passwords = true
-			exclude_profile_data = true
-			not_similar_to_current = true
+  description = "My new password policy"
 
-			password_history {
-				prior_password_count = 6
-				retention_days = 365
-			}
+  exclude_commonly_used_passwords = true
+  exclude_profile_data            = true
+  not_similar_to_current          = true
 
-			password_length {
-				min = 8
-				max = 255
-			}
+  password_history {
+    prior_password_count = 6
+    retention_days       = 365
+  }
 
-			password_age {
-				max = 182
-				min = 1
-			}
+  password_length {
+    min = 8
+    max = 255
+  }
 
-			account_lockout {
-				duration_seconds = 900
-				fail_count = 5
-			}
+  password_age {
+    max = 182
+    min = 1
+  }
 
-			min_characters {
-				alphabetical_uppercase = 1
-				alphabetical_lowercase = 1
-				numeric = 1
-				special_characters = 1
-			}
+  account_lockout {
+    duration_seconds = 900
+    fail_count       = 5
+  }
 
-			max_repeated_characters = 2
-			min_complexity = 7
-			min_unique_characters = 5
-		}
+  min_characters {
+    alphabetical_uppercase = 1
+    alphabetical_lowercase = 1
+    numeric                = 1
+    special_characters     = 1
+  }
 
-		data "pingone_password_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+  max_repeated_characters = 2
+  min_complexity          = 7
+  min_unique_characters   = 5
+}
 
-			password_policy_id = pingone_password_policy.%[2]s.id
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+data "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  password_policy_id = pingone_password_policy.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

@@ -192,60 +192,60 @@ func testAccResourceScopeConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_resource" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_resource_scope" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id = pingone_resource.%[2]s.id
+resource "pingone_resource_scope" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
 
-			name = "%[3]s"
-			description = "My resource scope"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  name        = "%[3]s"
+  description = "My resource scope"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccResourceScopeConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_resource" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_resource_scope" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id = pingone_resource.%[2]s.id
+resource "pingone_resource_scope" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
 
-			name = "%[3]s"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  name = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccResourceScopeConfig_Multiple(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_resource" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_resource_scope" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id = pingone_resource.%[2]s.id
+resource "pingone_resource_scope" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
 
-			name = "%[3]s-1"
-		}
-		
-		resource "pingone_resource_scope" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id = pingone_resource.%[2]s.id
+  name = "%[3]s-1"
+}
 
-			name = "%[3]s-2"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_resource_scope" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-2"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

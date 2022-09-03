@@ -61,27 +61,27 @@ func TestAccSchemaDataSource_ByIDFull(t *testing.T) {
 func testAccSchemaDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		
-		data "pingone_schema" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+data "pingone_schema" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSchemaDataSourceConfig_ByIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-	data "pingone_schema" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
+data "pingone_schema" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		name = "%[3]s"
-	}
+  name = "%[3]s"
+}
 
-	data "pingone_schema" "%[2]s-2" {
-		environment_id = data.pingone_environment.general_test.id
+data "pingone_schema" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
 
-		schema_id = data.pingone_schema.%[2]s.id
-	}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  schema_id = data.pingone_schema.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

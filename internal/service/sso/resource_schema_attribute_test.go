@@ -370,59 +370,59 @@ func testAccSchemaAttributeConfig_NewEnv(environmentName, licenseID, resourceNam
 	return fmt.Sprintf(`
 		%[1]s
 
-		data "pingone_schema" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
+data "pingone_schema" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-			name = "User"
-		}
+  name = "User"
+}
 
-		resource "pingone_schema_attribute" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-			schema_id = data.pingone_schema.%[4]s.id
+resource "pingone_schema_attribute" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  schema_id      = data.pingone_schema.%[4]s.id
 
-			name = "%[4]s"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+  name = "%[4]s"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccSchemaAttributeConfig_Full(resourceName, name, attrType string, unique, required, multivalued bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		data "pingone_schema" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-	
-			name = "User"
-		}
+data "pingone_schema" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		resource "pingone_schema_attribute" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			schema_id = data.pingone_schema.%[2]s.id
+  name = "User"
+}
 
-			name = "%[3]s"
-			display_name = "Attribute %[3]s"
-			description = "Test description"
+resource "pingone_schema_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  schema_id      = data.pingone_schema.%[2]s.id
 
-			type = "%[4]s"
-			unique = %[5]t
-			# required = %[6]t
-			multivalued = %[7]t
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name, attrType, unique, required, multivalued)
+  name         = "%[3]s"
+  display_name = "Attribute %[3]s"
+  description  = "Test description"
+
+  type   = "%[4]s"
+  unique = %[5]t
+  # required = %[6]t
+  multivalued = %[7]t
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, attrType, unique, required, multivalued)
 }
 
 func testAccSchemaAttributeConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		data "pingone_schema" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+data "pingone_schema" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "User"
-		}
+  name = "User"
+}
 
-		resource "pingone_schema_attribute" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			schema_id = data.pingone_schema.%[2]s.id
+resource "pingone_schema_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  schema_id      = data.pingone_schema.%[2]s.id
 
-			name = "%[3]s"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  name = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

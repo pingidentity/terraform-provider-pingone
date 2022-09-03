@@ -174,108 +174,108 @@ func testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name str
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name 			= "%[3]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		data "pingone_resource" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-	
-			name = "openid"
-		}
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 
-		data "pingone_resource_scope" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id = data.pingone_resource.%[2]s.id
-	
-			name = "email"
-		}
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		data "pingone_resource_scope" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id = data.pingone_resource.%[2]s.id
-	
-			name = "profile"
-		}
+  name = "openid"
+}
 
-		resource "pingone_application_resource_grant" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			application_id = pingone_application.%[2]s.id
-			
-			resource_id = data.pingone_resource.%[2]s.id
-			scopes = [
-				data.pingone_resource_scope.%[2]s-1.id,
-				data.pingone_resource_scope.%[2]s-2.id,
-			]
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+data "pingone_resource_scope" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name = "email"
+}
+
+data "pingone_resource_scope" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name = "profile"
+}
+
+resource "pingone_application_resource_grant" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  resource_id = data.pingone_resource.%[2]s.id
+  scopes = [
+    data.pingone_resource_scope.%[2]s-1.id,
+    data.pingone_resource_scope.%[2]s-2.id,
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationResourceGrantConfig_CustomResource(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name 			= "%[3]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_resource" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 
-			name = "%[3]s"
-		}
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		resource "pingone_resource_scope" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id = pingone_resource.%[2]s.id
+  name = "%[3]s"
+}
 
-			name = "%[3]s-1"
-		}
-		
-		resource "pingone_resource_scope" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id = pingone_resource.%[2]s.id
+resource "pingone_resource_scope" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
 
-			name = "%[3]s-2"
-		}
+  name = "%[3]s-1"
+}
 
-		resource "pingone_resource_scope" "%[2]s-3" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id = pingone_resource.%[2]s.id
+resource "pingone_resource_scope" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
 
-			name = "%[3]s-3"
-		}
+  name = "%[3]s-2"
+}
 
-		resource "pingone_application_resource_grant" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			application_id = pingone_application.%[2]s.id
-			
-			resource_id = pingone_resource.%[2]s.id
-			scopes = [
-				pingone_resource_scope.%[2]s-1.id,
-				pingone_resource_scope.%[2]s-2.id,
-				pingone_resource_scope.%[2]s-3.id
-			]
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_resource_scope" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-3"
+}
+
+resource "pingone_application_resource_grant" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  resource_id = pingone_resource.%[2]s.id
+  scopes = [
+    pingone_resource_scope.%[2]s-1.id,
+    pingone_resource_scope.%[2]s-2.id,
+    pingone_resource_scope.%[2]s-3.id
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
