@@ -60,7 +60,7 @@ func testAccCheckPasswordPolicyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccPasswordPolicy_Full(t *testing.T) {
+func TestAccPasswordPolicy_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -79,7 +79,31 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyConfig_Full(environmentName, resourceName, name, licenseID),
+				Config: testAccPasswordPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPasswordPolicy_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_password_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckPasswordPolicyDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPasswordPolicyConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -123,11 +147,7 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_password_policy.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -136,7 +156,7 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyConfig_Minimal(environmentName, resourceName, name, licenseID),
+				Config: testAccPasswordPolicyConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -162,13 +182,23 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 	})
 }
 
-func testAccPasswordPolicyConfig_Full(environmentName, resourceName, name, licenseID string) string {
+func testAccPasswordPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 		resource "pingone_password_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+			environment_id = pingone_environment.%[2]s.id
 			name = "%[4]s"
+		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccPasswordPolicyConfig_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+		resource "pingone_password_policy" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			name = "%[3]s"
 			
 			description = "Test description"
 
@@ -206,15 +236,15 @@ func testAccPasswordPolicyConfig_Full(environmentName, resourceName, name, licen
 			max_repeated_characters = 2
 			min_complexity = 7
 			min_unique_characters = 5
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccPasswordPolicyConfig_Minimal(environmentName, resourceName, name, licenseID string) string {
+func testAccPasswordPolicyConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_password_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		resource "pingone_password_policy" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			name = "%[3]s"
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

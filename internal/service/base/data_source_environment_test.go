@@ -263,7 +263,7 @@ func testAccEnvironmentDataSourceConfig_ByIDFull(resourceName, name, description
 			}
 		}
 		data "pingone_environment" "%[1]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
+			environment_id = pingone_environment.%[1]s.id
 		}`, resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
 }
 
@@ -278,7 +278,7 @@ func testAccEnvironmentDataSourceConfig_ByIDMinimal(resourceName, name, environm
 		service {}
 	}
 	data "pingone_environment" "%[1]s" {
-		environment_id = "${pingone_environment.%[1]s.id}"
+		environment_id = pingone_environment.%[1]s.id
 	}
 `, resourceName, name, environmentType, region, licenseID)
 }

@@ -2,7 +2,6 @@ package sso_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -16,20 +15,16 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_password_policy.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := acctest.ResourceNameGen()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:      testAccCheckPasswordPolicyDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name),
+				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -65,18 +60,14 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:      testAccCheckPasswordPolicyDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, name),
+				Config: testAccPasswordPolicyDataSourceConfig_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -103,13 +94,13 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
-func testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name string) string {
+func testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_password_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_password_policy" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			name = "%[3]s"
 			
 			description = "My new password policy"
 
@@ -149,24 +140,24 @@ func testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, licenseID
 			min_unique_characters = 5
 		}
 
-		data "pingone_password_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+		data "pingone_password_policy" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
 
-			name = "%[4]s"
+			name = "%[3]s"
 
 			depends_on = [
-				pingone_password_policy.%[3]s
+				pingone_password_policy.%[2]s
 			]
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, name string) string {
+func testAccPasswordPolicyDataSourceConfig_ByIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_password_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_password_policy" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			name = "%[3]s"
 			
 			description = "My new password policy"
 
@@ -206,9 +197,9 @@ func testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, 
 			min_unique_characters = 5
 		}
 
-		data "pingone_password_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+		data "pingone_password_policy" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
 
-			password_policy_id = "${pingone_password_policy.%[3]s.id}"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+			password_policy_id = pingone_password_policy.%[2]s.id
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

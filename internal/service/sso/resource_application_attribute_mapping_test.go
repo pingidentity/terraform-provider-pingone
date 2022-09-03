@@ -3,7 +3,6 @@ package sso_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -66,11 +65,7 @@ func TestAccApplicationAttributeMapping_Full(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -79,7 +74,7 @@ func TestAccApplicationAttributeMapping_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationAttributeMappingConfig_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationAttributeMappingConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -100,11 +95,7 @@ func TestAccApplicationAttributeMapping_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -113,7 +104,7 @@ func TestAccApplicationAttributeMapping_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationAttributeMappingConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -134,11 +125,7 @@ func TestAccApplicationAttributeMapping_Expression(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -147,7 +134,7 @@ func TestAccApplicationAttributeMapping_Expression(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationAttributeMappingConfig_Expression(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationAttributeMappingConfig_Expression(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -168,11 +155,7 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -181,7 +164,7 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationAttributeMappingConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
@@ -189,7 +172,7 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationAttributeMappingConfig_Expression(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationAttributeMappingConfig_Expression(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "full_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
@@ -197,7 +180,7 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationAttributeMappingConfig_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationAttributeMappingConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
@@ -205,11 +188,11 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 				),
 			},
 			{
-				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(environmentName, licenseID, resourceName, name),
+				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name),
 				ExpectError: regexp.MustCompile("Attribute name '[a-zA-Z]*' is not valid for the '[A-Z_]*' application"),
 			},
 			{
-				Config: testAccApplicationAttributeMappingConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
@@ -225,11 +208,7 @@ func TestAccApplicationAttributeMapping_ReservedAttributeName(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -238,20 +217,20 @@ func TestAccApplicationAttributeMapping_ReservedAttributeName(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(environmentName, licenseID, resourceName, name),
+				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name),
 				ExpectError: regexp.MustCompile("Attribute name '[a-zA-Z]*' is not valid for the '[A-Z_]*' application"),
 			},
 		},
 	})
 }
 
-func testAccApplicationAttributeMappingConfig_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[3]s" {
-			environment_id  = "${pingone_environment.%[2]s.id}"
-			name 			= "%[4]s"
+		resource "pingone_application" "%[2]s" {
+			environment_id  = data.pingone_environment.general_test.id
+			name 			= "%[3]s"
 			enabled 		= true
 		  
 			oidc_options {
@@ -264,23 +243,23 @@ func testAccApplicationAttributeMappingConfig_Full(environmentName, licenseID, r
 			}
 		}
 
-		resource "pingone_application_attribute_mapping" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			application_id = "${pingone_application.%[3]s.id}"
+		resource "pingone_application_attribute_mapping" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
 			name 		= "email"
 			required 	= true
 			value		= "$${user.email}"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationAttributeMappingConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[3]s" {
-			environment_id  = "${pingone_environment.%[2]s.id}"
-			name 			= "%[4]s"
+		resource "pingone_application" "%[2]s" {
+			environment_id  = data.pingone_environment.general_test.id
+			name 			= "%[3]s"
 			enabled 		= true
 		  
 			oidc_options {
@@ -293,22 +272,22 @@ func testAccApplicationAttributeMappingConfig_Minimal(environmentName, licenseID
 			}
 		}
 
-		resource "pingone_application_attribute_mapping" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			application_id = "${pingone_application.%[3]s.id}"
+		resource "pingone_application_attribute_mapping" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
 			name 		= "email"
 			value		= "$${user.email}"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationAttributeMappingConfig_Expression(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_Expression(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[3]s" {
-			environment_id  = "${pingone_environment.%[2]s.id}"
-			name 			= "%[4]s"
+		resource "pingone_application" "%[2]s" {
+			environment_id  = data.pingone_environment.general_test.id
+			name 			= "%[3]s"
 			enabled 		= true
 		  
 			oidc_options {
@@ -321,22 +300,22 @@ func testAccApplicationAttributeMappingConfig_Expression(environmentName, licens
 			}
 		}
 
-		resource "pingone_application_attribute_mapping" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			application_id = "${pingone_application.%[3]s.id}"
+		resource "pingone_application_attribute_mapping" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
 			name 		= "full_name"
 			value		= "$${user.name.given + ', ' + user.name.family}"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationAttributeMappingConfig_ReservedAttributeName(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[3]s" {
-			environment_id  = "${pingone_environment.%[2]s.id}"
-			name 			= "%[4]s"
+		resource "pingone_application" "%[2]s" {
+			environment_id  = data.pingone_environment.general_test.id
+			name 			= "%[3]s"
 			enabled 		= true
 		  
 			oidc_options {
@@ -349,11 +328,11 @@ func testAccApplicationAttributeMappingConfig_ReservedAttributeName(environmentN
 			}
 		}
 
-		resource "pingone_application_attribute_mapping" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			application_id = "${pingone_application.%[3]s.id}"
+		resource "pingone_application_attribute_mapping" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
 			name 		= "aud"
 			value		= "$${'test'}"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

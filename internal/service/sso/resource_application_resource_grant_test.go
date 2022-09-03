@@ -3,7 +3,6 @@ package sso_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -66,11 +65,7 @@ func TestAccApplicationResourceGrant_OpenIDResource(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_resource_grant.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -79,7 +74,7 @@ func TestAccApplicationResourceGrant_OpenIDResource(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationResourceGrantConfig_OpenIDResource(environmentName, resourceName, name, licenseID),
+				Config: testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -99,11 +94,7 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_resource_grant.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -112,7 +103,7 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationResourceGrantConfig_CustomResource(environmentName, resourceName, name, licenseID),
+				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -133,11 +124,7 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_resource_grant.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -146,7 +133,7 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationResourceGrantConfig_OpenIDResource(environmentName, resourceName, name, licenseID),
+				Config: testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -157,7 +144,7 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationResourceGrantConfig_CustomResource(environmentName, resourceName, name, licenseID),
+				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -169,7 +156,7 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationResourceGrantConfig_OpenIDResource(environmentName, resourceName, name, licenseID),
+				Config: testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -183,13 +170,13 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 	})
 }
 
-func testAccApplicationResourceGrantConfig_OpenIDResource(environmentName, resourceName, name, licenseID string) string {
+func testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name 			= "%[4]s"
+		resource "pingone_application" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			name 			= "%[3]s"
 			enabled 		= true
 		  
 			oidc_options {
@@ -202,45 +189,45 @@ func testAccApplicationResourceGrantConfig_OpenIDResource(environmentName, resou
 			}
 		}
 
-		data "pingone_resource" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+		data "pingone_resource" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
 	
 			name = "openid"
 		}
 
-		data "pingone_resource_scope" "%[3]s-1" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			resource_id = "${data.pingone_resource.%[3]s.id}"
+		data "pingone_resource_scope" "%[2]s-1" {
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = data.pingone_resource.%[2]s.id
 	
 			name = "email"
 		}
 
-		data "pingone_resource_scope" "%[3]s-2" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			resource_id = "${data.pingone_resource.%[3]s.id}"
+		data "pingone_resource_scope" "%[2]s-2" {
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = data.pingone_resource.%[2]s.id
 	
 			name = "profile"
 		}
 
-		resource "pingone_application_resource_grant" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			application_id = "${pingone_application.%[3]s.id}"
+		resource "pingone_application_resource_grant" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
-			resource_id = "${data.pingone_resource.%[3]s.id}"
+			resource_id = data.pingone_resource.%[2]s.id
 			scopes = [
-				"${data.pingone_resource_scope.%[3]s-1.id}",
-				"${data.pingone_resource_scope.%[3]s-2.id}",
+				data.pingone_resource_scope.%[2]s-1.id,
+				data.pingone_resource_scope.%[2]s-2.id,
 			]
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationResourceGrantConfig_CustomResource(environmentName, resourceName, name, licenseID string) string {
+func testAccApplicationResourceGrantConfig_CustomResource(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name 			= "%[4]s"
+		resource "pingone_application" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			name 			= "%[3]s"
 			enabled 		= true
 		  
 			oidc_options {
@@ -253,42 +240,42 @@ func testAccApplicationResourceGrantConfig_CustomResource(environmentName, resou
 			}
 		}
 
-		resource "pingone_resource" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+		resource "pingone_resource" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
 
-			name = "%[4]s"
+			name = "%[3]s"
 		}
 
-		resource "pingone_resource_scope" "%[3]s-1" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			resource_id = "${pingone_resource.%[3]s.id}"
+		resource "pingone_resource_scope" "%[2]s-1" {
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = pingone_resource.%[2]s.id
 
-			name = "one"
+			name = "%[3]s-1"
 		}
 		
-		resource "pingone_resource_scope" "%[3]s-2" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			resource_id = "${pingone_resource.%[3]s.id}"
+		resource "pingone_resource_scope" "%[2]s-2" {
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = pingone_resource.%[2]s.id
 
-			name = "two"
+			name = "%[3]s-2"
 		}
 
-		resource "pingone_resource_scope" "%[3]s-3" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			resource_id = "${pingone_resource.%[3]s.id}"
+		resource "pingone_resource_scope" "%[2]s-3" {
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = pingone_resource.%[2]s.id
 
-			name = "three"
+			name = "%[3]s-3"
 		}
 
-		resource "pingone_application_resource_grant" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			application_id = "${pingone_application.%[3]s.id}"
+		resource "pingone_application_resource_grant" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
-			resource_id = "${pingone_resource.%[3]s.id}"
+			resource_id = pingone_resource.%[2]s.id
 			scopes = [
-				"${pingone_resource_scope.%[3]s-1.id}",
-				"${pingone_resource_scope.%[3]s-2.id}",
-				"${pingone_resource_scope.%[3]s-3.id}"
+				pingone_resource_scope.%[2]s-1.id,
+				pingone_resource_scope.%[2]s-2.id,
+				pingone_resource_scope.%[2]s-3.id
 			]
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
