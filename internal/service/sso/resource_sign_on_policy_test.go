@@ -193,34 +193,34 @@ func testAccSignOnPolicyConfig_NewEnv(environmentName, licenseID, resourceName, 
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
+resource "pingone_sign_on_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-			name = "%[4]s"
+  name = "%[4]s"
 
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccSignOnPolicyConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-			description = "Test description"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  name        = "%[3]s"
+  description = "Test description"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
+  name = "%[3]s"
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

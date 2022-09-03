@@ -228,94 +228,94 @@ func testAccIdentityProviderAttributeConfig_Full(resourceName, name string) stri
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			identity_provider_id = pingone_identity_provider.%[2]s.id
-			
-			name 		= "email"
-			update 		= "EMPTY_ONLY"
-			value		= "$${providerAttributes.emailAddress.value}"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider_attribute" "%[2]s" {
+  environment_id       = data.pingone_environment.general_test.id
+  identity_provider_id = pingone_identity_provider.%[2]s.id
+
+  name   = "email"
+  update = "EMPTY_ONLY"
+  value  = "$${providerAttributes.emailAddress.value}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderAttributeConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			identity_provider_id = pingone_identity_provider.%[2]s.id
-			
-			name 		= "email"
-			update 		= "ALWAYS"
-			value		= "$${providerAttributes.emailAddress.value}"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider_attribute" "%[2]s" {
+  environment_id       = data.pingone_environment.general_test.id
+  identity_provider_id = pingone_identity_provider.%[2]s.id
+
+  name   = "email"
+  update = "ALWAYS"
+  value  = "$${providerAttributes.emailAddress.value}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderAttributeConfig_Expression(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			identity_provider_id = pingone_identity_provider.%[2]s.id
-			
-			name 		= "name.given"
-			update 		= "ALWAYS"
-			value		= "$${providerAttributes.name.givenName}"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider_attribute" "%[2]s" {
+  environment_id       = data.pingone_environment.general_test.id
+  identity_provider_id = pingone_identity_provider.%[2]s.id
+
+  name   = "name.given"
+  update = "ALWAYS"
+  value  = "$${providerAttributes.name.givenName}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderAttributeConfig_ReservedAttributeName(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			identity_provider_id = pingone_identity_provider.%[2]s.id
-			
-			name 		= "account"
-			update 		= "ALWAYS"
-			value		= "$${'test'}"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider_attribute" "%[2]s" {
+  environment_id       = data.pingone_environment.general_test.id
+  identity_provider_id = pingone_identity_provider.%[2]s.id
+
+  name   = "account"
+  update = "ALWAYS"
+  value  = "$${'test'}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

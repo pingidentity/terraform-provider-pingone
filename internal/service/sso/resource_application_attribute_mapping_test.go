@@ -228,111 +228,111 @@ func testAccApplicationAttributeMappingConfig_Full(resourceName, name string) st
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			name 			= "%[3]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			application_id = pingone_application.%[2]s.id
-			
-			name 		= "email"
-			required 	= true
-			value		= "$${user.email}"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name     = "email"
+  required = true
+  value    = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationAttributeMappingConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			name 			= "%[3]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			application_id = pingone_application.%[2]s.id
-			
-			name 		= "email"
-			value		= "$${user.email}"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "email"
+  value = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationAttributeMappingConfig_Expression(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			name 			= "%[3]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			application_id = pingone_application.%[2]s.id
-			
-			name 		= "full_name"
-			value		= "$${user.name.given + ', ' + user.name.family}"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "full_name"
+  value = "$${user.name.given + ', ' + user.name.family}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			name 			= "%[3]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			application_id = pingone_application.%[2]s.id
-			
-			name 		= "aud"
-			value		= "$${'test'}"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "aud"
+  value = "$${'test'}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

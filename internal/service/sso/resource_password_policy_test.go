@@ -186,65 +186,65 @@ func testAccPasswordPolicyConfig_NewEnv(environmentName, licenseID, resourceName
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_password_policy" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-			name = "%[4]s"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+resource "pingone_password_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccPasswordPolicyConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_password_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			description = "Test description"
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-			exclude_commonly_used_passwords = true
-			exclude_profile_data = true
-			not_similar_to_current = true
+  description = "Test description"
 
-			password_history {
-				prior_password_count = 10
-				retention_days = 150
-			}
+  exclude_commonly_used_passwords = true
+  exclude_profile_data            = true
+  not_similar_to_current          = true
 
-			password_length {
-				min = 8
-				max = 255
-			}
+  password_history {
+    prior_password_count = 10
+    retention_days       = 150
+  }
 
-			password_age {
-				max = 35
-				min = 2
-			}
+  password_length {
+    min = 8
+    max = 255
+  }
 
-			account_lockout {
-				duration_seconds = 30
-				fail_count = 5
-			}
+  password_age {
+    max = 35
+    min = 2
+  }
 
-			min_characters {
-				alphabetical_uppercase = 1
-				alphabetical_lowercase = 1
-				numeric = 1
-				special_characters = 1
-			}
+  account_lockout {
+    duration_seconds = 30
+    fail_count       = 5
+  }
 
-			max_repeated_characters = 2
-			min_complexity = 7
-			min_unique_characters = 5
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  min_characters {
+    alphabetical_uppercase = 1
+    alphabetical_lowercase = 1
+    numeric                = 1
+    special_characters     = 1
+  }
+
+  max_repeated_characters = 2
+  min_complexity          = 7
+  min_unique_characters   = 5
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccPasswordPolicyConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_password_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

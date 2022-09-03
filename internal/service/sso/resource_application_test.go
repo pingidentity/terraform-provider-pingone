@@ -1200,19 +1200,19 @@ func testAccApplicationConfig_NewEnv(environmentName, licenseID, resourceName, n
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-			name = "%[4]s"
-			enabled = true
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  enabled        = true
 
-			oidc_options {
-				type                        = "WEB_APP"
-				grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
-				response_types              = ["CODE"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+  oidc_options {
+    type                        = "WEB_APP"
+    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -1220,55 +1220,55 @@ func testAccApplicationConfig_OIDCFullWeb(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_group" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-		}
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			description = "My test OIDC app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
 
-			access_control_role_type = "ADMIN_USERS_ONLY"
+  access_control_role_type = "ADMIN_USERS_ONLY"
 
-			access_control_group_options {
-				type = "ANY_GROUP"
+  access_control_group_options {
+    type = "ANY_GROUP"
 
-				groups = [
-					pingone_group.%[2]s.id
-				]
-			}
-			
-			
-			enabled = true
-
-			oidc_options {
-				type                        = "WEB_APP"
-				grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
-				response_types              = ["CODE"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-				redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
-				post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
-
-				refresh_token_duration          = 3000000
-				refresh_token_rolling_duration  = 30000000
-
-				home_page_url 		= "https://www.pingidentity.com"
-				pkce_enforcement 	= "OPTIONAL"
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
 
 
-				support_unsigned_request_object = true
+  enabled = true
 
-			}
-		}
+  oidc_options {
+    type                        = "WEB_APP"
+    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
+    post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
+
+    refresh_token_duration         = 3000000
+    refresh_token_rolling_duration = 30000000
+
+    home_page_url    = "https://www.pingidentity.com"
+    pkce_enforcement = "OPTIONAL"
+
+
+    support_unsigned_request_object = true
+
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -1276,19 +1276,19 @@ func testAccApplicationConfig_OIDCMinimalWeb(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			enabled = true
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-			oidc_options {
-				type                        = "WEB_APP"
-				grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
-				response_types              = ["CODE"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+  oidc_options {
+    type                        = "WEB_APP"
+    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -1296,59 +1296,59 @@ func testAccApplicationConfig_OIDCFullNative(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_group" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-		}
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			description = "My test OIDC app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
 
-			access_control_role_type = "ADMIN_USERS_ONLY"
+  access_control_role_type = "ADMIN_USERS_ONLY"
 
-			access_control_group_options {
-				type = "ANY_GROUP"
+  access_control_group_options {
+    type = "ANY_GROUP"
 
-				groups = [
-					pingone_group.%[2]s.id
-				]
-			}
-			
-			enabled = true
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
 
-			oidc_options {
-				type                        = "NATIVE_APP"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  enabled = true
 
-				mobile_app {
-					bundle_id 		= "com.%[2]s.bundle"
-					package_name 	= "com.%[2]s.package"
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-					passcode_refresh_seconds = 45
+    mobile_app {
+      bundle_id    = "com.%[2]s.bundle"
+      package_name = "com.%[2]s.package"
 
-					integrity_detection {
-						enabled = true
-						cache_duration {
-							amount = 30
-							units  = "HOURS"
-						}
-					}
-				}
+      passcode_refresh_seconds = 45
 
-				bundle_id 		= "com.%[2]s.bundle"
-				package_name 	= "com.%[2]s.package"
-			}
-		}
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -1356,17 +1356,17 @@ func testAccApplicationConfig_OIDCMinimalNative(resourceName, name string) strin
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			enabled = true
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-			oidc_options {
-				type                        = "NATIVE_APP"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -1374,49 +1374,49 @@ func testAccApplicationConfig_OIDCFullSPA(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_group" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-		}
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			description = "My test OIDC app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
 
-			access_control_role_type = "ADMIN_USERS_ONLY"
+  access_control_role_type = "ADMIN_USERS_ONLY"
 
-			access_control_group_options {
-				type = "ANY_GROUP"
+  access_control_group_options {
+    type = "ANY_GROUP"
 
-				groups = [
-					pingone_group.%[2]s.id
-				]
-			}
-			
-			enabled = true
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
 
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
-				post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
-				home_page_url				= "https://www.pingidentity.com"
+  enabled = true
 
-				support_unsigned_request_object = true
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
+    post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
+    home_page_url               = "https://www.pingidentity.com"
 
-			}
-		}
+    support_unsigned_request_object = true
+
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -1424,20 +1424,20 @@ func testAccApplicationConfig_OIDCMinimalSPA(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			enabled = true
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -1445,41 +1445,41 @@ func testAccApplicationConfig_OIDCFullWorker(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_group" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-		}
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			description = "My test OIDC app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
 
-			access_control_role_type = "ADMIN_USERS_ONLY"
+  access_control_role_type = "ADMIN_USERS_ONLY"
 
-			access_control_group_options {
-				type = "ANY_GROUP"
+  access_control_group_options {
+    type = "ANY_GROUP"
 
-				groups = [
-					pingone_group.%[2]s.id
-				]
-			}
-			
-			enabled = true
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
 
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
+  enabled = true
+
+  oidc_options {
+    type                        = "WORKER"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -1487,120 +1487,120 @@ func testAccApplicationConfig_OIDCMinimalWorker(resourceName, name string) strin
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			enabled = true
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
+  oidc_options {
+    type                        = "WORKER"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_SAMLFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		
-		resource "pingone_group" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-		}
 
-		resource "pingone_key" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-	
-			name = "%[3]s"
-			algorithm = "EC"
-			key_length = 256
-			signature_algorithm = "SHA224withECDSA"
-			subject_dn = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-			usage_type = "SIGNING"
-			validity_period = 365
-		}
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			description = "My test SAML app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+  name                = "%[3]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA224withECDSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
 
-			access_control_role_type = "ADMIN_USERS_ONLY"
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test SAML app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-			access_control_group_options {
-				type = "ANY_GROUP"
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
 
-				groups = [
-					pingone_group.%[2]s.id
-				]
-			}
+  access_control_role_type = "ADMIN_USERS_ONLY"
 
-			enabled = true
+  access_control_group_options {
+    type = "ANY_GROUP"
 
-			saml_options {
-				type = "WEB_APP"
-				acs_urls = ["https://pingidentity.com", "https://www.pingidentity.com"]
-				assertion_duration = 3600
-				sp_entity_id = "sp:entity:%[2]s"
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
 
-				assertion_signed_enabled = false
-				idp_signing_key_id = pingone_key.%[2]s.id
-				nameid_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-				response_is_signed = true
-				slo_binding = "HTTP_REDIRECT"
-				slo_endpoint = "https://www.pingidentity.com"
-				slo_response_endpoint = "https://www.pingidentity.com"
+  enabled = true
 
-				// sp_verification_certificate_ids = []
+  saml_options {
+    type               = "WEB_APP"
+    acs_urls           = ["https://pingidentity.com", "https://www.pingidentity.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[2]s"
 
-			}
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+    assertion_signed_enabled = false
+    idp_signing_key_id       = pingone_key.%[2]s.id
+    nameid_format            = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed       = true
+    slo_binding              = "HTTP_REDIRECT"
+    slo_endpoint             = "https://www.pingidentity.com"
+    slo_response_endpoint    = "https://www.pingidentity.com"
+
+    // sp_verification_certificate_ids = []
+
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_SAMLMinimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			enabled = true
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-			saml_options {
-				acs_urls = ["https://pingidentity.com"]
-				assertion_duration = 3600
-				sp_entity_id = "sp:entity:%[2]s"
-			}
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  saml_options {
+    acs_urls           = ["https://pingidentity.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[2]s"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_Enabled(resourceName, name string, enabled bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			enabled = %[4]t
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = %[4]t
 
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
 }
 

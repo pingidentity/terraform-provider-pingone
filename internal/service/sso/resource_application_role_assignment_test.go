@@ -200,91 +200,91 @@ func testAccRoleAssignmentApplicationConfig_Population(resourceName, name, roleN
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			name 			= "%[3]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		data "pingone_role" "%[2]s" {
-			name = "%[4]s"
-		}
+  oidc_options {
+    type                        = "WORKER"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
 
-		resource "pingone_application_role_assignment" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			application_id = pingone_application.%[2]s.id
-			role_id = data.pingone_role.%[2]s.id
+data "pingone_role" "%[2]s" {
+  name = "%[4]s"
+}
 
-			scope_population_id = pingone_population.%[2]s.id
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
+resource "pingone_application_role_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+  role_id        = data.pingone_role.%[2]s.id
+
+  scope_population_id = pingone_population.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
 }
 
 func testAccRoleAssignmentApplicationConfig_Organisation(resourceName, name, roleName, organisationID string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			name 			= "%[3]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		data "pingone_role" "%[2]s" {
-			name = "%[4]s"
-		}
+  oidc_options {
+    type                        = "WORKER"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
 
-		resource "pingone_application_role_assignment" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			application_id = pingone_application.%[2]s.id
-			role_id = data.pingone_role.%[2]s.id
+data "pingone_role" "%[2]s" {
+  name = "%[4]s"
+}
 
-			scope_organization_id = "%[5]s"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName, organisationID)
+resource "pingone_application_role_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+  role_id        = data.pingone_role.%[2]s.id
+
+  scope_organization_id = "%[5]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName, organisationID)
 }
 
 func testAccRoleAssignmentApplicationConfig_Environment(resourceName, name, roleName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			name 			= "%[3]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		data "pingone_role" "%[2]s" {
-			name = "%[4]s"
-		}
+  oidc_options {
+    type                        = "WORKER"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
 
-		resource "pingone_application_role_assignment" "%[2]s" {
-			environment_id  = data.pingone_environment.general_test.id
-			application_id = pingone_application.%[2]s.id
-			role_id = data.pingone_role.%[2]s.id
+data "pingone_role" "%[2]s" {
+  name = "%[4]s"
+}
 
-			scope_environment_id = data.pingone_environment.general_test.id
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
+resource "pingone_application_role_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+  role_id        = data.pingone_role.%[2]s.id
+
+  scope_environment_id = data.pingone_environment.general_test.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
 }

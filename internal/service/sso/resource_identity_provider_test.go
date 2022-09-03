@@ -1058,15 +1058,15 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 func testAccIdentityProviderConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-			name = "%[4]s"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -1074,398 +1074,398 @@ func testAccIdentityProviderConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			description = "My test identity provider"
-			enabled = true
-			registration_population_id = pingone_population.%[2]s.id
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id             = data.pingone_environment.general_test.id
+  name                       = "%[3]s"
+  description                = "My test identity provider"
+  enabled                    = true
+  registration_population_id = pingone_population.%[2]s.id
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
 
-			// login_button_icon {
-				// 	id = "1"
-				// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-				// }
+  // login_button_icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
 
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Facebook1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			facebook {
-				app_id = "dummyappid1"
-				app_secret = "dummyappsecret1"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  facebook {
+    app_id     = "dummyappid1"
+    app_secret = "dummyappsecret1"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Facebook2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			facebook {
-				app_id = "dummyappid2"
-				app_secret = "dummyappsecret2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  facebook {
+    app_id     = "dummyappid2"
+    app_secret = "dummyappsecret2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Google1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			google {
-				client_id = "dummyclientid1"
-				client_secret = "dummyclientsecret1"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  google {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Google2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			google {
-				client_id = "dummyclientid2"
-				client_secret = "dummyclientsecret2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  google {
+    client_id     = "dummyclientid2"
+    client_secret = "dummyclientsecret2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_LinkedIn1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			linkedin {
-				client_id = "dummyclientid1"
-				client_secret = "dummyclientsecret1"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  linkedin {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_LinkedIn2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			linkedin {
-				client_id = "dummyclientid2"
-				client_secret = "dummyclientsecret2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  linkedin {
+    client_id     = "dummyclientid2"
+    client_secret = "dummyclientsecret2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Yahoo1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			yahoo {
-				client_id = "dummyclientid1"
-				client_secret = "dummyclientsecret1"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  yahoo {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Yahoo2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			yahoo {
-				client_id = "dummyclientid2"
-				client_secret = "dummyclientsecret2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  yahoo {
+    client_id     = "dummyclientid2"
+    client_secret = "dummyclientsecret2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Amazon1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			amazon {
-				client_id = "dummyclientid1"
-				client_secret = "dummyclientsecret1"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  amazon {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Amazon2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			amazon {
-				client_id = "dummyclientid2"
-				client_secret = "dummyclientsecret2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  amazon {
+    client_id     = "dummyclientid2"
+    client_secret = "dummyclientsecret2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Twitter1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			twitter {
-				client_id = "dummyclientid1"
-				client_secret = "dummyclientsecret1"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  twitter {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Twitter2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			twitter {
-				client_id = "dummyclientid2"
-				client_secret = "dummyclientsecret2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  twitter {
+    client_id     = "dummyclientid2"
+    client_secret = "dummyclientsecret2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Apple1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			apple {
-				client_id = "dummyclientid1"
-				client_secret_signing_key = "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey1-----END PRIVATE KEY-----"
-				key_id = "dummykeyi1"
-				team_id = "dummyteam1"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  apple {
+    client_id                 = "dummyclientid1"
+    client_secret_signing_key = "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey1-----END PRIVATE KEY-----"
+    key_id                    = "dummykeyi1"
+    team_id                   = "dummyteam1"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Apple2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			apple {
-				client_id = "dummyclientid2"
-				client_secret_signing_key = "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey2-----END PRIVATE KEY-----"
-				key_id = "dummykeyi2"
-				team_id = "dummyteam2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  apple {
+    client_id                 = "dummyclientid2"
+    client_secret_signing_key = "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey2-----END PRIVATE KEY-----"
+    key_id                    = "dummykeyi2"
+    team_id                   = "dummyteam2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Paypal1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			paypal {
-				client_id = "dummyclientid1"
-				client_secret = "dummyclientsecret1"
-				client_environment = "sandbox"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  paypal {
+    client_id          = "dummyclientid1"
+    client_secret      = "dummyclientsecret1"
+    client_environment = "sandbox"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Paypal2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			paypal {
-				client_id = "dummyclientid2"
-				client_secret = "dummyclientsecret2"
-				client_environment = "live"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  paypal {
+    client_id          = "dummyclientid2"
+    client_secret      = "dummyclientsecret2"
+    client_environment = "live"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Microsoft1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			microsoft {
-				client_id = "dummyclientid1"
-				client_secret = "dummyclientsecret1"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  microsoft {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Microsoft2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			microsoft {
-				client_id = "dummyclientid2"
-				client_secret = "dummyclientsecret2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  microsoft {
+    client_id     = "dummyclientid2"
+    client_secret = "dummyclientsecret2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Github1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			github {
-				client_id = "dummyclientid1"
-				client_secret = "dummyclientsecret1"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  github {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Github2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			github {
-				client_id = "dummyclientid2"
-				client_secret = "dummyclientsecret2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  github {
+    client_id     = "dummyclientid2"
+    client_secret = "dummyclientsecret2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_OIDCFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			openid_connect {
-				authorization_endpoint = "https://www.pingidentity.com/authz"
-				client_id = "dummyclientid1"
-				client_secret = "dummyclientsecret1"
-				discovery_endpoint = "https://www.pingidentity.com/discovery"
-				issuer = "https://www.pingidentity.com/issuer"
-				jwks_endpoint = "https://www.pingidentity.com/jwks"
-				scopes = ["openid", "scope1", "scope2"]
-				token_endpoint = "https://www.pingidentity.com/token"
-				token_endpoint_auth_method = "CLIENT_SECRET_POST"
-				userinfo_endpoint = "https://www.pingidentity.com/userinfo"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  openid_connect {
+    authorization_endpoint     = "https://www.pingidentity.com/authz"
+    client_id                  = "dummyclientid1"
+    client_secret              = "dummyclientsecret1"
+    discovery_endpoint         = "https://www.pingidentity.com/discovery"
+    issuer                     = "https://www.pingidentity.com/issuer"
+    jwks_endpoint              = "https://www.pingidentity.com/jwks"
+    scopes                     = ["openid", "scope1", "scope2"]
+    token_endpoint             = "https://www.pingidentity.com/token"
+    token_endpoint_auth_method = "CLIENT_SECRET_POST"
+    userinfo_endpoint          = "https://www.pingidentity.com/userinfo"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccIdentityProviderConfig_OIDCMinimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			openid_connect {
-				authorization_endpoint = "https://www.pingidentity.com/authz2"
-				client_id = "dummyclientid2"
-				client_secret = "dummyclientsecret2"
-				issuer = "https://www.pingidentity.com/issuer2"
-				jwks_endpoint = "https://www.pingidentity.com/jwks2"
-				scopes = ["openid", "scope3", "scope4"]
-				token_endpoint = "https://www.pingidentity.com/token2"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  openid_connect {
+    authorization_endpoint = "https://www.pingidentity.com/authz2"
+    client_id              = "dummyclientid2"
+    client_secret          = "dummyclientsecret2"
+    issuer                 = "https://www.pingidentity.com/issuer2"
+    jwks_endpoint          = "https://www.pingidentity.com/jwks2"
+    scopes                 = ["openid", "scope3", "scope4"]
+    token_endpoint         = "https://www.pingidentity.com/token2"
+  }
+}
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

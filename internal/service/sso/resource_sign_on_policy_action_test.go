@@ -1029,55 +1029,55 @@ func testAccSignOnPolicyActionConfig_LoginFullNoExt(resourceName, name string) s
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_identity_provider" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s-1"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
 
-		resource "pingone_identity_provider" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s-2"
-			
-			facebook {
-				app_id = "testclientid"
-				app_secret = "testclientsecret"
-			}
-		}
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_identity_provider" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
 
-			name = "%[3]s"
-		}
+  facebook {
+    app_id     = "testclientid"
+    app_secret = "testclientsecret"
+  }
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			priority = 1
+  name = "%[3]s"
+}
 
-			registration_local_population_id = pingone_population.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			social_provider_ids = [
-				pingone_identity_provider.%[2]s-2.id,
-				pingone_identity_provider.%[2]s-1.id
-			]
+  priority = 1
 
-			login {
-				recovery_enabled = false // we set this to false because the calculated default from the api is true
-			}
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  registration_local_population_id = pingone_population.%[2]s.id
+
+  social_provider_ids = [
+    pingone_identity_provider.%[2]s-2.id,
+    pingone_identity_provider.%[2]s-1.id
+  ]
+
+  login {
+    recovery_enabled = false // we set this to false because the calculated default from the api is true
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_LoginFullWithExt(resourceName, name string) string {
@@ -1085,49 +1085,49 @@ func testAccSignOnPolicyActionConfig_LoginFullWithExt(resourceName, name string)
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s-1"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
 
-		resource "pingone_identity_provider" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s-2"
-			
-			facebook {
-				app_id = "testclientid"
-				app_secret = "testclientsecret"
-			}
-		}
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_identity_provider" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
 
-			name = "%[3]s"
-		}
+  facebook {
+    app_id     = "testclientid"
+    app_secret = "testclientsecret"
+  }
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			priority = 1
+  name = "%[3]s"
+}
 
-			registration_external_href = "https://www.pingidentity.com"
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			social_provider_ids = [
-				pingone_identity_provider.%[2]s-2.id,
-				pingone_identity_provider.%[2]s-1.id
-			]
+  priority = 1
 
-			login {
-				recovery_enabled = false // we set this to false because the calculated default from the api is true
-			}
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  registration_external_href = "https://www.pingidentity.com"
+
+  social_provider_ids = [
+    pingone_identity_provider.%[2]s-2.id,
+    pingone_identity_provider.%[2]s-1.id
+  ]
+
+  login {
+    recovery_enabled = false // we set this to false because the calculated default from the api is true
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name string) string {
@@ -1135,20 +1135,20 @@ func testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name string) str
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			login {}
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  login {}
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 // TODO: idp
@@ -1157,53 +1157,53 @@ func testAccSignOnPolicyActionConfig_IDFirstFullWithExt(resourceName, name strin
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s-1"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
 
-		resource "pingone_identity_provider" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s-2"
-			
-			facebook {
-				app_id = "testclientid"
-				app_secret = "testclientsecret"
-			}
-		}
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_identity_provider" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
 
-			name = "%[3]s"
-		}
+  facebook {
+    app_id     = "testclientid"
+    app_secret = "testclientsecret"
+  }
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			priority = 1
+  name = "%[3]s"
+}
 
-			registration_external_href = "https://www.pingidentity.com"
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			social_provider_ids = [
-				pingone_identity_provider.%[2]s-2.id,
-				pingone_identity_provider.%[2]s-1.id
-			]
+  priority = 1
 
-			identifier_first {
-				recovery_enabled = false // we set this to false because the calculated default from the api is true
-				discovery_rule {
-					attribute_contains_text = "domain.com"
-					identity_provider_id =pingone_identity_provider.%[2]s-1.id
-				}
-			}
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  registration_external_href = "https://www.pingidentity.com"
+
+  social_provider_ids = [
+    pingone_identity_provider.%[2]s-2.id,
+    pingone_identity_provider.%[2]s-1.id
+  ]
+
+  identifier_first {
+    recovery_enabled = false // we set this to false because the calculated default from the api is true
+    discovery_rule {
+      attribute_contains_text = "domain.com"
+      identity_provider_id    = pingone_identity_provider.%[2]s-1.id
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_IDFirstFullNoExt(resourceName, name string) string {
@@ -1211,59 +1211,59 @@ func testAccSignOnPolicyActionConfig_IDFirstFullNoExt(resourceName, name string)
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_identity_provider" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s-1"
-			
-			google {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
-			}
-		}
+resource "pingone_identity_provider" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
 
-		resource "pingone_identity_provider" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s-2"
-			
-			facebook {
-				app_id = "testclientid"
-				app_secret = "testclientsecret"
-			}
-		}
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_identity_provider" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
 
-			name = "%[3]s"
-		}
+  facebook {
+    app_id     = "testclientid"
+    app_secret = "testclientsecret"
+  }
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			priority = 1
+  name = "%[3]s"
+}
 
-			registration_local_population_id = pingone_population.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			social_provider_ids = [
-				pingone_identity_provider.%[2]s-2.id,
-				pingone_identity_provider.%[2]s-1.id
-			]
+  priority = 1
 
-			identifier_first {
-				recovery_enabled = false // we set this to false because the calculated default from the api is true
-				discovery_rule {
-					attribute_contains_text = "pingidentity.com"
-					identity_provider_id =pingone_identity_provider.%[2]s-2.id
-			   }
-			}
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  registration_local_population_id = pingone_population.%[2]s.id
+
+  social_provider_ids = [
+    pingone_identity_provider.%[2]s-2.id,
+    pingone_identity_provider.%[2]s-1.id
+  ]
+
+  identifier_first {
+    recovery_enabled = false // we set this to false because the calculated default from the api is true
+    discovery_rule {
+      attribute_contains_text = "pingidentity.com"
+      identity_provider_id    = pingone_identity_provider.%[2]s-2.id
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_IDFirstMinimal(resourceName, name string) string {
@@ -1271,21 +1271,21 @@ func testAccSignOnPolicyActionConfig_IDFirstMinimal(resourceName, name string) s
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			identifier_first {}
+  identifier_first {}
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 // TODO: MFA device policy data source
@@ -1299,91 +1299,91 @@ func testAccSignOnPolicyActionConfig_IDPFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			openid_connect {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-				authorization_endpoint = "https://pingidentity.com/authz"
-				issuer = "https://pingidentity.com/issuer"
-				jwks_endpoint = "https://pingidentity.com/jwks"
-				scopes = ["openid", "profile"]
-				token_endpoint = "https://pingidentity.com/token"
-			}
-		}
+  openid_connect {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+    authorization_endpoint = "https://pingidentity.com/authz"
+    issuer                 = "https://pingidentity.com/issuer"
+    jwks_endpoint          = "https://pingidentity.com/jwks"
+    scopes                 = ["openid", "profile"]
+    token_endpoint         = "https://pingidentity.com/token"
+  }
+}
 
-			name = "%[3]s"
-		}
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+  name = "%[3]s"
+}
 
-			priority = 1
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			registration_local_population_id = pingone_population.%[2]s.id
+  priority = 1
 
-			registration_confirm_user_attributes = true
+  registration_local_population_id = pingone_population.%[2]s.id
 
-			identity_provider {
-				identity_provider_id = pingone_identity_provider.%[2]s.id
+  registration_confirm_user_attributes = true
 
-				acr_values        = "MFA"
-				pass_user_context = true
-			}
-			
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  identity_provider {
+    identity_provider_id = pingone_identity_provider.%[2]s.id
+
+    acr_values        = "MFA"
+    pass_user_context = true
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_IDPMinimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name = "%[3]s"
-			
-			openid_connect {
-				client_id = "testclientid"
-				client_secret = "testclientsecret"
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-				authorization_endpoint = "https://pingidentity.com/authz"
-				issuer = "https://pingidentity.com/issuer"
-				jwks_endpoint = "https://pingidentity.com/jwks"
-				scopes = ["openid", "profile"]
-				token_endpoint = "https://pingidentity.com/token"
-			}
-		}
+  openid_connect {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+    authorization_endpoint = "https://pingidentity.com/authz"
+    issuer                 = "https://pingidentity.com/issuer"
+    jwks_endpoint          = "https://pingidentity.com/jwks"
+    scopes                 = ["openid", "profile"]
+    token_endpoint         = "https://pingidentity.com/token"
+  }
+}
 
-			name = "%[3]s"
-		}
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+  name = "%[3]s"
+}
 
-			priority = 1
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			identity_provider {
-				identity_provider_id = pingone_identity_provider.%[2]s.id
-			}
-			
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  priority = 1
+
+  identity_provider {
+    identity_provider_id = pingone_identity_provider.%[2]s.id
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 // TODO: agreements
@@ -1398,40 +1398,40 @@ func testAccSignOnPolicyActionConfig_ProgressiveProfilingFull(resourceName, name
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			progressive_profiling {
-				prevent_multiple_prompts_per_flow = false // default is true
-				prompt_interval_seconds = 5 // default is 7776000
-				prompt_text = "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo."
+  progressive_profiling {
+    prevent_multiple_prompts_per_flow = false // default is true
+    prompt_interval_seconds           = 5     // default is 7776000
+    prompt_text                       = "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo."
 
-				attribute {
-					name = "name.given"
-					required = true
-				}
+    attribute {
+      name     = "name.given"
+      required = true
+    }
 
-				attribute {
-					name = "name.family"
-					required = true
-				}
+    attribute {
+      name     = "name.family"
+      required = true
+    }
 
-				attribute {
-					name = "address.postalCode"
-					required = false
-				}
-			}
-			
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+    attribute {
+      name     = "address.postalCode"
+      required = false
+    }
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_ProgressiveProfilingMinimal(resourceName, name string) string {
@@ -1439,32 +1439,32 @@ func testAccSignOnPolicyActionConfig_ProgressiveProfilingMinimal(resourceName, n
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			progressive_profiling {
-				prompt_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+  progressive_profiling {
+    prompt_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
-				attribute {
-					name = "email"
-					required = true
-				}
+    attribute {
+      name     = "email"
+      required = true
+    }
 
-				attribute {
-					name = "address.postalCode"
-					required = false
-				}
-			}
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+    attribute {
+      name     = "address.postalCode"
+      required = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_Multiple1(resourceName, name string) string {
@@ -1472,53 +1472,53 @@ func testAccSignOnPolicyActionConfig_Multiple1(resourceName, name string) string
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s-1" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s-1" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			identifier_first {}
+  identifier_first {}
 
-		}
-		
-		resource "pingone_sign_on_policy_action" "%[2]s-2" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+}
 
-			priority = 2
+resource "pingone_sign_on_policy_action" "%[2]s-2" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			login {}
+  priority = 2
 
-		}
-		
-		resource "pingone_sign_on_policy_action" "%[2]s-3" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+  login {}
 
-			priority = 3
+}
 
-			progressive_profiling {
-				prompt_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+resource "pingone_sign_on_policy_action" "%[2]s-3" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-				attribute {
-					name = "email"
-					required = true
-				}
+  priority = 3
 
-				attribute {
-					name = "address.postalCode"
-					required = false
-				}
-			}
+  progressive_profiling {
+    prompt_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+    attribute {
+      name     = "email"
+      required = true
+    }
+
+    attribute {
+      name     = "address.postalCode"
+      required = false
+    }
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_Multiple2(resourceName, name string) string {
@@ -1526,43 +1526,43 @@ func testAccSignOnPolicyActionConfig_Multiple2(resourceName, name string) string
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s-1" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s-1" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			login {}
+  login {}
 
-		}
-		
-		resource "pingone_sign_on_policy_action" "%[2]s-2" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+}
 
-			priority = 2
+resource "pingone_sign_on_policy_action" "%[2]s-2" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			progressive_profiling {
-				prompt_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+  priority = 2
 
-				attribute {
-					name = "email"
-					required = true
-				}
+  progressive_profiling {
+    prompt_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
-				attribute {
-					name = "address.postalCode"
-					required = false
-				}
-			}
+    attribute {
+      name     = "email"
+      required = true
+    }
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+    attribute {
+      name     = "address.postalCode"
+      required = false
+    }
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 // func testAccSignOnPolicyActionConfig_ConditionsDeclaredNotDefined(resourceName, name string) string {
@@ -1594,25 +1594,25 @@ func testAccSignOnPolicyActionConfig_ConditionsSignOnOlderThanSingle(resourceNam
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+  conditions {
+    last_sign_on_older_than_seconds = 3600
+  }
 
-			login {}
+  login {}
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulation(resourceName, name string) string {
@@ -1620,47 +1620,47 @@ func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulation(resourceName, 
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s-id" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+  conditions {
+    last_sign_on_older_than_seconds = 3600
+  }
 
-			identifier_first {}
+  identifier_first {}
 
-		}
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 2
+  priority = 2
 
-			conditions {
-				user_is_member_of_any_population_id = [
-					pingone_population.%[2]s.id
-				]
-			}
+  conditions {
+    user_is_member_of_any_population_id = [
+      pingone_population.%[2]s.id
+    ]
+  }
 
-			login {}
+  login {}
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulations(resourceName, name string) string {
@@ -1668,61 +1668,61 @@ func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulations(resourceName,
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_population" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s-1"
-		}
+  name = "%[3]s-1"
+}
 
-		resource "pingone_population" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s-2"
-		}
+  name = "%[3]s-2"
+}
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s-id" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+  conditions {
+    last_sign_on_older_than_seconds = 3600
+  }
 
-			identifier_first {}
+  identifier_first {}
 
-		}
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 2
+  priority = 2
 
-			conditions {
-				user_is_member_of_any_population_id = [
-					pingone_population.%[2]s.id,
-					pingone_population.%[2]s-1.id,
-					pingone_population.%[2]s-2.id
-				]
-			}
+  conditions {
+    user_is_member_of_any_population_id = [
+      pingone_population.%[2]s.id,
+      pingone_population.%[2]s-1.id,
+      pingone_population.%[2]s-2.id
+    ]
+  }
 
-			login {}
+  login {}
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingle(resourceName, name string) string {
@@ -1730,42 +1730,42 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingle(resourc
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s-id" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+  conditions {
+    last_sign_on_older_than_seconds = 3600
+  }
 
-			identifier_first {}
+  identifier_first {}
 
-		}
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 2
+  priority = 2
 
-			conditions {
-				user_attribute_equals {
-					attribute_reference = "$${user.lifecycle.status}"
-					value 				= "ACCOUNT_OK"
-				}
-			}
+  conditions {
+    user_attribute_equals {
+      attribute_reference = "$${user.lifecycle.status}"
+      value               = "ACCOUNT_OK"
+    }
+  }
 
-			login {}
+  login {}
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resourceName, name string) string {
@@ -1773,52 +1773,52 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s-id" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+  conditions {
+    last_sign_on_older_than_seconds = 3600
+  }
 
-			identifier_first {}
+  identifier_first {}
 
-		}
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 2
+  priority = 2
 
-			conditions {
-				user_attribute_equals {
-					attribute_reference = "$${user.name.given}"
-					value 				= "Bruce"
-				}
+  conditions {
+    user_attribute_equals {
+      attribute_reference = "$${user.name.given}"
+      value               = "Bruce"
+    }
 
-				user_attribute_equals {
-					attribute_reference = "$${user.name.family}"
-					value 				= "Wayne"
-				}
+    user_attribute_equals {
+      attribute_reference = "$${user.name.family}"
+      value               = "Wayne"
+    }
 
-				user_attribute_equals {
-					attribute_reference = "$${user.lifecycle.status}"
-					value 				= "ACCOUNT_OK"
-				}
-			}
+    user_attribute_equals {
+      attribute_reference = "$${user.lifecycle.status}"
+      value               = "ACCOUNT_OK"
+    }
+  }
 
-			login {}
+  login {}
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 // func testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(resourceName, name string) string {
@@ -2076,59 +2076,59 @@ func testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(resourceName, name
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-			name = "%[3]s"
-		}
+  name = "%[3]s"
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s-id" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 1
+  priority = 1
 
-			conditions {
-				last_sign_on_older_than_seconds = 3600
-			}
+  conditions {
+    last_sign_on_older_than_seconds = 3600
+  }
 
-			identifier_first {}
+  identifier_first {}
 
-		}
+}
 
-		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = data.pingone_environment.general_test.id
-			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-			priority = 2
+  priority = 2
 
-			conditions {
+  conditions {
 
-				user_is_member_of_any_population_id = [
-					pingone_population.%[2]s.id
-				]
+    user_is_member_of_any_population_id = [
+      pingone_population.%[2]s.id
+    ]
 
-				user_attribute_equals {
-					attribute_reference = "$${user.name.given}"
-					value 				= "Bruce"
-				}
+    user_attribute_equals {
+      attribute_reference = "$${user.name.given}"
+      value               = "Bruce"
+    }
 
-				user_attribute_equals {
-					attribute_reference = "$${user.name.family}"
-					value 				= "Wayne"
-				}
+    user_attribute_equals {
+      attribute_reference = "$${user.name.family}"
+      value               = "Wayne"
+    }
 
-			}
+  }
 
-			login {}
+  login {}
 
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 // func testAccSignOnPolicyActionConfig_ConditionsCompoundFull(resourceName, name string) string {

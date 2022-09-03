@@ -76,7 +76,7 @@ func testAccRoleDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		data "pingone_role" "%[2]s" {
-			name = "%[3]s"
-		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+data "pingone_role" "%[2]s" {
+  name = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
