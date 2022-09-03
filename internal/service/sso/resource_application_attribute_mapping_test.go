@@ -229,7 +229,7 @@ func testAccApplicationAttributeMappingConfig_Full(resourceName, name string) st
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id  = "${data.pingone_environment.general_test.id}"
+			environment_id  = data.pingone_environment.general_test.id
 			name 			= "%[3]s"
 			enabled 		= true
 		  
@@ -244,8 +244,8 @@ func testAccApplicationAttributeMappingConfig_Full(resourceName, name string) st
 		}
 
 		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			application_id = "${pingone_application.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
 			name 		= "email"
 			required 	= true
@@ -258,7 +258,7 @@ func testAccApplicationAttributeMappingConfig_Minimal(resourceName, name string)
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id  = "${data.pingone_environment.general_test.id}"
+			environment_id  = data.pingone_environment.general_test.id
 			name 			= "%[3]s"
 			enabled 		= true
 		  
@@ -273,8 +273,8 @@ func testAccApplicationAttributeMappingConfig_Minimal(resourceName, name string)
 		}
 
 		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			application_id = "${pingone_application.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
 			name 		= "email"
 			value		= "$${user.email}"
@@ -286,7 +286,7 @@ func testAccApplicationAttributeMappingConfig_Expression(resourceName, name stri
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id  = "${data.pingone_environment.general_test.id}"
+			environment_id  = data.pingone_environment.general_test.id
 			name 			= "%[3]s"
 			enabled 		= true
 		  
@@ -301,8 +301,8 @@ func testAccApplicationAttributeMappingConfig_Expression(resourceName, name stri
 		}
 
 		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			application_id = "${pingone_application.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
 			name 		= "full_name"
 			value		= "$${user.name.given + ', ' + user.name.family}"
@@ -314,7 +314,7 @@ func testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id  = "${data.pingone_environment.general_test.id}"
+			environment_id  = data.pingone_environment.general_test.id
 			name 			= "%[3]s"
 			enabled 		= true
 		  
@@ -329,8 +329,8 @@ func testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName
 		}
 
 		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			application_id = "${pingone_application.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
 			name 		= "aud"
 			value		= "$${'test'}"

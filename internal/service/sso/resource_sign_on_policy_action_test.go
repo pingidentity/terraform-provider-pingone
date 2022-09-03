@@ -1030,13 +1030,13 @@ func testAccSignOnPolicyActionConfig_LoginFullNoExt(resourceName, name string) s
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_identity_provider" "%[2]s-1" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s-1"
 			
 			google {
@@ -1046,7 +1046,7 @@ func testAccSignOnPolicyActionConfig_LoginFullNoExt(resourceName, name string) s
 		}
 
 		resource "pingone_identity_provider" "%[2]s-2" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s-2"
 			
 			facebook {
@@ -1056,22 +1056,22 @@ func testAccSignOnPolicyActionConfig_LoginFullNoExt(resourceName, name string) s
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
-			registration_local_population_id = "${pingone_population.%[2]s.id}"
+			registration_local_population_id = pingone_population.%[2]s.id
 
 			social_provider_ids = [
-				"${pingone_identity_provider.%[2]s-2.id}",
-				"${pingone_identity_provider.%[2]s-1.id}"
+				pingone_identity_provider.%[2]s-2.id,
+				pingone_identity_provider.%[2]s-1.id
 			]
 
 			login {
@@ -1086,7 +1086,7 @@ func testAccSignOnPolicyActionConfig_LoginFullWithExt(resourceName, name string)
 		%[1]s
 
 		resource "pingone_identity_provider" "%[2]s-1" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s-1"
 			
 			google {
@@ -1096,7 +1096,7 @@ func testAccSignOnPolicyActionConfig_LoginFullWithExt(resourceName, name string)
 		}
 
 		resource "pingone_identity_provider" "%[2]s-2" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s-2"
 			
 			facebook {
@@ -1106,22 +1106,22 @@ func testAccSignOnPolicyActionConfig_LoginFullWithExt(resourceName, name string)
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
 			registration_external_href = "https://www.pingidentity.com"
 
 			social_provider_ids = [
-				"${pingone_identity_provider.%[2]s-2.id}",
-				"${pingone_identity_provider.%[2]s-1.id}"
+				pingone_identity_provider.%[2]s-2.id,
+				pingone_identity_provider.%[2]s-1.id
 			]
 
 			login {
@@ -1136,14 +1136,14 @@ func testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name string) str
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1158,7 +1158,7 @@ func testAccSignOnPolicyActionConfig_IDFirstFullWithExt(resourceName, name strin
 		%[1]s
 
 		resource "pingone_identity_provider" "%[2]s-1" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s-1"
 			
 			google {
@@ -1168,7 +1168,7 @@ func testAccSignOnPolicyActionConfig_IDFirstFullWithExt(resourceName, name strin
 		}
 
 		resource "pingone_identity_provider" "%[2]s-2" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s-2"
 			
 			facebook {
@@ -1178,29 +1178,29 @@ func testAccSignOnPolicyActionConfig_IDFirstFullWithExt(resourceName, name strin
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
 			registration_external_href = "https://www.pingidentity.com"
 
 			social_provider_ids = [
-				"${pingone_identity_provider.%[2]s-2.id}",
-				"${pingone_identity_provider.%[2]s-1.id}"
+				pingone_identity_provider.%[2]s-2.id,
+				pingone_identity_provider.%[2]s-1.id
 			]
 
 			identifier_first {
 				recovery_enabled = false // we set this to false because the calculated default from the api is true
 				discovery_rule {
 					attribute_contains_text = "domain.com"
-					identity_provider_id ="${pingone_identity_provider.%[2]s-1.id}"
+					identity_provider_id =pingone_identity_provider.%[2]s-1.id
 				}
 			}
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -1212,13 +1212,13 @@ func testAccSignOnPolicyActionConfig_IDFirstFullNoExt(resourceName, name string)
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_identity_provider" "%[2]s-1" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s-1"
 			
 			google {
@@ -1228,7 +1228,7 @@ func testAccSignOnPolicyActionConfig_IDFirstFullNoExt(resourceName, name string)
 		}
 
 		resource "pingone_identity_provider" "%[2]s-2" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s-2"
 			
 			facebook {
@@ -1238,29 +1238,29 @@ func testAccSignOnPolicyActionConfig_IDFirstFullNoExt(resourceName, name string)
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
-			registration_local_population_id = "${pingone_population.%[2]s.id}"
+			registration_local_population_id = pingone_population.%[2]s.id
 
 			social_provider_ids = [
-				"${pingone_identity_provider.%[2]s-2.id}",
-				"${pingone_identity_provider.%[2]s-1.id}"
+				pingone_identity_provider.%[2]s-2.id,
+				pingone_identity_provider.%[2]s-1.id
 			]
 
 			identifier_first {
 				recovery_enabled = false // we set this to false because the calculated default from the api is true
 				discovery_rule {
 					attribute_contains_text = "pingidentity.com"
-					identity_provider_id ="${pingone_identity_provider.%[2]s-2.id}"
+					identity_provider_id =pingone_identity_provider.%[2]s-2.id
 			   }
 			}
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -1272,14 +1272,14 @@ func testAccSignOnPolicyActionConfig_IDFirstMinimal(resourceName, name string) s
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1300,13 +1300,13 @@ func testAccSignOnPolicyActionConfig_IDPFull(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			openid_connect {
@@ -1322,23 +1322,23 @@ func testAccSignOnPolicyActionConfig_IDPFull(resourceName, name string) string {
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
-			registration_local_population_id = "${pingone_population.%[2]s.id}"
+			registration_local_population_id = pingone_population.%[2]s.id
 
 			registration_confirm_user_attributes = true
 
 			identity_provider {
-				identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+				identity_provider_id = pingone_identity_provider.%[2]s.id
 
 				acr_values        = "MFA"
 				pass_user_context = true
@@ -1352,7 +1352,7 @@ func testAccSignOnPolicyActionConfig_IDPMinimal(resourceName, name string) strin
 		%[1]s
 
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			openid_connect {
@@ -1368,19 +1368,19 @@ func testAccSignOnPolicyActionConfig_IDPMinimal(resourceName, name string) strin
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
 			identity_provider {
-				identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+				identity_provider_id = pingone_identity_provider.%[2]s.id
 			}
 			
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -1399,14 +1399,14 @@ func testAccSignOnPolicyActionConfig_ProgressiveProfilingFull(resourceName, name
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1440,14 +1440,14 @@ func testAccSignOnPolicyActionConfig_ProgressiveProfilingMinimal(resourceName, n
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1473,14 +1473,14 @@ func testAccSignOnPolicyActionConfig_Multiple1(resourceName, name string) string
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s-1" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1489,8 +1489,8 @@ func testAccSignOnPolicyActionConfig_Multiple1(resourceName, name string) string
 		}
 		
 		resource "pingone_sign_on_policy_action" "%[2]s-2" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 2
 
@@ -1499,8 +1499,8 @@ func testAccSignOnPolicyActionConfig_Multiple1(resourceName, name string) string
 		}
 		
 		resource "pingone_sign_on_policy_action" "%[2]s-3" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 3
 
@@ -1527,14 +1527,14 @@ func testAccSignOnPolicyActionConfig_Multiple2(resourceName, name string) string
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s-1" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1543,8 +1543,8 @@ func testAccSignOnPolicyActionConfig_Multiple2(resourceName, name string) string
 		}
 		
 		resource "pingone_sign_on_policy_action" "%[2]s-2" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 2
 
@@ -1571,14 +1571,14 @@ func testAccSignOnPolicyActionConfig_Multiple2(resourceName, name string) string
 // 		%[1]s
 
 // 		resource "pingone_sign_on_policy" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 
 // 			name = "%[3]s"
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 1
 
@@ -1595,14 +1595,14 @@ func testAccSignOnPolicyActionConfig_ConditionsSignOnOlderThanSingle(resourceNam
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1621,20 +1621,20 @@ func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulation(resourceName, 
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1647,14 +1647,14 @@ func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulation(resourceName, 
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 2
 
 			conditions {
 				user_is_member_of_any_population_id = [
-					"${pingone_population.%[2]s.id}"
+					pingone_population.%[2]s.id
 				]
 			}
 
@@ -1669,32 +1669,32 @@ func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulations(resourceName,
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_population" "%[2]s-1" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s-1"
 		}
 
 		resource "pingone_population" "%[2]s-2" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s-2"
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1707,16 +1707,16 @@ func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulations(resourceName,
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 2
 
 			conditions {
 				user_is_member_of_any_population_id = [
-					"${pingone_population.%[2]s.id}",
-					"${pingone_population.%[2]s-1.id}",
-					"${pingone_population.%[2]s-2.id}"
+					pingone_population.%[2]s.id,
+					pingone_population.%[2]s-1.id,
+					pingone_population.%[2]s-2.id
 				]
 			}
 
@@ -1731,14 +1731,14 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingle(resourc
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1751,8 +1751,8 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingle(resourc
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 2
 
@@ -1774,14 +1774,14 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -1794,8 +1794,8 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 2
 
@@ -1827,14 +1827,14 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		%[1]s
 
 // 		resource "pingone_sign_on_policy" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 
 // 			name = "%[3]s"
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 1
 
@@ -1847,8 +1847,8 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 2
 
@@ -1869,14 +1869,14 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		%[1]s
 
 // 		resource "pingone_sign_on_policy" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 
 // 			name = "%[3]s"
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 1
 
@@ -1889,8 +1889,8 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 2
 
@@ -1912,14 +1912,14 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		%[1]s
 
 // 		resource "pingone_sign_on_policy" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 
 // 			name = "%[3]s"
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 1
 
@@ -1932,8 +1932,8 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 2
 
@@ -1952,14 +1952,14 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		%[1]s
 
 // 		resource "pingone_sign_on_policy" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 
 // 			name = "%[3]s"
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 1
 
@@ -1972,8 +1972,8 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 2
 
@@ -1992,14 +1992,14 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		%[1]s
 
 // 		resource "pingone_sign_on_policy" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 
 // 			name = "%[3]s"
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 1
 
@@ -2012,8 +2012,8 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 2
 
@@ -2032,14 +2032,14 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		%[1]s
 
 // 		resource "pingone_sign_on_policy" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 
 // 			name = "%[3]s"
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 1
 
@@ -2052,8 +2052,8 @@ func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resou
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 2
 
@@ -2077,20 +2077,20 @@ func testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(resourceName, name
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 1
 
@@ -2103,15 +2103,15 @@ func testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(resourceName, name
 		}
 
 		resource "pingone_sign_on_policy_action" "%[2]s" {
-			environment_id 			 = "${data.pingone_environment.general_test.id}"
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			environment_id 			 = data.pingone_environment.general_test.id
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 			priority = 2
 
 			conditions {
 
 				user_is_member_of_any_population_id = [
-					"${pingone_population.%[2]s.id}"
+					pingone_population.%[2]s.id
 				]
 
 				user_attribute_equals {
@@ -2137,14 +2137,14 @@ func testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(resourceName, name
 // 		%[1]s
 
 // 		resource "pingone_sign_on_policy" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 
 // 			name = "%[3]s"
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s-id" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 1
 
@@ -2157,15 +2157,15 @@ func testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(resourceName, name
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s-login" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 2
 
 // 			conditions {
 
 // 				user_is_member_of_any_population_id = [
-// 					"${pingone_population.%[2]s.id}"
+// 					pingone_population.%[2]s.id
 // 				]
 
 // 				user_attribute_equals {
@@ -2185,15 +2185,15 @@ func testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(resourceName, name
 // 		}
 
 // 		resource "pingone_sign_on_policy_action" "%[2]s-login" {
-// 			environment_id 			 = "${data.pingone_environment.general_test.id}"
-// 			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+// 			environment_id 			 = data.pingone_environment.general_test.id
+// 			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
 // 			priority = 3
 
 // 			conditions {
 
 // 				user_is_member_of_any_population_id = [
-// 					"${pingone_population.%[2]s.id}"
+// 					pingone_population.%[2]s.id
 // 				]
 
 // 				user_attribute_equals {

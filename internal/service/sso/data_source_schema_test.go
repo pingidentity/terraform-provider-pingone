@@ -63,7 +63,7 @@ func testAccSchemaDataSourceConfig_ByNameFull(resourceName, name string) string 
 		%[1]s
 		
 		data "pingone_schema" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -74,14 +74,14 @@ func testAccSchemaDataSourceConfig_ByIDFull(resourceName, name string) string {
 	%[1]s
 
 	data "pingone_schema" "%[2]s" {
-		environment_id = "${data.pingone_environment.general_test.id}"
+		environment_id = data.pingone_environment.general_test.id
 
 		name = "%[3]s"
 	}
 
 	data "pingone_schema" "%[2]s-2" {
-		environment_id = "${data.pingone_environment.general_test.id}"
+		environment_id = data.pingone_environment.general_test.id
 
-		schema_id = "${data.pingone_schema.%[2]s.id}"
+		schema_id = data.pingone_schema.%[2]s.id
 	}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

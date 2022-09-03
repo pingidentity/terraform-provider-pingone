@@ -99,7 +99,7 @@ func testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name string)
 		%[1]s
 
 		resource "pingone_password_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			description = "My new password policy"
@@ -141,7 +141,7 @@ func testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name string)
 		}
 
 		data "pingone_password_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 
@@ -156,7 +156,7 @@ func testAccPasswordPolicyDataSourceConfig_ByIDFull(resourceName, name string) s
 		%[1]s
 
 		resource "pingone_password_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			description = "My new password policy"
@@ -198,8 +198,8 @@ func testAccPasswordPolicyDataSourceConfig_ByIDFull(resourceName, name string) s
 		}
 
 		data "pingone_password_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
-			password_policy_id = "${pingone_password_policy.%[2]s.id}"
+			password_policy_id = pingone_password_policy.%[2]s.id
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

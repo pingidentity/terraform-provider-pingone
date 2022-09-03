@@ -1201,7 +1201,7 @@ func testAccApplicationConfig_NewEnv(environmentName, licenseID, resourceName, n
 		%[1]s
 
 		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+			environment_id = pingone_environment.%[2]s.id
 			name = "%[4]s"
 			enabled = true
 
@@ -1221,12 +1221,12 @@ func testAccApplicationConfig_OIDCFullWeb(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_group" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 		}
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			description = "My test OIDC app"
 			tags = []
@@ -1243,7 +1243,7 @@ func testAccApplicationConfig_OIDCFullWeb(resourceName, name string) string {
 				type = "ANY_GROUP"
 
 				groups = [
-					"${pingone_group.%[2]s.id}"
+					pingone_group.%[2]s.id
 				]
 			}
 			
@@ -1277,7 +1277,7 @@ func testAccApplicationConfig_OIDCMinimalWeb(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			enabled = true
 
@@ -1297,12 +1297,12 @@ func testAccApplicationConfig_OIDCFullNative(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_group" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 		}
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			description = "My test OIDC app"
 			tags = []
@@ -1319,7 +1319,7 @@ func testAccApplicationConfig_OIDCFullNative(resourceName, name string) string {
 				type = "ANY_GROUP"
 
 				groups = [
-					"${pingone_group.%[2]s.id}"
+					pingone_group.%[2]s.id
 				]
 			}
 			
@@ -1357,7 +1357,7 @@ func testAccApplicationConfig_OIDCMinimalNative(resourceName, name string) strin
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			enabled = true
 
@@ -1375,12 +1375,12 @@ func testAccApplicationConfig_OIDCFullSPA(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_group" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 		}
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			description = "My test OIDC app"
 			tags = []
@@ -1397,7 +1397,7 @@ func testAccApplicationConfig_OIDCFullSPA(resourceName, name string) string {
 				type = "ANY_GROUP"
 
 				groups = [
-					"${pingone_group.%[2]s.id}"
+					pingone_group.%[2]s.id
 				]
 			}
 			
@@ -1425,7 +1425,7 @@ func testAccApplicationConfig_OIDCMinimalSPA(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			enabled = true
 
@@ -1446,12 +1446,12 @@ func testAccApplicationConfig_OIDCFullWorker(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_group" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 		}
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			description = "My test OIDC app"
 			tags = []
@@ -1468,7 +1468,7 @@ func testAccApplicationConfig_OIDCFullWorker(resourceName, name string) string {
 				type = "ANY_GROUP"
 
 				groups = [
-					"${pingone_group.%[2]s.id}"
+					pingone_group.%[2]s.id
 				]
 			}
 			
@@ -1488,7 +1488,7 @@ func testAccApplicationConfig_OIDCMinimalWorker(resourceName, name string) strin
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			enabled = true
 
@@ -1506,12 +1506,12 @@ func testAccApplicationConfig_SAMLFull(resourceName, name string) string {
 		%[1]s
 		
 		resource "pingone_group" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 		}
 
 		resource "pingone_key" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 	
 			name = "%[3]s"
 			algorithm = "EC"
@@ -1523,7 +1523,7 @@ func testAccApplicationConfig_SAMLFull(resourceName, name string) string {
 		}
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			description = "My test SAML app"
 			tags = []
@@ -1540,7 +1540,7 @@ func testAccApplicationConfig_SAMLFull(resourceName, name string) string {
 				type = "ANY_GROUP"
 
 				groups = [
-					"${pingone_group.%[2]s.id}"
+					pingone_group.%[2]s.id
 				]
 			}
 
@@ -1553,7 +1553,7 @@ func testAccApplicationConfig_SAMLFull(resourceName, name string) string {
 				sp_entity_id = "sp:entity:%[2]s"
 
 				assertion_signed_enabled = false
-				idp_signing_key_id = "${pingone_key.%[2]s.id}"
+				idp_signing_key_id = pingone_key.%[2]s.id
 				nameid_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
 				response_is_signed = true
 				slo_binding = "HTTP_REDIRECT"
@@ -1571,7 +1571,7 @@ func testAccApplicationConfig_SAMLMinimal(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			enabled = true
 
@@ -1588,7 +1588,7 @@ func testAccApplicationConfig_Enabled(resourceName, name string, enabled bool) s
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			enabled = %[4]t
 
@@ -1610,7 +1610,7 @@ func testAccApplicationConfig_Enabled(resourceName, name string, enabled bool) s
 // 	return fmt.Sprintf(`
 // 		%[1]s
 // 		resource "pingone_application" "%[3]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 // 			name = "%[3]s"
 // 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 // }

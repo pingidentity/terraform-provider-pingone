@@ -194,7 +194,7 @@ func testAccSignOnPolicyConfig_NewEnv(environmentName, licenseID, resourceName, 
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+			environment_id = pingone_environment.%[2]s.id
 
 			name = "%[4]s"
 
@@ -206,7 +206,7 @@ func testAccSignOnPolicyConfig_Full(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 			description = "Test description"
@@ -218,7 +218,7 @@ func testAccSignOnPolicyConfig_Minimal(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 

@@ -1059,7 +1059,7 @@ func testAccIdentityProviderConfig_NewEnv(environmentName, licenseID, resourceNa
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+			environment_id = pingone_environment.%[2]s.id
 			name = "%[4]s"
 			
 			google {
@@ -1075,17 +1075,17 @@ func testAccIdentityProviderConfig_Full(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			description = "My test identity provider"
 			enabled = true
-			registration_population_id = "${pingone_population.%[2]s.id}"
+			registration_population_id = pingone_population.%[2]s.id
 
 			// icon {
 			// 	id = "1"
@@ -1109,7 +1109,7 @@ func testAccIdentityProviderConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			google {
@@ -1124,7 +1124,7 @@ func testAccIdentityProviderConfig_Facebook1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			facebook {
@@ -1139,7 +1139,7 @@ func testAccIdentityProviderConfig_Facebook2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			facebook {
@@ -1154,7 +1154,7 @@ func testAccIdentityProviderConfig_Google1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			google {
@@ -1169,7 +1169,7 @@ func testAccIdentityProviderConfig_Google2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			google {
@@ -1184,7 +1184,7 @@ func testAccIdentityProviderConfig_LinkedIn1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			linkedin {
@@ -1199,7 +1199,7 @@ func testAccIdentityProviderConfig_LinkedIn2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			linkedin {
@@ -1214,7 +1214,7 @@ func testAccIdentityProviderConfig_Yahoo1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			yahoo {
@@ -1229,7 +1229,7 @@ func testAccIdentityProviderConfig_Yahoo2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			yahoo {
@@ -1244,7 +1244,7 @@ func testAccIdentityProviderConfig_Amazon1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			amazon {
@@ -1259,7 +1259,7 @@ func testAccIdentityProviderConfig_Amazon2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			amazon {
@@ -1274,7 +1274,7 @@ func testAccIdentityProviderConfig_Twitter1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			twitter {
@@ -1289,7 +1289,7 @@ func testAccIdentityProviderConfig_Twitter2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			twitter {
@@ -1304,7 +1304,7 @@ func testAccIdentityProviderConfig_Apple1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			apple {
@@ -1321,7 +1321,7 @@ func testAccIdentityProviderConfig_Apple2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			apple {
@@ -1338,7 +1338,7 @@ func testAccIdentityProviderConfig_Paypal1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			paypal {
@@ -1354,7 +1354,7 @@ func testAccIdentityProviderConfig_Paypal2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			paypal {
@@ -1370,7 +1370,7 @@ func testAccIdentityProviderConfig_Microsoft1(resourceName, name string) string 
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			microsoft {
@@ -1385,7 +1385,7 @@ func testAccIdentityProviderConfig_Microsoft2(resourceName, name string) string 
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			microsoft {
@@ -1400,7 +1400,7 @@ func testAccIdentityProviderConfig_Github1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			github {
@@ -1415,7 +1415,7 @@ func testAccIdentityProviderConfig_Github2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			github {
@@ -1430,7 +1430,7 @@ func testAccIdentityProviderConfig_OIDCFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			openid_connect {
@@ -1453,7 +1453,7 @@ func testAccIdentityProviderConfig_OIDCMinimal(resourceName, name string) string
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			openid_connect {
@@ -1473,7 +1473,7 @@ func testAccIdentityProviderConfig_OIDCMinimal(resourceName, name string) string
 // 	return fmt.Sprintf(`
 // 		%[1]s
 // 		resource "pingone_identity_provider" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 // 			name = "%[3]s"
 
 // 			saml {
@@ -1493,7 +1493,7 @@ func testAccIdentityProviderConfig_OIDCMinimal(resourceName, name string) string
 // 	return fmt.Sprintf(`
 // 		%[1]s
 // 		resource "pingone_identity_provider" "%[2]s" {
-// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			environment_id = data.pingone_environment.general_test.id
 // 			name = "%[3]s"
 
 // 			saml {

@@ -201,7 +201,7 @@ func testAccResourceConfig_NewEnv(environmentName, licenseID, resourceName, name
 		%[1]s
 
 		resource "pingone_resource" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+			environment_id = pingone_environment.%[2]s.id
 
 			name = "%[4]s"
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -212,7 +212,7 @@ func testAccResourceConfig_Full(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_resource" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			
 			name = "%[3]s"
 			description = "Test Resource"
@@ -227,7 +227,7 @@ func testAccResourceConfig_Minimal(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_resource" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)

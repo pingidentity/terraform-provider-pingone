@@ -143,7 +143,7 @@ func testAccGroupConfig_NewEnv(environmentName, licenseID, resourceName, name st
 		%[1]s
 
 		resource "pingone_group" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+			environment_id = pingone_environment.%[2]s.id
 			name = "%[4]s"
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -153,16 +153,16 @@ func testAccGroupConfig_Full(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_group" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			description = "Test description"
-			population_id = "${pingone_population.%[2]s.id}"
+			population_id = pingone_population.%[2]s.id
 			user_filter = "email ew \"@test.com\""
 			external_id = "external_1234"
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -173,7 +173,7 @@ func testAccGroupConfig_Minimal(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_group" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

@@ -201,14 +201,14 @@ func testAccRoleAssignmentUserConfig_Population(resourceName, name, roleName str
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_user" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			population_id = "${pingone_population.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			population_id = pingone_population.%[2]s.id
 
 			username = "%[3]s"
 			email    = "foouser@pingidentity.com"
@@ -219,11 +219,11 @@ func testAccRoleAssignmentUserConfig_Population(resourceName, name, roleName str
 		}
 
 		resource "pingone_role_assignment_user" "%[2]s" {
-			environment_id  = "${data.pingone_environment.general_test.id}"
-			user_id = "${pingone_user.%[2]s.id}"
-			role_id = "${data.pingone_role.%[2]s.id}"
+			environment_id  = data.pingone_environment.general_test.id
+			user_id = pingone_user.%[2]s.id
+			role_id = data.pingone_role.%[2]s.id
 
-			scope_population_id = "${pingone_population.%[2]s.id}"
+			scope_population_id = pingone_population.%[2]s.id
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
 }
 
@@ -232,14 +232,14 @@ func testAccRoleAssignmentUserConfig_Organisation(resourceName, name, roleName, 
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_user" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			population_id = "${pingone_population.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			population_id = pingone_population.%[2]s.id
 
 			username = "%[3]s"
 			email    = "foouser@pingidentity.com"
@@ -250,9 +250,9 @@ func testAccRoleAssignmentUserConfig_Organisation(resourceName, name, roleName, 
 		}
 
 		resource "pingone_role_assignment_user" "%[2]s" {
-			environment_id  = "${data.pingone_environment.general_test.id}"
-			user_id = "${pingone_user.%[2]s.id}"
-			role_id = "${data.pingone_role.%[2]s.id}"
+			environment_id  = data.pingone_environment.general_test.id
+			user_id = pingone_user.%[2]s.id
+			role_id = data.pingone_role.%[2]s.id
 
 			scope_organization_id = "%[5]s"
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName, organisationID)
@@ -263,14 +263,14 @@ func testAccRoleAssignmentUserConfig_Environment(resourceName, name, roleName st
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_user" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			population_id = "${pingone_population.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			population_id = pingone_population.%[2]s.id
 
 			username = "%[3]s"
 			email    = "foouser@pingidentity.com"
@@ -281,10 +281,10 @@ func testAccRoleAssignmentUserConfig_Environment(resourceName, name, roleName st
 		}
 
 		resource "pingone_role_assignment_user" "%[2]s" {
-			environment_id  = "${data.pingone_environment.general_test.id}"
-			user_id = "${pingone_user.%[2]s.id}"
-			role_id = "${data.pingone_role.%[2]s.id}"
+			environment_id  = data.pingone_environment.general_test.id
+			user_id = pingone_user.%[2]s.id
+			role_id = data.pingone_role.%[2]s.id
 
-			scope_environment_id = "${data.pingone_environment.general_test.id}"
+			scope_environment_id = data.pingone_environment.general_test.id
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
 }

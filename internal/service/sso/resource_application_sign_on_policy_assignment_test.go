@@ -178,7 +178,7 @@ func testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name st
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id  = "${data.pingone_environment.general_test.id}"
+			environment_id  = data.pingone_environment.general_test.id
 			name 			= "%[3]s"
 			enabled 		= true
 		  
@@ -193,16 +193,16 @@ func testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name st
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 		  
 			name        = "%[3]s"
 		}
 
 		resource "pingone_application_sign_on_policy_assignment" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			application_id = "${pingone_application.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 			priority = 1
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -212,7 +212,7 @@ func testAccApplicationSignOnPolicyAssignmentConfig_Multiple(resourceName, name 
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id  = "${data.pingone_environment.general_test.id}"
+			environment_id  = data.pingone_environment.general_test.id
 			name 			= "%[3]s"
 			enabled 		= true
 		  
@@ -227,30 +227,30 @@ func testAccApplicationSignOnPolicyAssignmentConfig_Multiple(resourceName, name 
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s-1" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 		  
 			name        = "%[2]s_1"
 		}
 
 		resource "pingone_sign_on_policy" "%[2]s-2" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 		  
 			name        = "%[2]s_2"
 		}
 
 		resource "pingone_application_sign_on_policy_assignment" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			application_id = "${pingone_application.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s-1.id}"
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s-1.id
 			priority = 2
 		}
 		
 		resource "pingone_application_sign_on_policy_assignment" "%[2]s-2" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			application_id = "${pingone_application.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s-2.id}"
+			sign_on_policy_id = pingone_sign_on_policy.%[2]s-2.id
 			priority = 1
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

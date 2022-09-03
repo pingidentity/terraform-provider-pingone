@@ -175,7 +175,7 @@ func testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name str
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name 			= "%[3]s"
 			enabled 		= true
 		  
@@ -190,33 +190,33 @@ func testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name str
 		}
 
 		data "pingone_resource" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 	
 			name = "openid"
 		}
 
 		data "pingone_resource_scope" "%[2]s-1" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			resource_id = "${data.pingone_resource.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = data.pingone_resource.%[2]s.id
 	
 			name = "email"
 		}
 
 		data "pingone_resource_scope" "%[2]s-2" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			resource_id = "${data.pingone_resource.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = data.pingone_resource.%[2]s.id
 	
 			name = "profile"
 		}
 
 		resource "pingone_application_resource_grant" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			application_id = "${pingone_application.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
-			resource_id = "${data.pingone_resource.%[2]s.id}"
+			resource_id = data.pingone_resource.%[2]s.id
 			scopes = [
-				"${data.pingone_resource_scope.%[2]s-1.id}",
-				"${data.pingone_resource_scope.%[2]s-2.id}",
+				data.pingone_resource_scope.%[2]s-1.id,
+				data.pingone_resource_scope.%[2]s-2.id,
 			]
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -226,7 +226,7 @@ func testAccApplicationResourceGrantConfig_CustomResource(resourceName, name str
 		%[1]s
 
 		resource "pingone_application" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name 			= "%[3]s"
 			enabled 		= true
 		  
@@ -241,41 +241,41 @@ func testAccApplicationResourceGrantConfig_CustomResource(resourceName, name str
 		}
 
 		resource "pingone_resource" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_resource_scope" "%[2]s-1" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			resource_id = "${pingone_resource.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = pingone_resource.%[2]s.id
 
 			name = "%[3]s-1"
 		}
 		
 		resource "pingone_resource_scope" "%[2]s-2" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			resource_id = "${pingone_resource.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = pingone_resource.%[2]s.id
 
 			name = "%[3]s-2"
 		}
 
 		resource "pingone_resource_scope" "%[2]s-3" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			resource_id = "${pingone_resource.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			resource_id = pingone_resource.%[2]s.id
 
 			name = "%[3]s-3"
 		}
 
 		resource "pingone_application_resource_grant" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			application_id = "${pingone_application.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			application_id = pingone_application.%[2]s.id
 			
-			resource_id = "${pingone_resource.%[2]s.id}"
+			resource_id = pingone_resource.%[2]s.id
 			scopes = [
-				"${pingone_resource_scope.%[2]s-1.id}",
-				"${pingone_resource_scope.%[2]s-2.id}",
-				"${pingone_resource_scope.%[2]s-3.id}"
+				pingone_resource_scope.%[2]s-1.id,
+				pingone_resource_scope.%[2]s-2.id,
+				pingone_resource_scope.%[2]s-3.id
 			]
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

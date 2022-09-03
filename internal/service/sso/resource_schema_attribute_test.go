@@ -371,14 +371,14 @@ func testAccSchemaAttributeConfig_NewEnv(environmentName, licenseID, resourceNam
 		%[1]s
 
 		data "pingone_schema" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+			environment_id = pingone_environment.%[2]s.id
 
 			name = "User"
 		}
 
 		resource "pingone_schema_attribute" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			schema_id = "${data.pingone_schema.%[4]s.id}"
+			environment_id = pingone_environment.%[2]s.id
+			schema_id = data.pingone_schema.%[4]s.id
 
 			name = "%[4]s"
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -389,14 +389,14 @@ func testAccSchemaAttributeConfig_Full(resourceName, name, attrType string, uniq
 		%[1]s
 
 		data "pingone_schema" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 	
 			name = "User"
 		}
 
 		resource "pingone_schema_attribute" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			schema_id = "${data.pingone_schema.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			schema_id = data.pingone_schema.%[2]s.id
 
 			name = "%[3]s"
 			display_name = "Attribute %[3]s"
@@ -414,14 +414,14 @@ func testAccSchemaAttributeConfig_Minimal(resourceName, name string) string {
 		%[1]s
 
 		data "pingone_schema" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "User"
 		}
 
 		resource "pingone_schema_attribute" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			schema_id = "${data.pingone_schema.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			schema_id = data.pingone_schema.%[2]s.id
 
 			name = "%[3]s"
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)

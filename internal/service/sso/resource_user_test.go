@@ -214,17 +214,17 @@ func testAccUserConfig_NewEnv(environmentName, licenseID, resourceName, name str
 		%[1]s
 
 		resource "pingone_population" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+			environment_id = pingone_environment.%[2]s.id
 
 			name = "%[4]s"
 		}
 
 		resource "pingone_user" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+			environment_id = pingone_environment.%[2]s.id
 
 			username = "%[4]s"
 			email = "noreply@pingidentity.com"
-			population_id = "${pingone_population.%[3]s.id}"
+			population_id = pingone_population.%[3]s.id
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -233,17 +233,17 @@ func testAccUserConfig_Full(resourceName, name, status string) string {
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_user" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			username = "%[3]s"
 			email = "noreply@pingidentity.com"
-			population_id = "${pingone_population.%[2]s.id}"
+			population_id = pingone_population.%[2]s.id
 			status = "%[4]s"
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name, status)
 }
@@ -253,17 +253,17 @@ func testAccUserConfig_Minimal(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			name = "%[3]s"
 		}
 
 		resource "pingone_user" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			username = "%[3]s"
 			email = "noreply@pingidentity.com"
-			population_id = "${pingone_population.%[2]s.id}"
+			population_id = pingone_population.%[2]s.id
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -272,16 +272,16 @@ func testAccUserConfig_CustomPopulation(resourceName, name string) string {
 		%[1]s
 
 		resource "pingone_population" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			
 			name = "%[3]s"
 		}
 
 		resource "pingone_user" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 
 			username = "%[3]s"
 			email = "noreply@pingidentity.com"
-			population_id = "${pingone_population.%[2]s.id}"
+			population_id = pingone_population.%[2]s.id
 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

@@ -229,7 +229,7 @@ func testAccIdentityProviderAttributeConfig_Full(resourceName, name string) stri
 		%[1]s
 
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			google {
@@ -239,8 +239,8 @@ func testAccIdentityProviderAttributeConfig_Full(resourceName, name string) stri
 		}
 
 		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			identity_provider_id = pingone_identity_provider.%[2]s.id
 			
 			name 		= "email"
 			update 		= "EMPTY_ONLY"
@@ -253,7 +253,7 @@ func testAccIdentityProviderAttributeConfig_Minimal(resourceName, name string) s
 		%[1]s
 
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			google {
@@ -263,8 +263,8 @@ func testAccIdentityProviderAttributeConfig_Minimal(resourceName, name string) s
 		}
 
 		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			identity_provider_id = pingone_identity_provider.%[2]s.id
 			
 			name 		= "email"
 			update 		= "ALWAYS"
@@ -277,7 +277,7 @@ func testAccIdentityProviderAttributeConfig_Expression(resourceName, name string
 		%[1]s
 
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			google {
@@ -287,8 +287,8 @@ func testAccIdentityProviderAttributeConfig_Expression(resourceName, name string
 		}
 
 		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			identity_provider_id = pingone_identity_provider.%[2]s.id
 			
 			name 		= "name.given"
 			update 		= "ALWAYS"
@@ -301,7 +301,7 @@ func testAccIdentityProviderAttributeConfig_ReservedAttributeName(resourceName, 
 		%[1]s
 
 		resource "pingone_identity_provider" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
+			environment_id = data.pingone_environment.general_test.id
 			name = "%[3]s"
 			
 			google {
@@ -311,8 +311,8 @@ func testAccIdentityProviderAttributeConfig_ReservedAttributeName(resourceName, 
 		}
 
 		resource "pingone_identity_provider_attribute" "%[2]s" {
-			environment_id = "${data.pingone_environment.general_test.id}"
-			identity_provider_id = "${pingone_identity_provider.%[2]s.id}"
+			environment_id = data.pingone_environment.general_test.id
+			identity_provider_id = pingone_identity_provider.%[2]s.id
 			
 			name 		= "account"
 			update 		= "ALWAYS"
