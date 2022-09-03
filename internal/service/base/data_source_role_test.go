@@ -2,7 +2,6 @@ package base_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -16,19 +15,13 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_role.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	region := os.Getenv("PINGONE_REGION")
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleDataSourceConfig_ByNameFull(environmentName, resourceName, "Organization Admin", region, licenseID),
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "Organization Admin"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Organization Admin"),
@@ -36,7 +29,7 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccRoleDataSourceConfig_ByNameFull(environmentName, resourceName, "Environment Admin", region, licenseID),
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "Environment Admin"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Environment Admin"),
@@ -44,7 +37,7 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccRoleDataSourceConfig_ByNameFull(environmentName, resourceName, "Identity Data Admin", region, licenseID),
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "Identity Data Admin"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Identity Data Admin"),
@@ -52,7 +45,7 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccRoleDataSourceConfig_ByNameFull(environmentName, resourceName, "Client Application Developer", region, licenseID),
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "Client Application Developer"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Client Application Developer"),
@@ -60,7 +53,7 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccRoleDataSourceConfig_ByNameFull(environmentName, resourceName, "Identity Data Read Only", region, licenseID),
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "Identity Data Read Only"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Identity Data Read Only"),
@@ -68,7 +61,7 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccRoleDataSourceConfig_ByNameFull(environmentName, resourceName, "Configuration Read Only", region, licenseID),
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "Configuration Read Only"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Configuration Read Only"),
@@ -79,18 +72,11 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 	})
 }
 
-func testAccRoleDataSourceConfig_ByNameFull(environmentName, resourceName, name, region, licenseID string) string {
+func testAccRoleDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[5]s"
-			region = "%[4]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
 		data "pingone_role" "%[2]s" {
 			name = "%[3]s"
-		}`, environmentName, resourceName, name, region, licenseID)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

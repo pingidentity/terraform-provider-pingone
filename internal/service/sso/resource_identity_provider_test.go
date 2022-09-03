@@ -60,7 +60,7 @@ func testAccCheckIdentityProviderDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccIdentityProvider_Full(t *testing.T) {
+func TestAccIdentityProvider_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -79,7 +79,31 @@ func TestAccIdentityProvider_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+				),
+			},
+		},
+	})
+}
+
+func TestAccIdentityProvider_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckIdentityProviderDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIdentityProviderConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -101,11 +125,7 @@ func TestAccIdentityProvider_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -114,7 +134,7 @@ func TestAccIdentityProvider_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -136,11 +156,7 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -149,7 +165,7 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Full(environmentName, licenseID, resourceName, fmt.Sprintf("%s 1", name)),
+				Config: testAccIdentityProviderConfig_Full(resourceName, fmt.Sprintf("%s 1", name)),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -162,7 +178,7 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Minimal(environmentName, licenseID, resourceName, fmt.Sprintf("%s 2", name)),
+				Config: testAccIdentityProviderConfig_Minimal(resourceName, fmt.Sprintf("%s 2", name)),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -175,7 +191,7 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Full(environmentName, licenseID, resourceName, fmt.Sprintf("%s 1", name)),
+				Config: testAccIdentityProviderConfig_Full(resourceName, fmt.Sprintf("%s 1", name)),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -197,11 +213,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -210,7 +222,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Facebook1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Facebook1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.0.app_id", "dummyappid1"),
@@ -230,7 +242,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Facebook2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Facebook2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.0.app_id", "dummyappid2"),
@@ -259,11 +271,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -272,7 +280,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Google1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Google1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "1"),
@@ -292,7 +300,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Google2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Google2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "1"),
@@ -321,11 +329,7 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -334,7 +338,7 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_LinkedIn1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_LinkedIn1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -354,7 +358,7 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_LinkedIn2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_LinkedIn2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -383,11 +387,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -396,7 +396,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Yahoo1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Yahoo1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -416,7 +416,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Yahoo2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Yahoo2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -445,11 +445,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -458,7 +454,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Amazon1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Amazon1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -478,7 +474,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Amazon2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Amazon2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -507,11 +503,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -520,7 +512,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Twitter1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Twitter1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -540,7 +532,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Twitter2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Twitter2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -569,11 +561,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -582,7 +570,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Apple1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Apple1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -604,7 +592,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Apple2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Apple2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -635,11 +623,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -648,7 +632,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Paypal1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Paypal1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -669,7 +653,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Paypal2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Paypal2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -699,11 +683,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -712,7 +692,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Microsoft1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Microsoft1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -732,7 +712,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Microsoft2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Microsoft2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -761,11 +741,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -774,7 +750,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Github1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Github1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -794,7 +770,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Github2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Github2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -823,11 +799,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -836,7 +808,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_OIDCFull(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -866,7 +838,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_OIDCMinimal(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_OIDCMinimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -896,7 +868,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_OIDCFull(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -948,7 +920,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 // 		ErrorCheck:        acctest.ErrorCheck(t),
 // 		Steps: []resource.TestStep{
 // 			{
-// 				Config: testAccIdentityProviderConfig_SAMLFull(environmentName, licenseID, resourceName, name),
+// 				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
 // 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 // 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -972,7 +944,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 // 				),
 // 			},
 // 			{
-// 				Config: testAccIdentityProviderConfig_SAMLMinimal(environmentName, licenseID, resourceName, name),
+// 				Config: testAccIdentityProviderConfig_SAMLMinimal(resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
 // 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 // 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -996,7 +968,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 // 				),
 // 			},
 // 			{
-// 				Config: testAccIdentityProviderConfig_SAMLFull(environmentName, licenseID, resourceName, name),
+// 				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name),
 // 				Check: resource.ComposeTestCheckFunc(
 // 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 // 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -1029,11 +1001,7 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -1042,7 +1010,7 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Apple1(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Apple1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -1064,7 +1032,7 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Github2(environmentName, licenseID, resourceName, name),
+				Config: testAccIdentityProviderConfig_Github2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -1087,15 +1055,37 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 	})
 }
 
-func testAccIdentityProviderConfig_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 		resource "pingone_identity_provider" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "%[4]s"
+			
+			google {
+				client_id = "testclientid"
+				client_secret = "testclientsecret"
+			}
+		}
+		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccIdentityProviderConfig_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+		resource "pingone_population" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+
+			name = "%[3]s"
+		}
+
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			description = "My test identity provider"
 			enabled = true
-			registration_population_id = "${pingone_environment.%[2]s.default_population_id}"
+			registration_population_id = "${pingone_population.%[2]s.id}"
 
 			// icon {
 			// 	id = "1"
@@ -1112,210 +1102,210 @@ func testAccIdentityProviderConfig_Full(environmentName, licenseID, resourceName
 				client_secret = "testclientsecret"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			google {
 				client_id = "testclientid"
 				client_secret = "testclientsecret"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Facebook1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Facebook1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			facebook {
 				app_id = "dummyappid1"
 				app_secret = "dummyappsecret1"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Facebook2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Facebook2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			facebook {
 				app_id = "dummyappid2"
 				app_secret = "dummyappsecret2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Google1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Google1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			google {
 				client_id = "dummyclientid1"
 				client_secret = "dummyclientsecret1"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Google2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Google2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			google {
 				client_id = "dummyclientid2"
 				client_secret = "dummyclientsecret2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_LinkedIn1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_LinkedIn1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			linkedin {
 				client_id = "dummyclientid1"
 				client_secret = "dummyclientsecret1"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_LinkedIn2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_LinkedIn2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			linkedin {
 				client_id = "dummyclientid2"
 				client_secret = "dummyclientsecret2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Yahoo1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Yahoo1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			yahoo {
 				client_id = "dummyclientid1"
 				client_secret = "dummyclientsecret1"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Yahoo2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Yahoo2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			yahoo {
 				client_id = "dummyclientid2"
 				client_secret = "dummyclientsecret2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Amazon1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Amazon1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			amazon {
 				client_id = "dummyclientid1"
 				client_secret = "dummyclientsecret1"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Amazon2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Amazon2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			amazon {
 				client_id = "dummyclientid2"
 				client_secret = "dummyclientsecret2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Twitter1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Twitter1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			twitter {
 				client_id = "dummyclientid1"
 				client_secret = "dummyclientsecret1"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Twitter2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Twitter2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			twitter {
 				client_id = "dummyclientid2"
 				client_secret = "dummyclientsecret2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Apple1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Apple1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			apple {
 				client_id = "dummyclientid1"
@@ -1324,15 +1314,15 @@ func testAccIdentityProviderConfig_Apple1(environmentName, licenseID, resourceNa
 				team_id = "dummyteam1"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Apple2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Apple2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			apple {
 				client_id = "dummyclientid2"
@@ -1341,15 +1331,15 @@ func testAccIdentityProviderConfig_Apple2(environmentName, licenseID, resourceNa
 				team_id = "dummyteam2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Paypal1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Paypal1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			paypal {
 				client_id = "dummyclientid1"
@@ -1357,15 +1347,15 @@ func testAccIdentityProviderConfig_Paypal1(environmentName, licenseID, resourceN
 				client_environment = "sandbox"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Paypal2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Paypal2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			paypal {
 				client_id = "dummyclientid2"
@@ -1373,75 +1363,75 @@ func testAccIdentityProviderConfig_Paypal2(environmentName, licenseID, resourceN
 				client_environment = "live"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Microsoft1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Microsoft1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			microsoft {
 				client_id = "dummyclientid1"
 				client_secret = "dummyclientsecret1"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Microsoft2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Microsoft2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			microsoft {
 				client_id = "dummyclientid2"
 				client_secret = "dummyclientsecret2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Github1(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Github1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			github {
 				client_id = "dummyclientid1"
 				client_secret = "dummyclientsecret1"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Github2(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_Github2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			github {
 				client_id = "dummyclientid2"
 				client_secret = "dummyclientsecret2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_OIDCFull(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_OIDCFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			openid_connect {
 				authorization_endpoint = "https://www.pingidentity.com/authz"
@@ -1456,15 +1446,15 @@ func testAccIdentityProviderConfig_OIDCFull(environmentName, licenseID, resource
 				userinfo_endpoint = "https://www.pingidentity.com/userinfo"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_OIDCMinimal(environmentName, licenseID, resourceName, name string) string {
+func testAccIdentityProviderConfig_OIDCMinimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_identity_provider" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
+		resource "pingone_identity_provider" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
 			
 			openid_connect {
 				authorization_endpoint = "https://www.pingidentity.com/authz2"
@@ -1476,15 +1466,15 @@ func testAccIdentityProviderConfig_OIDCMinimal(environmentName, licenseID, resou
 				token_endpoint = "https://www.pingidentity.com/token2"
 			}
 		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-// func testAccIdentityProviderConfig_SAMLFull(environmentName, licenseID, resourceName, name string) string {
+// func testAccIdentityProviderConfig_SAMLFull(resourceName, name string) string {
 // 	return fmt.Sprintf(`
 // 		%[1]s
-// 		resource "pingone_identity_provider" "%[3]s" {
-// 			environment_id = "${pingone_environment.%[2]s.id}"
-// 			name = "%[4]s"
+// 		resource "pingone_identity_provider" "%[2]s" {
+// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			name = "%[3]s"
 
 // 			saml {
 // 				authentication_request_signed = true
@@ -1496,15 +1486,15 @@ func testAccIdentityProviderConfig_OIDCMinimal(environmentName, licenseID, resou
 // 				sso_endpoint = "https://www.pingidentity.com/sso"
 // 			}
 // 		}
-// 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 // }
 
-// func testAccIdentityProviderConfig_SAMLMinimal(environmentName, licenseID, resourceName, name string) string {
+// func testAccIdentityProviderConfig_SAMLMinimal(resourceName, name string) string {
 // 	return fmt.Sprintf(`
 // 		%[1]s
-// 		resource "pingone_identity_provider" "%[3]s" {
-// 			environment_id = "${pingone_environment.%[2]s.id}"
-// 			name = "%[4]s"
+// 		resource "pingone_identity_provider" "%[2]s" {
+// 			environment_id = "${data.pingone_environment.general_test.id}"
+// 			name = "%[3]s"
 
 // 			saml {
 // 				idp_entity_id = "idp:entity"
@@ -1512,5 +1502,5 @@ func testAccIdentityProviderConfig_OIDCMinimal(environmentName, licenseID, resou
 // 				sso_endpoint = "https://www.pingidentity.com/sso"
 // 			}
 // 		}
-// 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+// 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 // }

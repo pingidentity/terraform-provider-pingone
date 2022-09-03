@@ -58,7 +58,7 @@ func testAccCheckPopulationDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccPopulation_Full(t *testing.T) {
+func TestAccPopulation_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -77,7 +77,31 @@ func TestAccPopulation_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPopulationConfig_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccPopulationConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPopulation_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_population.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckPopulationDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPopulationConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -95,11 +119,7 @@ func TestAccPopulation_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_population.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -108,7 +128,7 @@ func TestAccPopulation_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPopulationConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Config: testAccPopulationConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -120,23 +140,33 @@ func TestAccPopulation_Minimal(t *testing.T) {
 	})
 }
 
-func testAccPopulationConfig_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccPopulationConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 		resource "pingone_population" "%[3]s" {
 			environment_id = "${pingone_environment.%[2]s.id}"
 			name = "%[4]s"
-			description = "Test description"
 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccPopulationConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
+func testAccPopulationConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		resource "pingone_population" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
+			description = "Test description"
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPopulationConfig_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+		resource "pingone_population" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			name = "%[3]s"
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

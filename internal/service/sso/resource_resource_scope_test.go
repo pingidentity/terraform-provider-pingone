@@ -3,7 +3,6 @@ package sso_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -66,11 +65,7 @@ func TestAccResourceScope_Full(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_resource_scope.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -79,12 +74,12 @@ func TestAccResourceScope_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceScopeConfig_Full(environmentName, resourceName, name, licenseID),
+				Config: testAccResourceScopeConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "one"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
 				),
 			},
@@ -98,11 +93,7 @@ func TestAccResourceScope_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_resource_scope.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -111,12 +102,12 @@ func TestAccResourceScope_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceScopeConfig_Minimal(environmentName, resourceName, name, licenseID),
+				Config: testAccResourceScopeConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "one"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 				),
 			},
@@ -130,11 +121,7 @@ func TestAccResourceScope_Multiple(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_resource_scope.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -143,10 +130,10 @@ func TestAccResourceScope_Multiple(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceScopeConfig_Multiple(environmentName, resourceName, name, licenseID),
+				Config: testAccResourceScopeConfig_Multiple(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-1", resourceFullName), "name", "one"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "name", "two"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("%s-1", resourceFullName), "name", fmt.Sprintf("%s-1", name)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "name", fmt.Sprintf("%s-2", name)),
 				),
 			},
 		},
@@ -159,11 +146,7 @@ func TestAccResourceScope_Change(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_resource_scope.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -172,32 +155,32 @@ func TestAccResourceScope_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceScopeConfig_Full(environmentName, resourceName, name, licenseID),
+				Config: testAccResourceScopeConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "one"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
 				),
 			},
 			{
-				Config: testAccResourceScopeConfig_Minimal(environmentName, resourceName, name, licenseID),
+				Config: testAccResourceScopeConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "one"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 				),
 			},
 			{
-				Config: testAccResourceScopeConfig_Full(environmentName, resourceName, name, licenseID),
+				Config: testAccResourceScopeConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "one"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
 				),
 			},
@@ -205,64 +188,64 @@ func TestAccResourceScope_Change(t *testing.T) {
 	})
 }
 
-func testAccResourceScopeConfig_Full(environmentName, resourceName, name, licenseID string) string {
+func testAccResourceScopeConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_resource" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+		resource "pingone_resource" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
 
-			name = "%[4]s"
+			name = "%[3]s"
 		}
 
-		resource "pingone_resource_scope" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			resource_id = "${pingone_resource.%[3]s.id}"
+		resource "pingone_resource_scope" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			resource_id = "${pingone_resource.%[2]s.id}"
 
-			name = "one"
+			name = "%[3]s"
 			description = "My resource scope"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccResourceScopeConfig_Minimal(environmentName, resourceName, name, licenseID string) string {
+func testAccResourceScopeConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_resource" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+		resource "pingone_resource" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
 
-			name = "%[4]s"
+			name = "%[3]s"
 		}
 
-		resource "pingone_resource_scope" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			resource_id = "${pingone_resource.%[3]s.id}"
+		resource "pingone_resource_scope" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			resource_id = "${pingone_resource.%[2]s.id}"
 
-			name = "one"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+			name = "%[3]s"
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccResourceScopeConfig_Multiple(environmentName, resourceName, name, licenseID string) string {
+func testAccResourceScopeConfig_Multiple(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_resource" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
+		resource "pingone_resource" "%[2]s" {
+			environment_id = "${data.pingone_environment.general_test.id}"
 
-			name = "%[4]s"
+			name = "%[3]s"
 		}
 
-		resource "pingone_resource_scope" "%[3]s-1" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			resource_id = "${pingone_resource.%[3]s.id}"
+		resource "pingone_resource_scope" "%[2]s-1" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			resource_id = "${pingone_resource.%[2]s.id}"
 
-			name = "one"
+			name = "%[3]s-1"
 		}
 		
-		resource "pingone_resource_scope" "%[3]s-2" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			resource_id = "${pingone_resource.%[3]s.id}"
+		resource "pingone_resource_scope" "%[2]s-2" {
+			environment_id = "${data.pingone_environment.general_test.id}"
+			resource_id = "${pingone_resource.%[2]s.id}"
 
-			name = "two"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+			name = "%[3]s-2"
+		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

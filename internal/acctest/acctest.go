@@ -177,3 +177,10 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 			}
 		}`, resourceName, licenseID)
 }
+
+func GenericSandboxEnvironment() string {
+	return `
+		data "pingone_environment" "general_test" {
+			name = "tf-testacc-general-test"
+		}`
+}

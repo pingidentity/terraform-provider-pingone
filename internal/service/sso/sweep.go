@@ -41,7 +41,7 @@ func sweepGroups(region string) error {
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
-	environments, err := sweep.FetchTaggedEnvironments(ctx, apiClient, region)
+	environments, err := sweep.FetchTaggedEnvironments(ctx, apiClient)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func sweepPopulations(region string) error {
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
-	environments, err := sweep.FetchTaggedEnvironments(ctx, apiClient, region)
+	environments, err := sweep.FetchTaggedEnvironments(ctx, apiClient)
 	if err != nil {
 		return err
 	}
