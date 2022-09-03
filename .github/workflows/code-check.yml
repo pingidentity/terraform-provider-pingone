@@ -155,7 +155,7 @@ jobs:
           make tflint
 
   testacc-lint:
-    name: Acceptance test terrafmt
+    name: terrafmt
     needs: [build]
     runs-on: ubuntu-latest
     steps:
