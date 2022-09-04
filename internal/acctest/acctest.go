@@ -86,6 +86,18 @@ func PreCheckEnvironmentAndPKCS12(t *testing.T) {
 	}
 }
 
+func PreCheckEnvironmentAndPKCS12WithCSR(t *testing.T) {
+
+	PreCheckEnvironmentAndPKCS12(t)
+	if v := os.Getenv("PINGONE_KEY_PKCS10_CSR"); v == "" {
+		t.Fatal("PINGONE_KEY_PKCS10_CSR is missing and must be set")
+	}
+
+	if v := os.Getenv("PINGONE_KEY_PEM_CSR"); v == "" {
+		t.Fatal("PINGONE_KEY_PEM_CSR is missing and must be set")
+	}
+}
+
 func PreCheckEnvironmentAndOrganisation(t *testing.T) {
 
 	PreCheckEnvironment(t)
