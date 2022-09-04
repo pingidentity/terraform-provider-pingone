@@ -156,9 +156,10 @@ func resourceGatewayCredentialDelete(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceGatewayCredentialImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	attributes := strings.SplitN(d.Id(), "/", 3)
+	splitLength := 3
+	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != 3 {
+	if len(attributes) != splitLength {
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/gatewayID/gatewayCredentialID\"", d.Id())
 	}
 

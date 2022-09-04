@@ -60,7 +60,7 @@ func testAccCheckGatewayDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGateway_Full(t *testing.T) {
+func TestAccGateway_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -79,7 +79,31 @@ func TestAccGateway_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGatewayConfig_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccGatewayConfig_NewEnv(environmentName, licenseID, resourceName, name, "PING_FEDERATE"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+				),
+			},
+		},
+	})
+}
+
+func TestAccGateway_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_gateway.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckGatewayDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccGatewayConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -99,11 +123,7 @@ func TestAccGateway_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_gateway.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -112,7 +132,7 @@ func TestAccGateway_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGatewayConfig_Minimal(environmentName, licenseID, resourceName, name, "PING_FEDERATE"),
+				Config: testAccGatewayConfig_Minimal(resourceName, name, "PING_FEDERATE"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -132,11 +152,7 @@ func TestAccGateway_Change(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_gateway.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -145,7 +161,7 @@ func TestAccGateway_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGatewayConfig_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccGatewayConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -156,7 +172,7 @@ func TestAccGateway_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccGatewayConfig_Minimal(environmentName, licenseID, resourceName, name, "PING_FEDERATE"),
+				Config: testAccGatewayConfig_Minimal(resourceName, name, "PING_FEDERATE"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -167,7 +183,7 @@ func TestAccGateway_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccGatewayConfig_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccGatewayConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -187,11 +203,7 @@ func TestAccGateway_PF(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_gateway.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -200,7 +212,7 @@ func TestAccGateway_PF(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGatewayConfig_Minimal(environmentName, licenseID, resourceName, name, "PING_FEDERATE"),
+				Config: testAccGatewayConfig_Minimal(resourceName, name, "PING_FEDERATE"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_FEDERATE"),
 				),
@@ -215,11 +227,7 @@ func TestAccGateway_APIG(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_gateway.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -228,7 +236,7 @@ func TestAccGateway_APIG(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGatewayConfig_Minimal(environmentName, licenseID, resourceName, name, "API_GATEWAY_INTEGRATION"),
+				Config: testAccGatewayConfig_Minimal(resourceName, name, "API_GATEWAY_INTEGRATION"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "type", "API_GATEWAY_INTEGRATION"),
 				),
@@ -237,29 +245,42 @@ func TestAccGateway_APIG(t *testing.T) {
 	})
 }
 
-func testAccGatewayConfig_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccGatewayConfig_NewEnv(environmentName, licenseID, resourceName, name, gatewayType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_gateway" "%[3]s" {
-			environment_id  = "${pingone_environment.%[2]s.id}"
-			name 			= "%[4]s"
-			description     = "My test gateway"
-			enabled         = true
-			
- 			type           = "PING_FEDERATE"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+resource "pingone_gateway" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  enabled        = false
+
+  type = "%[5]s"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, gatewayType)
 }
 
-func testAccGatewayConfig_Minimal(environmentName, licenseID, resourceName, name, gatewayType string) string {
+func testAccGatewayConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_gateway" "%[3]s" {
-			environment_id  = "${pingone_environment.%[2]s.id}"
-			name 			= "%[4]s"
-			enabled         = false
-			
- 			type           = "%[5]s"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, gatewayType)
+resource "pingone_gateway" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test gateway"
+  enabled        = true
+
+  type = "PING_FEDERATE"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccGatewayConfig_Minimal(resourceName, name, gatewayType string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_gateway" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = false
+
+  type = "%[4]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, gatewayType)
 }

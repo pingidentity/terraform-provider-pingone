@@ -3,7 +3,6 @@ package base_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -66,11 +65,7 @@ func TestAccGatewayCredential_Full(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_gateway_credential.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -79,7 +74,7 @@ func TestAccGatewayCredential_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGatewayCredentialConfig_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccGatewayCredentialConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -93,20 +88,20 @@ func TestAccGatewayCredential_Full(t *testing.T) {
 	})
 }
 
-func testAccGatewayCredentialConfig_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccGatewayCredentialConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_gateway" "%[3]s" {
-			environment_id  = "${pingone_environment.%[2]s.id}"
-			name 			= "%[4]s"
-			enabled         = true
-			
- 			type           = "PING_FEDERATE"
-		}
+resource "pingone_gateway" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_gateway_credential" "%[3]s" {
-			environment_id  = "${pingone_environment.%[2]s.id}"
-			gateway_id  	= "${pingone_gateway.%[3]s.id}"
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+  type = "PING_FEDERATE"
+}
+
+resource "pingone_gateway_credential" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  gateway_id     = pingone_gateway.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
