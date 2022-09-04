@@ -3,7 +3,7 @@ SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
-VERSION=0.3.1
+VERSION=0.4.0
 OS_ARCH=linux_amd64
 
 default: build
@@ -65,6 +65,23 @@ tflint:
 	@echo "==> Checking Terraform code with tflint..."
 	@tflint --init
 
-devcheck: build vet tools generate lint test sweep testacc
+terrafmt:
+	@echo "==> Formatting embedded Terraform code with terrafmt..."
+	@find ./internal/service -type f -name '*_test.go' \
+    | sort -u \
+    | xargs -I {} terrafmt -f fmt {}
 
-.PHONY: tools build generate test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint
+terrafmtcheck:
+	@echo "==> Checking embedded Terraform code with terrafmt..."
+	@find ./internal/service -type f -name '*_test.go' \
+    | sort -u \
+    | xargs -I {} terrafmt diff -f --check --fmtcompat {} ; if [ $$? -ne 0 ]; then \
+		echo ""; \
+		echo "terrafmt found bad formatting of HCL embedded in the test scripts. Please run "; \
+		echo "\"make terrafmt\" before submitting the code for review."; \
+		exit 1; \
+	fi
+
+devcheck: build vet tools generate lint terrafmtcheck test sweep testacc
+
+.PHONY: tools build generate test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
