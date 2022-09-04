@@ -61,7 +61,7 @@ func testAccCheckKeyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccKey_NewEnv(t *testing.T) {
+func TestAccKey_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -80,31 +80,7 @@ func TestAccKey_NewEnv(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccKeyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-				),
-			},
-		},
-	})
-}
-
-func TestAccKey_Full(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_key.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckKeyDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccKeyConfig_Full(resourceName, name, "ENCRYPTION", true),
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -124,7 +100,7 @@ func TestAccKey_Full(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccKeyConfig_Full(resourceName, name, "SIGNING", false),
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "SIGNING", false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
@@ -142,7 +118,7 @@ func TestAccKey_Full(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccKeyConfig_Full(resourceName, name, "SSL/TLS", false),
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "SSL/TLS", false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SSL/TLS"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -150,7 +126,7 @@ func TestAccKey_Full(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccKeyConfig_Full(resourceName, name, "ISSUANCE", false),
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ISSUANCE", false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "ISSUANCE"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -167,7 +143,11 @@ func TestAccKey_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_key.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -176,7 +156,7 @@ func TestAccKey_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccKeyConfig_Minimal(resourceName, name),
+				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -205,6 +185,10 @@ func TestAccKey_PKCS12(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_key.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	pkcs12 := os.Getenv("PINGONE_KEY_PKCS12")
 
 	resource.Test(t, resource.TestCase{
@@ -214,7 +198,7 @@ func TestAccKey_PKCS12(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccKeyConfig_PKCS12(resourceName, pkcs12),
+				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -234,7 +218,7 @@ func TestAccKey_PKCS12(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccKeyConfig_PKCS12(resourceName, pkcs12),
+				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -263,7 +247,11 @@ func TestAccKey_Change(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_key.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	pkcs12 := os.Getenv("PINGONE_KEY_PKCS12")
 
@@ -274,7 +262,7 @@ func TestAccKey_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccKeyConfig_Full(resourceName, name, "ENCRYPTION", true),
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -294,13 +282,13 @@ func TestAccKey_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccKeyConfig_Full(resourceName, name, "ENCRYPTION", false),
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 				),
 			},
 			{
-				Config: testAccKeyConfig_Minimal(resourceName, name),
+				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -320,7 +308,7 @@ func TestAccKey_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccKeyConfig_PKCS12(resourceName, pkcs12),
+				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -340,7 +328,7 @@ func TestAccKey_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccKeyConfig_Full(resourceName, name, "ENCRYPTION", false),
+				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -363,7 +351,28 @@ func TestAccKey_Change(t *testing.T) {
 	})
 }
 
-func testAccKeyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+func testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, usage string, defaultKey bool) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s"
+  algorithm           = "RSA"
+  key_length          = 3072
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "%[5]s"
+
+  default         = %[6]t
+  issuer_dn       = "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  serial_number   = "1662023413215"
+  validity_period = 3650
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, usage, defaultKey)
+}
+
+func testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -380,55 +389,17 @@ resource "pingone_key" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccKeyConfig_Full(resourceName, name, usage string, defaultKey bool) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name                = "%[3]s"
-  algorithm           = "RSA"
-  key_length          = 3072
-  signature_algorithm = "SHA512withRSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-  usage_type          = "%[4]s"
-
-  default         = %[5]t
-  issuer_dn       = "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-  serial_number   = "1662023413215"
-  validity_period = 3650
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, usage, defaultKey)
-}
-
-func testAccKeyConfig_Minimal(resourceName, name string) string {
+func testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12 string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_key" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name                = "%[3]s"
-  algorithm           = "EC"
-  key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-  usage_type          = "SIGNING"
-  validity_period     = 365
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccKeyConfig_PKCS12(resourceName, pkcs12 string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_key" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
   pkcs12_file_base64 = <<EOT
-%[3]s
+%[4]s
 EOT
 
   usage_type = "SIGNING"
-}`, acctest.GenericSandboxEnvironment(), resourceName, pkcs12)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12)
 }
