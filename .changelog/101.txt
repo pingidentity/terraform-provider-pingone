@@ -1,0 +1,11 @@
+```release-note:new-resource
+pingone_gateway
+```
+
+```release-note:new-resource
+pingone_gateway_credential
+```
+
+```release-note:new-resource
+pingone_gateway_role_assignment
+```
