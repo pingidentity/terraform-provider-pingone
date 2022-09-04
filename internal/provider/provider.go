@@ -70,6 +70,7 @@ func New(version string) func() *schema.Provider {
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
+				"pingone_certificate_export":          base.DatasourceCertificateExport(),
 				"pingone_certificate_signing_request": base.DatasourceCertificateSigningRequest(),
 				"pingone_environment":                 base.DatasourceEnvironment(),
 				"pingone_role":                        base.DatasourceRole(),

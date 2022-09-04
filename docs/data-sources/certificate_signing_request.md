@@ -31,7 +31,7 @@ data "pingone_certificate_signing_request" "my_csr" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `pem_file_base64` (String) The Certificate Signing Request (CSR) in PEM file format, base64 encoded.
+- `pem_file` (String) The Certificate Signing Request (CSR) in PEM file format.
 - `pkcs10_file_base64` (String) The Certificate Signing Request (CSR) in PKCS10 file format, base64 encoded.
 
 
