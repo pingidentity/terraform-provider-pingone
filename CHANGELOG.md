@@ -5,9 +5,19 @@ NOTES:
 * Bump `goreleaser/goreleaser-action` from 3.0.0 to 3.1.0 ([#87](https://github.com/pingidentity/terraform-provider-pingone/issues/87))
 * Documentation: Updates and corrections to examples ([#107](https://github.com/pingidentity/terraform-provider-pingone/issues/107))
 * bump `github.com/katbyte/terrafmt` from 0.4.0 to 0.5.2 ([#65](https://github.com/pingidentity/terraform-provider-pingone/issues/65))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.7.0 => v0.8.0 ([#110](https://github.com/pingidentity/terraform-provider-pingone/issues/110))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.5 => v0.3.6 ([#110](https://github.com/pingidentity/terraform-provider-pingone/issues/110))
 
 FEATURES:
 
+* **New Data Source:** `pingone_certificate` ([#110](https://github.com/pingidentity/terraform-provider-pingone/issues/110))
+* **New Data Source:** `pingone_certificate_export` ([#110](https://github.com/pingidentity/terraform-provider-pingone/issues/110))
+* **New Data Source:** `pingone_certificate_signing_request` ([#110](https://github.com/pingidentity/terraform-provider-pingone/issues/110))
+* **New Resource:** `pingone_certificate` ([#110](https://github.com/pingidentity/terraform-provider-pingone/issues/110))
+* **New Resource:** `pingone_certificate_signing_response` ([#110](https://github.com/pingidentity/terraform-provider-pingone/issues/110))
+* **New Resource:** `pingone_gateway` ([#101](https://github.com/pingidentity/terraform-provider-pingone/issues/101))
+* **New Resource:** `pingone_gateway_credential` ([#101](https://github.com/pingidentity/terraform-provider-pingone/issues/101))
+* **New Resource:** `pingone_gateway_role_assignment` ([#101](https://github.com/pingidentity/terraform-provider-pingone/issues/101))
 * **New Resource:** `pingone_key` ([#96](https://github.com/pingidentity/terraform-provider-pingone/issues/96))
 
 ## 0.3.1 (02 September 2022)
