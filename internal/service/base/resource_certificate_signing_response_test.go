@@ -58,20 +58,20 @@ func testAccCertificateSigningResponseConfig_Full(environmentName, licenseID, re
 	%[1]s
 
 resource "pingone_key" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-			  
-	pkcs12_file_base64 = <<EOT
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs12_file_base64 = <<EOT
 %[4]s
 EOT
-			  
-	usage_type = "SIGNING"
+
+  usage_type = "SIGNING"
 }
-	
+
 resource "pingone_certificate_signing_response" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-	
-	key_id = pingone_key.%[3]s.id
-	pem_ca_response_file = <<EOT
+  environment_id = pingone_environment.%[2]s.id
+
+  key_id               = pingone_key.%[3]s.id
+  pem_ca_response_file = <<EOT
 %[5]s
 EOT
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, pemResponse)

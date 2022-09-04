@@ -45,17 +45,17 @@ func testAccCertificateExportDataSourceConfig_ByIDFull(environmentName, licenseI
 %[1]s
 
 resource "pingone_key" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-		  
-	pkcs12_file_base64 = <<EOT
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs12_file_base64 = <<EOT
 %[4]s
 EOT
-		  
-	usage_type = "SIGNING"
+
+  usage_type = "SIGNING"
 }
 
 data "pingone_certificate_export" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   key_id = pingone_key.%[3]s.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12)
