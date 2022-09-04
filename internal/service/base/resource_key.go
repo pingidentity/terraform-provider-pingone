@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -339,7 +340,25 @@ func resourceKeyDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		},
 		"DeleteKey",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+
+			if p1error != nil {
+				var err error
+
+				// It seems the key might not release itself immediately
+				if m, err := regexp.MatchString("The Key must not be in use", p1error.GetMessage()); err == nil && m {
+					tflog.Warn(ctx, "Key in use detected")
+					return true
+				}
+				if err != nil {
+					tflog.Warn(ctx, "Cannot match error string for retry (DeleteKey)")
+					return false
+				}
+
+			}
+
+			return false
+		},
 	)
 	if diags.HasError() {
 		return diags
@@ -349,9 +368,10 @@ func resourceKeyDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func resourceKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	attributes := strings.SplitN(d.Id(), "/", 2)
+	splitLength := 2
+	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != 2 {
+	if len(attributes) != splitLength {
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/keyID\"", d.Id())
 	}
 

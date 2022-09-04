@@ -1,0 +1,26 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage - PKCS7 (DER)
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-der.tf") }}
+
+## Example Usage - X509 (PEM)
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pem.tf") }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Import is supported using the following syntax:
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}

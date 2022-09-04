@@ -700,10 +700,10 @@ github.com/otiai10/mint v1.3.0/go.mod h1:F5AjcsTsWUqX+Na9fpHb52P8pcRX2CI6A3ctIT9
 github.com/otiai10/mint v1.3.1/go.mod h1:/yxELlJQ0ufhjUwhshSj+wFjZ78CnZ48/1wtmBH1OTc=
 github.com/owenrumney/go-sarif v1.1.1 h1:QNObu6YX1igyFKhdzd7vgzmw7XsWN3/6NMGuDzBgXmE=
 github.com/owenrumney/go-sarif v1.1.1/go.mod h1:dNDiPlF04ESR/6fHlPyq7gHKmrM0sHUvAGjsoh8ZH0U=
-github.com/patrickcping/pingone-go-sdk-v2 v0.3.5 h1:axWqejM7Th+ZdPgb9GikMxArLLQgWverv+kIFZ6rmro=
-github.com/patrickcping/pingone-go-sdk-v2 v0.3.5/go.mod h1:JjapvUdroOPh3kVbiR3QZo/GFejv0AZq6hmFt0kBmCA=
-github.com/patrickcping/pingone-go-sdk-v2/management v0.7.0 h1:eeuxU7/Aj+atC6NePcrq/HMMdWsN2AlvehKIZdeJDvQ=
-github.com/patrickcping/pingone-go-sdk-v2/management v0.7.0/go.mod h1:iMDRt4G86i2Ut+QZcI9tz3hcM7nZjrhXEpp4Vc0epO4=
+github.com/patrickcping/pingone-go-sdk-v2 v0.3.6 h1:TNQEnpyfs69ift2t81/ZaFKn74SBbrfeVtxPZITyBdI=
+github.com/patrickcping/pingone-go-sdk-v2 v0.3.6/go.mod h1:Xi5c59uKst8WHpIEZ+ZCQAjQnrgtOGzeNNXS5DS7/xw=
+github.com/patrickcping/pingone-go-sdk-v2/management v0.8.0 h1:1Ozjqo725EhNG8DwWThRnZdGzmprsiJNtawUJ77ViGM=
+github.com/patrickcping/pingone-go-sdk-v2/management v0.8.0/go.mod h1:iMDRt4G86i2Ut+QZcI9tz3hcM7nZjrhXEpp4Vc0epO4=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.4.0 h1:woN8k6u2eGN1Bua+txc2ZcxVwOzWFTeEu+UeUAUdhTk=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.4.0/go.mod h1:IZX2hN+KrLNJ9aZPtxwGTVtvRcyUHsK51clw3yfUif4=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.3.0 h1:kNGBPiQT9gEEvjWvZt6n0a1pewW0CUnw+DeB5lm21po=
