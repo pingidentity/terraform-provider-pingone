@@ -70,6 +70,7 @@ func New(version string) func() *schema.Provider {
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
+				"pingone_certificate":                 base.DatasourceCertificate(),
 				"pingone_certificate_export":          base.DatasourceCertificateExport(),
 				"pingone_certificate_signing_request": base.DatasourceCertificateSigningRequest(),
 				"pingone_environment":                 base.DatasourceEnvironment(),
@@ -82,6 +83,7 @@ func New(version string) func() *schema.Provider {
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
+				"pingone_certificate":                  base.ResourceCertificate(),
 				"pingone_certificate_signing_response": base.ResourceCertificateSigningResponse(),
 				"pingone_environment":                  base.ResourceEnvironment(),
 				"pingone_key":                          base.ResourceKey(),

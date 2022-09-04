@@ -118,6 +118,22 @@ func PreCheckEnvironmentAndPKCS12WithCerts(t *testing.T) {
 	}
 }
 
+func PreCheckEnvironmentAndPKCS7(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_KEY_PKCS7_CERT"); v == "" {
+		t.Fatal("PINGONE_KEY_PKCS7_CERT is missing and must be set")
+	}
+}
+
+func PreCheckEnvironmentAndPEM(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_KEY_PEM_CERT"); v == "" {
+		t.Fatal("PINGONE_KEY_PEM_CERT is missing and must be set")
+	}
+}
+
 func PreCheckEnvironmentAndOrganisation(t *testing.T) {
 
 	PreCheckEnvironment(t)
