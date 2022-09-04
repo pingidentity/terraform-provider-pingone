@@ -1,0 +1,15 @@
+```release-note:new-resource
+pingone_certificate
+```
+
+```release-note:new-data-source
+pingone_certificate_export
+```
+
+```release-note:new-data-source
+pingone_certificate_signing_request
+```
+
+```release-note:new-resource
+pingone_certificate_signing_response
+```
