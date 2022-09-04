@@ -1,0 +1,1 @@
+$ terraform import pingone_certificate.example <environment_id>/<certificate_id>

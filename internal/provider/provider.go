@@ -70,8 +70,11 @@ func New(version string) func() *schema.Provider {
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
-				"pingone_environment": base.DatasourceEnvironment(),
-				"pingone_role":        base.DatasourceRole(),
+				"pingone_certificate":                 base.DatasourceCertificate(),
+				"pingone_certificate_export":          base.DatasourceCertificateExport(),
+				"pingone_certificate_signing_request": base.DatasourceCertificateSigningRequest(),
+				"pingone_environment":                 base.DatasourceEnvironment(),
+				"pingone_role":                        base.DatasourceRole(),
 
 				"pingone_password_policy": sso.DatasourcePasswordPolicy(),
 				"pingone_resource":        sso.DatasourceResource(),
@@ -80,12 +83,14 @@ func New(version string) func() *schema.Provider {
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
-				"pingone_environment":             base.ResourceEnvironment(),
-				"pingone_gateway":                 base.ResourceGateway(),
-				"pingone_gateway_credential":      base.ResourceGatewayCredential(),
-				"pingone_gateway_role_assignment": base.ResourceGatewayRoleAssignment(),
-        "pingone_key":                     base.ResourceKey(),
-				"pingone_role_assignment_user":    base.ResourceRoleAssignmentUser(),
+				"pingone_certificate":                  base.ResourceCertificate(),
+				"pingone_certificate_signing_response": base.ResourceCertificateSigningResponse(),
+				"pingone_environment":                  base.ResourceEnvironment(),
+				"pingone_gateway":                      base.ResourceGateway(),
+				"pingone_gateway_credential":           base.ResourceGatewayCredential(),
+				"pingone_gateway_role_assignment":      base.ResourceGatewayRoleAssignment(),
+				"pingone_key":                          base.ResourceKey(),
+				"pingone_role_assignment_user":         base.ResourceRoleAssignmentUser(),
 
 				"pingone_application":                           sso.ResourceApplication(),
 				"pingone_application_attribute_mapping":         sso.ResourceApplicationAttributeMapping(),
