@@ -99,9 +99,9 @@ func testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, r
 %[1]s
 
 resource "pingone_certificate" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-  
-	pem_file = <<EOT
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
 %[4]s
 EOT
 
@@ -124,9 +124,9 @@ func testAccCertificateDataSourceConfig_ByIDFull(environmentName, licenseID, res
 %[1]s
 
 resource "pingone_certificate" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-  
-	pem_file = <<EOT
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
 %[4]s
 EOT
 
