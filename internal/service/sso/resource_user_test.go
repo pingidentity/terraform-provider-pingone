@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -49,7 +50,7 @@ func testAccCheckUserDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccUser_Full(t *testing.T) {
+func TestAccUser_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -60,9 +61,6 @@ func TestAccUser_Full(t *testing.T) {
 	name := resourceName
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
-
-	email := "noreply@pingidentity.com"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -71,35 +69,59 @@ func TestAccUser_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUserConfig_Full(environmentName, licenseID, region, resourceName, email, "ENABLED"),
+				Config: testAccUserConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
-					resource.TestCheckResourceAttr(resourceFullName, "email", email),
-					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccUser_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_user.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckUserDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccUserConfig_Full(resourceName, name, "ENABLED"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "username", name),
+					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 				),
 			},
 			{
-				Config: testAccUserConfig_Full(environmentName, licenseID, region, resourceName, email, "DISABLED"),
+				Config: testAccUserConfig_Full(resourceName, name, "DISABLED"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
-					resource.TestCheckResourceAttr(resourceFullName, "email", email),
-					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "DISABLED"),
 				),
 			},
 			{
-				Config: testAccUserConfig_Full(environmentName, licenseID, region, resourceName, email, "ENABLED"),
+				Config: testAccUserConfig_Full(resourceName, name, "ENABLED"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
-					resource.TestCheckResourceAttr(resourceFullName, "email", email),
-					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 				),
 			},
@@ -113,14 +135,7 @@ func TestAccUser_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_user.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
-
-	email := "noreply@pingidentity.com"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -129,24 +144,24 @@ func TestAccUser_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUserConfig_Minimal(environmentName, licenseID, region, resourceName, email),
+				Config: testAccUserConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
-					resource.TestCheckResourceAttr(resourceFullName, "email", email),
-					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 				),
 			},
 			{
-				Config: testAccUserConfig_Full(environmentName, licenseID, region, resourceName, email, "DISABLED"),
+				Config: testAccUserConfig_Full(resourceName, name, "DISABLED"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
-					resource.TestCheckResourceAttr(resourceFullName, "email", email),
-					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "DISABLED"),
 				),
 			},
@@ -160,14 +175,7 @@ func TestAccUser_ChangePopulation(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_user.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
-
-	email := "noreply@pingidentity.com"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -176,24 +184,24 @@ func TestAccUser_ChangePopulation(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUserConfig_Minimal(environmentName, licenseID, region, resourceName, email),
+				Config: testAccUserConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
-					resource.TestCheckResourceAttr(resourceFullName, "email", email),
-					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 				),
 			},
 			{
-				Config: testAccUserConfig_CustomPopulation(environmentName, licenseID, region, resourceName, email),
+				Config: testAccUserConfig_CustomPopulation(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
-					resource.TestCheckResourceAttr(resourceFullName, "email", email),
-					resource.TestCheckResourceAttrSet(resourceFullName, "population_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 				),
 			},
@@ -201,69 +209,79 @@ func TestAccUser_ChangePopulation(t *testing.T) {
 	})
 }
 
-func testAccUserConfig_Full(environmentName, licenseID, region, resourceName, email, status string) string {
+func testAccUserConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[2]s"
-			region = "%[3]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
-		resource "pingone_user" "%[4]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
+resource "pingone_population" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-			username = "%[4]s"
-			email = "%[5]s"
-			population_id = "${pingone_environment.%[1]s.default_population_id}"
-			status = "%[6]s"
-		}`, environmentName, licenseID, region, resourceName, email, status)
+  name = "%[4]s"
 }
 
-func testAccUserConfig_Minimal(environmentName, licenseID, region, resourceName, email string) string {
-	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[2]s"
-			region = "%[3]s"
-			default_population {}
-			service {}
-		}
+resource "pingone_user" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-		resource "pingone_user" "%[4]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-
-			username = "%[4]s"
-			email = "%[5]s"
-			population_id = "${pingone_environment.%[1]s.default_population_id}"
-		}`, environmentName, licenseID, region, resourceName, email)
+  username      = "%[4]s"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[3]s.id
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccUserConfig_CustomPopulation(environmentName, licenseID, region, resourceName, email string) string {
+func testAccUserConfig_Full(resourceName, name, status string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[2]s"
-			region = "%[3]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
-		resource "pingone_population" "%[4]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			
-			name = "%[4]s"
-		}
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		resource "pingone_user" "%[4]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
+  name = "%[3]s"
+}
 
-			username = "%[4]s"
-			email = "%[5]s"
-			population_id = "${pingone_population.%[4]s.id}"
-		}`, environmentName, licenseID, region, resourceName, email)
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+  status        = "%[4]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, status)
+}
+
+func testAccUserConfig_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccUserConfig_CustomPopulation(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

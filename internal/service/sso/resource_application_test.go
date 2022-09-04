@@ -60,7 +60,7 @@ func testAccCheckApplicationDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccApplication_OIDCFullWeb(t *testing.T) {
+func TestAccApplication_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -79,7 +79,31 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullWeb(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_OIDCFullWeb(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_OIDCFullWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -131,11 +155,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -144,7 +164,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWeb(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -188,11 +208,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -201,7 +217,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWeb(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -236,7 +252,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullWeb(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCFullWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -279,7 +295,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWeb(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -323,11 +339,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -336,7 +348,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullNative(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCFullNative(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -367,16 +379,16 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", "com.pingidentity.bundle"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", "com.pingidentity.package"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "HOURS"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", "com.pingidentity.bundle"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", "com.pingidentity.package"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 				),
 			},
@@ -390,11 +402,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -403,7 +411,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalNative(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalNative(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -447,11 +455,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -460,7 +464,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullNative(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCFullNative(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -491,21 +495,21 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", "com.pingidentity.bundle"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", "com.pingidentity.package"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "HOURS"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", "com.pingidentity.bundle"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", "com.pingidentity.package"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalNative(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalNative(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -540,7 +544,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullNative(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCFullNative(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -571,16 +575,16 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", "com.pingidentity.bundle"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", "com.pingidentity.package"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "HOURS"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", "com.pingidentity.bundle"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", "com.pingidentity.package"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 				),
 			},
@@ -594,11 +598,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -607,7 +607,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullSPA(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCFullSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -658,11 +658,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -671,7 +667,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalSPA(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -714,11 +710,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -727,7 +719,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalSPA(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -761,7 +753,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullSPA(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCFullSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -803,7 +795,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalSPA(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -846,11 +838,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -859,7 +847,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullWorker(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCFullWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -905,11 +893,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -918,7 +902,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWorker(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -961,11 +945,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -974,7 +954,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWorker(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1008,7 +988,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullWorker(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCFullWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1045,7 +1025,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWorker(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_OIDCMinimalWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1088,11 +1068,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -1101,7 +1077,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_SAMLFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1124,13 +1100,13 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.acs_urls.1", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_REDIRECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_endpoint", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", "sp:entity:localhost"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
 				),
 			},
@@ -1138,59 +1114,13 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 	})
 }
 
-func TestAccApplication_Enabled(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-				),
-			},
-			{
-				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, true),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-				),
-			},
-			{
-				Config: testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-				),
-			},
-		},
-	})
-}
-
-// Application enabled / disabled
-
 func TestAccApplication_SAMLMinimal(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -1199,7 +1129,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_SAMLMinimal(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_SAMLMinimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1222,7 +1152,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_POST"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_endpoint", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", "sp:entity:localhost"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
 				),
 			},
@@ -1230,373 +1160,457 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 	})
 }
 
-func testAccApplicationConfig_OIDCFullWeb(environmentName, licenseID, resourceName, name string) string {
+func TestAccApplication_Enabled(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_Enabled(resourceName, name, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+				),
+			},
+			{
+				Config: testAccApplicationConfig_Enabled(resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+				),
+			},
+			{
+				Config: testAccApplicationConfig_Enabled(resourceName, name, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccApplicationConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_group" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "Group 1"
-		}
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			description = "My test OIDC app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  enabled        = true
 
-			access_control_role_type = "ADMIN_USERS_ONLY"
-
-			access_control_group_options {
-				type = "ANY_GROUP"
-
-				groups = [
-					"${pingone_group.%[3]s.id}"
-				]
-			}
-			
-			
-			enabled = true
-
-			oidc_options {
-				type                        = "WEB_APP"
-				grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
-				response_types              = ["CODE"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-				redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
-				post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
-
-				refresh_token_duration          = 3000000
-				refresh_token_rolling_duration  = 30000000
-
-				home_page_url 		= "https://www.pingidentity.com"
-				pkce_enforcement 	= "OPTIONAL"
-
-
-				support_unsigned_request_object = true
-
-			}
-		}
+  oidc_options {
+    type                        = "WEB_APP"
+    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCMinimalWeb(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationConfig_OIDCFullWeb(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			enabled = true
 
-			oidc_options {
-				type                        = "WEB_APP"
-				grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
-				response_types              = ["CODE"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 }
 
-func testAccApplicationConfig_OIDCFullNative(environmentName, licenseID, resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-		resource "pingone_group" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "Group 1"
-		}
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			description = "My test OIDC app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
 
-			access_control_role_type = "ADMIN_USERS_ONLY"
+  access_control_role_type = "ADMIN_USERS_ONLY"
 
-			access_control_group_options {
-				type = "ANY_GROUP"
+  access_control_group_options {
+    type = "ANY_GROUP"
 
-				groups = [
-					"${pingone_group.%[3]s.id}"
-				]
-			}
-			
-			enabled = true
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
 
-			oidc_options {
-				type                        = "NATIVE_APP"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-				mobile_app {
-					bundle_id 		= "com.pingidentity.bundle"
-					package_name 	= "com.pingidentity.package"
+  enabled = true
 
-					passcode_refresh_seconds = 45
+  oidc_options {
+    type                        = "WEB_APP"
+    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
+    post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
 
-					integrity_detection {
-						enabled = true
-						cache_duration {
-							amount = 30
-							units  = "HOURS"
-						}
-					}
-				}
+    refresh_token_duration         = 3000000
+    refresh_token_rolling_duration = 30000000
 
-				bundle_id 		= "com.pingidentity.bundle"
-				package_name 	= "com.pingidentity.package"
-			}
-		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+    home_page_url    = "https://www.pingidentity.com"
+    pkce_enforcement = "OPTIONAL"
+
+
+    support_unsigned_request_object = true
+
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCMinimalNative(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationConfig_OIDCMinimalWeb(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			enabled = true
 
-			oidc_options {
-				type                        = "NATIVE_APP"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "WEB_APP"
+    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCFullSPA(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationConfig_OIDCFullNative(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_group" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "Group 1"
-		}
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			description = "My test OIDC app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
-
-			access_control_role_type = "ADMIN_USERS_ONLY"
-
-			access_control_group_options {
-				type = "ANY_GROUP"
-
-				groups = [
-					"${pingone_group.%[3]s.id}"
-				]
-			}
-			
-			enabled = true
-
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
-				post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
-				home_page_url				= "https://www.pingidentity.com"
-
-				support_unsigned_request_object = true
-
-			}
-		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 }
 
-func testAccApplicationConfig_OIDCMinimalSPA(environmentName, licenseID, resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			enabled = true
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
+
+  access_control_role_type = "ADMIN_USERS_ONLY"
+
+  access_control_group_options {
+    type = "ANY_GROUP"
+
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id    = "com.%[2]s.bundle"
+      package_name = "com.%[2]s.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCFullWorker(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationConfig_OIDCMinimalNative(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_group" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "Group 1"
-		}
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			description = "My test OIDC app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-			access_control_role_type = "ADMIN_USERS_ONLY"
-
-			access_control_group_options {
-				type = "ANY_GROUP"
-
-				groups = [
-					"${pingone_group.%[3]s.id}"
-				]
-			}
-			
-			enabled = true
-
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCMinimalWorker(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationConfig_OIDCFullSPA(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			enabled = true
 
-			oidc_options {
-				type                        = "WORKER"
-				grant_types                 = ["CLIENT_CREDENTIALS"]
-				token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-			}
-		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 }
 
-func testAccApplicationConfig_SAMLFull(environmentName, licenseID, resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-		resource "pingone_group" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "Group 1"
-		}
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			description = "My test SAML app"
-			tags = []
-			login_page_url = "https://www.pingidentity.com"
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-			// icon {
-			// 	id = "1"
-			// 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-			// }
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
 
-			access_control_role_type = "ADMIN_USERS_ONLY"
+  access_control_role_type = "ADMIN_USERS_ONLY"
 
-			access_control_group_options {
-				type = "ANY_GROUP"
+  access_control_group_options {
+    type = "ANY_GROUP"
 
-				groups = [
-					"${pingone_group.%[3]s.id}"
-				]
-			}
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
 
-			enabled = true
+  enabled = true
 
-			saml_options {
-				type = "WEB_APP"
-				acs_urls = ["https://pingidentity.com", "https://www.pingidentity.com"]
-				assertion_duration = 3600
-				sp_entity_id = "sp:entity:localhost"
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
+    post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
+    home_page_url               = "https://www.pingidentity.com"
 
-				assertion_signed_enabled = false
-				// idp_signing_key_id = 
-				nameid_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-				response_is_signed = true
-				slo_binding = "HTTP_REDIRECT"
-				slo_endpoint = "https://www.pingidentity.com"
-				slo_response_endpoint = "https://www.pingidentity.com"
+    support_unsigned_request_object = true
 
-				// sp_verification_certificate_ids = []
-
-			}
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_SAMLMinimal(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationConfig_OIDCMinimalSPA(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			enabled = true
 
-			saml_options {
-				acs_urls = ["https://pingidentity.com"]
-				assertion_duration = 3600
-				sp_entity_id = "sp:entity:localhost"
-			}
-		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_Enabled(environmentName, licenseID, resourceName, name string, enabled bool) string {
+func testAccApplicationConfig_OIDCFullWorker(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-		resource "pingone_application" "%[3]s" {
-			environment_id = "${pingone_environment.%[2]s.id}"
-			name = "%[4]s"
-			enabled = %[5]t
 
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, enabled)
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
+
+  access_control_role_type = "ADMIN_USERS_ONLY"
+
+  access_control_group_options {
+    type = "ANY_GROUP"
+
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
+
+  enabled = true
+
+  oidc_options {
+    type                        = "WORKER"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDCMinimalWorker(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "WORKER"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_SAMLFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA224withECDSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test SAML app"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
+
+  access_control_role_type = "ADMIN_USERS_ONLY"
+
+  access_control_group_options {
+    type = "ANY_GROUP"
+
+    groups = [
+      pingone_group.%[2]s.id
+    ]
+  }
+
+  enabled = true
+
+  saml_options {
+    type               = "WEB_APP"
+    acs_urls           = ["https://pingidentity.com", "https://www.pingidentity.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[2]s"
+
+    assertion_signed_enabled = false
+    idp_signing_key_id       = pingone_key.%[2]s.id
+    nameid_format            = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed       = true
+    slo_binding              = "HTTP_REDIRECT"
+    slo_endpoint             = "https://www.pingidentity.com"
+    slo_response_endpoint    = "https://www.pingidentity.com"
+
+    // sp_verification_certificate_ids = []
+
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_SAMLMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://pingidentity.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[2]s"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_Enabled(resourceName, name string, enabled bool) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = %[4]t
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
 }
 
 // Error conditions
 
-// func testAccApplicationConfig_NoType(environmentName, licenseID, resourceName, name string) string {
+// func testAccApplicationConfig_NoType(resourceName, name string) string {
 // 	return fmt.Sprintf(`
 // 		%[1]s
-// 		resource "pingone_application" "%[2]s" {
-// 			environment_id = "${pingone_environment.%[1]s.id}"
+// 		resource "pingone_application" "%[3]s" {
+// 			environment_id = data.pingone_environment.general_test.id
 // 			name = "%[3]s"
-// 		}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name)
+// 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 // }

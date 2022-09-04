@@ -11,9 +11,29 @@ description: |-
 
 ~> A warning will be issued following `terraform apply` when attempting to remove the final sign-on policy action from an associated sign-on policy.  When removing the final sign-on policy action from a sign-on policy, it's recommended to also remove the associated sign-on policy at the same time.  Further information can be found [here](https://github.com/pingidentity/terraform-provider-pingone/issues/68).
 
-## Example Usage
+## Example Usage - First Factor (Username/Password)
 
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-login.tf") }}
+
+## Example Usage - Identifier First
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-idfirst.tf") }}
+
+## Example Usage - MFA
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-mfa.tf") }}
+
+## Example Usage - Identity Provider
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-idp.tf") }}
+
+## Example Usage - Progressive Profiling
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-progressiveprofiling.tf") }}
+
+## Example Usage - Agreement
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-agreement.tf") }}
 
 {{ .SchemaMarkdown | trimspace }}
 

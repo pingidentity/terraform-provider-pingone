@@ -2,7 +2,6 @@ package sso_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -16,20 +15,16 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_password_policy.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := acctest.ResourceNameGen()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:      testAccCheckPasswordPolicyDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceName, name, licenseID),
+				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -65,18 +60,14 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:      testAccCheckPasswordPolicyDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceName, name, licenseID),
+				Config: testAccPasswordPolicyDataSourceConfig_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -103,120 +94,112 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
-func testAccPasswordPolicyDataSourceConfig_ByNameFull(environmentName, resourceName, name, licenseID string) string {
+func testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[4]s"
-			default_population {}
-			service {}
-		}
-		resource "pingone_password_policy" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			name = "%[3]s"
-			
-			description = "My new password policy"
+		%[1]s
 
-			exclude_commonly_used_passwords = true
-			exclude_profile_data = true
-			not_similar_to_current = true
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-			password_history {
-				prior_password_count = 6
-				retention_days = 365
-			}
+  description = "My new password policy"
 
-			password_length {
-				min = 8
-				max = 255
-			}
+  exclude_commonly_used_passwords = true
+  exclude_profile_data            = true
+  not_similar_to_current          = true
 
-			password_age {
-				max = 182
-				min = 1
-			}
+  password_history {
+    prior_password_count = 6
+    retention_days       = 365
+  }
 
-			account_lockout {
-				duration_seconds = 900
-				fail_count = 5
-			}
+  password_length {
+    min = 8
+    max = 255
+  }
 
-			min_characters {
-				alphabetical_uppercase = 1
-				alphabetical_lowercase = 1
-				numeric = 1
-				special_characters = 1
-			}
+  password_age {
+    max = 182
+    min = 1
+  }
 
-			max_repeated_characters = 2
-			min_complexity = 7
-			min_unique_characters = 5
-		}
-		data "pingone_password_policy" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
+  account_lockout {
+    duration_seconds = 900
+    fail_count       = 5
+  }
 
-			name = "%[3]s"
+  min_characters {
+    alphabetical_uppercase = 1
+    alphabetical_lowercase = 1
+    numeric                = 1
+    special_characters     = 1
+  }
 
-			depends_on = [
-				pingone_password_policy.%[2]s
-			]
-		}`, environmentName, resourceName, name, licenseID)
+  max_repeated_characters = 2
+  min_complexity          = 7
+  min_unique_characters   = 5
 }
 
-func testAccPasswordPolicyDataSourceConfig_ByIDFull(environmentName, resourceName, name, licenseID string) string {
+data "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  depends_on = [
+    pingone_password_policy.%[2]s
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPasswordPolicyDataSourceConfig_ByIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[4]s"
-			default_population {}
-			service {}
-		}
-		resource "pingone_password_policy" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			name = "%[3]s"
-			
-			description = "My new password policy"
+		%[1]s
 
-			exclude_commonly_used_passwords = true
-			exclude_profile_data = true
-			not_similar_to_current = true
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-			password_history {
-				prior_password_count = 6
-				retention_days = 365
-			}
+  description = "My new password policy"
 
-			password_length {
-				min = 8
-				max = 255
-			}
+  exclude_commonly_used_passwords = true
+  exclude_profile_data            = true
+  not_similar_to_current          = true
 
-			password_age {
-				max = 182
-				min = 1
-			}
+  password_history {
+    prior_password_count = 6
+    retention_days       = 365
+  }
 
-			account_lockout {
-				duration_seconds = 900
-				fail_count = 5
-			}
+  password_length {
+    min = 8
+    max = 255
+  }
 
-			min_characters {
-				alphabetical_uppercase = 1
-				alphabetical_lowercase = 1
-				numeric = 1
-				special_characters = 1
-			}
+  password_age {
+    max = 182
+    min = 1
+  }
 
-			max_repeated_characters = 2
-			min_complexity = 7
-			min_unique_characters = 5
-		}
-		data "pingone_password_policy" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
+  account_lockout {
+    duration_seconds = 900
+    fail_count       = 5
+  }
 
-			password_policy_id = "${pingone_password_policy.%[2]s.id}"
-		}`, environmentName, resourceName, name, licenseID)
+  min_characters {
+    alphabetical_uppercase = 1
+    alphabetical_lowercase = 1
+    numeric                = 1
+    special_characters     = 1
+  }
+
+  max_repeated_characters = 2
+  min_complexity          = 7
+  min_unique_characters   = 5
+}
+
+data "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  password_policy_id = pingone_password_policy.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

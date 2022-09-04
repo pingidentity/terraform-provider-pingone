@@ -3,7 +3,6 @@ package sso_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -66,9 +65,7 @@ func TestAccApplicationSignOnPolicyAssignment_Single(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_sign_on_policy_assignment.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	name := resourceName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -77,7 +74,7 @@ func TestAccApplicationSignOnPolicyAssignment_Single(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationSignOnPolicyAssignmentConfig_Single(environmentName, resourceName, licenseID),
+				Config: testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -96,9 +93,7 @@ func TestAccApplicationSignOnPolicyAssignment_Multiple(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_sign_on_policy_assignment.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	name := resourceName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -107,7 +102,7 @@ func TestAccApplicationSignOnPolicyAssignment_Multiple(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationSignOnPolicyAssignmentConfig_Multiple(environmentName, resourceName, licenseID),
+				Config: testAccApplicationSignOnPolicyAssignmentConfig_Multiple(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -131,9 +126,7 @@ func TestAccApplicationSignOnPolicyAssignment_Change(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_sign_on_policy_assignment.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	name := resourceName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -142,7 +135,7 @@ func TestAccApplicationSignOnPolicyAssignment_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationSignOnPolicyAssignmentConfig_Single(environmentName, resourceName, licenseID),
+				Config: testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -152,7 +145,7 @@ func TestAccApplicationSignOnPolicyAssignment_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationSignOnPolicyAssignmentConfig_Multiple(environmentName, resourceName, licenseID),
+				Config: testAccApplicationSignOnPolicyAssignmentConfig_Multiple(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -167,7 +160,7 @@ func TestAccApplicationSignOnPolicyAssignment_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationSignOnPolicyAssignmentConfig_Single(environmentName, resourceName, licenseID),
+				Config: testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -180,96 +173,84 @@ func TestAccApplicationSignOnPolicyAssignment_Change(t *testing.T) {
 	})
 }
 
-func testAccApplicationSignOnPolicyAssignmentConfig_Single(environmentName, resourceName, licenseID string) string {
+func testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[3]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_sign_on_policy" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-		  
-			name        = "%[2]s"
-		}
-
-		resource "pingone_application_sign_on_policy_assignment" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			application_id = "${pingone_application.%[2]s.id}"
-			
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s.id}"
-			priority = 1
-		}`, environmentName, resourceName, licenseID)
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
 }
 
-func testAccApplicationSignOnPolicyAssignmentConfig_Multiple(environmentName, resourceName, licenseID string) string {
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_application_sign_on_policy_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+  priority          = 1
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationSignOnPolicyAssignmentConfig_Multiple(resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[3]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_sign_on_policy" "%[2]s-1" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-		  
-			name        = "%[2]s_1"
-		}
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 
-		resource "pingone_sign_on_policy" "%[2]s-2" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-		  
-			name        = "%[2]s_2"
-		}
+resource "pingone_sign_on_policy" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
 
-		resource "pingone_application_sign_on_policy_assignment" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			application_id = "${pingone_application.%[2]s.id}"
-			
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s-1.id}"
-			priority = 2
-		}
-		
-		resource "pingone_application_sign_on_policy_assignment" "%[2]s-2" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			application_id = "${pingone_application.%[2]s.id}"
-			
-			sign_on_policy_id = "${pingone_sign_on_policy.%[2]s-2.id}"
-			priority = 1
-		}`, environmentName, resourceName, licenseID)
+  name = "%[2]s_1"
+}
+
+resource "pingone_sign_on_policy" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s_2"
+}
+
+resource "pingone_application_sign_on_policy_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s-1.id
+  priority          = 2
+}
+
+resource "pingone_application_sign_on_policy_assignment" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s-2.id
+  priority          = 1
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

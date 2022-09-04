@@ -370,9 +370,10 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceSignOnPolicyActionImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	attributes := strings.SplitN(d.Id(), "/", 3)
+	splitLength := 3
+	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != 2 {
+	if len(attributes) != splitLength {
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/signOnPolicyID/policyActionID\"", d.Id())
 	}
 
@@ -517,9 +518,9 @@ func expandSOPActionIDFirst(d *schema.ResourceData, sopPriority int32) (*managem
 
 	socialIDSet := false
 	if v, ok := d.GetOk("social_provider_ids"); ok {
-		if vc, ok := v.([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != "" {
+		if vc, ok := v.(*schema.Set); ok && vc != nil && len(vc.List()) > 0 && vc.List()[0] != "" {
 			obj := make([]string, 0)
-			for _, str := range vc {
+			for _, str := range vc.List() {
 				obj = append(obj, str.(string))
 			}
 			sopActionType.SetSocialProviders(expandSOPActionSocialProviders(obj))
@@ -578,6 +579,11 @@ func expandSOPActionIDP(d *schema.ResourceData, sopPriority int32) (*management.
 		if v1, ok := d.GetOk("registration_local_population_id"); ok && v1 != "" {
 			obj := *management.NewSignOnPolicyActionIDPAllOfRegistration(true)
 			obj.SetPopulation(*management.NewSignOnPolicyActionLoginAllOfRegistrationPopulation(v1.(string)))
+
+			if v2, ok := d.GetOk("registration_confirm_user_attributes"); ok {
+				obj.SetConfirmIdentityProviderAttributes(v2.(bool))
+			}
+
 			sopActionType.SetRegistration(obj)
 		}
 
@@ -631,9 +637,9 @@ func expandSOPActionLogin(d *schema.ResourceData, sopPriority int32) (*managemen
 
 	socialIDSet := false
 	if v, ok := d.GetOk("social_provider_ids"); ok {
-		if vc, ok := v.([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != "" {
+		if vc, ok := v.(*schema.Set); ok && vc != nil && len(vc.List()) > 0 && vc.List()[0] != "" {
 			obj := make([]string, 0)
-			for _, str := range vc {
+			for _, str := range vc.List() {
 				obj = append(obj, str.(string))
 			}
 			sopActionType.SetSocialProviders(expandSOPActionSocialProviders(obj))

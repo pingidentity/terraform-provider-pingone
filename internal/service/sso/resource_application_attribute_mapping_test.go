@@ -3,7 +3,6 @@ package sso_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -66,9 +65,7 @@ func TestAccApplicationAttributeMapping_Full(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	name := resourceName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -77,10 +74,10 @@ func TestAccApplicationAttributeMapping_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationAttributeMappingConfig_Full(environmentName, resourceName, licenseID),
+				Config: testAccApplicationAttributeMappingConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
@@ -98,9 +95,7 @@ func TestAccApplicationAttributeMapping_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	name := resourceName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -109,10 +104,10 @@ func TestAccApplicationAttributeMapping_Minimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationAttributeMappingConfig_Minimal(environmentName, resourceName, licenseID),
+				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
@@ -130,9 +125,7 @@ func TestAccApplicationAttributeMapping_Expression(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	name := resourceName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -141,10 +134,10 @@ func TestAccApplicationAttributeMapping_Expression(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationAttributeMappingConfig_Expression(environmentName, resourceName, licenseID),
+				Config: testAccApplicationAttributeMappingConfig_Expression(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(resourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "full_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
@@ -162,9 +155,7 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	name := resourceName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -173,7 +164,7 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationAttributeMappingConfig_Minimal(environmentName, resourceName, licenseID),
+				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
@@ -181,7 +172,7 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationAttributeMappingConfig_Expression(environmentName, resourceName, licenseID),
+				Config: testAccApplicationAttributeMappingConfig_Expression(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "full_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
@@ -189,7 +180,7 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationAttributeMappingConfig_Full(environmentName, resourceName, licenseID),
+				Config: testAccApplicationAttributeMappingConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
@@ -197,11 +188,11 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 				),
 			},
 			{
-				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(environmentName, resourceName, licenseID),
+				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name),
 				ExpectError: regexp.MustCompile("Attribute name '[a-zA-Z]*' is not valid for the '[A-Z_]*' application"),
 			},
 			{
-				Config: testAccApplicationAttributeMappingConfig_Minimal(environmentName, resourceName, licenseID),
+				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
@@ -217,9 +208,7 @@ func TestAccApplicationAttributeMapping_ReservedAttributeName(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	name := resourceName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -228,146 +217,122 @@ func TestAccApplicationAttributeMapping_ReservedAttributeName(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(environmentName, resourceName, licenseID),
+				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name),
 				ExpectError: regexp.MustCompile("Attribute name '[a-zA-Z]*' is not valid for the '[A-Z_]*' application"),
 			},
 		},
 	})
 }
 
-func testAccApplicationAttributeMappingConfig_Full(environmentName, resourceName, licenseID string) string {
+func testAccApplicationAttributeMappingConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[3]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			application_id = "${pingone_application.%[2]s.id}"
-			
-			name 		= "email"
-			required 	= true
-			value		= "$${user.email}"
-		}`, environmentName, resourceName, licenseID)
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
 }
 
-func testAccApplicationAttributeMappingConfig_Minimal(environmentName, resourceName, licenseID string) string {
-	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[3]s"
-			default_population {}
-			service {}
-		}
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
-
-		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			application_id = "${pingone_application.%[2]s.id}"
-			
-			name 		= "email"
-			value		= "$${user.email}"
-		}`, environmentName, resourceName, licenseID)
+  name     = "email"
+  required = true
+  value    = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationAttributeMappingConfig_Expression(environmentName, resourceName, licenseID string) string {
+func testAccApplicationAttributeMappingConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[3]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			application_id = "${pingone_application.%[2]s.id}"
-			
-			name 		= "full_name"
-			value		= "$${user.name.given + ', ' + user.name.family}"
-		}`, environmentName, resourceName, licenseID)
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
 }
 
-func testAccApplicationAttributeMappingConfig_ReservedAttributeName(environmentName, resourceName, licenseID string) string {
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "email"
+  value = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_Expression(resourceName, name string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[3]s"
-			default_population {}
-			service {}
-		}
+		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id  = "${pingone_environment.%[1]s.id}"
-			name 			= "%[2]s"
-			enabled 		= true
-		  
-			oidc_options {
-				type                        = "SINGLE_PAGE_APP"
-				grant_types                 = ["AUTHORIZATION_CODE"]
-				response_types              = ["CODE"]
-				pkce_enforcement            = "S256_REQUIRED"
-				token_endpoint_authn_method = "NONE"
-				redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		}
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-		resource "pingone_application_attribute_mapping" "%[2]s" {
-			environment_id = "${pingone_environment.%[1]s.id}"
-			application_id = "${pingone_application.%[2]s.id}"
-			
-			name 		= "aud"
-			value		= "$${'test'}"
-		}`, environmentName, resourceName, licenseID)
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "full_name"
+  value = "$${user.name.given + ', ' + user.name.family}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "aud"
+  value = "$${'test'}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

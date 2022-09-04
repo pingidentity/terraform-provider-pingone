@@ -405,32 +405,32 @@ func TestAccEnvironment_Services(t *testing.T) {
 
 func testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
-			description = "%[3]s"
-			type = "%[4]s"
-			region = "%[5]s"
-			license_id = "%[6]s"
-			default_population {
-				name = "%[8]s"
-				description = "%[9]s"
-			}
-			service {
-				type = "%[10]s"
-			}
-			service {
-				type = "%[11]s"
-				console_url = "%[12]s"
-				bookmark {
-					name = "%[13]s"
-					url = "%[14]s"
-				}
-				bookmark {
-					name = "%[15]s"
-					url = "%[16]s"
-				}
-			}
-		}`, resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
+resource "pingone_environment" "%[1]s" {
+  name        = "%[2]s"
+  description = "%[3]s"
+  type        = "%[4]s"
+  region      = "%[5]s"
+  license_id  = "%[6]s"
+  default_population {
+    name        = "%[8]s"
+    description = "%[9]s"
+  }
+  service {
+    type = "%[10]s"
+  }
+  service {
+    type        = "%[11]s"
+    console_url = "%[12]s"
+    bookmark {
+      name = "%[13]s"
+      url  = "%[14]s"
+    }
+    bookmark {
+      name = "%[15]s"
+      url  = "%[16]s"
+    }
+  }
+}`, resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
 }
 
 func testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID string, services []string) string {
@@ -438,40 +438,40 @@ func testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID stri
 	composedServices := composeServices(services)
 
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
-			license_id = "%[3]s"
-			default_population {
-			}
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+  default_population {
+  }
 			%[4]s
-		}`, resourceName, name, licenseID, composedServices)
+}`, resourceName, name, licenseID, composedServices)
 }
 
 func testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, licenseID string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
-			type = "%[3]s"
-			license_id = "%[4]s"
-			default_population {
-			}
-			service {
-			}
-		}`, resourceName, name, environmentType, licenseID)
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  type       = "%[3]s"
+  license_id = "%[4]s"
+  default_population {
+  }
+  service {
+  }
+}`, resourceName, name, environmentType, licenseID)
 }
 
 func testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[2]s"
-			type = "%[3]s"
-			region = "%[4]s"
-			license_id = "%[5]s"
-			default_population {
-			}
-			service {
-			}
-		}`, resourceName, name, environmentType, region, licenseID)
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  type       = "%[3]s"
+  region     = "%[4]s"
+  license_id = "%[5]s"
+  default_population {
+  }
+  service {
+  }
+}`, resourceName, name, environmentType, region, licenseID)
 }
 
 func composeServices(services []string) string {

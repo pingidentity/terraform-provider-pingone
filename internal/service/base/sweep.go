@@ -35,7 +35,7 @@ func sweepEnvironments(region string) error {
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
-	environments, err := sweep.FetchTaggedEnvironments(ctx, apiClient, region)
+	environments, err := sweep.FetchTaggedEnvironments(ctx, apiClient)
 	if err != nil {
 		return err
 	}
@@ -60,6 +60,11 @@ func sweepEnvironments(region string) error {
 			log.Printf("Error destroying environment %s during sweep: %s", environment.GetName(), err)
 		}
 
+	}
+
+	err = sweep.CreateTestEnvironment(ctx, apiClient, p1Client.API.Region.APICode, "general-test")
+	if err != nil {
+		log.Printf("Error creating environment `general-test` during sweep: %s", err)
 	}
 
 	return nil

@@ -1,0 +1,27 @@
+```release-note:bug
+resource/pingone_application_attribute_mapping: Import issue: `invalid id..` when ID is correctly specified
+```
+
+```release-note:bug
+resource/pingone_application_resource_grant: Import issue: `invalid id..` when ID is correctly specified
+```
+
+```release-note:bug
+resource/pingone_application_sign_on_policy_assignment: Import issue: `invalid id..` when ID is correctly specified
+```
+
+```release-note:bug
+resource/pingone_identity_provider_attribute: Import issue: `invalid id..` when ID is correctly specified
+```
+
+```release-note:bug
+resource/pingone_resource_scope: Import issue: `invalid id..` when ID is correctly specified
+```
+
+```release-note:bug
+resource/pingone_schema_attribute: Import issue: `invalid id..` when ID is correctly specified
+```
+
+```release-note:bug
+resource/pingone_sign_on_policy_action: Import issue: `invalid id..` when ID is correctly specified
+```

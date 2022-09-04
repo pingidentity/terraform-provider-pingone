@@ -1,13 +1,38 @@
-## 0.3.1 (Unreleased)
+## 0.4.0 (Unreleased)
 
 NOTES:
 
+* Bump `goreleaser/goreleaser-action` from 3.0.0 to 3.1.0 ([#87](https://github.com/pingidentity/terraform-provider-pingone/issues/87))
+* Documentation: Updates and corrections to examples ([#107](https://github.com/pingidentity/terraform-provider-pingone/issues/107))
+* bump `github.com/katbyte/terrafmt` from 0.4.0 to 0.5.2 ([#65](https://github.com/pingidentity/terraform-provider-pingone/issues/65))
+
+FEATURES:
+
+* **New Resource:** `pingone_key` ([#96](https://github.com/pingidentity/terraform-provider-pingone/issues/96))
+
+## 0.3.1 (02 September 2022)
+
+NOTES:
+
+* Added structure to automatically retry OAuth token calls where returned errors are retryable. ([#105](https://github.com/pingidentity/terraform-provider-pingone/issues/105))
+* All resources/datasources: Certain HTTP level API errors become more readable and show better detail. ([#105](https://github.com/pingidentity/terraform-provider-pingone/issues/105))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.6.0 => v0.7.0 ([#98](https://github.com/pingidentity/terraform-provider-pingone/issues/98))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.4 => v0.3.5 ([#98](https://github.com/pingidentity/terraform-provider-pingone/issues/98))
+* resource/pingone_sign_on_policy_action: Added schema conflict advice for `enforce_lockout_for_identity_providers` when using the `identity_provider` typed sign on policy action ([#103](https://github.com/pingidentity/terraform-provider-pingone/issues/103))
+* resource/pingone_sign_on_policy_action: Added schema conflict advice for `social_provider_ids` when using the `identity_provider` typed sign on policy action ([#103](https://github.com/pingidentity/terraform-provider-pingone/issues/103))
 
 BUG FIXES:
 
 * resource/pingone_application: Fix `idp_signing_key_id` on `pingone_application` resource has no effect ([#98](https://github.com/pingidentity/terraform-provider-pingone/issues/98))
+* resource/pingone_application_attribute_mapping: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_application_resource_grant: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_application_sign_on_policy_assignment: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_identity_provider_attribute: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_resource_scope: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_schema_attribute: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
+* resource/pingone_sign_on_policy_action: Fix `registration_confirm_user_attributes` (`identity_provider` typed sign on policy action) has no effect ([#103](https://github.com/pingidentity/terraform-provider-pingone/issues/103))
+* resource/pingone_sign_on_policy_action: Fix for `social_provider_ids` showing changes when the values are the same but in different order. ([#103](https://github.com/pingidentity/terraform-provider-pingone/issues/103))
+* resource/pingone_sign_on_policy_action: Import issue: `invalid id..` when ID is correctly specified ([#104](https://github.com/pingidentity/terraform-provider-pingone/issues/104))
 
 ## 0.3.0 (30 August 2022)
 
