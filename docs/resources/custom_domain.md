@@ -20,7 +20,7 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_custom_domain" "my_custom_domain" {
   environment_id = pingone_environment.my_environment.id
 
-  domain_name = "auth.bxretail.org"
+  domain_name = "demo.bxretail.org"
 }
 ```
 
@@ -29,7 +29,7 @@ resource "pingone_custom_domain" "my_custom_domain" {
 
 ### Required
 
-- `domain_name` (String) A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `auth.bxretail.org`).
+- `domain_name` (String) A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).
 - `environment_id` (String) The ID of the environment to create the certificate in.
 
 ### Read-Only
