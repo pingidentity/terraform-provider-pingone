@@ -40,7 +40,7 @@ func ResourceCustomDomain() *schema.Resource {
 			},
 			"domain_name": {
 				Type:             schema.TypeString,
-				Description:      "A string that specifies the resource name, which must be provided and must be unique within an environment (for example, `auth.shopco.com`).",
+				Description:      "A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `auth.bxretail.org`).",
 				Required:         true,
 				ForceNew:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),

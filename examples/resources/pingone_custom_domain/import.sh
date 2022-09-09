@@ -1,0 +1,1 @@
+$ terraform import pingone_custom_domain.example <environment_id>/<custom_domain_id>
