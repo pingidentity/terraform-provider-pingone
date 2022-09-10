@@ -52,15 +52,15 @@ resource "pingone_custom_domain_ssl" "%[3]s" {
 
   custom_domain_id = pingone_custom_domain.%[3]s.id
 
-  certificate_pem_file = <<EOT
+  certificate_pem_file               = <<EOT
 %[4]s
 EOT
   intermediate_certificates_pem_file = <<EOT
 %[5]s
 EOT
-  private_key_pem_file = <<EOT
+  private_key_pem_file               = <<EOT
 %[6]s
 EOT
-  
+
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, certificateFile, intermediateFile, privateKeyFile)
 }
