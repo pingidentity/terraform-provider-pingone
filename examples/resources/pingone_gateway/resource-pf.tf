@@ -7,5 +7,5 @@ resource "pingone_gateway" "my_awesome_pingfederate_gateway" {
   name           = "Advanced Services SSO"
   enabled        = true
 
-  type = "PING_FEDERATE"
+  pingfederate {}
 }
