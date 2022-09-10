@@ -142,6 +142,7 @@ func ResourceGateway() *schema.Resource {
 							Description: "Indicates whether or not to trust all SSL certificates (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.",
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Default:     true,
 						},
 						"vendor": {
 							Description:      fmt.Sprintf("The LDAP vendor. Options are `%s`, `%s`, `%s`, `%s`, `%s`, `%s`, `%s`, and `%s`.", string(management.ENUMGATEWAYVENDOR_PING_DIRECTORY), string(management.ENUMGATEWAYVENDOR_MICROSOFT_ACTIVE_DIRECTORY), string(management.ENUMGATEWAYVENDOR_ORACLE_DIRECTORY_SERVER_ENTERPRISE_EDITION), string(management.ENUMGATEWAYVENDOR_ORACLE_UNIFIED_DIRECTORY), string(management.ENUMGATEWAYVENDOR_CA_DIRECTORY), string(management.ENUMGATEWAYVENDOR_OPEN_DJ_DIRECTORY), string(management.ENUMGATEWAYVENDOR_IBM__TIVOLI_SECURITY_DIRECTORY_SERVER), string(management.ENUMGATEWAYVENDOR_LDAP_V3_COMPLIANT_DIRECTORY_SERVER)),
@@ -459,6 +460,8 @@ func expandGatewayRequest(d *schema.ResourceData) (*management.CreateGatewayRequ
 
 		if v, ok := d.GetOk("ldap.0.validate_tls_certificates"); ok {
 			gateway.SetValidateTlsCertificates(v.(bool))
+		} else {
+			gateway.SetValidateTlsCertificates(false)
 		}
 
 		gatewayRequest.GatewayLDAP = &gateway
