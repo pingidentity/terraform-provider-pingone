@@ -266,7 +266,11 @@ func resourceGatewayCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	respObject := resp.(*management.CreateGateway201Response)
 
-	d.SetId(respObject.Gateway.GetId())
+	if gateway := respObject.Gateway; gateway != nil && gateway.GetId() != "" {
+		d.SetId(gateway.GetId())
+	} else if gateway := respObject.GatewayLDAP; gateway != nil && gateway.GetId() != "" {
+		d.SetId(gateway.GetId())
+	}
 
 	return resourceGatewayRead(ctx, d, meta)
 }
@@ -427,29 +431,33 @@ func expandGatewayRequest(d *schema.ResourceData) (*management.CreateGatewayRequ
 
 		gateway := *management.NewGatewayLDAP(d.Get("name").(string), management.ENUMGATEWAYTYPE_LDAP, d.Get("enabled").(bool), d.Get("ldap.0.bind_dn").(string), d.Get("ldap.0.bind_password").(string), userTypes, management.EnumGatewayVendor(d.Get("ldap.0.vendor").(string)))
 
-		if v, ok := d.GetOk("connection_security"); ok {
+		if v, ok := d.GetOk("ldap.0.connection_security"); ok {
 			gateway.SetConnectionSecurity(management.EnumGatewayLDAPSecurity(v.(string)))
 		}
 
-		if v, ok := d.GetOk("kerberos_service_account_upn"); ok {
+		if v, ok := d.GetOk("ldap.0.kerberos_service_account_upn"); ok {
 			kerberos := management.NewGatewayLDAPAllOfKerberos(v.(string))
 
-			if v1, ok := d.GetOk("kerberos_service_account_password"); ok {
+			if v1, ok := d.GetOk("ldap.0.kerberos_service_account_password"); ok {
 				kerberos.SetServiceAccountPassword(v1.(string))
 			}
 
-			if v1, ok := d.GetOk("kerberos_retain_previous_credentials_mins"); ok {
+			if v1, ok := d.GetOk("ldap.0.kerberos_retain_previous_credentials_mins"); ok {
 				kerberos.SetMinutesToRetainPreviousCredentials(int32(v1.(int)))
 			}
 
 			gateway.SetKerberos(*kerberos)
 		}
 
-		if v, ok := d.GetOk("servers"); ok {
-			gateway.SetServersHostAndPort(v.([]string))
+		if v, ok := d.GetOk("ldap.0.servers"); ok {
+			obj := make([]string, 0)
+			for _, str := range v.(*schema.Set).List() {
+				obj = append(obj, str.(string))
+			}
+			gateway.SetServersHostAndPort(obj)
 		}
 
-		if v, ok := d.GetOk("validate_tls_certificates"); ok {
+		if v, ok := d.GetOk("ldap.0.validate_tls_certificates"); ok {
 			gateway.SetValidateTlsCertificates(v.(bool))
 		}
 
@@ -512,8 +520,12 @@ func expandLDAPUserTypes(c *schema.Set) []management.GatewayLDAPAllOfUserTypes {
 			userType.SetSearchBaseDn(v)
 		}
 
-		if v, ok := obj["user_link_attributes"].([]string); ok && len(v) > 0 && v[0] != "" {
-			userType.SetOrderedCorrelationAttributes(v)
+		if v, ok := obj["user_link_attributes"].([]interface{}); ok && len(v) > 0 && v[0] != "" {
+			obj := make([]string, 0)
+			for _, str := range v {
+				obj = append(obj, str.(string))
+			}
+			userType.SetOrderedCorrelationAttributes(obj)
 		}
 
 		userTypes = append(userTypes, userType)
