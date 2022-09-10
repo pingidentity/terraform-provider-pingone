@@ -80,7 +80,17 @@ func resourceCustomDomainVerifyCreate(ctx context.Context, d *schema.ResourceDat
 					diags = append(diags, diag.Diagnostic{
 						Severity: diag.Error,
 						Summary:  fmt.Sprintf("Cannot verify the domain - %s", details[0].GetMessage()),
-						Detail:   `Please check the domain authority has the correct CNAME value set (if using the "pingone_custom_domain" resource, the CNAME value to use is returned in the "canonical_name" attribute.)`,
+						Detail:   `Please check the domain authority exists or is reachable.`,
+					})
+					return diags
+				}
+
+				m, _ = regexp.MatchString("^No CNAME records found", details[0].GetMessage())
+				if m {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  fmt.Sprintf("Cannot verify the domain - %s", details[0].GetMessage()),
+						Detail:   `Please check the domain authority has the correct CNAME value set (hint: if using the "pingone_custom_domain" resource, the CNAME value to use is returned in the "canonical_name" attribute.)`,
 					})
 					return diags
 				}

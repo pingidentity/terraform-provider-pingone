@@ -27,7 +27,7 @@ func TestAccCustomDomainVerify_CannotVerifyNXDOMAIN(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCustomDomainVerifyConfig_CannotVerifyNXDOMAIN(environmentName, licenseID, resourceName),
-				ExpectError: regexp.MustCompile(`Cannot verify the domain - Error response from authoritative name servers: NXDOMAIN`),
+				ExpectError: regexp.MustCompile(`Cannot verify the domain`),
 			},
 		},
 	})
