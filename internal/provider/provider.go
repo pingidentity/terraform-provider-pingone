@@ -87,6 +87,7 @@ func New(version string) func() *schema.Provider {
 				"pingone_certificate_signing_response": base.ResourceCertificateSigningResponse(),
 				"pingone_custom_domain":                base.ResourceCustomDomain(),
 				"pingone_custom_domain_verify":         base.ResourceCustomDomainVerify(),
+				"pingone_custom_domain_ssl":            base.ResourceCustomDomainSSL(),
 				"pingone_environment":                  base.ResourceEnvironment(),
 				"pingone_gateway":                      base.ResourceGateway(),
 				"pingone_gateway_credential":           base.ResourceGatewayCredential(),
