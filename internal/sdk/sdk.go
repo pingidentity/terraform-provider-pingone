@@ -50,6 +50,11 @@ var (
 )
 
 func ParseResponse(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, customError CustomError, retryable Retryable) (interface{}, diag.Diagnostics) {
+	defaultTimeout := 10
+	return ParseResponseWithCustomTimeout(ctx, f, sdkMethod, customError, retryable, time.Duration(defaultTimeout)*time.Minute)
+}
+
+func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, customError CustomError, retryable Retryable, timeout time.Duration) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if customError == nil {
@@ -60,11 +65,9 @@ func ParseResponse(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, cu
 		retryable = DefaultRetryable
 	}
 
-	defaultTimeout := 30
-
 	resp, r, err := RetryWrapper(
 		ctx,
-		time.Duration(defaultTimeout)*time.Second,
+		timeout,
 		f,
 		retryable,
 	)
