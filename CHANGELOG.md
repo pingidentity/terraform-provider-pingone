@@ -6,7 +6,9 @@ NOTES:
 * Documentation: Updates and corrections to examples ([#107](https://github.com/pingidentity/terraform-provider-pingone/issues/107))
 * bump `github.com/katbyte/terrafmt` from 0.4.0 to 0.5.2 ([#65](https://github.com/pingidentity/terraform-provider-pingone/issues/65))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.7.0 => v0.8.0 ([#110](https://github.com/pingidentity/terraform-provider-pingone/issues/110))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.8.0 => v0.9.0 ([#128](https://github.com/pingidentity/terraform-provider-pingone/issues/128))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.5 => v0.3.6 ([#110](https://github.com/pingidentity/terraform-provider-pingone/issues/110))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.6 => v0.3.7 ([#128](https://github.com/pingidentity/terraform-provider-pingone/issues/128))
 
 FEATURES:
 
