@@ -110,9 +110,7 @@ func TestAccGateway_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_FEDERATE"),
 				),
 			},
 		},
@@ -141,9 +139,7 @@ func TestAccGateway_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_FEDERATE"),
 				),
 			},
 		},
@@ -172,9 +168,7 @@ func TestAccGateway_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_FEDERATE"),
 				),
 			},
 			{
@@ -185,9 +179,7 @@ func TestAccGateway_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_FEDERATE"),
 				),
 			},
 			{
@@ -198,9 +190,7 @@ func TestAccGateway_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_FEDERATE"),
 				),
 			},
 			{
@@ -211,9 +201,7 @@ func TestAccGateway_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "API_GATEWAY_INTEGRATION"),
 				),
 			},
 		},
@@ -237,9 +225,7 @@ func TestAccGateway_PF(t *testing.T) {
 			{
 				Config: testAccGatewayConfig_PingFederate(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_FEDERATE"),
 				),
 			},
 		},
@@ -263,10 +249,53 @@ func TestAccGateway_APIG(t *testing.T) {
 			{
 				Config: testAccGatewayConfig_APIGateway(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "API_GATEWAY_INTEGRATION"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccGateway_Intelligence(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_gateway.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckGatewayDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccGatewayConfig_Intelligence(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_INTELLIGENCE"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccGateway_BadParameter(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckGatewayDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccGatewayConfig_BadParameter(resourceName, name),
+				ExpectError: regexp.MustCompile("Unexpected parameter bind_dn for PING_FEDERATE gateway type"),
 			},
 		},
 	})
@@ -294,85 +323,71 @@ func TestAccGateway_LDAPFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.bind_dn", "ou=test,dc=example,dc=com"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.bind_password", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.connection_security", "TLS"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.kerberos_service_account_upn", "username@domainname"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.kerberos_service_account_password", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.kerberos_retain_previous_credentials_mins", "20"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.servers.#", "3"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "ldap.0.servers.*", "ds2.dummyldapservice.com:636"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "ldap.0.servers.*", "ds3.dummyldapservice.com:636"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "ldap.0.servers.*", "ds1.dummyldapservice.com:636"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.validate_tls_certificates", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.vendor", "Microsoft Active Directory"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.id", "59e24997-f829-4206-b1b7-9b6a8a25c0b3"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.name", "User Set 2"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.password_authority", "PING_ONE"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.search_base_dn", "ou=users,dc=example,dc=com"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.user_link_attributes.#", "3"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.user_link_attributes.0", "objectGUID"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.user_link_attributes.1", "dn"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.user_link_attributes.2", "objectSid"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.user_migration_lookup_filter_pattern", "(|(uid=${identifier})(mail=${identifier}))"),
-					resource.TestMatchResourceAttr(resourceFullName, "ldap.0.user_type.0.user_migration_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.user_migration_attribute_mapping.#", "3"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "ldap.0.user_type.0.user_migration_attribute_mapping.*", map[string]string{
-						"name":  "username",
-						"value": "${ldapAttributes.uid}",
+					resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test,dc=example,dc=com"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_security", "TLS"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", "username@domainname"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", "dummyKerberosPasswordValue"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "20"),
+					resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:636"),
+					resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "vendor", "Microsoft Active Directory"),
+					resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "2"),
+
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
+						"name":                                   "User Set 2",
+						"password_authority":                     "PING_ONE",
+						"search_base_dn":                         "ou=users,dc=example,dc=com",
+						"user_link_attributes.#":                 "3",
+						"user_link_attributes.0":                 "objectGUID",
+						"user_link_attributes.1":                 "dn",
+						"user_link_attributes.2":                 "objectSid",
+						"user_migration.#":                       "1",
+						"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
+						"user_migration.0.attribute_mapping.#":   "3",
+						"push_password_changes_to_ldap":          "true",
 					}),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "ldap.0.user_type.0.user_migration_attribute_mapping.*", map[string]string{
-						"name":  "email",
-						"value": "${ldapAttributes.mail}",
+
+					/*
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "username",
+							"value": "${ldapAttributes.uid}",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "email",
+							"value": "${ldapAttributes.mail}",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "name.family",
+							"value": "${ldapAttributes.sn}",
+						}),
+					*/
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
+						"name":                                   "User Set 1",
+						"password_authority":                     "LDAP",
+						"search_base_dn":                         "ou=users1,dc=example,dc=com",
+						"user_link_attributes.#":                 "2",
+						"user_link_attributes.0":                 "objectGUID",
+						"user_link_attributes.1":                 "objectSid",
+						"user_migration.#":                       "1",
+						"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
+						"user_migration.0.attribute_mapping.#":   "2",
+						"push_password_changes_to_ldap":          "true",
 					}),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "ldap.0.user_type.0.user_migration_attribute_mapping.*", map[string]string{
-						"name":  "name.family",
-						"value": "${ldapAttributes.sn}",
-					}),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.0.push_password_changes_to_ldap", "true"),
-					// resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "ldap.0.user_type.*", map[string]string{
-					// 	"id":                                   "59e24997-f829-4206-b1b7-9b6a8a25c0b3",
-					// 	"name":                                 "User Set 2",
-					// 	"password_authority":                   "PING_ONE",
-					// 	"search_base_dn":                       "ou=users,dc=example,dc=com",
-					// 	"user_link_attributes.#":               "3",
-					// 	"user_migration_lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
-					// 	"user_migration_attribute_mapping.#":   "3",
-					// 	"push_password_changes_to_ldap":        "true",
-					// }),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.id", "59e24997-f829-4206-b1b7-9b6a8a25c0b4"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.name", "User Set 1"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.password_authority", "LDAP"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.search_base_dn", "ou=users1,dc=example,dc=com"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.user_link_attributes.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.user_link_attributes.0", "objectGUID"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.user_link_attributes.1", "objectSid"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.user_migration_lookup_filter_pattern", "(|(uid=${identifier})(mail=${identifier}))"),
-					resource.TestMatchResourceAttr(resourceFullName, "ldap.0.user_type.1.user_migration_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.user_migration_attribute_mapping.#", "2"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "ldap.0.user_type.1.user_migration_attribute_mapping.*", map[string]string{
-						"name":  "username",
-						"value": "${ldapAttributes.uid}",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "ldap.0.user_type.1.user_migration_attribute_mapping.*", map[string]string{
-						"name":  "email",
-						"value": "${ldapAttributes.mail}",
-					}),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.1.push_password_changes_to_ldap", "true"),
-					// resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "ldap.0.user_type.*", map[string]string{
-					// 	"id":                                   "59e24997-f829-4206-b1b7-9b6a8a25c0b4",
-					// 	"name":                                 "User Set 1",
-					// 	"password_authority":                   "LDAP",
-					// 	"search_base_dn":                       "ou=users1,dc=example,dc=com",
-					// 	"user_link_attributes.#":               "2",
-					// 	"user_migration_lookup_filter_pattern": "(|(uid=$${identifier})(mail=$${identifier}))",
-					// 	"user_migration_attribute_mapping.#":   "2",
-					// 	"push_password_changes_to_ldap":        "true",
-					// }),
+					/*
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.1.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "username",
+							"value": "${ldapAttributes.uid}",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.1.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "email",
+							"value": "${ldapAttributes.mail}",
+						}),
+					*/
 				),
 			},
 		},
@@ -401,30 +416,212 @@ func TestAccGateway_LDAPMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "pingfederate.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "api_gateway.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.bind_dn", "ou=test,dc=example,dc=com"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.bind_password", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.connection_security", "NONE"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.kerberos_service_account_upn", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.kerberos_service_account_password", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.kerberos_retain_previous_credentials_mins", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.servers.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.validate_tls_certificates", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.vendor", "PingDirectory"),
-					resource.TestCheckResourceAttr(resourceFullName, "ldap.0.user_type.#", "1"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "ldap.0.user_type.*", map[string]string{
-						"id":                                   "id3-1234",
-						"name":                                 "User Set 3",
-						"password_authority":                   "LDAP",
-						"search_base_dn":                       "",
-						"user_link_attributes.#":               "0",
-						"user_migration_lookup_filter_pattern": "",
-						"user_migration_population_id":         "",
-						"user_migration_attribute_mapping.#":   "1",
-						"push_password_changes_to_ldap":        "false",
+					resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test,dc=example,dc=com"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_security", "None"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:636"),
+					resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "vendor", "PingDirectory"),
+					resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccGateway_LDAPChange(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_gateway.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckGatewayDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccGatewayConfig_LDAPFull(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test,dc=example,dc=com"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_security", "TLS"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", "username@domainname"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", "dummyKerberosPasswordValue"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "20"),
+					resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:636"),
+					resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "vendor", "Microsoft Active Directory"),
+					resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "2"),
+
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
+						"name":                                   "User Set 2",
+						"password_authority":                     "PING_ONE",
+						"search_base_dn":                         "ou=users,dc=example,dc=com",
+						"user_link_attributes.#":                 "3",
+						"user_link_attributes.0":                 "objectGUID",
+						"user_link_attributes.1":                 "dn",
+						"user_link_attributes.2":                 "objectSid",
+						"user_migration.#":                       "1",
+						"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
+						"user_migration.0.attribute_mapping.#":   "3",
+						"push_password_changes_to_ldap":          "true",
 					}),
+
+					/*
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "username",
+							"value": "${ldapAttributes.uid}",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "email",
+							"value": "${ldapAttributes.mail}",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "name.family",
+							"value": "${ldapAttributes.sn}",
+						}),
+					*/
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
+						"name":                                   "User Set 1",
+						"password_authority":                     "LDAP",
+						"search_base_dn":                         "ou=users1,dc=example,dc=com",
+						"user_link_attributes.#":                 "2",
+						"user_link_attributes.0":                 "objectGUID",
+						"user_link_attributes.1":                 "objectSid",
+						"user_migration.#":                       "1",
+						"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
+						"user_migration.0.attribute_mapping.#":   "2",
+						"push_password_changes_to_ldap":          "true",
+					}),
+					/*
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.1.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "username",
+							"value": "${ldapAttributes.uid}",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.1.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "email",
+							"value": "${ldapAttributes.mail}",
+						}),
+					*/
+				),
+			},
+			{
+				Config: testAccGatewayConfig_LDAPMinimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test,dc=example,dc=com"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_security", "None"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:636"),
+					resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "vendor", "PingDirectory"),
+					resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "0"),
+				),
+			},
+			{
+				Config: testAccGatewayConfig_LDAPFull(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test,dc=example,dc=com"),
+					resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_security", "TLS"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", "username@domainname"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", "dummyKerberosPasswordValue"),
+					resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "20"),
+					resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:636"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:636"),
+					resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "vendor", "Microsoft Active Directory"),
+					resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "2"),
+
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
+						"name":                                   "User Set 2",
+						"password_authority":                     "PING_ONE",
+						"search_base_dn":                         "ou=users,dc=example,dc=com",
+						"user_link_attributes.#":                 "3",
+						"user_link_attributes.0":                 "objectGUID",
+						"user_link_attributes.1":                 "dn",
+						"user_link_attributes.2":                 "objectSid",
+						"user_migration.#":                       "1",
+						"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
+						"user_migration.0.attribute_mapping.#":   "3",
+						"push_password_changes_to_ldap":          "true",
+					}),
+
+					/*
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "username",
+							"value": "${ldapAttributes.uid}",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "email",
+							"value": "${ldapAttributes.mail}",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "name.family",
+							"value": "${ldapAttributes.sn}",
+						}),
+					*/
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
+						"name":                                   "User Set 1",
+						"password_authority":                     "LDAP",
+						"search_base_dn":                         "ou=users1,dc=example,dc=com",
+						"user_link_attributes.#":                 "2",
+						"user_link_attributes.0":                 "objectGUID",
+						"user_link_attributes.1":                 "objectSid",
+						"user_migration.#":                       "1",
+						"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
+						"user_migration.0.attribute_mapping.#":   "2",
+						"push_password_changes_to_ldap":          "true",
+					}),
+					/*
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.1.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "username",
+							"value": "${ldapAttributes.uid}",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.1.user_migration.0.attribute_mapping.*", map[string]string{
+							"name":  "email",
+							"value": "${ldapAttributes.mail}",
+						}),
+					*/
 				),
 			},
 		},
@@ -440,7 +637,7 @@ resource "pingone_gateway" "%[3]s" {
   name           = "%[4]s"
   enabled        = false
 
-  pingfederate {}
+  type = "PING_FEDERATE"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -454,7 +651,7 @@ resource "pingone_gateway" "%[2]s" {
   description    = "My test gateway"
   enabled        = true
 
-  pingfederate {}
+  type = "PING_FEDERATE"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -467,7 +664,7 @@ resource "pingone_gateway" "%[2]s" {
   name           = "%[3]s"
   enabled        = false
 
-  pingfederate {}
+  type = "PING_FEDERATE"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -480,7 +677,7 @@ resource "pingone_gateway" "%[2]s" {
   name           = "%[3]s"
   enabled        = false
 
-  pingfederate {}
+  type = "PING_FEDERATE"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -493,7 +690,20 @@ resource "pingone_gateway" "%[2]s" {
   name           = "%[3]s"
   enabled        = false
 
-  api_gateway {}
+  type = "API_GATEWAY_INTEGRATION"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccGatewayConfig_Intelligence(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_gateway" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = false
+
+  type = "PING_INTELLIGENCE"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -504,18 +714,18 @@ func testAccGatewayConfig_LDAPFull(resourceName, name string) string {
 resource "pingone_population" "%[2]s" {
 	environment_id = data.pingone_environment.general_test.id
 
-	name = "Gateway Population Test"
+	name = "%[3]s"
 }
 
 resource "pingone_gateway" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = false
-
-  ldap {
+  type = "LDAP"
 
 	bind_dn = "ou=test,dc=example,dc=com"
 	bind_password = "dummyPasswordValue"
+
 	connection_security = "TLS"
 	vendor = "Microsoft Active Directory"
 
@@ -532,61 +742,64 @@ resource "pingone_gateway" "%[2]s" {
 	validate_tls_certificates = false
 
 	user_type {
-		id = "59e24997-f829-4206-b1b7-9b6a8a25c0b4"
+		// id = "59e24997-f829-4206-b1b7-9b6a8a25c0b4"
 		name = "User Set 1"
 		password_authority = "LDAP"
 		search_base_dn = "ou=users1,dc=example,dc=com"
 
 		user_link_attributes = [ "objectGUID", "objectSid" ]
 
-		user_migration_lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+		user_migration {
+			lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
 
-		user_migration_population_id = pingone_population.%[2]s.id
+			population_id = pingone_population.%[2]s.id
 
-		user_migration_attribute_mapping {
-			name = "username"
-			value = "$${ldapAttributes.uid}"
-		}
+			attribute_mapping {
+				name = "username"
+				value = "$${ldapAttributes.uid}"
+			}
 
-		user_migration_attribute_mapping {
-			name = "email"
-			value = "$${ldapAttributes.mail}"
+			attribute_mapping {
+				name = "email"
+				value = "$${ldapAttributes.mail}"
+			}
 		}
 
 		push_password_changes_to_ldap = true
 	}
 
 	user_type {
-		id = "59e24997-f829-4206-b1b7-9b6a8a25c0b3"
+		// id = "59e24997-f829-4206-b1b7-9b6a8a25c0b3"
 		name = "User Set 2"
 		password_authority = "PING_ONE"
 		search_base_dn = "ou=users,dc=example,dc=com"
 
 		user_link_attributes = [ "objectGUID", "dn",  "objectSid" ]
 
-		user_migration_lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+		user_migration {
+			lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
 
-		user_migration_population_id = pingone_population.%[2]s.id
+			population_id = pingone_population.%[2]s.id
 
-		user_migration_attribute_mapping {
-			name = "username"
-			value = "$${ldapAttributes.uid}"
-		}
+			attribute_mapping {
+				name = "username"
+				value = "$${ldapAttributes.uid}"
+			}
 
-		user_migration_attribute_mapping {
-			name = "email"
-			value = "$${ldapAttributes.mail}"
-		}
+			attribute_mapping {
+				name = "email"
+				value = "$${ldapAttributes.mail}"
+			}
 
-		user_migration_attribute_mapping {
-			name = "name.family"
-			value = "$${ldapAttributes.sn}"
+			attribute_mapping {
+				name = "name.family"
+				value = "$${ldapAttributes.sn}"
+			}
 		}
 
 		push_password_changes_to_ldap = true
 	}
 
-  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -600,24 +813,42 @@ resource "pingone_gateway" "%[2]s" {
   name           = "%[3]s"
   enabled        = false
 
-  ldap {
+  type = "LDAP"
 
 	bind_dn = "ou=test,dc=example,dc=com"
 	bind_password = "dummyPasswordValue"
+
 	vendor = "PingDirectory"
 
-	user_type {
-		id = "59e24997-f829-4206-b1b7-9b6a8a25c0b3"
-		name = "User Set 3"
-		password_authority = "LDAP"
-
-		user_migration_attribute_mapping {
-			name = "username"
-			value = "$${ldapAttributes.uid}"
-		}
-	}
-
-  }
+	servers = [
+		"ds1.dummyldapservice.com:636",
+		"ds3.dummyldapservice.com:636",
+		"ds2.dummyldapservice.com:636",
+	]
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccGatewayConfig_BadParameter(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_gateway" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+	name           = "%[3]s"
+	enabled        = false
+  
+	type = "PING_FEDERATE"
+
+	bind_dn = "ou=test,dc=example,dc=com"
+	bind_password = "dummyPasswordValue"
+
+	vendor = "Microsoft Active Directory"
+
+	servers = [
+		"ds1.dummyldapservice.com:636",
+		"ds3.dummyldapservice.com:636",
+		"ds2.dummyldapservice.com:636",
+	]
+  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

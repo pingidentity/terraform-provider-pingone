@@ -15,6 +15,52 @@ Resource to create and manage PingOne gateways.
 resource "pingone_environment" "my_environment" {
   # ...
 }
+
+resource "pingone_gateway" "my_ldap_gateway" {
+  environment_id = pingone_environment.my_environment.id
+  name           = "My Active Directory"
+  enabled        = true
+  type           = "LDAP"
+
+  bind_dn       = "ou=test,dc=bxretail,dc=org"
+  bind_password = var.bind_password
+
+  connection_security = "TLS"
+  vendor              = "Microsoft Active Directory"
+
+  servers = [
+    "ds1.bxretail.org:636",
+    "ds2.bxretail.org:636",
+    "ds3.bxretail.org:636",
+  ]
+
+  user_type {
+    name               = "User Set 1"
+    password_authority = "LDAP"
+    search_base_dn     = "ou=users,dc=bxretail,dc=org"
+
+    user_link_attributes = ["objectGUID", "objectSid"]
+
+    user_migration {
+      lookup_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
+
+      population_id = pingone_environment.my_environment.default_population_id
+
+      attribute_mapping {
+        name  = "username"
+        value = "$${ldapAttributes.sAMAccountName}"
+      }
+
+      attribute_mapping {
+        name  = "email"
+        value = "$${ldapAttributes.mail}"
+      }
+    }
+
+    push_password_changes_to_ldap = true
+  }
+
+}
 ```
 
 ## Example Usage - PingFederate
@@ -29,7 +75,7 @@ resource "pingone_gateway" "my_awesome_pingfederate_gateway" {
   name           = "Advanced Services SSO"
   enabled        = true
 
-  pingfederate {}
+  type = "PING_FEDERATE"
 }
 ```
 
@@ -45,7 +91,7 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
   name           = "Awesome API Gateway"
   enabled        = true
 
-  api_gateway {}
+  type = "API_GATEWAY_INTEGRATION"
 }
 ```
 
@@ -57,72 +103,61 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 - `enabled` (Boolean) Indicates whether the gateway is enabled.
 - `environment_id` (String) The ID of the environment to create the gateway in.
 - `name` (String) The name of the gateway resource.
+- `type` (String) The type of gateway resource. Options are `PING_FEDERATE`, `API_GATEWAY_INTEGRATION`, `LDAP` and `PING_INTELLIGENCE`.
 
 ### Optional
 
-- `api_gateway` (Block List, Max: 1) Sets the **API_GATEWAY_INTEGRATION** gateway type. (see [below for nested schema](#nestedblock--api_gateway))
+- `bind_dn` (String) For LDAP gateways only: The distinguished name information to bind to the LDAP database (for example, `uid=pingone,dc=bxretail,dc=org`).
+- `bind_password` (String, Sensitive) For LDAP gateways only: The Bind password for the LDAP database.
+- `connection_security` (String) For LDAP gateways only: The connection security type. Options are `None`, `TLS`, and `StartTLS`. Defaults to `None`.
 - `description` (String) A description to apply to the gateway resource.
-- `ldap` (Block List, Max: 1) Sets the **LDAP** gateway type. (see [below for nested schema](#nestedblock--ldap))
-- `pingfederate` (Block List, Max: 1) Sets the **PING_FEDERATE** gateway type. (see [below for nested schema](#nestedblock--pingfederate))
+- `kerberos_retain_previous_credentials_mins` (Number) For LDAP gateways only: The number of minutes for which the previous credentials are persisted.
+- `kerberos_service_account_password` (String, Sensitive) For LDAP gateways only: The password for the Kerberos service account.
+- `kerberos_service_account_upn` (String) For LDAP gateways only: The Kerberos service account user principal name (for example, `username@bxretail.org`).
+- `servers` (Set of String) For LDAP gateways only: A list of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
+- `user_type` (Block Set) For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedblock--user_type))
+- `validate_tls_certificates` (Boolean) For LDAP gateways only: Indicates whether or not to trust all SSL certificates (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted. Defaults to `true`.
+- `vendor` (String) For LDAP gateways only: The LDAP vendor. Options are `PingDirectory`, `Microsoft Active Directory`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `CA Directory`, `OpenDJ Directory`, `IBM (Tivoli) Security Directory Server`, and `LDAP v3 compliant Directory Server`.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--api_gateway"></a>
-### Nested Schema for `api_gateway`
-
-
-<a id="nestedblock--ldap"></a>
-### Nested Schema for `ldap`
+<a id="nestedblock--user_type"></a>
+### Nested Schema for `user_type`
 
 Required:
 
-- `bind_dn` (String) The distinguished name information to bind to the LDAP database (for example, `uid=pingone,dc=bxretail,dc=org`).
-- `bind_password` (String, Sensitive) The Bind password for the LDAP database.
-- `user_type` (Block Set, Min: 1) A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedblock--ldap--user_type))
-- `vendor` (String) The LDAP vendor. Options are `PingDirectory`, `Microsoft Active Directory`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `CA Directory`, `OpenDJ Directory`, `IBM (Tivoli) Security Directory Server`, and `LDAP v3 compliant Directory Server`.
-
-Optional:
-
-- `connection_security` (String) The connection security type. Options are `None`, `TLS`, and `StartTLS`. Defaults to `None`.
-- `kerberos_retain_previous_credentials_mins` (Number) The number of minutes for which the previous credentials are persisted.
-- `kerberos_service_account_password` (String, Sensitive) The password for the Kerberos service account.
-- `kerberos_service_account_upn` (String) The Kerberos service account user principal name (for example, `username@bxretail.org`).
-- `servers` (Set of String) A list of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
-- `validate_tls_certificates` (Boolean) Indicates whether or not to trust all SSL certificates (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.
-
-<a id="nestedblock--ldap--user_type"></a>
-### Nested Schema for `ldap.user_type`
-
-Required:
-
-- `id` (String) Identifies the user type. This correlates to the `password.external.gateway.userType.id` User property.
 - `name` (String) The name of the user type.
 - `password_authority` (String) This can be either `PING_ONE` or `LDAP`. If set to `PING_ONE`, PingOne authenticates with the external directory initially, then PingOne authenticates all subsequent sign-ons.
-- `user_migration_attribute_mapping` (Block Set, Min: 1) A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedblock--ldap--user_type--user_migration_attribute_mapping))
+- `search_base_dn` (String) The LDAP base domain name (DN) for this user type.
+- `user_link_attributes` (List of String) A list of strings that represent LDAP attribute names that uniquely identify the user, and link to users in PingOne.
 
 Optional:
 
 - `push_password_changes_to_ldap` (Boolean) A boolean that determines whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway. Defaults to `false`.
-- `search_base_dn` (String) The LDAP base domain name (DN) for this user type.
-- `user_link_attributes` (List of String) A list of strings that represent LDAP attribute names that uniquely identify the user, and link to users in PingOne.
-- `user_migration_lookup_filter_pattern` (String) The LDAP user search filter to use to match users against the entered user identifier at login. For example, `(((uid=${identifier})(mail=${identifier}))`. Alternatively, this can be a search against the user directory.
-- `user_migration_population_id` (String) The ID of the population to use to create user entries during lookup.
+- `user_migration` (Block List, Max: 1) The configurations for initially authenticating new users who will be migrated to PingOne. Note: If there are multiple users having the same user name, only the first user processed is provisioned. (see [below for nested schema](#nestedblock--user_type--user_migration))
 
-<a id="nestedblock--ldap--user_type--user_migration_attribute_mapping"></a>
-### Nested Schema for `ldap.user_type.user_migration_attribute_mapping`
+Read-Only:
+
+- `id` (String) Identifies the user type. This correlates to the `password.external.gateway.userType.id` User property.
+
+<a id="nestedblock--user_type--user_migration"></a>
+### Nested Schema for `user_type.user_migration`
+
+Required:
+
+- `attribute_mapping` (Block Set, Min: 1) A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedblock--user_type--user_migration--attribute_mapping))
+- `lookup_filter_pattern` (String) The LDAP user search filter to use to match users against the entered user identifier at login. For example, `(((uid=${identifier})(mail=${identifier}))`. Alternatively, this can be a search against the user directory.
+- `population_id` (String) The ID of the population to use to create user entries during lookup.
+
+<a id="nestedblock--user_type--user_migration--attribute_mapping"></a>
+### Nested Schema for `user_type.user_migration.attribute_mapping`
 
 Required:
 
 - `name` (String) The name of a user attribute in PingOne. See [Users properties](https://apidocs.pingidentity.com/pingone/platform/v1/api/#users) for the complete list of available PingOne user attributes.
 - `value` (String) A reference to the corresponding external LDAP attribute.  Values are in the format `${ldapAttributes.mail}`, while Terraform HCL requires an additional `$` prefix character. For example, `$${ldapAttributes.mail}`
-
-
-
-
-<a id="nestedblock--pingfederate"></a>
-### Nested Schema for `pingfederate`
 
 ## Import
 

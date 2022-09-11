@@ -7,5 +7,5 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
   name           = "Awesome API Gateway"
   enabled        = true
 
-  api_gateway {}
+  type = "API_GATEWAY_INTEGRATION"
 }
