@@ -712,93 +712,93 @@ func testAccGatewayConfig_LDAPFull(resourceName, name string) string {
 		%[1]s
 
 resource "pingone_population" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-	name = "%[3]s"
+  name = "%[3]s"
 }
 
 resource "pingone_gateway" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = false
-  type = "LDAP"
+  type           = "LDAP"
 
-	bind_dn = "ou=test,dc=example,dc=com"
-	bind_password = "dummyPasswordValue"
+  bind_dn       = "ou=test,dc=example,dc=com"
+  bind_password = "dummyPasswordValue"
 
-	connection_security = "TLS"
-	vendor = "Microsoft Active Directory"
+  connection_security = "TLS"
+  vendor              = "Microsoft Active Directory"
 
-	kerberos_service_account_upn = "username@domainname"
-	kerberos_service_account_password = "dummyKerberosPasswordValue"
-	kerberos_retain_previous_credentials_mins = 20
+  kerberos_service_account_upn              = "username@domainname"
+  kerberos_service_account_password         = "dummyKerberosPasswordValue"
+  kerberos_retain_previous_credentials_mins = 20
 
-	servers = [
-		"ds1.dummyldapservice.com:636",
-		"ds3.dummyldapservice.com:636",
-		"ds2.dummyldapservice.com:636",
-	]
+  servers = [
+    "ds1.dummyldapservice.com:636",
+    "ds3.dummyldapservice.com:636",
+    "ds2.dummyldapservice.com:636",
+  ]
 
-	validate_tls_certificates = false
+  validate_tls_certificates = false
 
-	user_type {
-		// id = "59e24997-f829-4206-b1b7-9b6a8a25c0b4"
-		name = "User Set 1"
-		password_authority = "LDAP"
-		search_base_dn = "ou=users1,dc=example,dc=com"
+  user_type {
+    // id = "59e24997-f829-4206-b1b7-9b6a8a25c0b4"
+    name               = "User Set 1"
+    password_authority = "LDAP"
+    search_base_dn     = "ou=users1,dc=example,dc=com"
 
-		user_link_attributes = [ "objectGUID", "objectSid" ]
+    user_link_attributes = ["objectGUID", "objectSid"]
 
-		user_migration {
-			lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+    user_migration {
+      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
 
-			population_id = pingone_population.%[2]s.id
+      population_id = pingone_population.%[2]s.id
 
-			attribute_mapping {
-				name = "username"
-				value = "$${ldapAttributes.uid}"
-			}
+      attribute_mapping {
+        name  = "username"
+        value = "$${ldapAttributes.uid}"
+      }
 
-			attribute_mapping {
-				name = "email"
-				value = "$${ldapAttributes.mail}"
-			}
-		}
+      attribute_mapping {
+        name  = "email"
+        value = "$${ldapAttributes.mail}"
+      }
+    }
 
-		push_password_changes_to_ldap = true
-	}
+    push_password_changes_to_ldap = true
+  }
 
-	user_type {
-		// id = "59e24997-f829-4206-b1b7-9b6a8a25c0b3"
-		name = "User Set 2"
-		password_authority = "PING_ONE"
-		search_base_dn = "ou=users,dc=example,dc=com"
+  user_type {
+    // id = "59e24997-f829-4206-b1b7-9b6a8a25c0b3"
+    name               = "User Set 2"
+    password_authority = "PING_ONE"
+    search_base_dn     = "ou=users,dc=example,dc=com"
 
-		user_link_attributes = [ "objectGUID", "dn",  "objectSid" ]
+    user_link_attributes = ["objectGUID", "dn", "objectSid"]
 
-		user_migration {
-			lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+    user_migration {
+      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
 
-			population_id = pingone_population.%[2]s.id
+      population_id = pingone_population.%[2]s.id
 
-			attribute_mapping {
-				name = "username"
-				value = "$${ldapAttributes.uid}"
-			}
+      attribute_mapping {
+        name  = "username"
+        value = "$${ldapAttributes.uid}"
+      }
 
-			attribute_mapping {
-				name = "email"
-				value = "$${ldapAttributes.mail}"
-			}
+      attribute_mapping {
+        name  = "email"
+        value = "$${ldapAttributes.mail}"
+      }
 
-			attribute_mapping {
-				name = "name.family"
-				value = "$${ldapAttributes.sn}"
-			}
-		}
+      attribute_mapping {
+        name  = "name.family"
+        value = "$${ldapAttributes.sn}"
+      }
+    }
 
-		push_password_changes_to_ldap = true
-	}
+    push_password_changes_to_ldap = true
+  }
 
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -815,16 +815,16 @@ resource "pingone_gateway" "%[2]s" {
 
   type = "LDAP"
 
-	bind_dn = "ou=test,dc=example,dc=com"
-	bind_password = "dummyPasswordValue"
+  bind_dn       = "ou=test,dc=example,dc=com"
+  bind_password = "dummyPasswordValue"
 
-	vendor = "PingDirectory"
+  vendor = "PingDirectory"
 
-	servers = [
-		"ds1.dummyldapservice.com:636",
-		"ds3.dummyldapservice.com:636",
-		"ds2.dummyldapservice.com:636",
-	]
+  servers = [
+    "ds1.dummyldapservice.com:636",
+    "ds3.dummyldapservice.com:636",
+    "ds2.dummyldapservice.com:636",
+  ]
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -834,21 +834,21 @@ func testAccGatewayConfig_BadParameter(resourceName, name string) string {
 		%[1]s
 
 resource "pingone_gateway" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
-	name           = "%[3]s"
-	enabled        = false
-  
-	type = "PING_FEDERATE"
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = false
 
-	bind_dn = "ou=test,dc=example,dc=com"
-	bind_password = "dummyPasswordValue"
+  type = "PING_FEDERATE"
 
-	vendor = "Microsoft Active Directory"
+  bind_dn       = "ou=test,dc=example,dc=com"
+  bind_password = "dummyPasswordValue"
 
-	servers = [
-		"ds1.dummyldapservice.com:636",
-		"ds3.dummyldapservice.com:636",
-		"ds2.dummyldapservice.com:636",
-	]
-  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  vendor = "Microsoft Active Directory"
+
+  servers = [
+    "ds1.dummyldapservice.com:636",
+    "ds3.dummyldapservice.com:636",
+    "ds2.dummyldapservice.com:636",
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
