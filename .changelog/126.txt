@@ -1,0 +1,15 @@
+```release-note:new-resource
+pingone_custom_domain
+```
+
+```release-note:new-resource
+pingone_custom_domain_verify
+```
+
+```release-note:new-resource
+pingone_custom_domain_ssl
+```
+
+```release-note:note
+Change default API call retry timeout from 30s to 10m
+```

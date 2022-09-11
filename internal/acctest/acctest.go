@@ -134,6 +134,22 @@ func PreCheckEnvironmentAndPEM(t *testing.T) {
 	}
 }
 
+func PreCheckEnvironmentAndCustomDomainSSL(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_DOMAIN_CERTIFICATE_PEM"); v == "" {
+		t.Fatal("PINGONE_DOMAIN_CERTIFICATE_PEM is missing and must be set")
+	}
+
+	if v := os.Getenv("PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM"); v == "" {
+		t.Fatal("PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM is missing and must be set")
+	}
+
+	if v := os.Getenv("PINGONE_DOMAIN_KEY_PEM"); v == "" {
+		t.Fatal("PINGONE_DOMAIN_KEY_PEM is missing and must be set")
+	}
+}
+
 func PreCheckEnvironmentAndOrganisation(t *testing.T) {
 
 	PreCheckEnvironment(t)
