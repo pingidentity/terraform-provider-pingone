@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -123,8 +124,17 @@ func resourceGatewayCredentialRead(ctx context.Context, d *schema.ResourceData, 
 
 	respObject := resp.(*management.GatewayCredential)
 
-	d.Set("created_at", respObject.GetCreatedAt())
-	d.Set("last_used_at", respObject.GetLastUsedAt())
+	if v, ok := respObject.GetCreatedAtOk(); ok {
+		d.Set("created_at", v.Format(time.RFC3339))
+	} else {
+		d.Set("created_at", nil)
+	}
+
+	if v, ok := respObject.GetLastUsedAtOk(); ok {
+		d.Set("last_used_at", v.Format(time.RFC3339))
+	} else {
+		d.Set("last_used_at", nil)
+	}
 
 	return diags
 }
