@@ -8,7 +8,7 @@ resource "pingone_gateway" "my_ldap_gateway" {
   enabled        = true
   type           = "LDAP"
 
-  bind_dn       = "ou=test,dc=bxretail,dc=org"
+  bind_dn       = var.bind_dn
   bind_password = var.bind_password
 
   connection_security = "TLS"
