@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -24,6 +26,10 @@ func ResourceCustomDomainVerify() *schema.Resource {
 		CreateContext: resourceCustomDomainVerifyCreate,
 		ReadContext:   resourceCustomDomainVerifyRead,
 		DeleteContext: resourceCustomDomainVerifyDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(60 * time.Minute),
+		},
 
 		Schema: map[string]*schema.Schema{
 			"environment_id": {
@@ -64,7 +70,9 @@ func resourceCustomDomainVerifyCreate(ctx context.Context, d *schema.ResourceDat
 
 	var resp interface{}
 
-	resp, diags = sdk.ParseResponse(
+	timeoutValue := 60
+
+	resp, diags = sdk.ParseResponseWithCustomTimeout(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -98,7 +106,8 @@ func resourceCustomDomainVerifyCreate(ctx context.Context, d *schema.ResourceDat
 
 			return nil
 		},
-		sdk.DefaultCreateReadRetryable,
+		customDomainRetryConditions,
+		time.Duration(timeoutValue)*time.Minute, // 60 mins
 	)
 	if diags.HasError() {
 		return diags
@@ -148,4 +157,48 @@ func resourceCustomDomainVerifyRead(ctx context.Context, d *schema.ResourceData,
 
 func resourceCustomDomainVerifyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
+}
+
+func customDomainRetryConditions(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+
+	if p1error != nil {
+		var err error
+
+		// Permissions may not have propagated by this point
+		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			return true
+		}
+		if err != nil {
+			tflog.Warn(ctx, "Cannot match error string for retry")
+			return false
+		}
+
+		// add retry time for DNS propegating
+		if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+
+			// perhaps it's the DNS authority
+			if m, err := regexp.MatchString("^Error response from authoritative name servers: NXDOMAIN", details[0].GetMessage()); err == nil && m {
+				tflog.Warn(ctx, fmt.Sprintf("Cannot verify the domain - %s.  Retrying...", details[0].GetMessage()))
+				return true
+			}
+			if err != nil {
+				tflog.Warn(ctx, "Cannot match error string for retry")
+				return false
+			}
+
+			// perhaps it's the CNAME
+			if m, err := regexp.MatchString("^No CNAME records found", details[0].GetMessage()); err == nil && m {
+				tflog.Warn(ctx, fmt.Sprintf("Cannot verify the domain - %s.  Retrying...", details[0].GetMessage()))
+				return true
+			}
+			if err != nil {
+				tflog.Warn(ctx, "Cannot match error string for retry")
+				return false
+			}
+		}
+
+	}
+
+	return false
 }

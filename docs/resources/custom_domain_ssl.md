@@ -43,7 +43,7 @@ resource "pingone_custom_domain_ssl" "my_custom_domain" {
 - `certificate_pem_file` (String) A string that specifies the PEM-encoded certificate to import. The certificate must not be expired, must not be self signed and the domain must match one of the subject alternative name (SAN) values on the certificate.
 - `custom_domain_id` (String) The ID of the custom domain to set SSL settings for.
 - `environment_id` (String) The ID of the environment to create the certificate in.
-- `private_key_pem_file` (String) A string that specifies the PEM-encoded, unencrypted private key that matches the certificate's public key.
+- `private_key_pem_file` (String, Sensitive) A string that specifies the PEM-encoded, unencrypted private key that matches the certificate's public key.
 
 ### Optional
 
