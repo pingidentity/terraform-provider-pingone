@@ -36,21 +36,31 @@ func testAccCheckKeyDestroy(s *terraform.State) error {
 
 		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
 
-		if rEnv.StatusCode == 404 {
-			continue
-		}
-
 		if err != nil {
+
+			if rEnv == nil {
+				return fmt.Errorf("Response object does not exist and no error detected")
+			}
+
+			if rEnv.StatusCode == 404 {
+				continue
+			}
+
 			return err
 		}
 
 		body, r, err := apiClient.CertificateManagementApi.GetKey(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Accept(management.ENUMGETKEYACCEPTHEADER_JSON).Execute()
 
-		if r.StatusCode == 404 {
-			continue
-		}
-
 		if err != nil {
+
+			if r == nil {
+				return fmt.Errorf("Response object does not exist and no error detected")
+			}
+
+			if r.StatusCode == 404 {
+				continue
+			}
+
 			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
 			return err
 		}

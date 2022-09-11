@@ -34,11 +34,16 @@ func testAccCheckPopulationDestroy(s *terraform.State) error {
 
 		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
 
-		if rEnv.StatusCode == 404 {
-			continue
-		}
-
 		if err != nil {
+
+			if rEnv == nil {
+				return fmt.Errorf("Response object does not exist and no error detected")
+			}
+
+			if rEnv.StatusCode == 404 {
+				continue
+			}
+
 			return err
 		}
 

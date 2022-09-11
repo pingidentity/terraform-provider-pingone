@@ -35,11 +35,16 @@ func testAccCheckGroupDestroy(s *terraform.State) error {
 
 		body, r, err := apiClient.GroupsApi.ReadOneGroup(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
 
-		if r.StatusCode == 404 {
-			continue
-		}
-
 		if err != nil {
+
+			if r == nil {
+				return fmt.Errorf("Response object does not exist and no error detected")
+			}
+
+			if r.StatusCode == 404 {
+				continue
+			}
+
 			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
 			return err
 		}
