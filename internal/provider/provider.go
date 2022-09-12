@@ -70,11 +70,14 @@ func New(version string) func() *schema.Provider {
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
-				"pingone_certificate":                 base.DatasourceCertificate(),
-				"pingone_certificate_export":          base.DatasourceCertificateExport(),
-				"pingone_certificate_signing_request": base.DatasourceCertificateSigningRequest(),
-				"pingone_environment":                 base.DatasourceEnvironment(),
-				"pingone_role":                        base.DatasourceRole(),
+				"pingone_certificate":                    base.DatasourceCertificate(),
+				"pingone_certificate_export":             base.DatasourceCertificateExport(),
+				"pingone_certificate_signing_request":    base.DatasourceCertificateSigningRequest(),
+				"pingone_environment":                    base.DatasourceEnvironment(),
+				"pingone_role":                           base.DatasourceRole(),
+				"pingone_trusted_email_domain_dkim":      base.DatasourceTrustedEmailDomainDKIM(),
+				"pingone_trusted_email_domain_ownership": base.DatasourceTrustedEmailDomainOwnership(),
+				"pingone_trusted_email_domain_spf":       base.DatasourceTrustedEmailDomainSPF(),
 
 				"pingone_password_policy": sso.DatasourcePasswordPolicy(),
 				"pingone_resource":        sso.DatasourceResource(),
@@ -94,6 +97,7 @@ func New(version string) func() *schema.Provider {
 				"pingone_gateway_role_assignment":      base.ResourceGatewayRoleAssignment(),
 				"pingone_key":                          base.ResourceKey(),
 				"pingone_role_assignment_user":         base.ResourceRoleAssignmentUser(),
+				"pingone_trusted_email_domain":         base.ResourceTrustedEmailDomain(),
 
 				"pingone_application":                           sso.ResourceApplication(),
 				"pingone_application_attribute_mapping":         sso.ResourceApplicationAttributeMapping(),
