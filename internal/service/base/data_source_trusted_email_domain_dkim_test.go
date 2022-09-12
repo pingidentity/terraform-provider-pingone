@@ -60,10 +60,10 @@ func testAccTrustedEmailDomainDKIMDataSourceConfig_Full(environmentName, license
 %[1]s
 
 resource "pingone_trusted_email_domain" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-  
-	domain_name = "terraformdev.ping-eng.com"
-  }
+  environment_id = pingone_environment.%[2]s.id
+
+  domain_name = "terraformdev.ping-eng.com"
+}
 
 data "pingone_trusted_email_domain_dkim" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
