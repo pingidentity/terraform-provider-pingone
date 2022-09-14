@@ -1,0 +1,3 @@
+```release-note:bug
+Fix panic error when a HTTP level error is returned from API after retry
+```
