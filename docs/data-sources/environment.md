@@ -37,6 +37,7 @@ data "pingone_environment" "example_by_id" {
 - `license_id` (String) An ID of a valid license to apply to the environment.
 - `region` (String) The region the environment is created in.
 - `service` (List of Object) The services enabled in the environment. (see [below for nested schema](#nestedatt--service))
+- `solution` (String) The solution context of the environment.  Blank values indicate a custom solution context, without workforce solution additions.  Expected values are `WORKFORCE`, `CUSTOMER` or no value for a custom solution context.
 - `type` (String) The type of the environment.  Options are SANDBOX for a development/testing environment and PRODUCTION for environments that require protection from deletion.
 
 <a id="nestedatt--service"></a>

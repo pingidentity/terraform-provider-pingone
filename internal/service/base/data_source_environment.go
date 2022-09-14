@@ -57,11 +57,11 @@ func DatasourceEnvironment() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
-			// "solution": {
-			// 	Description: "The solution context of the environment.  Blank values indicate a non-workforce solution context.  Valid options are `WORKFORCE` and `CUSTOMER`",
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// },
+			"solution": {
+				Description: fmt.Sprintf("The solution context of the environment.  Blank values indicate a custom solution context, without workforce solution additions.  Expected values are `%s`, `%s` or no value for a custom solution context.", management.ENUMSOLUTIONTYPE_WORKFORCE, management.ENUMSOLUTIONTYPE_CUSTOMER),
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"service": {
 				Description: "The services enabled in the environment.",
 				Type:        schema.TypeList,
@@ -214,18 +214,29 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 		return diags
 	}
 
-	// d.Set("solution", servicesResp.SolutionType)
-	productBOMItems, err := flattenBOMProducts(servicesResp.(*management.BillOfMaterials))
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error mapping platform services with the configured services``: %v", err),
-			Detail:   fmt.Sprintf("Platform services: %v\n", servicesResp.(*management.BillOfMaterials)),
-		})
+	bomObject := servicesResp.(*management.BillOfMaterials)
 
-		return diags
+	if v, ok := bomObject.GetProductsOk(); ok {
+		productBOMItems, err := flattenBOMProducts(v)
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Error mapping platform services with the configured services``: %v", err),
+				Detail:   fmt.Sprintf("Platform services: %v\n", v),
+			})
+
+			return diags
+		}
+		d.Set("service", productBOMItems)
+	} else {
+		d.Set("service", nil)
 	}
-	d.Set("service", productBOMItems)
+
+	if v, ok := bomObject.GetSolutionTypeOk(); ok {
+		d.Set("solution", v)
+	} else {
+		d.Set("solution", nil)
+	}
 
 	return diags
 }

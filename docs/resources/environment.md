@@ -11,6 +11,8 @@ Resource to create and manage PingOne environments.
 
 ~> PingOne environments are created with a default population and at least one service added.
 
+~> This `pingone_environment` resource does not yet support creation of WORKFORCE enabled environments.
+
 ## Example Usage
 
 ```terraform
@@ -50,6 +52,7 @@ resource "pingone_environment" "my_environment" {
 
 - `description` (String) A description of the environment.
 - `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.
+- `solution` (String) The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `CUSTOMER`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.
 - `type` (String) The type of the environment to create.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion. Defaults to `SANDBOX`.
 
 ### Read-Only
