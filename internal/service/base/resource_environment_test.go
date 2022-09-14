@@ -412,7 +412,7 @@ resource "pingone_environment" "%[1]s" {
   type        = "%[4]s"
   region      = "%[5]s"
   license_id  = "%[6]s"
-  solution  = "%[7]s"
+  solution    = "%[7]s"
   default_population {
     name        = "%[8]s"
     description = "%[9]s"

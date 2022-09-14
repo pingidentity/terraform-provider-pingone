@@ -233,7 +233,7 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if v, ok := bomObject.GetSolutionTypeOk(); ok {
-		d.Set("solution", v)
+		d.Set("solution", string(*v))
 	} else {
 		d.Set("solution", nil)
 	}

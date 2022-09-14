@@ -359,12 +359,10 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 				Summary:  "The configured environment has a WORKFORCE solution context.  Workforce solution context environments are not yet supported in this resource.",
 			})
 
-			d.SetId("")
-
 			return diags
 		}
 
-		d.Set("solution", v)
+		d.Set("solution", string(*v))
 	} else {
 		d.Set("solution", nil)
 	}
