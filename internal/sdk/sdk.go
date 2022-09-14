@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 )
@@ -73,47 +75,73 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 	)
 
 	if err != nil || r.StatusCode >= 300 {
-		error := err.(*management.GenericOpenAPIError)
 
-		if error.Model() != nil {
-			model := error.Model().(management.P1Error)
+		switch t := err.(type) {
+		case *management.GenericOpenAPIError:
+			error := t
 
-			summaryText := fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, model.GetMessage())
-			detailText := fmt.Sprintf("PingOne Error Details:\nID: %s\nCode: %s\nMessage: %s", model.GetId(), model.GetCode(), model.GetMessage())
+			if error.Model() != nil {
+				model := error.Model().(management.P1Error)
 
-			diags = customError(model)
-			if diags != nil {
-				return nil, diags
-			}
+				summaryText := fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, model.GetMessage())
+				detailText := fmt.Sprintf("PingOne Error Details:\nID: %s\nCode: %s\nMessage: %s", model.GetId(), model.GetCode(), model.GetMessage())
 
-			if details, ok := model.GetDetailsOk(); ok {
-				detailsBytes, err := json.Marshal(details)
-				if err != nil {
-					diags = append(diags, diag.Diagnostic{
-						Severity: diag.Warning,
-						Summary:  "Cannot parse details object",
-					})
+				diags = customError(model)
+				if diags != nil {
+					return nil, diags
 				}
 
-				detailText = fmt.Sprintf("%s\nDetails object: %+v", detailText, string(detailsBytes[:]))
+				if details, ok := model.GetDetailsOk(); ok {
+					detailsBytes, err := json.Marshal(details)
+					if err != nil {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Warning,
+							Summary:  "Cannot parse details object",
+						})
+					}
+
+					detailText = fmt.Sprintf("%s\nDetails object: %+v", detailText, string(detailsBytes[:]))
+				}
+
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  summaryText,
+					Detail:   detailText,
+				})
+
+				return nil, diags
 			}
 
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  summaryText,
-				Detail:   detailText,
+				Summary:  fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, error.Error()),
+				Detail:   fmt.Sprintf("Full response body: %+v", r.Body),
+			})
+
+			return nil, diags
+
+		case *url.Error:
+			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s", t.Err.Error()))
+
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, t.Err.Error()),
+			})
+
+			return nil, diags
+
+		default:
+			tflog.Warn(ctx, fmt.Sprintf("Detected unknown error %+v", t))
+
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Error when calling `%s`", sdkMethod),
+				Detail:   "The error is not properly handled and further information is not available.  Please raise an issue with the provider maintainers.",
 			})
 
 			return nil, diags
 		}
 
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, error.Error()),
-			Detail:   fmt.Sprintf("Full response body: %+v", r.Body),
-		})
-
-		return nil, diags
 	}
 
 	return resp, diags
