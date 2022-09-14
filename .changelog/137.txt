@@ -1,0 +1,7 @@
+```release-note:enhancement
+resource/pingone_environment: Support for the `solution` environment context attribute (`CUSTOMER` and custom)
+```
+
+```release-note:enhancement
+data-source/pingone_environment: Support for the `solution` environment context attribute (`CUSTOMER`, `WORKFORCE` and custom)
+```

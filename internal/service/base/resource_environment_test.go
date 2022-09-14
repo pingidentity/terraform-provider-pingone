@@ -51,7 +51,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
 					resource.TestCheckResourceAttr(resourceFullName, "region", region),
 					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
-					// resource.TestCheckResourceAttr(resourceFullName, "solution", solution),
+					resource.TestCheckResourceAttr(resourceFullName, "solution", solution),
 					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", populationDescription),
@@ -97,6 +97,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
 					resource.TestCheckResourceAttr(resourceFullName, "region", region),
+					resource.TestCheckResourceAttr(resourceFullName, "solution", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
@@ -411,6 +412,7 @@ resource "pingone_environment" "%[1]s" {
   type        = "%[4]s"
   region      = "%[5]s"
   license_id  = "%[6]s"
+  solution    = "%[7]s"
   default_population {
     name        = "%[8]s"
     description = "%[9]s"

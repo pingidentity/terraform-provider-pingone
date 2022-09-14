@@ -72,13 +72,14 @@ func ResourceEnvironment() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 				ForceNew:         true,
 			},
-			// "solution": {
-			// 	Description:  "The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `WORKFORCE` and `CUSTOMER`",
-			// 	Type:         schema.TypeString,
-			// 	ValidateDiagFunc: validation.StringInSlice([]string{"WORKFORCE", "CUSTOMER"}, false),
-			// 	Optional:     true,
-			// 	ForceNew:     true,
-			// },
+			"solution": {
+				Description:      fmt.Sprintf("The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
+				Type:             schema.TypeString,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMSOLUTIONTYPE_CUSTOMER)}, false)),
+				Optional:         true,
+				Computed:         true,
+				ForceNew:         true,
+			},
 			"default_population_id": {
 				Description: "The ID of the environment's default population.",
 				Type:        schema.TypeString,
@@ -194,7 +195,13 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 			return diags
 		}
 
-		environment.SetBillOfMaterials(*management.NewBillOfMaterials(productBOMItems))
+		billOfMaterials := *management.NewBillOfMaterials(productBOMItems)
+
+		if v, ok := d.GetOk("solution"); ok {
+			billOfMaterials.SetSolutionType(management.EnumSolutionType(v.(string)))
+		}
+
+		environment.SetBillOfMaterials(billOfMaterials)
 	}
 
 	resp, diags := sdk.ParseResponse(
@@ -240,9 +247,6 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	respObject := resp.(*management.Environment)
-
-	//lintignore:R018
-	//time.Sleep(250 * time.Millisecond) // We wait a short period to relieve retry pressure downstream
 
 	// Set the default population
 	// We have to create a default population because the API must require one population in the environment. If we don't do this we have a problem with the 'destroy all' routine
@@ -328,19 +332,40 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 		return diags
 	}
 
-	// d.Set("solution", servicesResp.SolutionType)
-	productBOMItems, err := flattenBOMProducts(servicesResp.(*management.BillOfMaterials))
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error mapping platform services with the configured services``: %v", err),
-			Detail:   fmt.Sprintf("Platform services: %v\n", servicesResp.(*management.BillOfMaterials)),
-		})
+	bomObject := servicesResp.(*management.BillOfMaterials)
 
-		return diags
+	if v, ok := bomObject.GetProductsOk(); ok {
+		productBOMItems, err := flattenBOMProducts(v)
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Error mapping platform services with the configured services``: %v", err),
+				Detail:   fmt.Sprintf("Platform services: %v\n", v),
+			})
+
+			return diags
+		}
+
+		d.Set("service", productBOMItems)
+	} else {
+		d.Set("service", nil)
 	}
 
-	d.Set("service", productBOMItems)
+	if v, ok := bomObject.GetSolutionTypeOk(); ok {
+
+		if *v == management.ENUMSOLUTIONTYPE_WORKFORCE {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "The configured environment has a WORKFORCE solution context.  Workforce solution context environments are not yet supported in this resource.",
+			})
+
+			return diags
+		}
+
+		d.Set("solution", string(*v))
+	} else {
+		d.Set("solution", nil)
+	}
 
 	// The population
 
@@ -447,10 +472,6 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 
 		billOfMaterials := *management.NewBillOfMaterials(productBOMItems)
-
-		// if solution, ok := d.GetOk("solution"); ok {
-		// 	billOfMaterials.SetSolutionType(solution.(string))
-		// }
 
 		_, diags = sdk.ParseResponse(
 			ctx,
@@ -637,33 +658,29 @@ func expandBOMProducts(items []interface{}) ([]management.BillOfMaterialsProduct
 	return productBOMItems, nil
 }
 
-func flattenBOMProducts(items *management.BillOfMaterials) ([]interface{}, error) {
+func flattenBOMProducts(products []management.BillOfMaterialsProductsInner) ([]interface{}, error) {
 	productItems := make([]interface{}, 0)
 
-	if products, ok := items.GetProductsOk(); ok {
+	for _, product := range products {
 
-		for _, product := range products {
-
-			v, err := model.FindProductByAPICode(product.GetType())
-			if err != nil {
-				return nil, fmt.Errorf("Cannot retrieve the service from the service code: %w", err)
-			}
-
-			productItemsMap := map[string]interface{}{
-				"type": v.ProductCode,
-			}
-
-			if v, ok := product.Console.GetHrefOk(); ok {
-				productItemsMap["console_url"] = v
-			}
-
-			if v, ok := product.GetBookmarksOk(); ok {
-				productItemsMap["bookmark"] = flattenBOMProductsBookmarkList(v)
-			}
-
-			productItems = append(productItems, productItemsMap)
-
+		v, err := model.FindProductByAPICode(product.GetType())
+		if err != nil {
+			return nil, fmt.Errorf("Cannot retrieve the service from the service code: %w", err)
 		}
+
+		productItemsMap := map[string]interface{}{
+			"type": v.ProductCode,
+		}
+
+		if v, ok := product.Console.GetHrefOk(); ok {
+			productItemsMap["console_url"] = v
+		}
+
+		if v, ok := product.GetBookmarksOk(); ok {
+			productItemsMap["bookmark"] = flattenBOMProductsBookmarkList(v)
+		}
+
+		productItems = append(productItems, productItemsMap)
 
 	}
 
