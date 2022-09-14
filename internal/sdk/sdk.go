@@ -135,8 +135,8 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `%s`", sdkMethod),
-				Detail:   "The error is not properly handled and further information is not available.  Please raise an issue with the provider maintainers.",
+				Summary:  fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, t.Error()),
+				Detail:   fmt.Sprintf("A generic error has occurred.\nError details: %+v", t),
 			})
 
 			return nil, diags
