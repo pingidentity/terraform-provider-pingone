@@ -1,0 +1,15 @@
+```release-note:new-resource
+pingone_trusted_email_domain
+```
+
+```release-note:new-data-source
+pingone_trusted_email_domain_dkim
+```
+
+```release-note:new-data-source
+pingone_trusted_email_domain_ownership
+```
+
+```release-note:new-data-source
+pingone_trusted_email_domain_spf
+```
