@@ -103,7 +103,7 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 				}
 
 			case *url.Error:
-				tflog.Warn(ctx, fmt.Sprintf("Detected URL error %s", t.Err.Error()))
+				tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s", t.Err.Error()))
 
 			default:
 				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error %+v", t))
