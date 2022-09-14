@@ -1,5 +1,14 @@
 ## 0.5.0 (Unreleased)
 
+ENHANCEMENTS:
+
+* data-source/pingone_environment: Support for the `solution` environment context attribute (`CUSTOMER`, `WORKFORCE` and custom) ([#137](https://github.com/pingidentity/terraform-provider-pingone/issues/137))
+* resource/pingone_environment: Support for the `solution` environment context attribute (`CUSTOMER` and custom) ([#137](https://github.com/pingidentity/terraform-provider-pingone/issues/137))
+
+BUG FIXES:
+
+* Fix panic error when a HTTP level error is returned from API after retry ([#136](https://github.com/pingidentity/terraform-provider-pingone/issues/136))
+
 ## 0.4.0 (11 September 2022)
 
 NOTES:
