@@ -84,20 +84,20 @@ func testAccMFASettingsConfig_Full(environmentName, licenseID, resourceName stri
 		%[1]s
 
 resource "pingone_mfa_settings" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   pairing {
-	max_allowed_devices = 7
-	pairing_key_format = "NUMERIC"
+    max_allowed_devices = 7
+    pairing_key_format  = "NUMERIC"
   }
 
   lockout {
-	failure_count = 13
-	duration_seconds = 8
+    failure_count    = 13
+    duration_seconds = 8
   }
 
   authentication {
-	device_selection = "PROMPT_TO_SELECT"
+    device_selection = "PROMPT_TO_SELECT"
   }
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
@@ -108,19 +108,19 @@ func testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName s
 		%[1]s
 
 resource "pingone_mfa_settings" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   pairing {
-	pairing_key_format = "NUMERIC"
+    pairing_key_format = "NUMERIC"
   }
 
   lockout {
-	failure_count = 12
-	duration_seconds = 7
+    failure_count    = 12
+    duration_seconds = 7
   }
 
   authentication {
-	device_selection = "PROMPT_TO_SELECT"
+    device_selection = "PROMPT_TO_SELECT"
   }
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
