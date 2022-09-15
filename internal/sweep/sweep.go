@@ -34,8 +34,12 @@ func SweepClient(ctx context.Context) (*client.Client, error) {
 }
 
 func FetchTaggedEnvironments(ctx context.Context, apiClient *management.APIClient) ([]management.Environment, error) {
+	return FetchTaggedEnvironmentsByPrefix(ctx, apiClient, EnvironmentNamePrefix)
+}
 
-	filter := fmt.Sprintf("name sw \"%s\"", EnvironmentNamePrefix)
+func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.APIClient, prefix string) ([]management.Environment, error) {
+
+	filter := fmt.Sprintf("name sw \"%s\"", prefix)
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
@@ -90,7 +94,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 
 	environment := *management.NewEnvironment(
 		*management.NewEnvironmentLicense(environmentLicense),
-		fmt.Sprintf("%s%s", EnvironmentNamePrefix, index),
+		fmt.Sprintf("%sdynamic-%s", EnvironmentNamePrefix, index),
 		region,
 		management.ENUMENVIRONMENTTYPE_SANDBOX,
 	) // Environment |  (optional)

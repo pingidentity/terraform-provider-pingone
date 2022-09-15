@@ -1,7 +1,5 @@
 package sso_test
 
-// TODO test conditions
-
 import (
 	"context"
 	"fmt"
@@ -396,6 +394,62 @@ func TestAccSignOnPolicyAction_ProgressiveProfilingAction(t *testing.T) {
 						"name":     "name.family",
 						"required": "true",
 					}),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSignOnPolicyAction_PingIDAction(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSignOnPolicyActionConfig_PingID(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "pingid.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSignOnPolicyAction_PingIDWinLoginPasswordlessAction(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordless(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.0.unique_user_attribute_name", "externalId"),
+					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.0.offline_mode_enabled", "true"),
 				),
 			},
 		},
@@ -1475,6 +1529,51 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     }
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_PingID(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.workforce_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  pingid {}
+}`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordless(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.workforce_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  pingid_windows_login_passwordless {
+	unique_user_attribute_name = "externalId"
+	offline_mode_enabled = true
+  }
+}`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_Multiple1(resourceName, name string) string {

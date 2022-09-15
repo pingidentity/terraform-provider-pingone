@@ -1,7 +1,5 @@
 package sso_test
 
-// TODO test conditions
-
 import (
 	"context"
 	"fmt"

@@ -173,7 +173,7 @@ func ResourceNameGen() string {
 }
 
 func ResourceNameGenEnvironment() string {
-	return fmt.Sprintf("tf-testacc-%s", ResourceNameGen())
+	return fmt.Sprintf("tf-testacc-dynamic-%s", ResourceNameGen())
 }
 
 func ResourceNameGenDefaultPopulation() string {
@@ -245,6 +245,13 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 func GenericSandboxEnvironment() string {
 	return `
 		data "pingone_environment" "general_test" {
-			name = "tf-testacc-general-test"
+			name = "tf-testacc-dynamic-general-test"
+		}`
+}
+
+func WorkforceSandboxEnvironment() string {
+	return `
+		data "pingone_environment" "workforce_test" {
+			name = "tf-testacc-static-workforce-test"
 		}`
 }
