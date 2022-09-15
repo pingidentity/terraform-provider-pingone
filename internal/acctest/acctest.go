@@ -238,6 +238,10 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 			default_population {
 			}
 			service {
+				type = "SSO"
+			}
+			service {
+				type = "MFA"
 			}
 		}`, resourceName, licenseID)
 }

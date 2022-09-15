@@ -11,6 +11,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 )
 
@@ -115,6 +116,8 @@ func New(version string) func() *schema.Provider {
 				"pingone_sign_on_policy":                        sso.ResourceSignOnPolicy(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
 				"pingone_user":                                  sso.ResourceUser(),
+
+				"pingone_mfa_settings": mfa.ResourceMFASettings(),
 			},
 		}
 
