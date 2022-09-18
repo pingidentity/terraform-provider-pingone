@@ -445,12 +445,12 @@ func expandSOPAction(d *schema.ResourceData) (*management.SignOnPolicyAction, di
 	}
 
 	if _, ok := d.GetOk("pingid"); ok {
-		signOnPolicyAction.SignOnPolicyActionCommon, diags = expandSOPActionPingID(d, sopPriority)
+		signOnPolicyAction.SignOnPolicyActionCommon = expandSOPActionPingID(d, sopPriority)
 		processedCount += 1
 	}
 
 	if _, ok := d.GetOk("pingid_windows_login_passwordless"); ok {
-		signOnPolicyAction.SignOnPolicyActionPingIDWinLoginPasswordless, diags = expandSOPActionPingIDWinLoginPasswordless(d, sopPriority)
+		signOnPolicyAction.SignOnPolicyActionPingIDWinLoginPasswordless = expandSOPActionPingIDWinLoginPasswordless(d, sopPriority)
 		processedCount += 1
 	}
 
@@ -767,25 +767,23 @@ func expandSOPActionProgressiveProfiling(d *schema.ResourceData, sopPriority int
 	return nil, diags
 }
 
-func expandSOPActionPingID(d *schema.ResourceData, sopPriority int32) (*management.SignOnPolicyActionCommon, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func expandSOPActionPingID(d *schema.ResourceData, sopPriority int32) *management.SignOnPolicyActionCommon {
 
-	if v, ok := d.Get("pingid").([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+	if v, ok := d.Get("pingid").([]interface{}); ok && v != nil && len(v) > 0 {
 
 		sopActionType := management.NewSignOnPolicyActionCommon(
 			sopPriority,
 			management.ENUMSIGNONPOLICYTYPE_PINGID_AUTHENTICATION,
 		)
 
-		return sopActionType, diags
+		return sopActionType
 
 	}
 
-	return nil, diags
+	return nil
 }
 
-func expandSOPActionPingIDWinLoginPasswordless(d *schema.ResourceData, sopPriority int32) (*management.SignOnPolicyActionPingIDWinLoginPasswordless, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func expandSOPActionPingIDWinLoginPasswordless(d *schema.ResourceData, sopPriority int32) *management.SignOnPolicyActionPingIDWinLoginPasswordless {
 
 	if v, ok := d.Get("pingid_windows_login_passwordless").([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
@@ -797,11 +795,11 @@ func expandSOPActionPingIDWinLoginPasswordless(d *schema.ResourceData, sopPriori
 			*management.NewSignOnPolicyActionPingIDWinLoginPasswordlessAllOfOfflineMode(vp["offline_mode_enabled"].(bool)),
 		)
 
-		return sopActionType, diags
+		return sopActionType
 
 	}
 
-	return nil, diags
+	return nil
 }
 
 func expandSOPActionDiscoveryRules(items []interface{}) []management.SignOnPolicyActionIDFirstAllOfDiscoveryRules {
@@ -1636,6 +1634,10 @@ func getActionID(instance management.SignOnPolicyAction) string {
 		actionID = instance.SignOnPolicyActionProgressiveProfiling.GetId()
 	case *management.SignOnPolicyActionMFA:
 		actionID = instance.SignOnPolicyActionMFA.GetId()
+	case *management.SignOnPolicyActionCommon:
+		actionID = instance.SignOnPolicyActionCommon.GetId()
+	case *management.SignOnPolicyActionPingIDWinLoginPasswordless:
+		actionID = instance.SignOnPolicyActionPingIDWinLoginPasswordless.GetId()
 	}
 
 	return actionID

@@ -448,7 +448,7 @@ func TestAccSignOnPolicyAction_PingIDWinLoginPasswordlessAction(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.0.unique_user_attribute_name", "externalId"),
+					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.0.unique_user_attribute_name", "username"),
 					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.0.offline_mode_enabled", "true"),
 				),
 			},
@@ -1570,8 +1570,8 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
   priority = 1
 
   pingid_windows_login_passwordless {
-	unique_user_attribute_name = "externalId"
-	offline_mode_enabled = true
+    unique_user_attribute_name = "username"
+    offline_mode_enabled       = true
   }
 }`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
 }
