@@ -357,14 +357,14 @@ func testAccWebhookConfig_NewEnv(environmentName, licenseID, resourceName, name 
 resource "pingone_webhook" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  name                = "%[4]s"
+  name              = "%[4]s"
   enabled           = "true"
-  http_endpoint_url          = "https://localhost/"
+  http_endpoint_url = "https://localhost/"
 
   format = "ACTIVITY"
-  
+
   filter_options {
-	included_action_types = [ "ACCOUNT.LINKED", "ACCOUNT.UNLINKED" ]
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -374,89 +374,89 @@ func testAccWebhookConfig_Full(resourceName, name string) string {
 		%[1]s
 
 resource "pingone_population" "%[2]s-1" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-	name                = "%[3]s-1"
+  name = "%[3]s-1"
 }
 
 resource "pingone_population" "%[2]s-2" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-	name                = "%[3]s-2"
+  name = "%[3]s-2"
 }
 
 resource "pingone_population" "%[2]s-3" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-	name                = "%[3]s-3"
+  name = "%[3]s-3"
 }
 
 resource "pingone_application" "%[2]s-1" {
-	environment_id = data.pingone_environment.general_test.id
-	name           = "%[3]s-1"
-	enabled        = true
-  
-	oidc_options {
-	  type                        = "SINGLE_PAGE_APP"
-	  grant_types                 = ["AUTHORIZATION_CODE"]
-	  response_types              = ["CODE"]
-	  pkce_enforcement            = "S256_REQUIRED"
-	  token_endpoint_authn_method = "NONE"
-	  redirect_uris               = ["https://www.pingidentity.com"]
-	}
-  }
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+  enabled        = true
 
-  resource "pingone_application" "%[2]s-2" {
-	environment_id = data.pingone_environment.general_test.id
-	name           = "%[3]s-2"
-	enabled        = true
-  
-	oidc_options {
-	  type                        = "SINGLE_PAGE_APP"
-	  grant_types                 = ["AUTHORIZATION_CODE"]
-	  response_types              = ["CODE"]
-	  pkce_enforcement            = "S256_REQUIRED"
-	  token_endpoint_authn_method = "NONE"
-	  redirect_uris               = ["https://www.pingidentity.com"]
-	}
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
   }
+}
 
-  resource "pingone_application" "%[2]s-3" {
-	environment_id = data.pingone_environment.general_test.id
-	name           = "%[3]s-3"
-	enabled        = true
-  
-	oidc_options {
-	  type                        = "SINGLE_PAGE_APP"
-	  grant_types                 = ["AUTHORIZATION_CODE"]
-	  response_types              = ["CODE"]
-	  pkce_enforcement            = "S256_REQUIRED"
-	  token_endpoint_authn_method = "NONE"
-	  redirect_uris               = ["https://www.pingidentity.com"]
-	}
+resource "pingone_application" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
   }
+}
+
+resource "pingone_application" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-3"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 
 resource "pingone_webhook" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-  name                = "%[3]s"
+  name              = "%[3]s"
   enabled           = false
-  http_endpoint_url          = "https://localhost/"
+  http_endpoint_url = "https://localhost/"
 
   http_endpoint_headers = {
     Authorization = "Basic usernamepassword"
-    Content-Type = "application/json"
+    Content-Type  = "application/json"
   }
 
   verify_tls_certificates = false
 
   format = "ACTIVITY"
-  
+
   filter_options {
-	included_action_types = [ "ACCOUNT.LINKED", "ACCOUNT.UNLINKED" ]
-	included_application_ids = [ pingone_application.%[3]s-2.id, pingone_application.%[3]s-3.id, pingone_application.%[3]s-1.id ]
-	included_population_ids = [ pingone_population.%[3]s-2.id, pingone_population.%[3]s-3.id, pingone_population.%[3]s-1.id ]
-	included_tags = ["adminIdentityEvent"]
+    included_action_types    = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+    included_application_ids = [pingone_application.%[3]s-2.id, pingone_application.%[3]s-3.id, pingone_application.%[3]s-1.id]
+    included_population_ids  = [pingone_population.%[3]s-2.id, pingone_population.%[3]s-3.id, pingone_population.%[3]s-1.id]
+    included_tags            = ["adminIdentityEvent"]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -466,15 +466,15 @@ func testAccWebhookConfig_Minimal(resourceName, name string) string {
 		%[1]s
 
 resource "pingone_webhook" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-  name                = "%[3]s"
-  http_endpoint_url          = "https://localhost/"
+  name              = "%[3]s"
+  http_endpoint_url = "https://localhost/"
 
   format = "SPLUNK"
-  
+
   filter_options {
-	included_action_types = [ "ACCOUNT.LINKED", "ACCOUNT.UNLINKED" ]
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -483,82 +483,82 @@ func testAccWebhookConfig_Profile1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-		
-			name                = "%[3]s-1"
-		}
-		
-		resource "pingone_population" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-		
-			name                = "%[3]s-2"
-		}
-		
-		resource "pingone_population" "%[2]s-3" {
-			environment_id = data.pingone_environment.general_test.id
-		
-			name                = "%[3]s-3"
-		}
-		
-		resource "pingone_application" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s-1"
-			enabled        = true
-		  
-			oidc_options {
-			  type                        = "SINGLE_PAGE_APP"
-			  grant_types                 = ["AUTHORIZATION_CODE"]
-			  response_types              = ["CODE"]
-			  pkce_enforcement            = "S256_REQUIRED"
-			  token_endpoint_authn_method = "NONE"
-			  redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		  }
-		
-		  resource "pingone_application" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s-2"
-			enabled        = true
-		  
-			oidc_options {
-			  type                        = "SINGLE_PAGE_APP"
-			  grant_types                 = ["AUTHORIZATION_CODE"]
-			  response_types              = ["CODE"]
-			  pkce_enforcement            = "S256_REQUIRED"
-			  token_endpoint_authn_method = "NONE"
-			  redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		  }
-		
-		  resource "pingone_application" "%[2]s-3" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s-3"
-			enabled        = true
-		  
-			oidc_options {
-			  type                        = "SINGLE_PAGE_APP"
-			  grant_types                 = ["AUTHORIZATION_CODE"]
-			  response_types              = ["CODE"]
-			  pkce_enforcement            = "S256_REQUIRED"
-			  token_endpoint_authn_method = "NONE"
-			  redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		  }
+resource "pingone_population" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-1"
+}
+
+resource "pingone_population" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-2"
+}
+
+resource "pingone_population" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-3"
+}
+
+resource "pingone_application" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-3"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 
 resource "pingone_webhook" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-  name                = "%[3]s"
+  name              = "%[3]s"
   enabled           = false
-  http_endpoint_url          = "https://localhost/"
+  http_endpoint_url = "https://localhost/"
 
   format = "ACTIVITY"
-  
+
   filter_options {
-	included_action_types = [ "ACCOUNT.LINKED", "ACCOUNT.UNLINKED" ]
-	included_application_ids = [ pingone_application.%[3]s-2.id, pingone_application.%[3]s-3.id, pingone_application.%[3]s-1.id ]
-	included_population_ids = [ pingone_population.%[3]s-2.id, pingone_population.%[3]s-3.id, pingone_population.%[3]s-1.id ]
+    included_action_types    = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+    included_application_ids = [pingone_application.%[3]s-2.id, pingone_application.%[3]s-3.id, pingone_application.%[3]s-1.id]
+    included_population_ids  = [pingone_population.%[3]s-2.id, pingone_population.%[3]s-3.id, pingone_population.%[3]s-1.id]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -567,61 +567,61 @@ func testAccWebhookConfig_Profile2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_population" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-		
-			name                = "%[3]s-1"
-		}
-		
-		resource "pingone_population" "%[2]s-new" {
-			environment_id = data.pingone_environment.general_test.id
-		
-			name                = "%[3]s-new"
-		}
-		
-		resource "pingone_application" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s-1"
-			enabled        = true
-		  
-			oidc_options {
-			  type                        = "SINGLE_PAGE_APP"
-			  grant_types                 = ["AUTHORIZATION_CODE"]
-			  response_types              = ["CODE"]
-			  pkce_enforcement            = "S256_REQUIRED"
-			  token_endpoint_authn_method = "NONE"
-			  redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		  }
-		
-		  resource "pingone_application" "%[2]s-new" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s-new"
-			enabled        = true
-		  
-			oidc_options {
-			  type                        = "SINGLE_PAGE_APP"
-			  grant_types                 = ["AUTHORIZATION_CODE"]
-			  response_types              = ["CODE"]
-			  pkce_enforcement            = "S256_REQUIRED"
-			  token_endpoint_authn_method = "NONE"
-			  redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		  }
+resource "pingone_population" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-1"
+}
+
+resource "pingone_population" "%[2]s-new" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-new"
+}
+
+resource "pingone_application" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application" "%[2]s-new" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-new"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 
 resource "pingone_webhook" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-  name                = "%[3]s"
+  name              = "%[3]s"
   enabled           = false
-  http_endpoint_url          = "https://localhost/"
+  http_endpoint_url = "https://localhost/"
 
   format = "ACTIVITY"
-  
+
   filter_options {
-	included_action_types = [ "ACCOUNT.LINKED" ]
-	included_application_ids = [ pingone_application.%[3]s-new.id, pingone_application.%[3]s-1.id ]
-	included_population_ids = [ pingone_population.%[3]s-new.id, pingone_population.%[3]s-1.id ]
+    included_action_types    = ["ACCOUNT.LINKED"]
+    included_application_ids = [pingone_application.%[3]s-new.id, pingone_application.%[3]s-1.id]
+    included_population_ids  = [pingone_population.%[3]s-new.id, pingone_population.%[3]s-1.id]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
