@@ -98,6 +98,7 @@ func New(version string) func() *schema.Provider {
 				"pingone_key":                          base.ResourceKey(),
 				"pingone_role_assignment_user":         base.ResourceRoleAssignmentUser(),
 				"pingone_trusted_email_domain":         base.ResourceTrustedEmailDomain(),
+				"pingone_webhook":                      base.ResourceWebhook(),
 
 				"pingone_application":                           sso.ResourceApplication(),
 				"pingone_application_attribute_mapping":         sso.ResourceApplicationAttributeMapping(),
