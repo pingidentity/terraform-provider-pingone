@@ -495,7 +495,7 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 		return nil
 	}
 
-	respObject := resp.(*management.CreateApplication201Response)
+	respObject := resp.(*management.ReadOneApplication200Response)
 
 	if respObject.ApplicationOIDC != nil && respObject.ApplicationOIDC.GetId() != "" {
 
