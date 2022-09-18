@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -30,15 +31,11 @@ func TestAccTrustedEmailDomainOwnershipDataSource_Full(t *testing.T) {
 				Config: testAccTrustedEmailDomainOwnershipDataSourceConfig_Full(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "TXT"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "region.#", "2"),
+					resource.TestCheckResourceAttrWith(dataSourceFullName, "region.#", validateRegionCardinality),
 					resource.TestMatchResourceAttr(dataSourceFullName, "region.0.name", regexp.MustCompile(`^[a-z0-9-]*$`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "region.0.status", "VERIFICATION_REQUIRED"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "region.0.key", "_amazonses"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "region.0.value", regexp.MustCompile(`^[a-zA-Z0-9-~_//+=]*$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "region.1.name", regexp.MustCompile(`^[a-z0-9-]*$`)),
-					resource.TestCheckResourceAttr(dataSourceFullName, "region.1.status", "VERIFICATION_REQUIRED"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "region.1.key", "_amazonses"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "region.1.value", regexp.MustCompile(`^[a-zA-Z0-9-~_//+=]*$`)),
 				),
 			},
 		},
@@ -60,4 +57,18 @@ data "pingone_trusted_email_domain_ownership" "%[3]s" {
 
   trusted_email_domain_id = pingone_trusted_email_domain.%[3]s.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
+func validateRegionCardinality(value string) error {
+
+	valueInt, err := strconv.Atoi(value)
+	if err != nil {
+		return err
+	}
+
+	if valueInt < 1 {
+		return fmt.Errorf("region block should have at least one set of values")
+	}
+	return nil
+
 }
