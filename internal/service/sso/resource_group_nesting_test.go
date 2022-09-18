@@ -93,14 +93,14 @@ resource "pingone_group" "%[2]s" {
 }
 
 resource "pingone_group" "%[2]s-nesting" {
-	environment_id = data.pingone_environment.general_test.id
-  
-	name = "%[3]s-nesting"
-  }
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-nesting"
+}
 
 resource "pingone_group_nesting" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  group_id = pingone_group.%[2]s.id
+  environment_id  = data.pingone_environment.general_test.id
+  group_id        = pingone_group.%[2]s.id
   nested_group_id = pingone_group.%[2]s-nesting.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
