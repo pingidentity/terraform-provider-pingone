@@ -22,7 +22,13 @@ func init() {
 		F:    sweepPopulations,
 		Dependencies: []string{
 			"pingone_group",
+			"pingone_sign_on_policy",
 		},
+	})
+
+	resource.AddTestSweepers("pingone_sign_on_policy", &resource.Sweeper{
+		Name: "pingone_sign_on_policy",
+		F:    sweepSOPs,
 	})
 }
 
@@ -110,6 +116,51 @@ func sweepPopulations(region string) error {
 					if err != nil {
 						log.Printf("Error destroying population %s during sweep: %s", population.GetName(), err)
 					}
+				}
+
+			}
+		}
+
+	}
+	return nil
+
+}
+
+func sweepSOPs(region string) error {
+
+	var ctx = context.Background()
+
+	p1Client, err := sweep.SweepClient(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
+	})
+
+	environments, err := sweep.FetchTaggedEnvironments(ctx, apiClient)
+	if err != nil {
+		return err
+	}
+
+	for _, environment := range environments {
+
+		respList, _, err := apiClient.SignOnPoliciesApi.ReadAllSignOnPolicies(ctx, environment.GetId()).Execute()
+		if err != nil {
+			return fmt.Errorf("Error getting sign on policies: %s", err)
+		}
+
+		if signOnPolicies, ok := respList.Embedded.GetSignOnPoliciesOk(); ok {
+
+			for _, signOnPolicy := range signOnPolicies {
+
+				_, err := apiClient.SignOnPoliciesApi.DeleteSignOnPolicy(ctx, environment.GetId(), signOnPolicy.GetId()).Execute()
+
+				if err != nil {
+					log.Printf("Error destroying sign-on policy %s during sweep: %s", signOnPolicy.GetName(), err)
 				}
 
 			}

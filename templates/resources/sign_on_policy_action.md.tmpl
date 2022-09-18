@@ -35,6 +35,14 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-agreement.tf") }}
 
+## Example Usage - PingID Windows Login Passwordless (Workforce Environments)
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pingidwinpasswordless.tf") }}
+
+## Example Usage - PingID (Workforce Environments)
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pingid.tf") }}
+
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import

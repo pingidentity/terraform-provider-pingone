@@ -1,8 +1,6 @@
 package sso
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -33,10 +31,11 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
 		},
 		"conditions": {
-			Description: "Conditions to apply to the sign on policy action.",
-			Type:        schema.TypeList,
-			MaxItems:    1,
-			Optional:    true,
+			Description:   "Conditions to apply to the sign on policy action.",
+			Type:          schema.TypeList,
+			MaxItems:      1,
+			Optional:      true,
+			ConflictsWith: []string{"pingid", "pingid_windows_login_passwordless"},
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"last_sign_on_older_than_seconds": {
@@ -136,14 +135,14 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Description:      "A string that specifies the link to the external identity provider's identity store. This property is set when the administrator chooses to have users register in an external identity store. This attribute can be set only when the registration.enabled property is set to false.",
 			Type:             schema.TypeString,
 			Optional:         true,
-			ConflictsWith:    []string{"registration_local_population_id", "agreement", "identity_provider", "mfa", "progressive_profiling"},
+			ConflictsWith:    []string{"registration_local_population_id", "agreement", "identity_provider", "mfa", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 			ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 		},
 		"registration_local_population_id": {
 			Description:      "A string that specifies the population ID associated with the newly registered user. Setting this enables local registration features.",
 			Type:             schema.TypeString,
 			Optional:         true,
-			ConflictsWith:    []string{"registration_external_href", "agreement", "mfa", "progressive_profiling"},
+			ConflictsWith:    []string{"registration_external_href", "agreement", "mfa", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 			ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 		},
 		"registration_confirm_user_attributes": {
@@ -151,14 +150,14 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Type:          schema.TypeBool,
 			Optional:      true,
 			Default:       false,
-			ConflictsWith: []string{"registration_external_href", "agreement", "mfa", "progressive_profiling"},
+			ConflictsWith: []string{"registration_external_href", "agreement", "mfa", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 		},
 		"social_provider_ids": {
 			Description:   "One or more IDs of the identity providers that can be used for the social login sign-on flow.",
 			Type:          schema.TypeSet,
 			MaxItems:      100,
 			Optional:      true,
-			ConflictsWith: []string{"agreement", "mfa", "identity_provider", "progressive_profiling"},
+			ConflictsWith: []string{"agreement", "mfa", "identity_provider", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 			Elem: &schema.Schema{
 				Type:             schema.TypeString,
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
@@ -169,15 +168,15 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Type:          schema.TypeBool,
 			Optional:      true,
 			Default:       false,
-			ConflictsWith: []string{"agreement", "mfa", "identity_provider", "progressive_profiling"},
+			ConflictsWith: []string{"agreement", "mfa", "identity_provider", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 		},
 		"agreement": {
-			Description:  fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_AGREEMENT)),
+			Description:  "Options specific to the **Agreements** policy action.",
 			Type:         schema.TypeList,
 			MaxItems:     1,
 			Optional:     true,
 			ForceNew:     true,
-			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling"},
+			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"agreement_id": {
@@ -196,12 +195,12 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			},
 		},
 		"identifier_first": {
-			Description:  fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_IDENTIFIER_FIRST)),
+			Description:  "Options specific to the **Identifier First** policy action.",
 			Type:         schema.TypeList,
 			MaxItems:     1,
 			Optional:     true,
 			ForceNew:     true,
-			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling"},
+			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"discovery_rule": {
@@ -231,12 +230,12 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			},
 		},
 		"identity_provider": {
-			Description:  fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER)),
+			Description:  "Options specific to the **Identity Provider** policy action.",
 			Type:         schema.TypeList,
 			MaxItems:     1,
 			Optional:     true,
 			ForceNew:     true,
-			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling"},
+			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"acr_values": {
@@ -260,12 +259,12 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			},
 		},
 		"login": {
-			Description:  fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_LOGIN)),
+			Description:  "Options specific to the **Login** policy action.",
 			Type:         schema.TypeList,
 			MaxItems:     1,
 			Optional:     true,
 			ForceNew:     true,
-			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling"},
+			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"recovery_enabled": recoveryEnabledSchema(),
@@ -273,12 +272,12 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			},
 		},
 		"mfa": {
-			Description:  fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION)),
+			Description:  "Options specific to the **Multi-factor Authentication** policy action.",
 			Type:         schema.TypeList,
 			MaxItems:     1,
 			Optional:     true,
 			ForceNew:     true,
-			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling"},
+			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"device_sign_on_policy_id": {
@@ -298,12 +297,12 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			},
 		},
 		"progressive_profiling": {
-			Description:  fmt.Sprintf("Options specific to the **%s** policy action.", string(management.ENUMSIGNONPOLICYTYPE_PROGRESSIVE_PROFILING)),
+			Description:  "Options specific to the **Progressive Profiling** policy action.",
 			Type:         schema.TypeList,
 			MaxItems:     1,
 			Optional:     true,
 			ForceNew:     true,
-			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling"},
+			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"attribute": {
@@ -344,6 +343,40 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 						Required:         true,
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+					},
+				},
+			},
+		},
+		"pingid": {
+			Description:  "Options specific to the **PingID** policy action.  This action can only be applied to Workforce solution context environments that have the PingID and SSO services enabled.",
+			Type:         schema.TypeList,
+			MaxItems:     1,
+			Optional:     true,
+			ForceNew:     true,
+			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{},
+			},
+		},
+		"pingid_windows_login_passwordless": {
+			Description:  "Options specific to the **PingID Windows Login Passwordless** policy action.  This action can only be applied to Workforce solution context environments that have the PingID and SSO services enabled.",
+			Type:         schema.TypeList,
+			MaxItems:     1,
+			Optional:     true,
+			ForceNew:     true,
+			ExactlyOneOf: []string{"identifier_first", "login", "mfa", "identity_provider", "agreement", "progressive_profiling", "pingid", "pingid_windows_login_passwordless"},
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"unique_user_attribute_name": {
+						Description:      "A string that specifies the schema attribute to match against the provided identifier when searching for a user in the directory. Only unique attributes in the directory schema may be configured.",
+						Type:             schema.TypeString,
+						Required:         true,
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+					},
+					"offline_mode_enabled": {
+						Description: "A boolean that specifies whether to allow users to log in when PingOne and or PingID are not available.",
+						Type:        schema.TypeBool,
+						Required:    true,
 					},
 				},
 			},

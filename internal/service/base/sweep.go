@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -35,7 +36,7 @@ func sweepEnvironments(region string) error {
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
-	environments, err := sweep.FetchTaggedEnvironments(ctx, apiClient)
+	environments, err := sweep.FetchTaggedEnvironmentsByPrefix(ctx, apiClient, fmt.Sprintf("%sdynamic-", sweep.EnvironmentNamePrefix))
 	if err != nil {
 		return err
 	}

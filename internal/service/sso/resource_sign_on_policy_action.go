@@ -110,6 +110,8 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 		"login":                                  nil,
 		"mfa":                                    nil,
 		"progressive_profiling":                  nil,
+		"pingid":                                 nil,
+		"pingid_windows_login_passwordless":      nil,
 	}
 
 	switch respObject.GetActualInstance().(type) {
@@ -262,6 +264,18 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		values["mfa"] = flattenActionMFA(respObject.SignOnPolicyActionMFA)
 
+	case *management.SignOnPolicyActionCommon:
+
+		values["priority"] = respObject.SignOnPolicyActionCommon.GetPriority()
+
+		values["pingid"] = make([]interface{}, 1)
+
+	case *management.SignOnPolicyActionPingIDWinLoginPasswordless:
+
+		values["priority"] = respObject.SignOnPolicyActionPingIDWinLoginPasswordless.GetPriority()
+
+		values["pingid_windows_login_passwordless"] = flattenActionPingIDWinLoginPasswordless(respObject.SignOnPolicyActionPingIDWinLoginPasswordless)
+
 	}
 
 	d.Set("priority", values["priority"])
@@ -280,6 +294,8 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 	d.Set("login", values["login"])
 	d.Set("mfa", values["mfa"])
 	d.Set("progressive_profiling", values["progressive_profiling"])
+	d.Set("pingid", values["pingid"])
+	d.Set("pingid_windows_login_passwordless", values["pingid_windows_login_passwordless"])
 
 	return diags
 }
@@ -425,6 +441,16 @@ func expandSOPAction(d *schema.ResourceData) (*management.SignOnPolicyAction, di
 
 	if _, ok := d.GetOk("progressive_profiling"); ok {
 		signOnPolicyAction.SignOnPolicyActionProgressiveProfiling, diags = expandSOPActionProgressiveProfiling(d, sopPriority)
+		processedCount += 1
+	}
+
+	if _, ok := d.GetOk("pingid"); ok {
+		signOnPolicyAction.SignOnPolicyActionCommon = expandSOPActionPingID(d, sopPriority)
+		processedCount += 1
+	}
+
+	if _, ok := d.GetOk("pingid_windows_login_passwordless"); ok {
+		signOnPolicyAction.SignOnPolicyActionPingIDWinLoginPasswordless = expandSOPActionPingIDWinLoginPasswordless(d, sopPriority)
 		processedCount += 1
 	}
 
@@ -739,6 +765,41 @@ func expandSOPActionProgressiveProfiling(d *schema.ResourceData, sopPriority int
 	})
 
 	return nil, diags
+}
+
+func expandSOPActionPingID(d *schema.ResourceData, sopPriority int32) *management.SignOnPolicyActionCommon {
+
+	if v, ok := d.Get("pingid").([]interface{}); ok && v != nil && len(v) > 0 {
+
+		sopActionType := management.NewSignOnPolicyActionCommon(
+			sopPriority,
+			management.ENUMSIGNONPOLICYTYPE_PINGID_AUTHENTICATION,
+		)
+
+		return sopActionType
+
+	}
+
+	return nil
+}
+
+func expandSOPActionPingIDWinLoginPasswordless(d *schema.ResourceData, sopPriority int32) *management.SignOnPolicyActionPingIDWinLoginPasswordless {
+
+	if v, ok := d.Get("pingid_windows_login_passwordless").([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+		vp := v[0].(map[string]interface{})
+
+		sopActionType := management.NewSignOnPolicyActionPingIDWinLoginPasswordless(
+			sopPriority,
+			management.ENUMSIGNONPOLICYTYPE_PINGID_WINLOGIN_PASSWORDLESS_AUTHENTICATION,
+			*management.NewSignOnPolicyActionPingIDWinLoginPasswordlessAllOfUniqueUserAttribute(vp["unique_user_attribute_name"].(string)),
+			*management.NewSignOnPolicyActionPingIDWinLoginPasswordlessAllOfOfflineMode(vp["offline_mode_enabled"].(bool)),
+		)
+
+		return sopActionType
+
+	}
+
+	return nil
 }
 
 func expandSOPActionDiscoveryRules(items []interface{}) []management.SignOnPolicyActionIDFirstAllOfDiscoveryRules {
@@ -1510,6 +1571,15 @@ func flattenActionAgreement(signOnPolicyActionAgreement *management.SignOnPolicy
 	return append(actionList, action)
 }
 
+func flattenActionPingIDWinLoginPasswordless(signOnPolicyActionPingIDWinLoginPasswordless *management.SignOnPolicyActionPingIDWinLoginPasswordless) []interface{} {
+	actionList := make([]interface{}, 0, 1)
+
+	return append(actionList, map[string]interface{}{
+		"unique_user_attribute_name": signOnPolicyActionPingIDWinLoginPasswordless.GetUniqueUserAttribute().Name,
+		"offline_mode_enabled":       signOnPolicyActionPingIDWinLoginPasswordless.GetOfflineMode().Enabled,
+	})
+}
+
 func flattenDiscoveryRulesInner(signOnPolicyActionIDFirstAllOfDiscoveryRules []management.SignOnPolicyActionIDFirstAllOfDiscoveryRules) ([]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -1564,6 +1634,10 @@ func getActionID(instance management.SignOnPolicyAction) string {
 		actionID = instance.SignOnPolicyActionProgressiveProfiling.GetId()
 	case *management.SignOnPolicyActionMFA:
 		actionID = instance.SignOnPolicyActionMFA.GetId()
+	case *management.SignOnPolicyActionCommon:
+		actionID = instance.SignOnPolicyActionCommon.GetId()
+	case *management.SignOnPolicyActionPingIDWinLoginPasswordless:
+		actionID = instance.SignOnPolicyActionPingIDWinLoginPasswordless.GetId()
 	}
 
 	return actionID
