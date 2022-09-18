@@ -1,16 +1,24 @@
 ## 0.5.0 (Unreleased)
 
+NOTES:
+
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.9.0 => v0.10.0 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.7 => v0.3.8 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
+
 FEATURES:
 
 * **New Data Source:** `pingone_trusted_email_domain_dkim` ([#134](https://github.com/pingidentity/terraform-provider-pingone/issues/134))
 * **New Data Source:** `pingone_trusted_email_domain_ownership` ([#134](https://github.com/pingidentity/terraform-provider-pingone/issues/134))
 * **New Data Source:** `pingone_trusted_email_domain_spf` ([#134](https://github.com/pingidentity/terraform-provider-pingone/issues/134))
+* **New Resource:** `pingone_mfa_settings` ([#140](https://github.com/pingidentity/terraform-provider-pingone/issues/140))
 * **New Resource:** `pingone_trusted_email_domain` ([#134](https://github.com/pingidentity/terraform-provider-pingone/issues/134))
+* **New Resource:** `pingone_webhook` ([#143](https://github.com/pingidentity/terraform-provider-pingone/issues/143))
 
 ENHANCEMENTS:
 
 * data-source/pingone_environment: Support for the `solution` environment context attribute (`CUSTOMER`, `WORKFORCE` and custom) ([#137](https://github.com/pingidentity/terraform-provider-pingone/issues/137))
 * resource/pingone_environment: Support for the `solution` environment context attribute (`CUSTOMER` and custom) ([#137](https://github.com/pingidentity/terraform-provider-pingone/issues/137))
+* resource/pingone_sign_on_policy_action: Added the *PingID* and *PingID Windows Login Passwordless* sign-on policy actions for workforce environments ([#141](https://github.com/pingidentity/terraform-provider-pingone/issues/141))
 
 BUG FIXES:
 
