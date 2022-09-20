@@ -272,7 +272,7 @@ func testAccAlertRuleConfig_NewEnv(environmentName, licenseID, name string) stri
 
 resource "pingone_alert_rule" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  
+
   addresses = ["noreply1@pingidentity.com", "noreply@pingidentity.com"]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, name)
 }
@@ -282,11 +282,11 @@ func testAccAlertRuleConfig_Full(resourceName string) string {
 		%[1]s
 
 resource "pingone_alert_rule" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-  channel_type                = "EMAIL"
-  addresses = ["noreply1@pingidentity.com", "noreply@pingidentity.com"]
-  include_severities = ["INFO", "WARNING", "ERROR"]
+  channel_type        = "EMAIL"
+  addresses           = ["noreply1@pingidentity.com", "noreply@pingidentity.com"]
+  include_severities  = ["INFO", "WARNING", "ERROR"]
   include_alert_types = ["KEY_PAIR_EXPIRED", "CERTIFICATE_EXPIRED", "CERTIFICATE_EXPIRING"]
   exclude_alert_types = ["GATEWAY_VERSION_DEPRECATED", "GATEWAY_VERSION_DEPRECATING"]
 }`, acctest.GenericSandboxEnvironment(), resourceName)
@@ -297,7 +297,7 @@ func testAccAlertRuleConfig_Minimal(resourceName string) string {
 		%[1]s
 
 resource "pingone_alert_rule" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   addresses = ["noreply1@pingidentity.com", "noreply@pingidentity.com"]
 }`, acctest.GenericSandboxEnvironment(), resourceName)
@@ -308,11 +308,11 @@ func testAccAlertRuleConfig_FullChange(resourceName string) string {
 		%[1]s
 
 resource "pingone_alert_rule" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-  channel_type                = "EMAIL"
-  addresses = ["noreply@pingidentity.com"]
-  include_severities = ["INFO", "WARNING"]
+  channel_type        = "EMAIL"
+  addresses           = ["noreply@pingidentity.com"]
+  include_severities  = ["INFO", "WARNING"]
   include_alert_types = ["GATEWAY_VERSION_DEPRECATED", "GATEWAY_VERSION_DEPRECATING"]
   exclude_alert_types = ["KEY_PAIR_EXPIRED", "CERTIFICATE_EXPIRED", "CERTIFICATE_EXPIRING"]
 }`, acctest.GenericSandboxEnvironment(), resourceName)
