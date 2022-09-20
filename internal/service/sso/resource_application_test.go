@@ -1504,9 +1504,9 @@ resource "pingone_group" "%[2]s-1" {
 }
 
 resource "pingone_group" "%[2]s-2" {
-	environment_id = data.pingone_environment.general_test.id
-	name           = "%[3]s-2"
-  }
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+}
 
 resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1526,7 +1526,7 @@ resource "pingone_application" "%[2]s" {
     type = "ANY_GROUP"
 
     groups = [
-		pingone_group.%[2]s-2.id,
+      pingone_group.%[2]s-2.id,
       pingone_group.%[2]s-1.id
     ]
   }
@@ -1570,9 +1570,9 @@ resource "pingone_group" "%[2]s-1" {
 }
 
 resource "pingone_group" "%[2]s-2" {
-	environment_id = data.pingone_environment.general_test.id
-	name           = "%[3]s-2"
-  }
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+}
 
 resource "pingone_key" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1605,7 +1605,7 @@ resource "pingone_application" "%[2]s" {
 
     groups = [
       pingone_group.%[2]s-2.id,
-	  pingone_group.%[2]s-1.id
+      pingone_group.%[2]s-1.id
     ]
   }
 
