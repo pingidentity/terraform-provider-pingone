@@ -1,0 +1,1 @@
+$ terraform import pingone_alert_rule.example <environment_id>/<alert_rule_id>
