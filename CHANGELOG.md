@@ -4,6 +4,7 @@ NOTES:
 
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.9.0 => v0.10.0 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.7 => v0.3.8 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
+* pingone_application: Changed `tags` from `List` type to `Set` type. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
 
 FEATURES:
 
@@ -23,6 +24,14 @@ ENHANCEMENTS:
 BUG FIXES:
 
 * Fix panic error when a HTTP level error is returned from API after retry ([#136](https://github.com/pingidentity/terraform-provider-pingone/issues/136))
+* pingone_application: Fix for `access_control_group_options.groups` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
+* pingone_application: Fix for `oidc_options.grant_types` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
+* pingone_application: Fix for `oidc_options.post_logout_redirect_uris` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
+* pingone_application: Fix for `oidc_options.redirect_uris` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
+* pingone_application: Fix for `oidc_options.response_types` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
+* pingone_application: Fix for `saml_options.acs_urls` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
+* pingone_application: Fix for `saml_options.sp_verification_certificate_ids` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
+* pingone_environment: Fix for `services` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
 
 ## 0.4.0 (11 September 2022)
 
