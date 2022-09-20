@@ -11,6 +11,7 @@ FEATURES:
 * **New Data Source:** `pingone_trusted_email_domain_dkim` ([#134](https://github.com/pingidentity/terraform-provider-pingone/issues/134))
 * **New Data Source:** `pingone_trusted_email_domain_ownership` ([#134](https://github.com/pingidentity/terraform-provider-pingone/issues/134))
 * **New Data Source:** `pingone_trusted_email_domain_spf` ([#134](https://github.com/pingidentity/terraform-provider-pingone/issues/134))
+* **New Resource:** `pingone_group_nesting` ([#144](https://github.com/pingidentity/terraform-provider-pingone/issues/144))
 * **New Resource:** `pingone_mfa_settings` ([#140](https://github.com/pingidentity/terraform-provider-pingone/issues/140))
 * **New Resource:** `pingone_trusted_email_domain` ([#134](https://github.com/pingidentity/terraform-provider-pingone/issues/134))
 * **New Resource:** `pingone_webhook` ([#143](https://github.com/pingidentity/terraform-provider-pingone/issues/143))
