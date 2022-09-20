@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -60,7 +59,7 @@ func ResourceApplication() *schema.Resource {
 			},
 			"tags": {
 				Description: "An array that specifies the list of labels associated with the application.",
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
@@ -117,7 +116,7 @@ func ResourceApplication() *schema.Resource {
 						},
 						"groups": {
 							Description: "A set that specifies the group IDs for the groups the actor must belong to for access to the application.",
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -149,7 +148,7 @@ func ResourceApplication() *schema.Resource {
 						},
 						"grant_types": {
 							Description: "A list that specifies the grant type for the authorization request. Options are `AUTHORIZATION_CODE`, `IMPLICIT`, `REFRESH_TOKEN`, `CLIENT_CREDENTIALS`.",
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
 								ValidateFunc: validation.StringInSlice([]string{"AUTHORIZATION_CODE", "IMPLICIT", "REFRESH_TOKEN", "CLIENT_CREDENTIALS"}, false),
@@ -158,7 +157,7 @@ func ResourceApplication() *schema.Resource {
 						},
 						"response_types": {
 							Description: "A list that specifies the code or token type returned by an authorization request. Options are `TOKEN`, `ID_TOKEN`, and `CODE`. Note that `CODE` cannot be used in an authorization request with `TOKEN` or `ID_TOKEN` because PingOne does not currently support OIDC hybrid flows.",
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
 								ValidateFunc: validation.StringInSlice([]string{"TOKEN", "ID_TOKEN", "CODE"}, false),
@@ -181,7 +180,7 @@ func ResourceApplication() *schema.Resource {
 						},
 						"redirect_uris": {
 							Description: "A string that specifies the callback URI for the authentication response.",
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
 								ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
@@ -190,7 +189,7 @@ func ResourceApplication() *schema.Resource {
 						},
 						"post_logout_redirect_uris": {
 							Description: "A string that specifies the URLs that the browser can be redirected to after logout.",
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
 								ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
@@ -335,7 +334,7 @@ func ResourceApplication() *schema.Resource {
 						},
 						"acs_urls": {
 							Description: "A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).",
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Required:    true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
@@ -393,7 +392,7 @@ func ResourceApplication() *schema.Resource {
 						},
 						"sp_verification_certificate_ids": {
 							Description: "A list that specifies the certificate IDs used to verify the service provider signature.",
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Optional:    true,
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
@@ -791,7 +790,7 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			return nil, diags
 		}
 
-		grantTypes, _ := expandGrantTypes(oidcOptions["grant_types"].([]interface{}))
+		grantTypes, _ := expandGrantTypes(oidcOptions["grant_types"].(*schema.Set))
 
 		// Set the object
 		application = *management.NewApplicationOIDC(d.Get("enabled").(bool), d.Get("name").(string), management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT, *applicationType, grantTypes, management.EnumApplicationOIDCTokenAuthMethod(oidcOptions["token_endpoint_authn_method"].(string)))
@@ -829,9 +828,9 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			application.SetHomePageUrl(v1)
 		}
 
-		if v1, ok := oidcOptions["response_types"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+		if v1, ok := oidcOptions["response_types"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
 			obj := make([]management.EnumApplicationOIDCResponseType, 0)
-			for _, j := range v1 {
+			for _, j := range v1.List() {
 				obj = append(obj, management.EnumApplicationOIDCResponseType(j.(string)))
 			}
 			application.SetResponseTypes(obj)
@@ -843,17 +842,17 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			}
 		}
 
-		if v1, ok := oidcOptions["redirect_uris"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+		if v1, ok := oidcOptions["redirect_uris"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
 			obj := make([]string, 0)
-			for _, j := range v1 {
+			for _, j := range v1.List() {
 				obj = append(obj, j.(string))
 			}
 			application.SetRedirectUris(obj)
 		}
 
-		if v1, ok := oidcOptions["post_logout_redirect_uris"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+		if v1, ok := oidcOptions["post_logout_redirect_uris"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
 			obj := make([]string, 0)
-			for _, j := range v1 {
+			for _, j := range v1.List() {
 				obj = append(obj, j.(string))
 			}
 			application.SetPostLogoutRedirectUris(obj)
@@ -914,10 +913,10 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 	return &application, diags
 }
 
-func expandGrantTypes(s []interface{}) ([]management.EnumApplicationOIDCGrantType, bool) {
+func expandGrantTypes(s *schema.Set) ([]management.EnumApplicationOIDCGrantType, bool) {
 	grantTypes := make([]management.EnumApplicationOIDCGrantType, 0)
 	refreshToken := false
-	for _, j := range s {
+	for _, j := range s.List() {
 		grantTypes = append(grantTypes, management.EnumApplicationOIDCGrantType(j.(string)))
 		if management.EnumApplicationOIDCGrantType(j.(string)) == management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN {
 			refreshToken = true
@@ -1011,7 +1010,7 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 
 		// Set the object
 		acsUrls := make([]string, 0)
-		for _, v := range samlOptions["acs_urls"].([]interface{}) {
+		for _, v := range samlOptions["acs_urls"].(*schema.Set).List() {
 			acsUrls = append(acsUrls, v.(string))
 		}
 		application = *management.NewApplicationSAML(d.Get("enabled").(bool), d.Get("name").(string), management.ENUMAPPLICATIONPROTOCOL_SAML, *applicationType, acsUrls, int32(samlOptions["assertion_duration"].(int)), samlOptions["sp_entity_id"].(string))
@@ -1077,10 +1076,10 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetSloResponseEndpoint(v1)
 		}
 
-		if v1, ok := samlOptions["sp_verification_certificate_ids"].([]string); ok && v1 != nil && v1[0] != "" {
+		if v1, ok := samlOptions["sp_verification_certificate_ids"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
 			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
-			for _, j := range v1 {
-				certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(j)
+			for _, j := range v1.List() {
+				certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(j.(string))
 				certificates = append(certificates, certificate)
 			}
 
@@ -1110,10 +1109,10 @@ func expandCommonOptionalAttributes(d *schema.ResourceData) management.Applicati
 	}
 
 	if v, ok := d.GetOk("tags"); ok {
-		if j, okJ := v.([]string); okJ {
+		if j, okJ := v.([]interface{}); okJ {
 			tags := make([]management.EnumApplicationTags, 0)
 			for _, k := range j {
-				tags = append(tags, management.EnumApplicationTags(k))
+				tags = append(tags, management.EnumApplicationTags(k.(string)))
 			}
 
 			application.Tags = tags
@@ -1148,7 +1147,7 @@ func expandCommonOptionalAttributes(d *schema.ResourceData) management.Applicati
 			obj := j[0].(map[string]interface{})
 
 			groups := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
-			for _, j := range obj["groups"].([]interface{}) {
+			for _, j := range obj["groups"].(*schema.Set).List() {
 				groups = append(groups, *management.NewApplicationAccessControlGroupGroupsInner(j.(string)))
 			}
 
@@ -1221,22 +1220,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 	}
 
 	if v, ok := application.GetRedirectUrisOk(); ok {
-
-		sort.SliceStable(v, func(i, j int) bool {
-			return v[i] < v[j]
-		})
-
 		item["redirect_uris"] = v
 	} else {
 		item["redirect_uris"] = nil
 	}
 
 	if v, ok := application.GetPostLogoutRedirectUrisOk(); ok {
-
-		sort.SliceStable(v, func(i, j int) bool {
-			return v[i] < v[j]
-		})
-
 		item["post_logout_redirect_uris"] = v
 	} else {
 		item["post_logout_redirect_uris"] = nil
@@ -1296,10 +1285,6 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 func flattenGrantTypes(application *management.ApplicationOIDC) []string {
 
 	grantTypes := application.GetGrantTypes()
-
-	sort.SliceStable(grantTypes, func(i, j int) bool {
-		return string(grantTypes[i]) < string(grantTypes[j])
-	})
 
 	returnGrants := make([]string, 0)
 	for _, v := range grantTypes {

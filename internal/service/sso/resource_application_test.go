@@ -125,25 +125,29 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "1",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WEB_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.1", "REFRESH_TOKEN"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.1", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.0", "https://pingidentity.com/logout"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.1", "https://www.pingidentity.com/logout"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -188,14 +192,14 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WEB_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.1", "REFRESH_TOKEN"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
@@ -241,14 +245,14 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WEB_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.1", "REFRESH_TOKEN"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
@@ -274,25 +278,29 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "1",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WEB_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.1", "REFRESH_TOKEN"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.1", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.0", "https://pingidentity.com/logout"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.1", "https://www.pingidentity.com/logout"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -319,14 +327,14 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WEB_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.1", "REFRESH_TOKEN"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
@@ -370,14 +378,18 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "1",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "NATIVE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -435,7 +447,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "NATIVE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -486,14 +498,18 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "1",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "NATIVE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -533,7 +549,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "NATIVE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -566,14 +582,18 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "1",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "NATIVE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -629,24 +649,28 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "1",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SINGLE_PAGE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.1", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.0", "https://pingidentity.com/logout"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.1", "https://www.pingidentity.com/logout"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -691,13 +715,13 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SINGLE_PAGE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
@@ -743,13 +767,13 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SINGLE_PAGE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
@@ -775,24 +799,28 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "1",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SINGLE_PAGE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.1", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.0", "https://pingidentity.com/logout"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.1", "https://www.pingidentity.com/logout"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -819,13 +847,13 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SINGLE_PAGE_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "AUTHORIZATION_CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.0", "CODE"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.0", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
@@ -869,14 +897,19 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "2",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"groups.1": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WORKER"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -928,7 +961,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WORKER"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -980,7 +1013,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WORKER"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -1010,14 +1043,19 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "2",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"groups.1": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WORKER"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -1051,7 +1089,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WORKER"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.grant_types.0", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
@@ -1099,15 +1137,20 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.type", "ANY_GROUP"),
-					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.0.groups.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.0.groups.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "2",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"groups.1": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.type", "WEB_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.acs_urls.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.acs_urls.0", "https://pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.acs_urls.1", "https://www.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1153,7 +1196,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.type", "WEB_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.acs_urls.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.acs_urls.0", "https://pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", ""),
@@ -1262,11 +1305,11 @@ resource "pingone_application" "%[2]s" {
 
   oidc_options {
     type                        = "WEB_APP"
-    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
-    post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
+    redirect_uris               = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    post_logout_redirect_uris   = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
 
     refresh_token_duration         = 3000000
     refresh_token_rolling_duration = 30000000
@@ -1293,7 +1336,7 @@ resource "pingone_application" "%[2]s" {
 
   oidc_options {
     type                        = "WEB_APP"
-    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
     redirect_uris               = ["https://www.pingidentity.com"]
@@ -1419,8 +1462,8 @@ resource "pingone_application" "%[2]s" {
     response_types              = ["CODE"]
     pkce_enforcement            = "S256_REQUIRED"
     token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["https://pingidentity.com", "https://www.pingidentity.com"]
-    post_logout_redirect_uris   = ["https://pingidentity.com/logout", "https://www.pingidentity.com/logout"]
+    redirect_uris               = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    post_logout_redirect_uris   = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
     home_page_url               = "https://www.pingidentity.com"
 
     support_unsigned_request_object = true
@@ -1455,10 +1498,15 @@ func testAccApplicationConfig_OIDCFullWorker(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_group" "%[2]s" {
+resource "pingone_group" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-1"
 }
+
+resource "pingone_group" "%[2]s-2" {
+	environment_id = data.pingone_environment.general_test.id
+	name           = "%[3]s-2"
+  }
 
 resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1478,7 +1526,8 @@ resource "pingone_application" "%[2]s" {
     type = "ANY_GROUP"
 
     groups = [
-      pingone_group.%[2]s.id
+		pingone_group.%[2]s-2.id,
+      pingone_group.%[2]s-1.id
     ]
   }
 
@@ -1515,10 +1564,15 @@ func testAccApplicationConfig_SAMLFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_group" "%[2]s" {
+resource "pingone_group" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-1"
 }
+
+resource "pingone_group" "%[2]s-2" {
+	environment_id = data.pingone_environment.general_test.id
+	name           = "%[3]s-2"
+  }
 
 resource "pingone_key" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1550,7 +1604,8 @@ resource "pingone_application" "%[2]s" {
     type = "ANY_GROUP"
 
     groups = [
-      pingone_group.%[2]s.id
+      pingone_group.%[2]s-2.id,
+	  pingone_group.%[2]s-1.id
     ]
   }
 
@@ -1558,7 +1613,7 @@ resource "pingone_application" "%[2]s" {
 
   saml_options {
     type               = "WEB_APP"
-    acs_urls           = ["https://pingidentity.com", "https://www.pingidentity.com"]
+    acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
 

@@ -572,8 +572,8 @@ func expandSOPActionIDFirst(d *schema.ResourceData, sopPriority int32) (*managem
 			sopActionType.SetRecovery(*management.NewSignOnPolicyActionLoginAllOfRecovery(v1))
 		}
 
-		if v1, ok := vp["discovery_rule"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
-			sopActionType.SetDiscoveryRules(expandSOPActionDiscoveryRules(v1))
+		if v1, ok := vp["discovery_rule"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
+			sopActionType.SetDiscoveryRules(expandSOPActionDiscoveryRules(v1.List()))
 		}
 
 	}
@@ -970,10 +970,10 @@ func expandSOPActionConditionIDFirstAndLogin(condition interface{}, sopPriority 
 		conditionStructList = append(conditionStructList, buildSignOnOlderThan(int32(v)))
 	}
 
-	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != "" {
+	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].(*schema.Set); ok && v != nil && len(v.List()) > 0 && v.List()[0] != "" {
 
 		var populationStructs *management.SignOnPolicyActionCommonConditionOrOrInner
-		populationStructs, diags = buildUserMemberOfPopulation(v, sopPriority)
+		populationStructs, diags = buildUserMemberOfPopulation(v.List(), sopPriority)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -1043,10 +1043,10 @@ func expandSOPActionConditionMFA(condition interface{}, sopPriority int32) (*man
 		conditionStructList = append(conditionStructList, buildSignOnOlderThan(int32(v)))
 	}
 
-	if v, ok := condition.(map[string]interface{})["ip_out_of_range_cidr"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != "" {
+	if v, ok := condition.(map[string]interface{})["ip_out_of_range_cidr"].(*schema.Set); ok && v != nil && len(v.List()) > 0 && v.List()[0] != "" {
 
 		obj := make([]string, 0)
-		for _, str := range v {
+		for _, str := range v.List() {
 			obj = append(obj, str.(string))
 		}
 
@@ -1088,9 +1088,9 @@ func expandSOPActionConditionMFA(condition interface{}, sopPriority int32) (*man
 
 		anonymousNetworkList := make([]string, 0)
 
-		if j, ok := condition.(map[string]interface{})["anonymous_network_detected_allowed_cidr"].([]interface{}); ok && j != nil && len(j) > 0 && j[0] != "" {
+		if j, ok := condition.(map[string]interface{})["anonymous_network_detected_allowed_cidr"].(*schema.Set); ok && j != nil && len(j.List()) > 0 && j.List()[0] != "" {
 			obj := make([]string, 0)
-			for _, str := range j {
+			for _, str := range j.List() {
 				obj = append(obj, str.(string))
 			}
 			anonymousNetworkList = obj
@@ -1103,10 +1103,10 @@ func expandSOPActionConditionMFA(condition interface{}, sopPriority int32) (*man
 		})
 	}
 
-	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != "" {
+	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].(*schema.Set); ok && v != nil && len(v.List()) > 0 && v.List()[0] != "" {
 
 		var populationStructs *management.SignOnPolicyActionCommonConditionOrOrInner
-		populationStructs, diags = buildUserMemberOfPopulation(v, sopPriority)
+		populationStructs, diags = buildUserMemberOfPopulation(v.List(), sopPriority)
 		if diags.HasError() {
 			return nil, diags
 		}
