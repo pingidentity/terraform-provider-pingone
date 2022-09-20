@@ -109,7 +109,7 @@ func ResourceEnvironment() *schema.Resource {
 			},
 			"service": {
 				Description: "The services to enable in the environment.",
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				MaxItems:    13, // total services that exist
 				Required:    true,
 				Elem: &schema.Resource{
@@ -184,7 +184,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if services, ok := d.GetOk("service"); ok {
-		productBOMItems, err := expandBOMProducts(services.([]interface{}))
+		productBOMItems, err := expandBOMProducts(services.(*schema.Set))
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -459,7 +459,7 @@ func resourcePingOneEnvironmentUpdate(ctx context.Context, d *schema.ResourceDat
 	// The bill of materials
 
 	if services, ok := d.GetOk("service"); ok {
-		productBOMItems, err := expandBOMProducts(services.([]interface{}))
+		productBOMItems, err := expandBOMProducts(services.(*schema.Set))
 
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
@@ -623,10 +623,10 @@ var (
 	}
 )
 
-func expandBOMProducts(items []interface{}) ([]management.BillOfMaterialsProductsInner, error) {
+func expandBOMProducts(items *schema.Set) ([]management.BillOfMaterialsProductsInner, error) {
 	var productBOMItems []management.BillOfMaterialsProductsInner
 
-	for _, item := range items {
+	for _, item := range items.List() {
 
 		v, err := model.FindProductByName(item.(map[string]interface{})["type"].(string))
 		if err != nil {

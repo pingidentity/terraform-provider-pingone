@@ -46,7 +46,7 @@ resource "pingone_environment" "my_environment" {
 - `default_population` (Block List, Min: 1, Max: 1) The environment's default population. (see [below for nested schema](#nestedblock--default_population))
 - `license_id` (String) An ID of a valid license to apply to the environment.
 - `name` (String) The name of the environment.
-- `service` (Block List, Min: 1, Max: 13) The services to enable in the environment. (see [below for nested schema](#nestedblock--service))
+- `service` (Block Set, Min: 1, Max: 13) The services to enable in the environment. (see [below for nested schema](#nestedblock--service))
 
 ### Optional
 

@@ -219,13 +219,13 @@ Optional:
 Optional:
 
 - `anonymous_network_detected` (Boolean) A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected anonymous network. Defaults to `false`.
-- `anonymous_network_detected_allowed_cidr` (List of String) A list of allowed CIDR when an anonymous network is detected.
+- `anonymous_network_detected_allowed_cidr` (Set of String) A list of allowed CIDR when an anonymous network is detected.
 - `geovelocity_anomaly_detected` (Boolean) A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected geovelocity anomaly. Defaults to `false`.
-- `ip_out_of_range_cidr` (List of String) A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.
+- `ip_out_of_range_cidr` (Set of String) A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.
 - `ip_reputation_high_risk` (Boolean) A boolean that specifies whether the user's IP risk should be used when evaluating this policy action.  A value of `HIGH` will prompt the user to authenticate with this action. Defaults to `false`.
 - `last_sign_on_older_than_seconds` (Number) Set the number of seconds by which the user will not be prompted for this action following the last successful authentication.
 - `user_attribute_equals` (Block Set) One or more conditions where an attribute on the user's profile must match the configured value. (see [below for nested schema](#nestedblock--conditions--user_attribute_equals))
-- `user_is_member_of_any_population_id` (List of String) Activate this action only for users within the specified list of population IDs.
+- `user_is_member_of_any_population_id` (Set of String) Activate this action only for users within the specified list of population IDs.
 
 <a id="nestedblock--conditions--user_attribute_equals"></a>
 ### Nested Schema for `conditions.user_attribute_equals`
@@ -242,7 +242,7 @@ Required:
 
 Optional:
 
-- `discovery_rule` (Block List, Max: 100) One or more IDP discovery rules invoked when no user is associated with the user identifier. The condition on which this identity provider is used to authenticate the user is expressed using the PingOne policy condition language. (see [below for nested schema](#nestedblock--identifier_first--discovery_rule))
+- `discovery_rule` (Block Set, Max: 100) One or more IDP discovery rules invoked when no user is associated with the user identifier. The condition on which this identity provider is used to authenticate the user is expressed using the PingOne policy condition language. (see [below for nested schema](#nestedblock--identifier_first--discovery_rule))
 - `recovery_enabled` (Boolean) A boolean that specifies whether account recovery features are active on the policy action. Defaults to `true`.
 
 <a id="nestedblock--identifier_first--discovery_rule"></a>

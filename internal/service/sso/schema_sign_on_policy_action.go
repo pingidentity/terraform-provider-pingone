@@ -48,7 +48,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 					},
 					"user_is_member_of_any_population_id": {
 						Description:   "Activate this action only for users within the specified list of population IDs.",
-						Type:          schema.TypeList,
+						Type:          schema.TypeSet,
 						MaxItems:      100,
 						Optional:      true,
 						ConflictsWith: []string{"progressive_profiling", "agreement", "identity_provider"},
@@ -83,7 +83,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 					},
 					"ip_out_of_range_cidr": {
 						Description:   "A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.",
-						Type:          schema.TypeList,
+						Type:          schema.TypeSet,
 						MaxItems:      100,
 						Optional:      true,
 						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
@@ -119,7 +119,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 					},
 					"anonymous_network_detected_allowed_cidr": {
 						Description:   "A list of allowed CIDR when an anonymous network is detected.",
-						Type:          schema.TypeList,
+						Type:          schema.TypeSet,
 						MaxItems:      100,
 						Optional:      true,
 						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
@@ -205,7 +205,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 				Schema: map[string]*schema.Schema{
 					"discovery_rule": {
 						Description: "One or more IDP discovery rules invoked when no user is associated with the user identifier. The condition on which this identity provider is used to authenticate the user is expressed using the PingOne policy condition language.",
-						Type:        schema.TypeList,
+						Type:        schema.TypeSet,
 						MaxItems:    100,
 						Optional:    true,
 						Elem: &schema.Resource{

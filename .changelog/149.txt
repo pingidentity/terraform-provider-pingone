@@ -1,0 +1,35 @@
+```release-note:note
+pingone_application: Changed `tags` from `List` type to `Set` type.
+```
+
+```release-note:bug
+pingone_environment: Fix for `services` showing changes when the values are the same but in different order.
+```
+
+```release-note:bug
+pingone_application: Fix for `access_control_group_options.groups` showing changes when the values are the same but in different order.
+```
+
+```release-note:bug
+pingone_application: Fix for `oidc_options.grant_types` showing changes when the values are the same but in different order.
+```
+
+```release-note:bug
+pingone_application: Fix for `oidc_options.response_types` showing changes when the values are the same but in different order.
+```
+
+```release-note:bug
+pingone_application: Fix for `oidc_options.redirect_uris` showing changes when the values are the same but in different order.
+```
+
+```release-note:bug
+pingone_application: Fix for `oidc_options.post_logout_redirect_uris` showing changes when the values are the same but in different order.
+```
+
+```release-note:bug
+pingone_application: Fix for `saml_options.acs_urls` showing changes when the values are the same but in different order.
+```
+
+```release-note:bug
+pingone_application: Fix for `saml_options.sp_verification_certificate_ids` showing changes when the values are the same but in different order.
+```

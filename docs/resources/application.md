@@ -114,7 +114,7 @@ resource "pingone_application" "my_awesome_worker_app" {
 - `login_page_url` (String) A string that specifies the custom login page URL for the application. If you set the `login_page_url` property for applications in an environment that sets a custom domain, the URL should include the top-level domain and at least one additional domain level. **Warning** To avoid issues with third-party cookies in some browsers, a custom domain must be used, giving your PingOne environment the same parent domain as your authentication application. For more information about custom domains, see Custom domains.
 - `oidc_options` (Block List, Max: 1) OIDC/OAuth application specific settings. (see [below for nested schema](#nestedblock--oidc_options))
 - `saml_options` (Block List, Max: 1) SAML application specific settings. (see [below for nested schema](#nestedblock--saml_options))
-- `tags` (List of String) An array that specifies the list of labels associated with the application.
+- `tags` (Set of String) An array that specifies the list of labels associated with the application.
 
 ### Read-Only
 
@@ -125,7 +125,7 @@ resource "pingone_application" "my_awesome_worker_app" {
 
 Required:
 
-- `groups` (List of String) A set that specifies the group IDs for the groups the actor must belong to for access to the application.
+- `groups` (Set of String) A set that specifies the group IDs for the groups the actor must belong to for access to the application.
 - `type` (String) A string that specifies the group type required to access the application. Options are `ANY_GROUP` (the actor must belong to at least one group listed in the `groups` property) and `ALL_GROUPS` (the actor must belong to all groups listed in the `groups` property).
 
 
@@ -143,7 +143,7 @@ Required:
 
 Required:
 
-- `grant_types` (List of String) A list that specifies the grant type for the authorization request. Options are `AUTHORIZATION_CODE`, `IMPLICIT`, `REFRESH_TOKEN`, `CLIENT_CREDENTIALS`.
+- `grant_types` (Set of String) A list that specifies the grant type for the authorization request. Options are `AUTHORIZATION_CODE`, `IMPLICIT`, `REFRESH_TOKEN`, `CLIENT_CREDENTIALS`.
 - `token_endpoint_authn_method` (String) A string that specifies the client authentication methods supported by the token endpoint.  Options are `NONE`, `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_POST`
 - `type` (String) A string that specifies the type associated with the application.
 
@@ -154,11 +154,11 @@ Optional:
 - `mobile_app` (Block List, Max: 1) Mobile application integration settings for `NATIVE_APP` type applications. (see [below for nested schema](#nestedblock--oidc_options--mobile_app))
 - `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.
 - `pkce_enforcement` (String) A string that specifies how `PKCE` request parameters are handled on the authorize request. Options are `OPTIONAL` PKCE `code_challenge` is optional and any code challenge method is acceptable. `REQUIRED` PKCE `code_challenge` is required and any code challenge method is acceptable. `S256_REQUIRED` PKCE `code_challenge` is required and the `code_challenge_method` must be `S256`. Defaults to `OPTIONAL`.
-- `post_logout_redirect_uris` (List of String) A string that specifies the URLs that the browser can be redirected to after logout.
-- `redirect_uris` (List of String) A string that specifies the callback URI for the authentication response.
+- `post_logout_redirect_uris` (Set of String) A string that specifies the URLs that the browser can be redirected to after logout.
+- `redirect_uris` (Set of String) A string that specifies the callback URI for the authentication response.
 - `refresh_token_duration` (Number) An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is 2592000, or 30 days. Valid values are between 60 and 2147483647. If the refresh_token_rolling_duration property is specified for the application, then this property must be less than or equal to the value of refreshTokenRollingDuration. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token. Defaults to `2592000`.
 - `refresh_token_rolling_duration` (Number) An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. If a value is not provided, the default value is 15552000, or 180 days. Valid values are between 60 and 2147483647. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token. Defaults to `15552000`.
-- `response_types` (List of String) A list that specifies the code or token type returned by an authorization request. Options are `TOKEN`, `ID_TOKEN`, and `CODE`. Note that `CODE` cannot be used in an authorization request with `TOKEN` or `ID_TOKEN` because PingOne does not currently support OIDC hybrid flows.
+- `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request. Options are `TOKEN`, `ID_TOKEN`, and `CODE`. Note that `CODE` cannot be used in an authorization request with `TOKEN` or `ID_TOKEN` because PingOne does not currently support OIDC hybrid flows.
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If false or null (default), an unsigned request object is not allowed. Defaults to `false`.
 
 Read-Only:
@@ -204,7 +204,7 @@ Optional:
 
 Required:
 
-- `acs_urls` (List of String) A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).
+- `acs_urls` (Set of String) A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).
 - `assertion_duration` (Number) An integer that specifies the assertion validity duration in seconds.
 - `sp_entity_id` (String) A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.
 
@@ -217,7 +217,7 @@ Optional:
 - `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response. Options are `HTTP_REDIRECT` or `HTTP_POST`. The default is `HTTP_POST`; existing configurations with no data default to `HTTP_POST`. Defaults to `HTTP_POST`.
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a sloEndpoint logout endpoint URL is not defined, logout actions result in an error.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the sloEndpoint property value is used to submit SLO response.
-- `sp_verification_certificate_ids` (List of String) A list that specifies the certificate IDs used to verify the service provider signature.
+- `sp_verification_certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.
 - `type` (String) A string that specifies the type associated with the application. Defaults to `WEB_APP`.
 
 ## Import
