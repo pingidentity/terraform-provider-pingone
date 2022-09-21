@@ -1132,7 +1132,7 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
   priority = 1
 
   enforce_lockout_for_identity_providers = true
-  registration_confirm_user_attributes = true
+  registration_confirm_user_attributes   = true
 
   registration_local_population_id = pingone_population.%[2]s.id
 
@@ -1319,7 +1319,7 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
   registration_local_population_id = pingone_population.%[2]s.id
 
   enforce_lockout_for_identity_providers = true
-  registration_confirm_user_attributes = true
+  registration_confirm_user_attributes   = true
 
   social_provider_ids = [
     pingone_identity_provider.%[2]s-2.id,
