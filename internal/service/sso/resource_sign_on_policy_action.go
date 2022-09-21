@@ -658,6 +658,11 @@ func expandSOPActionLogin(d *schema.ResourceData, sopPriority int32) (*managemen
 	if v, ok := d.GetOk("registration_local_population_id"); ok && v != "" {
 		obj := *management.NewSignOnPolicyActionLoginAllOfRegistration(true)
 		obj.SetPopulation(*management.NewSignOnPolicyActionLoginAllOfRegistrationPopulation(v.(string)))
+
+		if v2, ok := d.GetOk("registration_confirm_user_attributes"); ok {
+			obj.SetConfirmIdentityProviderAttributes(v2.(bool))
+		}
+
 		sopActionType.SetRegistration(obj)
 	}
 

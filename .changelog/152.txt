@@ -1,0 +1,3 @@
+```release-note:bug
+pingone_sign_on_policy_action: Fix for `registration_confirm_user_attributes` on `login` type sign-on policy action has no effect, causing change on replan.
+```
