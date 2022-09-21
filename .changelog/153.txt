@@ -1,0 +1,3 @@
+```release-note:note
+pingone_gateway_credential: Corrected documentation example HCL.
+```
