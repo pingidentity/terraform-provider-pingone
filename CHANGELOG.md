@@ -5,6 +5,7 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.9.0 => v0.10.0 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.7 => v0.3.8 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
 * pingone_application: Changed `tags` from `List` type to `Set` type. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
+* pingone_gateway_credential: Corrected documentation example HCL. ([#153](https://github.com/pingidentity/terraform-provider-pingone/issues/153))
 
 FEATURES:
 
