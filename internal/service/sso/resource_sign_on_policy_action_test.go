@@ -124,9 +124,9 @@ func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", ""),
 					resource.TestMatchResourceAttr(resourceFullName, "registration_local_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "login.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "login.0.recovery_enabled", "false"),
 				),
@@ -207,9 +207,9 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "registration_external_href", ""),
 					resource.TestMatchResourceAttr(resourceFullName, "registration_local_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "registration_confirm_user_attributes", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "enforce_lockout_for_identity_providers", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.recovery_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "1"),
@@ -1131,6 +1131,9 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
   priority = 1
 
+  enforce_lockout_for_identity_providers = true
+  registration_confirm_user_attributes = true
+
   registration_local_population_id = pingone_population.%[2]s.id
 
   social_provider_ids = [
@@ -1314,6 +1317,9 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
   priority = 1
 
   registration_local_population_id = pingone_population.%[2]s.id
+
+  enforce_lockout_for_identity_providers = true
+  registration_confirm_user_attributes = true
 
   social_provider_ids = [
     pingone_identity_provider.%[2]s-2.id,
