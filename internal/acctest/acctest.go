@@ -78,6 +78,14 @@ func PreCheckEnvironment(t *testing.T) {
 	}
 }
 
+func PreCheckWorkforceEnvironment(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_REGION"); v == "Canada" {
+		t.Skipf("Workforce environment not supported in the Canada region")
+	}
+}
+
 func PreCheckEnvironmentAndPKCS12(t *testing.T) {
 
 	PreCheckEnvironment(t)

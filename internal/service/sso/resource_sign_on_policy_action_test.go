@@ -409,7 +409,7 @@ func TestAccSignOnPolicyAction_PingIDAction(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:          func() { acctest.PreCheckWorkforceEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
@@ -436,7 +436,7 @@ func TestAccSignOnPolicyAction_PingIDWinLoginPasswordlessAction(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:          func() { acctest.PreCheckWorkforceEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
