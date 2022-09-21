@@ -33,6 +33,7 @@ BUG FIXES:
 * pingone_application: Fix for `saml_options.acs_urls` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
 * pingone_application: Fix for `saml_options.sp_verification_certificate_ids` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
 * pingone_environment: Fix for `services` showing changes when the values are the same but in different order. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
+* pingone_sign_on_policy_action: Fix for `registration_confirm_user_attributes` on `login` type sign-on policy action has no effect, causing change on replan. ([#152](https://github.com/pingidentity/terraform-provider-pingone/issues/152))
 
 ## 0.4.0 (11 September 2022)
 
