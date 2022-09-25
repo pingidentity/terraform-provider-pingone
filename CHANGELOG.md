@@ -1,7 +1,8 @@
-## 0.5.0 (Unreleased)
+## 0.5.0 (25 September 2022)
 
 NOTES:
 
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.21.0 => v2.23.0 ([#146](https://github.com/pingidentity/terraform-provider-pingone/issues/146))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.9.0 => v0.10.0 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.7 => v0.3.8 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
 * bump `github.com/terraform-linters/tflint` v0.39.3 => v0.40.1 ([#147](https://github.com/pingidentity/terraform-provider-pingone/issues/147))
