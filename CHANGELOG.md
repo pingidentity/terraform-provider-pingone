@@ -4,6 +4,7 @@ NOTES:
 
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.9.0 => v0.10.0 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.7 => v0.3.8 ([#145](https://github.com/pingidentity/terraform-provider-pingone/issues/145))
+* bump `github.com/terraform-linters/tflint` v0.39.3 => v0.40.1 ([#147](https://github.com/pingidentity/terraform-provider-pingone/issues/147))
 * pingone_application: Changed `tags` from `List` type to `Set` type. ([#149](https://github.com/pingidentity/terraform-provider-pingone/issues/149))
 * pingone_gateway_credential: Corrected documentation example HCL. ([#153](https://github.com/pingidentity/terraform-provider-pingone/issues/153))
 
@@ -20,6 +21,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * data-source/pingone_environment: Support for the `solution` environment context attribute (`CUSTOMER`, `WORKFORCE` and custom) ([#137](https://github.com/pingidentity/terraform-provider-pingone/issues/137))
+* pingone_application: Add support for "External Link" type applications by adding `external_link_options` configuration block. ([#155](https://github.com/pingidentity/terraform-provider-pingone/issues/155))
 * resource/pingone_environment: Support for the `solution` environment context attribute (`CUSTOMER` and custom) ([#137](https://github.com/pingidentity/terraform-provider-pingone/issues/137))
 * resource/pingone_sign_on_policy_action: Added the *PingID* and *PingID Windows Login Passwordless* sign-on policy actions for workforce environments ([#141](https://github.com/pingidentity/terraform-provider-pingone/issues/141))
 
