@@ -1780,7 +1780,7 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   external_link_options {
-    home_page_url               = "https://www.pingidentity.com"
+    home_page_url = "https://www.pingidentity.com"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -1795,7 +1795,7 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   external_link_options {
-    home_page_url               = "https://www.pingidentity.com"
+    home_page_url = "https://www.pingidentity.com"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
