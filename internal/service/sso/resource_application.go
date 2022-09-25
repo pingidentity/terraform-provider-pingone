@@ -65,12 +65,14 @@ func ResourceApplication() *schema.Resource {
 					Type:         schema.TypeString,
 					ValidateFunc: validation.StringInSlice([]string{"PING_FED_CONNECTION_INTEGRATION"}, false),
 				},
+				ConflictsWith: []string{"external_link_options"},
 			},
 			"login_page_url": {
 				Description:      "A string that specifies the custom login page URL for the application. If you set the `login_page_url` property for applications in an environment that sets a custom domain, the URL should include the top-level domain and at least one additional domain level. **Warning** To avoid issues with third-party cookies in some browsers, a custom domain must be used, giving your PingOne environment the same parent domain as your authentication application. For more information about custom domains, see Custom domains.",
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+				ConflictsWith:    []string{"external_link_options"},
 			},
 			"icon": {
 				Description: "The HREF and the ID for the application icon.",
@@ -95,11 +97,12 @@ func ResourceApplication() *schema.Resource {
 				},
 			},
 			"access_control_role_type": {
-				Description:  "A string that specifies the user role required to access the application. Options are `ADMIN_USERS_ONLY`. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ADMIN_USERS_ONLY"}, false),
+				Description:   "A string that specifies the user role required to access the application. Options are `ADMIN_USERS_ONLY`. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ValidateFunc:  validation.StringInSlice([]string{"ADMIN_USERS_ONLY"}, false),
+				ConflictsWith: []string{"external_link_options"},
 			},
 			"access_control_group_options": {
 				Description: "Group access control settings.",
@@ -125,12 +128,29 @@ func ResourceApplication() *schema.Resource {
 					},
 				},
 			},
+			"external_link_options": {
+				Description:  "External link application specific settings.",
+				Type:         schema.TypeList,
+				MaxItems:     1,
+				Optional:     true,
+				ExactlyOneOf: []string{"oidc_options", "saml_options", "external_link_options"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"home_page_url": {
+							Description:      "A string that specifies the custom home page URL for the application.",
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
+						},
+					},
+				},
+			},
 			"oidc_options": {
 				Description:  "OIDC/OAuth application specific settings.",
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
-				ExactlyOneOf: []string{"oidc_options", "saml_options"},
+				ExactlyOneOf: []string{"oidc_options", "saml_options", "external_link_options"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
@@ -321,7 +341,7 @@ func ResourceApplication() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
-				ExactlyOneOf: []string{"oidc_options", "saml_options"},
+				ExactlyOneOf: []string{"oidc_options", "saml_options", "external_link_options"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
@@ -434,6 +454,15 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta
 		applicationRequest.ApplicationSAML = application
 	}
 
+	if _, ok := d.GetOk("external_link_options"); ok {
+		var application *management.ApplicationExternalLink
+		application, diags = expandApplicationExternalLink(d)
+		if diags.HasError() {
+			return diags
+		}
+		applicationRequest.ApplicationExternalLink = application
+	}
+
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
@@ -454,6 +483,8 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta
 		d.SetId(respObject.ApplicationOIDC.GetId())
 	} else if respObject.ApplicationSAML != nil && respObject.ApplicationSAML.GetId() != "" {
 		d.SetId(respObject.ApplicationSAML.GetId())
+	} else if respObject.ApplicationExternalLink != nil && respObject.ApplicationExternalLink.GetId() != "" {
+		d.SetId(respObject.ApplicationExternalLink.GetId())
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -667,6 +698,55 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 
 		d.Set("saml_options", flattenSAMLOptions(application))
 
+	} else if respObject.ApplicationExternalLink != nil && respObject.ApplicationExternalLink.GetId() != "" {
+
+		application := respObject.ApplicationExternalLink
+
+		d.Set("name", application.GetName())
+		d.Set("enabled", application.GetEnabled())
+
+		if v, ok := application.GetDescriptionOk(); ok {
+			d.Set("description", v)
+		} else {
+			d.Set("description", nil)
+		}
+
+		if v, ok := application.GetIconOk(); ok {
+			d.Set("icon", flattenIcon(v))
+		} else {
+			d.Set("icon", nil)
+		}
+
+		if v, ok := application.GetAccessControlOk(); ok {
+
+			if j, ok := v.GetGroupOk(); ok {
+
+				groups := make([]string, 0)
+				for _, k := range j.GetGroups() {
+					groups = append(groups, k.GetId())
+				}
+
+				groupObj := map[string]interface{}{
+					"type":   j.GetType(),
+					"groups": groups,
+				}
+
+				groupsObj := make([]interface{}, 0)
+
+				d.Set("access_control_group_options", append(groupsObj, groupObj))
+			} else {
+				d.Set("access_control_group_options", nil)
+			}
+		} else {
+			d.Set("access_control_group_options", nil)
+		}
+
+		externalLinkOpts := make([]interface{}, 0)
+
+		d.Set("external_link_options", append(externalLinkOpts, map[string]interface{}{
+			"home_page_url": application.GetHomePageUrl(),
+		}))
+
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -706,6 +786,15 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 			return diags
 		}
 		applicationRequest.ApplicationSAML = application
+	}
+
+	if _, ok := d.GetOk("external_link_options"); ok {
+		var application *management.ApplicationExternalLink
+		application, diags = expandApplicationExternalLink(d)
+		if diags.HasError() {
+			return diags
+		}
+		applicationRequest.ApplicationExternalLink = application
 	}
 
 	_, diags = sdk.ParseResponse(
@@ -1090,6 +1179,46 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("SAML options not available for application: %s", d.Get("name")),
+		})
+
+		return nil, diags
+	}
+
+	return &application, diags
+}
+
+// External Link
+
+func expandApplicationExternalLink(d *schema.ResourceData) (*management.ApplicationExternalLink, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var application management.ApplicationExternalLink
+
+	if v, ok := d.Get("external_link_options").([]interface{}); ok && len(v) > 0 && v[0] != nil {
+
+		externalLinkOptions := v[0].(map[string]interface{})
+
+		application = *management.NewApplicationExternalLink(d.Get("enabled").(bool), d.Get("name").(string), management.ENUMAPPLICATIONPROTOCOL_EXTERNAL_LINK, management.ENUMAPPLICATIONTYPE_PORTAL_LINK_APP, externalLinkOptions["home_page_url"].(string))
+
+		// set the common optional options
+		applicationCommon := expandCommonOptionalAttributes(d)
+
+		if v1, ok := applicationCommon.GetDescriptionOk(); ok {
+			application.SetDescription(*v1)
+		}
+
+		if v1, ok := applicationCommon.GetIconOk(); ok {
+			application.SetIcon(*v1)
+		}
+
+		if v1, ok := applicationCommon.GetAccessControlOk(); ok {
+			application.SetAccessControl(*v1)
+		}
+
+	} else {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("External Link options not available for application: %s", d.Get("name")),
 		})
 
 		return nil, diags

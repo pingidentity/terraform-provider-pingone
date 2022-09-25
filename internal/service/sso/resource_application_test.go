@@ -157,6 +157,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -210,6 +211,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -263,6 +265,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 			{
@@ -310,6 +313,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 			{
@@ -345,6 +349,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -412,6 +417,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -465,6 +471,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -532,6 +539,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 			{
@@ -567,6 +575,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 			{
@@ -616,6 +625,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -680,6 +690,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -732,6 +743,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -784,6 +796,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 			{
@@ -830,6 +843,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 			{
@@ -864,6 +878,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -924,6 +939,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -976,6 +992,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -1028,6 +1045,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 			{
@@ -1070,6 +1088,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 			{
@@ -1104,6 +1123,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -1161,6 +1181,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 				),
 			},
 		},
@@ -1207,6 +1228,81 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_ExternalLinkFull(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_ExternalLinkFull(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "description", "My test external link app"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
+						"type":     "ANY_GROUP",
+						"groups.#": "2",
+					}),
+					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
+						"groups.0": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"groups.1": regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+					}),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.0.home_page_url", "https://www.pingidentity.com"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_ExternalLinkMinimal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_ExternalLinkMinimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.0.home_page_url", "https://www.pingidentity.com"),
 				),
 			},
 		},
@@ -1644,6 +1740,62 @@ resource "pingone_application" "%[2]s" {
     acs_urls           = ["https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_ExternalLinkFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_group" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+}
+
+resource "pingone_group" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test external link app"
+
+  // icon {
+  // 	id = "1"
+  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
+  // }
+
+  access_control_group_options {
+    type = "ANY_GROUP"
+
+    groups = [
+      pingone_group.%[2]s-2.id,
+      pingone_group.%[2]s-1.id
+    ]
+  }
+
+  enabled = true
+
+  external_link_options {
+    home_page_url = "https://www.pingidentity.com"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_ExternalLinkMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  external_link_options {
+    home_page_url = "https://www.pingidentity.com"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

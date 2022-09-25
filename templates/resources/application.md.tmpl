@@ -29,6 +29,10 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-worker.tf") }}
 
+## Example Usage - External Link
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-externallink.tf") }}
+
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import
