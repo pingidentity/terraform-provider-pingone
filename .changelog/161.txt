@@ -1,0 +1,11 @@
+```release-note:enhancement
+pingone_application: Add support for "Service" type applications.
+```
+
+```release-note:bug
+pingone_application: Correct the `type` parameter validation for "Custom" application types.
+```
+
+```release-note:note
+pingone_application: Clarified documentation for fixed enum fields.
+```
