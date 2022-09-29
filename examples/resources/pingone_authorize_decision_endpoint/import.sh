@@ -1,0 +1,1 @@
+$ terraform import pingone_authorize_decision_endpoint.example <environment_id>/<decision_endpoint_id>
