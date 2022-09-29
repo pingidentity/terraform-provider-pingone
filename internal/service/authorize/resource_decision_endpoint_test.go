@@ -240,7 +240,7 @@ resource "pingone_authorize_decision_endpoint" "%[2]s" {
   description    = "Test description"
 
   record_recent_requests = true
-  alternate_id = "%[3]s-1"
+  alternate_id           = "%[3]s-1"
   // authorization_version_id = "78e14034-ecc9-417e-9c1d-df8cafdcd04b"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
