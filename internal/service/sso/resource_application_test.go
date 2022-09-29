@@ -2111,18 +2111,18 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options {
-    type                        = "CUSTOM_APP"
-    grant_types                 = [
-		"AUTHORIZATION_CODE",
-	"CLIENT_CREDENTIALS",
-	"IMPLICIT",
-	"REFRESH_TOKEN"
-	]
-    response_types              = [
-		"CODE",
-        "TOKEN",
-        "ID_TOKEN"
-	]
+    type = "CUSTOM_APP"
+    grant_types = [
+      "AUTHORIZATION_CODE",
+      "CLIENT_CREDENTIALS",
+      "IMPLICIT",
+      "REFRESH_TOKEN"
+    ]
+    response_types = [
+      "CODE",
+      "TOKEN",
+      "ID_TOKEN"
+    ]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
     redirect_uris               = ["https://www.pingidentity.com", "https://pingidentity.com"]
     post_logout_redirect_uris   = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
@@ -2189,18 +2189,18 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options {
-    type                        = "SERVICE"
-    grant_types                 = [
-		"AUTHORIZATION_CODE",
-	"CLIENT_CREDENTIALS",
-	"IMPLICIT",
-	"REFRESH_TOKEN"
-	]
-    response_types              = [
-		"CODE",
-        "TOKEN",
-        "ID_TOKEN"
-	]
+    type = "SERVICE"
+    grant_types = [
+      "AUTHORIZATION_CODE",
+      "CLIENT_CREDENTIALS",
+      "IMPLICIT",
+      "REFRESH_TOKEN"
+    ]
+    response_types = [
+      "CODE",
+      "TOKEN",
+      "ID_TOKEN"
+    ]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
     redirect_uris               = ["https://www.pingidentity.com", "https://pingidentity.com"]
     post_logout_redirect_uris   = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
