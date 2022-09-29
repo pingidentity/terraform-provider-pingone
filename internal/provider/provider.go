@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
@@ -87,6 +88,8 @@ func New(version string) func() *schema.Provider {
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
+				"pingone_authorize_decision_endpoint": authorize.ResourceDecisionEndpoint(),
+
 				"pingone_certificate":                  base.ResourceCertificate(),
 				"pingone_certificate_signing_response": base.ResourceCertificateSigningResponse(),
 				"pingone_custom_domain":                base.ResourceCustomDomain(),
