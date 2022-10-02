@@ -3,12 +3,12 @@
 page_title: "pingone_language Resource - terraform-provider-pingone"
 subcategory: ""
 description: |-
-  Resource to create and manage PingOne languages.
+  Resource to create and manage PingOne languages.  To fully enable a created language, the pingone_language_update resource must be used to complete the configuration.
 ---
 
 # pingone_language (Resource)
 
-Resource to create and manage PingOne languages.
+Resource to create and manage PingOne languages.  To fully enable a created language, the `pingone_language_update` resource must be used to complete the configuration.
 
 ## Example Usage
 
@@ -20,9 +20,7 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_language" "my_customers_language" {
   environment_id = pingone_environment.my_environment.id
 
-  name    = "French"
-  locale  = "fr-FR"
-  enabled = true
+  locale = "fr-FR"
 }
 ```
 
@@ -31,19 +29,16 @@ resource "pingone_language" "my_customers_language" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the key in.
-- `locale` (String) An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).
-- `name` (String) The user-defined language name.
-
-### Optional
-
-- `default` (Boolean) Specifies whether this language is the default for the environment. This property value must be set to `false` when creating a language resource. It can be set to `true` only after the language is enabled and after the localization of an agreement resource is complete when agreements are used for the environment. Defaults to `false`.
-- `enabled` (Boolean) Specifies whether this language is enabled for the environment. This property value must be set to false when creating a language. Defaults to `false`.
+- `environment_id` (String) The ID of the environment to create the language in.
+- `locale` (String) An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).  The following language codes are reserved as they are created automatically in the environment: `de`, `en`, `es`, `fr`, `fr-CA`, `it`, `ja`, `ko`, `nl`, `pt`, `ru`, `th`, `tr`, `zh`.
 
 ### Read-Only
 
 - `customer_added` (Boolean) Specifies whether this language was added by a customer administrator.
+- `default` (Boolean) Specifies whether this language is the default for the environment. This property value must be set to `false` when creating a language resource. It can be set to `true` only after the language is enabled and after the localization of an agreement resource is complete when agreements are used for the environment.
+- `enabled` (Boolean) Specifies whether this language is enabled for the environment. This property value must be set to false when creating a language.
 - `id` (String) The ID of this resource.
+- `name` (String) The language name.
 
 ## Import
 

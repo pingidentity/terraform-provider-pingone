@@ -78,8 +78,6 @@ func TestAccLanguage_Full(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	name := resourceName
-
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
@@ -89,69 +87,35 @@ func TestAccLanguage_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, name, "de-DE"),
+				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "de-DE"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "German (Germany)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "de-DE"),
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "true"),
 				),
 			},
 			{
-				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, name, "cy-GB"),
+				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "cy-GB"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "Welsh (United Kingdom)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "cy-GB"),
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "true"),
 				),
 			},
 			{
-				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, name, "fr-FR"),
+				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "fr-FR"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "true"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccLanguage_Minimal(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_language.%s", resourceName)
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckLanguageDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccLanguageConfig_Minimal(environmentName, licenseID, resourceName, name, "fr-FR"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "French (France)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -170,34 +134,20 @@ func TestAccLanguage_Change(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	name := resourceName
-
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndPKCS12(t) },
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
 		CheckDestroy:      testAccCheckLanguageDestroy,
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, name, "fr-FR"),
+				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "fr-FR"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "true"),
-				),
-			},
-			{
-				Config: testAccLanguageConfig_Minimal(environmentName, licenseID, resourceName, name, "fr-FR"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "French (France)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -205,13 +155,25 @@ func TestAccLanguage_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, name, "fr-FR"),
+				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "fr-FR"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "French (France)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
-					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "true"),
+				),
+			},
+			{
+				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "fr-FR"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "French (France)"),
+					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "true"),
 				),
@@ -220,28 +182,13 @@ func TestAccLanguage_Change(t *testing.T) {
 	})
 }
 
-func testAccLanguageConfig_Full(environmentName, licenseID, resourceName, name, locale string) string {
+func testAccLanguageConfig_Full(environmentName, licenseID, resourceName, locale string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_language" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  name    = "%[4]s"
-  locale  = "%[5]s"
-  enabled = true
-  default = false
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
-}
-
-func testAccLanguageConfig_Minimal(environmentName, licenseID, resourceName, name, locale string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_language" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-
-  name   = "%[4]s"
-  locale = "%[5]s"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+  locale  = "%[4]s"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }

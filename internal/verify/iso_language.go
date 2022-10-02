@@ -1,5 +1,13 @@
 package verify
 
+import (
+	"fmt"
+	"strings"
+
+	"golang.org/x/exp/slices"
+)
+
+var reservedLanguageCodes = []string{"zh", "nl", "en", "fr", "fr-CA", "de", "it", "ja", "ko", "pt", "ru", "es", "th", "tr"}
 var isoList = []string{
 	"af",
 	"af-ZA",
@@ -236,6 +244,34 @@ var isoList = []string{
 	"zu-ZA",
 }
 
-func IsoList() []string {
+func FullIsoList() []string {
 	return isoList
+}
+
+func IsoList() []string {
+
+	v := make([]string, 0)
+	for _, c := range isoList {
+		if !slices.Contains(reservedLanguageCodes, c) {
+			v = append(v, c)
+		}
+	}
+
+	return v
+}
+
+func ReservedIsoList() []string {
+	return reservedLanguageCodes
+}
+
+func IsoReservedListString() string {
+
+	slices.Sort(reservedLanguageCodes)
+
+	v := make([]string, len(reservedLanguageCodes))
+	for i, c := range reservedLanguageCodes {
+		v[i] = fmt.Sprintf("`%s`", c)
+	}
+	return strings.Join(v, ", ")
+
 }
