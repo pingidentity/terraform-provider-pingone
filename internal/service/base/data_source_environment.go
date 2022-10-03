@@ -57,6 +57,11 @@ func DatasourceEnvironment() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"organization_id": {
+				Description: "The ID of the PingOne organization tenant to which the environment belongs.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"solution": {
 				Description: fmt.Sprintf("The solution context of the environment.  Blank values indicate a custom solution context, without workforce solution additions.  Expected values are `%s`, `%s` or no value for a custom solution context.", management.ENUMSOLUTIONTYPE_WORKFORCE, management.ENUMSOLUTIONTYPE_CUSTOMER),
 				Type:        schema.TypeString,
@@ -198,6 +203,7 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 	d.Set("type", resp.GetType())
 	d.Set("region", model.FindRegionByAPICode(resp.GetRegion()).Region)
 	d.Set("license_id", resp.GetLicense().Id)
+	d.Set("organization_id", resp.GetOrganization().Id)
 
 	// The bill of materials
 

@@ -35,6 +35,7 @@ data "pingone_environment" "example_by_id" {
 - `description` (String) A description of the environment.
 - `id` (String) The ID of this resource.
 - `license_id` (String) An ID of a valid license to apply to the environment.
+- `organization_id` (String) The ID of the PingOne organization tenant to which the environment belongs.
 - `region` (String) The region the environment is created in.
 - `service` (Set of Object) The services enabled in the environment. (see [below for nested schema](#nestedatt--service))
 - `solution` (String) The solution context of the environment.  Blank values indicate a custom solution context, without workforce solution additions.  Expected values are `WORKFORCE`, `CUSTOMER` or no value for a custom solution context.
