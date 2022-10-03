@@ -45,14 +45,15 @@ func TestAccEnvironment_Full(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", description),
 					resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
 					resource.TestCheckResourceAttr(resourceFullName, "region", region),
 					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
+					resource.TestMatchResourceAttr(resourceFullName, "organization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "solution", solution),
-					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", populationDescription),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
@@ -96,14 +97,15 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
 					resource.TestCheckResourceAttr(resourceFullName, "region", region),
 					resource.TestCheckResourceAttr(resourceFullName, "solution", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
-					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "organization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
@@ -168,7 +170,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 // 			{
 // 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 				),
 // 			},
 // 			{
@@ -201,7 +203,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 // 			{
 // 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
 // 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 // 				),
 // 			},
 // 			{
@@ -246,9 +248,9 @@ func TestAccEnvironment_NonPopulationServices(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "id"),
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", populationDescription),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
@@ -343,7 +345,7 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
@@ -357,7 +359,7 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceFullName, "default_population_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", populationDescription),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
