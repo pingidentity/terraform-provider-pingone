@@ -132,6 +132,6 @@ func testAccLicenseDataSourceConfig_ByIDFull(resourceName, organizationID, licen
 	return fmt.Sprintf(`
 data "pingone_license" "%[1]s" {
   organization_id = "%[2]s"
-  license_id = "%[3]s"
+  license_id      = "%[3]s"
 }`, resourceName, organizationID, licenseID)
 }

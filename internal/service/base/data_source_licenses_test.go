@@ -93,7 +93,7 @@ func testAccLicensesDataSourceConfig_BySCIMFilter(resourceName, organizationID, 
 	return fmt.Sprintf(`
 data "pingone_licenses" "%[1]s" {
   organization_id = "%[2]s"
-  scim_filter = "%[3]s"
+  scim_filter     = "%[3]s"
 }`, resourceName, organizationID, filter)
 }
 
@@ -103,13 +103,13 @@ data "pingone_licenses" "%[1]s" {
   organization_id = "%[2]s"
 
   data_filter {
-	name = "package"
-	values = ["INTERNAL","ADMIN"]
+    name   = "package"
+    values = ["INTERNAL", "ADMIN"]
   }
 
   data_filter {
-	name = "status"
-	values = ["ACTIVE"]
+    name   = "status"
+    values = ["ACTIVE"]
   }
 }`, resourceName, organizationID)
 }
@@ -120,13 +120,13 @@ data "pingone_licenses" "%[1]s" {
   organization_id = "%[2]s"
 
   data_filter {
-	name = "name"
-	values = ["INTERNAL"]
+    name   = "name"
+    values = ["INTERNAL"]
   }
 
   data_filter {
-	name = "status"
-	values = ["ACTIVE"]
+    name   = "status"
+    values = ["ACTIVE"]
   }
 }`, resourceName, organizationID)
 }
@@ -137,13 +137,13 @@ data "pingone_licenses" "%[1]s" {
   organization_id = "%[2]s"
 
   data_filter {
-	name = "package"
-	values = ["INTERNAL"]
+    name   = "package"
+    values = ["INTERNAL"]
   }
 
   data_filter {
-	name = "status"
-	values = ["EXPIRED"]
+    name   = "status"
+    values = ["EXPIRED"]
   }
 }`, resourceName, organizationID)
 }
