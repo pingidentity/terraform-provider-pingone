@@ -8,13 +8,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
-
-func testAccCheckLicensesDestroy(s *terraform.State) error {
-	return nil
-}
 
 func TestAccLicensesDataSource_BySCIMFilter(t *testing.T) {
 	t.Parallel()
