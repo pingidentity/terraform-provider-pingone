@@ -1,0 +1,7 @@
+```release-note:enhancement
+resource/pingone_environment: Add support for `organization_id` computed attribute.
+```
+
+```release-note:enhancement
+data-source/pingone_environment: Add support for `organization_id` computed attribute.
+```
