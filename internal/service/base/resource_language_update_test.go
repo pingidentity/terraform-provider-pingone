@@ -91,7 +91,7 @@ func TestAccLanguageUpdate_SystemDefined(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "fr", true),
+				Config: testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "fr", true, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -99,6 +99,34 @@ func TestAccLanguageUpdate_SystemDefined(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "false"),
+				),
+			},
+			{
+				Config: testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "fr", true, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "French"),
+					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "false"),
+				),
+			},
+			{
+				Config:      testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "fr", false, true),
+				ExpectError: regexp.MustCompile("Invalid combination of `enabled` and `default`, the langauge must be enabled to be made default. Got enabled=false, default=true."),
+			},
+			{
+				Config: testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "fr", false, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "French"),
+					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "false"),
 				),
 			},
@@ -211,7 +239,7 @@ resource "pingone_language_update" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled)
 }
 
-func testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, locale string, enabled bool) string {
+func testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, locale string, enabled, defaultValue bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -226,5 +254,6 @@ resource "pingone_language_update" "%[3]s" {
 
   language_id  = data.pingone_language.%[3]s.id
   enabled = %[5]t
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled)
+  default = %[6]t
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled, defaultValue)
 }
