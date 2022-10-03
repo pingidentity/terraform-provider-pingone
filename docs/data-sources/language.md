@@ -35,7 +35,7 @@ data "pingone_language" "example_by_id" {
 
 ### Optional
 
-- `language_id` (String) The ID of the langauge in PingOne to update.
+- `language_id` (String) The ID of the language in PingOne to update.
 - `locale` (String) An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).
 
 ### Read-Only

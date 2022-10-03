@@ -60,7 +60,7 @@ resource "pingone_language_update" "my_customers_language" {
 
 - `enabled` (Boolean) Specifies whether this language is enabled for the environment.
 - `environment_id` (String) The ID of the environment that contains the language to manage.
-- `language_id` (String) The ID of the langauge in PingOne to update.
+- `language_id` (String) The ID of the language in PingOne to update.
 
 ### Optional
 

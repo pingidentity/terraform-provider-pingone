@@ -30,7 +30,7 @@ func DatasourceLanguage() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"language_id": {
-				Description:      "The ID of the langauge in PingOne to update.",
+				Description:      "The ID of the language in PingOne to update.",
 				Type:             schema.TypeString,
 				Optional:         true,
 				ExactlyOneOf:     []string{"locale", "language_id"},

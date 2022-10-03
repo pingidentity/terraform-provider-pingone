@@ -39,7 +39,7 @@ func ResourceLanguageUpdate() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"language_id": {
-				Description:      "The ID of the langauge in PingOne to update.",
+				Description:      "The ID of the language in PingOne to update.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
@@ -258,7 +258,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 	if !enabled && defaultValue {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Invalid combination of `enabled` and `default`, the langauge must be enabled to be made default. Got enabled=%t, default=%t.", enabled, defaultValue),
+			Summary:  fmt.Sprintf("Invalid combination of `enabled` and `default`, the language must be enabled to be made default. Got enabled=%t, default=%t.", enabled, defaultValue),
 		})
 
 		return diags

@@ -116,7 +116,7 @@ func TestAccLanguageUpdate_SystemDefined(t *testing.T) {
 			},
 			{
 				Config:      testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "fr", false, true),
-				ExpectError: regexp.MustCompile("Invalid combination of `enabled` and `default`, the langauge must be enabled to be made default. Got enabled=false, default=true."),
+				ExpectError: regexp.MustCompile("Invalid combination of `enabled` and `default`, the language must be enabled to be made default. Got enabled=false, default=true."),
 			},
 			{
 				Config: testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "fr", false, false),
