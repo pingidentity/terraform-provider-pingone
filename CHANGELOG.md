@@ -1,5 +1,10 @@
 ## 0.6.0 (Unreleased)
 
+ENHANCEMENTS:
+
+* data-source/pingone_environment: Add support for `organization_id` computed attribute. ([#166](https://github.com/pingidentity/terraform-provider-pingone/issues/166))
+* resource/pingone_environment: Add support for `organization_id` computed attribute. ([#166](https://github.com/pingidentity/terraform-provider-pingone/issues/166))
+
 ## 0.5.1 (30 September 2022)
 
 NOTES:
