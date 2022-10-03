@@ -111,17 +111,18 @@ func TestAccLanguageDataSource_SystemDefined(t *testing.T) {
 func testAccLanguageDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, locale string) string {
 	return fmt.Sprintf(`
 
+
 	%[1]s
 
-	resource "pingone_language" "%[3]s" {
-		environment_id = pingone_environment.%[2]s.id
-	  
-		locale  = "%[4]s"
-	  }
+resource "pingone_language" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  locale = "%[4]s"
+}
 
 data "pingone_language" "%[3]s" {
 
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   locale = "%[4]s"
 
@@ -136,14 +137,14 @@ func testAccLanguageDataSourceConfig_ByIDFull(environmentName, licenseID, resour
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_language" "%[3]s" {
-		environment_id = pingone_environment.%[2]s.id
-	  
-		locale  = "%[4]s"
-	  }
+resource "pingone_language" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  locale = "%[4]s"
+}
 
 data "pingone_language" "%[3]s" {
-		environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   language_id = pingone_language.%[3]s.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
@@ -154,7 +155,7 @@ func testAccLanguageDataSourceConfig_SystemDefined(environmentName, licenseID, r
 	%[1]s
 
 data "pingone_language" "%[3]s" {
-		environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   locale = "%[4]s"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)

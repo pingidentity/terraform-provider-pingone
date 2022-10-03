@@ -189,6 +189,6 @@ func testAccLanguageConfig_Full(environmentName, licenseID, resourceName, locale
 resource "pingone_language" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  locale  = "%[4]s"
+  locale = "%[4]s"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }

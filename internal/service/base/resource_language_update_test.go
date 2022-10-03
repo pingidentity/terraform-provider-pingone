@@ -207,17 +207,17 @@ func testAccLanguageUpdateConfig_Full(environmentName, licenseID, resourceName, 
 		%[1]s
 
 resource "pingone_language" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-		  
-			locale  = "%[4]s"
-		  }
+  environment_id = pingone_environment.%[2]s.id
+
+  locale = "%[4]s"
+}
 
 resource "pingone_language_update" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  language_id  = pingone_language.%[3]s.id
-  enabled = %[5]t
-  default = true
+  language_id = pingone_language.%[3]s.id
+  enabled     = %[5]t
+  default     = true
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled)
 }
 
@@ -226,16 +226,16 @@ func testAccLanguageUpdateConfig_Minimal(environmentName, licenseID, resourceNam
 		%[1]s
 
 resource "pingone_language" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-		  
-			locale  = "%[4]s"
-		  }
+  environment_id = pingone_environment.%[2]s.id
+
+  locale = "%[4]s"
+}
 
 resource "pingone_language_update" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  language_id  = pingone_language.%[3]s.id
-  enabled = %[5]t
+  language_id = pingone_language.%[3]s.id
+  enabled     = %[5]t
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled)
 }
 
@@ -243,17 +243,17 @@ func testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resou
 	return fmt.Sprintf(`
 		%[1]s
 
-		data "pingone_language" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-	
-	  locale = "%[4]s"
-	}
+data "pingone_language" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  locale = "%[4]s"
+}
 
 resource "pingone_language_update" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  language_id  = data.pingone_language.%[3]s.id
-  enabled = %[5]t
-  default = %[6]t
+  language_id = data.pingone_language.%[3]s.id
+  enabled     = %[5]t
+  default     = %[6]t
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled, defaultValue)
 }
