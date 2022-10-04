@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_environment Resource - terraform-provider-pingone"
-subcategory: ""
+subcategory: "Platform"
 description: |-
   Resource to create and manage PingOne environments.
 ---

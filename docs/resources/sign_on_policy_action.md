@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_sign_on_policy_action Resource - terraform-provider-pingone"
-subcategory: ""
+subcategory: "SSO"
 description: |-
   Resource to create and manage PingOne sign on policy actions.
 ---
