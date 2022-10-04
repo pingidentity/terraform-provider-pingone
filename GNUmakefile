@@ -36,6 +36,14 @@ vet:
 		exit 1; \
 	fi
 
+docscategorycheck:
+	@echo "==> Checking for missing category in generated docs..."
+	@find ./docs/**/*.md -print | xargs grep "subcategory: \"\""; if [ $$? -ne 1 ]; then \
+		echo ""; \
+		echo "Documentation check found a blank subcategory for the above files.  Ensure a template is created (./templates) with a subcategory set."; \
+		exit 1; \
+	fi
+
 depscheck:
 	@echo "==> Checking source code with go mod tidy..."
 	@go mod tidy
@@ -82,6 +90,6 @@ terrafmtcheck:
 		exit 1; \
 	fi
 
-devcheck: build vet tools generate lint terrafmtcheck test sweep testacc
+devcheck: build vet tools generate docscategorycheck lint terrafmtcheck test sweep testacc
 
-.PHONY: tools build generate test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
+.PHONY: tools build generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
