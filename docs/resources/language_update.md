@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_language_update Resource - terraform-provider-pingone"
-subcategory: ""
+subcategory: "Platform"
 description: |-
   Resource to complete the configuration of customer-defined and system-defined languages in PingOne.
 ---
