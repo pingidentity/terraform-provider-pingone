@@ -1,5 +1,10 @@
 ## 0.6.0 (Unreleased)
 
+FEATURES:
+
+* **New Data Source:** `pingone_user` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
+* **New Data Source:** `pingone_users` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
+
 ## 0.5.2 (04 October 2022)
 
 ENHANCEMENTS:
