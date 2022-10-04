@@ -1,3 +1,21 @@
+## 0.6.0 (Unreleased)
+
+NOTES:
+
+* Documentation: Organised registry documentation into subcategories ([#169](https://github.com/pingidentity/terraform-provider-pingone/issues/169))
+
+FEATURES:
+
+* **New Data Source:** `pingone_user` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
+* **New Data Source:** `pingone_users` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
+
+## 0.5.2 (04 October 2022)
+
+ENHANCEMENTS:
+
+* data-source/pingone_environment: Add support for `organization_id` computed attribute. ([#166](https://github.com/pingidentity/terraform-provider-pingone/issues/166))
+* resource/pingone_environment: Add support for `organization_id` computed attribute. ([#166](https://github.com/pingidentity/terraform-provider-pingone/issues/166))
+
 ## 0.5.1 (30 September 2022)
 
 NOTES:
