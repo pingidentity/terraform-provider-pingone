@@ -1,5 +1,9 @@
 ## 0.6.0 (Unreleased)
 
+NOTES:
+
+* Documentation: Organised registry documentation into subcategories ([#169](https://github.com/pingidentity/terraform-provider-pingone/issues/169))
+
 FEATURES:
 
 * **New Data Source:** `pingone_user` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
