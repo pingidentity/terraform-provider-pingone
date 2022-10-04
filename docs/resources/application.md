@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_application Resource - terraform-provider-pingone"
-subcategory: ""
+subcategory: "SSO"
 description: |-
   Resource to create and manage PingOne applications
 ---

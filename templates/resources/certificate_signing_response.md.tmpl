@@ -9,18 +9,18 @@ description: |-
 
 {{ .Description | trimspace }}
 
-## Example Usage - Create Key Pair
+{{ if .HasExample -}}
+## Example Usage
 
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-create.tf") }}
-
-## Example Usage - Import PKCS12
-
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-import.tf") }}
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
+{{- end }}
 
 {{ .SchemaMarkdown | trimspace }}
 
+{{ if .HasImport -}}
 ## Import
 
 Import is supported using the following syntax:
 
 {{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
+{{- end }}
