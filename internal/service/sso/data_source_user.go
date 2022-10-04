@@ -136,7 +136,7 @@ func datasourcePingOneUserRead(ctx context.Context, d *schema.ResourceData, meta
 	d.Set("user_id", resp.GetId())
 	d.Set("username", resp.GetUsername())
 	d.Set("email", resp.GetEmail())
-	d.Set("status", resp.GetAccount().Status)
+	d.Set("status", string(*resp.GetAccount().Status))
 	d.Set("population_id", resp.GetPopulation().Id)
 
 	return diags
