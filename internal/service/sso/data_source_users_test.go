@@ -81,46 +81,46 @@ func testAccUsersDataSourceConfig_BySCIMFilter(resourceName, filter, name string
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_population" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		name = "%[3]s"
-	  }
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-	resource "pingone_user" "%[2]s-1" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		username      = "%[3]s-1"
-		email         = "noreply@pingidentity.com"
-		population_id = pingone_population.%[2]s.id
-	  }
+  name = "%[3]s"
+}
 
-	  resource "pingone_user" "%[2]s-2" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		username      = "%[3]s-2"
-		email         = "noreply@pingidentity.com"
-		population_id = pingone_population.%[2]s.id
-	  }
+resource "pingone_user" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
 
-	  resource "pingone_user" "%[2]s-3" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		username      = "%[3]s-3"
-		email         = "noreply@pingidentity.com"
-		population_id = pingone_population.%[2]s.id
-	  }
+  username      = "%[3]s-1"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}
+
+resource "pingone_user" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s-2"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}
+
+resource "pingone_user" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s-3"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}
 
 data "pingone_users" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-  scim_filter     = "%[4]s"
+  scim_filter = "%[4]s"
 
   depends_on = [
-	pingone_user.%[2]s-1,
-	pingone_user.%[2]s-2,
-	pingone_user.%[2]s-3,
-	pingone_population.%[2]s,
+    pingone_user.%[2]s-1,
+    pingone_user.%[2]s-2,
+    pingone_user.%[2]s-3,
+    pingone_population.%[2]s,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, filter)
 }
@@ -129,38 +129,38 @@ func testAccUsersDataSourceConfig_ByDataFilter1(resourceName, name string) strin
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_population" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		name = "%[3]s"
-	  }
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-	resource "pingone_user" "%[2]s-1" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		username      = "%[3]s-1"
-		email         = "noreply@pingidentity.com"
-		population_id = pingone_population.%[2]s.id
-	  }
+  name = "%[3]s"
+}
 
-	  resource "pingone_user" "%[2]s-2" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		username      = "%[3]s-2"
-		email         = "noreply@pingidentity.com"
-		population_id = pingone_population.%[2]s.id
-	  }
+resource "pingone_user" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
 
-	  resource "pingone_user" "%[2]s-3" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		username      = "%[3]s-3"
-		email         = "noreply@pingidentity.com"
-		population_id = pingone_population.%[2]s.id
-	  }
+  username      = "%[3]s-1"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}
+
+resource "pingone_user" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s-2"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}
+
+resource "pingone_user" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s-3"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}
 
 data "pingone_users" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   data_filter {
     name   = "username"
@@ -173,10 +173,10 @@ data "pingone_users" "%[2]s" {
   }
 
   depends_on = [
-	pingone_user.%[2]s-1,
-	pingone_user.%[2]s-2,
-	pingone_user.%[2]s-3,
-	pingone_population.%[2]s,
+    pingone_user.%[2]s-1,
+    pingone_user.%[2]s-2,
+    pingone_user.%[2]s-3,
+    pingone_population.%[2]s,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -185,38 +185,38 @@ func testAccUsersDataSourceConfig_ByDataFilter2(resourceName, name string) strin
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_population" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		name = "%[3]s"
-	  }
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-	resource "pingone_user" "%[2]s-1" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		username      = "%[3]s-1"
-		email         = "noreply@pingidentity.com"
-		population_id = pingone_population.%[2]s.id
-	  }
+  name = "%[3]s"
+}
 
-	  resource "pingone_user" "%[2]s-2" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		username      = "%[3]s-2"
-		email         = "noreply@pingidentity.com"
-		population_id = pingone_population.%[2]s.id
-	  }
+resource "pingone_user" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
 
-	  resource "pingone_user" "%[2]s-3" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		username      = "%[3]s-3"
-		email         = "noreply@pingidentity.com"
-		population_id = pingone_population.%[2]s.id
-	  }
+  username      = "%[3]s-1"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}
+
+resource "pingone_user" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s-2"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}
+
+resource "pingone_user" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s-3"
+  email         = "noreply@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+}
 
 data "pingone_users" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   data_filter {
     name   = "population.id"
@@ -224,10 +224,10 @@ data "pingone_users" "%[2]s" {
   }
 
   depends_on = [
-	pingone_user.%[2]s-1,
-	pingone_user.%[2]s-2,
-	pingone_user.%[2]s-3,
-	pingone_population.%[2]s,
+    pingone_user.%[2]s-1,
+    pingone_user.%[2]s-2,
+    pingone_user.%[2]s-3,
+    pingone_population.%[2]s,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
