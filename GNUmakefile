@@ -38,7 +38,7 @@ vet:
 
 docscategorycheck:
 	@echo "==> Checking for missing category in generated docs..."
-	@find ./docs/**/*.md -print | xargs grep "subcategory: \"\""; if [ $$? -ne 1 ]; then \
+	@if [ $$(find ./docs/**/*.md -print | xargs grep "subcategory: \"\"" | wc -l) -ne 0 ]; then \
 		echo ""; \
 		echo "Documentation check found a blank subcategory for the above files.  Ensure a template is created (./templates) with a subcategory set."; \
 		exit 1; \
