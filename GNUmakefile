@@ -3,7 +3,7 @@ SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
-VERSION=0.5.0
+VERSION=0.6.0
 OS_ARCH=linux_amd64
 
 default: build
@@ -33,6 +33,14 @@ vet:
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
 		echo "and fix them if necessary before submitting the code for review."; \
+		exit 1; \
+	fi
+
+docscategorycheck:
+	@echo "==> Checking for missing category in generated docs..."
+	@find ./docs/**/*.md -print | xargs grep "subcategory: \"\""; if [ $$(find ./docs/**/*.md -print | xargs grep "subcategory: \"\"" | wc -l) -ne 0 ]; then \
+		echo ""; \
+		echo "Documentation check found a blank subcategory for the above files.  Ensure a template is created (./templates) with a subcategory set."; \
 		exit 1; \
 	fi
 
@@ -82,6 +90,6 @@ terrafmtcheck:
 		exit 1; \
 	fi
 
-devcheck: build vet tools generate lint terrafmtcheck test sweep testacc
+devcheck: build vet tools generate docscategorycheck lint terrafmtcheck test sweep testacc
 
-.PHONY: tools build generate test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
+.PHONY: tools build generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck

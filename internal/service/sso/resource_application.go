@@ -58,12 +58,12 @@ func ResourceApplication() *schema.Resource {
 				Default:     false,
 			},
 			"tags": {
-				Description: "An array that specifies the list of labels associated with the application.",
+				Description: fmt.Sprintf("An array that specifies the list of labels associated with the application.  Options are: `%s`", string(management.ENUMAPPLICATIONTAGS_PING_FED_CONNECTION_INTEGRATION)),
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
-					ValidateFunc: validation.StringInSlice([]string{"PING_FED_CONNECTION_INTEGRATION"}, false),
+					ValidateFunc: validation.StringInSlice([]string{string(management.ENUMAPPLICATIONTAGS_PING_FED_CONNECTION_INTEGRATION)}, false),
 				},
 				ConflictsWith: []string{"external_link_options"},
 			},
@@ -97,11 +97,11 @@ func ResourceApplication() *schema.Resource {
 				},
 			},
 			"access_control_role_type": {
-				Description:   "A string that specifies the user role required to access the application. Options are `ADMIN_USERS_ONLY`. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.",
+				Description:   fmt.Sprintf("A string that specifies the user role required to access the application. A user is an admin user if the user has one or more of the following roles Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer. Options are `%s`.", string(management.ENUMAPPLICATIONACCESSCONTROLTYPE_ADMIN_USERS_ONLY)),
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
-				ValidateFunc:  validation.StringInSlice([]string{"ADMIN_USERS_ONLY"}, false),
+				ValidateFunc:  validation.StringInSlice([]string{string(management.ENUMAPPLICATIONACCESSCONTROLTYPE_ADMIN_USERS_ONLY)}, false),
 				ConflictsWith: []string{"external_link_options"},
 			},
 			"access_control_group_options": {
@@ -154,11 +154,11 @@ func ResourceApplication() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
-							Description:  "A string that specifies the type associated with the application.",
+							Description:  fmt.Sprintf("A string that specifies the type associated with the application.  Options are `%s`, `%s`, `%s`, `%s`, `%s` and `%s`.", string(management.ENUMAPPLICATIONTYPE_WEB_APP), string(management.ENUMAPPLICATIONTYPE_NATIVE_APP), string(management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP), string(management.ENUMAPPLICATIONTYPE_WORKER), string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP), string(management.ENUMAPPLICATIONTYPE_SERVICE)),
 							Type:         schema.TypeString,
 							Required:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"WEB_APP", "NATIVE_APP", "SINGLE_PAGE_APP", "WORKER", "CUSTOM"}, false),
+							ValidateFunc: validation.StringInSlice([]string{string(management.ENUMAPPLICATIONTYPE_WEB_APP), string(management.ENUMAPPLICATIONTYPE_NATIVE_APP), string(management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP), string(management.ENUMAPPLICATIONTYPE_WORKER), string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP), string(management.ENUMAPPLICATIONTYPE_SERVICE)}, false),
 						},
 						"home_page_url": {
 							Description:      "A string that specifies the custom home page URL for the application.",
@@ -167,36 +167,36 @@ func ResourceApplication() *schema.Resource {
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
 						},
 						"grant_types": {
-							Description: "A list that specifies the grant type for the authorization request. Options are `AUTHORIZATION_CODE`, `IMPLICIT`, `REFRESH_TOKEN`, `CLIENT_CREDENTIALS`.",
+							Description: fmt.Sprintf("A list that specifies the grant type for the authorization request.  Options are `%s`, `%s`, `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCGRANTTYPE_AUTHORIZATION_CODE), string(management.ENUMAPPLICATIONOIDCGRANTTYPE_IMPLICIT), string(management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN), string(management.ENUMAPPLICATIONOIDCGRANTTYPE_CLIENT_CREDENTIALS)),
 							Type:        schema.TypeSet,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validation.StringInSlice([]string{"AUTHORIZATION_CODE", "IMPLICIT", "REFRESH_TOKEN", "CLIENT_CREDENTIALS"}, false),
+								ValidateFunc: validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCGRANTTYPE_AUTHORIZATION_CODE), string(management.ENUMAPPLICATIONOIDCGRANTTYPE_IMPLICIT), string(management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN), string(management.ENUMAPPLICATIONOIDCGRANTTYPE_CLIENT_CREDENTIALS)}, false),
 							},
 							Required: true,
 						},
 						"response_types": {
-							Description: "A list that specifies the code or token type returned by an authorization request. Options are `TOKEN`, `ID_TOKEN`, and `CODE`. Note that `CODE` cannot be used in an authorization request with `TOKEN` or `ID_TOKEN` because PingOne does not currently support OIDC hybrid flows.",
+							Description: fmt.Sprintf("A list that specifies the code or token type returned by an authorization request.  Note that `%s` cannot be used in an authorization request with `%s` or `%s` because PingOne does not currently support OIDC hybrid flows.", management.ENUMAPPLICATIONOIDCRESPONSETYPE_CODE, management.ENUMAPPLICATIONOIDCRESPONSETYPE_TOKEN, management.ENUMAPPLICATIONOIDCRESPONSETYPE_ID_TOKEN),
 							Type:        schema.TypeSet,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validation.StringInSlice([]string{"TOKEN", "ID_TOKEN", "CODE"}, false),
+								ValidateFunc: validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCRESPONSETYPE_CODE), string(management.ENUMAPPLICATIONOIDCRESPONSETYPE_TOKEN), string(management.ENUMAPPLICATIONOIDCRESPONSETYPE_ID_TOKEN)}, false),
 							},
 							Optional: true,
-							Computed: true,
+							//Computed: true,
 						},
 						"token_endpoint_authn_method": {
-							Description:  "A string that specifies the client authentication methods supported by the token endpoint.  Options are `NONE`, `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_POST`",
+							Description:  fmt.Sprintf("A string that specifies the client authentication methods supported by the token endpoint.  Options are `%s`, `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_NONE), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST)),
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"NONE", "CLIENT_SECRET_BASIC", "CLIENT_SECRET_POST"}, false),
+							ValidateFunc: validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_NONE), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST)}, false),
 						},
 						"pkce_enforcement": {
-							Description:  "A string that specifies how `PKCE` request parameters are handled on the authorize request. Options are `OPTIONAL` PKCE `code_challenge` is optional and any code challenge method is acceptable. `REQUIRED` PKCE `code_challenge` is required and any code challenge method is acceptable. `S256_REQUIRED` PKCE `code_challenge` is required and the `code_challenge_method` must be `S256`.",
+							Description:  fmt.Sprintf("A string that specifies how `PKCE` request parameters are handled on the authorize request.  Options are `%s`, `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_REQUIRED), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_S256_REQUIRED)),
 							Type:         schema.TypeString,
 							Optional:     true,
-							Default:      "OPTIONAL",
-							ValidateFunc: validation.StringInSlice([]string{"OPTIONAL", "REQUIRED", "S256_REQUIRED"}, false),
+							Default:      string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL),
+							ValidateFunc: validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_REQUIRED), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_S256_REQUIRED)}, false),
 						},
 						"redirect_uris": {
 							Description: "A string that specifies the callback URI for the authentication response.",
@@ -248,7 +248,7 @@ func ResourceApplication() *schema.Resource {
 							Default:     false,
 						},
 						"mobile_app": {
-							Description: "Mobile application integration settings for `NATIVE_APP` type applications.",
+							Description: fmt.Sprintf("Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 							Type:        schema.TypeList,
 							MaxItems:    1,
 							Optional:    true,
@@ -304,11 +304,11 @@ func ResourceApplication() *schema.Resource {
 																Required:    true,
 															},
 															"units": {
-																Description:  "A string that specifies the time units of the mobile.integrityDetection.cacheDuration.amount.  Possible values are `MINUTES`, `HOURS` and defaults to `MINUTES`",
+																Description:  fmt.Sprintf("A string that specifies the time units of the `amount` parameter. Options are `%s` and `%s`.", string(management.ENUMDURATIONUNITMINSHOURS_MINUTES), string(management.ENUMDURATIONUNITMINSHOURS_HOURS)),
 																Type:         schema.TypeString,
 																Optional:     true,
-																Default:      "MINUTES",
-																ValidateFunc: validation.StringInSlice([]string{"MINUTES", "HOURS"}, false),
+																Default:      string(management.ENUMDURATIONUNITMINSHOURS_MINUTES),
+																ValidateFunc: validation.StringInSlice([]string{string(management.ENUMDURATIONUNITMINSHOURS_MINUTES), string(management.ENUMDURATIONUNITMINSHOURS_HOURS)}, false),
 															},
 														},
 													},
@@ -345,12 +345,12 @@ func ResourceApplication() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
-							Description:  "A string that specifies the type associated with the application.",
+							Description:  fmt.Sprintf("A string that specifies the type associated with the application.  Options are `%s` and `%s`.", string(management.ENUMAPPLICATIONTYPE_WEB_APP), string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP)),
 							Type:         schema.TypeString,
 							Optional:     true,
-							Default:      "WEB_APP",
+							Default:      string(management.ENUMAPPLICATIONTYPE_WEB_APP),
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"WEB_APP", "CUSTOM"}, false),
+							ValidateFunc: validation.StringInSlice([]string{string(management.ENUMAPPLICATIONTYPE_WEB_APP), string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP)}, false),
 						},
 						"acs_urls": {
 							Description: "A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).",
@@ -389,9 +389,9 @@ func ResourceApplication() *schema.Resource {
 							Default:     false,
 						},
 						"slo_binding": {
-							Description:  "A string that specifies the binding protocol to be used for the logout response. Options are `HTTP_REDIRECT` or `HTTP_POST`. The default is `HTTP_POST`; existing configurations with no data default to `HTTP_POST`.",
+							Description:  fmt.Sprintf("A string that specifies the binding protocol to be used for the logout response. Options are `%s` and `%s`.  Existing configurations with no data default to `%s`.", string(management.ENUMAPPLICATIONSAMLSLOBINDING_REDIRECT), string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST), management.ENUMAPPLICATIONSAMLSLOBINDING_POST),
 							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"HTTP_REDIRECT", "HTTP_POST"}, false),
+							ValidateFunc: validation.StringInSlice([]string{string(management.ENUMAPPLICATIONSAMLSLOBINDING_REDIRECT), string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST)}, false),
 							Optional:     true,
 							Default:      "HTTP_POST",
 						},
@@ -926,7 +926,7 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		}
 
 		if v1, ok := oidcOptions["pkce_enforcement"].(string); ok && v1 != "" {
-			if application.GetType() == management.ENUMAPPLICATIONTYPE_WEB_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_CUSTOM_APP {
+			if application.GetType() == management.ENUMAPPLICATIONTYPE_WEB_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_CUSTOM_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SERVICE {
 				application.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(v1))
 			}
 		}

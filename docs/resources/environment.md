@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_environment Resource - terraform-provider-pingone"
-subcategory: ""
+subcategory: "Platform"
 description: |-
   Resource to create and manage PingOne environments.
 ---
@@ -59,6 +59,7 @@ resource "pingone_environment" "my_environment" {
 
 - `default_population_id` (String) The ID of the environment's default population.
 - `id` (String) The ID of this resource.
+- `organization_id` (String) The ID of the PingOne organization tenant to which the environment belongs.
 
 <a id="nestedblock--default_population"></a>
 ### Nested Schema for `default_population`

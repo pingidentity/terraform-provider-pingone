@@ -1,3 +1,36 @@
+## 0.6.0 (Unreleased)
+
+NOTES:
+
+* Documentation: Organised registry documentation into subcategories ([#169](https://github.com/pingidentity/terraform-provider-pingone/issues/169))
+
+FEATURES:
+
+* **New Data Source:** `pingone_user` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
+* **New Data Source:** `pingone_users` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
+
+## 0.5.2 (04 October 2022)
+
+ENHANCEMENTS:
+
+* data-source/pingone_environment: Add support for `organization_id` computed attribute. ([#166](https://github.com/pingidentity/terraform-provider-pingone/issues/166))
+* resource/pingone_environment: Add support for `organization_id` computed attribute. ([#166](https://github.com/pingidentity/terraform-provider-pingone/issues/166))
+
+## 0.5.1 (30 September 2022)
+
+NOTES:
+
+* bump `github.com/terraform-linters/tflint` v0.40.1 => v0.41.0 ([#157](https://github.com/pingidentity/terraform-provider-pingone/issues/157))
+* pingone_application: Clarified documentation for fixed enum fields. ([#161](https://github.com/pingidentity/terraform-provider-pingone/issues/161))
+
+ENHANCEMENTS:
+
+* pingone_application: Add support for "Service" type applications. ([#161](https://github.com/pingidentity/terraform-provider-pingone/issues/161))
+
+BUG FIXES:
+
+* pingone_application: Correct the `type` parameter validation for "Custom" application types. ([#161](https://github.com/pingidentity/terraform-provider-pingone/issues/161))
+
 ## 0.5.0 (25 September 2022)
 
 NOTES:
