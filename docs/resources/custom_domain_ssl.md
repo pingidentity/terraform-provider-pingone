@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_custom_domain_ssl Resource - terraform-provider-pingone"
-subcategory: ""
+subcategory: "Platform"
 description: |-
   Resource to create and manage PingOne Custom Domain SSL settings.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_identity_provider_attribute Resource - terraform-provider-pingone"
-subcategory: ""
+subcategory: "SSO"
 description: |-
   Resource to create and manage an attribute mapping for identity providers configured in PingOne.
 ---

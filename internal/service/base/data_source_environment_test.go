@@ -3,6 +3,7 @@ package base_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -44,14 +45,15 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "region", resourceFullName, "region"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "solution", resourceFullName, "solution"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "license_id", resourceFullName, "license_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "organization_id", resourceFullName, "organization_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "service.%", resourceFullName, "service.%"),
 				),
 			},
@@ -80,14 +82,15 @@ func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByNameMinimal(resourceName, name, environmentType, region, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "description", ""),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "region", resourceFullName, "region"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "solution", resourceFullName, "solution"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "license_id", resourceFullName, "license_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "organization_id", resourceFullName, "organization_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "service.%", resourceFullName, "service.%"),
 				),
 			},
@@ -130,14 +133,15 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByIDFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "region", resourceFullName, "region"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "solution", resourceFullName, "solution"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "license_id", resourceFullName, "license_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "organization_id", resourceFullName, "organization_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "service.%", resourceFullName, "service.%"),
 				),
 			},
@@ -166,14 +170,15 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByIDMinimal(resourceName, name, environmentType, region, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "description", ""),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "region", resourceFullName, "region"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "solution", resourceFullName, "solution"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "license_id", resourceFullName, "license_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "organization_id", resourceFullName, "organization_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "service.%", resourceFullName, "service.%"),
 				),
 			},

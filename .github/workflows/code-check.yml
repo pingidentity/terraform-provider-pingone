@@ -77,6 +77,15 @@ jobs:
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
 
+  docscategory-lint:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: docscategory lint
+        run: |
+          make docscategorycheck
+          
   golangci-lint:
     needs: [build]
     runs-on: ubuntu-latest

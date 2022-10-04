@@ -72,6 +72,11 @@ func ResourceEnvironment() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 				ForceNew:         true,
 			},
+			"organization_id": {
+				Description: "The ID of the PingOne organization tenant to which the environment belongs.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"solution": {
 				Description:      fmt.Sprintf("The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
 				Type:             schema.TypeString,
@@ -316,6 +321,7 @@ func resourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData,
 	d.Set("type", respObject.GetType())
 	d.Set("region", model.FindRegionByAPICode(respObject.GetRegion()).Region)
 	d.Set("license_id", respObject.GetLicense().Id)
+	d.Set("organization_id", respObject.GetOrganization().Id)
 
 	// The bill of materials
 
