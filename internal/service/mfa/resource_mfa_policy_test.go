@@ -1099,34 +1099,34 @@ func testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, nam
 resource "pingone_mfa_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
-  
-	sms {
-		enabled = true
-	}
 
-	voice {
-		enabled = true
-	}
+  sms {
+    enabled = true
+  }
 
-	email {
-		enabled = true
-	}
+  voice {
+    enabled = true
+  }
 
-	mobile {
-		enabled = true
-	}
+  email {
+    enabled = true
+  }
 
-	totp {
-		enabled = true
-	}
+  mobile {
+    enabled = true
+  }
 
-	security_key {
-		enabled = true
-	}
+  totp {
+    enabled = true
+  }
 
-	platform {
-		enabled = true
-	}
+  security_key {
+    enabled = true
+  }
+
+  platform {
+    enabled = true
+  }
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -1135,718 +1135,718 @@ func testAccMFAPolicyConfig_FullSMS(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = true
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-				  otp_lifetime_duration = 75
-				  otp_lifetime_timeunit = "SECONDS"
+  sms {
+    enabled = true
 
-				  otp_failure_count = 5
+    otp_lifetime_duration = 75
+    otp_lifetime_timeunit = "SECONDS"
 
-				  otp_failure_cooldown_duration = 5
-				  otp_failure_cooldown_timeunit = "SECONDS"
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 5
+    otp_failure_cooldown_timeunit = "SECONDS"
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_MinimalSMS(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = true
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = true
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_FullVoice(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				enabled = true
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-				otp_lifetime_duration = 75
-				otp_lifetime_timeunit = "SECONDS"
+  sms {
+    enabled = false
+  }
 
-				otp_failure_count = 5
+  voice {
+    enabled = true
 
-				otp_failure_cooldown_duration = 5
-				otp_failure_cooldown_timeunit = "SECONDS"
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+    otp_lifetime_duration = 75
+    otp_lifetime_timeunit = "SECONDS"
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 5
+    otp_failure_cooldown_timeunit = "SECONDS"
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_MinimalVoice(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = true
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = true
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_FullEmail(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				enabled = true
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-				otp_lifetime_duration = 75
-				otp_lifetime_timeunit = "SECONDS"
+  sms {
+    enabled = false
+  }
 
-				otp_failure_count = 5
+  voice {
+    enabled = false
+  }
 
-				otp_failure_cooldown_duration = 5
-				otp_failure_cooldown_timeunit = "SECONDS"
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  email {
+    enabled = true
+
+    otp_lifetime_duration = 75
+    otp_lifetime_timeunit = "SECONDS"
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 5
+    otp_failure_cooldown_timeunit = "SECONDS"
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_MinimalEmail(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = true
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = true
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_FullMobile(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s-1"
-			description    = "My test OIDC app for MFA Policy"
-			tags           = []
-			login_page_url = "https://www.pingidentity.com"
-		  
-			enabled = true
-		  
-			oidc_options {
-			  type                        = "NATIVE_APP"
-			  grant_types                 = ["CLIENT_CREDENTIALS"]
-			  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-		  
-			  mobile_app {
-				bundle_id    = "com.%[2]s1.bundle"
-				package_name = "com.%[2]s1.package"
-		  
-				passcode_refresh_seconds = 45
-		  
-				integrity_detection {
-				  enabled = true
-				  cache_duration {
-					amount = 30
-					units  = "HOURS"
-				  }
-				}
-			  }
-		  
-			  bundle_id    = "com.%[2]s1.bundle"
-			  package_name = "com.%[2]s1.package"
-			}
-		  }
+resource "pingone_application" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-		  resource "pingone_application" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s-2"
-			description    = "My test OIDC app for MFA Policy"
-			tags           = []
-			login_page_url = "https://www.pingidentity.com"
-		  
-			enabled = true
-		  
-			oidc_options {
-			  type                        = "NATIVE_APP"
-			  grant_types                 = ["CLIENT_CREDENTIALS"]
-			  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-		  
-			  mobile_app {
-				bundle_id    = "com.%[2]s2.bundle"
-				package_name = "com.%[2]s2.package"
-		  
-				passcode_refresh_seconds = 45
-		  
-				integrity_detection {
-				  enabled = true
-				  cache_duration {
-					amount = 30
-					units  = "HOURS"
-				  }
-				}
-			  }
-		  
-			  bundle_id    = "com.%[2]s2.bundle"
-			  package_name = "com.%[2]s2.package"
-			}
-		  }
+  enabled = true
 
-		  resource "pingone_application" "%[2]s-3" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s-3"
-			description    = "My test OIDC app for MFA Policy"
-			tags           = []
-			login_page_url = "https://www.pingidentity.com"
-		  
-			enabled = true
-		  
-			oidc_options {
-			  type                        = "NATIVE_APP"
-			  grant_types                 = ["CLIENT_CREDENTIALS"]
-			  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-		  
-			  mobile_app {
-				bundle_id    = "com.%[2]s3.bundle"
-				package_name = "com.%[2]s3.package"
-		  
-				passcode_refresh_seconds = 45
-		  
-				integrity_detection {
-				  enabled = true
-				  cache_duration {
-					amount = 30
-					units  = "HOURS"
-				  }
-				}
-			  }
-		  
-			  bundle_id    = "com.%[2]s3.bundle"
-			  package_name = "com.%[2]s3.package"
-			}
-		  }
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				enabled = true
+    mobile_app {
+      bundle_id    = "com.%[2]s1.bundle"
+      package_name = "com.%[2]s1.package"
 
-				otp_failure_count = 5
+      passcode_refresh_seconds = 45
 
-				otp_failure_cooldown_duration = 125
-				otp_failure_cooldown_timeunit = "SECONDS"
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
 
-				application {
-					id = pingone_application.%[2]s-1.id
+    bundle_id    = "com.%[2]s1.bundle"
+    package_name = "com.%[2]s1.package"
+  }
+}
 
-					push_enabled = false //true
-					otp_enabled = true
+resource "pingone_application" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-					// device_authorization_enabled = true
-					// device_authorization_extra_verification = "restrictive"
+  enabled = true
 
-					auto_enrollment_enabled = true
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-					integrity_detection = "restrictive"
-				}
+    mobile_app {
+      bundle_id    = "com.%[2]s2.bundle"
+      package_name = "com.%[2]s2.package"
 
-				application {
-					id = pingone_application.%[2]s-2.id
+      passcode_refresh_seconds = 45
 
-					push_enabled = false
-					otp_enabled = true
-				}
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
 
-				application {
-					id = pingone_application.%[2]s-3.id
+    bundle_id    = "com.%[2]s2.bundle"
+    package_name = "com.%[2]s2.package"
+  }
+}
 
-					push_enabled = false //true
-					otp_enabled = true
+resource "pingone_application" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-3"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
 
-					device_authorization_enabled = false
+  enabled = true
 
-					auto_enrollment_enabled = true
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-					integrity_detection = "permissive"
-				}
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+    mobile_app {
+      bundle_id    = "com.%[2]s3.bundle"
+      package_name = "com.%[2]s3.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s3.bundle"
+    package_name = "com.%[2]s3.package"
+  }
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = true
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 125
+    otp_failure_cooldown_timeunit = "SECONDS"
+
+    application {
+      id = pingone_application.%[2]s-1.id
+
+      push_enabled = false //true
+      otp_enabled  = true
+
+      // device_authorization_enabled = true
+      // device_authorization_extra_verification = "restrictive"
+
+      auto_enrollment_enabled = true
+
+      integrity_detection = "restrictive"
+    }
+
+    application {
+      id = pingone_application.%[2]s-2.id
+
+      push_enabled = false
+      otp_enabled  = true
+    }
+
+    application {
+      id = pingone_application.%[2]s-3.id
+
+      push_enabled = false //true
+      otp_enabled  = true
+
+      device_authorization_enabled = false
+
+      auto_enrollment_enabled = true
+
+      integrity_detection = "permissive"
+    }
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_MinimalMobile(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = true
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = true
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_FullTotp(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				enabled = true
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-				otp_failure_count = 5
+  sms {
+    enabled = false
+  }
 
-				otp_failure_cooldown_duration = 125
-				otp_failure_cooldown_timeunit = "SECONDS"
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = true
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 125
+    otp_failure_cooldown_timeunit = "SECONDS"
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_MinimalTotp(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = true
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = true
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_FullSecurityKey(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				enabled = true
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-				// fido_policy_id = 
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = true
+
+    // fido_policy_id = 
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_MinimalSecurityKey(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = true
-			  }
-		  
-			  platform {
-				  enabled = false
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = true
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_FullPlatform(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				enabled = true
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-				// fido_policy_id = 
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = true
+
+    // fido_policy_id = 
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFAPolicyConfig_MinimalPlatform(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  sms {
-				  enabled = false
-			  }
-		  
-			  voice {
-				  enabled = false
-			  }
-		  
-			  email {
-				  enabled = false
-			  }
-		  
-			  mobile {
-				  enabled = false
-			  }
-		  
-			  totp {
-				  enabled = false
-			  }
-		  
-			  security_key {
-				  enabled = false
-			  }
-		  
-			  platform {
-				  enabled = true
-			  }
-		  
-		  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = true
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
