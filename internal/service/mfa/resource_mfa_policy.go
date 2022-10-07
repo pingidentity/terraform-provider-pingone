@@ -481,6 +481,8 @@ func expandMFAPolicyMobileDevice(v interface{}) *mfa.DeviceAuthenticationPolicyM
 
 	obj := v.(map[string]interface{})
 
+	otpStepSizeDuration := 30
+
 	item := mfa.NewDeviceAuthenticationPolicyMobile(
 		obj["enabled"].(bool),
 		*mfa.NewDeviceAuthenticationPolicyMobileOtp(
@@ -490,7 +492,7 @@ func expandMFAPolicyMobileDevice(v interface{}) *mfa.DeviceAuthenticationPolicyM
 			),
 			*mfa.NewDeviceAuthenticationPolicyMobileOtpWindow(
 				*mfa.NewDeviceAuthenticationPolicyMobileOtpWindowStepSize(
-					int32(30),
+					int32(otpStepSizeDuration),
 					mfa.ENUMTIMEUNIT_SECONDS,
 				),
 			),
