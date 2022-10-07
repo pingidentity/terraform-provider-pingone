@@ -1,0 +1,1 @@
+$ terraform import pingone_mfa_policy.example <environment_id>/<mfa_policy_id>

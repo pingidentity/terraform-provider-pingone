@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -340,13 +341,19 @@ func resourceKeyDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		},
 		"DeleteKey",
 		sdk.CustomErrorResourceNotFoundWarning,
-		func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+		func(ctx context.Context, r *http.Response, p1error interface{}) bool {
+
+			errorObj, err := model.RemarshalErrorObj(p1error)
+			if err != nil {
+				tflog.Error(ctx, fmt.Sprintf("%s", err))
+				return false
+			}
 
 			if p1error != nil {
 				var err error
 
 				// It seems the key might not release itself immediately
-				if m, err := regexp.MatchString("The Key must not be in use", p1error.GetMessage()); err == nil && m {
+				if m, err := regexp.MatchString("The Key must not be in use", errorObj.GetMessage()); err == nil && m {
 					tflog.Warn(ctx, "Key in use detected")
 					return true
 				}

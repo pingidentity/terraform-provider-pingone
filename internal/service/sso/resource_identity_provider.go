@@ -1179,10 +1179,10 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 			planCertificates := v.List()
 
 			if len(planCertificates) > 0 && planCertificates[0] != nil {
-				certificates := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
+				certificates := make([]management.IdentityProviderSAMLAllOfIdpVerificationCertificates, 0)
 
 				for _, certificate := range planCertificates {
-					certificates = append(certificates, *management.NewApplicationAccessControlGroupGroupsInner(certificate.(string)))
+					certificates = append(certificates, *management.NewIdentityProviderSAMLAllOfIdpVerificationCertificates(certificate.(string)))
 				}
 
 				idpVerification = *management.NewIdentityProviderSAMLAllOfIdpVerification(certificates)

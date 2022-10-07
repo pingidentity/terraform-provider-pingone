@@ -45,35 +45,31 @@ func ResourceMFAPolicy() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 			"sms": {
-				Description:  "SMS device authentication policy settings.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				AtLeastOneOf: []string{"sms", "voice", "email", "mobile", "totp", "security_key", "platform"},
-				Elem:         offlineDeviceResourceSchema("sms.0"),
+				Description: "SMS device authentication policy settings.",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Required:    true,
+				Elem:        offlineDeviceResourceSchema("sms.0"),
 			},
 			"voice": {
-				Description:  "Voice device authentication policy settings.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				AtLeastOneOf: []string{"sms", "voice", "email", "mobile", "totp", "security_key", "platform"},
-				Elem:         offlineDeviceResourceSchema("voice.0"),
+				Description: "Voice device authentication policy settings.",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Required:    true,
+				Elem:        offlineDeviceResourceSchema("voice.0"),
 			},
 			"email": {
-				Description:  "Email device authentication policy settings.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				AtLeastOneOf: []string{"sms", "voice", "email", "mobile", "totp", "security_key", "platform"},
-				Elem:         offlineDeviceResourceSchema("email.0"),
+				Description: "Email device authentication policy settings.",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Required:    true,
+				Elem:        offlineDeviceResourceSchema("email.0"),
 			},
 			"mobile": {
-				Description:  "Mobile device authentication policy settings.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				AtLeastOneOf: []string{"sms", "voice", "email", "mobile", "totp", "security_key", "platform"},
+				Description: "Mobile device authentication policy settings.",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -85,22 +81,25 @@ func ResourceMFAPolicy() *schema.Resource {
 							Description: "An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.",
 							Type:        schema.TypeInt,
 							Optional:    true,
+							Default:     3,
 						},
 						"otp_failure_cooldown_duration": {
 							Description: "An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.",
 							Type:        schema.TypeInt,
 							Optional:    true,
+							Default:     2,
 						},
 						"otp_failure_cooldown_timeunit": {
 							Description:      fmt.Sprintf("The type of time unit for `otp_failure_cooldown_duration`.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
 							Type:             schema.TypeString,
 							Optional:         true,
+							Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
 						},
 						"application": {
 							Description: "Settings for a configured Mobile Application.",
 							Type:        schema.TypeSet,
-							Required:    true,
+							Optional:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"id": {
@@ -125,11 +124,10 @@ func ResourceMFAPolicy() *schema.Resource {
 										Optional:    true,
 									},
 									"device_authorization_extra_verification": {
-										Description:      "Specifies the level of further verification when `device_authorization_enabled` is true. The PingOne platform performs an extra verification check by sending a \"silent\" push notification to the customer native application, and receives a confirmation in return.  Extra verification can be one of the following levels: `disabled` (default): The PingOne platform does not perform the extra verification check. `permissive`: The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed.  `restrictive`: The PingOne platform performs the extra verification check.The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed.",
+										Description:      "Specifies the level of further verification when `device_authorization_enabled` is true. The PingOne platform performs an extra verification check by sending a \"silent\" push notification to the customer native application, and receives a confirmation in return.  Extra verification can be one of the following levels: `permissive`: The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed.  `restrictive`: The PingOne platform performs the extra verification check.The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed.",
 										Type:             schema.TypeString,
 										Optional:         true,
-										Default:          "disabled",
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"disabled", "permissive", "restrictive"}, false)),
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"permissive", "restrictive"}, false)),
 									},
 									"auto_enrollment_enabled": {
 										Description: "Set to `true` if you want the application to allow Auto Enrollment. Auto Enrollment means that the user can authenticate for the first time from an unpaired device, and the successful authentication will result in the pairing of the device for MFA.",
@@ -140,6 +138,7 @@ func ResourceMFAPolicy() *schema.Resource {
 										Description:      "Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response. Set the value to `permissive` if you want to allow the process to continue. Set the value to `restrictive` if you want to block the user in such situations.",
 										Type:             schema.TypeString,
 										Optional:         true,
+										Default:          "restrictive",
 										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"permissive", "restrictive"}, false)),
 									},
 								},
@@ -149,11 +148,10 @@ func ResourceMFAPolicy() *schema.Resource {
 				},
 			},
 			"totp": {
-				Description:  "TOTP device authentication policy settings.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				AtLeastOneOf: []string{"sms", "voice", "email", "mobile", "totp", "security_key", "platform"},
+				Description: "TOTP device authentication policy settings.",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -165,36 +163,37 @@ func ResourceMFAPolicy() *schema.Resource {
 							Description: "An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.",
 							Type:        schema.TypeInt,
 							Optional:    true,
+							Default:     3,
 						},
 						"otp_failure_cooldown_duration": {
 							Description: "An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.",
 							Type:        schema.TypeInt,
 							Optional:    true,
+							Default:     2,
 						},
 						"otp_failure_cooldown_timeunit": {
 							Description:      fmt.Sprintf("The type of time unit for `otp_failure_cooldown_duration`.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
 							Type:             schema.TypeString,
 							Optional:         true,
+							Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
 						},
 					},
 				},
 			},
 			"security_key": {
-				Description:  "Security key device authentication policy settings.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				AtLeastOneOf: []string{"sms", "voice", "email", "mobile", "totp", "security_key", "platform"},
-				Elem:         fidoDeviceResourceSchema(),
+				Description: "Security key device authentication policy settings.",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Required:    true,
+				Elem:        fidoDeviceResourceSchema(),
 			},
 			"platform": {
-				Description:  "Platform device authentication policy settings.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				AtLeastOneOf: []string{"sms", "voice", "email", "mobile", "totp", "security_key", "platform"},
-				Elem:         fidoDeviceResourceSchema(),
+				Description: "Platform device authentication policy settings.",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Required:    true,
+				Elem:        fidoDeviceResourceSchema(),
 			},
 		},
 	}
@@ -212,11 +211,13 @@ func offlineDeviceResourceSchema(resourcePrefix string) *schema.Resource {
 				Description: "An integer that defines turation (number of time units) that the passcode is valid before it expires.",
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Default:     30,
 			},
 			"otp_lifetime_timeunit": {
 				Description:      fmt.Sprintf("The type of time unit for `otp_lifetime_duration`.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
 				Type:             schema.TypeString,
 				Optional:         true,
+				Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
 				RequiredWith:     []string{fmt.Sprintf("%s.otp_lifetime_duration", resourcePrefix), fmt.Sprintf("%s.otp_lifetime_timeunit", resourcePrefix)},
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
 			},
@@ -224,17 +225,20 @@ func offlineDeviceResourceSchema(resourcePrefix string) *schema.Resource {
 				Description: "An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.",
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Default:     3,
 			},
 			"otp_failure_cooldown_duration": {
 				Description:  "An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the \"onetime authentication\" feature, the user is not blocked after the maximum number of failures even if you specified a block duration.",
 				Type:         schema.TypeInt,
 				Optional:     true,
+				Default:      0,
 				RequiredWith: []string{fmt.Sprintf("%s.otp_failure_cooldown_duration", resourcePrefix), fmt.Sprintf("%s.otp_failure_cooldown_timeunit", resourcePrefix)},
 			},
 			"otp_failure_cooldown_timeunit": {
 				Description:      fmt.Sprintf("The type of time unit for `otp_failure_cooldown_duration`.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
 				Type:             schema.TypeString,
 				Optional:         true,
+				Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
 				RequiredWith:     []string{fmt.Sprintf("%s.otp_failure_cooldown_duration", resourcePrefix), fmt.Sprintf("%s.otp_failure_cooldown_timeunit", resourcePrefix)},
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
 			},
@@ -440,35 +444,18 @@ func resourceMFAPolicyImport(ctx context.Context, d *schema.ResourceData, meta i
 
 func expandMFAPolicy(d *schema.ResourceData) *mfa.DeviceAuthenticationPolicy {
 
-	item := mfa.NewDeviceAuthenticationPolicy(d.Get("name").(string))
-
-	if v, ok := d.GetOk("sms"); ok && v != nil && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		item.SetSms(*expandMFAPolicyOfflineDevice(v.([]interface{})[0]))
-	}
-
-	if v, ok := d.GetOk("voice"); ok && v != nil && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		item.SetVoice(*expandMFAPolicyOfflineDevice(v.([]interface{})[0]))
-	}
-
-	if v, ok := d.GetOk("email"); ok && v != nil && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		item.SetEmail(*expandMFAPolicyOfflineDevice(v.([]interface{})[0]))
-	}
-
-	if v, ok := d.GetOk("mobile"); ok && v != nil && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		item.SetMobile(*expandMFAPolicyMobileDevice(v.([]interface{})[0]))
-	}
-
-	if v, ok := d.GetOk("totp"); ok && v != nil && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		item.SetTotp(*expandMFAPolicyTOTPDevice(v.([]interface{})[0]))
-	}
-
-	if v, ok := d.GetOk("security_key"); ok && v != nil && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		item.SetSecurityKey(*expandMFAPolicyFIDODevice(v.([]interface{})[0]))
-	}
-
-	if v, ok := d.GetOk("platform"); ok && v != nil && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		item.SetPlatform(*expandMFAPolicyFIDODevice(v.([]interface{})[0]))
-	}
+	item := mfa.NewDeviceAuthenticationPolicy(
+		d.Get("name").(string),
+		*expandMFAPolicyOfflineDevice(d.Get("sms").([]interface{})[0]),
+		*expandMFAPolicyOfflineDevice(d.Get("voice").([]interface{})[0]),
+		*expandMFAPolicyOfflineDevice(d.Get("email").([]interface{})[0]),
+		*expandMFAPolicyMobileDevice(d.Get("mobile").([]interface{})[0]),
+		*expandMFAPolicyTOTPDevice(d.Get("totp").([]interface{})[0]),
+		*expandMFAPolicyFIDODevice(d.Get("security_key").([]interface{})[0]),
+		*expandMFAPolicyFIDODevice(d.Get("platform").([]interface{})[0]),
+		false,
+		false,
+	)
 
 	return item
 }
@@ -477,75 +464,15 @@ func expandMFAPolicyOfflineDevice(v interface{}) *mfa.DeviceAuthenticationPolicy
 
 	obj := v.(map[string]interface{})
 
-	item := mfa.NewDeviceAuthenticationPolicyOfflineDevice(obj["enabled"].(bool))
+	otp := *mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtp(
+		*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpLifeTime(int32(obj["otp_lifetime_duration"].(int)), mfa.EnumTimeUnit(obj["otp_lifetime_timeunit"].(string))),
+		*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
+			int32(obj["otp_failure_count"].(int)),
+			*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(int32(obj["otp_failure_cooldown_duration"].(int)), mfa.EnumTimeUnit(obj["otp_failure_cooldown_timeunit"].(string))),
+		),
+	)
 
-	var otpLifetime *mfa.DeviceAuthenticationPolicyOfflineDeviceOtpLifetime
-	var otpFailure *mfa.DeviceAuthenticationPolicyOfflineDeviceOtpFailure
-
-	var otpLifetimeDuration *int
-	var otpLifetimeDurationUnit *string
-
-	if v, ok := obj["otp_lifetime_duration"].(int); ok {
-		otpLifetimeDuration = &v
-	}
-
-	if v, ok := obj["otp_lifetime_timeunit"].(string); ok {
-		otpLifetimeDurationUnit = &v
-	}
-
-	if otpLifetimeDuration != nil && otpLifetimeDurationUnit != nil {
-		otpLifetime = mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpLifetime()
-		otpLifetime.SetDuration(int32(*otpLifetimeDuration))
-		otpLifetime.SetTimeUnit(mfa.EnumTimeUnit(*otpLifetimeDurationUnit))
-	}
-
-	var otpFailureCount *int
-	var otpFailureCooldownDuration *int
-	var otpFailureCooldownDurationUnit *string
-
-	if v, ok := obj["otp_failure_count"].(int); ok {
-		otpFailureCount = &v
-	}
-
-	if v, ok := obj["otp_failure_cooldown_duration"].(int); ok {
-		otpFailureCooldownDuration = &v
-	}
-
-	if v, ok := obj["otp_failure_cooldown_timeunit"].(string); ok {
-		otpFailureCooldownDurationUnit = &v
-	}
-
-	if otpFailureCount != nil || (otpFailureCooldownDuration != nil && otpFailureCooldownDurationUnit != nil) {
-
-		otpFailure = mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure()
-
-		if otpFailureCount != nil {
-			otpFailure.SetCount(int32(*otpFailureCount))
-		}
-
-		if otpFailureCooldownDuration != nil && otpFailureCooldownDurationUnit != nil {
-			otpCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown()
-			otpCooldown.SetDuration(int32(*otpFailureCooldownDuration))
-			otpCooldown.SetTimeUnit(mfa.EnumTimeUnit(*otpFailureCooldownDurationUnit))
-
-			otpFailure.SetCoolDown(*otpCooldown)
-		}
-
-	}
-
-	if otpLifetime != nil || otpFailure != nil {
-		otp := *mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtp()
-
-		if otpLifetime != nil {
-			otp.SetLifetime(*otpLifetime)
-		}
-
-		if otpFailure != nil {
-			otp.SetFailure(*otpFailure)
-		}
-
-		item.SetOtp(otp)
-	}
+	item := mfa.NewDeviceAuthenticationPolicyOfflineDevice(obj["enabled"].(bool), otp)
 
 	return item
 }
@@ -554,7 +481,61 @@ func expandMFAPolicyMobileDevice(v interface{}) *mfa.DeviceAuthenticationPolicyM
 
 	obj := v.(map[string]interface{})
 
-	item := mfa.NewDeviceAuthenticationPolicyMobile(obj["enabled"].(bool))
+	item := mfa.NewDeviceAuthenticationPolicyMobile(
+		obj["enabled"].(bool),
+		*mfa.NewDeviceAuthenticationPolicyMobileOtp(
+			*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
+				int32(obj["otp_failure_count"].(int)),
+				*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(int32(obj["otp_failure_cooldown_duration"].(int)), mfa.EnumTimeUnit(obj["otp_failure_cooldown_timeunit"].(string))),
+			),
+			*mfa.NewDeviceAuthenticationPolicyMobileOtpWindow(
+				*mfa.NewDeviceAuthenticationPolicyMobileOtpWindowStepSize(
+					int32(30),
+					mfa.ENUMTIMEUNIT_SECONDS,
+				),
+			),
+		),
+	)
+
+	if c, ok := obj["application"].(*schema.Set); ok && c != nil && len(c.List()) > 0 && c.List()[0] != nil {
+
+		items := make([]mfa.DeviceAuthenticationPolicyMobileApplicationsInner, 0)
+
+		for _, cn := range c.List() {
+
+			c2 := cn.(map[string]interface{})
+
+			item := *mfa.NewDeviceAuthenticationPolicyMobileApplicationsInner(c2["id"].(string))
+
+			if c3, ok := c2["push_enabled"].(bool); ok {
+				item.SetPush(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPush(c3))
+			}
+
+			if c3, ok := c2["otp_enabled"].(bool); ok {
+				item.SetOtp(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerOtp(c3))
+			}
+
+			deviceAuthz := *mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerDeviceAuthorization(c2["device_authorization_enabled"].(bool))
+
+			if c3, ok := c2["device_authorization_extra_verification"].(string); ok && c3 != "" {
+				deviceAuthz.SetExtraVerification(mfa.EnumMFADevicePolicyMobileExtraVerification(c3))
+			}
+
+			item.SetDeviceAuthorization(deviceAuthz)
+
+			if c3, ok := c2["auto_enrollment_enabled"].(bool); ok {
+				item.SetAutoEnrollment(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerAutoEnrollment(c3))
+			}
+
+			if c3, ok := c2["integrity_detection"].(string); ok && c3 != "" {
+				item.SetIntegrityDetection(mfa.EnumMFADevicePolicyMobileIntegrityDetection(c3))
+			}
+
+			items = append(items, item)
+		}
+
+		item.SetApplications(items)
+	}
 
 	return item
 }
@@ -563,47 +544,15 @@ func expandMFAPolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTot
 
 	obj := v.(map[string]interface{})
 
-	item := mfa.NewDeviceAuthenticationPolicyTotp(obj["enabled"].(bool))
-
-	var otpFailure *mfa.DeviceAuthenticationPolicyOfflineDeviceOtpFailure
-
-	var otpFailureCount *int
-	var otpFailureCooldownDuration *int
-	var otpFailureCooldownDurationUnit *string
-
-	if v, ok := obj["otp_failure_count"].(int); ok {
-		otpFailureCount = &v
-	}
-
-	if v, ok := obj["otp_failure_cooldown_duration"].(int); ok {
-		otpFailureCooldownDuration = &v
-	}
-
-	if v, ok := obj["otp_failure_cooldown_timeunit"].(string); ok {
-		otpFailureCooldownDurationUnit = &v
-	}
-
-	if otpFailureCount != nil || (otpFailureCooldownDuration != nil && otpFailureCooldownDurationUnit != nil) {
-
-		otpFailure = mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure()
-
-		if otpFailureCount != nil {
-			otpFailure.SetCount(int32(*otpFailureCount))
-		}
-
-		if otpFailureCooldownDuration != nil && otpFailureCooldownDurationUnit != nil {
-			otpCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown()
-			otpCooldown.SetDuration(int32(*otpFailureCooldownDuration))
-			otpCooldown.SetTimeUnit(mfa.EnumTimeUnit(*otpFailureCooldownDurationUnit))
-
-			otpFailure.SetCoolDown(*otpCooldown)
-		}
-
-		otp := *mfa.NewDeviceAuthenticationPolicyMobileOtpWindow()
-		otp.SetFailure(*otpFailure)
-
-		item.SetOtp(otp)
-	}
+	item := mfa.NewDeviceAuthenticationPolicyTotp(
+		obj["enabled"].(bool),
+		*mfa.NewDeviceAuthenticationPolicyTotpOtp(
+			*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
+				int32(obj["otp_failure_count"].(int)),
+				*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(int32(obj["otp_failure_cooldown_duration"].(int)), mfa.EnumTimeUnit(obj["otp_failure_cooldown_timeunit"].(string))),
+			),
+		),
+	)
 
 	return item
 }
@@ -628,7 +577,7 @@ func flattenMFAPolicyOfflineDevice(c *mfa.DeviceAuthenticationPolicyOfflineDevic
 
 	if v, ok := c.GetOtpOk(); ok {
 
-		if v1, ok := v.GetLifetimeOk(); ok {
+		if v1, ok := v.GetLifeTimeOk(); ok {
 
 			if v2, ok := v1.GetDurationOk(); ok {
 				item["otp_lifetime_duration"] = int(*v2)
@@ -671,23 +620,20 @@ func flattenMFAPolicyMobile(c *mfa.DeviceAuthenticationPolicyMobile) []map[strin
 
 	if v, ok := c.GetOtpOk(); ok {
 
-		if v1, ok := v.GetWindowOk(); ok {
+		if v1, ok := v.GetFailureOk(); ok {
 
-			if v2, ok := v1.GetFailureOk(); ok {
+			if v2, ok := v1.GetCountOk(); ok {
+				item["otp_failure_count"] = int(*v2)
+			}
 
-				if v3, ok := v2.GetCountOk(); ok {
-					item["otp_failure_count"] = int(*v3)
+			if v2, ok := v1.GetCoolDownOk(); ok {
+
+				if v3, ok := v2.GetDurationOk(); ok {
+					item["otp_failure_cooldown_duration"] = int(*v3)
 				}
 
-				if v3, ok := v2.GetCoolDownOk(); ok {
-
-					if v4, ok := v3.GetDurationOk(); ok {
-						item["otp_failure_cooldown_duration"] = int(*v4)
-					}
-
-					if v4, ok := v3.GetTimeUnitOk(); ok {
-						item["otp_failure_cooldown_timeunit"] = string(*v4)
-					}
+				if v3, ok := v2.GetTimeUnitOk(); ok {
+					item["otp_failure_cooldown_timeunit"] = string(*v3)
 				}
 			}
 		}
@@ -724,7 +670,7 @@ func expandMFAPolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileAp
 		}
 
 		if v1, ok := v.GetAutoEnrollmentOk(); ok {
-			item["auto_enrollment_enabled"] = v1
+			item["auto_enrollment_enabled"] = v1.GetEnabled()
 		}
 
 		if v1, ok := v.GetIntegrityDetectionOk(); ok {

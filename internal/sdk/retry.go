@@ -11,12 +11,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 )
 
-type Retryable func(context.Context, *http.Response, *management.P1Error) bool
+type Retryable func(context.Context, *http.Response, interface{}) bool
 
 var (
-	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+	DefaultRetryable = func(ctx context.Context, r *http.Response, _ interface{}) bool {
 
 		// Gateway errors
 		if r.StatusCode >= 502 && r.StatusCode <= 504 {
@@ -27,13 +28,17 @@ var (
 		return false
 	}
 
-	DefaultCreateReadRetryable = func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+	DefaultCreateReadRetryable = func(ctx context.Context, r *http.Response, p1error interface{}) bool {
 
 		if p1error != nil {
-			var err error
+			errorObj, err := model.RemarshalErrorObj(p1error)
+			if err != nil {
+				tflog.Error(ctx, fmt.Sprintf("%s", err))
+				return false
+			}
 
 			// Permissions may not have propagated by this point
-			if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", errorObj.GetMessage()); err == nil && m {
 				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 				return true
 			}
@@ -47,13 +52,17 @@ var (
 		return false
 	}
 
-	RoleAssignmentRetryable = func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+	RoleAssignmentRetryable = func(ctx context.Context, r *http.Response, p1error interface{}) bool {
 
 		if p1error != nil {
-			var err error
+			errorObj, err := model.RemarshalErrorObj(p1error)
+			if err != nil {
+				tflog.Error(ctx, fmt.Sprintf("%s", err))
+				return false
+			}
 
 			// Permissions may not have propagated by this point (1)
-			if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", errorObj.GetMessage()); err == nil && m {
 				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 				return true
 			}
@@ -63,7 +72,7 @@ var (
 			}
 
 			// Permissions may not have propagated by this point (2)
-			if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				if m, err := regexp.MatchString("^Must have role at the same or broader scope", details[0].GetMessage()); err == nil && m {
 					tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 					return true
@@ -92,14 +101,18 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 
 		if err != nil || r.StatusCode >= 300 {
 
-			var model management.P1Error
+			var errorModel model.P1Error
 
 			switch t := err.(type) {
 			case *management.GenericOpenAPIError:
-				error := t
+				error, err := model.RemarshalGenericOpenAPIErrorObj(t)
+				if err != nil {
+					tflog.Error(ctx, fmt.Sprintf("%s", err))
+					return nil
+				}
 
 				if error.Model() != nil {
-					model = error.Model().(management.P1Error)
+					errorModel = error.Model().(model.P1Error)
 				}
 
 			case *url.Error:
@@ -109,7 +122,7 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error %+v", t))
 			}
 
-			if (model.Id != nil || r != nil) && (isRetryable(ctx, r, &model) || DefaultRetryable(ctx, r, &model)) {
+			if (errorModel.Id != nil || r != nil) && (isRetryable(ctx, r, &errorModel) || DefaultRetryable(ctx, r, &errorModel)) {
 				tflog.Warn(ctx, "Retrying ... ")
 				return resource.RetryableError(err)
 			}

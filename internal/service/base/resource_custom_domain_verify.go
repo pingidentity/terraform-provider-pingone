@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -79,10 +80,15 @@ func resourceCustomDomainVerifyCreate(ctx context.Context, d *schema.ResourceDat
 			return apiClient.CustomDomainsApi.UpdateDomain(ctx, d.Get("environment_id").(string), d.Get("custom_domain_id").(string)).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_DOMAIN_NAME_VERIFYJSON).Execute()
 		},
 		"UpdateDomain",
-		func(error management.P1Error) diag.Diagnostics {
+		func(error interface{}) diag.Diagnostics {
+
+			errorObj, err := model.RemarshalErrorObj(error)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 
 			// Cannot validate against the authoritative name service
-			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				m, _ := regexp.MatchString("^Error response from authoritative name servers: NXDOMAIN", details[0].GetMessage())
 				if m {
 					diags = append(diags, diag.Diagnostic{
@@ -159,13 +165,18 @@ func resourceCustomDomainVerifyDelete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func customDomainRetryConditions(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+func customDomainRetryConditions(ctx context.Context, r *http.Response, p1error interface{}) bool {
 
 	if p1error != nil {
-		var err error
+
+		errorObj, err := model.RemarshalErrorObj(p1error)
+		if err != nil {
+			tflog.Error(ctx, fmt.Sprintf("%s", err))
+			return false
+		}
 
 		// Permissions may not have propagated by this point
-		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", errorObj.GetMessage()); err == nil && m {
 			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 			return true
 		}
@@ -175,7 +186,7 @@ func customDomainRetryConditions(ctx context.Context, r *http.Response, p1error 
 		}
 
 		// add retry time for DNS propegating
-		if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+		if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 
 			// perhaps it's the DNS authority
 			if m, err := regexp.MatchString("^Error response from authoritative name servers: NXDOMAIN", details[0].GetMessage()); err == nil && m {

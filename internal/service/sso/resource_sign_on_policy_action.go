@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
@@ -346,21 +347,26 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 			return nil, r, err
 		},
 		"DeleteSignOnPolicyAction",
-		func(error management.P1Error) diag.Diagnostics {
+		func(error interface{}) diag.Diagnostics {
 			var diags diag.Diagnostics
 
+			errorObj, err := model.RemarshalErrorObj(error)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
 			// Deleted outside of TF
-			if error.GetCode() == "NOT_FOUND" {
+			if errorObj.GetCode() == "NOT_FOUND" {
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Warning,
-					Summary:  error.GetMessage(),
+					Summary:  errorObj.GetMessage(),
 				})
 
 				return diags
 			}
 
 			// Last action in the policy
-			if v, ok := error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+			if v, ok := errorObj.GetDetailsOk(); ok && v != nil && len(v) > 0 {
 				if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
 					if match, _ := regexp.MatchString("Cannot delete last action from the policy", v[0].GetMessage()); match {
 						diags = append(diags, diag.Diagnostic{

@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -130,10 +131,15 @@ func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.Reso
 			return apiClient.UserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string)).RoleAssignment(userRoleAssignment).Execute()
 		},
 		"CreateUserRoleAssignment",
-		func(error management.P1Error) diag.Diagnostics {
+		func(error interface{}) diag.Diagnostics {
+
+			errorObj, err := model.RemarshalErrorObj(error)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 
 			// Invalid role/scope combination
-			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				if target, ok := details[0].GetTargetOk(); ok && *target == "scope" {
 					diags = diag.FromErr(fmt.Errorf("Incompatible role and scope combination. Role: %s / Scope: %s", userRoleAssignmentRole.GetId(), userRoleAssignmentScope.GetType()))
 
