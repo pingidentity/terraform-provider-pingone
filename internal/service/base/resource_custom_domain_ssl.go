@@ -106,15 +106,10 @@ func resourceCustomDomainSSLCreate(ctx context.Context, d *schema.ResourceData, 
 			return apiClient.CustomDomainsApi.UpdateDomain(ctx, d.Get("environment_id").(string), d.Get("custom_domain_id").(string)).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_CERTIFICATE_IMPORTJSON).CustomDomainCertificateRequest(customDomainCertificateRequest).Execute()
 		},
 		"UpdateDomain",
-		func(error interface{}) diag.Diagnostics {
-
-			errorObj, err := model.RemarshalErrorObj(error)
-			if err != nil {
-				return diag.FromErr(err)
-			}
+		func(error model.P1Error) diag.Diagnostics {
 
 			// Cannot validate against the authoritative name service
-			if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				m, _ := regexp.MatchString("^Custom domain status must be 'SSL_CERTIFICATE_REQUIRED' or 'ACTIVE' in order to import a certificate", details[0].GetMessage())
 				if m {
 					diags = append(diags, diag.Diagnostic{

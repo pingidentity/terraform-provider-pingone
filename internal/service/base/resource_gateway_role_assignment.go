@@ -131,15 +131,10 @@ func resourcePingOneGatewayRoleAssignmentCreate(ctx context.Context, d *schema.R
 			return apiClient.GatewayRoleAssignmentsApi.CreateGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).RoleAssignment(gatewayRoleAssignment).Execute()
 		},
 		"CreateGatewayRoleAssignment",
-		func(error interface{}) diag.Diagnostics {
-
-			errorObj, err := model.RemarshalErrorObj(error)
-			if err != nil {
-				return diag.FromErr(err)
-			}
+		func(error model.P1Error) diag.Diagnostics {
 
 			// Invalid role/scope combination
-			if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				if target, ok := details[0].GetTargetOk(); ok && *target == "scope" {
 					diags = diag.FromErr(fmt.Errorf("Incompatible role and scope combination. Role: %s / Scope: %s", gatewayRoleAssignmentRole.GetId(), gatewayRoleAssignmentScope.GetType()))
 

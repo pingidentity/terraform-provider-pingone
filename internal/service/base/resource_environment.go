@@ -216,15 +216,10 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 			return apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
 		},
 		"CreateEnvironmentActiveLicense",
-		func(error interface{}) diag.Diagnostics {
-
-			errorObj, err := model.RemarshalErrorObj(error)
-			if err != nil {
-				return diag.FromErr(err)
-			}
+		func(error model.P1Error) diag.Diagnostics {
 
 			// Invalid region
-			if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
 					allowedRegions := make([]string, 0)
 					for _, allowedRegion := range details[0].GetInnerError().AllowedValues {
@@ -237,7 +232,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 			}
 
 			// DV FF
-			m, err := regexp.MatchString("^Organization does not have Ping One DaVinci FF enabled", errorObj.GetMessage())
+			m, err := regexp.MatchString("^Organization does not have Ping One DaVinci FF enabled", error.GetMessage())
 			if err != nil {
 				diags = diag.FromErr(fmt.Errorf("Invalid regexp: DV FF error"))
 				return diags
@@ -613,17 +608,14 @@ func resourcePingOneEnvironmentImport(ctx context.Context, d *schema.ResourceDat
 }
 
 var (
-	retryEnvironmentDefault = func(ctx context.Context, r *http.Response, p1error interface{}) bool {
+	retryEnvironmentDefault = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+		var err error
 
 		if p1error != nil {
-			errorObj, err := model.RemarshalErrorObj(p1error)
-			if err != nil {
-				tflog.Error(ctx, fmt.Sprintf("%s", err))
-				return false
-			}
 
 			// Permissions may not have propagated by this point
-			if m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", errorObj.GetMessage()); err == nil && m {
+			if m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", p1error.GetMessage()); err == nil && m {
 				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 				return true
 			}

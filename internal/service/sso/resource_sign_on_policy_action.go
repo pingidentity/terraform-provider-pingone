@@ -347,26 +347,21 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 			return nil, r, err
 		},
 		"DeleteSignOnPolicyAction",
-		func(error interface{}) diag.Diagnostics {
+		func(error model.P1Error) diag.Diagnostics {
 			var diags diag.Diagnostics
 
-			errorObj, err := model.RemarshalErrorObj(error)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
 			// Deleted outside of TF
-			if errorObj.GetCode() == "NOT_FOUND" {
+			if error.GetCode() == "NOT_FOUND" {
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Warning,
-					Summary:  errorObj.GetMessage(),
+					Summary:  error.GetMessage(),
 				})
 
 				return diags
 			}
 
 			// Last action in the policy
-			if v, ok := errorObj.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+			if v, ok := error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
 				if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
 					if match, _ := regexp.MatchString("Cannot delete last action from the policy", v[0].GetMessage()); match {
 						diags = append(diags, diag.Diagnostic{

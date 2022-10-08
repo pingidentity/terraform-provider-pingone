@@ -80,15 +80,10 @@ func resourceCustomDomainVerifyCreate(ctx context.Context, d *schema.ResourceDat
 			return apiClient.CustomDomainsApi.UpdateDomain(ctx, d.Get("environment_id").(string), d.Get("custom_domain_id").(string)).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_DOMAIN_NAME_VERIFYJSON).Execute()
 		},
 		"UpdateDomain",
-		func(error interface{}) diag.Diagnostics {
-
-			errorObj, err := model.RemarshalErrorObj(error)
-			if err != nil {
-				return diag.FromErr(err)
-			}
+		func(error model.P1Error) diag.Diagnostics {
 
 			// Cannot validate against the authoritative name service
-			if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				m, _ := regexp.MatchString("^Error response from authoritative name servers: NXDOMAIN", details[0].GetMessage())
 				if m {
 					diags = append(diags, diag.Diagnostic{
@@ -165,18 +160,14 @@ func resourceCustomDomainVerifyDelete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func customDomainRetryConditions(ctx context.Context, r *http.Response, p1error interface{}) bool {
+func customDomainRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+	var err error
 
 	if p1error != nil {
 
-		errorObj, err := model.RemarshalErrorObj(p1error)
-		if err != nil {
-			tflog.Error(ctx, fmt.Sprintf("%s", err))
-			return false
-		}
-
 		// Permissions may not have propagated by this point
-		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", errorObj.GetMessage()); err == nil && m {
+		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
 			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 			return true
 		}
@@ -186,7 +177,7 @@ func customDomainRetryConditions(ctx context.Context, r *http.Response, p1error 
 		}
 
 		// add retry time for DNS propegating
-		if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+		if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 
 			// perhaps it's the DNS authority
 			if m, err := regexp.MatchString("^Error response from authoritative name servers: NXDOMAIN", details[0].GetMessage()); err == nil && m {

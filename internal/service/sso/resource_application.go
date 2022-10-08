@@ -538,7 +538,7 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			},
 			"ReadApplicationSecret",
 			sdk.CustomErrorResourceNotFoundWarning,
-			func(ctx context.Context, r *http.Response, p1error interface{}) bool {
+			func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 				// The secret may take a short time to propagate
 				if r.StatusCode == 404 {
@@ -547,14 +547,10 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 				}
 
 				if p1error != nil {
-					errorObj, err := model.RemarshalErrorObj(p1error)
-					if err != nil {
-						tflog.Error(ctx, fmt.Sprintf("%s", err))
-						return false
-					}
+					var err error
 
 					// Permissions may not have propagated by this point
-					if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", errorObj.GetMessage()); err == nil && m {
+					if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
 						tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 						return true
 					}

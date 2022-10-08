@@ -131,15 +131,10 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 			return apiClient.ApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
 		},
 		"CreateApplicationRoleAssignment",
-		func(error interface{}) diag.Diagnostics {
-
-			errorObj, err := model.RemarshalErrorObj(error)
-			if err != nil {
-				return diag.FromErr(err)
-			}
+		func(error model.P1Error) diag.Diagnostics {
 
 			// Invalid role/scope combination
-			if details, ok := errorObj.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				if target, ok := details[0].GetTargetOk(); ok && *target == "scope" {
 					diags = diag.FromErr(fmt.Errorf("Incompatible role and scope combination. Role: %s / Scope: %s", applicationRoleAssignmentRole.GetId(), applicationRoleAssignmentScope.GetType()))
 
