@@ -9,6 +9,8 @@ NOTES:
 
 FEATURES:
 
+* **New Data Source:** `pingone_license` ([#164](https://github.com/pingidentity/terraform-provider-pingone/issues/164))
+* **New Data Source:** `pingone_licenses` ([#164](https://github.com/pingidentity/terraform-provider-pingone/issues/164))
 * **New Data Source:** `pingone_user` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
 * **New Data Source:** `pingone_users` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
 * **New Resource:** `pingone_mfa_application_push_credential` ([#170](https://github.com/pingidentity/terraform-provider-pingone/issues/170))
