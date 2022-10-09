@@ -1428,13 +1428,13 @@ resource "pingone_application" "%[2]s-1" {
 }
 
 resource "pingone_mfa_application_push_credential" "%[2]s-1" {
-	environment_id = data.pingone_environment.general_test.id
-	application_id = pingone_application.%[2]s-1.id
-  
-	fcm {
-	  key = "dummykey"
-	}
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s-1.id
+
+  fcm {
+    key = "dummykey"
   }
+}
 
 resource "pingone_application" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
@@ -1505,13 +1505,13 @@ resource "pingone_application" "%[2]s-3" {
 }
 
 resource "pingone_mfa_application_push_credential" "%[2]s-3" {
-	environment_id = data.pingone_environment.general_test.id
-	application_id = pingone_application.%[2]s-3.id
-  
-	fcm {
-	  key = "dummykey"
-	}
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s-3.id
+
+  fcm {
+    key = "dummykey"
   }
+}
 
 resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1543,7 +1543,7 @@ resource "pingone_mfa_policy" "%[2]s" {
       push_enabled = true
       otp_enabled  = true
 
-      device_authorization_enabled = true
+      device_authorization_enabled            = true
       device_authorization_extra_verification = "restrictive"
 
       auto_enrollment_enabled = true
@@ -1585,8 +1585,8 @@ resource "pingone_mfa_policy" "%[2]s" {
   }
 
   depends_on = [
-	pingone_mfa_application_push_credential.%[2]s-1,
-	pingone_mfa_application_push_credential.%[2]s-3
+    pingone_mfa_application_push_credential.%[2]s-1,
+    pingone_mfa_application_push_credential.%[2]s-3
   ]
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
