@@ -9,7 +9,53 @@ description: |-
 
 Resource to create and manage MFA Policies in a PingOne Environment.
 
-## Example Usage
+## Example Usage - Basic Policy
+
+The following example enables the Platform Biometrics, Security Key FIDO2 and Authenticator TOTP factors. 
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ...
+}
+
+resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
+  environment_id = pingone_environment.my_environment.id
+  name           = "My awesome MFA policy"
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = true
+  }
+
+  security_key {
+    enabled = true
+  }
+
+  platform {
+    enabled = true
+  }
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+}
+```
+
+## Example Usage - Mobile Authenticator
+
+The following example configures and enables the Mobile Authenticator (using PingOne MFA SDK), Platform Biometrics, Security Key FIDO2 and Authenticator TOTP factors. 
 
 ```terraform
 resource "pingone_environment" "my_environment" {
@@ -47,9 +93,34 @@ resource "pingone_application" "my_mobile_application" {
   }
 }
 
+resource "pingone_mfa_application_push_credential" "example_fcm" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_mobile_application.id
+
+  fcm {
+    key = var.fcm_key
+  }
+}
+
+resource "pingone_mfa_application_push_credential" "example_apns" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_mobile_application.id
+
+  apns {
+    key               = var.apns_key
+    team_id           = var.apns_team_id
+    token_signing_key = var.apns_token_signing_key
+  }
+}
+
 resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
   environment_id = pingone_environment.my_environment.id
   name           = "My awesome MFA policy"
+
+  depends_on = [
+    pingone_mfa_application_push_credential.example_fcm,
+    pingone_mfa_application_push_credential.example_apns,
+  ]
 
   mobile {
     enabled = true
@@ -103,15 +174,15 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
 
 ### Required
 
-- `email` (Block List, Min: 1, Max: 1) Email device authentication policy settings. (see [below for nested schema](#nestedblock--email))
+- `email` (Block List, Min: 1, Max: 1) Email OTP authentication policy settings. (see [below for nested schema](#nestedblock--email))
 - `environment_id` (String) The ID of the environment to create the sign on policy in.
-- `mobile` (Block List, Min: 1, Max: 1) Mobile device authentication policy settings. (see [below for nested schema](#nestedblock--mobile))
+- `mobile` (Block List, Min: 1, Max: 1) Mobile authenticator device policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource. (see [below for nested schema](#nestedblock--mobile))
 - `name` (String) A string that specifies the MFA policy's name.
-- `platform` (Block List, Min: 1, Max: 1) Platform device authentication policy settings. (see [below for nested schema](#nestedblock--platform))
-- `security_key` (Block List, Min: 1, Max: 1) Security key device authentication policy settings. (see [below for nested schema](#nestedblock--security_key))
-- `sms` (Block List, Min: 1, Max: 1) SMS device authentication policy settings. (see [below for nested schema](#nestedblock--sms))
-- `totp` (Block List, Min: 1, Max: 1) TOTP device authentication policy settings. (see [below for nested schema](#nestedblock--totp))
-- `voice` (Block List, Min: 1, Max: 1) Voice device authentication policy settings. (see [below for nested schema](#nestedblock--voice))
+- `platform` (Block List, Min: 1, Max: 1) Platform biometrics authentication policy settings. (see [below for nested schema](#nestedblock--platform))
+- `security_key` (Block List, Min: 1, Max: 1) Security key (FIDO2) authentication policy settings. (see [below for nested schema](#nestedblock--security_key))
+- `sms` (Block List, Min: 1, Max: 1) SMS OTP authentication policy settings. (see [below for nested schema](#nestedblock--sms))
+- `totp` (Block List, Min: 1, Max: 1) TOTP authenticator policy settings. (see [below for nested schema](#nestedblock--totp))
+- `voice` (Block List, Min: 1, Max: 1) Voice OTP authentication policy settings. (see [below for nested schema](#nestedblock--voice))
 
 ### Read-Only
 
