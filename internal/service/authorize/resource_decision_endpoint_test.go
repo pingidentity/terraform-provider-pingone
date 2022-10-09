@@ -10,7 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
@@ -24,8 +25,12 @@ func testAccCheckDecisionEndpointDestroy(s *terraform.State) error {
 	}
 
 	apiClient := p1Client.API.AuthorizeAPIClient
+	ctx = context.WithValue(ctx, authorize.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
+	})
+
 	apiClientManagement := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
+	ctxManagement := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
@@ -34,7 +39,7 @@ func testAccCheckDecisionEndpointDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, rEnv, err := apiClientManagement.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
+		_, rEnv, err := apiClientManagement.EnvironmentsApi.ReadOneEnvironment(ctxManagement, rs.Primary.Attributes["environment_id"]).Execute()
 
 		if err != nil {
 

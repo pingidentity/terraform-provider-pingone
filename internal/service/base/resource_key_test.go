@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	pingone "github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
@@ -25,7 +24,7 @@ func testAccCheckKeyDestroy(s *terraform.State) error {
 	}
 
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, pingone.ContextServerVariables, map[string]string{
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
 
