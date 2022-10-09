@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
@@ -346,7 +347,7 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 			return nil, r, err
 		},
 		"DeleteSignOnPolicyAction",
-		func(error management.P1Error) diag.Diagnostics {
+		func(error model.P1Error) diag.Diagnostics {
 			var diags diag.Diagnostics
 
 			// Deleted outside of TF

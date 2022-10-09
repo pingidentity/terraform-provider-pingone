@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -105,7 +106,7 @@ func resourceCustomDomainSSLCreate(ctx context.Context, d *schema.ResourceData, 
 			return apiClient.CustomDomainsApi.UpdateDomain(ctx, d.Get("environment_id").(string), d.Get("custom_domain_id").(string)).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_CERTIFICATE_IMPORTJSON).CustomDomainCertificateRequest(customDomainCertificateRequest).Execute()
 		},
 		"UpdateDomain",
-		func(error management.P1Error) diag.Diagnostics {
+		func(error model.P1Error) diag.Diagnostics {
 
 			// Cannot validate against the authoritative name service
 			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {

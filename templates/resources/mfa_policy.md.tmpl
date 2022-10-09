@@ -1,0 +1,32 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "MFA"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage - Basic Policy
+
+The following example enables the Platform Biometrics, Security Key FIDO2 and Authenticator TOTP factors. 
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-basic-example.tf") }}
+
+## Example Usage - Mobile Authenticator
+
+The following example configures and enables the Mobile Authenticator (using PingOne MFA SDK), Platform Biometrics, Security Key FIDO2 and Authenticator TOTP factors. 
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-mobile-authenticator.tf") }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import is supported using the following syntax:
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
+{{- end }}
