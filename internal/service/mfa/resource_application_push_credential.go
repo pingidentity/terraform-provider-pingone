@@ -59,11 +59,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 							Required:    true,
 							Sensitive:   true,
 							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-								if old == "DUMMY_SUPPRESS_VALUE" {
-									return true
-								}
-
-								return false
+								return old == "DUMMY_SUPPRESS_VALUE"
 							},
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
@@ -85,11 +81,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 							Required:    true,
 							Sensitive:   true,
 							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-								if old == "DUMMY_SUPPRESS_VALUE" {
-									return true
-								}
-
-								return false
+								return old == "DUMMY_SUPPRESS_VALUE"
 							},
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
@@ -98,11 +90,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-								if old == "DUMMY_SUPPRESS_VALUE" {
-									return true
-								}
-
-								return false
+								return old == "DUMMY_SUPPRESS_VALUE"
 							},
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
@@ -112,11 +100,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 							Required:    true,
 							Sensitive:   true,
 							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-								if old == "DUMMY_SUPPRESS_VALUE" {
-									return true
-								}
-
-								return false
+								return old == "DUMMY_SUPPRESS_VALUE"
 							},
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 						},
