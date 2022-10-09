@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -130,7 +131,7 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 			return apiClient.ApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
 		},
 		"CreateApplicationRoleAssignment",
-		func(error management.P1Error) diag.Diagnostics {
+		func(error model.P1Error) diag.Diagnostics {
 
 			// Invalid role/scope combination
 			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
