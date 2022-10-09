@@ -188,46 +188,46 @@ func testAccApplicationPushCredentialConfig_FCM(resourceName, name, key string) 
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			description    = "My test OIDC app for MFA Policy"
-			tags           = []
-			login_page_url = "https://www.pingidentity.com"
-		  
-			enabled = true
-		  
-			oidc_options {
-			  type                        = "NATIVE_APP"
-			  grant_types                 = ["CLIENT_CREDENTIALS"]
-			  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-		  
-			  mobile_app {
-				bundle_id    = "com.%[2]s.bundle"
-				package_name = "com.%[2]s.package"
-		  
-				passcode_refresh_seconds = 45
-		  
-				integrity_detection {
-				  enabled = true
-				  cache_duration {
-					amount = 30
-					units  = "HOURS"
-				  }
-				}
-			  }
-		  
-			  bundle_id    = "com.%[2]s.bundle"
-			  package_name = "com.%[2]s.package"
-			}
-		  }
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id    = "com.%[2]s.bundle"
+      package_name = "com.%[2]s.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
 
 resource "pingone_mfa_application_push_credential" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
   fcm {
-	key = "%[4]s"
+    key = "%[4]s"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
 }
@@ -236,48 +236,48 @@ func testAccApplicationPushCredentialConfig_APNS(resourceName, name, key string)
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			description    = "My test OIDC app for MFA Policy"
-			tags           = []
-			login_page_url = "https://www.pingidentity.com"
-		  
-			enabled = true
-		  
-			oidc_options {
-			  type                        = "NATIVE_APP"
-			  grant_types                 = ["CLIENT_CREDENTIALS"]
-			  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-		  
-			  mobile_app {
-				bundle_id    = "com.%[2]s.bundle"
-				package_name = "com.%[2]s.package"
-		  
-				passcode_refresh_seconds = 45
-		  
-				integrity_detection {
-				  enabled = true
-				  cache_duration {
-					amount = 30
-					units  = "HOURS"
-				  }
-				}
-			  }
-		  
-			  bundle_id    = "com.%[2]s.bundle"
-			  package_name = "com.%[2]s.package"
-			}
-		  }
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id    = "com.%[2]s.bundle"
+      package_name = "com.%[2]s.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
 
 resource "pingone_mfa_application_push_credential" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
   apns {
-	key = "%[4]s"
-	team_id = "team.id.updated"
-	token_signing_key = "-----BEGIN PRIVATE KEY-----%[4]s-----END PRIVATE KEY-----"
+    key               = "%[4]s"
+    team_id           = "team.id.updated"
+    token_signing_key = "-----BEGIN PRIVATE KEY-----%[4]s-----END PRIVATE KEY-----"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
 }
