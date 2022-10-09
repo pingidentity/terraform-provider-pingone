@@ -11,12 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 )
 
-type Retryable func(context.Context, *http.Response, *management.P1Error) bool
+type Retryable func(context.Context, *http.Response, *model.P1Error) bool
 
 var (
-	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 		// Gateway errors
 		if r.StatusCode >= 502 && r.StatusCode <= 504 {
@@ -27,7 +29,7 @@ var (
 		return false
 	}
 
-	DefaultCreateReadRetryable = func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+	DefaultCreateReadRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 		if p1error != nil {
 			var err error
@@ -47,7 +49,7 @@ var (
 		return false
 	}
 
-	RoleAssignmentRetryable = func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+	RoleAssignmentRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 		if p1error != nil {
 			var err error
@@ -88,28 +90,55 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 	err := resource.RetryContext(ctx, timeout, func() *resource.RetryError {
 		var err error
 
+		// error could be management, mfa, authorize
 		resp, r, err = f()
 
 		if err != nil || r.StatusCode >= 300 {
 
-			var model management.P1Error
+			var errorModel *model.P1Error
+			var err1 error
 
 			switch t := err.(type) {
 			case *management.GenericOpenAPIError:
-				error := t
 
-				if error.Model() != nil {
-					model = error.Model().(management.P1Error)
+				if t.Model() != nil {
+					errorModel, err1 = model.RemarshalErrorObj(t.Model().(management.P1Error))
+					if err1 != nil {
+						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						return resource.NonRetryableError(err)
+					}
+				}
+
+				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
+				if err1 != nil {
+					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					return resource.NonRetryableError(err)
+				}
+
+			case *mfa.GenericOpenAPIError:
+
+				if t.Model() != nil {
+					errorModel, err1 = model.RemarshalErrorObj(t.Model().(mfa.P1Error))
+					if err1 != nil {
+						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						return resource.NonRetryableError(err)
+					}
+				}
+
+				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
+				if err1 != nil {
+					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					return resource.NonRetryableError(err)
 				}
 
 			case *url.Error:
 				tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s", t.Err.Error()))
 
 			default:
-				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error %+v", t))
+				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (retry) %+v", t))
 			}
 
-			if (model.Id != nil || r != nil) && (isRetryable(ctx, r, &model) || DefaultRetryable(ctx, r, &model)) {
+			if errorModel != nil && (errorModel.Id != nil || r != nil) && (isRetryable(ctx, r, errorModel) || DefaultRetryable(ctx, r, errorModel)) {
 				tflog.Warn(ctx, "Retrying ... ")
 				return resource.RetryableError(err)
 			}

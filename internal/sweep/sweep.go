@@ -48,7 +48,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 		},
 		"ReadAllEnvironments",
 		sdk.CustomErrorResourceNotFoundWarning,
-		func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+		func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 			if p1error != nil {
 				var err error
@@ -115,7 +115,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 			return apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
 		},
 		"CreateEnvironmentActiveLicense",
-		func(error management.P1Error) diag.Diagnostics {
+		func(error model.P1Error) diag.Diagnostics {
 
 			// Invalid region
 			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {

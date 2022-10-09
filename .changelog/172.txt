@@ -1,0 +1,3 @@
+```release-note:bug
+resource/pingone_role_assignment_user: Corrected import command on registry documentation.
+```

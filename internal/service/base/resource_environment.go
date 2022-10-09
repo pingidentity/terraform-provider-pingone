@@ -216,7 +216,7 @@ func resourcePingOneEnvironmentCreate(ctx context.Context, d *schema.ResourceDat
 			return apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
 		},
 		"CreateEnvironmentActiveLicense",
-		func(error management.P1Error) diag.Diagnostics {
+		func(error model.P1Error) diag.Diagnostics {
 
 			// Invalid region
 			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
@@ -608,10 +608,11 @@ func resourcePingOneEnvironmentImport(ctx context.Context, d *schema.ResourceDat
 }
 
 var (
-	retryEnvironmentDefault = func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+	retryEnvironmentDefault = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+		var err error
 
 		if p1error != nil {
-			var err error
 
 			// Permissions may not have propagated by this point
 			if m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", p1error.GetMessage()); err == nil && m {

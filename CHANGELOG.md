@@ -3,11 +3,20 @@
 NOTES:
 
 * Documentation: Organised registry documentation into subcategories ([#169](https://github.com/pingidentity/terraform-provider-pingone/issues/169))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.10.0 => v0.11.0 ([#170](https://github.com/pingidentity/terraform-provider-pingone/issues/170))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.5.1 => v0.6.0 ([#170](https://github.com/pingidentity/terraform-provider-pingone/issues/170))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.8 => v0.4.0 ([#170](https://github.com/pingidentity/terraform-provider-pingone/issues/170))
 
 FEATURES:
 
 * **New Data Source:** `pingone_user` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
 * **New Data Source:** `pingone_users` ([#168](https://github.com/pingidentity/terraform-provider-pingone/issues/168))
+* **New Resource:** `pingone_mfa_application_push_credential` ([#170](https://github.com/pingidentity/terraform-provider-pingone/issues/170))
+* **New Resource:** `pingone_mfa_policy` ([#170](https://github.com/pingidentity/terraform-provider-pingone/issues/170))
+
+BUG FIXES:
+
+* resource/pingone_role_assignment_user: Corrected import command on registry documentation. ([#172](https://github.com/pingidentity/terraform-provider-pingone/issues/172))
 
 ## 0.5.2 (04 October 2022)
 

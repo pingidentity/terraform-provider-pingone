@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -537,7 +538,7 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			},
 			"ReadApplicationSecret",
 			sdk.CustomErrorResourceNotFoundWarning,
-			func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+			func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 				// The secret may take a short time to propagate
 				if r.StatusCode == 404 {
