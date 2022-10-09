@@ -1,0 +1,7 @@
+```release-note:new-data-source
+pingone_license
+```
+
+```release-note:new-data-source
+pingone_licenses
+```
