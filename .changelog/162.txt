@@ -1,0 +1,11 @@
+```release-note:new-resource
+pingone_language
+```
+
+```release-note:new-resource
+pingone_language_update
+```
+
+```release-note:new-data-source
+pingone_language
+```

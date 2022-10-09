@@ -10,16 +10,16 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 )
 
 type SDKInterfaceFunc func() (interface{}, *http.Response, error)
-type CustomError func(management.P1Error) diag.Diagnostics
+type CustomError func(model.P1Error) diag.Diagnostics
 
 var (
-	DefaultCustomError = func(error management.P1Error) diag.Diagnostics { return nil }
+	DefaultCustomError = func(error model.P1Error) diag.Diagnostics { return nil }
 
-	CustomErrorResourceNotFoundWarning = func(error management.P1Error) diag.Diagnostics {
+	CustomErrorResourceNotFoundWarning = func(error model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
 		// Deleted outside of TF
@@ -35,7 +35,7 @@ var (
 		return nil
 	}
 
-	CustomErrorInvalidValue = func(error management.P1Error) diag.Diagnostics {
+	CustomErrorInvalidValue = func(error model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
 		// Value not allowed
@@ -77,16 +77,15 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 	if err != nil || r.StatusCode >= 300 {
 
 		switch t := err.(type) {
-		case *management.GenericOpenAPIError:
-			error := t
+		case *model.GenericOpenAPIError:
 
-			if error.Model() != nil {
-				model := error.Model().(management.P1Error)
+			if t.Model() != nil {
+				model := t.Model().(*model.P1Error)
 
 				summaryText := fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, model.GetMessage())
 				detailText := fmt.Sprintf("PingOne Error Details:\nID: %s\nCode: %s\nMessage: %s", model.GetId(), model.GetCode(), model.GetMessage())
 
-				diags = customError(model)
+				diags = customError(*model)
 				if diags != nil {
 					return nil, diags
 				}
@@ -114,7 +113,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, error.Error()),
+				Summary:  fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, t.Error()),
 				Detail:   fmt.Sprintf("Full response body: %+v", r.Body),
 			})
 
@@ -131,7 +130,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 			return nil, diags
 
 		default:
-			tflog.Warn(ctx, fmt.Sprintf("Detected unknown error %+v", t))
+			tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
 
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,

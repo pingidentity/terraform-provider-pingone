@@ -76,6 +76,9 @@ func New(version string) func() *schema.Provider {
 				"pingone_certificate_export":             base.DatasourceCertificateExport(),
 				"pingone_certificate_signing_request":    base.DatasourceCertificateSigningRequest(),
 				"pingone_environment":                    base.DatasourceEnvironment(),
+				"pingone_license":                        base.DatasourceLicense(),
+				"pingone_licenses":                       base.DatasourceLicenses(),
+				"pingone_language":                       base.DatasourceLanguage(),
 				"pingone_role":                           base.DatasourceRole(),
 				"pingone_trusted_email_domain_dkim":      base.DatasourceTrustedEmailDomainDKIM(),
 				"pingone_trusted_email_domain_ownership": base.DatasourceTrustedEmailDomainOwnership(),
@@ -102,6 +105,8 @@ func New(version string) func() *schema.Provider {
 				"pingone_gateway_credential":           base.ResourceGatewayCredential(),
 				"pingone_gateway_role_assignment":      base.ResourceGatewayRoleAssignment(),
 				"pingone_key":                          base.ResourceKey(),
+				"pingone_language":                     base.ResourceLanguage(),
+				"pingone_language_update":              base.ResourceLanguageUpdate(),
 				"pingone_role_assignment_user":         base.ResourceRoleAssignmentUser(),
 				"pingone_trusted_email_domain":         base.ResourceTrustedEmailDomain(),
 				"pingone_webhook":                      base.ResourceWebhook(),
@@ -124,7 +129,9 @@ func New(version string) func() *schema.Provider {
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
 				"pingone_user":                                  sso.ResourceUser(),
 
-				"pingone_mfa_settings": mfa.ResourceMFASettings(),
+				"pingone_mfa_application_push_credential": mfa.ResourceApplicationPushCredential(),
+				"pingone_mfa_policy":                      mfa.ResourceMFAPolicy(),
+				"pingone_mfa_settings":                    mfa.ResourceMFASettings(),
 			},
 		}
 
