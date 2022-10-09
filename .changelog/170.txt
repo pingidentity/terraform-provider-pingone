@@ -1,3 +1,7 @@
 ```release-note:new-resource
 pingone_mfa_policy
 ```
+
+```release-note:new-resource
+pingone_mfa_application_push_credential
+```

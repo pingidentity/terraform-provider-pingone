@@ -130,7 +130,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 			return nil, diags
 
 		default:
-			tflog.Warn(ctx, fmt.Sprintf("Detected unknown error %+v", t))
+			tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
 
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,

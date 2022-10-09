@@ -121,8 +121,9 @@ func New(version string) func() *schema.Provider {
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
 				"pingone_user":                                  sso.ResourceUser(),
 
-				"pingone_mfa_policy":   mfa.ResourceMFAPolicy(),
-				"pingone_mfa_settings": mfa.ResourceMFASettings(),
+				"pingone_mfa_application_push_credential": mfa.ResourceApplicationPushCredential(),
+				"pingone_mfa_policy":                      mfa.ResourceMFAPolicy(),
+				"pingone_mfa_settings":                    mfa.ResourceMFASettings(),
 			},
 		}
 

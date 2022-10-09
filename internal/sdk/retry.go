@@ -96,40 +96,49 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 		if err != nil || r.StatusCode >= 300 {
 
 			var errorModel *model.P1Error
+			var err1 error
 
 			switch t := err.(type) {
 			case *management.GenericOpenAPIError:
 
 				if t.Model() != nil {
-					errorModel, _ = model.RemarshalErrorObj(t.Model().(management.P1Error))
+					errorModel, err1 = model.RemarshalErrorObj(t.Model().(management.P1Error))
+					if err1 != nil {
+						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						return resource.NonRetryableError(err)
+					}
 				}
 
-				var err1 error
 				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
 				if err1 != nil {
 					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					return resource.NonRetryableError(err)
 				}
 
 			case *mfa.GenericOpenAPIError:
 
 				if t.Model() != nil {
-					errorModel, _ = model.RemarshalErrorObj(t.Model().(mfa.P1Error))
+					errorModel, err1 = model.RemarshalErrorObj(t.Model().(mfa.P1Error))
+					if err1 != nil {
+						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						return resource.NonRetryableError(err)
+					}
 				}
 
-				var err1 error
 				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
 				if err1 != nil {
 					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					return resource.NonRetryableError(err)
 				}
 
 			case *url.Error:
 				tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s", t.Err.Error()))
 
 			default:
-				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error %+v", t))
+				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (retry) %+v", t))
 			}
 
-			if (errorModel.Id != nil || r != nil) && (isRetryable(ctx, r, errorModel) || DefaultRetryable(ctx, r, errorModel)) {
+			if errorModel != nil && (errorModel.Id != nil || r != nil) && (isRetryable(ctx, r, errorModel) || DefaultRetryable(ctx, r, errorModel)) {
 				tflog.Warn(ctx, "Retrying ... ")
 				return resource.RetryableError(err)
 			}
