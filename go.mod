@@ -10,10 +10,10 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.23.0
 	github.com/katbyte/terrafmt v0.5.2
-	github.com/patrickcping/pingone-go-sdk-v2 v0.4.0
+	github.com/patrickcping/pingone-go-sdk-v2 v0.4.1
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.11.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.6.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.11.1
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.6.1
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.41.0
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
