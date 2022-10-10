@@ -1620,7 +1620,7 @@ resource "pingone_mfa_policy" "%[2]s" {
       push_enabled = false
       otp_enabled  = true
 
-	  integrity_detection = "permissive"
+      integrity_detection = "permissive"
     }
 
     application {
@@ -1726,7 +1726,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 
       auto_enrollment_enabled = true
 
-	  integrity_detection = "permissive"
+      integrity_detection = "permissive"
     }
   }
 
@@ -1771,10 +1771,10 @@ resource "pingone_application" "%[2]s" {
 
       integrity_detection {
         enabled = true
-		cache_duration {
-			amount = 30
-			units  = "HOURS"
-		  }
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
       }
     }
 
@@ -2085,7 +2085,7 @@ resource "pingone_mfa_policy" "%[2]s" {
       push_enabled = false
       otp_enabled  = true
 
-      device_authorization_enabled            = false
+      device_authorization_enabled = false
 
       auto_enrollment_enabled = true
     }
