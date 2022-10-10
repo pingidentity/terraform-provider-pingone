@@ -215,7 +215,7 @@ resource "pingone_mfa_settings" "%[3]s" {
   }
 
   lockout {
-    failure_count    = 13
+    failure_count = 13
   }
 
   authentication {
