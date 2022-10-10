@@ -3,6 +3,7 @@
 NOTES:
 
 * Documentation: Organised registry documentation into subcategories ([#169](https://github.com/pingidentity/terraform-provider-pingone/issues/169))
+* bump `github.com/golangci/golangci-lint` v1.49.0 => v1.50.0 ([#176](https://github.com/pingidentity/terraform-provider-pingone/issues/176))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.10.0 => v0.11.0 ([#170](https://github.com/pingidentity/terraform-provider-pingone/issues/170))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.5.1 => v0.6.0 ([#170](https://github.com/pingidentity/terraform-provider-pingone/issues/170))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.3.8 => v0.4.0 ([#170](https://github.com/pingidentity/terraform-provider-pingone/issues/170))
