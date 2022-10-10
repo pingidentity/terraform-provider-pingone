@@ -555,14 +555,14 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"device_authorization_enabled": regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
 						"auto_enrollment_enabled":                 regexp.MustCompile(`^true$`),
-						"integrity_detection":                     regexp.MustCompile(`^restrictive$`),
+						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 						"push_enabled": regexp.MustCompile(`^false$`),
 						"otp_enabled":  regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
-						"integrity_detection":                     regexp.MustCompile(`^restrictive$`),
+						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
@@ -577,6 +577,70 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccMFAPolicy_Mobile_IntegrityDetectionErrors(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckMFAPolicyDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name),
+				// Integrity detection (`mobile.application.integrity_detection`) has no effect when the Application resource has integrity detection disabled
+				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) has no effect when the Application resource has integrity detection disabled"),
+			},
+			{
+				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name),
+				// Integrity detection (`mobile.application.integrity_detection`) must be set when the Application resource has integrity detection enabled
+				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) must be set when the Application resource has integrity detection enabled"),
+			},
+		},
+	})
+}
+
+func TestAccMFAPolicy_Mobile_BadApplicationErrors(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckMFAPolicyDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name),
+				// Appliation referenced in `mobile.application.id` does not exist
+				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` does not exist"),
+			},
+			{
+				Config: testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name),
+				// Appliation referenced in `mobile.application.id` is not of type OIDC
+				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` is not of type OIDC"),
+			},
+			{
+				Config: testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name),
+				// Appliation referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type
+				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type"),
+			},
+			{
+				Config: testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name),
+				// Appliation referenced in `mobile.application.id` does not contain mobile application configuration
+				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` does not contain mobile application configuration"),
 			},
 		},
 	})
@@ -647,14 +711,14 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"device_authorization_enabled": regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
 						"auto_enrollment_enabled":                 regexp.MustCompile(`^true$`),
-						"integrity_detection":                     regexp.MustCompile(`^restrictive$`),
+						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 						"push_enabled": regexp.MustCompile(`^false$`),
 						"otp_enabled":  regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
-						"integrity_detection":                     regexp.MustCompile(`^restrictive$`),
+						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
@@ -703,14 +767,14 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"device_authorization_enabled": regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
 						"auto_enrollment_enabled":                 regexp.MustCompile(`^true$`),
-						"integrity_detection":                     regexp.MustCompile(`^restrictive$`),
+						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 						"push_enabled": regexp.MustCompile(`^false$`),
 						"otp_enabled":  regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
-						"integrity_detection":                     regexp.MustCompile(`^restrictive$`),
+						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
@@ -1419,11 +1483,7 @@ resource "pingone_application" "%[2]s-1" {
       passcode_refresh_seconds = 45
 
       integrity_detection {
-        enabled = true
-        cache_duration {
-          amount = 30
-          units  = "HOURS"
-        }
+        enabled = false
       }
     }
 
@@ -1552,8 +1612,6 @@ resource "pingone_mfa_policy" "%[2]s" {
       device_authorization_extra_verification = "restrictive"
 
       auto_enrollment_enabled = true
-
-      integrity_detection = "restrictive"
     }
 
     application {
@@ -1561,6 +1619,8 @@ resource "pingone_mfa_policy" "%[2]s" {
 
       push_enabled = false
       otp_enabled  = true
+
+      integrity_detection = "permissive"
     }
 
     application {
@@ -1593,6 +1653,455 @@ resource "pingone_mfa_policy" "%[2]s" {
     pingone_mfa_application_push_credential.%[2]s-1,
     pingone_mfa_application_push_credential.%[2]s-3
   ]
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id    = "com.%[2]s.bundle"
+      package_name = "com.%[2]s.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = false
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = true
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 125
+    otp_failure_cooldown_timeunit = "SECONDS"
+
+    application {
+      id = pingone_application.%[2]s.id
+
+      push_enabled = true
+      otp_enabled  = true
+
+      device_authorization_enabled            = true
+      device_authorization_extra_verification = "restrictive"
+
+      auto_enrollment_enabled = true
+
+      integrity_detection = "permissive"
+    }
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id    = "com.%[2]s.bundle"
+      package_name = "com.%[2]s.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = true
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 125
+    otp_failure_cooldown_timeunit = "SECONDS"
+
+    application {
+      id = pingone_application.%[2]s.id
+
+      push_enabled = true
+      otp_enabled  = true
+
+      device_authorization_enabled            = true
+      device_authorization_extra_verification = "restrictive"
+
+      auto_enrollment_enabled = true
+    }
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = true
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 125
+    otp_failure_cooldown_timeunit = "SECONDS"
+
+    application {
+      id = "9bf6c075-78ba-4cd6-a5b1-96ec144d66ef" // Fake ID
+
+      push_enabled = true
+      otp_enabled  = true
+
+      device_authorization_enabled            = true
+      device_authorization_extra_verification = "restrictive"
+
+      auto_enrollment_enabled = true
+    }
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test SAML app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  saml_options {
+    acs_urls           = ["https://my-saas-app.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:localhost"
+  }
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = true
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 125
+    otp_failure_cooldown_timeunit = "SECONDS"
+
+    application {
+      id = pingone_application.%[2]s.id
+
+      push_enabled = true
+      otp_enabled  = true
+
+      device_authorization_enabled            = true
+      device_authorization_extra_verification = "restrictive"
+
+      auto_enrollment_enabled = true
+    }
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "WORKER"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = true
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 125
+    otp_failure_cooldown_timeunit = "SECONDS"
+
+    application {
+      id = pingone_application.%[2]s.id
+
+      push_enabled = true
+      otp_enabled  = true
+
+      device_authorization_enabled            = true
+      device_authorization_extra_verification = "restrictive"
+
+      auto_enrollment_enabled = true
+    }
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = true
+
+    otp_failure_count = 5
+
+    otp_failure_cooldown_duration = 125
+    otp_failure_cooldown_timeunit = "SECONDS"
+
+    application {
+      id = pingone_application.%[2]s.id
+
+      push_enabled = false
+      otp_enabled  = true
+
+      device_authorization_enabled = false
+
+      auto_enrollment_enabled = true
+    }
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = false
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
