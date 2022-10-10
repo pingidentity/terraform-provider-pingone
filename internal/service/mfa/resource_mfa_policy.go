@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -138,7 +139,6 @@ func ResourceMFAPolicy() *schema.Resource {
 										Description:      "Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response. Set the value to `permissive` if you want to allow the process to continue. Set the value to `restrictive` if you want to block the user in such situations.",
 										Type:             schema.TypeString,
 										Optional:         true,
-										Default:          "restrictive",
 										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"permissive", "restrictive"}, false)),
 									},
 								},
@@ -270,9 +270,17 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
+
+	managementApiClient := p1Client.API.ManagementAPIClient
+	ctxManagement := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
+	})
 	var diags diag.Diagnostics
 
-	mfaPolicy := expandMFAPolicy(d)
+	mfaPolicy, diags := expandMFAPolicy(ctxManagement, managementApiClient, d)
+	if diags.HasError() {
+		return diags
+	}
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
@@ -377,9 +385,17 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
+
+	managementApiClient := p1Client.API.ManagementAPIClient
+	ctxManagement := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
+	})
 	var diags diag.Diagnostics
 
-	mfaPolicy := expandMFAPolicy(d)
+	mfaPolicy, diags := expandMFAPolicy(ctxManagement, managementApiClient, d)
+	if diags.HasError() {
+		return diags
+	}
 
 	_, diags = sdk.ParseResponse(
 		ctx,
@@ -442,14 +458,20 @@ func resourceMFAPolicyImport(ctx context.Context, d *schema.ResourceData, meta i
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandMFAPolicy(d *schema.ResourceData) *mfa.DeviceAuthenticationPolicy {
+func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	mobile, diags := expandMFAPolicyMobileDevice(d.Get("mobile").([]interface{})[0], ctx, apiClient, d.Get("environment_id").(string))
+	if diags.HasError() {
+		return nil, diags
+	}
 
 	item := mfa.NewDeviceAuthenticationPolicy(
 		d.Get("name").(string),
 		*expandMFAPolicyOfflineDevice(d.Get("sms").([]interface{})[0]),
 		*expandMFAPolicyOfflineDevice(d.Get("voice").([]interface{})[0]),
 		*expandMFAPolicyOfflineDevice(d.Get("email").([]interface{})[0]),
-		*expandMFAPolicyMobileDevice(d.Get("mobile").([]interface{})[0]),
+		*mobile,
 		*expandMFAPolicyTOTPDevice(d.Get("totp").([]interface{})[0]),
 		*expandMFAPolicyFIDODevice(d.Get("security_key").([]interface{})[0]),
 		*expandMFAPolicyFIDODevice(d.Get("platform").([]interface{})[0]),
@@ -457,7 +479,7 @@ func expandMFAPolicy(d *schema.ResourceData) *mfa.DeviceAuthenticationPolicy {
 		false,
 	)
 
-	return item
+	return item, diags
 }
 
 func expandMFAPolicyOfflineDevice(v interface{}) *mfa.DeviceAuthenticationPolicyOfflineDevice {
@@ -477,7 +499,8 @@ func expandMFAPolicyOfflineDevice(v interface{}) *mfa.DeviceAuthenticationPolicy
 	return item
 }
 
-func expandMFAPolicyMobileDevice(v interface{}) *mfa.DeviceAuthenticationPolicyMobile {
+func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *management.APIClient, environmentID string) (*mfa.DeviceAuthenticationPolicyMobile, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	obj := v.(map[string]interface{})
 
@@ -509,6 +532,11 @@ func expandMFAPolicyMobileDevice(v interface{}) *mfa.DeviceAuthenticationPolicyM
 
 			item := *mfa.NewDeviceAuthenticationPolicyMobileApplicationsInner(c2["id"].(string))
 
+			application, diags := checkApplicationForMobileApp(ctx, apiClient, environmentID, c2["id"].(string))
+			if diags.HasError() {
+				return nil, diags
+			}
+
 			if c3, ok := c2["push_enabled"].(bool); ok {
 				item.SetPush(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPush(c3))
 			}
@@ -529,8 +557,30 @@ func expandMFAPolicyMobileDevice(v interface{}) *mfa.DeviceAuthenticationPolicyM
 				item.SetAutoEnrollment(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerAutoEnrollment(c3))
 			}
 
-			if c3, ok := c2["integrity_detection"].(string); ok && c3 != "" {
-				item.SetIntegrityDetection(mfa.EnumMFADevicePolicyMobileIntegrityDetection(c3))
+			c3, ok := c2["integrity_detection"].(string)
+			if application.GetMobile().IntegrityDetection.GetMode() == management.ENUMENABLEDSTATUS_ENABLED {
+
+				if ok && c3 != "" {
+					item.SetIntegrityDetection(mfa.EnumMFADevicePolicyMobileIntegrityDetection(c3))
+				} else {
+					// error - this must be set
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Integrity detection (`mobile.application.integrity_detection`) must be set when the Application resource has integrity detection enabled",
+						Detail:   "The referenced mobile application (`mobile.application.id`) has integrity detection enabled. This policy must specify the level of integrity detection in the `mobile.application.integrity_detection` parameter.",
+					})
+					return nil, diags
+				}
+			} else {
+				if ok && c3 != "" {
+					// error - this has no effect
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Integrity detection (`mobile.application.integrity_detection`) has no effect when the Application resource has integrity detection disabled",
+						Detail:   "The referenced mobile application (`mobile.application.id`) has integrity detection disabled. Setting the `mobile.application.integrity_detection` parameter has no effect.",
+					})
+					return nil, diags
+				}
 			}
 
 			items = append(items, item)
@@ -539,7 +589,87 @@ func expandMFAPolicyMobileDevice(v interface{}) *mfa.DeviceAuthenticationPolicyM
 		item.SetApplications(items)
 	}
 
-	return item
+	return item, diags
+}
+
+func checkApplicationForMobileApp(ctx context.Context, apiClient *management.APIClient, environmentID, appID string) (*management.ApplicationOIDC, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	resp, diags := sdk.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentID, appID).Execute()
+		},
+		"ReadOneApplication",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if resp == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Appliation referenced in `mobile.application.id` does not exist",
+		})
+		return nil, diags
+	}
+
+	respObject := resp.(*management.ReadOneApplication200Response)
+
+	var oidcObject *management.ApplicationOIDC
+
+	// check if oidc
+	if respObject.ApplicationOIDC == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Appliation referenced in `mobile.application.id` is not of type OIDC",
+			Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
+		})
+		return nil, diags
+	} else {
+		oidcObject = respObject.ApplicationOIDC
+	}
+
+	// check if native
+	if respObject.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_NATIVE_APP && respObject.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_CUSTOM_APP {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Appliation referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type",
+			Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
+		})
+		return nil, diags
+	}
+
+	// check if mobile set and package/bundle set
+	if _, ok := respObject.ApplicationOIDC.GetMobileOk(); !ok {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Appliation referenced in `mobile.application.id` does not contain mobile application configuration",
+			Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
+		})
+		return nil, diags
+	}
+
+	if v, ok := respObject.ApplicationOIDC.GetMobileOk(); ok {
+
+		_, bundleIDOk := v.GetBundleIdOk()
+		_, packageNameOk := v.GetPackageNameOk()
+
+		if !bundleIDOk && !packageNameOk {
+
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Appliation referenced in `mobile.application.id` does not contain mobile application configuration",
+				Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
+			})
+			return nil, diags
+		}
+	}
+
+	return oidcObject, diags
 }
 
 func expandMFAPolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTotp {
