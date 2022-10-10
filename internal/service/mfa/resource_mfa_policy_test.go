@@ -1907,7 +1907,7 @@ resource "pingone_application" "%[2]s" {
   saml_options {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
-    sp_entity_id       = "sp:entity:localhost"
+    sp_entity_id       = "sp:%[2]s:localhost"
   }
 }
 
