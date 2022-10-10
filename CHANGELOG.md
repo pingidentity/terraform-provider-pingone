@@ -1,5 +1,15 @@
 ## 0.6.1 (Unreleased)
 
+NOTES:
+
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.11.0 => v0.11.1 ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.6.0 => v0.6.1 ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.4.0 => v0.4.1 ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
+
+BUG FIXES:
+
+* resource/pingone_mfa_settings: Made the `lockout` configuration block and `lockout.duration_seconds` optional in the schema. ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
+
 ## 0.6.0 (10 October 2022)
 
 NOTES:
