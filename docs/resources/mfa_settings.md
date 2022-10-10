@@ -39,8 +39,11 @@ resource "pingone_mfa_settings" "mfa_settings" {
 
 - `authentication` (Block List, Min: 1, Max: 1) An object that contains the device selection settings. (see [below for nested schema](#nestedblock--authentication))
 - `environment_id` (String) The ID of the environment to create the sign on policy in.
-- `lockout` (Block List, Min: 1, Max: 1) An object that contains lockout settings. (see [below for nested schema](#nestedblock--lockout))
 - `pairing` (Block List, Min: 1, Max: 1) An object that contains pairing settings. (see [below for nested schema](#nestedblock--pairing))
+
+### Optional
+
+- `lockout` (Block List, Max: 1) An object that contains lockout settings. (see [below for nested schema](#nestedblock--lockout))
 
 ### Read-Only
 
@@ -54,25 +57,28 @@ Required:
 - `device_selection` (String) A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments) and `PROMPT_TO_SELECT`.
 
 
-<a id="nestedblock--lockout"></a>
-### Nested Schema for `lockout`
-
-Required:
-
-- `duration_seconds` (Number) An integer that defines the number of seconds to keep the account in a locked state.
-- `failure_count` (Number) An integer that defines the maximum number of incorrect authentication attempts before the account is locked.
-
-
 <a id="nestedblock--pairing"></a>
 ### Nested Schema for `pairing`
 
 Required:
 
-- `pairing_key_format` (String) String that controls the type of pairing key issued. The valid values are NUMERIC (12-digit key) and ALPHANUMERIC (16-character alphanumeric key).
+- `pairing_key_format` (String) String that controls the type of pairing key issued. The valid values are `NUMERIC` (12-digit key) and `ALPHANUMERIC` (16-character alphanumeric key).
 
 Optional:
 
 - `max_allowed_devices` (Number) An integer that defines the maximum number of MFA devices each user can have. This can be any number up to 15. The default value is 5. Defaults to `5`.
+
+
+<a id="nestedblock--lockout"></a>
+### Nested Schema for `lockout`
+
+Required:
+
+- `failure_count` (Number) An integer that defines the maximum number of incorrect authentication attempts before the account is locked.
+
+Optional:
+
+- `duration_seconds` (Number) An integer that defines the number of seconds to keep the account in a locked state.
 
 ## Import
 

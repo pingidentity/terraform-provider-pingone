@@ -53,7 +53,7 @@ func ResourceMFASettings() *schema.Resource {
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 15)),
 						},
 						"pairing_key_format": {
-							Description:      fmt.Sprintf("String that controls the type of pairing key issued. The valid values are %s (12-digit key) and %s (16-character alphanumeric key).", string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_NUMERIC), string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_ALPHANUMERIC)),
+							Description:      fmt.Sprintf("String that controls the type of pairing key issued. The valid values are `%s` (12-digit key) and `%s` (16-character alphanumeric key).", string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_NUMERIC), string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_ALPHANUMERIC)),
 							Type:             schema.TypeString,
 							Required:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_NUMERIC), string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_ALPHANUMERIC)}, false)),
@@ -65,7 +65,7 @@ func ResourceMFASettings() *schema.Resource {
 				Description: "An object that contains lockout settings.",
 				Type:        schema.TypeList,
 				MaxItems:    1,
-				Required:    true,
+				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"failure_count": {
@@ -77,7 +77,7 @@ func ResourceMFASettings() *schema.Resource {
 						"duration_seconds": {
 							Description:      "An integer that defines the number of seconds to keep the account in a locked state.",
 							Type:             schema.TypeInt,
-							Required:         true,
+							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 					},
@@ -111,7 +111,11 @@ func resourceMFASettingsCreate(ctx context.Context, d *schema.ResourceData, meta
 	})
 	var diags diag.Diagnostics
 
-	mfaSettings := *mfa.NewMFASettings(expandMFASettingsAuthentication(d.Get("authentication").([]interface{})), expandMFASettingsLockout(d.Get("lockout").([]interface{})), expandMFASettingsPairing(d.Get("pairing").([]interface{})))
+	mfaSettings := *mfa.NewMFASettings(expandMFASettingsAuthentication(d.Get("authentication").([]interface{})), expandMFASettingsPairing(d.Get("pairing").([]interface{})))
+
+	if v, ok := d.GetOk("lockout"); ok {
+		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
+	}
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
@@ -164,7 +168,13 @@ func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta i
 	respObject := resp.(*mfa.MFASettings)
 
 	d.Set("pairing", flattenMFASettingPairing(respObject.GetPairing()))
-	d.Set("lockout", flattenMFASettingLockout(respObject.GetLockout()))
+
+	if v, ok := respObject.GetLockoutOk(); ok {
+		d.Set("lockout", flattenMFASettingLockout(*v))
+	} else {
+		d.Set("lockout", nil)
+	}
+
 	d.Set("authentication", flattenMFASettingAuthentication(respObject.GetAuthentication()))
 
 	return diags
@@ -178,7 +188,11 @@ func resourceMFASettingsUpdate(ctx context.Context, d *schema.ResourceData, meta
 	})
 	var diags diag.Diagnostics
 
-	mfaSettings := *mfa.NewMFASettings(expandMFASettingsAuthentication(d.Get("authentication").([]interface{})), expandMFASettingsLockout(d.Get("lockout").([]interface{})), expandMFASettingsPairing(d.Get("pairing").([]interface{})))
+	mfaSettings := *mfa.NewMFASettings(expandMFASettingsAuthentication(d.Get("authentication").([]interface{})), expandMFASettingsPairing(d.Get("pairing").([]interface{})))
+
+	if v, ok := d.GetOk("lockout"); ok {
+		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
+	}
 
 	_, diags = sdk.ParseResponse(
 		ctx,
@@ -248,7 +262,13 @@ func expandMFASettingsPairing(v []interface{}) mfa.MFASettingsPairing {
 func expandMFASettingsLockout(v []interface{}) mfa.MFASettingsLockout {
 	obj := v[0].(map[string]interface{})
 
-	return *mfa.NewMFASettingsLockout(int32(obj["failure_count"].(int)), int32(obj["duration_seconds"].(int)))
+	mfa := *mfa.NewMFASettingsLockout(int32(obj["failure_count"].(int)))
+
+	if v, ok := obj["duration_seconds"].(int); ok && v > 0 {
+		mfa.SetDurationSeconds(int32(v))
+	}
+
+	return mfa
 }
 
 func expandMFASettingsAuthentication(v []interface{}) mfa.MFASettingsAuthentication {
