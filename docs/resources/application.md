@@ -207,7 +207,7 @@ Optional:
 
 - `cache_duration` (Block List, Max: 1) Every attestation request entails a certain time tradeoff. You can choose to cache successful integrity detection calls for a predefined duration, between a minimum of 1 minute and a maximum of 48 hours. If integrity detection is ENABLED, the cache duration must be set. (see [below for nested schema](#nestedblock--oidc_options--mobile_app--integrity_detection--cache_duration))
 - `enabled` (Boolean) A boolean that specifies whether device integrity detection takes place on mobile devices. Defaults to `false`.
-- `excluded_platforms` (Set of String) You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `GOOGLE` and `IOS` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.
+- `excluded_platforms` (List of String) You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `GOOGLE` and `IOS` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.
 
 <a id="nestedblock--oidc_options--mobile_app--integrity_detection--cache_duration"></a>
 ### Nested Schema for `oidc_options.mobile_app.integrity_detection.cache_duration`

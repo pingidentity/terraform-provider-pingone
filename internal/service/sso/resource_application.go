@@ -299,7 +299,7 @@ func ResourceApplication() *schema.Resource {
 												},
 												"excluded_platforms": {
 													Description: fmt.Sprintf("You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `%s` and `%s` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.", string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE), string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_IOS)),
-													Type:        schema.TypeSet,
+													Type:        schema.TypeList,
 													MaxItems:    1,
 													Optional:    true,
 													Elem: &schema.Schema{
@@ -1068,10 +1068,10 @@ func expandMobile(s map[string]interface{}) (*management.ApplicationOIDCAllOfMob
 			integrityDetection.SetMode(mode)
 		}
 
-		if j, okJ := obj["excluded_platforms"].(*schema.Set); okJ && len(j.List()) > 0 && j.List()[0] != nil {
+		if j, okJ := obj["excluded_platforms"].([]interface{}); okJ && len(j) > 0 && j[0] != nil {
 			list := make([]management.EnumMobileIntegrityDetectionPlatform, 0)
 
-			for _, platform := range j.List() {
+			for _, platform := range j {
 				list = append(list, management.EnumMobileIntegrityDetectionPlatform(platform.(string)))
 			}
 
