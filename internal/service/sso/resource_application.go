@@ -277,6 +277,12 @@ func ResourceApplication() *schema.Resource {
 										Computed:     true,
 										ValidateFunc: validation.IntBetween(30, 60),
 									},
+									"universal_app_link": {
+										Description:      "A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code. The URI prefix can be set to a universal link with a valid value (which can be a URL address that starts with `HTTP://` or `HTTPS://`, such as `https://www.bxretail.org`), or an app schema, which is just a string and requires no special validation.",
+										Type:             schema.TypeString,
+										Optional:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+									},
 									"integrity_detection": {
 										Description: "Mobile application integrity detection settings.",
 										Type:        schema.TypeList,
@@ -290,6 +296,16 @@ func ResourceApplication() *schema.Resource {
 													Type:        schema.TypeBool,
 													Optional:    true,
 													Default:     false,
+												},
+												"excluded_platforms": {
+													Description: fmt.Sprintf("You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `%s` and `%s` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.", string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE), string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_IOS)),
+													Type:        schema.TypeList,
+													MaxItems:    1,
+													Optional:    true,
+													Elem: &schema.Schema{
+														Type:             schema.TypeString,
+														ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE), string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_IOS)}, false)),
+													},
 												},
 												"cache_duration": {
 													Description: "Every attestation request entails a certain time tradeoff. You can choose to cache successful integrity detection calls for a predefined duration, between a minimum of 1 minute and a maximum of 48 hours. If integrity detection is ENABLED, the cache duration must be set.",
@@ -1032,6 +1048,10 @@ func expandMobile(s map[string]interface{}) (*management.ApplicationOIDCAllOfMob
 		mobile.SetPasscodeRefreshDuration(*management.NewApplicationOIDCAllOfMobilePasscodeRefreshDuration(int32(v), management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS))
 	}
 
+	if v, ok := s["universal_app_link"].(string); ok && v != "" {
+		mobile.SetUriPrefix(v)
+	}
+
 	if v, ok := s["integrity_detection"].([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 
 		obj := v[0].(map[string]interface{})
@@ -1046,6 +1066,16 @@ func expandMobile(s map[string]interface{}) (*management.ApplicationOIDCAllOfMob
 				mode = management.ENUMENABLEDSTATUS_DISABLED
 			}
 			integrityDetection.SetMode(mode)
+		}
+
+		if j, okJ := obj["excluded_platforms"].([]interface{}); okJ && len(j) > 0 && j[0] != nil {
+			list := make([]management.EnumMobileIntegrityDetectionPlatform, 0)
+
+			for _, platform := range j {
+				list = append(list, management.EnumMobileIntegrityDetectionPlatform(platform.(string)))
+			}
+
+			integrityDetection.SetExcludedPlatforms(list)
 		}
 
 		if j, okJ := obj["cache_duration"].([]interface{}); okJ && len(j) > 0 && j[0] != nil {
@@ -1453,6 +1483,12 @@ func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) (interface{}, 
 		item["passcode_refresh_seconds"] = nil
 	}
 
+	if v, ok := mobile.GetUriPrefixOk(); ok {
+		item["universal_app_link"] = v
+	} else {
+		item["universal_app_link"] = nil
+	}
+
 	if v, ok := mobile.GetIntegrityDetectionOk(); ok {
 		item["integrity_detection"] = flattenMobileIntegrityDetection(v)
 	} else {
@@ -1475,6 +1511,19 @@ func flattenMobileIntegrityDetection(obj *management.ApplicationOIDCAllOfMobileI
 		}
 	} else {
 		item["enabled"] = nil
+	}
+
+	if v, ok := obj.GetExcludedPlatformsOk(); ok {
+
+		items := make([]string, 0)
+		for _, platform := range v {
+			items = append(items, string(platform))
+		}
+
+		item["excluded_platforms"] = items
+
+	} else {
+		item["excluded_platforms"] = nil
 	}
 
 	if v, ok := obj.GetCacheDurationOk(); ok {

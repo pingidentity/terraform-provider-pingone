@@ -1,0 +1,7 @@
+```release-note:enhancement
+resource/pingone_application: Add support for `universal_app_link` attribute for native mobile applications.
+```
+
+```release-note:enhancement
+resource/pingone_application: Add support for integrity detection `excluded_platforms` attribute for native mobile applications.
+```

@@ -198,6 +198,7 @@ Optional:
 - `integrity_detection` (Block List, Max: 1) Mobile application integrity detection settings. (see [below for nested schema](#nestedblock--oidc_options--mobile_app--integrity_detection))
 - `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `package_name` field.
 - `passcode_refresh_seconds` (Number) The amount of time a passcode should be displayed before being replaced with a new passcode - must be between 30 and 60.
+- `universal_app_link` (String) A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code. The URI prefix can be set to a universal link with a valid value (which can be a URL address that starts with `HTTP://` or `HTTPS://`, such as `https://www.bxretail.org`), or an app schema, which is just a string and requires no special validation.
 
 <a id="nestedblock--oidc_options--mobile_app--integrity_detection"></a>
 ### Nested Schema for `oidc_options.mobile_app.integrity_detection`
@@ -206,6 +207,7 @@ Optional:
 
 - `cache_duration` (Block List, Max: 1) Every attestation request entails a certain time tradeoff. You can choose to cache successful integrity detection calls for a predefined duration, between a minimum of 1 minute and a maximum of 48 hours. If integrity detection is ENABLED, the cache duration must be set. (see [below for nested schema](#nestedblock--oidc_options--mobile_app--integrity_detection--cache_duration))
 - `enabled` (Boolean) A boolean that specifies whether device integrity detection takes place on mobile devices. Defaults to `false`.
+- `excluded_platforms` (List of String) You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `GOOGLE` and `IOS` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.
 
 <a id="nestedblock--oidc_options--mobile_app--integrity_detection--cache_duration"></a>
 ### Nested Schema for `oidc_options.mobile_app.integrity_detection.cache_duration`
