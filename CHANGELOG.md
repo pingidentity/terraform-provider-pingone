@@ -6,6 +6,11 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.6.0 => v0.6.1 ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.4.0 => v0.4.1 ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
 
+ENHANCEMENTS:
+
+* resource/pingone_application: Add support for `universal_app_link` attribute for native mobile applications. ([#185](https://github.com/pingidentity/terraform-provider-pingone/issues/185))
+* resource/pingone_application: Add support for integrity detection `excluded_platforms` attribute for native mobile applications. ([#185](https://github.com/pingidentity/terraform-provider-pingone/issues/185))
+
 BUG FIXES:
 
 * resource/pingone_mfa_settings: Made the `lockout` configuration block and `lockout.duration_seconds` optional in the schema. ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
