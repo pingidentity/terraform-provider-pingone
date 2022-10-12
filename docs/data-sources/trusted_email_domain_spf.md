@@ -12,7 +12,7 @@ Datasource to retrieve Trusted Email Domain SPF status.
 ## Example Usage
 
 ```terraform
-data "pingone_trusted_email_domain_dkim" "email_domain_dkim" {
+data "pingone_trusted_email_domain_spf" "email_domain_spf" {
   environment_id = pingone_environment.my_environment.id
 
   trusted_email_domain_id = pingone_trusted_email_domain.id

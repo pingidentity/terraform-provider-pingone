@@ -1,0 +1,7 @@
+```release-note:bug
+resource/pingone_trusted_email_domain_dkim: Corrected documentation example.
+```
+
+```release-note:bug
+resource/pingone_trusted_email_domain_spf: Corrected documentation example.
+```
