@@ -2057,12 +2057,12 @@ resource "pingone_application" "%[2]s" {
 
       passcode_refresh_seconds = 45
 
-	  universal_app_link = "https://applink.com"
+      universal_app_link = "https://applink.com"
 
       integrity_detection {
         enabled = true
 
-		excluded_platforms = ["IOS"]
+        excluded_platforms = ["IOS"]
 
         cache_duration {
           amount = 30
