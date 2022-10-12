@@ -14,6 +14,8 @@ ENHANCEMENTS:
 BUG FIXES:
 
 * resource/pingone_mfa_settings: Made the `lockout` configuration block and `lockout.duration_seconds` optional in the schema. ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
+* resource/pingone_trusted_email_domain_dkim: Corrected documentation example. ([#184](https://github.com/pingidentity/terraform-provider-pingone/issues/184))
+* resource/pingone_trusted_email_domain_spf: Corrected documentation example. ([#184](https://github.com/pingidentity/terraform-provider-pingone/issues/184))
 
 ## 0.6.0 (10 October 2022)
 
