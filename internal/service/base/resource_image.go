@@ -108,7 +108,9 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		return diags
 	}
 
-	fileName := fmt.Sprintf("%s.%s", utils.RandStringFromCharSet(12, "abcdefghijklmnopqrstuvwxyz012346789"), strings.ToLower(d.Get("image_type").(string)))
+	chars := 12
+
+	fileName := fmt.Sprintf("%s.%s", utils.RandStringFromCharSet(chars, "abcdefghijklmnopqrstuvwxyz012346789"), strings.ToLower(d.Get("image_type").(string)))
 
 	contentTypes := map[string]string{
 		"jpg": "image/jpeg",
