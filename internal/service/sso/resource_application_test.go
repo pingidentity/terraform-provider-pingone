@@ -1904,7 +1904,9 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test external link app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
 						"type":     "ANY_GROUP",
