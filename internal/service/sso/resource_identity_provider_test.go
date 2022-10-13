@@ -1126,10 +1126,10 @@ resource "pingone_population" "%[2]s" {
 }
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type = "%[5]s"
+  image_type        = "%[5]s"
 }
 
 resource "pingone_identity_provider" "%[2]s" {
@@ -1140,14 +1140,14 @@ resource "pingone_identity_provider" "%[2]s" {
   registration_population_id = pingone_population.%[2]s.id
 
   icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
-login_button_icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+  login_button_icon {
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   google {
     client_id     = "testclientid"
@@ -1482,26 +1482,26 @@ func testAccIdentityProviderConfig_OIDCFull(resourceName, name, image, imageType
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_image" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-		
-		  image_file_base64 = "%[4]s"
-		  image_type = "%[5]s"
-		}
+resource "pingone_image" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+  image_type        = "%[5]s"
+}
 
 resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
   icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
-login_button_icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+  login_button_icon {
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   openid_connect {
     authorization_endpoint     = "https://www.pingidentity.com/authz"

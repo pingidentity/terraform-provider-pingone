@@ -169,10 +169,10 @@ func testAccImageConfig_Image(resourceName, image, imageType string) string {
 	%[1]s
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[3]s"
-  image_type = "%[4]s"
+  image_type        = "%[4]s"
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, image, imageType)
 }

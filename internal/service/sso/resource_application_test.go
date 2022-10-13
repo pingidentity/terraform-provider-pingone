@@ -2020,10 +2020,10 @@ resource "pingone_group" "%[2]s" {
 }
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type = "%[5]s"
+  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2034,9 +2034,9 @@ resource "pingone_application" "%[2]s" {
   login_page_url = "https://www.pingidentity.com"
 
   icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2103,10 +2103,10 @@ resource "pingone_group" "%[2]s" {
 }
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type = "%[5]s"
+  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2117,9 +2117,9 @@ resource "pingone_application" "%[2]s" {
   login_page_url = "https://www.pingidentity.com"
 
   icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2193,10 +2193,10 @@ resource "pingone_group" "%[2]s" {
 }
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type = "%[5]s"
+  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2207,9 +2207,9 @@ resource "pingone_application" "%[2]s" {
   login_page_url = "https://www.pingidentity.com"
 
   icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2278,10 +2278,10 @@ resource "pingone_group" "%[2]s" {
 }
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type = "%[5]s"
+  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2292,9 +2292,9 @@ resource "pingone_application" "%[2]s" {
   login_page_url = "https://www.pingidentity.com"
 
   icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2365,10 +2365,10 @@ resource "pingone_group" "%[2]s" {
 }
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type = "%[5]s"
+  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2379,9 +2379,9 @@ resource "pingone_application" "%[2]s" {
   login_page_url = "https://www.pingidentity.com"
 
   icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2448,10 +2448,10 @@ resource "pingone_group" "%[2]s-2" {
 }
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type = "%[5]s"
+  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2462,8 +2462,8 @@ resource "pingone_application" "%[2]s" {
   login_page_url = "https://www.pingidentity.com"
 
   icon {
-  	id = pingone_image.%[2]s.id
-  	href = pingone_image.%[2]s.uploaded_image[0].href
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -2533,10 +2533,10 @@ resource "pingone_key" "%[2]s" {
 }
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type = "%[5]s"
+  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2547,9 +2547,9 @@ resource "pingone_application" "%[2]s" {
   login_page_url = "https://www.pingidentity.com"
 
   icon {
-	id = pingone_image.%[2]s.id
-	href = pingone_image.%[2]s.uploaded_image[0].href
-}
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
