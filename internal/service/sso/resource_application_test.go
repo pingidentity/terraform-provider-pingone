@@ -2612,10 +2612,10 @@ resource "pingone_group" "%[2]s-2" {
 }
 
 resource "pingone_image" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
-  
-	image_file_base64 = "%[4]s"
-  }
+  environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+}
 
 resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
