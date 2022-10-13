@@ -2,7 +2,9 @@ package sso_test
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
@@ -106,6 +108,9 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -113,7 +118,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullWeb(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -122,7 +127,9 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -179,7 +186,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWeb(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -226,6 +233,9 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -233,7 +243,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWeb(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -269,7 +279,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullWeb(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -278,7 +288,9 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -317,7 +329,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWeb(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -364,6 +376,9 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -371,7 +386,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullNative(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -380,7 +395,9 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -441,7 +458,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalNative(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -492,6 +509,9 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -499,7 +519,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullNative(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -508,7 +528,9 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -551,7 +573,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalNative(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -591,7 +613,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullNative(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -600,7 +622,9 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -654,6 +678,9 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -661,7 +688,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullCustom(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -670,7 +697,9 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -731,7 +760,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalCustom(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalCustom(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -775,6 +804,9 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -782,7 +814,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullCustom(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -791,7 +823,9 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -834,7 +868,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalCustom(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalCustom(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -867,7 +901,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullCustom(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -876,7 +910,9 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -930,6 +966,9 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -937,7 +976,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullService(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -946,7 +985,9 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -1007,7 +1048,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalService(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalService(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1054,6 +1095,9 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -1061,7 +1105,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullService(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1070,7 +1114,9 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -1113,7 +1159,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalService(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalService(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1149,7 +1195,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullService(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1158,7 +1204,9 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -1212,6 +1260,9 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -1219,7 +1270,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullSPA(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1228,7 +1279,9 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -1284,7 +1337,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalSPA(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1330,6 +1383,9 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -1337,7 +1393,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalSPA(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1372,7 +1428,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullSPA(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1381,7 +1437,9 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -1419,7 +1477,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalSPA(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1465,6 +1523,9 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.png")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -1472,7 +1533,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCFullWorker(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1481,7 +1542,9 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -1533,7 +1596,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWorker(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1579,6 +1642,9 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.png")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -1586,7 +1652,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWorker(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1621,7 +1687,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCFullWorker(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1630,7 +1696,9 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -1664,7 +1732,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDCMinimalWorker(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1710,6 +1778,9 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -1717,7 +1788,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_SAMLFull(resourceName, name),
+				Config: testAccApplicationConfig_SAML_Full(resourceName, name, image, "png"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1726,7 +1797,9 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -1775,7 +1848,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_SAMLMinimal(resourceName, name),
+				Config: testAccApplicationConfig_SAML_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1937,13 +2010,20 @@ resource "pingone_application" "%[3]s" {
 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCFullWeb(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image, imageType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_group" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+}
+
+resource "pingone_image" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+  image_type = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -1953,10 +2033,10 @@ resource "pingone_application" "%[2]s" {
   tags           = []
   login_page_url = "https://www.pingidentity.com"
 
-  // icon {
-  // 	id = "1"
-  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-  // }
+  icon {
+	id = pingone_image.%[2]s.id
+	href = pingone_image.%[2]s.uploaded_image[0].href
+}
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -1990,10 +2070,10 @@ resource "pingone_application" "%[2]s" {
 
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
 }
 
-func testAccApplicationConfig_OIDCMinimalWeb(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2013,13 +2093,20 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCFullNative(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_FullNative(resourceName, name, image, imageType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_group" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+}
+
+resource "pingone_image" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+  image_type = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2029,10 +2116,10 @@ resource "pingone_application" "%[2]s" {
   tags           = []
   login_page_url = "https://www.pingidentity.com"
 
-  // icon {
-  // 	id = "1"
-  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-  // }
+  icon {
+	id = pingone_image.%[2]s.id
+	href = pingone_image.%[2]s.uploaded_image[0].href
+}
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2075,10 +2162,10 @@ resource "pingone_application" "%[2]s" {
     package_name = "com.%[2]s.package"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
 }
 
-func testAccApplicationConfig_OIDCMinimalNative(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_MinimalNative(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2096,13 +2183,20 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCFullCustom(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image, imageType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_group" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+}
+
+resource "pingone_image" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+  image_type = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2112,10 +2206,10 @@ resource "pingone_application" "%[2]s" {
   tags           = []
   login_page_url = "https://www.pingidentity.com"
 
-  // icon {
-  // 	id = "1"
-  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-  // }
+  icon {
+	id = pingone_image.%[2]s.id
+	href = pingone_image.%[2]s.uploaded_image[0].href
+}
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2153,10 +2247,10 @@ resource "pingone_application" "%[2]s" {
     pkce_enforcement = "REQUIRED"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
 }
 
-func testAccApplicationConfig_OIDCMinimalCustom(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_MinimalCustom(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2174,13 +2268,20 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCFullService(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_FullService(resourceName, name, image, imageType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_group" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+}
+
+resource "pingone_image" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+  image_type = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2190,10 +2291,10 @@ resource "pingone_application" "%[2]s" {
   tags           = []
   login_page_url = "https://www.pingidentity.com"
 
-  // icon {
-  // 	id = "1"
-  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-  // }
+  icon {
+	id = pingone_image.%[2]s.id
+	href = pingone_image.%[2]s.uploaded_image[0].href
+}
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2231,10 +2332,10 @@ resource "pingone_application" "%[2]s" {
     pkce_enforcement = "REQUIRED"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
 }
 
-func testAccApplicationConfig_OIDCMinimalService(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_MinimalService(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2254,13 +2355,20 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCFullSPA(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image, imageType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_group" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+}
+
+resource "pingone_image" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+  image_type = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2270,10 +2378,10 @@ resource "pingone_application" "%[2]s" {
   tags           = []
   login_page_url = "https://www.pingidentity.com"
 
-  // icon {
-  // 	id = "1"
-  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-  // }
+  icon {
+	id = pingone_image.%[2]s.id
+	href = pingone_image.%[2]s.uploaded_image[0].href
+}
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2301,10 +2409,10 @@ resource "pingone_application" "%[2]s" {
 
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
 }
 
-func testAccApplicationConfig_OIDCMinimalSPA(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2325,7 +2433,7 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDCFullWorker(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image, imageType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2339,6 +2447,13 @@ resource "pingone_group" "%[2]s-2" {
   name           = "%[3]s-2"
 }
 
+resource "pingone_image" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+  image_type = "%[5]s"
+}
+
 resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -2346,10 +2461,10 @@ resource "pingone_application" "%[2]s" {
   tags           = []
   login_page_url = "https://www.pingidentity.com"
 
-  // icon {
-  // 	id = "1"
-  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-  // }
+  icon {
+  	id = pingone_image.%[2]s.id
+  	href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2370,10 +2485,10 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
 }
 
-func testAccApplicationConfig_OIDCMinimalWorker(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2391,7 +2506,7 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_SAMLFull(resourceName, name string) string {
+func testAccApplicationConfig_SAML_Full(resourceName, name, image, imageType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2417,6 +2532,13 @@ resource "pingone_key" "%[2]s" {
   validity_period     = 365
 }
 
+resource "pingone_image" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+  image_type = "%[5]s"
+}
+
 resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -2424,10 +2546,10 @@ resource "pingone_application" "%[2]s" {
   tags           = []
   login_page_url = "https://www.pingidentity.com"
 
-  // icon {
-  // 	id = "1"
-  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-  // }
+  icon {
+	id = pingone_image.%[2]s.id
+	href = pingone_image.%[2]s.uploaded_image[0].href
+}
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
@@ -2459,10 +2581,10 @@ resource "pingone_application" "%[2]s" {
     // sp_verification_certificate_ids = []
 
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
 }
 
-func testAccApplicationConfig_SAMLMinimal(resourceName, name string) string {
+func testAccApplicationConfig_SAML_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 

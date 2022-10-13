@@ -1,0 +1,1 @@
+$ terraform import pingone_image.example <environment_id>/<image_id>
