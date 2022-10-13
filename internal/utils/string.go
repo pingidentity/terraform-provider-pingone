@@ -1,15 +1,23 @@
 package utils
 
-import "math/rand"
+import (
+	"crypto/rand"
+	"math/big"
+)
 
-func RandStringFromCharSet(strlen int, charSet string) string {
+func RandStringFromCharSet(strlen int, charSet string) (string, error) {
 	result := make([]byte, strlen)
 	for i := 0; i < strlen; i++ {
-		result[i] = charSet[RandIntRange(0, len(charSet))]
+		num, err := RandIntRange(len(charSet))
+		if err != nil {
+			return "", err
+		}
+
+		result[i] = charSet[num.Int64()]
 	}
-	return string(result)
+	return string(result), nil
 }
 
-func RandIntRange(min int, max int) int {
-	return rand.Intn(max-min) + min
+func RandIntRange(max int) (*big.Int, error) {
+	return rand.Int(rand.Reader, big.NewInt(int64(max)))
 }

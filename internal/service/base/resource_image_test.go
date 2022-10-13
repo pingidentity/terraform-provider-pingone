@@ -87,7 +87,7 @@ func TestAccImage_PNG(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccImageConfig_Image(resourceName, image, "png"),
+				Config: testAccImageConfig_Image(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -118,7 +118,7 @@ func TestAccImage_JPG(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccImageConfig_Image(resourceName, image, "jpg"),
+				Config: testAccImageConfig_Image(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -149,7 +149,7 @@ func TestAccImage_GIF(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccImageConfig_Image(resourceName, image, "gif"),
+				Config: testAccImageConfig_Image(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -164,7 +164,7 @@ func TestAccImage_GIF(t *testing.T) {
 	})
 }
 
-func testAccImageConfig_Image(resourceName, image, imageType string) string {
+func testAccImageConfig_Image(resourceName, image string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -172,7 +172,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[3]s"
-  image_type        = "%[4]s"
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, image, imageType)
+}`, acctest.GenericSandboxEnvironment(), resourceName, image)
 }

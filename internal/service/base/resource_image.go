@@ -40,17 +40,10 @@ func ResourceImage() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
 			"image_file_base64": {
-				Description: "A base64 encoded image file to import.",
+				Description: "A base64 encoded image file to import.  Only PNG, GIF and JPG images are supported.",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-			},
-			"image_type": {
-				Description:      "Image type.  Options are `PNG`, `JPG` or `GIF`.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"PNG", "JPG", "GIF"}, true)),
 			},
 			"uploaded_image": {
 				Description: "A block that specifies the processed image details.",
@@ -103,26 +96,48 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "Cannot base64 decode provided image file.",
+			Detail:   fmt.Sprintf("The file cannot be base64 decoded: %s", err),
 		})
 
 		return diags
 	}
 
 	chars := 12
+	generatedName, err := utils.RandStringFromCharSet(chars, "abcdefghijklmnopqrstuvwxyz012346789")
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Cannot generate a filename to use",
+			Detail:   fmt.Sprintf("A random filename cannot be generated: %s", err),
+		})
 
-	fileName := fmt.Sprintf("%s.%s", utils.RandStringFromCharSet(chars, "abcdefghijklmnopqrstuvwxyz012346789"), strings.ToLower(d.Get("image_type").(string)))
-
-	contentTypes := map[string]string{
-		"jpg": "image/jpeg",
-		"gif": "image/gif",
-		"png": "image/png",
+		return diags
 	}
+
+	extensionMapping := map[string]string{
+		"image/jpeg": "jpg",
+		"image/gif":  "gif",
+		"image/png":  "png",
+	}
+
+	contentType := http.DetectContentType(archive)
+	if _, ok := extensionMapping[contentType]; !ok {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Cannot determine the content type of the image.  Ensure the file is a jpg, gif or png format.",
+			Detail:   fmt.Sprintf("The file type has been determined to be `%s`, which is not supported.", contentType),
+		})
+
+		return diags
+	}
+
+	fileName := fmt.Sprintf("%s.%s", generatedName, extensionMapping[contentType])
 
 	resp, diags = sdk.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ImagesApi.CreateImage(ctx, d.Get("environment_id").(string)).ContentType(contentTypes[strings.ToLower(d.Get("image_type").(string))]).ContentDisposition(fmt.Sprintf("attachment; filename=%s", fileName)).File(&archive).Execute()
+			return apiClient.ImagesApi.CreateImage(ctx, d.Get("environment_id").(string)).ContentType(contentType).ContentDisposition(fmt.Sprintf("attachment; filename=%s", fileName)).File(&archive).Execute()
 		},
 		"CreateImage",
 		sdk.DefaultCustomError,

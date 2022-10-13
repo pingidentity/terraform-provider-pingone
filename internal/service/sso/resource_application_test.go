@@ -118,7 +118,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -279,7 +279,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -386,7 +386,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -519,7 +519,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -613,7 +613,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -688,7 +688,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -814,7 +814,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -901,7 +901,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -976,7 +976,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1105,7 +1105,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1195,7 +1195,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1270,7 +1270,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1428,7 +1428,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1533,7 +1533,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1687,7 +1687,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1788,7 +1788,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_SAML_Full(resourceName, name, image, "png"),
+				Config: testAccApplicationConfig_SAML_Full(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1887,6 +1887,9 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 
 	name := resourceName
 
+	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
 		ProviderFactories: acctest.ProviderFactories,
@@ -1894,7 +1897,7 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_ExternalLinkFull(resourceName, name),
+				Config: testAccApplicationConfig_ExternalLinkFull(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -2010,7 +2013,7 @@ resource "pingone_application" "%[3]s" {
 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image, imageType string) string {
+func testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2023,7 +2026,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2070,7 +2072,7 @@ resource "pingone_application" "%[2]s" {
 
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name string) string {
@@ -2093,7 +2095,7 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDC_FullNative(resourceName, name, image, imageType string) string {
+func testAccApplicationConfig_OIDC_FullNative(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2106,7 +2108,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2162,7 +2163,7 @@ resource "pingone_application" "%[2]s" {
     package_name = "com.%[2]s.package"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalNative(resourceName, name string) string {
@@ -2183,7 +2184,7 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image, imageType string) string {
+func testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2196,7 +2197,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2247,7 +2247,7 @@ resource "pingone_application" "%[2]s" {
     pkce_enforcement = "REQUIRED"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalCustom(resourceName, name string) string {
@@ -2268,7 +2268,7 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDC_FullService(resourceName, name, image, imageType string) string {
+func testAccApplicationConfig_OIDC_FullService(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2281,7 +2281,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2332,7 +2331,7 @@ resource "pingone_application" "%[2]s" {
     pkce_enforcement = "REQUIRED"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalService(resourceName, name string) string {
@@ -2355,7 +2354,7 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image, imageType string) string {
+func testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2368,7 +2367,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2409,7 +2407,7 @@ resource "pingone_application" "%[2]s" {
 
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name string) string {
@@ -2433,7 +2431,7 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image, imageType string) string {
+func testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2451,7 +2449,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2485,7 +2482,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name string) string {
@@ -2506,7 +2503,7 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_SAML_Full(resourceName, name, image, imageType string) string {
+func testAccApplicationConfig_SAML_Full(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2536,7 +2533,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type        = "%[5]s"
 }
 
 resource "pingone_application" "%[2]s" {
@@ -2581,7 +2577,7 @@ resource "pingone_application" "%[2]s" {
     // sp_verification_certificate_ids = []
 
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_SAML_Minimal(resourceName, name string) string {
@@ -2601,7 +2597,7 @@ resource "pingone_application" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_ExternalLinkFull(resourceName, name string) string {
+func testAccApplicationConfig_ExternalLinkFull(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2615,15 +2611,21 @@ resource "pingone_group" "%[2]s-2" {
   name           = "%[3]s-2"
 }
 
+resource "pingone_image" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+  
+	image_file_base64 = "%[4]s"
+  }
+
 resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test external link app"
 
-  // icon {
-  // 	id = "1"
-  // 	href = "https://assets.pingone.com/ux/ui-library/4.18.0/images/logo-pingidentity.png"
-  // }
+  icon {
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image[0].href
+  }
 
   access_control_group_options {
     type = "ANY_GROUP"
@@ -2639,7 +2641,7 @@ resource "pingone_application" "%[2]s" {
   external_link_options {
     home_page_url = "https://www.pingidentity.com"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_ExternalLinkMinimal(resourceName, name string) string {

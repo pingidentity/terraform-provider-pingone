@@ -20,7 +20,6 @@ resource "pingone_image" "foo" {
   environment_id = pingone_environment.my_environment.id
 
   image_file_base64 = filebase64("../path/to/image.jpg")
-  image_type        = "jpg"
 }
 ```
 
@@ -30,8 +29,7 @@ resource "pingone_image" "foo" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to create the image in.
-- `image_file_base64` (String) A base64 encoded image file to import.
-- `image_type` (String) Image type.  Options are `PNG`, `JPG` or `GIF`.
+- `image_file_base64` (String) A base64 encoded image file to import.  Only PNG, GIF and JPG images are supported.
 
 ### Read-Only
 

@@ -118,7 +118,7 @@ func TestAccIdentityProvider_Full(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Full(resourceName, name, image, "png"),
+				Config: testAccIdentityProviderConfig_Full(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -187,7 +187,7 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_Full(resourceName, fmt.Sprintf("%s 1", name), image, "png"),
+				Config: testAccIdentityProviderConfig_Full(resourceName, fmt.Sprintf("%s 1", name), image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -217,7 +217,7 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_Full(resourceName, fmt.Sprintf("%s 1", name), image, "png"),
+				Config: testAccIdentityProviderConfig_Full(resourceName, fmt.Sprintf("%s 1", name), image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -841,7 +841,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name, image, "png"),
+				Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -907,7 +907,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name, image, "png"),
+				Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -1115,7 +1115,7 @@ resource "pingone_identity_provider" "%[3]s" {
 		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccIdentityProviderConfig_Full(resourceName, name, image, imageType string) string {
+func testAccIdentityProviderConfig_Full(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -1129,7 +1129,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type        = "%[5]s"
 }
 
 resource "pingone_identity_provider" "%[2]s" {
@@ -1154,7 +1153,7 @@ resource "pingone_identity_provider" "%[2]s" {
     client_secret = "testclientsecret"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccIdentityProviderConfig_Minimal(resourceName, name string) string {
@@ -1478,7 +1477,7 @@ resource "pingone_identity_provider" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_OIDCFull(resourceName, name, image, imageType string) string {
+func testAccIdentityProviderConfig_OIDCFull(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -1486,7 +1485,6 @@ resource "pingone_image" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
-  image_type        = "%[5]s"
 }
 
 resource "pingone_identity_provider" "%[2]s" {
@@ -1516,7 +1514,7 @@ resource "pingone_identity_provider" "%[2]s" {
     userinfo_endpoint          = "https://www.pingidentity.com/userinfo"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image, imageType)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccIdentityProviderConfig_OIDCMinimal(resourceName, name string) string {
