@@ -1,10 +1,12 @@
-## 0.6.1 (Unreleased)
+## 0.6.1 (15 October 2022)
 
 NOTES:
 
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.11.0 => v0.11.1 ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.11.1 => v0.11.2 ([#187](https://github.com/pingidentity/terraform-provider-pingone/issues/187))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.6.0 => v0.6.1 ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.4.0 => v0.4.1 ([#181](https://github.com/pingidentity/terraform-provider-pingone/issues/181))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.4.1 => v0.4.2 ([#187](https://github.com/pingidentity/terraform-provider-pingone/issues/187))
 
 ENHANCEMENTS:
 
