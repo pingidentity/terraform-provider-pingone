@@ -155,7 +155,7 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (retry) %+v", t))
 			}
 
-			if errorModel != nil && (errorModel.Id != nil || r != nil) && (isRetryable(ctx, r, errorModel) || DefaultRetryable(ctx, r, errorModel)) {
+			if ((errorModel != nil && errorModel.Id != nil) || r != nil) && (isRetryable(ctx, r, errorModel) || DefaultRetryable(ctx, r, errorModel)) {
 				tflog.Warn(ctx, "Retrying ... ")
 				return resource.RetryableError(err)
 			}
