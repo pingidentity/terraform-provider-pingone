@@ -2,7 +2,6 @@ package sso_test
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -44,7 +43,7 @@ func TestAccUsersDataSource_ByDataFilter(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_users.%s", resourceName)
 
-	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
+	name := resourceName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -53,7 +52,7 @@ func TestAccUsersDataSource_ByDataFilter(t *testing.T) {
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUsersDataSourceConfig_ByDataFilter1(resourceName, organizationID),
+				Config: testAccUsersDataSourceConfig_ByDataFilter1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
@@ -63,7 +62,7 @@ func TestAccUsersDataSource_ByDataFilter(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccUsersDataSourceConfig_ByDataFilter2(resourceName, organizationID),
+				Config: testAccUsersDataSourceConfig_ByDataFilter2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
