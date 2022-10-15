@@ -1,5 +1,9 @@
 ## 0.7.0 (Unreleased)
 
+FEATURES:
+
+* **New Resource:** `pingone_image` ([#186](https://github.com/pingidentity/terraform-provider-pingone/issues/186))
+
 ## 0.6.1 (15 October 2022)
 
 NOTES:
