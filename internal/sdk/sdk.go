@@ -79,18 +79,17 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 		switch t := err.(type) {
 		case *model.GenericOpenAPIError:
 
-			if t.Model() != nil {
-				model := t.Model().(*model.P1Error)
+			if v, ok := t.Model().(model.P1Error); ok && v.GetId() != "" {
 
-				summaryText := fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, model.GetMessage())
-				detailText := fmt.Sprintf("PingOne Error Details:\nID: %s\nCode: %s\nMessage: %s", model.GetId(), model.GetCode(), model.GetMessage())
+				summaryText := fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, v.GetMessage())
+				detailText := fmt.Sprintf("PingOne Error Details:\nID: %s\nCode: %s\nMessage: %s", v.GetId(), v.GetCode(), v.GetMessage())
 
-				diags = customError(*model)
+				diags = customError(v)
 				if diags != nil {
 					return nil, diags
 				}
 
-				if details, ok := model.GetDetailsOk(); ok {
+				if details, ok := v.GetDetailsOk(); ok {
 					detailsBytes, err := json.Marshal(details)
 					if err != nil {
 						diags = append(diags, diag.Diagnostic{
@@ -114,8 +113,9 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, t.Error()),
-				Detail:   fmt.Sprintf("Full response body: %+v", r.Body),
 			})
+
+			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nFull response body: %+v", sdkMethod, t.Error(), r.Body))
 
 			return nil, diags
 
