@@ -1,4 +1,4 @@
-## 0.6.1 (Unreleased)
+## 0.6.1 (15 October 2022)
 
 NOTES:
 
