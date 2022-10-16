@@ -93,10 +93,7 @@ func resourceFIDOPolicyCreate(ctx context.Context, d *schema.ResourceData, meta 
 	})
 	var diags diag.Diagnostics
 
-	fidoPolicy, diags := expandFIDOPolicy(d)
-	if diags.HasError() {
-		return diags
-	}
+	fidoPolicy := expandFIDOPolicy(d)
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
@@ -196,10 +193,7 @@ func resourceFIDOPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	})
 	var diags diag.Diagnostics
 
-	fidoPolicy, diags := expandFIDOPolicy(d)
-	if diags.HasError() {
-		return diags
-	}
+	fidoPolicy := expandFIDOPolicy(d)
 
 	_, diags = sdk.ParseResponse(
 		ctx,
@@ -262,8 +256,7 @@ func resourceFIDOPolicyImport(ctx context.Context, d *schema.ResourceData, meta 
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandFIDOPolicy(d *schema.ResourceData) (*mfa.FIDOPolicy, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func expandFIDOPolicy(d *schema.ResourceData) *mfa.FIDOPolicy {
 
 	item := mfa.NewFIDOPolicy(
 		d.Get("name").(string),
@@ -296,5 +289,5 @@ func expandFIDOPolicy(d *schema.ResourceData) (*mfa.FIDOPolicy, diag.Diagnostics
 	// 	item.SetDefault(v.(bool))
 	// }
 
-	return item, diags
+	return item
 }
