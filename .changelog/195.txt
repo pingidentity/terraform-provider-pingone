@@ -1,0 +1,7 @@
+```release-note:new-resource
+pingone_branding_theme
+```
+
+```release-note:new-resource
+pingone_branding_settings
+```
