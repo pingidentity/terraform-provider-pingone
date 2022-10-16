@@ -234,18 +234,18 @@ func testAccFIDOPolicyConfig_Full(resourceName, name string) string {
 		%[1]s
 
 resource "pingone_mfa_fido_policy" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
-	name           = "%[3]s"
-	description = "Test FIDO policy"
-	
-	  attestation_requirements = "CERTIFIED"
-	  resident_key_requirement = "DISCOURAGED"
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test FIDO policy"
 
-	  enforce_during_authentication = true
+  attestation_requirements = "CERTIFIED"
+  resident_key_requirement = "DISCOURAGED"
 
-	  // allowed_authenticators
-	
-	}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  enforce_during_authentication = true
+
+  // allowed_authenticators
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccFIDOPolicyConfig_Minimal(resourceName, name string) string {
@@ -255,9 +255,9 @@ func testAccFIDOPolicyConfig_Minimal(resourceName, name string) string {
 resource "pingone_mfa_fido_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  
-	attestation_requirements = "GLOBAL"
-	resident_key_requirement = "REQUIRED"
-  
-  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+
+  attestation_requirements = "GLOBAL"
+  resident_key_requirement = "REQUIRED"
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

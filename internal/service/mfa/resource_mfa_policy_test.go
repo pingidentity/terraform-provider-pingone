@@ -2232,14 +2232,14 @@ func testAccMFAPolicyConfig_FullSecurityKey(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_fido_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  attestation_requirements = "GLOBAL"
-			  resident_key_requirement = "REQUIRED"
-			
-			}
+resource "pingone_mfa_fido_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "GLOBAL"
+  resident_key_requirement = "REQUIRED"
+
+}
 
 resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -2282,14 +2282,14 @@ func testAccMFAPolicyConfig_MinimalSecurityKey(resourceName, name string) string
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_fido_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  attestation_requirements = "GLOBAL"
-			  resident_key_requirement = "REQUIRED"
-			
-			}
+resource "pingone_mfa_fido_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "GLOBAL"
+  resident_key_requirement = "REQUIRED"
+
+}
 
 resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -2330,14 +2330,14 @@ func testAccMFAPolicyConfig_FullPlatform(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_fido_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  attestation_requirements = "GLOBAL"
-			  resident_key_requirement = "REQUIRED"
-			
-			}
+resource "pingone_mfa_fido_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "GLOBAL"
+  resident_key_requirement = "REQUIRED"
+
+}
 
 resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -2380,14 +2380,14 @@ func testAccMFAPolicyConfig_MinimalPlatform(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_mfa_fido_policy" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			
-			  attestation_requirements = "GLOBAL"
-			  resident_key_requirement = "REQUIRED"
-			
-			}
+resource "pingone_mfa_fido_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "GLOBAL"
+  resident_key_requirement = "REQUIRED"
+
+}
 
 resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
