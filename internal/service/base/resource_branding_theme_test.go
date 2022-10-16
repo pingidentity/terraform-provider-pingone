@@ -290,16 +290,16 @@ func testAccBrandingThemeConfig_NewEnv(environmentName, licenseID, resourceName,
 resource "pingone_branding_theme" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  name = "%[4]s"
+  name     = "%[4]s"
   template = "split"
 
-  background_color = "#FF00F0"
-  button_text_color = "#FF6C6C"
+  background_color   = "#FF00F0"
+  button_text_color  = "#FF6C6C"
   heading_text_color = "#FF0005"
-  card_color = "#0FFF39"
-  body_text_color = "#8620FF"
-  link_text_color = "#8A7F06"
-  button_color = "#0CFFFB"
+  card_color         = "#0FFF39"
+  body_text_color    = "#8620FF"
+  link_text_color    = "#8A7F06"
+  button_color       = "#0CFFFB"
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -309,39 +309,39 @@ func testAccBrandingThemeConfig_Full(resourceName, name, logo, background string
 		%[1]s
 
 resource "pingone_image" "%[2]s-logo" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   image_file_base64 = "%[4]s"
 }
 
 resource "pingone_image" "%[2]s-background" {
-	environment_id = data.pingone_environment.general_test.id
-  
-	image_file_base64 = "%[5]s"
-  }
+  environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[5]s"
+}
 
 resource "pingone_branding_theme" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-	name = "%[3]s"
+  name     = "%[3]s"
   template = "split"
 
   logo {
-	id = pingone_image.%[2]s-logo.id
-	href = pingone_image.%[2]s-logo.uploaded_image[0].href
+    id   = pingone_image.%[2]s-logo.id
+    href = pingone_image.%[2]s-logo.uploaded_image[0].href
   }
 
   background_image {
-	id = pingone_image.%[2]s-background.id
-	href = pingone_image.%[2]s-background.uploaded_image[0].href
+    id   = pingone_image.%[2]s-background.id
+    href = pingone_image.%[2]s-background.uploaded_image[0].href
   }
 
-  button_text_color = "#FF6C6C"
+  button_text_color  = "#FF6C6C"
   heading_text_color = "#FF0005"
-  card_color = "#0FFF39"
-  body_text_color = "#8620FF"
-  link_text_color = "#8A7F06"
-  button_color = "#0CFFFB"
+  card_color         = "#0FFF39"
+  body_text_color    = "#8620FF"
+  link_text_color    = "#8A7F06"
+  button_color       = "#0CFFFB"
 
   footer_text = "What do you call a can opener that doesn't work? A can't opener."
 
@@ -355,16 +355,16 @@ func testAccBrandingThemeConfig_Minimal(resourceName, name string) string {
 resource "pingone_branding_theme" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name = "%[3]s"
+  name     = "%[3]s"
   template = "split"
 
-  background_color = "#FF00F0"
-  button_text_color = "#FF6C6C"
+  background_color   = "#FF00F0"
+  button_text_color  = "#FF6C6C"
   heading_text_color = "#FF0005"
-  card_color = "#0FFF39"
-  body_text_color = "#8620FF"
-  link_text_color = "#8A7F06"
-  button_color = "#0CFFFB"
+  card_color         = "#0FFF39"
+  body_text_color    = "#8620FF"
+  link_text_color    = "#8A7F06"
+  button_color       = "#0CFFFB"
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
