@@ -227,19 +227,19 @@ func testAccBrandingSettingsConfig_Full(environmentName, licenseID, resourceName
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_image" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-		  
-			image_file_base64 = "%[5]s"
-		  }
+resource "pingone_image" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  image_file_base64 = "%[5]s"
+}
 
 resource "pingone_branding_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   company_name = "%[4]s"
   logo_image {
-	id = pingone_image.%[3]s.id
-	href = pingone_image.%[3]s.uploaded_image[0].href
+    id   = pingone_image.%[3]s.id
+    href = pingone_image.%[3]s.uploaded_image[0].href
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image)
 }
@@ -268,18 +268,18 @@ func testAccBrandingSettingsConfig_Minimal3(environmentName, licenseID, resource
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_image" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-		  
-			image_file_base64 = "%[4]s"
-		  }
+resource "pingone_image" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  image_file_base64 = "%[4]s"
+}
 
 resource "pingone_branding_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   logo_image {
-	id = pingone_image.%[3]s.id
-	href = pingone_image.%[3]s.uploaded_image[0].href
+    id   = pingone_image.%[3]s.id
+    href = pingone_image.%[3]s.uploaded_image[0].href
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, image)
 }
