@@ -122,6 +122,7 @@ func TestAccResource_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 					resource.TestCheckResourceAttr(resourceFullName, "audience", "my_aud"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "7200"),
+					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_POST"),
 				),
 			},
 		},
@@ -152,6 +153,7 @@ func TestAccResource_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 					resource.TestCheckResourceAttr(resourceFullName, "audience", name),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "3600"),
+					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 				),
 			},
 		},
@@ -180,6 +182,7 @@ func TestAccResource_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 					resource.TestCheckResourceAttr(resourceFullName, "audience", name),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "3600"),
+					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 				),
 			},
 			{
@@ -190,6 +193,7 @@ func TestAccResource_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 					resource.TestCheckResourceAttr(resourceFullName, "audience", "my_aud"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "7200"),
+					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_POST"),
 				),
 			},
 			{
@@ -200,6 +204,7 @@ func TestAccResource_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 					resource.TestCheckResourceAttr(resourceFullName, "audience", name),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "3600"),
+					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 				),
 			},
 		},
@@ -229,6 +234,8 @@ resource "pingone_resource" "%[2]s" {
 
   audience                      = "my_aud"
   access_token_validity_seconds = 7200
+
+  introspect_endpoint_auth_method = "CLIENT_SECRET_POST"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

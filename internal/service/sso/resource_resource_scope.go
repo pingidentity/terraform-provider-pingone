@@ -57,12 +57,23 @@ func ResourceResourceScope() *schema.Resource {
 				Optional:    true,
 			},
 			"schema_attributes": {
-				Description: "A list that specifies the user schema attributes that can be read or updated for the specified PingOne access control scope. The value is an array of schema attribute paths (such as username, name.given, shirtSize) that the scope controls. This property is supported only for the `p1:read:user`, `p1:update:user` and `p1:read:user:{suffix}` and `p1:update:user:{suffix}` scopes. No other PingOne platform scopes allow this behavior. Any attributes not listed in the attribute array are excluded from the read or update action. The wildcard path (*) in the array includes all attributes and cannot be used in conjunction with any other user schema attribute path.",
-				Type:        schema.TypeList,
-				Computed:    true,
+				Description: "A list that specifies the user schema attributes that can be read or updated for the specified PingOne access control scope. The value is an array of schema attribute paths (such as `username`, `name.given`, `shirtSize`) that the scope controls. This property is supported only for the `p1:read:user`, `p1:update:user` and `p1:read:user:{suffix}` and `p1:update:user:{suffix}` scopes. No other PingOne platform scopes allow this behavior. Any attributes not listed in the attribute array are excluded from the read or update action. The wildcard path (`*`) in the array includes all attributes and cannot be used in conjunction with any other user schema attribute paths.",
+				Type:        schema.TypeSet,
+				Optional:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				ConflictsWith: []string{"schema_attributes", "mapped_claims"},
+			},
+			"mapped_claims": {
+				Description: "A list of custom resource attribute IDs. This property applies only for the resource with its type property set to `OPENID_CONNECT`. Moreover, this property does not display predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+				},
+				ConflictsWith: []string{"schema_attributes", "mapped_claims"},
 			},
 		},
 	}
@@ -83,7 +94,27 @@ func resourceResourceScopeCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	if v, ok := d.GetOk("schema_attributes"); ok {
-		resourceScope.SetSchemaAttributes(v.([]string))
+		if v1, ok := v.(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
+			items := make([]string, 0)
+
+			for _, item := range v1.List() {
+				items = append(items, item.(string))
+			}
+
+			resourceScope.SetSchemaAttributes(items)
+		}
+	}
+
+	if v, ok := d.GetOk("mapped_claims"); ok {
+		if v1, ok := v.(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
+			items := make([]string, 0)
+
+			for _, item := range v1.List() {
+				items = append(items, item.(string))
+			}
+
+			resourceScope.SetMappedClaims(items)
+		}
 	}
 
 	resp, diags := sdk.ParseResponse(
@@ -150,6 +181,12 @@ func resourceResourceScopeRead(ctx context.Context, d *schema.ResourceData, meta
 		d.Set("schema_attributes", nil)
 	}
 
+	if v, ok := respObject.GetMappedClaimsOk(); ok {
+		d.Set("mapped_claims", v)
+	} else {
+		d.Set("mapped_claims", nil)
+	}
+
 	return diags
 }
 
@@ -168,7 +205,27 @@ func resourceResourceScopeUpdate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	if v, ok := d.GetOk("schema_attributes"); ok {
-		resourceScope.SetSchemaAttributes(v.([]string))
+		if v1, ok := v.(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
+			items := make([]string, 0)
+
+			for _, item := range v1.List() {
+				items = append(items, item.(string))
+			}
+
+			resourceScope.SetSchemaAttributes(items)
+		}
+	}
+
+	if v, ok := d.GetOk("mapped_claims"); ok {
+		if v1, ok := v.(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
+			items := make([]string, 0)
+
+			for _, item := range v1.List() {
+				items = append(items, item.(string))
+			}
+
+			resourceScope.SetMappedClaims(items)
+		}
 	}
 
 	_, diags = sdk.ParseResponse(

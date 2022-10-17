@@ -1,0 +1,23 @@
+```release-note:new-resource
+pingone_resource_attribute
+```
+
+```release-note:enhancement
+resource/pingone_resource: Added support for the `introspect_endpoint_auth_method` attribute.
+```
+
+```release-note:enhancement
+resource/pingone_resource_scope: Enabled the `schema_attributes` attribute to enable access control scope to specific attributes when using PingOne API resources.
+```
+
+```release-note:enhancement
+resource/pingone_resource_scope: Added support for the `mapped_claims` attribute to map resource attributes to scopes when using Custom or OpenID Connect resources.
+```
+
+```release-note:enhancement
+data-source/pingone_resource: Added read only support for the `introspect_endpoint_auth_method` attribute.
+```
+
+```release-note:enhancement
+data-source/pingone_resource_scope: Added read only support for the `mapped_claims` attribute.
+```

@@ -75,6 +75,13 @@ func ResourceResource() *schema.Resource {
 				Default:          3600,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(300, 2592000)),
 			},
+			"introspect_endpoint_auth_method": {
+				Description:      fmt.Sprintf("The client authentication methods supported by the token endpoint. Options are `NONE`, `CLIENT_SECRET_BASIC`, and `CLIENT_SECRET_POST`."),
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{`NONE`, `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_POST`}, false)),
+				Default:          "CLIENT_SECRET_BASIC",
+			},
 		},
 	}
 }
@@ -100,6 +107,10 @@ func resourceResourceCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	if v, ok := d.GetOk("access_token_validity_seconds"); ok {
 		resource.SetAccessTokenValiditySeconds(int32(v.(int)))
+	}
+
+	if v, ok := d.GetOk("introspect_endpoint_auth_method"); ok {
+		resource.SetIntrospectEndpointAuthMethod(v.(string))
 	}
 
 	resp, diags := sdk.ParseResponse(
@@ -178,6 +189,12 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 		d.Set("access_token_validity_seconds", nil)
 	}
 
+	if v, ok := respObject.GetIntrospectEndpointAuthMethodOk(); ok {
+		d.Set("introspect_endpoint_auth_method", v)
+	} else {
+		d.Set("introspect_endpoint_auth_method", nil)
+	}
+
 	return diags
 }
 
@@ -207,6 +224,10 @@ func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta in
 
 	if v, ok := d.GetOk("access_token_validity_seconds"); ok {
 		resource.SetAccessTokenValiditySeconds(int32(v.(int)))
+	}
+
+	if v, ok := d.GetOk("introspect_endpoint_auth_method"); ok {
+		resource.SetIntrospectEndpointAuthMethod(v.(string))
 	}
 
 	_, diags = sdk.ParseResponse(
