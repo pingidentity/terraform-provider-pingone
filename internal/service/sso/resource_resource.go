@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -76,11 +79,17 @@ func ResourceResource() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(300, 2592000)),
 			},
 			"introspect_endpoint_auth_method": {
-				Description:      fmt.Sprintf("The client authentication methods supported by the token endpoint. Options are `NONE`, `CLIENT_SECRET_BASIC`, and `CLIENT_SECRET_POST`."),
+				Description:      fmt.Sprintf("The client authentication methods supported by the token endpoint. Options are `%s`, `%s`, and `%s`.", string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_NONE), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_POST)),
 				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{`NONE`, `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_POST`}, false)),
-				Default:          "CLIENT_SECRET_BASIC",
+				Optional:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_NONE), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_POST)}, false)),
+				Default:          string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC),
+			},
+			"client_secret": {
+				Description: "An auto-generated resource client secret. Possible characters are `a-z`, `A-Z`, `0-9`, `-`, `.`, `_`, `~`. The secret has a minimum length of 64 characters per SHA-512 requirements when using the HS512 algorithm to sign ID tokens using the secret as the key.",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
 			},
 		},
 	}
@@ -110,7 +119,7 @@ func resourceResourceCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	if v, ok := d.GetOk("introspect_endpoint_auth_method"); ok {
-		resource.SetIntrospectEndpointAuthMethod(v.(string))
+		resource.SetIntrospectEndpointAuthMethod(management.EnumResourceIntrospectEndpointAuthMethod(v.(string)))
 	}
 
 	resp, diags := sdk.ParseResponse(
@@ -142,26 +151,15 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 	})
 	var diags diag.Diagnostics
 
-	resp, diags := sdk.ParseResponse(
-		ctx,
-
-		func() (interface{}, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-		},
-		"ReadOneResource",
-		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-	)
+	respObject, diags := fetchResource(ctx, apiClient, d.Get("environment_id").(string), d.Id())
 	if diags.HasError() {
 		return diags
 	}
 
-	if resp == nil {
+	if respObject == nil {
 		d.SetId("")
 		return nil
 	}
-
-	respObject := resp.(*management.Resource)
 
 	d.Set("name", respObject.GetName())
 
@@ -173,8 +171,59 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	if v, ok := respObject.GetTypeOk(); ok {
 		d.Set("type", string(*v))
+
+		if *v == management.ENUMRESOURCETYPE_CUSTOM {
+			respSecret, diags := sdk.ParseResponse(
+				ctx,
+
+				func() (interface{}, *http.Response, error) {
+					return apiClient.ResourceClientSecretApi.ReadResourceSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+				},
+				"ReadResourceSecret",
+				sdk.CustomErrorResourceNotFoundWarning,
+				func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+					// The secret may take a short time to propagate
+					if r.StatusCode == 404 {
+						tflog.Warn(ctx, "Resource secret not found, available for retry")
+						return true
+					}
+
+					if p1error != nil {
+						var err error
+
+						// Permissions may not have propagated by this point
+						if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+							tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+							return true
+						}
+						if err != nil {
+							tflog.Warn(ctx, "Cannot match error string for retry")
+							return false
+						}
+
+					}
+
+					return false
+				},
+			)
+			if diags.HasError() {
+				return diags
+			}
+
+			respSecretObj := *respSecret.(*management.ResourceSecret)
+
+			if v, ok := respSecretObj.GetSecretOk(); ok {
+				d.Set("client_secret", v)
+			} else {
+				d.Set("client_secret", nil)
+			}
+		} else {
+			d.Set("client_secret", nil)
+		}
 	} else {
 		d.Set("type", nil)
+		d.Set("client_secret", nil)
 	}
 
 	if v, ok := respObject.GetAudienceOk(); ok {
@@ -190,7 +239,7 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	if v, ok := respObject.GetIntrospectEndpointAuthMethodOk(); ok {
-		d.Set("introspect_endpoint_auth_method", v)
+		d.Set("introspect_endpoint_auth_method", string(*v))
 	} else {
 		d.Set("introspect_endpoint_auth_method", nil)
 	}
@@ -227,7 +276,7 @@ func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	if v, ok := d.GetOk("introspect_endpoint_auth_method"); ok {
-		resource.SetIntrospectEndpointAuthMethod(v.(string))
+		resource.SetIntrospectEndpointAuthMethod(management.EnumResourceIntrospectEndpointAuthMethod(v.(string)))
 	}
 
 	_, diags = sdk.ParseResponse(
@@ -289,4 +338,45 @@ func resourceResourceImport(ctx context.Context, d *schema.ResourceData, meta in
 	resourceResourceRead(ctx, d, meta)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func fetchResource(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) (*management.Resource, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	resp, diags := sdk.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ResourcesApi.ReadOneResource(ctx, environmentID, resourceID).Execute()
+		},
+		"ReadOneResource",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	respObject := resp.(*management.Resource)
+
+	return respObject, diags
+}
+
+func getResourceType(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) (management.EnumResourceType, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	respObject, diags := fetchResource(ctx, apiClient, environmentID, resourceID)
+	if diags.HasError() {
+		return management.ENUMRESOURCETYPE_CUSTOM, diags
+	}
+
+	return respObject.GetType(), diags
+}
+
+func getPingOneAPIResource(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Resource, diag.Diagnostics) {
+	return fetchResourceFromName(ctx, apiClient, environmentID, "PingOne API")
+}
+
+func getOpenIDResource(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Resource, diag.Diagnostics) {
+	return fetchResourceFromName(ctx, apiClient, environmentID, "openid")
 }

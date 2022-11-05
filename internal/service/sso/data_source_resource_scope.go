@@ -61,6 +61,14 @@ func DatasourceResourceScope() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"mapped_claims": {
+				Description: "A list of custom resource attribute IDs. This property applies only for the resource with its type property set to `OPENID_CONNECT`. Moreover, this property does not display predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.",
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -160,5 +168,57 @@ func datasourcePingOneResourceScopeRead(ctx context.Context, d *schema.ResourceD
 		d.Set("schema_attributes", nil)
 	}
 
+	if v, ok := resp.GetMappedClaimsOk(); ok {
+		d.Set("mapped_claims", v)
+	} else {
+		d.Set("mapped_claims", nil)
+	}
+
 	return diags
+}
+
+func fetchResourceScopeFromName(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceScopeName string) (*management.ResourceScope, diag.Diagnostics) {
+
+	var resp *management.ResourceScope
+
+	respList, diags := sdk.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, environmentID, resourceID).Execute()
+		},
+		"ReadAllResourceScopes",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if resourceScopes, ok := respList.(*management.EntityArray).Embedded.GetScopesOk(); ok {
+
+		found := false
+		for _, resourceScope := range resourceScopes {
+
+			resourceScope := resourceScope // fix for exportloopref lint
+
+			if resourceScope.GetName() == resourceScopeName {
+				resp = &resourceScope
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Cannot find resource %s", resourceScopeName),
+			})
+
+			return nil, diags
+		}
+
+	}
+
+	return resp, diags
 }
