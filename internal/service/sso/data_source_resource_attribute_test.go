@@ -71,15 +71,15 @@ func testAccResourceAttributeDataSourceConfig_ByNameFull(resourceName, name stri
 	return fmt.Sprintf(`
 		%[1]s
 
-		data "pingone_resource" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-		  
-			name = "openid"
-		  }
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
 
 data "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id = data.pingone_resource.%[2]s.id
+  resource_id    = data.pingone_resource.%[2]s.id
 
   name = "%[3]s"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -89,22 +89,22 @@ func testAccResourceAttributeDataSourceConfig_ByIDFull(resourceName, name string
 	return fmt.Sprintf(`
 	%[1]s
 
-	data "pingone_resource" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		name = "openid"
-	  }
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
 
 data "pingone_resource_attribute" "%[2]s-init" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id = data.pingone_resource.%[2]s.id
+  resource_id    = data.pingone_resource.%[2]s.id
 
   name = "%[3]s"
 }
 
 data "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id = data.pingone_resource.%[2]s.id
+  resource_id    = data.pingone_resource.%[2]s.id
 
   resource_attribute_id = data.pingone_resource_attribute.%[2]s-init.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)

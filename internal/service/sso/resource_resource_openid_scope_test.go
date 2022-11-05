@@ -256,35 +256,35 @@ func testAccResourceScopeOpenIDConfig_Full(resourceName, attributeName, scopeNam
 	return fmt.Sprintf(`
 		%[1]s
 
-		data "pingone_resource" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-		  
-			name = "openid"
-		  }
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-		  resource "pingone_resource_attribute" "%[2]s-1" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id    = data.pingone_resource.%[2]s.id
-		  
-			name        = "%[3]s-1"
-			value = "$${user.name.given}"
-		  }
-		
-		  resource "pingone_resource_attribute" "%[2]s-2" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id    = data.pingone_resource.%[2]s.id
-		  
-			name        = "%[3]s-2"
-			value = "$${user.name.family}"
-		  }
-		
-		  resource "pingone_resource_attribute" "%[2]s-3" {
-			environment_id = data.pingone_environment.general_test.id
-			resource_id    = data.pingone_resource.%[2]s.id
-		  
-			name        = "%[3]s-3"
-			value = "$${user.email}"
-		  }
+  name = "openid"
+}
+
+resource "pingone_resource_attribute" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name  = "%[3]s-1"
+  value = "$${user.name.given}"
+}
+
+resource "pingone_resource_attribute" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name  = "%[3]s-2"
+  value = "$${user.name.family}"
+}
+
+resource "pingone_resource_attribute" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name  = "%[3]s-3"
+  value = "$${user.email}"
+}
 
 resource "pingone_resource_scope_openid" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -293,9 +293,9 @@ resource "pingone_resource_scope_openid" "%[2]s" {
   description = "My resource scope"
 
   mapped_claims = [
-	pingone_resource_attribute.%[2]s-2.id,
-	pingone_resource_attribute.%[2]s-3.id,
-	pingone_resource_attribute.%[2]s-1.id
+    pingone_resource_attribute.%[2]s-2.id,
+    pingone_resource_attribute.%[2]s-3.id,
+    pingone_resource_attribute.%[2]s-1.id
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, attributeName, scopeName)
 }
@@ -315,45 +315,45 @@ func testAccResourceScopeOpenIDConfig_OverridePredefined(environmentName, licens
 	return fmt.Sprintf(`
 		%[1]s
 
-		data "pingone_resource" "%[3]s" {
-			environment_id = pingone_environment.%[2]s.id
-		  
-			name = "openid"
-		  }
+data "pingone_resource" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-		  resource "pingone_resource_attribute" "%[3]s-1" {
-			environment_id = pingone_environment.%[2]s.id
-			resource_id    = data.pingone_resource.%[3]s.id
-		  
-			name        = "%[4]s-1"
-			value = "$${user.name.given}"
-		  }
-		
-		  resource "pingone_resource_attribute" "%[3]s-2" {
-			environment_id = pingone_environment.%[2]s.id
-			resource_id    = data.pingone_resource.%[3]s.id
-		  
-			name        = "%[4]s-2"
-			value = "$${user.name.family}"
-		  }
-		
-		  resource "pingone_resource_attribute" "%[3]s-3" {
-			environment_id = pingone_environment.%[2]s.id
-			resource_id    = data.pingone_resource.%[3]s.id
-		  
-			name        = "%[4]s-3"
-			value = "$${user.email}"
-		  }
+  name = "openid"
+}
+
+resource "pingone_resource_attribute" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+  resource_id    = data.pingone_resource.%[3]s.id
+
+  name  = "%[4]s-1"
+  value = "$${user.name.given}"
+}
+
+resource "pingone_resource_attribute" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+  resource_id    = data.pingone_resource.%[3]s.id
+
+  name  = "%[4]s-2"
+  value = "$${user.name.family}"
+}
+
+resource "pingone_resource_attribute" "%[3]s-3" {
+  environment_id = pingone_environment.%[2]s.id
+  resource_id    = data.pingone_resource.%[3]s.id
+
+  name  = "%[4]s-3"
+  value = "$${user.email}"
+}
 
 resource "pingone_resource_scope_openid" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
-  name        = "%[4]s"
+  name = "%[4]s"
 
   mapped_claims = [
-	pingone_resource_attribute.%[3]s-2.id,
-	pingone_resource_attribute.%[3]s-3.id,
-	pingone_resource_attribute.%[3]s-1.id
+    pingone_resource_attribute.%[3]s-2.id,
+    pingone_resource_attribute.%[3]s-3.id,
+    pingone_resource_attribute.%[3]s-1.id
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

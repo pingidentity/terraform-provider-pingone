@@ -285,8 +285,8 @@ resource "pingone_resource_scope_pingone_api" "%[2]s" {
   description = "My resource scope"
 
   schema_attributes = [
-	"name.given",
-	"name.family",
+    "name.given",
+    "name.family",
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -307,13 +307,13 @@ func testAccResourceScopePingOneAPIConfig_OverridePredefined(environmentName, li
 		%[1]s
 
 resource "pingone_resource_scope_pingone_api" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
-  name        = "%[4]s"
+  name = "%[4]s"
 
   schema_attributes = [
-	"name.given",
-	"name.family",
+    "name.given",
+    "name.family",
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

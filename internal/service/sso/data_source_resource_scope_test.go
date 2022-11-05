@@ -229,86 +229,86 @@ func testAccResourceScopeDataSourceConfig_ByIDSchemaAttributes(resourceName, nam
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_resource" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		name = "%[3]s"
-	  }
-	  
-	  resource "pingone_resource_scope" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-		resource_id    = pingone_resource.%[2]s.id
-	  
-		name        = "%[3]s"
-		description = "My resource scope"
-	  
-		schema_attributes = [
-		  "name.given",
-		  "customAttr",
-		  "name.family",
-		]
-	  }
-	  
-	data "pingone_resource_scope" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-		resource_id    = pingone_resource.%[2]s.id
-		resource_scope_id = pingone_resource_scope.%[2]s.id
-		
-	}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_resource_scope" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name        = "%[3]s"
+  description = "My resource scope"
+
+  schema_attributes = [
+    "name.given",
+    "customAttr",
+    "name.family",
+  ]
+}
+
+data "pingone_resource_scope" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  resource_id       = pingone_resource.%[2]s.id
+  resource_scope_id = pingone_resource_scope.%[2]s.id
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccResourceScopeDataSourceConfig_ByIDMappedClaims(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_resource" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		name = "%[3]s"
-	  }
-	  
-	  resource "pingone_resource_attribute" "%[2]s-1" {
-		  environment_id = data.pingone_environment.general_test.id
-		  resource_id    = pingone_resource.%[2]s.id
-		
-		  name        = "%[3]s-1"
-		  value = "$${user.name.given}"
-		}
-	  
-		resource "pingone_resource_attribute" "%[2]s-2" {
-		  environment_id = data.pingone_environment.general_test.id
-		  resource_id    = pingone_resource.%[2]s.id
-		
-		  name        = "%[3]s-2"
-		  value = "$${user.name.family}"
-		}
-	  
-		resource "pingone_resource_attribute" "%[2]s-3" {
-		  environment_id = data.pingone_environment.general_test.id
-		  resource_id    = pingone_resource.%[2]s.id
-		
-		  name        = "%[3]s-3"
-		  value = "$${user.email}"
-		}
-	  
-	  resource "pingone_resource_scope" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-		resource_id    = pingone_resource.%[2]s.id
-	  
-		name        = "%[3]s"
-		description = "My resource scope"
-	  
-		mapped_claims = [
-		  pingone_resource_attribute.%[2]s-2.id
-		  pingone_resource_attribute.%[2]s-3.id
-		  pingone_resource_attribute.%[2]s-1.id
-		]
-	  }
-	  
-	 data  "pingone_resource_scope" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-		resource_id    = pingone_resource.%[2]s.id
-		resource_scope_id = pingone_resource_scope.%[2]s.id
-		
-	}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_resource_attribute" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name  = "%[3]s-1"
+  value = "$${user.name.given}"
+}
+
+resource "pingone_resource_attribute" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name  = "%[3]s-2"
+  value = "$${user.name.family}"
+}
+
+resource "pingone_resource_attribute" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name  = "%[3]s-3"
+  value = "$${user.email}"
+}
+
+resource "pingone_resource_scope" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name        = "%[3]s"
+  description = "My resource scope"
+
+  mapped_claims = [
+    pingone_resource_attribute.%[2]s-2.id,
+    pingone_resource_attribute.%[2]s-3.id,
+    pingone_resource_attribute.%[2]s-1.id
+  ]
+}
+
+data "pingone_resource_scope" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  resource_id       = pingone_resource.%[2]s.id
+  resource_scope_id = pingone_resource_scope.%[2]s.id
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

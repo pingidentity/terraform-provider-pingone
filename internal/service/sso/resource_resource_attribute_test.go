@@ -112,7 +112,7 @@ resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   resource_id    = pingone_resource.%[2]s.id
 
-  name        = "%[3]s"
+  name  = "%[3]s"
   value = "$${user.name.family}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, idToken, userInfo)
 }
