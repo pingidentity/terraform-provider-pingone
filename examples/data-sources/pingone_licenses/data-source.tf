@@ -7,8 +7,8 @@ data "pingone_licenses" "my_licenses_by_data_filter" {
   organization_id = var.organization_id
 
   data_filter {
-    name   = "package"
-    values = ["TRIAL"]
+    name   = "name"
+    values = ["My License"]
   }
 
   data_filter {

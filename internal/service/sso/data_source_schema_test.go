@@ -2,6 +2,7 @@ package sso_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -23,10 +24,11 @@ func TestAccSchemaDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccSchemaDataSourceConfig_ByNameFull(resourceName, "User"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "schema_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "User"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "schema_id"),
 				),
 			},
 		},
@@ -48,10 +50,11 @@ func TestAccSchemaDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccSchemaDataSourceConfig_ByIDFull(resourceName, "User"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "schema_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "User"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "schema_id"),
 				),
 			},
 		},

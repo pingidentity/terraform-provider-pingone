@@ -21,8 +21,8 @@ data "pingone_licenses" "my_licenses_by_data_filter" {
   organization_id = var.organization_id
 
   data_filter {
-    name   = "package"
-    values = ["TRIAL"]
+    name   = "name"
+    values = ["My License"]
   }
 
   data_filter {
@@ -54,7 +54,7 @@ data "pingone_licenses" "my_licenses_by_data_filter" {
 
 Required:
 
-- `values` (Set of String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.  If the attribute to filter is `package`, available value are `ADMIN`, `INTERNAL`, `TRIAL`, `STANDARD`, `PREMIUM`, `MFA`, `RISK`, `MFARISK`, `GLOBAL`.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE`.  If the attribute filter is `name`, the exact name of the license should be provided.
+- `values` (Set of String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.  If the attribute filter is `package`, the value is a free text, case-sensitive field.  Package names are not fixed and can change over time. If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  If the attribute filter is `name`, the exact name of the license should be provided.
 
 Optional:
 

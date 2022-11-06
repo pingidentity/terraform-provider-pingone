@@ -1,0 +1,1 @@
+$ terraform import pingone_branding_settings.example <environment_id>

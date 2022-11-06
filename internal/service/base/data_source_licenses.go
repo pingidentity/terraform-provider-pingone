@@ -48,7 +48,7 @@ func DatasourceLicenses() *schema.Resource {
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"name", "package", "status"}, false)),
 						},
 						"values": {
-							Description: "The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.  If the attribute to filter is `package`, available value are `ADMIN`, `INTERNAL`, `TRIAL`, `STANDARD`, `PREMIUM`, `MFA`, `RISK`, `MFARISK`, `GLOBAL`.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE`.  If the attribute filter is `name`, the exact name of the license should be provided.",
+							Description: "The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.  If the attribute filter is `package`, the value is a free text, case-sensitive field.  Package names are not fixed and can change over time. If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  If the attribute filter is `name`, the exact name of the license should be provided.",
 							Type:        schema.TypeSet,
 							Required:    true,
 							Elem: &schema.Schema{

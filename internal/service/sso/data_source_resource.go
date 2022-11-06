@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -62,6 +65,17 @@ func DatasourceResource() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
+			"introspect_endpoint_auth_method": {
+				Description: fmt.Sprintf("The client authentication methods supported by the token endpoint. Options are `%s`, `%s`, and `%s`.", string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_NONE), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_POST)),
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"client_secret": {
+				Description: "An auto-generated resource client secret. Possible characters are `a-z`, `A-Z`, `0-9`, `-`, `.`, `_`, `~`. The secret has a minimum length of 64 characters per SHA-512 requirements when using the HS512 algorithm to sign ID tokens using the secret as the key.",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+			},
 		},
 	}
 }
@@ -74,45 +88,13 @@ func datasourcePingOneResourceRead(ctx context.Context, d *schema.ResourceData, 
 	})
 	var diags diag.Diagnostics
 
-	var resp management.Resource
+	var resp *management.Resource
 
 	if v, ok := d.GetOk("name"); ok {
 
-		respList, diags := sdk.ParseResponse(
-			ctx,
-
-			func() (interface{}, *http.Response, error) {
-				return apiClient.ResourcesApi.ReadAllResources(ctx, d.Get("environment_id").(string)).Execute()
-			},
-			"ReadAllResources",
-			sdk.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-		)
+		resp, diags = fetchResourceFromName(ctx, apiClient, d.Get("environment_id").(string), v.(string))
 		if diags.HasError() {
 			return diags
-		}
-
-		if resources, ok := respList.(*management.EntityArray).Embedded.GetResourcesOk(); ok {
-
-			found := false
-			for _, resource := range resources {
-
-				if resource.GetName() == v.(string) {
-					resp = resource
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  fmt.Sprintf("Cannot find resource %s", v),
-				})
-
-				return diags
-			}
-
 		}
 
 	} else if v, ok2 := d.GetOk("resource_id"); ok2 {
@@ -131,7 +113,7 @@ func datasourcePingOneResourceRead(ctx context.Context, d *schema.ResourceData, 
 			return diags
 		}
 
-		resp = *resourceResp.(*management.Resource)
+		resp = resourceResp.(*management.Resource)
 
 	} else {
 
@@ -157,8 +139,59 @@ func datasourcePingOneResourceRead(ctx context.Context, d *schema.ResourceData, 
 
 	if v, ok := resp.GetTypeOk(); ok {
 		d.Set("type", string(*v))
+
+		if *v == management.ENUMRESOURCETYPE_CUSTOM {
+			respSecret, diags := sdk.ParseResponse(
+				ctx,
+
+				func() (interface{}, *http.Response, error) {
+					return apiClient.ResourceClientSecretApi.ReadResourceSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+				},
+				"ReadResourceSecret",
+				sdk.CustomErrorResourceNotFoundWarning,
+				func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+					// The secret may take a short time to propagate
+					if r.StatusCode == 404 {
+						tflog.Warn(ctx, "Resource secret not found, available for retry")
+						return true
+					}
+
+					if p1error != nil {
+						var err error
+
+						// Permissions may not have propagated by this point
+						if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+							tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+							return true
+						}
+						if err != nil {
+							tflog.Warn(ctx, "Cannot match error string for retry")
+							return false
+						}
+
+					}
+
+					return false
+				},
+			)
+			if diags.HasError() {
+				return diags
+			}
+
+			respSecretObj := *respSecret.(*management.ResourceSecret)
+
+			if v, ok := respSecretObj.GetSecretOk(); ok {
+				d.Set("client_secret", v)
+			} else {
+				d.Set("client_secret", nil)
+			}
+		} else {
+			d.Set("client_secret", nil)
+		}
 	} else {
 		d.Set("type", nil)
+		d.Set("client_secret", nil)
 	}
 
 	if v, ok := resp.GetAudienceOk(); ok {
@@ -173,5 +206,57 @@ func datasourcePingOneResourceRead(ctx context.Context, d *schema.ResourceData, 
 		d.Set("access_token_validity_seconds", nil)
 	}
 
+	if v, ok := resp.GetIntrospectEndpointAuthMethodOk(); ok {
+		d.Set("introspect_endpoint_auth_method", string(*v))
+	} else {
+		d.Set("introspect_endpoint_auth_method", nil)
+	}
+
 	return diags
+}
+
+func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient, environmentID, resourceName string) (*management.Resource, diag.Diagnostics) {
+
+	var resp *management.Resource
+
+	respList, diags := sdk.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ResourcesApi.ReadAllResources(ctx, environmentID).Execute()
+		},
+		"ReadAllResources",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if resources, ok := respList.(*management.EntityArray).Embedded.GetResourcesOk(); ok {
+
+		found := false
+		for _, resource := range resources {
+
+			resource := resource // fix for exportloopref lint
+
+			if resource.GetName() == resourceName {
+				resp = &resource
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Cannot find resource %s", resourceName),
+			})
+
+			return nil, diags
+		}
+
+	}
+
+	return resp, diags
 }

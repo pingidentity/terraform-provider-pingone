@@ -41,6 +41,8 @@ data "pingone_resource" "example_by_id" {
 
 - `access_token_validity_seconds` (Number) An integer that specifies the number of seconds that the access token is valid.  The minimum value is 300 seconds (5 minutes); the maximum value is 2592000 seconds (30 days).
 - `audience` (String) A string that specifies a URL without a fragment or `@ObjectName` and must not contain `pingone` or `pingidentity` (for example, `https://api.myresource.com`). If a URL is not specified, the resource name is used.
+- `client_secret` (String, Sensitive) An auto-generated resource client secret. Possible characters are `a-z`, `A-Z`, `0-9`, `-`, `.`, `_`, `~`. The secret has a minimum length of 64 characters per SHA-512 requirements when using the HS512 algorithm to sign ID tokens using the secret as the key.
 - `description` (String) A description of the resource.
 - `id` (String) The ID of this resource.
+- `introspect_endpoint_auth_method` (String) The client authentication methods supported by the token endpoint. Options are `NONE`, `CLIENT_SECRET_BASIC`, and `CLIENT_SECRET_POST`.
 - `type` (String) A string that specifies the type of resource. Options are `OPENID_CONNECT`, `PINGONE_API`, and `CUSTOM`. Only the `CUSTOM` resource type can be created. `OPENID_CONNECT` specifies the built-in platform resource for OpenID Connect. `PINGONE_API` specifies the built-in platform resource for PingOne.
