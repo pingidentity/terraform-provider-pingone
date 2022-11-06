@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.0
 	github.com/katbyte/terrafmt v0.5.2
-	github.com/patrickcping/pingone-go-sdk-v2 v0.4.3
+	github.com/patrickcping/pingone-go-sdk-v2 v0.5.0
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.12.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.7.0

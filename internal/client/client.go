@@ -21,6 +21,7 @@ func (c *Config) APIClient(ctx context.Context) (*Client, error) {
 		ClientID:      c.ClientID,
 		ClientSecret:  c.ClientSecret,
 		EnvironmentID: c.EnvironmentID,
+		AccessToken:   c.AccessToken,
 		Region:        c.Region,
 	}
 

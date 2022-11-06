@@ -1,0 +1,7 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.4.3 => v0.5.0
+```
+
+```release-note:enhancement
+Optional parameter `api_access_token` added to the provider configuration, to allow use of a PingOne API access token obtained prior to execution.
+```

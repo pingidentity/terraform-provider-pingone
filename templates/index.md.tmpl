@@ -26,14 +26,20 @@ Authenticating the provider also requires a code that represents the PingOne reg
 
 ## Example Usage
 
-### Authenticate using static credentials
+### Authenticate using static worker client credentials
 
 {{ tffile "examples/provider/provider.tf" }}
 
-### Authenticate using environment variables
+### Authenticate using environment variable worker client credentials
 
 {{ tffile "examples/provider/provider-env.tf" }}
 
 {{ codefile "shell" (printf "%s" "examples/provider/provider-env.sh") }}
+
+### Authenticate using an environment variable access token
+
+{{ tffile "examples/provider/provider-env.tf" }}
+
+{{ codefile "shell" (printf "%s" "examples/provider/provider-env-at.sh") }}
 
 {{ .SchemaMarkdown | trimspace }}
