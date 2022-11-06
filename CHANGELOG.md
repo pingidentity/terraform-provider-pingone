@@ -1,5 +1,12 @@
 ## 0.7.0 (Unreleased)
 
+NOTES:
+
+* bump `github.com/golangci/golangci-lint` v1.50.0 => v1.50.1 ([#207](https://github.com/pingidentity/terraform-provider-pingone/issues/207))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.11.2 => v0.12.0 ([#207](https://github.com/pingidentity/terraform-provider-pingone/issues/207))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.6.1 => v0.7.0 ([#207](https://github.com/pingidentity/terraform-provider-pingone/issues/207))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.4.2 => v0.4.3 ([#207](https://github.com/pingidentity/terraform-provider-pingone/issues/207))
+
 FEATURES:
 
 * **New Resource:** `pingone_image` ([#186](https://github.com/pingidentity/terraform-provider-pingone/issues/186))
