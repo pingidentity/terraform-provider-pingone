@@ -705,8 +705,8 @@ github.com/otiai10/mint v1.3.0/go.mod h1:F5AjcsTsWUqX+Na9fpHb52P8pcRX2CI6A3ctIT9
 github.com/otiai10/mint v1.3.1/go.mod h1:/yxELlJQ0ufhjUwhshSj+wFjZ78CnZ48/1wtmBH1OTc=
 github.com/owenrumney/go-sarif v1.1.1 h1:QNObu6YX1igyFKhdzd7vgzmw7XsWN3/6NMGuDzBgXmE=
 github.com/owenrumney/go-sarif v1.1.1/go.mod h1:dNDiPlF04ESR/6fHlPyq7gHKmrM0sHUvAGjsoh8ZH0U=
-github.com/patrickcping/pingone-go-sdk-v2 v0.4.3 h1:TcrB7VWGU3ee+Il5FSC3Ne3LOiuCcOTk8To5mSCN/OA=
-github.com/patrickcping/pingone-go-sdk-v2 v0.4.3/go.mod h1:Dqa0V/1jowgNJqiC64+kFp7VbYKXLc7MlIWwPXRngHk=
+github.com/patrickcping/pingone-go-sdk-v2 v0.5.0 h1:A4tHUHk+VtEw9ZdwXHa0Ag/64iJEGZ3Aa3eXMhq1jrU=
+github.com/patrickcping/pingone-go-sdk-v2 v0.5.0/go.mod h1:Dqa0V/1jowgNJqiC64+kFp7VbYKXLc7MlIWwPXRngHk=
 github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.0 h1:sLt/3L7ziJRsukvBslpzuIQVtKplHohHXVrL/51AZzc=
 github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.0/go.mod h1:sPYLibXIJPOCG87yQ2zFdbrlIUK44zo37qgtkhyKyMk=
 github.com/patrickcping/pingone-go-sdk-v2/management v0.12.0 h1:va7D4Xh2WeLCYTPMFzu2dQalpRudP714sWr20VdDs1o=
