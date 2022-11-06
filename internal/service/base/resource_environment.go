@@ -70,7 +70,6 @@ func ResourceEnvironment() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
 			},
 			"organization_id": {
 				Description: "The ID of the PingOne organization tenant to which the environment belongs.",
