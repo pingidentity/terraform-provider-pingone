@@ -1,5 +1,5 @@
 ```release-note:enhancement
-resource/pingone_environment: No longer force re-creation of the environment resource if the license ID is changed.
+resource/pingone_environment: No longer forces re-creation of the environment resource if the license ID is changed.
 ```
 
 ```release-note:bug
