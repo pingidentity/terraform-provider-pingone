@@ -3,6 +3,7 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -63,10 +64,39 @@ func testAccCheckResourceScopeDestroy(s *terraform.State) error {
 			return err
 		}
 
-		return fmt.Errorf("PingOne Resource Instance %s still exists", rs.Primary.ID)
+		return fmt.Errorf("PingOne Resource scope Instance %s still exists", rs.Primary.ID)
+
 	}
 
 	return nil
+}
+
+func TestAccResourceScope_NewEnv(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_resource.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckResourceDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceScopeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+				),
+			},
+		},
+	})
 }
 
 func TestAccResourceScope_Full(t *testing.T) {
@@ -125,31 +155,6 @@ func TestAccResourceScope_Minimal(t *testing.T) {
 	})
 }
 
-func TestAccResourceScope_Multiple(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_resource_scope.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckResourceScopeDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccResourceScopeConfig_Multiple(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-1", resourceFullName), "name", fmt.Sprintf("%s-1", name)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "name", fmt.Sprintf("%s-2", name)),
-				),
-			},
-		},
-	})
-}
-
 func TestAccResourceScope_Change(t *testing.T) {
 	t.Parallel()
 
@@ -198,10 +203,52 @@ func TestAccResourceScope_Change(t *testing.T) {
 	})
 }
 
-func testAccResourceScopeConfig_Full(resourceName, name string) string {
+func TestAccResourceScope_InvalidParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckResourceScopeDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccResourceScopeConfig_ErrorResource(resourceName, name, "PingOne API"),
+				ExpectError: regexp.MustCompile("Cannot control scopes for resources that are of type PingOne API or OpenID Connect.  Please ensure that the resource in the `resource_id` parameter is a custom resource."),
+			},
+			{
+				Config:      testAccResourceScopeConfig_ErrorResource(resourceName, name, "openid"),
+				ExpectError: regexp.MustCompile("Cannot control scopes for resources that are of type PingOne API or OpenID Connect.  Please ensure that the resource in the `resource_id` parameter is a custom resource."),
+			},
+		},
+	})
+}
+
+func testAccResourceScopeConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_resource" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_resource_scope" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  resource_id    = pingone_resource.%[3]s.id
+
+  name = "%[4]s"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccResourceScopeConfig_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
 resource "pingone_resource" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
@@ -235,27 +282,20 @@ resource "pingone_resource_scope" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccResourceScopeConfig_Multiple(resourceName, name string) string {
+func testAccResourceScopeConfig_ErrorResource(resourceName, name, existingResourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_resource" "%[2]s" {
+data "pingone_resource" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_resource_scope" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
 
   name = "%[3]s"
-}
-
-resource "pingone_resource_scope" "%[2]s-1" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
-
-  name = "%[3]s-1"
-}
-
-resource "pingone_resource_scope" "%[2]s-2" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
-
-  name = "%[3]s-2"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, existingResourceName)
 }

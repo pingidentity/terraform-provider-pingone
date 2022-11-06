@@ -19,7 +19,7 @@ func ResourceResourceScope() *schema.Resource {
 	return &schema.Resource{
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne OAuth 2.0 resource scopes.",
+		Description: "Resource to create and manage PingOne OAuth 2.0 resource scopes for custom resources.  This resource cannot manage PingOne API or OpenID Connect scopes.",
 
 		CreateContext: resourceResourceScopeCreate,
 		ReadContext:   resourceResourceScopeRead,
@@ -56,14 +56,6 @@ func ResourceResourceScope() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
-			"schema_attributes": {
-				Description: "A list that specifies the user schema attributes that can be read or updated for the specified PingOne access control scope. The value is an array of schema attribute paths (such as username, name.given, shirtSize) that the scope controls. This property is supported only for the `p1:read:user`, `p1:update:user` and `p1:read:user:{suffix}` and `p1:update:user:{suffix}` scopes. No other PingOne platform scopes allow this behavior. Any attributes not listed in the attribute array are excluded from the read or update action. The wildcard path (*) in the array includes all attributes and cannot be used in conjunction with any other user schema attribute path.",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
 		},
 	}
 }
@@ -76,21 +68,18 @@ func resourceResourceScopeCreate(ctx context.Context, d *schema.ResourceData, me
 	})
 	var diags diag.Diagnostics
 
-	resourceScope := *management.NewResourceScope(d.Get("name").(string)) // ResourceScope |  (optional)
-
-	if v, ok := d.GetOk("description"); ok {
-		resourceScope.SetDescription(v.(string))
+	diags = checkResourceType(ctx, apiClient, d.Get("environment_id").(string), d.Get("resource_id").(string))
+	if diags.HasError() {
+		return diags
 	}
 
-	if v, ok := d.GetOk("schema_attributes"); ok {
-		resourceScope.SetSchemaAttributes(v.([]string))
-	}
+	resourceScope := expandResourceScope(d)
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ResourceScopesApi.CreateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string)).ResourceScope(resourceScope).Execute()
+			return apiClient.ResourceScopesApi.CreateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string)).ResourceScope(*resourceScope).Execute()
 		},
 		"CreateResourceScope",
 		sdk.DefaultCustomError,
@@ -114,6 +103,11 @@ func resourceResourceScopeRead(ctx context.Context, d *schema.ResourceData, meta
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
+
+	diags = checkResourceType(ctx, apiClient, d.Get("environment_id").(string), d.Get("resource_id").(string))
+	if diags.HasError() {
+		return diags
+	}
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
@@ -144,12 +138,6 @@ func resourceResourceScopeRead(ctx context.Context, d *schema.ResourceData, meta
 		d.Set("description", nil)
 	}
 
-	if v, ok := respObject.GetSchemaAttributesOk(); ok {
-		d.Set("schema_attributes", v)
-	} else {
-		d.Set("schema_attributes", nil)
-	}
-
 	return diags
 }
 
@@ -161,21 +149,18 @@ func resourceResourceScopeUpdate(ctx context.Context, d *schema.ResourceData, me
 	})
 	var diags diag.Diagnostics
 
-	resourceScope := *management.NewResourceScope(d.Get("name").(string)) // Resource |  (optional)
-
-	if v, ok := d.GetOk("description"); ok {
-		resourceScope.SetDescription(v.(string))
+	diags = checkResourceType(ctx, apiClient, d.Get("environment_id").(string), d.Get("resource_id").(string))
+	if diags.HasError() {
+		return diags
 	}
 
-	if v, ok := d.GetOk("schema_attributes"); ok {
-		resourceScope.SetSchemaAttributes(v.([]string))
-	}
+	resourceScope := expandResourceScope(d)
 
 	_, diags = sdk.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).ResourceScope(resourceScope).Execute()
+			return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).ResourceScope(*resourceScope).Execute()
 		},
 		"UpdateResourceScope",
 		sdk.DefaultCustomError,
@@ -195,6 +180,11 @@ func resourceResourceScopeDelete(ctx context.Context, d *schema.ResourceData, me
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
 	var diags diag.Diagnostics
+
+	diags = checkResourceType(ctx, apiClient, d.Get("environment_id").(string), d.Get("resource_id").(string))
+	if diags.HasError() {
+		return diags
+	}
 
 	_, diags = sdk.ParseResponse(
 		ctx,
@@ -231,4 +221,35 @@ func resourceResourceScopeImport(ctx context.Context, d *schema.ResourceData, me
 	resourceResourceScopeRead(ctx, d, meta)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func checkResourceType(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	resourceType, diags := getResourceType(ctx, apiClient, environmentID, resourceID)
+	if diags.HasError() {
+		return diags
+	}
+
+	if resourceType != management.ENUMRESOURCETYPE_CUSTOM {
+
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Cannot control scopes for resources that are of type PingOne API or OpenID Connect.  Please ensure that the resource in the `resource_id` parameter is a custom resource.",
+		})
+		return diags
+
+	}
+
+	return diags
+}
+
+func expandResourceScope(d *schema.ResourceData) *management.ResourceScope {
+	resourceScope := *management.NewResourceScope(d.Get("name").(string)) // ResourceScope |  (optional)
+
+	if v, ok := d.GetOk("description"); ok {
+		resourceScope.SetDescription(v.(string))
+	}
+
+	return &resourceScope
 }
