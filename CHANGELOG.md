@@ -9,15 +9,24 @@ NOTES:
 
 FEATURES:
 
+* **New Data Source:** `pingone_resource_attribute` ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
 * **New Resource:** `pingone_image` ([#186](https://github.com/pingidentity/terraform-provider-pingone/issues/186))
+* **New Resource:** `pingone_resource_attribute` ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
+* **New Resource:** `pingone_resource_scope_openid` ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
+* **New Resource:** `pingone_resource_scope_pingone_api` ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
 
 ENHANCEMENTS:
 
+* data-source/pingone_resource: Added read only support for the `introspect_endpoint_auth_method` and `client_secret` attributes. ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
+* data-source/pingone_resource_scope: Added read only support for the `mapped_claims` attribute. ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
 * resource/pingone_environment: No longer forces re-creation of the environment resource if the license ID is changed. ([#206](https://github.com/pingidentity/terraform-provider-pingone/issues/206))
+* resource/pingone_resource: Added support for the optional `introspect_endpoint_auth_method` and the computed `client_secret` attributes. ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
 
 BUG FIXES:
 
 * data-source/pingone_licenses: Remove the value restriction on the license `package` field on when filtering.  Package values are not fixed and can change over time. ([#206](https://github.com/pingidentity/terraform-provider-pingone/issues/206))
+* resource/pingone_resource: Removed the potential for defective management of PingOne API and OpenID Connect resources. ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
+* resource/pingone_resource_scope: Removed the potential for defective management of PingOne API and OpenID Connect resource scopes. ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
 
 ## 0.6.1 (15 October 2022)
 
