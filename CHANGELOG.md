@@ -11,6 +11,14 @@ FEATURES:
 
 * **New Resource:** `pingone_image` ([#186](https://github.com/pingidentity/terraform-provider-pingone/issues/186))
 
+ENHANCEMENTS:
+
+* resource/pingone_environment: No longer forces re-creation of the environment resource if the license ID is changed. ([#206](https://github.com/pingidentity/terraform-provider-pingone/issues/206))
+
+BUG FIXES:
+
+* data-source/pingone_licenses: Remove the value restriction on the license `package` field on when filtering.  Package values are not fixed and can change over time. ([#206](https://github.com/pingidentity/terraform-provider-pingone/issues/206))
+
 ## 0.6.1 (15 October 2022)
 
 NOTES:
