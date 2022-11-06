@@ -229,22 +229,22 @@ func testAccResourceScopeDataSourceConfig_ByIDSchemaAttributes(resourceName, nam
 	return fmt.Sprintf(`
 	%[1]s
 
-	resource "pingone_resource_scope_pingone_api" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		name = "p1:read:user:%[3]s"
-	  
-		schema_attributes = [
-		  "name.given",
-		  "name.family",
-		]
-	  }
+resource "pingone_resource_scope_pingone_api" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-	  data "pingone_resource" "%[2]s" {
-		environment_id = data.pingone_environment.general_test.id
-	  
-		name = "PingOne API"
-	  }
+  name = "p1:read:user:%[3]s"
+
+  schema_attributes = [
+    "name.given",
+    "name.family",
+  ]
+}
+
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "PingOne API"
+}
 
 data "pingone_resource_scope" "%[2]s" {
   environment_id    = data.pingone_environment.general_test.id
@@ -258,48 +258,48 @@ func testAccResourceScopeDataSourceConfig_ByIDMappedClaims(resourceName, name st
 	return fmt.Sprintf(`
 	%[1]s
 
-	data "pingone_resource" "%[2]s" {
-	  environment_id = data.pingone_environment.general_test.id
-	
-	  name = "openid"
-	}
-	
-	resource "pingone_resource_attribute" "%[2]s-1" {
-	  environment_id = data.pingone_environment.general_test.id
-	  resource_id    = data.pingone_resource.%[2]s.id
-	
-	  name  = "%[3]s-1"
-	  value = "$${user.name.given}"
-	}
-	
-	resource "pingone_resource_attribute" "%[2]s-2" {
-	  environment_id = data.pingone_environment.general_test.id
-	  resource_id    = data.pingone_resource.%[2]s.id
-	
-	  name  = "%[3]s-2"
-	  value = "$${user.name.family}"
-	}
-	
-	resource "pingone_resource_attribute" "%[2]s-3" {
-	  environment_id = data.pingone_environment.general_test.id
-	  resource_id    = data.pingone_resource.%[2]s.id
-	
-	  name  = "%[3]s-3"
-	  value = "$${user.email}"
-	}
-	
-	resource "pingone_resource_scope_openid" "%[2]s" {
-	  environment_id = data.pingone_environment.general_test.id
-	
-	  name        = "%[3]s"
-	  description = "My resource scope"
-	
-	  mapped_claims = [
-		pingone_resource_attribute.%[2]s-2.id,
-		pingone_resource_attribute.%[2]s-3.id,
-		pingone_resource_attribute.%[2]s-1.id
-	  ]
-	}
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
+
+resource "pingone_resource_attribute" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name  = "%[3]s-1"
+  value = "$${user.name.given}"
+}
+
+resource "pingone_resource_attribute" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name  = "%[3]s-2"
+  value = "$${user.name.family}"
+}
+
+resource "pingone_resource_attribute" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name  = "%[3]s-3"
+  value = "$${user.email}"
+}
+
+resource "pingone_resource_scope_openid" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name        = "%[3]s"
+  description = "My resource scope"
+
+  mapped_claims = [
+    pingone_resource_attribute.%[2]s-2.id,
+    pingone_resource_attribute.%[2]s-3.id,
+    pingone_resource_attribute.%[2]s-1.id
+  ]
+}
 
 data "pingone_resource_scope" "%[2]s" {
   environment_id    = data.pingone_environment.general_test.id
