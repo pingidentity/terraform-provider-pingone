@@ -1,0 +1,7 @@
+```release-note:enhancement
+resource/pingone_environment: No longer force re-creation of the environment resource if the license ID is changed.
+```
+
+```release-note:bug
+data-source/pingone_licenses: Remove the value restriction on the license `package` field on when filtering.  Package values are not fixed and can change over time.
+```
