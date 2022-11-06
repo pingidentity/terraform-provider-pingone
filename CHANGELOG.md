@@ -10,7 +10,10 @@ NOTES:
 FEATURES:
 
 * **New Data Source:** `pingone_resource_attribute` ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
+* **New Resource:** `pingone_branding_settings` ([#195](https://github.com/pingidentity/terraform-provider-pingone/issues/195))
+* **New Resource:** `pingone_branding_theme` ([#195](https://github.com/pingidentity/terraform-provider-pingone/issues/195))
 * **New Resource:** `pingone_image` ([#186](https://github.com/pingidentity/terraform-provider-pingone/issues/186))
+* **New Resource:** `pingone_mfa_fido_policy` ([#194](https://github.com/pingidentity/terraform-provider-pingone/issues/194))
 * **New Resource:** `pingone_resource_attribute` ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
 * **New Resource:** `pingone_resource_scope_openid` ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
 * **New Resource:** `pingone_resource_scope_pingone_api` ([#205](https://github.com/pingidentity/terraform-provider-pingone/issues/205))
