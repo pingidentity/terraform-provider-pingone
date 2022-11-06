@@ -1,0 +1,35 @@
+```release-note:new-data-source
+pingone_resource_attribute
+```
+
+```release-note:new-resource
+pingone_resource_attribute
+```
+
+```release-note:new-resource
+pingone_resource_scope_openid
+```
+
+```release-note:new-resource
+pingone_resource_scope_pingone_api
+```
+
+```release-note:enhancement
+data-source/pingone_resource: Added read only support for the `introspect_endpoint_auth_method` and `client_secret` attributes.
+```
+
+```release-note:enhancement
+data-source/pingone_resource_scope: Added read only support for the `mapped_claims` attribute.
+```
+
+```release-note:enhancement
+resource/pingone_resource: Added support for the optional `introspect_endpoint_auth_method` and the computed `client_secret` attributes.
+```
+
+```release-note:bug
+resource/pingone_resource: Removed the potential for defective management of PingOne API and OpenID Connect resources.
+```
+
+```release-note:bug
+resource/pingone_resource_scope: Removed the potential for defective management of PingOne API and OpenID Connect resource scopes.
+```
