@@ -136,7 +136,7 @@ func filterResults(filterSet *schema.Set, licenses []management.License) []manag
 
 		filterMap := map[string]interface{}{
 			"name":    license.GetName(),
-			"package": string(license.GetPackage()),
+			"package": license.GetPackage(),
 			"status":  string(license.GetStatus()),
 		}
 
