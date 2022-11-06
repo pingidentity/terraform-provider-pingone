@@ -20,7 +20,7 @@ func ResourceResourceScopePingOneAPI() *schema.Resource {
 	return &schema.Resource{
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage resource scopes for the PingOne API resource.  Predefined scopes of `p1:read:user` and `p1:update:user` can be overridden, and new scopes can be defined as subscopes.  E.g. `p1:read:user:email` or `p1:update:user:email`.",
+		Description: "Resource to create and manage resource scopes for the PingOne API resource.  Predefined scopes of `p1:read:user` and `p1:update:user` can be overridden, and new scopes can be defined as subscopes in the format `p1:read:user:{suffix}` or `p1:update:user:{suffix}`.  E.g. `p1:read:user:newscope` or `p1:update:user:newscope`.",
 
 		CreateContext: resourceResourceScopePingOneAPICreate,
 		ReadContext:   resourceResourceScopePingOneAPIRead,
@@ -40,7 +40,7 @@ func ResourceResourceScopePingOneAPI() *schema.Resource {
 				ForceNew:         true,
 			},
 			"name": {
-				Description:      "The name of the resource scope.  Predefined scopes of `p1:read:user` and `p1:update:user` can be overridden, and new scopes can be defined as subscopes.  E.g. `p1:read:user:email` or `p1:update:user:email`",
+				Description:      "The name of the resource scope.  Predefined scopes of `p1:read:user` and `p1:update:user` can be overridden, and new scopes can be defined as subscopes in the format `p1:read:user:{suffix}` or `p1:update:user:{suffix}`.  E.g. `p1:read:user:newscope` or `p1:update:user:newscope`",
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^p1:(read|update):user(:{1}[a-zA-Z0-9]+)*$`), "Resource scope name must be either `p1:read:user`, `p1:update:user`, `p1:read:user:{suffix}` or `p1:update:user:{suffix}`")),

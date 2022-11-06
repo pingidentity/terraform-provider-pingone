@@ -1,0 +1,1 @@
+$ terraform import pingone_resource_scope_openid.example <environment_id>/<resource_scope_id>

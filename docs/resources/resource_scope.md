@@ -2,12 +2,12 @@
 page_title: "pingone_resource_scope Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne OAuth 2.0 resource scopes.
+  Resource to create and manage PingOne OAuth 2.0 resource scopes for custom resources.  This resource cannot manage PingOne API or OpenID Connect scopes.
 ---
 
 # pingone_resource_scope (Resource)
 
-Resource to create and manage PingOne OAuth 2.0 resource scopes.
+Resource to create and manage PingOne OAuth 2.0 resource scopes for custom resources.  This resource cannot manage PingOne API or OpenID Connect scopes.
 
 ## Example Usage
 
@@ -46,7 +46,6 @@ resource "pingone_resource_scope" "my_resource_scope" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `schema_attributes` (List of String) A list that specifies the user schema attributes that can be read or updated for the specified PingOne access control scope. The value is an array of schema attribute paths (such as username, name.given, shirtSize) that the scope controls. This property is supported only for the `p1:read:user`, `p1:update:user` and `p1:read:user:{suffix}` and `p1:update:user:{suffix}` scopes. No other PingOne platform scopes allow this behavior. Any attributes not listed in the attribute array are excluded from the read or update action. The wildcard path (*) in the array includes all attributes and cannot be used in conjunction with any other user schema attribute path.
 
 ## Import
 
