@@ -1,4 +1,4 @@
-## 0.7.0 (Unreleased)
+## 0.7.0 (07 November 2022)
 
 NOTES:
 
