@@ -1,0 +1,3 @@
+```release-note:note
+Removed documented reference to the Fraud service due to capability merge with Risk
+```
