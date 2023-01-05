@@ -1,5 +1,9 @@
 ## 0.7.1 (Unreleased)
 
+NOTES:
+
+* Removed documented reference to the Fraud service due to capability merge with Risk ([#224](https://github.com/pingidentity/terraform-provider-pingone/issues/224))
+
 ## 0.7.0 (07 November 2022)
 
 NOTES:
