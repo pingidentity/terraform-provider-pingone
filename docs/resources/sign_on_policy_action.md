@@ -232,8 +232,12 @@ Optional:
 
 Required:
 
-- `attribute_reference` (String) Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an additional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`
-- `value` (String) The value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.
+- `attribute_reference` (String) Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an additional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`.  When configured, one of `value_string` or `value_boolean` must be provided.
+
+Optional:
+
+- `value_boolean` (Boolean) The boolean value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.  This value parameter should be used where the data type of the schema attribute in `attribute_reference` is of type `BOOLEAN` (e.g `$${user.emailVerified}`, `$${user.verified}` and `$${user.mfaEnabled}`).  Conflicts with `value_string`.
+- `value_string` (String) The string value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.  This value parameter should be used where the data type of the schema attribute in `attribute_reference` is of type `STRING`.  Conflicts with `value_boolean`.
 
 
 

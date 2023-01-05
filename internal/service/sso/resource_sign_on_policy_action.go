@@ -30,7 +30,16 @@ func ResourceSignOnPolicyAction() *schema.Resource {
 			StateContext: resourceSignOnPolicyActionImport,
 		},
 
-		Schema: resourceSignOnPolicyActionSchema(),
+		Schema:        resourceSignOnPolicyActionSchema(),
+		SchemaVersion: 1,
+
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceSignOnPolicyActionSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: ResourceSignOnPolicyActionStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -122,7 +131,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionLogin.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v)
+			conditions, diags = flattenConditions(*v, "pwd")
 			if diags.HasError() {
 				return diags
 			}
@@ -159,7 +168,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionAgreement.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v)
+			conditions, diags = flattenConditions(*v, "")
 			if diags.HasError() {
 				return diags
 			}
@@ -174,7 +183,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionIDFirst.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v)
+			conditions, diags = flattenConditions(*v, "pwd")
 			if diags.HasError() {
 				return diags
 			}
@@ -216,7 +225,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionIDP.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v)
+			conditions, diags = flattenConditions(*v, "pwd")
 			if diags.HasError() {
 				return diags
 			}
@@ -241,7 +250,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionProgressiveProfiling.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v)
+			conditions, diags = flattenConditions(*v, "")
 			if diags.HasError() {
 				return diags
 			}
@@ -256,7 +265,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionMFA.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v)
+			conditions, diags = flattenConditions(*v, "mfa")
 			if diags.HasError() {
 				return diags
 			}
@@ -522,6 +531,9 @@ func expandSOPActionIDFirst(d *schema.ResourceData, sopPriority int32) (*managem
 		if vc, ok := v.([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
 			var conditions *management.SignOnPolicyActionCommonConditionOrOrInner
 			conditions, diags = expandSOPActionCondition(vc[0], management.ENUMSIGNONPOLICYTYPE_IDENTIFIER_FIRST, sopPriority)
+			if diags.HasError() {
+				return nil, diags
+			}
 			sopActionType.SetCondition(*conditions)
 		}
 	}
@@ -599,6 +611,9 @@ func expandSOPActionIDP(d *schema.ResourceData, sopPriority int32) (*management.
 			if vc, ok := v1.([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
 				var conditions *management.SignOnPolicyActionCommonConditionOrOrInner
 				conditions, diags = expandSOPActionCondition(vc[0], management.ENUMSIGNONPOLICYTYPE_IDENTITY_PROVIDER, sopPriority)
+				if diags.HasError() {
+					return nil, diags
+				}
 				sopActionType.SetCondition(*conditions)
 			}
 		}
@@ -646,6 +661,9 @@ func expandSOPActionLogin(d *schema.ResourceData, sopPriority int32) (*managemen
 		if v1, ok := v.([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
 			var conditions *management.SignOnPolicyActionCommonConditionOrOrInner
 			conditions, diags = expandSOPActionCondition(v1[0], management.ENUMSIGNONPOLICYTYPE_LOGIN, sopPriority)
+			if diags.HasError() {
+				return nil, diags
+			}
 			sopActionType.SetCondition(*conditions)
 		}
 	}
@@ -717,6 +735,9 @@ func expandSOPActionMFA(d *schema.ResourceData, sopPriority int32) (*management.
 		if vc, ok := v.([]interface{}); ok && vc != nil && len(vc) > 0 && vc[0] != nil {
 			var conditions *management.SignOnPolicyActionCommonConditionOrOrInner
 			conditions, diags = expandSOPActionCondition(vc[0], management.ENUMSIGNONPOLICYTYPE_MULTI_FACTOR_AUTHENTICATION, sopPriority)
+			if diags.HasError() {
+				return nil, diags
+			}
 			sopActionType.SetCondition(*conditions)
 		}
 	}
@@ -880,28 +901,43 @@ func expandSOPActionCondition(condition interface{}, actionType management.EnumS
 	return sopConditions, diags
 }
 
-func buildSignOnOlderThan(v int32) management.SignOnPolicyActionCommonConditionOrOrInner {
+func buildSignOnOlderThan(v int32, lastSignOnContext string) management.SignOnPolicyActionCommonConditionOrOrInner {
 	return management.SignOnPolicyActionCommonConditionOrOrInner{
 		SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
-			SignOnPolicyActionCommonConditionGreater: management.NewSignOnPolicyActionCommonConditionGreater(v, "${session.lastSignOn.withAuthenticator.pwd.at}"),
+			SignOnPolicyActionCommonConditionGreater: management.NewSignOnPolicyActionCommonConditionGreater(v, getLastSignOnContextFull(lastSignOnContext)),
 		},
 	}
 }
 
 type attributeEquality struct {
-	attributeReference string
-	attributeValue     string
+	attributeReference   string
+	attributeValueString *string
+	attributeValueBool   *bool
 }
 
 func buildUserMemberOfPopulation(v []interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	attributeList := make([]attributeEquality, 0)
 
 	for _, population := range v {
-		attributeList = append(attributeList, attributeEquality{
+
+		attribute := attributeEquality{
 			attributeReference: "${user.population.id}",
-			attributeValue:     population.(string),
-		})
+		}
+
+		if v, ok := population.(string); ok && v != "" {
+			attribute.attributeValueString = &v
+		} else {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Found Population ID to be invalid, found a non-string type or blank value",
+				Detail:   "A population ID defined in `conditions.0.user_is_member_of_any_population_id` is either not a string type or is a blank value. This is most likely an issue with the provider itself. Please raise an issue with the provider maintainers.",
+			})
+			return nil, diags
+		}
+
+		attributeList = append(attributeList, attribute)
 	}
 
 	return buildAttributeEqualsCondition(attributeList, "user_is_member_of_any_population_id", sopPriority)
@@ -909,13 +945,37 @@ func buildUserMemberOfPopulation(v []interface{}, sopPriority int32) (*managemen
 }
 
 func buildUserAttributes(v []interface{}, sopPriority int32) (*management.SignOnPolicyActionCommonConditionOrOrInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	attributeList := make([]attributeEquality, 0)
 
 	for _, attributeMap := range v {
-		attributeList = append(attributeList, attributeEquality{
+
+		attribute := attributeEquality{
 			attributeReference: attributeMap.(map[string]interface{})["attribute_reference"].(string),
-			attributeValue:     attributeMap.(map[string]interface{})["value"].(string),
-		})
+		}
+
+		valueSet := false
+
+		if v, ok := attributeMap.(map[string]interface{})["value_string"].(string); ok && v != "" && !valueSet {
+			attribute.attributeValueString = &v
+			valueSet = true
+		}
+
+		if v, ok := attributeMap.(map[string]interface{})["value_boolean"].(bool); ok && !valueSet {
+			attribute.attributeValueBool = &v
+			valueSet = true
+		}
+
+		if !valueSet {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "One of `user_attribute_equals.value_string` or `user_attribute_equals.value_boolean` is required to be set.",
+			})
+			return nil, diags
+		}
+
+		attributeList = append(attributeList, attribute)
 	}
 
 	return buildAttributeEqualsCondition(attributeList, "user_attribute_equals", sopPriority)
@@ -940,7 +1000,10 @@ func buildAttributeEqualsCondition(v []attributeEquality, tfSchemaAttribute stri
 
 				conditionList = append(conditionList, management.SignOnPolicyActionCommonConditionOrOrInner{
 					SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
-						SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(attribute.attributeReference, attribute.attributeValue),
+						SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(attribute.attributeReference, management.SignOnPolicyActionCommonConditionEqualsEquals{
+							Bool:   attribute.attributeValueBool,
+							String: attribute.attributeValueString,
+						}),
 					},
 				})
 
@@ -956,7 +1019,10 @@ func buildAttributeEqualsCondition(v []attributeEquality, tfSchemaAttribute stri
 
 			return &management.SignOnPolicyActionCommonConditionOrOrInner{
 				SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
-					SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(v[0].attributeReference, v[0].attributeValue),
+					SignOnPolicyActionCommonConditionEquals: management.NewSignOnPolicyActionCommonConditionEquals(v[0].attributeReference, management.SignOnPolicyActionCommonConditionEqualsEquals{
+						Bool:   v[0].attributeValueBool,
+						String: v[0].attributeValueString,
+					}),
 				},
 			}, nil
 		}
@@ -973,7 +1039,7 @@ func expandSOPActionConditionIDFirstAndLogin(condition interface{}, sopPriority 
 
 	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds"].(int); ok {
 
-		conditionStructList = append(conditionStructList, buildSignOnOlderThan(int32(v)))
+		conditionStructList = append(conditionStructList, buildSignOnOlderThan(int32(v), "pwd"))
 	}
 
 	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].(*schema.Set); ok && v != nil && len(v.List()) > 0 && v.List()[0] != "" {
@@ -1027,7 +1093,7 @@ func expandSOPActionConditionIDP(condition interface{}) *management.SignOnPolicy
 
 	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds"].(int); ok {
 
-		conditionStruct.SignOnPolicyActionCommonConditionAggregate = buildSignOnOlderThan(int32(v)).SignOnPolicyActionCommonConditionAggregate
+		conditionStruct.SignOnPolicyActionCommonConditionAggregate = buildSignOnOlderThan(int32(v), "pwd").SignOnPolicyActionCommonConditionAggregate
 	}
 
 	return conditionStruct
@@ -1046,7 +1112,7 @@ func expandSOPActionConditionMFA(condition interface{}, sopPriority int32) (*man
 
 	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds"].(int); ok {
 
-		conditionStructList = append(conditionStructList, buildSignOnOlderThan(int32(v)))
+		conditionStructList = append(conditionStructList, buildSignOnOlderThan(int32(v), "mfa"))
 	}
 
 	if v, ok := condition.(map[string]interface{})["ip_out_of_range_cidr"].(*schema.Set); ok && v != nil && len(v.List()) > 0 && v.List()[0] != "" {
@@ -1159,7 +1225,7 @@ type flattenedConditions struct {
 	anonymous_network_detected_allowed_cidr []string
 }
 
-func processConditions(conditions *flattenedConditions, v management.SignOnPolicyActionCommonConditionOrOrInner) (*flattenedConditions, diag.Diagnostics) {
+func processConditions(conditions *flattenedConditions, v management.SignOnPolicyActionCommonConditionOrOrInner, lastSignOnContext string) (*flattenedConditions, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	returnCondition := conditions
@@ -1205,7 +1271,7 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 
 	if j := v.SignOnPolicyActionCommonConditionOr; j != nil {
 		for _, orCondition := range j.GetOr() {
-			returnCondition, diags = processConditions(returnCondition, orCondition)
+			returnCondition, diags = processConditions(returnCondition, orCondition, lastSignOnContext)
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -1215,11 +1281,14 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 	if j := v.SignOnPolicyActionCommonConditionAggregate; j != nil {
 		if vc := j.SignOnPolicyActionCommonConditionGreater; vc != nil {
 
-			if condition, ok := vc.GetSecondsSinceOk(); ok {
-				if *condition != "${session.lastSignOn.withAuthenticator.pwd.at}" {
+			if condition, ok := vc.GetSecondsSinceOk(); ok && lastSignOnContext != "" {
+
+				lastSignOnContextFull := getLastSignOnContextFull(lastSignOnContext)
+
+				if *condition != lastSignOnContextFull {
 					diags = append(diags, diag.Diagnostic{
 						Severity: diag.Error,
-						Summary:  fmt.Sprintf("Condition `last_sign_on_older_than_seconds` has unknown field %s, but expecting value ${session.lastSignOn.withAuthenticator.pwd.at}.  This is not supported in the provider.  Please raise an issue.", *condition),
+						Summary:  fmt.Sprintf("Condition `last_sign_on_older_than_seconds` has unknown field `%s`, but expecting field `%s`.  This is not supported in the provider.  Please raise an issue.", *condition, lastSignOnContextFull),
 					})
 
 					return nil, diags
@@ -1372,12 +1441,13 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 		if vc := j.SignOnPolicyActionCommonConditionEquals; vc != nil {
 
 			if populationField := vc.GetValue(); populationField == "${user.population.id}" {
-				returnCondition.user_is_member_of_any_population_id = append(returnCondition.user_is_member_of_any_population_id, vc.GetEquals())
+				returnCondition.user_is_member_of_any_population_id = append(returnCondition.user_is_member_of_any_population_id, *vc.GetEquals().String)
 
 			} else {
 				condition := attributeEquality{
-					attributeValue:     vc.GetEquals(),
-					attributeReference: vc.GetValue(),
+					attributeReference:   vc.GetValue(),
+					attributeValueString: vc.GetEquals().String,
+					attributeValueBool:   vc.GetEquals().Bool,
 				}
 
 				returnCondition.user_attribute_equals = append(returnCondition.user_attribute_equals, condition)
@@ -1391,7 +1461,7 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 
 }
 
-func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolicyActionCommonConditionOrOrInner) ([]interface{}, diag.Diagnostics) {
+func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolicyActionCommonConditionOrOrInner, lastSignOnContext string) ([]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var conditionStruct *management.SignOnPolicyActionCommonConditionOrOrInner
@@ -1410,7 +1480,10 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 		conditionStruct = &signOnPolicyActionCommonConditions
 	}
 
-	conditions, diags := processConditions(&flattenedConditions{}, *conditionStruct)
+	conditions, diags := processConditions(&flattenedConditions{}, *conditionStruct, lastSignOnContext)
+	if diags.HasError() {
+		return nil, diags
+	}
 
 	flattenedConditions := map[string]interface{}{
 		"last_sign_on_older_than_seconds":         nil,
@@ -1434,10 +1507,24 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 	if conditions.user_attribute_equals != nil {
 		attributeList := make([]map[string]interface{}, 0)
 		for _, attributeStruct := range conditions.user_attribute_equals {
-			attributeList = append(attributeList, map[string]interface{}{
+
+			attribute := map[string]interface{}{
 				"attribute_reference": attributeStruct.attributeReference,
-				"value":               attributeStruct.attributeValue,
-			})
+			}
+
+			if v := attributeStruct.attributeValueString; v != nil {
+				attribute["value_string"] = *v
+			} else {
+				attribute["value_string"] = ""
+			}
+
+			if v := attributeStruct.attributeValueBool; v != nil {
+				attribute["value_boolean"] = *v
+			} else {
+				attribute["value_boolean"] = nil
+			}
+
+			attributeList = append(attributeList, attribute)
 		}
 		flattenedConditions["user_attribute_equals"] = attributeList
 	}
@@ -1647,4 +1734,17 @@ func getActionID(instance management.SignOnPolicyAction) string {
 	}
 
 	return actionID
+}
+
+func getLastSignOnContextFull(lastSignOnContext string) string {
+	lastSignOnContextFull := ""
+	switch lastSignOnContext {
+	case "pwd":
+		lastSignOnContextFull = "${session.lastSignOn.withAuthenticator.pwd.at}"
+	case "mfa":
+		lastSignOnContextFull = "${session.lastSignOn.withAuthenticator.mfa.at}"
+	default:
+		lastSignOnContextFull = "${session.lastSignOn.withAuthenticator.pwd.at}"
+	}
+	return lastSignOnContextFull
 }

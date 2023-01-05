@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -635,13 +636,16 @@ func TestAccSignOnPolicyAction_ConditionsMemberOfPopulations(t *testing.T) {
 	})
 }
 
-func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingle(t *testing.T) {
+func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleString(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
 	name := resourceName
+
+	attributeReference := "${user.lifecycle.status}"
+	attributeValue := "ACCOUNT_OK"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
@@ -650,15 +654,15 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingle(t *testing.T)
 		ErrorCheck:        acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingle(resourceName, name),
+				Config: testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingleString(resourceName, name, attributeReference, attributeValue),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
-						"attribute_reference": "${user.lifecycle.status}",
-						"value":               "ACCOUNT_OK",
+						"attribute_reference": attributeReference,
+						"value_string":        attributeValue,
 					}),
 				),
 			},
@@ -669,15 +673,68 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingle(t *testing.T)
 				),
 			},
 			{
-				Config: testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingle(resourceName, name),
+				Config: testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingleString(resourceName, name, attributeReference, attributeValue),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
-						"attribute_reference": "${user.lifecycle.status}",
-						"value":               "ACCOUNT_OK",
+						"attribute_reference": attributeReference,
+						"value_string":        attributeValue,
+					}),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleBool(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+
+	name := resourceName
+
+	attributeReference := "${user.mfaEnabled}"
+	attributeValue := true
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingleBool(resourceName, name, attributeReference, attributeValue),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
+						"attribute_reference": "${user.mfaEnabled}",
+						"value_boolean":       strconv.FormatBool(attributeValue),
+					}),
+				),
+			},
+			{
+				Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+				),
+			},
+			{
+				Config: testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingleBool(resourceName, name, attributeReference, attributeValue),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
+						"attribute_reference": "${user.mfaEnabled}",
+						"value_boolean":       strconv.FormatBool(attributeValue),
 					}),
 				),
 			},
@@ -705,18 +762,22 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "4"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.lifecycle.status}",
-						"value":               "ACCOUNT_OK",
+						"value_string":        "ACCOUNT_OK",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.name.given}",
-						"value":               "Bruce",
+						"value_string":        "Bruce",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.name.family}",
-						"value":               "Wayne",
+						"value_string":        "Wayne",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
+						"attribute_reference": "${user.mfaEnabled}",
+						"value_boolean":       "true",
 					}),
 				),
 			},
@@ -732,18 +793,22 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "4"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.lifecycle.status}",
-						"value":               "ACCOUNT_OK",
+						"value_string":        "ACCOUNT_OK",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.name.given}",
-						"value":               "Bruce",
+						"value_string":        "Bruce",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.name.family}",
-						"value":               "Wayne",
+						"value_string":        "Wayne",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
+						"attribute_reference": "${user.mfaEnabled}",
+						"value_boolean":       "true",
 					}),
 				),
 			},
@@ -1840,7 +1905,7 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingle(resourceName, name string) string {
+func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingleString(resourceName, name, attributeReference, attributeValue string) string {
 
 	return fmt.Sprintf(`
 		%[1]s
@@ -1873,14 +1938,57 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
   conditions {
     user_attribute_equals {
-      attribute_reference = "$${user.lifecycle.status}"
-      value               = "ACCOUNT_OK"
+      attribute_reference = "$%[4]s"
+      value_string        = "%[5]s"
     }
   }
 
   login {}
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, attributeReference, attributeValue)
+}
+
+func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingleBool(resourceName, name, attributeReference string, attributeValue bool) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s-id" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  conditions {
+    last_sign_on_older_than_seconds = 3600
+  }
+
+  identifier_first {}
+
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 2
+
+  conditions {
+    user_attribute_equals {
+      attribute_reference = "$%[4]s"
+      value_boolean       = %[5]t
+    }
+  }
+
+  login {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, attributeReference, attributeValue)
 }
 
 func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resourceName, name string) string {
@@ -1917,17 +2025,22 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
   conditions {
     user_attribute_equals {
       attribute_reference = "$${user.name.given}"
-      value               = "Bruce"
+      value_string        = "Bruce"
     }
 
     user_attribute_equals {
       attribute_reference = "$${user.name.family}"
-      value               = "Wayne"
+      value_string        = "Wayne"
     }
 
     user_attribute_equals {
       attribute_reference = "$${user.lifecycle.status}"
-      value               = "ACCOUNT_OK"
+      value_string        = "ACCOUNT_OK"
+    }
+
+    user_attribute_equals {
+      attribute_reference = "$${user.mfaEnabled}"
+      value_boolean       = true
     }
   }
 
@@ -2231,12 +2344,12 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
     user_attribute_equals {
       attribute_reference = "$${user.name.given}"
-      value               = "Bruce"
+      value_string        = "Bruce"
     }
 
     user_attribute_equals {
       attribute_reference = "$${user.name.family}"
-      value               = "Wayne"
+      value_string        = "Wayne"
     }
 
   }
@@ -2285,12 +2398,12 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
 // 				user_attribute_equals {
 // 					attribute_reference = "$${user.name.given}"
-// 					value 				= "Bruce"
+// 					value_string 				= "Bruce"
 // 				}
 
 // 				user_attribute_equals {
 // 					attribute_reference = "$${user.name.family}"
-// 					value 				= "Wayne"
+// 					value_string 				= "Wayne"
 // 				}
 
 // 			}
@@ -2313,12 +2426,12 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
 // 				user_attribute_equals {
 // 					attribute_reference = "$${user.name.given}"
-// 					value 				= "Bruce"
+// 					value_string 				= "Bruce"
 // 				}
 
 // 				user_attribute_equals {
 // 					attribute_reference = "$${user.name.family}"
-// 					value 				= "Wayne"
+// 					value_string 				= "Wayne"
 // 				}
 
 // 				ip_out_of_range_cidr = [
