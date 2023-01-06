@@ -224,6 +224,7 @@ Optional:
 - `ip_out_of_range_cidr` (Set of String) A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.
 - `ip_reputation_high_risk` (Boolean) A boolean that specifies whether the user's IP risk should be used when evaluating this policy action.  A value of `HIGH` will prompt the user to authenticate with this action. Defaults to `false`.
 - `last_sign_on_older_than_seconds` (Number) Set the number of seconds by which the user will not be prompted for this action following the last successful authentication.
+- `last_sign_on_older_than_seconds_mfa` (Number) Set the number of seconds by which the user will not be prompted for this action following the last successful authentication of an MFA authenticator device.
 - `user_attribute_equals` (Block Set) One or more conditions where an attribute on the user's profile must match the configured value. (see [below for nested schema](#nestedblock--conditions--user_attribute_equals))
 - `user_is_member_of_any_population_id` (Set of String) Activate this action only for users within the specified list of population IDs.
 
@@ -232,12 +233,12 @@ Optional:
 
 Required:
 
-- `attribute_reference` (String) Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an additional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`.  When configured, one of `value_string` or `value_boolean` must be provided.
+- `attribute_reference` (String) Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an additional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`.  When configured, one of `value` (for attributes of type `STRING` or `INTEGER`) or `value_boolean` (for attributes of type `BOOLEAN`) must be provided.
 
 Optional:
 
-- `value_boolean` (Boolean) The boolean value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.  This value parameter should be used where the data type of the schema attribute in `attribute_reference` is of type `BOOLEAN` (e.g `$${user.emailVerified}`, `$${user.verified}` and `$${user.mfaEnabled}`).  Conflicts with `value_string`.
-- `value_string` (String) The string value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.  This value parameter should be used where the data type of the schema attribute in `attribute_reference` is of type `STRING`.  Conflicts with `value_boolean`.
+- `value` (String) The string or integer (as string) value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.  This value parameter should be used where the data type of the schema attribute in `attribute_reference` is of type `STRING` or `INTEGER`.  Conflicts with `value_boolean`.
+- `value_boolean` (Boolean) The boolean value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.  This value parameter should be used where the data type of the schema attribute in `attribute_reference` is of type `BOOLEAN` (e.g `$${user.emailVerified}`, `$${user.verified}` and `$${user.mfaEnabled}`).  Conflicts with `value`.
 
 
 

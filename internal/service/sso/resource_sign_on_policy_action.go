@@ -30,16 +30,7 @@ func ResourceSignOnPolicyAction() *schema.Resource {
 			StateContext: resourceSignOnPolicyActionImport,
 		},
 
-		Schema:        resourceSignOnPolicyActionSchema(),
-		SchemaVersion: 1,
-
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    resourceSignOnPolicyActionSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: ResourceSignOnPolicyActionStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: resourceSignOnPolicyActionSchema(),
 	}
 }
 
@@ -898,7 +889,27 @@ func expandSOPActionCondition(condition interface{}, actionType management.EnumS
 		return nil, diags
 	}
 
+	bytes, _ := sopConditions.SignOnPolicyActionCommonConditionOr.MarshalJSON()
+
+	fmt.Printf("HERECOND!!! %#v", string(bytes[:]))
+
 	return sopConditions, diags
+}
+
+func buildSignOnOlderThanPwd(v int32) management.SignOnPolicyActionCommonConditionOrOrInner {
+	return management.SignOnPolicyActionCommonConditionOrOrInner{
+		SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+			SignOnPolicyActionCommonConditionGreater: management.NewSignOnPolicyActionCommonConditionGreater(v, getLastSignOnContextFull("pwd")),
+		},
+	}
+}
+
+func buildSignOnOlderThanMfa(v int32) management.SignOnPolicyActionCommonConditionOrOrInner {
+	return management.SignOnPolicyActionCommonConditionOrOrInner{
+		SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
+			SignOnPolicyActionCommonConditionGreater: management.NewSignOnPolicyActionCommonConditionGreater(v, getLastSignOnContextFull("mfa")),
+		},
+	}
 }
 
 func buildSignOnOlderThan(v int32, lastSignOnContext string) management.SignOnPolicyActionCommonConditionOrOrInner {
@@ -957,7 +968,7 @@ func buildUserAttributes(v []interface{}, sopPriority int32) (*management.SignOn
 
 		valueSet := false
 
-		if v, ok := attributeMap.(map[string]interface{})["value_string"].(string); ok && v != "" && !valueSet {
+		if v, ok := attributeMap.(map[string]interface{})["value"].(string); ok && v != "" && !valueSet {
 			attribute.attributeValueString = &v
 			valueSet = true
 		}
@@ -970,7 +981,7 @@ func buildUserAttributes(v []interface{}, sopPriority int32) (*management.SignOn
 		if !valueSet {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "One of `user_attribute_equals.value_string` or `user_attribute_equals.value_boolean` is required to be set.",
+				Summary:  "One of `user_attribute_equals.value` or `user_attribute_equals.value_boolean` is required to be set.",
 			})
 			return nil, diags
 		}
@@ -1037,9 +1048,9 @@ func expandSOPActionConditionIDFirstAndLogin(condition interface{}, sopPriority 
 
 	var conditionStructList = make([]management.SignOnPolicyActionCommonConditionOrOrInner, 0)
 
-	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds"].(int); ok {
+	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds"].(int); ok && v > 0 {
 
-		conditionStructList = append(conditionStructList, buildSignOnOlderThan(int32(v), "pwd"))
+		conditionStructList = append(conditionStructList, buildSignOnOlderThanPwd(int32(v)))
 	}
 
 	if v, ok := condition.(map[string]interface{})["user_is_member_of_any_population_id"].(*schema.Set); ok && v != nil && len(v.List()) > 0 && v.List()[0] != "" {
@@ -1091,9 +1102,9 @@ func expandSOPActionConditionIDP(condition interface{}) *management.SignOnPolicy
 
 	conditionStruct := &management.SignOnPolicyActionCommonConditionOrOrInner{}
 
-	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds"].(int); ok {
+	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds"].(int); ok && v > 0 {
 
-		conditionStruct.SignOnPolicyActionCommonConditionAggregate = buildSignOnOlderThan(int32(v), "pwd").SignOnPolicyActionCommonConditionAggregate
+		conditionStruct.SignOnPolicyActionCommonConditionAggregate = buildSignOnOlderThanPwd(int32(v)).SignOnPolicyActionCommonConditionAggregate
 	}
 
 	return conditionStruct
@@ -1110,9 +1121,20 @@ func expandSOPActionConditionMFA(condition interface{}, sopPriority int32) (*man
 	// heres johnny
 	var conditionStructList = make([]management.SignOnPolicyActionCommonConditionOrOrInner, 0)
 
-	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds"].(int); ok {
+	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds"].(int); ok && v > 0 {
 
-		conditionStructList = append(conditionStructList, buildSignOnOlderThan(int32(v), "mfa"))
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Argument is deprecated",
+			Detail:   "Parameter `conditions.last_sign_on_older_than_seconds` has been deprecated when configured with an MFA Sign-on policy action.  Please use `last_sign_on_older_than_seconds_mfa` instead.",
+		})
+
+		conditionStructList = append(conditionStructList, buildSignOnOlderThanPwd(int32(v)))
+	}
+
+	if v, ok := condition.(map[string]interface{})["last_sign_on_older_than_seconds_mfa"].(int); ok && v > 0 {
+
+		conditionStructList = append(conditionStructList, buildSignOnOlderThanMfa(int32(v)))
 	}
 
 	if v, ok := condition.(map[string]interface{})["ip_out_of_range_cidr"].(*schema.Set); ok && v != nil && len(v.List()) > 0 && v.List()[0] != "" {
@@ -1216,6 +1238,7 @@ func expandSOPActionConditionMFA(condition interface{}, sopPriority int32) (*man
 
 type flattenedConditions struct {
 	last_sign_on_older_than_seconds         *int32
+	last_sign_on_older_than_seconds_mfa     *int32
 	user_is_member_of_any_population_id     []string
 	user_attribute_equals                   []attributeEquality
 	ip_out_of_range_cidr                    []string
@@ -1283,26 +1306,24 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 
 			if condition, ok := vc.GetSecondsSinceOk(); ok && lastSignOnContext != "" {
 
-				lastSignOnContextFull := getLastSignOnContextFull(lastSignOnContext)
-
-				if *condition != lastSignOnContextFull {
+				if returnCondition.last_sign_on_older_than_seconds != nil || returnCondition.last_sign_on_older_than_seconds_mfa != nil {
 					diags = append(diags, diag.Diagnostic{
 						Severity: diag.Error,
-						Summary:  fmt.Sprintf("Condition `last_sign_on_older_than_seconds` has unknown field `%s`, but expecting field `%s`.  This is not supported in the provider.  Please raise an issue.", *condition, lastSignOnContextFull),
+						Summary:  "Condition `last_sign_on_older_than_seconds` or `last_sign_on_older_than_seconds_mfa` has has multiple nested values.  This is not supported in the provider.  Please raise an issue.",
 					})
 
 					return nil, diags
 				}
 
-				if returnCondition.last_sign_on_older_than_seconds != nil {
-					diags = append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  "Condition `last_sign_on_older_than_seconds` has has multiple nested values.  This is not supported in the provider.  Please raise an issue.",
-					})
+				greaterThanValue := func() *int32 { b := vc.GetGreater(); return &b }()
 
-					return nil, diags
+				switch *condition {
+				case "${session.lastSignOn.withAuthenticator.pwd.at}":
+					returnCondition.last_sign_on_older_than_seconds = greaterThanValue
+				case "${session.lastSignOn.withAuthenticator.mfa.at}":
+					returnCondition.last_sign_on_older_than_seconds_mfa = greaterThanValue
 				}
-				returnCondition.last_sign_on_older_than_seconds = func() *int32 { b := vc.GetGreater(); return &b }()
+
 			}
 		}
 
@@ -1487,6 +1508,7 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 
 	flattenedConditions := map[string]interface{}{
 		"last_sign_on_older_than_seconds":         nil,
+		"last_sign_on_older_than_seconds_mfa":     nil,
 		"user_is_member_of_any_population_id":     nil,
 		"user_attribute_equals":                   nil,
 		"ip_out_of_range_cidr":                    nil,
@@ -1498,6 +1520,10 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 
 	if conditions.last_sign_on_older_than_seconds != nil {
 		flattenedConditions["last_sign_on_older_than_seconds"] = *conditions.last_sign_on_older_than_seconds
+	}
+
+	if conditions.last_sign_on_older_than_seconds_mfa != nil {
+		flattenedConditions["last_sign_on_older_than_seconds_mfa"] = *conditions.last_sign_on_older_than_seconds_mfa
 	}
 
 	if conditions.user_is_member_of_any_population_id != nil {
@@ -1513,9 +1539,9 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 			}
 
 			if v := attributeStruct.attributeValueString; v != nil {
-				attribute["value_string"] = *v
+				attribute["value"] = *v
 			} else {
-				attribute["value_string"] = ""
+				attribute["value"] = ""
 			}
 
 			if v := attributeStruct.attributeValueBool; v != nil {
