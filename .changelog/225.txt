@@ -1,7 +1,11 @@
 ```release-note:bug
-resource/pingone_sign_on_policy_action: Fixed bug where the `last_sign_on_older_than_seconds` condition for an MFA Sign on policy referenced an incorrect user attribute, leading to a provider crash.
+resource/pingone_sign_on_policy_action: Fixed bug where the `last_sign_on_older_than_seconds` condition, when set to an MFA Sign on policy action that was then changed in the console lead to a provider crash on next replan.
 ```
 
 ```release-note:bug
-resource/pingone_sign_on_policy_action: Fixed bug where the `user_attribute_equals` condition didn't correctly interpret boolean values for schema attributes of the same type.  HCL developers can now specify the correct data type for the intended schema attribute.
+resource/pingone_sign_on_policy_action: Added `value_boolean` to the `user_attribute_equals` condition block as the existing `value` property didn't correctly interpret boolean values.
+```
+
+```release-note:enhancement
+resource/pingone_sign_on_policy_action: Added `last_sign_on_older_than_seconds_mfa` condition that can only be set to an MFA Sign on policy action.
 ```

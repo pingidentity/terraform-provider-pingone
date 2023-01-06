@@ -662,7 +662,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleString(t *test
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": attributeReference,
-						"value_string":        attributeValue,
+						"value":               attributeValue,
 					}),
 				),
 			},
@@ -681,7 +681,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleString(t *test
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": attributeReference,
-						"value_string":        attributeValue,
+						"value":               attributeValue,
 					}),
 				),
 			},
@@ -765,15 +765,15 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "4"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.lifecycle.status}",
-						"value_string":        "ACCOUNT_OK",
+						"value":               "ACCOUNT_OK",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.name.given}",
-						"value_string":        "Bruce",
+						"value":               "Bruce",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.name.family}",
-						"value_string":        "Wayne",
+						"value":               "Wayne",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.mfaEnabled}",
@@ -796,15 +796,15 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "4"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.lifecycle.status}",
-						"value_string":        "ACCOUNT_OK",
+						"value":               "ACCOUNT_OK",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.name.given}",
-						"value_string":        "Bruce",
+						"value":               "Bruce",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.name.family}",
-						"value_string":        "Wayne",
+						"value":               "Wayne",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "conditions.0.user_attribute_equals.*", map[string]string{
 						"attribute_reference": "${user.mfaEnabled}",
@@ -1939,7 +1939,7 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
   conditions {
     user_attribute_equals {
       attribute_reference = "$%[4]s"
-      value_string        = "%[5]s"
+      value               = "%[5]s"
     }
   }
 
@@ -2025,17 +2025,17 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
   conditions {
     user_attribute_equals {
       attribute_reference = "$${user.name.given}"
-      value_string        = "Bruce"
+      value               = "Bruce"
     }
 
     user_attribute_equals {
       attribute_reference = "$${user.name.family}"
-      value_string        = "Wayne"
+      value               = "Wayne"
     }
 
     user_attribute_equals {
       attribute_reference = "$${user.lifecycle.status}"
-      value_string        = "ACCOUNT_OK"
+      value               = "ACCOUNT_OK"
     }
 
     user_attribute_equals {
@@ -2344,12 +2344,12 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
     user_attribute_equals {
       attribute_reference = "$${user.name.given}"
-      value_string        = "Bruce"
+      value               = "Bruce"
     }
 
     user_attribute_equals {
       attribute_reference = "$${user.name.family}"
-      value_string        = "Wayne"
+      value               = "Wayne"
     }
 
   }
@@ -2398,12 +2398,12 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
 // 				user_attribute_equals {
 // 					attribute_reference = "$${user.name.given}"
-// 					value_string 				= "Bruce"
+// 					value 				= "Bruce"
 // 				}
 
 // 				user_attribute_equals {
 // 					attribute_reference = "$${user.name.family}"
-// 					value_string 				= "Wayne"
+// 					value 				= "Wayne"
 // 				}
 
 // 			}
@@ -2426,12 +2426,12 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
 // 				user_attribute_equals {
 // 					attribute_reference = "$${user.name.given}"
-// 					value_string 				= "Bruce"
+// 					value 				= "Bruce"
 // 				}
 
 // 				user_attribute_equals {
 // 					attribute_reference = "$${user.name.family}"
-// 					value_string 				= "Wayne"
+// 					value 				= "Wayne"
 // 				}
 
 // 				ip_out_of_range_cidr = [

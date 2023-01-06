@@ -122,7 +122,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionLogin.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v, "pwd")
+			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
 				return diags
 			}
@@ -159,7 +159,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionAgreement.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v, "")
+			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
 				return diags
 			}
@@ -174,7 +174,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionIDFirst.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v, "pwd")
+			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
 				return diags
 			}
@@ -216,7 +216,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionIDP.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v, "pwd")
+			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
 				return diags
 			}
@@ -241,7 +241,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionProgressiveProfiling.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v, "")
+			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
 				return diags
 			}
@@ -256,7 +256,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		if v, ok := respObject.SignOnPolicyActionMFA.GetConditionOk(); ok {
 			var conditions interface{}
-			conditions, diags = flattenConditions(*v, "mfa")
+			conditions, diags = flattenConditions(*v)
 			if diags.HasError() {
 				return diags
 			}
@@ -889,27 +889,15 @@ func expandSOPActionCondition(condition interface{}, actionType management.EnumS
 		return nil, diags
 	}
 
-	bytes, _ := sopConditions.SignOnPolicyActionCommonConditionOr.MarshalJSON()
-
-	fmt.Printf("HERECOND!!! %#v", string(bytes[:]))
-
 	return sopConditions, diags
 }
 
 func buildSignOnOlderThanPwd(v int32) management.SignOnPolicyActionCommonConditionOrOrInner {
-	return management.SignOnPolicyActionCommonConditionOrOrInner{
-		SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
-			SignOnPolicyActionCommonConditionGreater: management.NewSignOnPolicyActionCommonConditionGreater(v, getLastSignOnContextFull("pwd")),
-		},
-	}
+	return buildSignOnOlderThan(v, "pwd")
 }
 
 func buildSignOnOlderThanMfa(v int32) management.SignOnPolicyActionCommonConditionOrOrInner {
-	return management.SignOnPolicyActionCommonConditionOrOrInner{
-		SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
-			SignOnPolicyActionCommonConditionGreater: management.NewSignOnPolicyActionCommonConditionGreater(v, getLastSignOnContextFull("mfa")),
-		},
-	}
+	return buildSignOnOlderThan(v, "mfa")
 }
 
 func buildSignOnOlderThan(v int32, lastSignOnContext string) management.SignOnPolicyActionCommonConditionOrOrInner {
@@ -1248,7 +1236,7 @@ type flattenedConditions struct {
 	anonymous_network_detected_allowed_cidr []string
 }
 
-func processConditions(conditions *flattenedConditions, v management.SignOnPolicyActionCommonConditionOrOrInner, lastSignOnContext string) (*flattenedConditions, diag.Diagnostics) {
+func processConditions(conditions *flattenedConditions, v management.SignOnPolicyActionCommonConditionOrOrInner) (*flattenedConditions, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	returnCondition := conditions
@@ -1294,7 +1282,7 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 
 	if j := v.SignOnPolicyActionCommonConditionOr; j != nil {
 		for _, orCondition := range j.GetOr() {
-			returnCondition, diags = processConditions(returnCondition, orCondition, lastSignOnContext)
+			returnCondition, diags = processConditions(returnCondition, orCondition)
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -1304,7 +1292,7 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 	if j := v.SignOnPolicyActionCommonConditionAggregate; j != nil {
 		if vc := j.SignOnPolicyActionCommonConditionGreater; vc != nil {
 
-			if condition, ok := vc.GetSecondsSinceOk(); ok && lastSignOnContext != "" {
+			if condition, ok := vc.GetSecondsSinceOk(); ok {
 
 				if returnCondition.last_sign_on_older_than_seconds != nil || returnCondition.last_sign_on_older_than_seconds_mfa != nil {
 					diags = append(diags, diag.Diagnostic{
@@ -1482,7 +1470,7 @@ func processConditions(conditions *flattenedConditions, v management.SignOnPolic
 
 }
 
-func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolicyActionCommonConditionOrOrInner, lastSignOnContext string) ([]interface{}, diag.Diagnostics) {
+func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolicyActionCommonConditionOrOrInner) ([]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var conditionStruct *management.SignOnPolicyActionCommonConditionOrOrInner
@@ -1501,7 +1489,7 @@ func flattenConditions(signOnPolicyActionCommonConditions management.SignOnPolic
 		conditionStruct = &signOnPolicyActionCommonConditions
 	}
 
-	conditions, diags := processConditions(&flattenedConditions{}, *conditionStruct, lastSignOnContext)
+	conditions, diags := processConditions(&flattenedConditions{}, *conditionStruct)
 	if diags.HasError() {
 		return nil, diags
 	}
