@@ -2,6 +2,7 @@ package base_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -72,6 +73,28 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 	})
 }
 
+func TestAccRoleDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccRoleDataSourceConfig_NotFoundByName(resourceName),
+				ExpectError: regexp.MustCompile("Cannot find role doesnotexist"),
+			},
+			// {
+			// 	Config:      testAccRoleDataSourceConfig_NotFoundByID(resourceName),
+			// 	ExpectError: regexp.MustCompile("Error when calling `GetRole`: Role not found for id: 9c052a8a-14be-44e4-8f07-2662569994ce and environmentId: [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
+			// },
+		},
+	})
+}
+
 func testAccRoleDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -79,4 +102,13 @@ func testAccRoleDataSourceConfig_ByNameFull(resourceName, name string) string {
 data "pingone_role" "%[2]s" {
   name = "%[3]s"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRoleDataSourceConfig_NotFoundByName(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_role" "%[2]s" {
+  name = "doesnotexist"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }

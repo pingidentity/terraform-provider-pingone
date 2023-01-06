@@ -84,6 +84,32 @@ func TestAccLicensesDataSource_ByDataFilter(t *testing.T) {
 	})
 }
 
+func TestAccLicensesDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	dataSourceFullName := fmt.Sprintf("data.pingone_licenses.%s", resourceName)
+
+	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckLicenseDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccLicensesDataSourceConfig_BySCIMFilter(resourceName, organizationID, fmt.Sprintf("(status eq \\\"active\\\") and (beginsAt lt \\\"%s\\\")", "2006-01-02T15:04:05Z07:00")),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "organization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "0"),
+				),
+			},
+		},
+	})
+}
+
 func testAccLicensesDataSourceConfig_BySCIMFilter(resourceName, organizationID, filter string) string {
 	return fmt.Sprintf(`
 data "pingone_licenses" "%[1]s" {

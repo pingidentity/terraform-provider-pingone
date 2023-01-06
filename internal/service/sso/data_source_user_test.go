@@ -99,6 +99,28 @@ func TestAccUserDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
+func TestAccUserDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccUserDataSourceConfig_NotFoundByName(resourceName),
+				ExpectError: regexp.MustCompile("Cannot find user"),
+			},
+			{
+				Config:      testAccUserDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Cannot find user"),
+			},
+		},
+	})
+}
+
 func testAccUserDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -180,4 +202,26 @@ data "pingone_user" "%[2]s" {
 
   user_id = pingone_user.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccUserDataSourceConfig_NotFoundByName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username = "doesnotexist"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccUserDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  user_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }

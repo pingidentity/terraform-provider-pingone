@@ -128,10 +128,42 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
+func TestAccLicenseDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// {
+			// 	Config:      testAccLicenseDataSourceConfig_NotFoundByName(resourceName),
+			// 	ExpectError: regexp.MustCompile("Cannot find license doesnotexist"),
+			// },
+			{
+				Config:      testAccLicenseDataSourceConfig_NotFoundByID(resourceName, organizationID),
+				ExpectError: regexp.MustCompile("Error when calling `ReadOneLicense`: The request could not be completed. The requested resource was not found."),
+			},
+		},
+	})
+}
+
 func testAccLicenseDataSourceConfig_ByIDFull(resourceName, organizationID, licenseID string) string {
 	return fmt.Sprintf(`
 data "pingone_license" "%[1]s" {
   organization_id = "%[2]s"
   license_id      = "%[3]s"
 }`, resourceName, organizationID, licenseID)
+}
+
+func testAccLicenseDataSourceConfig_NotFoundByID(resourceName, organizationID string) string {
+	return fmt.Sprintf(`
+data "pingone_license" "%[1]s" {
+  organization_id = "%[2]s"
+  license_id      = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}`, resourceName, organizationID)
 }

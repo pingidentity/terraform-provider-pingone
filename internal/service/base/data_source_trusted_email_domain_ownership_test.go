@@ -42,6 +42,28 @@ func TestAccTrustedEmailDomainOwnershipDataSource_Full(t *testing.T) {
 	})
 }
 
+func TestAccTrustedEmailDomainOwnershipDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// {
+			// 	Config:      testAccTrustedEmailDomainOwnershipDataSourceConfig_NotFoundByName(resourceName),
+			// 	ExpectError: regexp.MustCompile("Cannot find domain doesnotexist"),
+			// },
+			{
+				Config:      testAccTrustedEmailDomainOwnershipDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Error when calling `ReadTrustedEmailDomainOwnershipStatus`: The request could not be completed. The requested resource was not found."),
+			},
+		},
+	})
+}
+
 func testAccTrustedEmailDomainOwnershipDataSourceConfig_Full(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 %[1]s
@@ -57,6 +79,17 @@ data "pingone_trusted_email_domain_ownership" "%[3]s" {
 
   trusted_email_domain_id = pingone_trusted_email_domain.%[3]s.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
+func testAccTrustedEmailDomainOwnershipDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+data "pingone_trusted_email_domain_ownership" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  trusted_email_domain_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func validateRegionCardinality(value string) error {

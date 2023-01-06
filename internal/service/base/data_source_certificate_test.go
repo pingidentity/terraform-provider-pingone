@@ -94,6 +94,28 @@ func TestAccCertificateDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
+func TestAccCertificateDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironmentAndPEM(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCertificateDataSourceConfig_NotFoundByName(resourceName),
+				ExpectError: regexp.MustCompile("Cannot find certificate doesnotexist"),
+			},
+			{
+				Config:      testAccCertificateDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Error when calling `GetCertificate`: Certificate not found for id: 9c052a8a-14be-44e4-8f07-2662569994ce and environmentId: [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
+			},
+		},
+	})
+}
+
 func testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, pem string) string {
 	return fmt.Sprintf(`
 %[1]s
@@ -138,4 +160,26 @@ data "pingone_certificate" "%[3]s" {
 
   certificate_id = pingone_certificate.%[3]s.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pem)
+}
+
+func testAccCertificateDataSourceConfig_NotFoundByName(resourceName string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+data "pingone_certificate" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "doesnotexist"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccCertificateDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+data "pingone_certificate" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  certificate_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
