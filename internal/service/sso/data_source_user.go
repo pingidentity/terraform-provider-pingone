@@ -105,7 +105,6 @@ func datasourcePingOneUserRead(ctx context.Context, d *schema.ResourceData, meta
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "None of user_id, username or email are set",
-			Detail:   "None of user_id, username or email are set",
 		})
 
 		return diags
@@ -126,18 +125,25 @@ func datasourcePingOneUserRead(ctx context.Context, d *schema.ResourceData, meta
 		return diags
 	}
 
-	if users, ok := respList.(*management.EntityArray).Embedded.GetUsersOk(); ok {
+	if users, ok := respList.(*management.EntityArray).Embedded.GetUsersOk(); ok && len(users) > 0 && users[0].Id != nil {
 
 		resp = users[0]
 
-	}
+		d.SetId(resp.GetId())
+		d.Set("user_id", resp.GetId())
+		d.Set("username", resp.GetUsername())
+		d.Set("email", resp.GetEmail())
+		d.Set("status", string(*resp.GetAccount().Status))
+		d.Set("population_id", resp.GetPopulation().Id)
 
-	d.SetId(resp.GetId())
-	d.Set("user_id", resp.GetId())
-	d.Set("username", resp.GetUsername())
-	d.Set("email", resp.GetEmail())
-	d.Set("status", string(*resp.GetAccount().Status))
-	d.Set("population_id", resp.GetPopulation().Id)
+	} else {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Cannot find user",
+		})
+
+		return diags
+	}
 
 	return diags
 }

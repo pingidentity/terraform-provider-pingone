@@ -61,6 +61,28 @@ func TestAccSchemaDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
+func TestAccSchemaDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccSchemaDataSourceConfig_NotFoundByName(resourceName),
+				ExpectError: regexp.MustCompile("Cannot find schema doesnotexist"),
+			},
+			{
+				Config:      testAccSchemaDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Error when calling `ReadOneSchema`: The request could not be completed. The requested resource was not found."),
+			},
+		},
+	})
+}
+
 func testAccSchemaDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -87,4 +109,28 @@ data "pingone_schema" "%[2]s-2" {
 
   schema_id = data.pingone_schema.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSchemaDataSourceConfig_NotFoundByName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_schema" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "doesnotexist"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccSchemaDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_schema" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  schema_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
 }

@@ -2,6 +2,7 @@ package sso_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -89,6 +90,29 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "not_similar_to_current", resourceFullName, "not_similar_to_current"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "population_count", resourceFullName, "population_count"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccPasswordPolicyDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckPasswordPolicyDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccPasswordPolicyDataSourceConfig_NotFoundByName(resourceName),
+				ExpectError: regexp.MustCompile("Cannot find password policy doesnotexist"),
+			},
+			{
+				Config:      testAccPasswordPolicyDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Error when calling `ReadOnePasswordPolicy`: The request could not be completed. The requested resource was not found."),
 			},
 		},
 	})
@@ -202,4 +226,26 @@ data "pingone_password_policy" "%[2]s" {
 
   password_policy_id = pingone_password_policy.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPasswordPolicyDataSourceConfig_NotFoundByName(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "doesnotexist"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccPasswordPolicyDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  password_policy_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
