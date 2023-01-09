@@ -66,7 +66,7 @@ func ResourceApplication() *schema.Resource {
 					Type:         schema.TypeString,
 					ValidateFunc: validation.StringInSlice([]string{string(management.ENUMAPPLICATIONTAGS_PING_FED_CONNECTION_INTEGRATION)}, false),
 				},
-				ConflictsWith: []string{"external_link_options"},
+				ConflictsWith: []string{"external_link_options", "saml_options"},
 			},
 			"login_page_url": {
 				Description:      "A string that specifies the custom login page URL for the application. If you set the `login_page_url` property for applications in an environment that sets a custom domain, the URL should include the top-level domain and at least one additional domain level. **Warning** To avoid issues with third-party cookies in some browsers, a custom domain must be used, giving your PingOne environment the same parent domain as your authentication application. For more information about custom domains, see Custom domains.",
@@ -706,12 +706,6 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			d.Set("description", nil)
 		}
 
-		if v, ok := application.GetTagsOk(); ok {
-			d.Set("tags", v)
-		} else {
-			d.Set("tags", nil)
-		}
-
 		if v, ok := application.GetLoginPageUrlOk(); ok {
 			d.Set("login_page_url", v)
 		} else {
@@ -980,16 +974,8 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			application.SetDescription(*v1)
 		}
 
-		if v1, ok := applicationCommon.GetTagsOk(); ok {
-			application.SetTags(v1)
-		}
-
 		if v1, ok := applicationCommon.GetLoginPageUrlOk(); ok {
 			application.SetLoginPageUrl(*v1)
-		}
-
-		if v1, ok := applicationCommon.GetAssignActorRolesOk(); ok {
-			application.SetAssignActorRoles(*v1)
 		}
 
 		if v1, ok := applicationCommon.GetIconOk(); ok {
@@ -1084,6 +1070,19 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			//	})
 			//}
 		}
+
+		if v, ok := oidcOptions["tags"]; ok {
+			if j, okJ := v.([]interface{}); okJ {
+				tags := make([]management.EnumApplicationTags, 0)
+				for _, k := range j {
+					tags = append(tags, management.EnumApplicationTags(k.(string)))
+				}
+
+				application.Tags = tags
+			}
+		}
+
+		application.SetAssignActorRoles(false)
 
 		if v1, ok := oidcOptions["support_unsigned_request_object"].(bool); ok {
 			application.SetSupportUnsignedRequestObject(v1)
@@ -1241,16 +1240,8 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetDescription(*v1)
 		}
 
-		if v1, ok := applicationCommon.GetTagsOk(); ok {
-			application.SetTags(v1)
-		}
-
 		if v1, ok := applicationCommon.GetLoginPageUrlOk(); ok {
 			application.SetLoginPageUrl(*v1)
-		}
-
-		if v1, ok := applicationCommon.GetAssignActorRolesOk(); ok {
-			application.SetAssignActorRoles(*v1)
 		}
 
 		if v1, ok := applicationCommon.GetIconOk(); ok {
@@ -1379,24 +1370,11 @@ func expandCommonOptionalAttributes(d *schema.ResourceData) management.Applicati
 		application.SetDescription(v.(string))
 	}
 
-	if v, ok := d.GetOk("tags"); ok {
-		if j, okJ := v.([]interface{}); okJ {
-			tags := make([]management.EnumApplicationTags, 0)
-			for _, k := range j {
-				tags = append(tags, management.EnumApplicationTags(k.(string)))
-			}
-
-			application.Tags = tags
-		}
-	}
-
 	if v, ok := d.GetOk("login_page_url"); ok {
 		if v != "" {
 			application.SetLoginPageUrl(v.(string))
 		}
 	}
-
-	application.SetAssignActorRoles(false)
 
 	if v, ok := d.GetOk("icon"); ok {
 		if j, okJ := v.([]interface{}); okJ && j != nil && len(j) > 0 {
