@@ -3,10 +3,12 @@
 NOTES:
 
 * Removed documented reference to the Fraud service due to capability merge with Risk ([#224](https://github.com/pingidentity/terraform-provider-pingone/issues/224))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.24.0 => v2.24.1 ([#214](https://github.com/pingidentity/terraform-provider-pingone/issues/214))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.0 => v0.1.1 ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.12.0 => v0.13.0 ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.7.0 => v0.7.1 ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.5.0 => v0.5.1 ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* bump `github.com/terraform-linters/tflint` v0.42.2 => v0.44.1 ([#221](https://github.com/pingidentity/terraform-provider-pingone/issues/221))
 * resource/pingone_application: Removed redundant support for `tags` parameter on SAML type applications. ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
 
 ENHANCEMENTS:
