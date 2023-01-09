@@ -129,6 +129,12 @@ func ResourceApplication() *schema.Resource {
 					},
 				},
 			},
+			"hidden_from_app_portal": {
+				Description: "A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
 			"external_link_options": {
 				Description:  "External link application specific settings.",
 				Type:         schema.TypeList,
@@ -163,6 +169,18 @@ func ResourceApplication() *schema.Resource {
 						},
 						"home_page_url": {
 							Description:      "A string that specifies the custom home page URL for the application.",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+						},
+						"initiate_login_uri": {
+							Description:      "A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+						},
+						"target_link_uri": {
+							Description:      "The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.",
 							Type:             schema.TypeString,
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
@@ -208,6 +226,12 @@ func ResourceApplication() *schema.Resource {
 							},
 							Optional: true,
 						},
+						"allow_wildcards_in_redirect_uris": {
+							Description: "A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri).",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+						},
 						"post_logout_redirect_uris": {
 							Description: "A string that specifies the URLs that the browser can be redirected to after logout.",
 							Type:        schema.TypeSet,
@@ -230,6 +254,12 @@ func ResourceApplication() *schema.Resource {
 							Optional:     true,
 							Default:      15552000,
 							ValidateFunc: validation.IntBetween(60, 2147483647),
+						},
+						"refresh_token_rolling_grace_period_duration": {
+							Description:  "The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens. This is useful in the case of network errors on the client. Valid values are between 0 and 86400 seconds. Null is treated the same as 0.",
+							Type:         schema.TypeInt,
+							Optional:     true,
+							ValidateFunc: validation.IntBetween(0, 86400),
 						},
 						"client_id": {
 							Description: "A string that specifies the application ID used to authenticate to the authorization server.",
@@ -361,6 +391,12 @@ func ResourceApplication() *schema.Resource {
 				ExactlyOneOf: []string{"oidc_options", "saml_options", "external_link_options"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"home_page_url": {
+							Description:      "A string that specifies the custom home page URL for the application.",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+						},
 						"type": {
 							Description:  fmt.Sprintf("A string that specifies the type associated with the application.  Options are `%s` and `%s`.", string(management.ENUMAPPLICATIONTYPE_WEB_APP), string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP)),
 							Type:         schema.TypeString,
@@ -487,7 +523,7 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta
 			return apiClient.ApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
 		},
 		"CreateApplication",
-		sdk.DefaultCustomError,
+		applicationWriteCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
@@ -644,6 +680,12 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			d.Set("access_control_group_options", nil)
 		}
 
+		if v, ok := application.GetHiddenFromAppPortalOk(); ok {
+			d.Set("hidden_from_app_portal", v)
+		} else {
+			d.Set("hidden_from_app_portal", nil)
+		}
+
 		v, diags := flattenOIDCOptions(application, respSecret.(*management.ApplicationSecret))
 		if diags.HasError() {
 			return diags
@@ -713,6 +755,12 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			d.Set("access_control_group_options", nil)
 		}
 
+		if v, ok := application.GetHiddenFromAppPortalOk(); ok {
+			d.Set("hidden_from_app_portal", v)
+		} else {
+			d.Set("hidden_from_app_portal", nil)
+		}
+
 		d.Set("saml_options", flattenSAMLOptions(application))
 
 	} else if respObject.ApplicationExternalLink != nil && respObject.ApplicationExternalLink.GetId() != "" {
@@ -756,6 +804,12 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			}
 		} else {
 			d.Set("access_control_group_options", nil)
+		}
+
+		if v, ok := application.GetHiddenFromAppPortalOk(); ok {
+			d.Set("hidden_from_app_portal", v)
+		} else {
+			d.Set("hidden_from_app_portal", nil)
 		}
 
 		externalLinkOpts := make([]interface{}, 0)
@@ -821,7 +875,7 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 			return apiClient.ApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
 		},
 		"UpdateApplication",
-		sdk.DefaultCustomError,
+		applicationWriteCustomError,
 		sdk.DefaultRetryable,
 	)
 	if diags.HasError() {
@@ -873,6 +927,24 @@ func resourceApplicationImport(ctx context.Context, d *schema.ResourceData, meta
 	resourceApplicationRead(ctx, d, meta)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func applicationWriteCustomError(error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Wildcards in redirect URis
+	m, err := regexp.MatchString("^Wildcards are not allowed in redirect URIs.", error.GetMessage())
+	if err != nil {
+		diags = diag.FromErr(fmt.Errorf("Invalid regexp: Wildcards are not allowed in redirect URIs."))
+		return diags
+	}
+	if m {
+		diags = diag.FromErr(fmt.Errorf("Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcards_in_redirect_uris` to `true`."))
+
+		return diags
+	}
+
+	return nil
 }
 
 // OIDC
@@ -928,10 +1000,22 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			application.SetAccessControl(*v1)
 		}
 
+		if v1, ok := applicationCommon.GetHiddenFromAppPortalOk(); ok {
+			application.SetHiddenFromAppPortal(*v1)
+		}
+
 		// Set the OIDC specific optional options
 
 		if v1, ok := oidcOptions["home_page_url"].(string); ok && v1 != "" {
 			application.SetHomePageUrl(v1)
+		}
+
+		if v1, ok := oidcOptions["initiate_login_uri"].(string); ok && v1 != "" {
+			application.SetInitiateLoginUri(v1)
+		}
+
+		if v1, ok := oidcOptions["target_link_uri"].(string); ok && v1 != "" {
+			application.SetTargetLinkUri(v1)
 		}
 
 		if v1, ok := oidcOptions["response_types"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
@@ -956,6 +1040,10 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			application.SetRedirectUris(obj)
 		}
 
+		if v1, ok := oidcOptions["allow_wildcards_in_redirect_uris"].(bool); ok {
+			application.SetAllowWildcardInRedirectUris(v1)
+		}
+
 		if v1, ok := oidcOptions["post_logout_redirect_uris"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
 			obj := make([]string, 0)
 			for _, j := range v1.List() {
@@ -978,6 +1066,17 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		if v1, ok := oidcOptions["refresh_token_rolling_duration"].(int); ok {
 			//if refreshTokenEnabled {
 			application.SetRefreshTokenRollingDuration(int32(v1))
+			//} else {
+			//	diags = append(diags, diag.Diagnostic{
+			//		Severity: diag.Warning,
+			//		Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
+			//	})
+			//}
+		}
+
+		if v1, ok := oidcOptions["refresh_token_rolling_grace_period_duration"].(int); ok {
+			//if refreshTokenEnabled {
+			application.SetRefreshTokenRollingGracePeriodDuration(int32(v1))
 			//} else {
 			//	diags = append(diags, diag.Diagnostic{
 			//		Severity: diag.Warning,
@@ -1162,7 +1261,15 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetAccessControl(*v1)
 		}
 
+		if v1, ok := applicationCommon.GetHiddenFromAppPortalOk(); ok {
+			application.SetHiddenFromAppPortal(*v1)
+		}
+
 		// Set the SAML specific optional options
+
+		if v1, ok := samlOptions["home_page_url"].(string); ok && v1 != "" {
+			application.SetHomePageUrl(v1)
+		}
 
 		if v1, ok := samlOptions["assertion_signed_enabled"].(bool); ok {
 			application.SetAssertionSigned(v1)
@@ -1246,6 +1353,10 @@ func expandApplicationExternalLink(d *schema.ResourceData) (*management.Applicat
 			application.SetAccessControl(*v1)
 		}
 
+		if v1, ok := applicationCommon.GetHiddenFromAppPortalOk(); ok {
+			application.SetHiddenFromAppPortal(*v1)
+		}
+
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -1321,6 +1432,10 @@ func expandCommonOptionalAttributes(d *schema.ResourceData) management.Applicati
 		application.SetAccessControl(accessControl)
 	}
 
+	if v, ok := d.GetOk("hidden_from_app_portal"); ok {
+		application.SetHiddenFromAppPortal(v.(bool))
+	}
+
 	return application
 
 }
@@ -1367,6 +1482,18 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["home_page_url"] = nil
 	}
 
+	if v, ok := application.GetInitiateLoginUriOk(); ok {
+		item["initiate_login_uri"] = v
+	} else {
+		item["initiate_login_uri"] = nil
+	}
+
+	if v, ok := application.GetTargetLinkUriOk(); ok {
+		item["target_link_uri"] = v
+	} else {
+		item["target_link_uri"] = nil
+	}
+
 	if v, ok := application.GetResponseTypesOk(); ok {
 		item["response_types"] = v
 	} else {
@@ -1385,6 +1512,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["redirect_uris"] = nil
 	}
 
+	if v, ok := application.GetAllowWildcardInRedirectUrisOk(); ok {
+		item["allow_wildcards_in_redirect_uris"] = v
+	} else {
+		item["allow_wildcards_in_redirect_uris"] = nil
+	}
+
 	if v, ok := application.GetPostLogoutRedirectUrisOk(); ok {
 		item["post_logout_redirect_uris"] = v
 	} else {
@@ -1401,6 +1534,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["refresh_token_rolling_duration"] = v
 	} else {
 		item["refresh_token_rolling_duration"] = nil
+	}
+
+	if v, ok := application.GetRefreshTokenRollingGracePeriodDurationOk(); ok {
+		item["refresh_token_rolling_grace_period_duration"] = v
+	} else {
+		item["refresh_token_rolling_grace_period_duration"] = nil
 	}
 
 	if v, ok := secret.GetSecretOk(); ok {
@@ -1553,6 +1692,12 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	}
 
 	// Optional
+	if v, ok := application.GetHomePageUrlOk(); ok {
+		item["home_page_url"] = v
+	} else {
+		item["home_page_url"] = nil
+	}
+
 	if v, ok := application.GetAssertionSignedOk(); ok {
 		item["assertion_signed_enabled"] = v
 	} else {
