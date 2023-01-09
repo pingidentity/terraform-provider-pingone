@@ -21,3 +21,7 @@ resource/pingone_application: Support better resiliency of rolling refresh token
 ```release-note:enhancement
 resource/pingone_application: Optional parameter `home_page_url` added to the SAML application options.
 ```
+
+```release-note:note
+resource/pingone_application: Removed redundant support for `tags` parameter on SAML type applications.
+```
