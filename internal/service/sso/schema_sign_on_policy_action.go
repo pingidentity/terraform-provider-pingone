@@ -42,9 +42,17 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Description:      "Set the number of seconds by which the user will not be prompted for this action following the last successful authentication.",
 						Type:             schema.TypeInt,
 						Optional:         true,
-						ConflictsWith:    []string{"progressive_profiling", "agreement"},
+						ConflictsWith:    []string{"progressive_profiling", "agreement", "conditions.0.last_sign_on_older_than_seconds_mfa"},
 						ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
-						AtLeastOneOf:     []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
+						AtLeastOneOf:     []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
+					},
+					"last_sign_on_older_than_seconds_mfa": {
+						Description:      "Set the number of seconds by which the user will not be prompted for this action following the last successful authentication of an MFA authenticator device.",
+						Type:             schema.TypeInt,
+						Optional:         true,
+						ConflictsWith:    []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider", "conditions.0.last_sign_on_older_than_seconds"},
+						ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
+						AtLeastOneOf:     []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"user_is_member_of_any_population_id": {
 						Description:   "Activate this action only for users within the specified list of population IDs.",
@@ -56,7 +64,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 							Type:             schema.TypeString,
 							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 						},
-						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
+						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"user_attribute_equals": {
 						Description:   "One or more conditions where an attribute on the user's profile must match the configured value.",
@@ -66,20 +74,25 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"attribute_reference": {
-									Description:      "Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an additional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`",
+									Description:      "Specifies the user attribute used in the condition. Only string core, standard, and custom attributes are supported. For complex attribute types, you must reference the sub-attribute (`$${user.name.firstName}`).  Note values that begin with a dollar sign (`$`) must be prefixed with an additional dollar sign.  E.g. `${name.given}` should be configured as `$${name.given}`.  When configured, one of `value` (for attributes of type `STRING` or `INTEGER`) or `value_boolean` (for attributes of type `BOOLEAN`) must be provided.",
 									Type:             schema.TypeString,
 									Required:         true,
 									ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 								},
 								"value": {
-									Description:      "The value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.",
+									Description:      "The string or integer (as string) value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.  This value parameter should be used where the data type of the schema attribute in `attribute_reference` is of type `STRING` or `INTEGER`.  Conflicts with `value_boolean`.",
 									Type:             schema.TypeString,
-									Required:         true,
+									Optional:         true,
 									ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+								},
+								"value_boolean": {
+									Description: "The boolean value of the attribute (declared in `attribute_reference`) on the user profile that should be matched.  This value parameter should be used where the data type of the schema attribute in `attribute_reference` is of type `BOOLEAN` (e.g `$${user.emailVerified}`, `$${user.verified}` and `$${user.mfaEnabled}`).  Conflicts with `value`.",
+									Type:        schema.TypeBool,
+									Optional:    true,
 								},
 							},
 						},
-						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
+						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"ip_out_of_range_cidr": {
 						Description:   "A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.",
@@ -91,7 +104,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 							Type:             schema.TypeString,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDR),
 						},
-						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
+						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"ip_reputation_high_risk": {
 						Description:   "A boolean that specifies whether the user's IP risk should be used when evaluating this policy action.  A value of `HIGH` will prompt the user to authenticate with this action.",
@@ -99,7 +112,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Optional:      true,
 						Default:       false,
 						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
-						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
+						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"geovelocity_anomaly_detected": {
 						Description:   "A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected geovelocity anomaly.",
@@ -107,7 +120,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Optional:      true,
 						Default:       false,
 						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
-						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
+						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"anonymous_network_detected": {
 						Description:   "A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected anonymous network.",
@@ -115,7 +128,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						Optional:      true,
 						Default:       false,
 						ConflictsWith: []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider"},
-						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
+						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"anonymous_network_detected_allowed_cidr": {
 						Description:   "A list of allowed CIDR when an anonymous network is detected.",
