@@ -3,10 +3,27 @@
 NOTES:
 
 * Removed documented reference to the Fraud service due to capability merge with Risk ([#224](https://github.com/pingidentity/terraform-provider-pingone/issues/224))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.0 => v0.1.1 ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.12.0 => v0.13.0 ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.7.0 => v0.7.1 ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.5.0 => v0.5.1 ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* resource/pingone_application: Removed redundant support for `tags` parameter on SAML type applications. ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+
+ENHANCEMENTS:
+
+* resource/pingone_application: Optional parameter `home_page_url` added to the SAML application options. ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* resource/pingone_application: Support better resiliency of rolling refresh tokens by adding the optional parameter `refresh_token_rolling_grace_period_duration` to the OIDC application options.  This is useful in the case of network errors on the client. ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* resource/pingone_application: Support options for post login redirect by adding the optional parameter `target_link_uri` to the OIDC application options. ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* resource/pingone_application: Support the ability to hide an application from the Application Portal through the new optional parameter `hidden_from_app_portal`. ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* resource/pingone_application: Support third party initiated login by adding the optional parameter `initiate_login_uri` to the OIDC application options. ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* resource/pingone_application: Support wildcards use in redirect URIs by adding the optional parameter `allow_wildcards_in_redirect_uris` to the OIDC application options. ([#228](https://github.com/pingidentity/terraform-provider-pingone/issues/228))
+* resource/pingone_sign_on_policy_action: Added `last_sign_on_older_than_seconds_mfa` condition that can only be set to an MFA Sign on policy action. ([#225](https://github.com/pingidentity/terraform-provider-pingone/issues/225))
 
 BUG FIXES:
 
 * data-source/pingone_user: Fixed provider panic crash when the user cannot be found. ([#227](https://github.com/pingidentity/terraform-provider-pingone/issues/227))
+* resource/pingone_sign_on_policy_action: Added `value_boolean` to the `user_attribute_equals` condition block as the existing `value` property didn't correctly interpret boolean values. ([#225](https://github.com/pingidentity/terraform-provider-pingone/issues/225))
+* resource/pingone_sign_on_policy_action: Fixed bug where the `last_sign_on_older_than_seconds` condition, when set to an MFA Sign on policy action that was then changed in the console lead to a provider crash on next replan. ([#225](https://github.com/pingidentity/terraform-provider-pingone/issues/225))
 
 ## 0.7.0 (07 November 2022)
 
