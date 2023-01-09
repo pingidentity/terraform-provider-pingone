@@ -1,3 +1,19 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.5.0 => v0.5.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.12.0 => v0.13.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.7.0 => v0.7.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.0 => v0.1.1
+```
+
 ```release-note:enhancement
 resource/pingone_application: Support the ability to hide an application from the Application Portal through the new optional parameter `hidden_from_app_portal`.
 ```
