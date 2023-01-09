@@ -1,0 +1,3 @@
+```release-note:note
+bump `github.com/terraform-linters/tflint` v0.42.2 => v0.44.1
+```
