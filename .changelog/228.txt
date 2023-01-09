@@ -1,0 +1,23 @@
+```release-note:enhancement
+resource/pingone_application: Support the ability to hide an application from the Application Portal through the new optional parameter `hidden_from_app_portal`.
+```
+
+```release-note:enhancement
+resource/pingone_application: Support third party initiated login by adding the optional parameter `initiate_login_uri` to the OIDC application options.
+```
+
+```release-note:enhancement
+resource/pingone_application: Support options for post login redirect by adding the optional parameter `target_link_uri` to the OIDC application options.
+```
+
+```release-note:enhancement
+resource/pingone_application: Support wildcards use in redirect URIs by adding the optional parameter `allow_wildcards_in_redirect_uris` to the OIDC application options.
+```
+
+```release-note:enhancement
+resource/pingone_application: Support better resiliency of rolling refresh tokens by adding the optional parameter `refresh_token_rolling_grace_period_duration` to the OIDC application options.  This is useful in the case of network errors on the client.
+```
+
+```release-note:enhancement
+resource/pingone_application: Optional parameter `home_page_url` added to the SAML application options.
+```
