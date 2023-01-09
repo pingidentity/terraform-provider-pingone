@@ -1899,7 +1899,6 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test SAML app for MFA Policy"
-  tags           = []
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
