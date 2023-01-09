@@ -3,6 +3,7 @@ package base_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -40,6 +41,24 @@ func TestAccCertificateSigningRequestDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
+func TestAccCertificateSigningRequestDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironmentAndPKCS12WithCSR(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCertificateSigningRequestDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Error when calling `GetKey`: Key not found for id: 9c052a8a-14be-44e4-8f07-2662569994ce and environmentId: [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
+			},
+		},
+	})
+}
+
 func testAccCertificateSigningRequestDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pkcs12 string) string {
 	return fmt.Sprintf(`
 %[1]s
@@ -59,4 +78,16 @@ data "pingone_certificate_signing_request" "%[3]s" {
 
   key_id = pingone_key.%[3]s.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12)
+}
+
+func testAccCertificateSigningRequestDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_certificate_signing_request" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  key_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
 }

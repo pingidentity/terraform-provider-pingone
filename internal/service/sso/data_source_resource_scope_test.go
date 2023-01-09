@@ -153,6 +153,29 @@ func TestAccResourceScopeDataSource_ByIDMappedClaims(t *testing.T) {
 	})
 }
 
+func TestAccResourceScopeDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckResourceScopeDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccResourceScopeDataSourceConfig_NotFoundByName(resourceName),
+				ExpectError: regexp.MustCompile("Cannot find resource scope doesnotexist"),
+			},
+			{
+				Config:      testAccResourceScopeDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Error when calling `ReadOneResourceScope`: The request could not be completed. The requested resource was not found."),
+			},
+		},
+	})
+}
+
 func testAccResourceScopeDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -307,4 +330,40 @@ data "pingone_resource_scope" "%[2]s" {
   resource_scope_id = pingone_resource_scope_openid.%[2]s.id
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceScopeDataSourceConfig_NotFoundByName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s"
+}
+
+data "pingone_resource_scope" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "doesnotexist"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccResourceScopeDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s"
+}
+
+data "pingone_resource_scope" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  resource_scope_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }

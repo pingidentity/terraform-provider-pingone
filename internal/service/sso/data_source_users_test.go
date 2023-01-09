@@ -76,6 +76,32 @@ func TestAccUsersDataSource_ByDataFilter(t *testing.T) {
 	})
 }
 
+func TestAccUsersDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	dataSourceFullName := fmt.Sprintf("data.pingone_users.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckUserDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccUsersDataSourceConfig_NotFound(resourceName, fmt.Sprintf(`(username eq \"%s-1\") OR (username eq \"%s-2\")`, name, name), name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "0"),
+				),
+			},
+		},
+	})
+}
+
 func testAccUsersDataSourceConfig_BySCIMFilter(resourceName, filter, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -229,4 +255,21 @@ data "pingone_users" "%[2]s" {
     pingone_population.%[2]s,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccUsersDataSourceConfig_NotFound(resourceName, filter, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+data "pingone_users" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  scim_filter = "%[4]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, filter)
 }

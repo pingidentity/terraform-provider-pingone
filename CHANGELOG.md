@@ -4,6 +4,10 @@ NOTES:
 
 * Removed documented reference to the Fraud service due to capability merge with Risk ([#224](https://github.com/pingidentity/terraform-provider-pingone/issues/224))
 
+BUG FIXES:
+
+* data-source/pingone_user: Fixed provider panic crash when the user cannot be found. ([#227](https://github.com/pingidentity/terraform-provider-pingone/issues/227))
+
 ## 0.7.0 (07 November 2022)
 
 NOTES:

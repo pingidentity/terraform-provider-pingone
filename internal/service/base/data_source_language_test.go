@@ -3,6 +3,7 @@ package base_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -108,6 +109,29 @@ func TestAccLanguageDataSource_SystemDefined(t *testing.T) {
 	})
 }
 
+func TestAccLanguageDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckLanguageDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccLanguageDataSourceConfig_NotFoundByName(resourceName),
+				ExpectError: regexp.MustCompile(`expected locale to be one of \[.*\], got doesnotexist`),
+			},
+			{
+				Config:      testAccLanguageDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Error when calling `ReadOneLanguage`: Unable to find language for environmentId=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} with id=9c052a8a-14be-44e4-8f07-2662569994ce"),
+			},
+		},
+	})
+}
+
 func testAccLanguageDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, locale string) string {
 	return fmt.Sprintf(`
 
@@ -159,4 +183,28 @@ data "pingone_language" "%[3]s" {
 
   locale = "%[4]s"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+}
+
+func testAccLanguageDataSourceConfig_NotFoundByName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_language" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  locale = "doesnotexist"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccLanguageDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_language" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  language_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
 }

@@ -120,7 +120,7 @@ func TestAccResource_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "Test Resource"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
-					resource.TestCheckResourceAttr(resourceFullName, "audience", "my_aud"),
+					resource.TestCheckResourceAttr(resourceFullName, "audience", fmt.Sprintf("%s-1", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "7200"),
 					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_POST"),
 					resource.TestMatchResourceAttr(resourceFullName, "client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -194,7 +194,7 @@ func TestAccResource_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "Test Resource"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
-					resource.TestCheckResourceAttr(resourceFullName, "audience", "my_aud"),
+					resource.TestCheckResourceAttr(resourceFullName, "audience", fmt.Sprintf("%s-1", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "7200"),
 					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_POST"),
 					resource.TestMatchResourceAttr(resourceFullName, "client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -237,7 +237,7 @@ resource "pingone_resource" "%[2]s" {
   name        = "%[3]s"
   description = "Test Resource"
 
-  audience                      = "my_aud"
+  audience                      = "%[3]s-1"
   access_token_validity_seconds = 7200
 
   introspect_endpoint_auth_method = "CLIENT_SECRET_POST"

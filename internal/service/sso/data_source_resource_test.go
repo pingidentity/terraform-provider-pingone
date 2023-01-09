@@ -108,6 +108,29 @@ func TestAccResourceDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
+func TestAccResourceDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckResourceDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccResourceDataSourceConfig_NotFoundByName(resourceName),
+				ExpectError: regexp.MustCompile("Cannot find resource doesnotexist"),
+			},
+			{
+				Config:      testAccResourceDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Error when calling `ReadOneResource`: The request could not be completed. The requested resource was not found."),
+			},
+		},
+	})
+}
+
 func testAccResourceDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -118,7 +141,7 @@ resource "pingone_resource" "%[2]s" {
   name        = "%[3]s"
   description = "Test Resource"
 
-  audience                      = "my_aud"
+  audience                      = "%[3]s"
   access_token_validity_seconds = 7200
 }
 
@@ -143,7 +166,7 @@ resource "pingone_resource" "%[2]s" {
   name        = "%[3]s"
   description = "Test Resource"
 
-  audience                      = "my_aud"
+  audience                      = "%[3]s"
   access_token_validity_seconds = 7200
 }
 
@@ -162,5 +185,27 @@ data "pingone_resource" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   name = "openid"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccResourceDataSourceConfig_NotFoundByName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "doesnotexist"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccResourceDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  resource_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 }`, acctest.GenericSandboxEnvironment(), resourceName)
 }

@@ -186,6 +186,29 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 	})
 }
 
+func TestAccEnvironmentDataSource_NotFound(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGenEnvironment()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccEnvironmentDataSourceConfig_NotFoundByName(resourceName),
+				ExpectError: regexp.MustCompile("Cannot find environment doesnotexist"),
+			},
+			{
+				Config:      testAccEnvironmentDataSourceConfig_NotFoundByID(resourceName),
+				ExpectError: regexp.MustCompile("Error when calling `ReadOneEnvironment`: Unable to find environment with ID: '9c052a8a-14be-44e4-8f07-2662569994ce'"),
+			},
+		},
+	})
+}
+
 func testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo string) string {
 	return fmt.Sprintf(`
 resource "pingone_environment" "%[1]s" {
@@ -290,4 +313,21 @@ data "pingone_environment" "%[1]s" {
   environment_id = pingone_environment.%[1]s.id
 }
 `, resourceName, name, environmentType, region, licenseID)
+}
+
+func testAccEnvironmentDataSourceConfig_NotFoundByName(resourceName string) string {
+	return fmt.Sprintf(`
+
+data "pingone_environment" "%[1]s" {
+  name = "doesnotexist"
+}`, resourceName)
+}
+
+func testAccEnvironmentDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+
+
+data "pingone_environment" "%[1]s" {
+  environment_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+}`, resourceName)
 }

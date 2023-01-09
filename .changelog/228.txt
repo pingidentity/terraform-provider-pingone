@@ -1,0 +1,43 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.5.0 => v0.5.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.12.0 => v0.13.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.7.0 => v0.7.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.0 => v0.1.1
+```
+
+```release-note:enhancement
+resource/pingone_application: Support the ability to hide an application from the Application Portal through the new optional parameter `hidden_from_app_portal`.
+```
+
+```release-note:enhancement
+resource/pingone_application: Support third party initiated login by adding the optional parameter `initiate_login_uri` to the OIDC application options.
+```
+
+```release-note:enhancement
+resource/pingone_application: Support options for post login redirect by adding the optional parameter `target_link_uri` to the OIDC application options.
+```
+
+```release-note:enhancement
+resource/pingone_application: Support wildcards use in redirect URIs by adding the optional parameter `allow_wildcards_in_redirect_uris` to the OIDC application options.
+```
+
+```release-note:enhancement
+resource/pingone_application: Support better resiliency of rolling refresh tokens by adding the optional parameter `refresh_token_rolling_grace_period_duration` to the OIDC application options.  This is useful in the case of network errors on the client.
+```
+
+```release-note:enhancement
+resource/pingone_application: Optional parameter `home_page_url` added to the SAML application options.
+```
+
+```release-note:note
+resource/pingone_application: Removed redundant support for `tags` parameter on SAML type applications.
+```
