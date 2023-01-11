@@ -45,6 +45,13 @@ func ResourceMFAPolicy() *schema.Resource {
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
+			"device_selection": {
+				Description:      fmt.Sprintf("A string that defines the device selection method. Options are `%s` (this is the default setting for new environments), `%s` and `%s`.", string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFADEVICEPOLICYSELECTION_PROMPT_TO_SELECT), string(mfa.ENUMMFADEVICEPOLICYSELECTION_ALWAYS_PROMPT_TO_SELECT)),
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT), string(mfa.ENUMMFADEVICEPOLICYSELECTION_ALWAYS_PROMPT_TO_SELECT)}, false)),
+			},
 			"sms": {
 				Description: "SMS OTP authentication policy settings.",
 				Type:        schema.TypeList,
@@ -334,6 +341,12 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	d.Set("name", respObject.GetName())
 
+	if v, ok := respObject.GetAuthenticationOk(); ok {
+		d.Set("device_selection", v.GetDeviceSelection())
+	} else {
+		d.Set("device_selection", nil)
+	}
+
 	if v, ok := respObject.GetSmsOk(); ok {
 		d.Set("sms", flattenMFAPolicyOfflineDevice(v))
 	} else {
@@ -478,6 +491,10 @@ func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *sc
 		false,
 		false,
 	)
+
+	if v, ok := d.GetOk("device_selection"); ok {
+		item.SetAuthentication(*mfa.NewDeviceAuthenticationPolicyAuthentication(mfa.EnumMFADevicePolicySelection(v.(string))))
+	}
 
 	return item, diags
 }
