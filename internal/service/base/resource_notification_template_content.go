@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -89,13 +90,13 @@ func ResourceNotificationTemplateContent() *schema.Resource {
 										Description: "The email's sender name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used. You can configure other email sender names per environment.",
 										Type:        schema.TypeString,
 										Optional:    true,
-										Computed:    true,
+										Default:     "PingOne",
 									},
 									"address": {
 										Description: "The sender email address. If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email sender addresses per environment.",
 										Type:        schema.TypeString,
 										Optional:    true,
-										Computed:    true,
+										Default:     "noreply@pingidentity.com",
 									},
 								},
 							},
@@ -170,7 +171,7 @@ func ResourceNotificationTemplateContent() *schema.Resource {
 						"title": {
 							Description:      "The push notification title. This can include variables.",
 							Type:             schema.TypeString,
-							Optional:         true,
+							Required:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 200)),
 						},
 					},
@@ -248,7 +249,7 @@ func resourceNotificationTemplateContentCreate(ctx context.Context, d *schema.Re
 			return apiClient.NotificationsTemplatesApi.CreateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string)).TemplateContent(*templateContent).Execute()
 		},
 		"CreateContent",
-		sdk.DefaultCustomError,
+		notificationTemplateCustomWriteError,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
@@ -414,14 +415,14 @@ func resourceNotificationTemplateContentUpdate(ctx context.Context, d *schema.Re
 			return apiClient.NotificationsTemplatesApi.UpdateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).TemplateContent(*templateContent).Execute()
 		},
 		"UpdateContent",
-		sdk.DefaultCustomError,
+		notificationTemplateCustomWriteError,
 		sdk.DefaultRetryable,
 	)
 	if diags.HasError() {
 		return diags
 	}
 
-	return resourceKeyRead(ctx, d, meta)
+	return resourceNotificationTemplateContentRead(ctx, d, meta)
 }
 
 func resourceNotificationTemplateContentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -469,6 +470,43 @@ func resourceNotificationTemplateContentImport(ctx context.Context, d *schema.Re
 	return []*schema.ResourceData{d}, nil
 }
 
+func notificationTemplateCustomWriteError(error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+
+		// Delivery method not applicable to the template
+		if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "deliveryMethod" {
+			diags = diag.FromErr(fmt.Errorf("The configured delivery method does not apply to the selected template."))
+
+			return diags
+		}
+
+		// Language not likely added
+		if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "language" {
+			diags = diag.FromErr(fmt.Errorf("The locale is not valid for the environment.  Has the associated language been created with the `pingone_language` resource?"))
+
+			return diags
+		}
+
+		// Not all variables set
+		if message, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "REQUIRED_VALUE" {
+			diags = diag.FromErr(fmt.Errorf(*message))
+
+			return diags
+		}
+
+		// Custom notification content already exists
+		if _, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "UNIQUENESS_VIOLATION" {
+			diags = diag.FromErr(fmt.Errorf("Customized content for the template and locale already exists."))
+
+			return diags
+		}
+	}
+
+	return nil
+}
+
 func expandNotificationTemplateContent(d *schema.ResourceData) (*management.TemplateContent, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -478,6 +516,10 @@ func expandNotificationTemplateContent(d *schema.ResourceData) (*management.Temp
 		var templateContent *management.TemplateContentEmail
 		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_EMAIL)
 
+		if v1, ok := d.Get("variant").(string); ok {
+			common.SetVariant(v1)
+		}
+
 		templateContent, diags = expandNotificationTemplateContentEmail(v.([]interface{}), common)
 		templateContentRequest.TemplateContentEmail = templateContent
 	}
@@ -485,6 +527,10 @@ func expandNotificationTemplateContent(d *schema.ResourceData) (*management.Temp
 	if v, ok := d.GetOk("push"); ok {
 		var templateContent *management.TemplateContentPush
 		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_PUSH)
+
+		if v1, ok := d.Get("variant").(string); ok {
+			common.SetVariant(v1)
+		}
 
 		templateContent, diags = expandNotificationTemplateContentPush(v.([]interface{}), common)
 		templateContentRequest.TemplateContentPush = templateContent
@@ -494,6 +540,10 @@ func expandNotificationTemplateContent(d *schema.ResourceData) (*management.Temp
 		var templateContent *management.TemplateContentSMS
 		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_SMS)
 
+		if v1, ok := d.Get("variant").(string); ok {
+			common.SetVariant(v1)
+		}
+
 		templateContent, diags = expandNotificationTemplateContentSMS(v.([]interface{}), common)
 		templateContentRequest.TemplateContentSMS = templateContent
 	}
@@ -501,6 +551,10 @@ func expandNotificationTemplateContent(d *schema.ResourceData) (*management.Temp
 	if v, ok := d.GetOk("voice"); ok {
 		var templateContent *management.TemplateContentVoice
 		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_VOICE)
+
+		if v1, ok := d.Get("variant").(string); ok {
+			common.SetVariant(v1)
+		}
 
 		templateContent, diags = expandNotificationTemplateContentVoice(v.([]interface{}), common)
 		templateContentRequest.TemplateContentVoice = templateContent
@@ -529,7 +583,7 @@ func expandNotificationTemplateContentEmail(d []interface{}, common *management.
 
 		// From the block
 		if v, ok := options["from"].([]interface{}); ok && len(v) > 0 && v[0] != nil {
-			fromOptions := d[0].(map[string]interface{})
+			fromOptions := v[0].(map[string]interface{})
 
 			from := management.NewTemplateContentEmailAllOfFrom()
 
@@ -549,7 +603,7 @@ func expandNotificationTemplateContentEmail(d []interface{}, common *management.
 		}
 
 		if v, ok := options["reply_to"].([]interface{}); ok && len(v) > 0 && v[0] != nil {
-			replyToOptions := d[0].(map[string]interface{})
+			replyToOptions := v[0].(map[string]interface{})
 
 			replyTo := management.NewTemplateContentEmailAllOfReplyTo()
 
@@ -592,7 +646,7 @@ func expandNotificationTemplateContentPush(d []interface{}, common *management.T
 	if len(d) > 0 && d[0] != nil {
 		options := d[0].(map[string]interface{})
 
-		templateContent = *management.NewTemplateContentPush(common.GetLocale(), common.GetDeliveryMethod(), options["body"].(string))
+		templateContent = *management.NewTemplateContentPush(common.GetLocale(), common.GetDeliveryMethod(), options["title"].(string), options["body"].(string))
 
 		// From common
 		if v1, ok := common.GetVariantOk(); ok {
@@ -602,10 +656,6 @@ func expandNotificationTemplateContentPush(d []interface{}, common *management.T
 		// From the block
 		if v, ok := options["category"].(string); ok && v != "" {
 			templateContent.SetPushCategory(management.EnumTemplateContentPushCategory(v))
-		}
-
-		if v, ok := options["title"].(string); ok && v != "" {
-			templateContent.SetTitle(v)
 		}
 
 	} else {
@@ -713,22 +763,22 @@ func flattenNotificationTemplateContentDeliveryMethodEmail(d *management.Templat
 		item["from"] = nil
 	}
 
-	if v, ok := d.GetFromOk(); ok {
-		from := map[string]interface{}{
+	if v, ok := d.GetReplyToOk(); ok {
+		replyTo := map[string]interface{}{
 			"name":    nil,
 			"address": nil,
 		}
 
 		if c, ok := v.GetNameOk(); ok {
-			from["name"] = c
+			replyTo["name"] = c
 		}
 
 		if c, ok := v.GetAddressOk(); ok {
-			from["address"] = c
+			replyTo["address"] = c
 		}
 
-		fromItems := make([]interface{}, 0)
-		item["reply_to"] = append(fromItems, from)
+		replyToItems := make([]interface{}, 0)
+		item["reply_to"] = append(replyToItems, replyTo)
 	} else {
 		item["reply_to"] = nil
 	}
@@ -752,7 +802,8 @@ func flattenNotificationTemplateContentDeliveryMethodEmail(d *management.Templat
 func flattenNotificationTemplateContentDeliveryMethodPush(d *management.TemplateContentPush) []interface{} {
 	// Required
 	item := map[string]interface{}{
-		"body": d.GetBody(),
+		"body":  d.GetBody(),
+		"title": d.GetTitle(),
 	}
 
 	// Optional
@@ -760,12 +811,6 @@ func flattenNotificationTemplateContentDeliveryMethodPush(d *management.Template
 		item["category"] = string(*v)
 	} else {
 		item["category"] = nil
-	}
-
-	if v, ok := d.GetTitleOk(); ok {
-		item["title"] = v
-	} else {
-		item["title"] = nil
 	}
 
 	items := make([]interface{}, 0)

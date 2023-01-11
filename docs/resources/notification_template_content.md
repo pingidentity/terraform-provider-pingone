@@ -108,8 +108,8 @@ Optional:
 
 Optional:
 
-- `address` (String) The sender email address. If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email sender addresses per environment.
-- `name` (String) The email's sender name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used. You can configure other email sender names per environment.
+- `address` (String) The sender email address. If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email sender addresses per environment. Defaults to `noreply@pingidentity.com`.
+- `name` (String) The email's sender name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used. You can configure other email sender names per environment. Defaults to `PingOne`.
 
 
 <a id="nestedblock--email--reply_to"></a>
@@ -128,11 +128,11 @@ Optional:
 Required:
 
 - `body` (String) The push notification text. This can include variables.
+- `title` (String) The push notification title. This can include variables.
 
 Optional:
 
 - `category` (String) For Push content, you can specify what type of banner should be displayed to the user. The available options are `BANNER_BUTTONS` (the banner contains both Approve and Deny buttons), `WITHOUT_BANNER_BUTTONS` (when the user clicks the banner, they are taken to an application that contains the necessary approval controls), `APPROVE_AND_OPEN_APP` (when the Approve button is clicked, authentication is completed and the user is taken to the relevant application).  If this parameter is not provided, the default is `BANNER_BUTTONS`. Note that to use the non-default push banners, you must implement them in your application code, using the PingOne SDK. For details, see the [README for iOS](https://github.com/pingidentity/pingone-mobile-sdk-ios/#171-push-notifications-categories) and the [README for Android](https://github.com/pingidentity/pingone-mobile-sdk-android). Defaults to `BANNER_BUTTONS`.
-- `title` (String) The push notification title. This can include variables.
 
 
 <a id="nestedblock--sms"></a>

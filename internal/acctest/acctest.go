@@ -50,6 +50,16 @@ func init() {
 	}
 }
 
+type TestData struct {
+	Invalid string
+	Valid   string
+}
+
+type MinMaxChecks struct {
+	Minimal resource.TestCheckFunc
+	Full    resource.TestCheckFunc
+}
+
 func PreCheck(t *testing.T) {
 
 	if v := os.Getenv("PINGONE_CLIENT_ID"); v == "" {
