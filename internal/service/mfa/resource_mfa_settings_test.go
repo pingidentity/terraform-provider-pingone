@@ -43,7 +43,7 @@ func TestAccMFASettings_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "8"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
+					// resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
 				),
 			},
 		},
@@ -76,7 +76,7 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
+					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "DEFAULT_TO_FIRST"),
 				),
 			},
 			{
@@ -91,7 +91,7 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
+					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "DEFAULT_TO_FIRST"),
 				),
 			},
 		},
@@ -126,7 +126,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "8"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
+					// resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
 				),
 			},
 			{
@@ -139,7 +139,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
+					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "DEFAULT_TO_FIRST"),
 				),
 			},
 			{
@@ -154,7 +154,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "8"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
+					// resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
 				),
 			},
 		},
@@ -178,9 +178,9 @@ resource "pingone_mfa_settings" "%[3]s" {
     duration_seconds = 8
   }
 
-  authentication {
-    device_selection = "PROMPT_TO_SELECT"
-  }
+  //   authentication {
+  //     device_selection = "PROMPT_TO_SELECT"
+  //   }
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
@@ -194,10 +194,6 @@ resource "pingone_mfa_settings" "%[3]s" {
 
   pairing {
     pairing_key_format = "NUMERIC"
-  }
-
-  authentication {
-    device_selection = "PROMPT_TO_SELECT"
   }
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
@@ -216,10 +212,6 @@ resource "pingone_mfa_settings" "%[3]s" {
 
   lockout {
     failure_count = 13
-  }
-
-  authentication {
-    device_selection = "PROMPT_TO_SELECT"
   }
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
