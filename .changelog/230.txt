@@ -1,0 +1,3 @@
+```release-note:note
+resource/pingone_mfa_settings: Deprecate attribute block `authentication` and attribute `authentication.device_selection` as device selection settings have moved to the `pingone_mfa_policy` resource.
+```
