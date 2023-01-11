@@ -25,10 +25,6 @@ resource "pingone_mfa_settings" "mfa_settings" {
     duration_seconds = 600
   }
 
-  authentication {
-    device_selection = "DEFAULT_TO_FIRST"
-  }
-
 }
 ```
 
