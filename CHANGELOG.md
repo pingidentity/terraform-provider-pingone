@@ -1,4 +1,4 @@
-## 0.8.0 (Unreleased)
+## 0.8.0 (12 January 2023)
 
 NOTES:
 
