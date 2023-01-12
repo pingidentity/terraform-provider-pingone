@@ -551,6 +551,8 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 						"push_enabled":                 regexp.MustCompile(`^true$`),
+						"push_timeout_duration":        regexp.MustCompile(`^100$`),
+						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
 						"otp_enabled":                  regexp.MustCompile(`^true$`),
 						"device_authorization_enabled": regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
@@ -558,15 +560,19 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
-						"push_enabled": regexp.MustCompile(`^false$`),
-						"otp_enabled":  regexp.MustCompile(`^true$`),
+						"id":                    regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"push_enabled":          regexp.MustCompile(`^false$`),
+						"push_timeout_duration": regexp.MustCompile(`^40$`),
+						"push_timeout_timeunit": regexp.MustCompile(`^SECONDS$`),
+						"otp_enabled":           regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 						"push_enabled":                 regexp.MustCompile(`^true$`),
+						"push_timeout_duration":        regexp.MustCompile(`^40$`),
+						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
 						"otp_enabled":                  regexp.MustCompile(`^true$`),
 						"device_authorization_enabled": regexp.MustCompile(`^false$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
@@ -707,6 +713,8 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 						"push_enabled":                 regexp.MustCompile(`^true$`),
+						"push_timeout_duration":        regexp.MustCompile(`^100$`),
+						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
 						"otp_enabled":                  regexp.MustCompile(`^true$`),
 						"device_authorization_enabled": regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
@@ -714,15 +722,19 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
-						"push_enabled": regexp.MustCompile(`^false$`),
-						"otp_enabled":  regexp.MustCompile(`^true$`),
+						"id":                    regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"push_enabled":          regexp.MustCompile(`^false$`),
+						"push_timeout_duration": regexp.MustCompile(`^40$`),
+						"push_timeout_timeunit": regexp.MustCompile(`^SECONDS$`),
+						"otp_enabled":           regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 						"push_enabled":                 regexp.MustCompile(`^true$`),
+						"push_timeout_duration":        regexp.MustCompile(`^40$`),
+						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
 						"otp_enabled":                  regexp.MustCompile(`^true$`),
 						"device_authorization_enabled": regexp.MustCompile(`^false$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
@@ -763,6 +775,8 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 						"push_enabled":                 regexp.MustCompile(`^true$`),
+						"push_timeout_duration":        regexp.MustCompile(`^100$`),
+						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
 						"otp_enabled":                  regexp.MustCompile(`^true$`),
 						"device_authorization_enabled": regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
@@ -770,15 +784,19 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
-						"push_enabled": regexp.MustCompile(`^false$`),
-						"otp_enabled":  regexp.MustCompile(`^true$`),
+						"id":                    regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"push_enabled":          regexp.MustCompile(`^false$`),
+						"push_timeout_duration": regexp.MustCompile(`^40$`),
+						"push_timeout_timeunit": regexp.MustCompile(`^SECONDS$`),
+						"otp_enabled":           regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 						"push_enabled":                 regexp.MustCompile(`^true$`),
+						"push_timeout_duration":        regexp.MustCompile(`^40$`),
+						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
 						"otp_enabled":                  regexp.MustCompile(`^true$`),
 						"device_authorization_enabled": regexp.MustCompile(`^false$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
@@ -1680,6 +1698,8 @@ resource "pingone_mfa_policy" "%[2]s" {
       id = pingone_application.%[2]s-1.id
 
       push_enabled = true
+	  push_timeout_duration = 100
+
       otp_enabled  = true
 
       device_authorization_enabled            = true
