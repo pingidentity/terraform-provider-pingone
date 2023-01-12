@@ -1697,10 +1697,10 @@ resource "pingone_mfa_policy" "%[2]s" {
     application {
       id = pingone_application.%[2]s-1.id
 
-      push_enabled = true
-	  push_timeout_duration = 100
+      push_enabled          = true
+      push_timeout_duration = 100
 
-      otp_enabled  = true
+      otp_enabled = true
 
       device_authorization_enabled            = true
       device_authorization_extra_verification = "restrictive"
