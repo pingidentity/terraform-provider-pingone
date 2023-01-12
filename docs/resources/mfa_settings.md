@@ -25,10 +25,6 @@ resource "pingone_mfa_settings" "mfa_settings" {
     duration_seconds = 600
   }
 
-  authentication {
-    device_selection = "DEFAULT_TO_FIRST"
-  }
-
 }
 ```
 
@@ -37,25 +33,17 @@ resource "pingone_mfa_settings" "mfa_settings" {
 
 ### Required
 
-- `authentication` (Block List, Min: 1, Max: 1) An object that contains the device selection settings. (see [below for nested schema](#nestedblock--authentication))
 - `environment_id` (String) The ID of the environment to create the sign on policy in.
 - `pairing` (Block List, Min: 1, Max: 1) An object that contains pairing settings. (see [below for nested schema](#nestedblock--pairing))
 
 ### Optional
 
+- `authentication` (Block List, Max: 1, Deprecated) **This property is deprecated.**  Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource. An object that contains the device selection settings. (see [below for nested schema](#nestedblock--authentication))
 - `lockout` (Block List, Max: 1) An object that contains lockout settings. (see [below for nested schema](#nestedblock--lockout))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-<a id="nestedblock--authentication"></a>
-### Nested Schema for `authentication`
-
-Required:
-
-- `device_selection` (String) A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments) and `PROMPT_TO_SELECT`.
-
 
 <a id="nestedblock--pairing"></a>
 ### Nested Schema for `pairing`
@@ -67,6 +55,14 @@ Required:
 Optional:
 
 - `max_allowed_devices` (Number) An integer that defines the maximum number of MFA devices each user can have. This can be any number up to 15. The default value is 5. Defaults to `5`.
+
+
+<a id="nestedblock--authentication"></a>
+### Nested Schema for `authentication`
+
+Required:
+
+- `device_selection` (String, Deprecated) **This property is deprecated.**  Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource.  A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments) and `PROMPT_TO_SELECT`.
 
 
 <a id="nestedblock--lockout"></a>

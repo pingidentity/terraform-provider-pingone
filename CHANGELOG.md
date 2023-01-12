@@ -1,5 +1,16 @@
 ## 0.8.0 (Unreleased)
 
+NOTES:
+
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.13.0 => v0.14.0 ([#230](https://github.com/pingidentity/terraform-provider-pingone/issues/230))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.7.1 => v0.7.2 ([#230](https://github.com/pingidentity/terraform-provider-pingone/issues/230))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.5.1 => v0.5.2 ([#230](https://github.com/pingidentity/terraform-provider-pingone/issues/230))
+* resource/pingone_mfa_settings: Deprecate attribute block `authentication` and attribute `authentication.device_selection` as device selection settings have moved to the `pingone_mfa_policy` resource. ([#230](https://github.com/pingidentity/terraform-provider-pingone/issues/230))
+
+ENHANCEMENTS:
+
+* resource/pingone_mfa_policy: Support per policy device selection settings by adding the optional parameter `device_selection`, previously found on the `pingone_mfa_settings` resource. ([#230](https://github.com/pingidentity/terraform-provider-pingone/issues/230))
+
 ## 0.7.1 (09 January 2023)
 
 NOTES:

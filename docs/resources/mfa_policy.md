@@ -184,6 +184,10 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
 - `totp` (Block List, Min: 1, Max: 1) TOTP authenticator policy settings. (see [below for nested schema](#nestedblock--totp))
 - `voice` (Block List, Min: 1, Max: 1) Voice OTP authentication policy settings. (see [below for nested schema](#nestedblock--voice))
 
+### Optional
+
+- `device_selection` (String) A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments), `PROMPT_TO_SELECT` and `ALWAYS_PROMPT_TO_SELECT`. Defaults to `DEFAULT_TO_FIRST`.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
