@@ -484,7 +484,11 @@ func notificationTemplateCustomWriteError(error model.P1Error) diag.Diagnostics 
 
 		// Language not likely added
 		if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "language" {
-			diags = diag.FromErr(fmt.Errorf("The locale is not valid for the environment.  Has the associated language been created with the `pingone_language` resource?"))
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "The locale is not valid for the environment.",
+				Detail:   "Please ensure that the associated language for the locale been created with the `pingone_language` resource.",
+			})
 
 			return diags
 		}
@@ -498,7 +502,11 @@ func notificationTemplateCustomWriteError(error model.P1Error) diag.Diagnostics 
 
 		// Custom notification content already exists
 		if _, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "UNIQUENESS_VIOLATION" {
-			diags = diag.FromErr(fmt.Errorf("Customized content for the template and locale already exists."))
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Customized content for the template, locale and variant combination already exists.",
+				Detail:   "Please ensure that:\n\t1.\tThe notification content for the template, locale and variant is not being managed by another process and is conflicting.\n\t2.\tAny custom content for the combination has been restored to default values. See [Editing a notification](https://docs.pingidentity.com/r/en-us/pingone/p1_c_edit_notification) for more details.",
+			})
 
 			return diags
 		}

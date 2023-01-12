@@ -9,6 +9,10 @@ description: |-
 
 Resource to create and manage PingOne notification template contents for push, SMS, email and voice notifications.
 
+~> Only one notification method can be configured per resource, so (for example) a template that requires push, email and SMS will require three `pingone_notification_template_content` resource definitions, one for each method type.
+
+~> The provider will error if custom content has already been configured for a template / locale combination where the variant isn't configured, and template / locale / variant combination where the variant is configured.  Please ensure that before creation with this resource, the desired combinations have their default text restored first.  See [Editing a notification](https://docs.pingidentity.com/r/en-us/pingone/p1_c_edit_notification) for more details.
+
 ## Example Usage
 
 ```terraform

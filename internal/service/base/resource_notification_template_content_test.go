@@ -171,7 +171,7 @@ func TestAccNotificationTemplateContent_NewLocale(t *testing.T) {
 			},
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name, locale),
-				ExpectError: regexp.MustCompile("The locale is not valid for the environment.  Has the associated language been created with the `pingone_language` resource\\?"),
+				ExpectError: regexp.MustCompile("The locale is not valid for the environment."),
 			},
 		},
 	})
@@ -258,10 +258,10 @@ func TestAccNotificationTemplateContent_InvalidData(t *testing.T) {
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name.Valid, locale.Invalid),
 				ExpectError: regexp.MustCompile(`expected locale to be one of \[af af-ZA ar ar-AE ar-BH ar-DZ ar-EG ar-IQ ar-JO ar-KW ar-LB ar-LY ar-MA ar-OM ar-QA ar-SA ar-SY ar-TN ar-YE az az-AZ be be-BY bg bg-BG bs-BA ca ca-ES cs cs-CZ cy cy-GB da da-DK de de-AT de-CH de-DE de-LI de-LU dv dv-MV el el-GR en en-AU en-BZ en-CA en-CB en-GB en-IE en-JM en-NZ en-PH en-TT en-US en-ZA en-ZW eo es es-AR es-BO es-CL es-CO es-CR es-DO es-EC es-ES es-GT es-HN es-MX es-NI es-PA es-PE es-PR es-PY es-SV es-UY es-VE et et-EE eu eu-ES fa fa-IR fi fi-FI fo fo-FO fr fr-BE fr-CA fr-CH fr-FR fr-LU fr-MC gl gl-ES gu gu-IN he he-IL hi hi-IN hr hr-BA hr-HR hu hu-HU hy hy-AM id id-ID is is-IS it it-CH it-IT ja ja-JP ka ka-GE kk kk-KZ kn kn-IN ko ko-KR kok kok-IN ky ky-KG lt lt-LT lv lv-LV mi mi-NZ mk mk-MK mn mn-MN mr mr-IN ms ms-BN ms-MY mt mt-MT nb nb-NO nl nl-BE nl-NL nn-NO ns ns-ZA pa pa-IN pl pl-PL ps ps-AR pt pt-BR pt-PT qu qu-BO qu-EC qu-PE ro ro-RO ru ru-RU sa sa-IN se se-FI se-FI se-FI se-NO se-SE se-SE se-SE sk sk-SK sl sl-SI sq sq-AL sr-BA sr-SP sv sv-FI sv-SE sw sw-KE syr syr-SY ta ta-IN te te-IN th th-TH tl tl-PH tn tn-ZA tr tr-TR tt tt-RU ts uk uk-UA ur ur-PK uz uz-UZ uz-UZ vi vi-VN xh xh-ZA zh zh-CN zh-HK zh-MO zh-SG zh-TW zu zu-ZA\], got en-ZZ`),
 			},
-			// {
-			// 	Config:      testAccNotificationTemplateContentConfig_DuplicateLocale(environmentName, licenseID, resourceName, name.Valid, "en"),
-			// 	ExpectError: regexp.MustCompile(`Customized content for the template and locale already exists.`),
-			// },
+			{
+				Config:      testAccNotificationTemplateContentConfig_DuplicateLocale(environmentName, licenseID, resourceName, name.Valid, "en"),
+				ExpectError: regexp.MustCompile(`Customized content for the template, locale and variant combination already exists.`),
+			},
 		},
 	})
 }
@@ -674,37 +674,39 @@ resource "pingone_notification_template_content" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale, variant)
 }
 
-// func testAccNotificationTemplateContentConfig_DuplicateLocale(environmentName, licenseID, resourceName, name, locale string) string {
-// 	return fmt.Sprintf(`
-// 		%[1]s
+func testAccNotificationTemplateContentConfig_DuplicateLocale(environmentName, licenseID, resourceName, name, locale string) string {
+	return fmt.Sprintf(`
+		%[1]s
 
-// resource "pingone_notification_template_content" "%[3]s-1" {
-//   environment_id = pingone_environment.%[2]s.id
-//   template_name  = "%[4]s"
-//   locale         = "%[5]s"
+resource "pingone_notification_template_content" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+  template_name  = "%[4]s"
+  locale         = "%[5]s"
+  variant = "test-duplicate-locale"
 
-//   push {
-//     body  = "1 - Please approve this transaction."
-//     title = "1 - BX Retail Transaction Request"
-//   }
-// }
+  push {
+    body  = "1 - Please approve this transaction."
+    title = "1 - BX Retail Transaction Request"
+  }
+}
 
-// resource "pingone_notification_template_content" "%[3]s-2" {
-//   environment_id = pingone_environment.%[2]s.id
-//   template_name  = "%[4]s"
-//   locale         = "%[5]s"
+resource "pingone_notification_template_content" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+  template_name  = "%[4]s"
+  locale         = "%[5]s"
+  variant = "test-duplicate-locale"
 
-//   push {
-//     body  = "2 - Please approve this transaction."
-//     title = "2 - BX Retail Transaction Request"
-//   }
+  push {
+    body  = "2 - Please approve this transaction."
+    title = "2 - BX Retail Transaction Request"
+  }
 
-//   depends_on = [
-// 	pingone_notification_template_content.%[3]s-1
-//   ]
-// }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+  depends_on = [
+	pingone_notification_template_content.%[3]s-1
+  ]
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 
-// }
+}
 
 func testAccNotificationTemplateContentConfig_DefaultVariant_Email_Minimal(environmentName, licenseID, resourceName, name, locale string) string {
 	return fmt.Sprintf(`
