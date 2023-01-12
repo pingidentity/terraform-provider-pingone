@@ -1,0 +1,30 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Platform"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> Only one notification method can be configured per resource, so (for example) a template that requires push, email and SMS will require three `pingone_notification_template_content` resource definitions, one for each method type.
+
+~> The provider will error if custom content has already been configured for a template / locale combination where the variant isn't configured, and template / locale / variant combination where the variant is configured.  Please ensure that before creation with this resource, the desired combinations have their default text restored first.  See [Editing a notification](https://docs.pingidentity.com/r/en-us/pingone/p1_c_edit_notification) for more details.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import is supported using the following syntax:
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
+{{- end }}

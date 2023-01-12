@@ -248,6 +248,18 @@ func FullIsoList() []string {
 	return isoList
 }
 
+func FullIsoListString() string {
+
+	slices.Sort(isoList)
+
+	v := make([]string, len(isoList))
+	for i, c := range isoList {
+		v[i] = fmt.Sprintf("`%s`", c)
+	}
+	return strings.Join(v, ", ")
+
+}
+
 func IsoList() []string {
 
 	v := make([]string, 0)
