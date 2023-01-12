@@ -84,15 +84,18 @@ func ResourceMFASettings() *schema.Resource {
 				},
 			},
 			"authentication": {
-				Description: "An object that contains the device selection settings.",
+				Description: "**This property is deprecated.**  Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource. An object that contains the device selection settings.",
 				Type:        schema.TypeList,
+				Deprecated:  "Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource.",
 				MaxItems:    1,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"device_selection": {
-							Description:      fmt.Sprintf("A string that defines the device selection method. Options are `%s` (this is the default setting for new environments) and `%s`.", string(mfa.ENUMMFASETTINGSDEVICESELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT)),
+							Description:      fmt.Sprintf("**This property is deprecated.**  Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource.  A string that defines the device selection method. Options are `%s` (this is the default setting for new environments) and `%s`.", string(mfa.ENUMMFASETTINGSDEVICESELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT)),
 							Type:             schema.TypeString,
+							Deprecated:       "Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource.",
 							Required:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFASETTINGSDEVICESELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT)}, false)),
 						},
@@ -111,7 +114,11 @@ func resourceMFASettingsCreate(ctx context.Context, d *schema.ResourceData, meta
 	})
 	var diags diag.Diagnostics
 
-	mfaSettings := *mfa.NewMFASettings(expandMFASettingsAuthentication(d.Get("authentication").([]interface{})), expandMFASettingsPairing(d.Get("pairing").([]interface{})))
+	mfaSettings := *mfa.NewMFASettings(expandMFASettingsPairing(d.Get("pairing").([]interface{})))
+
+	if v, ok := d.GetOk("authentication"); ok {
+		mfaSettings.SetAuthentication(expandMFASettingsAuthentication(v.([]interface{})))
+	}
 
 	if v, ok := d.GetOk("lockout"); ok {
 		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
@@ -175,7 +182,11 @@ func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta i
 		d.Set("lockout", nil)
 	}
 
-	d.Set("authentication", flattenMFASettingAuthentication(respObject.GetAuthentication()))
+	if v, ok := respObject.GetAuthenticationOk(); ok {
+		d.Set("authentication", flattenMFASettingAuthentication(*v))
+	} else {
+		d.Set("authentication", nil)
+	}
 
 	return diags
 }
@@ -188,7 +199,11 @@ func resourceMFASettingsUpdate(ctx context.Context, d *schema.ResourceData, meta
 	})
 	var diags diag.Diagnostics
 
-	mfaSettings := *mfa.NewMFASettings(expandMFASettingsAuthentication(d.Get("authentication").([]interface{})), expandMFASettingsPairing(d.Get("pairing").([]interface{})))
+	mfaSettings := *mfa.NewMFASettings(expandMFASettingsPairing(d.Get("pairing").([]interface{})))
+
+	if v, ok := d.GetOk("authentication"); ok {
+		mfaSettings.SetAuthentication(expandMFASettingsAuthentication(v.([]interface{})))
+	}
 
 	if v, ok := d.GetOk("lockout"); ok {
 		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
