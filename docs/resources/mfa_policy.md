@@ -237,6 +237,11 @@ Optional:
 - `device_authorization_enabled` (Boolean) Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.
 - `device_authorization_extra_verification` (String) Specifies the level of further verification when `device_authorization_enabled` is true. The PingOne platform performs an extra verification check by sending a "silent" push notification to the customer native application, and receives a confirmation in return.  Extra verification can be one of the following levels: `permissive`: The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed.  `restrictive`: The PingOne platform performs the extra verification check.The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed.
 - `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response. Set the value to `permissive` if you want to allow the process to continue. Set the value to `restrictive` if you want to block the user in such situations.
+- `push_timeout_duration` (Number) An integer that defines the amount of time (in seconds) a user has to respond to a push notification before it expires. Minimum is 40 seconds and maximum is 150 seconds. If this parameter is not provided, the duration is set to 40 seconds. Defaults to `40`.
+
+Read-Only:
+
+- `push_timeout_timeunit` (String) The time unit for the `push_timeout_duration` parameter. Currently, the only permitted value is `SECONDS`.
 
 
 

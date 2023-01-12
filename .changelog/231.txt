@@ -1,0 +1,3 @@
+```release-note:enhancement
+resource/pingone_mfa_policy: Support per application push notification timeout by adding optional parameter `push_timeout_duration` to the `mobile.application` block.
+```

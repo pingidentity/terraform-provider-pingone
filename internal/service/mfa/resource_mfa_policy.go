@@ -121,6 +121,18 @@ func ResourceMFAPolicy() *schema.Resource {
 										Type:        schema.TypeBool,
 										Required:    true,
 									},
+									"push_timeout_duration": {
+										Description:      "An integer that defines the amount of time (in seconds) a user has to respond to a push notification before it expires. Minimum is 40 seconds and maximum is 150 seconds. If this parameter is not provided, the duration is set to 40 seconds.",
+										Type:             schema.TypeInt,
+										Optional:         true,
+										Default:          40,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(40, 150)),
+									},
+									"push_timeout_timeunit": {
+										Description: "The time unit for the `push_timeout_duration` parameter. Currently, the only permitted value is `SECONDS`.",
+										Type:        schema.TypeString,
+										Computed:    true,
+									},
 									"otp_enabled": {
 										Description: "Specifies whether OTP authentication is enabled or disabled for the policy.",
 										Type:        schema.TypeBool,
@@ -558,6 +570,10 @@ func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *
 				item.SetPush(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPush(c3))
 			}
 
+			if c3, ok := c2["push_timeout_duration"].(int); ok {
+				item.SetPushTimeout(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout(int32(c3), mfa.ENUMTIMEUNITPUSHTIMEOUT_SECONDS))
+			}
+
 			if c3, ok := c2["otp_enabled"].(bool); ok {
 				item.SetOtp(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerOtp(c3))
 			}
@@ -815,6 +831,17 @@ func expandMFAPolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileAp
 
 			if v2, ok := v1.GetExtraVerificationOk(); ok {
 				item["device_authorization_extra_verification"] = v2
+			}
+		}
+
+		if v1, ok := v.GetPushTimeoutOk(); ok {
+
+			if v2, ok := v1.GetDurationOk(); ok {
+				item["push_timeout_duration"] = v2
+			}
+
+			if v2, ok := v1.GetTimeUnitOk(); ok {
+				item["push_timeout_timeunit"] = v2
 			}
 		}
 
