@@ -13,6 +13,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
+* resource/pingone_mfa_policy: Support per application push notification timeout by adding optional parameter `push_timeout_duration` to the `mobile.application` block. ([#231](https://github.com/pingidentity/terraform-provider-pingone/issues/231))
 * resource/pingone_mfa_policy: Support per policy device selection settings by adding the optional parameter `device_selection`, previously found on the `pingone_mfa_settings` resource. ([#230](https://github.com/pingidentity/terraform-provider-pingone/issues/230))
 
 ## 0.7.1 (09 January 2023)
