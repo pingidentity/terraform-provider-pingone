@@ -227,6 +227,63 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 	})
 }
 
+func TestAccNotificationTemplateContent_ChangeVariant(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_notification_template_content.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	name := "strong_authentication"
+	locale := "en"
+
+	variant1 := "My New Variant"
+	check1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "variant", variant1),
+	)
+
+	variant2 := "My Second Variant"
+	check2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "variant", variant2),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckNotificationTemplateContentDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Change defined variants
+			{
+				Config: testAccNotificationTemplateContentConfig_NewVariant_Minimal(environmentName, licenseID, resourceName, name, locale, variant1),
+				Check:  check1,
+			},
+			{
+				Config: testAccNotificationTemplateContentConfig_NewVariant_Minimal(environmentName, licenseID, resourceName, name, locale, variant2),
+				Check:  check2,
+			},
+			{
+				Config:  testAccNotificationTemplateContentConfig_NewVariant_Minimal(environmentName, licenseID, resourceName, name, locale, variant2),
+				Destroy: true,
+			},
+			// From no variant, to variant
+			{
+				Config: testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name, locale),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "variant", ""),
+				),
+			},
+			{
+				Config: testAccNotificationTemplateContentConfig_NewVariant_Minimal(environmentName, licenseID, resourceName, name, locale, variant2),
+				Check:  check2,
+			},
+		},
+	})
+}
+
 func TestAccNotificationTemplateContent_InvalidData(t *testing.T) {
 	t.Parallel()
 
@@ -682,7 +739,7 @@ resource "pingone_notification_template_content" "%[3]s-1" {
   environment_id = pingone_environment.%[2]s.id
   template_name  = "%[4]s"
   locale         = "%[5]s"
-  variant = "test-duplicate-locale"
+  variant        = "test-duplicate-locale"
 
   push {
     body  = "1 - Please approve this transaction."
@@ -694,7 +751,7 @@ resource "pingone_notification_template_content" "%[3]s-2" {
   environment_id = pingone_environment.%[2]s.id
   template_name  = "%[4]s"
   locale         = "%[5]s"
-  variant = "test-duplicate-locale"
+  variant        = "test-duplicate-locale"
 
   push {
     body  = "2 - Please approve this transaction."
@@ -702,7 +759,7 @@ resource "pingone_notification_template_content" "%[3]s-2" {
   }
 
   depends_on = [
-	pingone_notification_template_content.%[3]s-1
+    pingone_notification_template_content.%[3]s-1
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 
