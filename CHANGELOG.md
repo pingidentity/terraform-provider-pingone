@@ -7,6 +7,10 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.5.1 => v0.5.2 ([#230](https://github.com/pingidentity/terraform-provider-pingone/issues/230))
 * resource/pingone_mfa_settings: Deprecate attribute block `authentication` and attribute `authentication.device_selection` as device selection settings have moved to the `pingone_mfa_policy` resource. ([#230](https://github.com/pingidentity/terraform-provider-pingone/issues/230))
 
+FEATURES:
+
+* **New Resource:** `pingone_notification_template_content` ([#229](https://github.com/pingidentity/terraform-provider-pingone/issues/229))
+
 ENHANCEMENTS:
 
 * resource/pingone_mfa_policy: Support per policy device selection settings by adding the optional parameter `device_selection`, previously found on the `pingone_mfa_settings` resource. ([#230](https://github.com/pingidentity/terraform-provider-pingone/issues/230))
