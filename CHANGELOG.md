@@ -1,5 +1,9 @@
 ## 0.8.1 (Unreleased)
 
+ENHANCEMENTS:
+
+* `resource/pingone_application`: Changed input validation to add support for localhost `http://` endpoints in OIDC applications. ([#244](https://github.com/pingidentity/terraform-provider-pingone/issues/244))
+
 ## 0.8.0 (12 January 2023)
 
 NOTES:
