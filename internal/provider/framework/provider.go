@@ -14,7 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 )
 
 // Ensure PingOneProvider satisfies various provider interfaces.
@@ -95,13 +97,12 @@ func (p *PingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("client_secret")),
 					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("environment_id")),
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("client_id")), // path.MatchRoot("other_attr")),
+					stringvalidator.OneOf(model.RegionsAvailableList()...),
 				},
-				// ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(model.RegionsAvailableList(), false)),
 			},
 			"force_delete_production_type": schema.BoolAttribute{
 				MarkdownDescription: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
 				Optional:            true,
-				// ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(model.RegionsAvailableList(), false)),
 			},
 		},
 	}
@@ -163,7 +164,12 @@ func (p *PingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 }
 
 func (p *PingOneProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{} // define resources here
+	return []func() resource.Resource{
+		//base.NotificationSettingsResource,
+		// base.NotificationPolicyResource,
+		// base.PhoneDeliverySettingsResource,
+		base.TrustedEmailAddressResource,
+	} // define resources here
 }
 
 func (p *PingOneProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
