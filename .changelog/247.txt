@@ -1,0 +1,11 @@
+```release-note:note
+`resource/pingone_application_role_assignment`: Updated documentation to add more examples and clarify the schema requirements.
+```
+
+```release-note:note
+`resource/pingone_role_assignment_user`: Updated documentation to add more examples and clarify the schema requirements.
+```
+
+```release-note:note
+`resource/pingone_gateway_role_assignment`: Updated documentation to add more examples and clarify the schema requirements.
+```
