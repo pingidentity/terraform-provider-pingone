@@ -1,13 +1,13 @@
 module github.com/pingidentity/terraform-provider-pingone
 
-go 1.18
+go 1.19
 
 require (
 	github.com/bflad/tfproviderlint v0.28.1
 	github.com/golangci/golangci-lint v1.51.1
 	github.com/hashicorp/go-changelog v0.0.0-20220419201213-5edfc0d651d8
 	github.com/hashicorp/terraform-plugin-docs v0.13.0
-	github.com/hashicorp/terraform-plugin-log v0.7.0
+	github.com/hashicorp/terraform-plugin-log v0.8.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
 	github.com/katbyte/terrafmt v0.5.2
 	github.com/patrickcping/pingone-go-sdk-v2 v0.5.2
