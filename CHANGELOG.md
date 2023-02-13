@@ -5,6 +5,7 @@ NOTES:
 * `resource/pingone_application_role_assignment`: Updated documentation to add more examples and clarify the schema requirements. ([#247](https://github.com/pingidentity/terraform-provider-pingone/issues/247))
 * `resource/pingone_gateway_role_assignment`: Updated documentation to add more examples and clarify the schema requirements. ([#247](https://github.com/pingidentity/terraform-provider-pingone/issues/247))
 * `resource/pingone_role_assignment_user`: Updated documentation to add more examples and clarify the schema requirements. ([#247](https://github.com/pingidentity/terraform-provider-pingone/issues/247))
+* bump `github.com/hashicorp/terraform-plugin-log` v0.7.0 => v0.8.0 ([#245](https://github.com/pingidentity/terraform-provider-pingone/issues/245))
 * bump `github.com/terraform-linters/tflint` v0.44.1 => v0.45.0 ([#246](https://github.com/pingidentity/terraform-provider-pingone/issues/246))
 
 ENHANCEMENTS:
