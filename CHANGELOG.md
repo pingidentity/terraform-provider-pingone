@@ -1,5 +1,11 @@
 ## 0.8.1 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_application_role_assignment`: Updated documentation to add more examples and clarify the schema requirements. ([#247](https://github.com/pingidentity/terraform-provider-pingone/issues/247))
+* `resource/pingone_gateway_role_assignment`: Updated documentation to add more examples and clarify the schema requirements. ([#247](https://github.com/pingidentity/terraform-provider-pingone/issues/247))
+* `resource/pingone_role_assignment_user`: Updated documentation to add more examples and clarify the schema requirements. ([#247](https://github.com/pingidentity/terraform-provider-pingone/issues/247))
+
 ENHANCEMENTS:
 
 * `resource/pingone_application`: Changed input validation to add support for localhost `http://` endpoints in OIDC applications. ([#244](https://github.com/pingidentity/terraform-provider-pingone/issues/244))
