@@ -5,10 +5,15 @@ NOTES:
 * `resource/pingone_application_role_assignment`: Updated documentation to add more examples and clarify the schema requirements. ([#247](https://github.com/pingidentity/terraform-provider-pingone/issues/247))
 * `resource/pingone_gateway_role_assignment`: Updated documentation to add more examples and clarify the schema requirements. ([#247](https://github.com/pingidentity/terraform-provider-pingone/issues/247))
 * `resource/pingone_role_assignment_user`: Updated documentation to add more examples and clarify the schema requirements. ([#247](https://github.com/pingidentity/terraform-provider-pingone/issues/247))
+* bump `github.com/terraform-linters/tflint` v0.44.1 => v0.45.0 ([#246](https://github.com/pingidentity/terraform-provider-pingone/issues/246))
 
 ENHANCEMENTS:
 
 * `resource/pingone_application`: Changed input validation to add support for localhost `http://` endpoints in OIDC applications. ([#244](https://github.com/pingidentity/terraform-provider-pingone/issues/244))
+
+BUG FIXES:
+
+* `resource/pingone_sign_on_policy`: Corrected input validation regex for the sign on policy `name` attribute. ([#248](https://github.com/pingidentity/terraform-provider-pingone/issues/248))
 
 ## 0.8.0 (12 January 2023)
 
