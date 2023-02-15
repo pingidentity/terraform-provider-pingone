@@ -78,10 +78,10 @@ func TestAccApplicationAttributeMapping_Full(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationAttributeMappingConfig_Full(resourceName, name),
@@ -108,10 +108,10 @@ func TestAccApplicationAttributeMapping_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
@@ -138,10 +138,10 @@ func TestAccApplicationAttributeMapping_Expression(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationAttributeMappingConfig_Expression(resourceName, name),
@@ -168,10 +168,10 @@ func TestAccApplicationAttributeMapping_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
@@ -221,10 +221,10 @@ func TestAccApplicationAttributeMapping_ReservedAttributeName(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name),

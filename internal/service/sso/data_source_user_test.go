@@ -19,9 +19,9 @@ func TestAccUserDataSource_ByNameFull(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccUserDataSourceConfig_ByNameFull(resourceName, name),
@@ -49,9 +49,9 @@ func TestAccUserDataSource_ByEmailFull(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccUserDataSourceConfig_ByEmailFull(resourceName, name),
@@ -79,9 +79,9 @@ func TestAccUserDataSource_ByIDFull(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccUserDataSourceConfig_ByIDFull(resourceName, name),
@@ -105,9 +105,9 @@ func TestAccUserDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccUserDataSourceConfig_NotFoundByName(resourceName),

@@ -78,10 +78,10 @@ func TestAccApplicationResourceGrant_OpenIDResource(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationResourceGrantDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
@@ -107,10 +107,10 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationResourceGrantDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
@@ -137,10 +137,10 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckApplicationResourceGrantDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),

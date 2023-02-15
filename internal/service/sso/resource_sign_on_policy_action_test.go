@@ -79,10 +79,10 @@ func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_LoginFullWithExt(resourceName, name),
@@ -161,10 +161,10 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_IDFirstFullWithExt(resourceName, name),
@@ -252,10 +252,10 @@ func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_IDPFull(resourceName, name),
@@ -321,10 +321,10 @@ func TestAccSignOnPolicyAction_ProgressiveProfilingAction(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_ProgressiveProfilingFull(resourceName, name),
@@ -410,10 +410,10 @@ func TestAccSignOnPolicyAction_PingIDAction(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckWorkforceEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckWorkforceEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_PingID(resourceName, name),
@@ -437,10 +437,10 @@ func TestAccSignOnPolicyAction_PingIDWinLoginPasswordlessAction(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckWorkforceEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckWorkforceEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordless(resourceName, name),
@@ -466,10 +466,10 @@ func TestAccSignOnPolicyAction_MultipleActionChange(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
@@ -515,10 +515,10 @@ func TestAccSignOnPolicyAction_ConditionsSignOnOlderThanSingle(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_ConditionsSignOnOlderThanSingle(resourceName, name),
@@ -553,10 +553,10 @@ func TestAccSignOnPolicyAction_ConditionsMemberOfPopulation(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulation(resourceName, name),
@@ -597,10 +597,10 @@ func TestAccSignOnPolicyAction_ConditionsMemberOfPopulations(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulations(resourceName, name),
@@ -648,10 +648,10 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleString(t *test
 	attributeValue := "ACCOUNT_OK"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingleString(resourceName, name, attributeReference, attributeValue),
@@ -701,10 +701,10 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleBool(t *testin
 	attributeValue := true
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsSingleBool(resourceName, name, attributeReference, attributeValue),
@@ -751,10 +751,10 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsMultiple(resourceName, name),
@@ -830,7 +830,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 
 // 	resource.Test(t, resource.TestCase{
 // 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProviderFactories: acctest.ProviderFactories,
+// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 // 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
 // 		ErrorCheck:        acctest.ErrorCheck(t),
 // 		Steps: []resource.TestStep{
@@ -878,7 +878,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 
 // 	resource.Test(t, resource.TestCase{
 // 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProviderFactories: acctest.ProviderFactories,
+// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 // 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
 // 		ErrorCheck:        acctest.ErrorCheck(t),
 // 		Steps: []resource.TestStep{
@@ -928,7 +928,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 
 // 	resource.Test(t, resource.TestCase{
 // 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProviderFactories: acctest.ProviderFactories,
+// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 // 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
 // 		ErrorCheck:        acctest.ErrorCheck(t),
 // 		Steps: []resource.TestStep{
@@ -974,7 +974,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 
 // 	resource.Test(t, resource.TestCase{
 // 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProviderFactories: acctest.ProviderFactories,
+// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 // 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
 // 		ErrorCheck:        acctest.ErrorCheck(t),
 // 		Steps: []resource.TestStep{
@@ -1020,7 +1020,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 
 // 	resource.Test(t, resource.TestCase{
 // 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProviderFactories: acctest.ProviderFactories,
+// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 // 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
 // 		ErrorCheck:        acctest.ErrorCheck(t),
 // 		Steps: []resource.TestStep{
@@ -1068,7 +1068,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 
 // 	resource.Test(t, resource.TestCase{
 // 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProviderFactories: acctest.ProviderFactories,
+// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 // 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
 // 		ErrorCheck:        acctest.ErrorCheck(t),
 // 		Steps: []resource.TestStep{
@@ -1115,10 +1115,10 @@ func TestAccSignOnPolicyAction_ConditionsCompound(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSignOnPolicyActionConfig_ConditionsCompoundSubset(resourceName, name),

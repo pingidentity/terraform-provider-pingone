@@ -17,9 +17,9 @@ func TestAccSchemaDataSource_ByNameFull(t *testing.T) {
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSchemaDataSourceConfig_ByNameFull(resourceName, "User"),
@@ -43,9 +43,9 @@ func TestAccSchemaDataSource_ByIDFull(t *testing.T) {
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSchemaDataSourceConfig_ByIDFull(resourceName, "User"),
@@ -67,9 +67,9 @@ func TestAccSchemaDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccSchemaDataSourceConfig_NotFoundByName(resourceName),

@@ -79,10 +79,10 @@ func TestAccRoleAssignmentApplication_Population(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckRoleAssignmentApplicationDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRoleAssignmentApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccRoleAssignmentApplicationConfig_Population(resourceName, name, "Identity Data Admin"),
@@ -119,10 +119,10 @@ func TestAccRoleAssignmentApplication_Organisation(t *testing.T) {
 	organisationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckRoleAssignmentApplicationDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRoleAssignmentApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccRoleAssignmentApplicationConfig_Organisation(resourceName, name, "Identity Data Admin", organisationID),
@@ -167,10 +167,10 @@ func TestAccRoleAssignmentApplication_Environment(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckRoleAssignmentApplicationDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRoleAssignmentApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccRoleAssignmentApplicationConfig_Environment(resourceName, name, "Identity Data Admin"),

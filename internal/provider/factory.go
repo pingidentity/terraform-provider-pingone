@@ -8,11 +8,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/provider/sdkv2"
 )
 
 func ProviderServerFactoryV5(ctx context.Context, version string) (func() tfprotov5.ProviderServer, *schema.Provider, error) {
 
-	p1V5Provider := New(version)()
+	p1V5Provider := sdkv2.New(version)()
 	p1V6Provider := framework.New(version)()
 
 	providers := []func() tfprotov5.ProviderServer{

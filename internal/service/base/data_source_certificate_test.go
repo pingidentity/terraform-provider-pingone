@@ -24,9 +24,9 @@ func TestAccCertificateDataSource_ByNameFull(t *testing.T) {
 	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndPEM(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPEM(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, pem_cert),
@@ -66,9 +66,9 @@ func TestAccCertificateDataSource_ByIDFull(t *testing.T) {
 	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndPEM(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPEM(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCertificateDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pem_cert),
@@ -100,9 +100,9 @@ func TestAccCertificateDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndPEM(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPEM(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCertificateDataSourceConfig_NotFoundByName(resourceName),

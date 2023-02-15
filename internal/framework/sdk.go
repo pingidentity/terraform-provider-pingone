@@ -4,16 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
-type SDKInterfaceFunc func() (interface{}, *http.Response, error)
 type CustomError func(model.P1Error) diag.Diagnostics
 
 var (
@@ -48,12 +47,12 @@ var (
 	}
 )
 
-func ParseResponse(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, customError CustomError, retryable Retryable) (interface{}, diag.Diagnostics) {
+func ParseResponse(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, retryable sdk.Retryable) (interface{}, diag.Diagnostics) {
 	defaultTimeout := 10
-	return ParseResponseWithCustomTimeout(ctx, f, sdkMethod, customError, retryable, time.Duration(defaultTimeout)*time.Minute)
+	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, retryable, time.Duration(defaultTimeout)*time.Minute)
 }
 
-func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, customError CustomError, retryable Retryable, timeout time.Duration) (interface{}, diag.Diagnostics) {
+func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, retryable sdk.Retryable, timeout time.Duration) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if customError == nil {
@@ -61,10 +60,10 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 	}
 
 	if retryable == nil {
-		retryable = DefaultRetryable
+		retryable = sdk.DefaultRetryable
 	}
 
-	resp, r, err := RetryWrapper(
+	resp, r, err := sdk.RetryWrapper(
 		ctx,
 		timeout,
 		f,
@@ -78,7 +77,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 
 			if v, ok := t.Model().(model.P1Error); ok && v.GetId() != "" {
 
-				summaryText := fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, v.GetMessage())
+				summaryText := fmt.Sprintf("Error when calling `%s`: %v", requestID, v.GetMessage())
 				detailText := fmt.Sprintf("PingOne Error Details:\nID: %s\nCode: %s\nMessage: %s", v.GetId(), v.GetCode(), v.GetMessage())
 
 				diags = customError(v)
@@ -100,23 +99,23 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 				return nil, diags
 			}
 
-			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, t.Error()), "")
+			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 
-			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nFull response body: %+v", sdkMethod, t.Error(), r.Body))
+			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nFull response body: %+v", requestID, t.Error(), r.Body))
 
 			return nil, diags
 
 		case *url.Error:
 			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s", t.Err.Error()))
 
-			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, t.Error()), "")
+			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 
 			return nil, diags
 
 		default:
 			tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
 
-			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, t.Error()), fmt.Sprintf("A generic error has occurred.\nError details: %+v", t))
+			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), fmt.Sprintf("A generic error has occurred.\nError details: %+v", t))
 
 			return nil, diags
 		}

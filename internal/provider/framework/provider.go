@@ -5,25 +5,23 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 )
 
 // Ensure PingOneProvider satisfies various provider interfaces.
-var _ provider.Provider = &PingOneProvider{}
+var _ provider.Provider = &pingOneProvider{}
 
 // PingOneProvider defines the provider implementation.
-type PingOneProvider struct {
+type pingOneProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
@@ -31,8 +29,8 @@ type PingOneProvider struct {
 	client  *pingone.Client
 }
 
-// PingOneProviderModel describes the provider data model.
-type PingOneProviderModel struct {
+// pingOneProviderModel describes the provider data model.
+type pingOneProviderModel struct {
 	ClientID                             types.String `tfsdk:"client_id"`
 	ClientSecret                         types.String `tfsdk:"client_secret"`
 	EnvironmentID                        types.String `tfsdk:"environment_id"`
@@ -41,64 +39,33 @@ type PingOneProviderModel struct {
 	ForceDeleteProductionEnvironmentType types.Bool   `tfsdk:"force_delete_production_type"`
 }
 
-func (p *PingOneProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+func (p *pingOneProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "pingone"
 	resp.Version = p.version
 }
 
-func (p *PingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
 				MarkdownDescription: "Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must be configured with `client_secret` and `environment_id`.",
 				Optional:            true,
-				Validators: []validator.String{
-					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("client_id")),
-					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("client_secret")),
-					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("environment_id")),
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("api_access_token")), // path.MatchRoot("other_attr")),
-				},
 			},
 			"client_secret": schema.StringAttribute{
 				MarkdownDescription: "Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.  Must be configured with `client_id` and `environment_id`.",
 				Optional:            true,
-				Validators: []validator.String{
-					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("client_id")),
-					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("client_secret")),
-					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("environment_id")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("api_access_token")),
-				},
 			},
 			"environment_id": schema.StringAttribute{
 				MarkdownDescription: "Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.",
 				Optional:            true,
-				Validators: []validator.String{
-					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("client_id")),
-					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("client_secret")),
-					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("environment_id")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("api_access_token")),
-				},
 			},
 			"api_access_token": schema.StringAttribute{
 				MarkdownDescription: "The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
 				Optional:            true,
-				Validators: []validator.String{
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("client_id")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("client_secret")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("environment_id")),
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("client_id")), // path.MatchRoot("other_attr")),
-				},
 			},
 			"region": schema.StringAttribute{
 				MarkdownDescription: "The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
-				Required:            true,
-				Validators: []validator.String{
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("client_id")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("client_secret")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("environment_id")),
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("client_id")), // path.MatchRoot("other_attr")),
-					stringvalidator.OneOf(model.RegionsAvailableList()...),
-				},
+				Optional:            true,
 			},
 			"force_delete_production_type": schema.BoolAttribute{
 				MarkdownDescription: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
@@ -108,8 +75,9 @@ func (p *PingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 	}
 }
 
-func (p *PingOneProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data PingOneProviderModel
+func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	tflog.Debug(ctx, "PingOne provider configure start")
+	var data pingOneProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -117,24 +85,30 @@ func (p *PingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	}
 
 	// Set the defaults
+	tflog.Info(ctx, "PingOne provider setting defaults..")
 	if data.ClientID.IsNull() {
 		data.ClientID = basetypes.NewStringValue(os.Getenv("PINGONE_CLIENT_ID"))
+		tflog.Info(ctx, "PingOne provider set ClientID to environment var")
 	}
 
 	if data.ClientSecret.IsNull() {
 		data.ClientSecret = basetypes.NewStringValue(os.Getenv("PINGONE_CLIENT_SECRET"))
+		tflog.Info(ctx, "PingOne provider set ClientSecret to environment var")
 	}
 
 	if data.EnvironmentID.IsNull() {
 		data.EnvironmentID = basetypes.NewStringValue(os.Getenv("PINGONE_ENVIRONMENT_ID"))
+		tflog.Info(ctx, "PingOne provider set EnvironmentID to environment var")
 	}
 
 	if data.APIAccessToken.IsNull() {
 		data.APIAccessToken = basetypes.NewStringValue(os.Getenv("PINGONE_API_ACCESS_TOKEN"))
+		tflog.Info(ctx, "PingOne provider set APIAccessToken to environment var")
 	}
 
 	if data.Region.IsNull() {
 		data.Region = basetypes.NewStringValue(os.Getenv("PINGONE_REGION"))
+		tflog.Info(ctx, "PingOne provider set Region to environment var")
 	}
 
 	if data.ForceDeleteProductionEnvironmentType.IsNull() {
@@ -142,6 +116,7 @@ func (p *PingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		if err != nil {
 			v = false
 		}
+		tflog.Info(ctx, "PingOne provider set ForceDeleteProductionEnvironmentType to environment var")
 		data.ForceDeleteProductionEnvironmentType = basetypes.NewBoolValue(v)
 	}
 
@@ -155,30 +130,33 @@ func (p *PingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		ForceDelete:   data.ForceDeleteProductionEnvironmentType.ValueBool(),
 	}
 
-	client, err := config.APIClient(ctx)
+	apiClient, err := config.APIClient(ctx)
 	if err != nil {
 		return
 	}
 
-	p.client = client
+	var resourceConfig framework.ResourceType
+	resourceConfig.Client = apiClient
+	tflog.Info(ctx, "PingOne provider initialized client")
+
+	resp.ResourceData = resourceConfig
+	resp.DataSourceData = resourceConfig
+
 }
 
-func (p *PingOneProvider) Resources(ctx context.Context) []func() resource.Resource {
+func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		//base.NotificationSettingsResource,
-		// base.NotificationPolicyResource,
-		// base.PhoneDeliverySettingsResource,
-		base.TrustedEmailAddressResource,
+		base.NewTrustedEmailAddressResource,
 	} // define resources here
 }
 
-func (p *PingOneProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{} // define resources here
+func (p *pingOneProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{} // define data sources here
 }
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &PingOneProvider{
+		return &pingOneProvider{
 			version: version,
 		}
 	}
