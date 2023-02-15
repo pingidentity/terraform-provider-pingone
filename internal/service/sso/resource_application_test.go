@@ -1921,7 +1921,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 }
 
 // OIDC Use Cases
-func TestAccApplication_WildcardInRedirect(t *testing.T) {
+func TestAccApplication_OIDC_WildcardInRedirectURI(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -1951,6 +1951,64 @@ func TestAccApplication_WildcardInRedirect(t *testing.T) {
 	})
 }
 
+type OIDCLocalhostTest struct {
+	Hostname string
+	Valid    string
+}
+
+func TestAccApplication_OIDC_LocalhostAddresses(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
+		ProviderFactories: acctest.ProviderFactories,
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		ErrorCheck:        acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Localhost
+			{
+				Config: testAccApplicationConfig_OIDC_LocalhostAddresses(resourceName, name, "localhost"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "http://localhost/login"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", "http://localhost/home"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.initiate_login_uri", "http://localhost/init"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "http://localhost/callback"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "http://localhost/logout"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.target_link_uri", "http://localhost/link"),
+				),
+			},
+			{
+				Config:  testAccApplicationConfig_OIDC_LocalhostAddresses(resourceName, name, "localhost"),
+				Destroy: true,
+			},
+			// 127.0.0.1
+			{
+				Config: testAccApplicationConfig_OIDC_LocalhostAddresses(resourceName, name, "127.0.0.1"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "http://127.0.0.1/login"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.home_page_url", "http://127.0.0.1/home"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.initiate_login_uri", "http://127.0.0.1/init"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "http://127.0.0.1/callback"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "http://127.0.0.1/logout"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.target_link_uri", "http://127.0.0.1/link"),
+				),
+			},
+			{
+				Config:  testAccApplicationConfig_OIDC_LocalhostAddresses(resourceName, name, "127.0.0.1"),
+				Destroy: true,
+			},
+		},
+	})
+}
+
+// SAML
 func TestAccApplication_SAMLFull(t *testing.T) {
 	t.Parallel()
 
@@ -2741,6 +2799,33 @@ resource "pingone_application" "%[2]s" {
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, wildcardInRedirect)
+}
+
+func testAccApplicationConfig_OIDC_LocalhostAddresses(resourceName, name, hostname string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  login_page_url = "http://%[4]s/login" # https with the exception of localhost
+
+  oidc_options {
+    home_page_url               = "http://%[4]s/home" # https with the exception of localhost
+    initiate_login_uri          = "http://%[4]s/init" # https with the exception of localhost
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["http://%[4]s/callback"] # https with the exception of localhost
+    post_logout_redirect_uris   = ["http://%[4]s/logout"]   # either http or https
+    target_link_uri             = "http://%[4]s/link"       # either http or https
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, hostname)
 }
 
 func testAccApplicationConfig_SAML_Full(resourceName, name, image string) string {

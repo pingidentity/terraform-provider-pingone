@@ -66,7 +66,7 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to create the sign on policy in.
-- `name` (String) A string that specifies the resource name. The name must be unique within the environment, and can consist of either a string of alphanumeric letters, underscore, hyphen, period `^[a-zA-Z0-9_. -]+$` or an absolute URI if the string contains a `:` character.
+- `name` (String) A string that specifies the resource name. The name must be unique within the environment, and can consist of either a string of alphanumeric letters, underscore, hyphen, period `^[a-zA-Z0-9_.-]+$` or an absolute URI if the string contains a `:` character.
 
 ### Optional
 

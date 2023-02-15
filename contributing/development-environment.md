@@ -3,7 +3,7 @@
 ## Requirements
 
 - [Terraform](https://www.terraform.io/downloads.html) 1.0+ (to run acceptance tests)
-- [Go](https://golang.org/doc/install) 1.18+ (to build the provider plugin)
+- [Go](https://golang.org/doc/install) 1.19+ (to build and test the provider plugin)
 
 ## Quick Start
 
@@ -72,7 +72,7 @@ Occasionally, development may include changes to the [PingOne GO SDK](https://gi
 ```
 module github.com/pingidentity/terraform-provider-pingone
 
-go 1.18
+go 1.19
 
 replace github.com/patrickcping/pingone-go-sdk-v2/management => ../pingone-go-sdk-v2/management
 
