@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 )
 
 // Ensure PingOneProvider satisfies various provider interfaces.
@@ -145,9 +144,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 }
 
 func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		base.NewTrustedEmailAddressResource,
-	} // define resources here
+	return []func() resource.Resource{} // define resources here
 }
 
 func (p *pingOneProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
