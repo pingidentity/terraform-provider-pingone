@@ -5,109 +5,139 @@ The following describes how the code is organised in the repository
 
 * `internal/acctest` - The `acctest` directory contains functions that are common to all acceptance tests in the provider
 * `internal/client` - The `client` directory contains functions specific to instantiation and modification of the PingOne GO SDK client.  The providers will source the PingOne client from this module
-* `internal/provider` - The `provider` directory contains the core Terraform provider code.  This will initialise the Terraform provider as a whole
-* `internal/sdk` - The `sdk` directory contains the code that brokers the interaction between the PingOne SDK functions and the Terraform provider.  For example, restructuring errors to Terraform provider format or processing resource retry conditions.
+* `internal/framework` - The `sdk` directory contains the code that brokers the interaction between the PingOne SDK functions and the Terraform provider (using the v6 protocol/plugin framework SDK).  For example, restructuring errors to Terraform provider format or processing resource retry conditions.
+* `internal/provider` - The `provider` directory contains the core Terraform provider code.  This will initialise the Terraform provider as a whole.  The `provider` package contains a provider factory based on the mux packages described [here](https://developer.hashicorp.com/terraform/plugin/mux).  The provider is being gradually migrated to the v6 protocol/plugin framework SDK and away from the v5 protocol/SDKv2 SDK.  Currently, the factory presents a combined v5 protocol provider for backward compatibility of Terraform CLI earlier than v1.
+* `internal/sdk` - The `sdk` directory contains the code that brokers the interaction between the PingOne SDK functions and the Terraform provider (using the v5 protocl/SDKv2 SDK).  For example, restructuring errors to Terraform provider format or processing resource retry conditions.
 * `internal/service` - The `service` directory contains the resource and data source code relevant for all of the PingOne services.  Common code to all services and the PingOne platform will be created here.
 * `internal/service/base` - The `base` directory, as a subdirectory of `service` contains the resources, data sources and testing code for the PingOne platform components that are shared between multiple services.
 * `internal/service/<service name>` - The individual PingOne services are separated into their own directories, under the `service` directory.  This is to ensure full logical separation between the different services and help with ongoing maintainability.  Service names and their support status can be found on the [Services Support](services-support.md) guide
+
+## Migration to Terraform Plugin Framework SDK
+
+The provider is being gradually migrated to the Plugin Framework SDK.  Any new resources and/or data sources should use the Plugin Framework and be registered in the `internal/service/<service name>/service.go` file for inclusion in the provider.  Examples provided in this document are specific to the Plugin Framework SDK.
 
 ## PingOne GO SDK and API
 
 The PingOne Terraform provider leverages the [PingOne Platform API](https://apidocs.pingidentity.com/pingone/platform/v1/api/), via an automatically generated [PingOne Go SDK](https://github.com/patrickcping/pingone-go-sdk-v2).  The resources in this provider must use the Go SDK to call PingOne platform endpoints, rather than call API endpoints directly.
 
-For each function that requires an SDK call, the client must be retrieved and the PingOne domain suffix (of the PingOne tenant region) applied:
+For each resource that requires a PingOne SDK call, the client must be retrieved and the PingOne domain suffix (of the PingOne tenant region) applied:
 
 ```
-p1Client := meta.(*client.Client)
-apiClient := p1Client.API.ManagementAPIClient
-ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-	"suffix": p1Client.API.Region.URLSuffix,
-})
+func (r *FooResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	if resourceConfig.Client.API == nil || resourceConfig.Client.API.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": resourceConfig.Client.API.Region.URLSuffix,
+	})
+
+	tflog.Info(ctx, "PingOne provider client init successful")
+
+	r.client = resourceConfig.Client.API.ManagementAPIClient
+}
 ```
 
-Once initialised in the function (as above), the SDK can be invoked inside a response wrapper.  An example of how to retrieve an environment record is as follows:
+Once initialised in the Configure method (as above), the SDK can be invoked inside a function using a retry and response parsing wrapper.  Example:
 ```
-	resp, diags := sdk.ParseResponse(
+	response, diags := framework.ParseResponse(
 		ctx,
+
 		func() (interface{}, *http.Response, error) {
-			return apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+			return r.client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
 		},
-		"ReadOneEnvironment",
-		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		"CreateTrustedEmailAddress", // This is an ID used for logging and error output
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
-	}
-	respObject := resp.(*management.Environment)
+	trustedEmailAddress := response.(*management.EmailDomainTrustedEmail)
 ```
 
 The purpose of the response wrapper is to standardise and optionally override API error responses and retry conditions.
 
 More information about the SDK methods available can be found at:
 * [Go API client for PingOne Management (SSO and Base)](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/management)
+* [Go API client for PingOne Authorize](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/authorize)
 * [Go API client for PingOne MFA](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/mfa)
 * [Go API client for PingOne Risk](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/risk)
 
 ## Custom Errors
 
-The `CustomError` parameter of the `sdk.ParseResponse` function allows the developer to override API errors with a custom message or output.
+The `CustomError` parameter of the `framework.ParseResponse` function allows the developer to override API errors with a custom message or output.
 
 The following shows an implementation where two overrides are in place; one that evaluates the PingOne API details block for specific validation errors based on the environment region, and the second overriding the error message returned based on a string match:
 ```
-	resp, diags := sdk.ParseResponse(
+	response, diags := framework.ParseResponse(
 		ctx,
+
 		func() (interface{}, *http.Response, error) {
-			return apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
+			return r.client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
 		},
-		"CreateEnvironmentActiveLicense",
-		func(error management.P1Error) diag.Diagnostics {
-
-			// Invalid region
-			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-				if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
-					allowedRegions := make([]string, 0)
-					for _, allowedRegion := range details[0].GetInnerError().AllowedValues {
-						allowedRegions = append(allowedRegions, model.FindRegionByAPICode(management.EnumRegionCode(allowedRegion)).Region)
-					}
-					diags = diag.FromErr(fmt.Errorf("Incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %s", allowedRegions, model.FindRegionByAPICode(region).Region))
-
-					return diags
-				}
-			}
-
-			// DV FF
-			m, err := regexp.MatchString("^Organization does not have Ping One DaVinci FF enabled", error.GetMessage())
-			if err != nil {
-				diags = diag.FromErr(fmt.Errorf("Invalid regexp: DV FF error"))
-				return diags
-			}
-			if m {
-				diags = diag.FromErr(fmt.Errorf("The PingOne DaVinci service is not enabled in this organization tenant."))
-
-				return diags
-			}
-
-			return nil
-		},
-		sdk.DefaultRetryable,
+		"CreateTrustedEmailAddress", // This is an ID used for logging and error output
+		trustedEmailAddressAPIErrors, // This is an overridden error function
+		sdk.DefaultCreateReadRetryable,
 	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	trustedEmailAddress := response.(*management.EmailDomainTrustedEmail)
 ```
 
-The default value for this parameter is the `sdk.DefaultCustomError` function.  This can be explicitly set (recommended for readability), or the parameter value can be set to `nil`.
+```
+func trustedEmailAddressAPIErrors(error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Domain not verified
+	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+		if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
+			if target, ok := details[0].GetTargetOk(); ok && *target == "trustedEmail" {
+				diags.AddError(
+					"The domain of the given email address is not verified",
+					"Ensure that the domain of the given trusted email address has been verified first.  This can be configured with the `pingone_trusted_email_domain` resource.",
+				)
+
+				return diags
+			}
+		}
+	}
+	return nil
+}
+```
+
+The default value for this parameter is the `framework.DefaultCustomError` function.  This can be explicitly set (recommended for readability), or the parameter value can be set to `nil`.
 
 ## Custom Retry Conditions
 
-The `Retryable` parameter of the `sdk.ParseResponse` function allows the developer to define specific conditions of retry. By default, the provider will retry on network connectivity or timeout responses, but the developer may choose to also retry based on asynchronous latency.  More information about possible latency conditions can be found at the PingOne API documentation [Accounting for Latency](https://apidocs.pingidentity.com/pingone/platform/v1/api/#accounting-for-latency) section.
+The `Retryable` parameter of the `framework.ParseResponse` function allows the developer to define specific conditions of retry. By default, the provider will retry on network connectivity or timeout responses, but the developer may choose to also retry based on asynchronous latency and eventual consistency.  More information about possible latency conditions can be found at the PingOne API documentation [Accounting for Latency](https://apidocs.pingidentity.com/pingone/platform/v1/api/#accounting-for-latency) section.
 
 The following example shows a custom retry override to account for bootstrapped role assignment for the Terraform client to be able to create populations, based on string match of the error message:
 ```
-	resp, diags := sdk.ParseResponse(
+	resp, diags := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -138,3 +168,5 @@ The following example shows a custom retry override to account for bootstrapped 
 ```
 
 The default value for this parameter is the `sdk.DefaultRetryable` function.  This can be explicitly set (recommended for readability), or the parameter value can be set to `nil`.
+
+*Note:* Retry specific code has not been converted to a framework equivalent and still exists under the `internal/sdk` package.  This is because the plugin framework does not yet include features for retry.
