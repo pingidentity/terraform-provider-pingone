@@ -309,9 +309,15 @@ func WorkforceSandboxEnvironment() string {
 		}`
 }
 
-func DomainVerifiedSandboxEnvironment() string {
-	return `
+func DomainVerifiedSandboxEnvironment(verifiedDomain string) string {
+	return fmt.Sprintf(`
 		data "pingone_environment" "domainverified_test" {
 			name = "tf-testacc-static-domainverified-test"
-		}`
+		}
+
+		data "pingone_trusted_email_domain" "email_domain" {
+			environment_id = data.pingone_environment.domainverified_test.id
+
+			domain_name = "%[1]s"
+		}`, verifiedDomain)
 }
