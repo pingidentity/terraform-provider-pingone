@@ -310,8 +310,8 @@ func WorkforceSandboxEnvironment() string {
 }
 
 func DomainVerifiedSandboxEnvironment() string {
-	return fmt.Sprintf(`
+	return `
 		data "pingone_environment" "domainverified_test" {
 			name = "tf-testacc-static-domainverified-test"
-		}`)
+		}`
 }

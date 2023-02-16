@@ -162,7 +162,7 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 			for _, emailDomainItem := range emailDomains {
 
 				if emailDomainItem.GetDomainName() == data.DomainName.ValueString() {
-					emailDomain = &emailDomainItem
+					*emailDomain = emailDomainItem
 					found = true
 					break
 				}
