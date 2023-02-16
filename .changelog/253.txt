@@ -1,0 +1,7 @@
+```release-note:new-resource
+pingone_trusted_email_address
+```
+
+```release-note:new-data-source
+pingone_trusted_email_domain
+```
