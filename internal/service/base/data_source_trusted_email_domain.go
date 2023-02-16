@@ -134,7 +134,7 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 		return
 	}
 
-	var emailDomain *management.EmailDomain
+	var emailDomain management.EmailDomain
 
 	if !data.DomainName.IsNull() {
 
@@ -162,7 +162,7 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 			for _, emailDomainItem := range emailDomains {
 
 				if emailDomainItem.GetDomainName() == data.DomainName.ValueString() {
-					*emailDomain = emailDomainItem
+					emailDomain = emailDomainItem
 					found = true
 					break
 				}
@@ -196,7 +196,7 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 			return
 		}
 
-		emailDomain = response.(*management.EmailDomain)
+		emailDomain = *response.(*management.EmailDomain)
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -206,7 +206,7 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(emailDomain)...)
+	resp.Diagnostics.Append(data.toState(&emailDomain)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
