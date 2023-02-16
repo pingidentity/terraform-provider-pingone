@@ -37,10 +37,10 @@ func TestAccEnvironment_Full(t *testing.T) {
 	serviceTwoBookmarkURLTwo := "https://my-bookmark-2"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
@@ -89,10 +89,10 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	region := os.Getenv("PINGONE_REGION")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, licenseID),
@@ -135,10 +135,10 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
@@ -163,7 +163,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 
 // 	resource.Test(t, resource.TestCase{
 // 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProviderFactories: acctest.ProviderFactories,
+// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 // 		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
 // 		ErrorCheck:        acctest.ErrorCheck(t),
 // 		Steps: []resource.TestStep{
@@ -196,7 +196,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 
 // 	resource.Test(t, resource.TestCase{
 // 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProviderFactories: acctest.ProviderFactories,
+// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 // 		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
 // 		ErrorCheck:        acctest.ErrorCheck(t),
 // 		Steps: []resource.TestStep{
@@ -240,10 +240,10 @@ func TestAccEnvironment_NonPopulationServices(t *testing.T) {
 	serviceTwoBookmarkURLTwo := "https://my-bookmark-2"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
@@ -284,10 +284,10 @@ func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
@@ -337,10 +337,10 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 	serviceTwoBookmarkURLTwo := "https://my-bookmark-2"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
@@ -397,10 +397,10 @@ func TestAccEnvironment_Services(t *testing.T) {
 	services3 := []string{`SSO`, `MFA`, `Risk`, `Verify`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services1),

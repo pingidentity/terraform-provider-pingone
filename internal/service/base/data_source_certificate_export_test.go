@@ -26,9 +26,9 @@ func TestAccCertificateExportDataSource_ByIDFull(t *testing.T) {
 	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndPKCS12WithCerts(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS12WithCerts(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCertificateExportDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pkcs12),
@@ -47,9 +47,9 @@ func TestAccCertificateExportDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndPKCS12WithCerts(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS12WithCerts(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCertificateExportDataSourceConfig_NotFoundByID(resourceName),

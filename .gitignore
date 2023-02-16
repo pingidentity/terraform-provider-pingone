@@ -37,3 +37,4 @@ website/vendor
 vendor
 terraform-provider-pingone
 assets
+env*.sh

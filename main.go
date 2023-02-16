@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 )
 
@@ -27,18 +29,29 @@ var (
 )
 
 func main() {
-	var debugMode bool
-
-	flag.BoolVar(&debugMode, "debug", false, "set to true to run the provider with support for debuggers like delve")
+	debugFlag := flag.Bool("debug", false, "Start provider in debug mode.")
 	flag.Parse()
 
-	opts := &plugin.ServeOpts{
-		Debug: debugMode,
+	ctx := context.Background()
 
-		ProviderAddr: "registry.terraform.io/pingidentity/pingone",
-
-		ProviderFunc: provider.New(version),
+	muxServer, _, err := provider.ProviderServerFactoryV5(ctx, version)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	plugin.Serve(opts)
+	var serveOpts []tf5server.ServeOpt
+
+	if *debugFlag {
+		serveOpts = append(serveOpts, tf5server.WithManagedDebug())
+	}
+
+	err = tf5server.Serve(
+		"registry.terraform.io/pingidentity/pingone",
+		muxServer,
+		serveOpts...,
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }

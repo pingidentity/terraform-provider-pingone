@@ -20,10 +20,10 @@ func TestAccLicensesDataSource_BySCIMFilter(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckLicenseDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckLicenseDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccLicensesDataSourceConfig_BySCIMFilter(resourceName, organizationID, fmt.Sprintf("(status eq \\\"active\\\") and (beginsAt lt \\\"%s\\\")", time.Now().Format(time.RFC3339))),
@@ -48,10 +48,10 @@ func TestAccLicensesDataSource_ByDataFilter(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckLicenseDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckLicenseDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccLicensesDataSourceConfig_ByDataFilter1(resourceName, organizationID),
@@ -93,10 +93,10 @@ func TestAccLicensesDataSource_NotFound(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckLicenseDestroy,
-		ErrorCheck:        acctest.ErrorCheck(t),
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckLicenseDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccLicensesDataSourceConfig_BySCIMFilter(resourceName, organizationID, fmt.Sprintf("(status eq \\\"active\\\") and (beginsAt lt \\\"%s\\\")", "2006-01-02T15:04:05Z07:00")),

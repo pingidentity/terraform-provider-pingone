@@ -1,0 +1,3 @@
+```release-note:note
+Added plugin mux factory and plugin framework (v6 protocol) provider to facilitate migration from SDKv2 (v5 protocol)
+```

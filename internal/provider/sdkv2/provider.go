@@ -1,14 +1,15 @@
-package provider
+package sdkv2
 
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
@@ -39,48 +40,33 @@ func New(version string) func() *schema.Provider {
 
 			Schema: map[string]*schema.Schema{
 				"client_id": {
-					Type:         schema.TypeString,
-					Optional:     true,
-					ExactlyOneOf: []string{"api_access_token", "client_id"},
-					RequiredWith: []string{"client_id", "client_secret", "environment_id"},
-					DefaultFunc:  schema.EnvDefaultFunc("PINGONE_CLIENT_ID", nil),
-					Description:  "Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must be configured with `client_secret` and `environment_id`.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must be configured with `client_secret` and `environment_id`.",
 				},
 				"client_secret": {
-					Type:          schema.TypeString,
-					Optional:      true,
-					ConflictsWith: []string{"api_access_token"},
-					RequiredWith:  []string{"client_id", "client_secret", "environment_id"},
-					DefaultFunc:   schema.EnvDefaultFunc("PINGONE_CLIENT_SECRET", nil),
-					Description:   "Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.  Must be configured with `client_id` and `environment_id`.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.  Must be configured with `client_id` and `environment_id`.",
 				},
 				"environment_id": {
-					Type:          schema.TypeString,
-					Optional:      true,
-					ConflictsWith: []string{"api_access_token"},
-					RequiredWith:  []string{"client_id", "client_secret", "environment_id"},
-					DefaultFunc:   schema.EnvDefaultFunc("PINGONE_ENVIRONMENT_ID", nil),
-					Description:   "Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.",
 				},
 				"api_access_token": {
-					Type:          schema.TypeString,
-					Optional:      true,
-					ExactlyOneOf:  []string{"api_access_token", "client_id"},
-					ConflictsWith: []string{"client_secret", "environment_id"},
-					DefaultFunc:   schema.EnvDefaultFunc("PINGONE_API_ACCESS_TOKEN", nil),
-					Description:   "The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
 				},
 				"region": {
-					Type:             schema.TypeString,
-					Required:         true,
-					DefaultFunc:      schema.EnvDefaultFunc("PINGONE_REGION", nil),
-					Description:      "The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(model.RegionsAvailableList(), false)),
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
 				},
 				"force_delete_production_type": {
 					Type:        schema.TypeBool,
 					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", false),
 					Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
 				},
 			},
@@ -167,13 +153,59 @@ func New(version string) func() *schema.Provider {
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 
-		config := &client.Config{
-			ClientID:      d.Get("client_id").(string),
-			ClientSecret:  d.Get("client_secret").(string),
-			EnvironmentID: d.Get("environment_id").(string),
-			AccessToken:   d.Get("api_access_token").(string),
-			Region:        d.Get("region").(string),
-			ForceDelete:   d.Get("force_delete_production_type").(bool),
+		var config client.Config
+
+		// Set the defaults
+		infoLogMessage := "[v5] Provider parameter %s missing, defaulting to environment variable"
+		if v, ok := d.Get("client_id").(string); ok && v != "" {
+			config.ClientID = v
+		} else {
+			config.ClientID = os.Getenv("PINGONE_CLIENT_ID")
+			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "client_id"))
+		}
+
+		if v, ok := d.Get("client_secret").(string); ok && v != "" {
+			config.ClientSecret = v
+		} else {
+			config.ClientSecret = os.Getenv("PINGONE_CLIENT_SECRET")
+			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "client_secret"))
+		}
+
+		if v, ok := d.Get("environment_id").(string); ok && v != "" {
+			config.EnvironmentID = v
+		} else {
+			config.EnvironmentID = os.Getenv("PINGONE_ENVIRONMENT_ID")
+			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "environment_id"))
+		}
+
+		if v, ok := d.Get("api_access_token").(string); ok && v != "" {
+			config.AccessToken = v
+		} else {
+			config.AccessToken = os.Getenv("PINGONE_API_ACCESS_TOKEN")
+			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "api_access_token"))
+		}
+
+		if v, ok := d.Get("region").(string); ok && v != "" {
+			config.Region = v
+		} else {
+			config.Region = os.Getenv("PINGONE_REGION")
+			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "region"))
+		}
+
+		if v, ok := d.Get("force_delete_production_type").(bool); ok {
+			config.ForceDelete = v
+		} else {
+			forceDelete, err := strconv.ParseBool(os.Getenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE"))
+			if err != nil {
+				forceDelete = false
+			}
+			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "force_delete_production_type"))
+			config.ForceDelete = forceDelete
+		}
+
+		err := config.Validate()
+		if err != nil {
+			return nil, diag.FromErr(err)
 		}
 
 		client, err := config.APIClient(ctx)
