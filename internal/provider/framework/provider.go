@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -14,6 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 )
 
 // Ensure PingOneProvider satisfies various provider interfaces.
@@ -75,7 +80,7 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 }
 
 func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	tflog.Debug(ctx, "PingOne provider configure start")
+	tflog.Debug(ctx, "[v6] Provider configure start")
 	var data pingOneProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -84,30 +89,31 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	}
 
 	// Set the defaults
-	tflog.Info(ctx, "PingOne provider setting defaults..")
+	tflog.Info(ctx, "[v6] Provider setting defaults..")
+	infoLogMessage := "[v6] Provider parameter %s missing, defaulting to environment variable"
 	if data.ClientID.IsNull() {
 		data.ClientID = basetypes.NewStringValue(os.Getenv("PINGONE_CLIENT_ID"))
-		tflog.Info(ctx, "PingOne provider set ClientID to environment var")
+		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "client_id"))
 	}
 
 	if data.ClientSecret.IsNull() {
 		data.ClientSecret = basetypes.NewStringValue(os.Getenv("PINGONE_CLIENT_SECRET"))
-		tflog.Info(ctx, "PingOne provider set ClientSecret to environment var")
+		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "client_secret"))
 	}
 
 	if data.EnvironmentID.IsNull() {
 		data.EnvironmentID = basetypes.NewStringValue(os.Getenv("PINGONE_ENVIRONMENT_ID"))
-		tflog.Info(ctx, "PingOne provider set EnvironmentID to environment var")
+		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "environment_id"))
 	}
 
 	if data.APIAccessToken.IsNull() {
 		data.APIAccessToken = basetypes.NewStringValue(os.Getenv("PINGONE_API_ACCESS_TOKEN"))
-		tflog.Info(ctx, "PingOne provider set APIAccessToken to environment var")
+		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "api_access_token"))
 	}
 
 	if data.Region.IsNull() {
 		data.Region = basetypes.NewStringValue(os.Getenv("PINGONE_REGION"))
-		tflog.Info(ctx, "PingOne provider set Region to environment var")
+		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "region"))
 	}
 
 	if data.ForceDeleteProductionEnvironmentType.IsNull() {
@@ -115,7 +121,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		if err != nil {
 			v = false
 		}
-		tflog.Info(ctx, "PingOne provider set ForceDeleteProductionEnvironmentType to environment var")
+		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "force_delete_production_type"))
 		data.ForceDeleteProductionEnvironmentType = basetypes.NewBoolValue(v)
 	}
 
@@ -129,6 +135,14 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		ForceDelete:   data.ForceDeleteProductionEnvironmentType.ValueBool(),
 	}
 
+	err := config.Validate()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Parameter validation error",
+			fmt.Sprintf("%s", err))
+		return
+	}
+
 	apiClient, err := config.APIClient(ctx)
 	if err != nil {
 		return
@@ -136,7 +150,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	var resourceConfig framework.ResourceType
 	resourceConfig.Client = apiClient
-	tflog.Info(ctx, "PingOne provider initialized client")
+	tflog.Info(ctx, "[v6] Provider initialized client")
 
 	resp.ResourceData = resourceConfig
 	resp.DataSourceData = resourceConfig
@@ -144,11 +158,21 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 }
 
 func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{} // define resources here
+	v := make([]func() resource.Resource, 0)
+	v = append(v, authorize.Resources()...)
+	v = append(v, base.Resources()...)
+	v = append(v, mfa.Resources()...)
+	v = append(v, sso.Resources()...)
+	return v
 }
 
 func (p *pingOneProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{} // define data sources here
+	v := make([]func() datasource.DataSource, 0)
+	v = append(v, authorize.DataSources()...)
+	v = append(v, base.DataSources()...)
+	v = append(v, mfa.DataSources()...)
+	v = append(v, sso.DataSources()...)
+	return v
 }
 
 func New(version string) func() provider.Provider {
