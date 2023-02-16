@@ -156,11 +156,11 @@ func testAccTrustedEmailAddressConfig_New_DomainVerified(resourceName, verifiedD
 	return fmt.Sprintf(`
 	%[1]s
 
-	data "pingone_trusted_email_domain" "%[2]s" {
-		environment_id = data.pingone_environment.domainverified_test.id
+data "pingone_trusted_email_domain" "%[2]s" {
+  environment_id = data.pingone_environment.domainverified_test.id
 
-		domain_name = "%[3]s"
-	}
+  domain_name = "%[3]s"
+}
 
 resource "pingone_trusted_email_address" "%[2]s" {
   environment_id  = data.pingone_environment.domainverified_test.id

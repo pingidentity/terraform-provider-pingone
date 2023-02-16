@@ -93,11 +93,11 @@ func testAccTrustedEmailDomainDataSourceConfig_ByNameFull(resourceName, verified
 	return fmt.Sprintf(`
 	%[1]s
 
-	data "pingone_trusted_email_domain" "%[2]s" {
-		environment_id = data.pingone_environment.domainverified_test.id
+data "pingone_trusted_email_domain" "%[2]s" {
+  environment_id = data.pingone_environment.domainverified_test.id
 
-		domain_name = "%[3]s"
-	}
+  domain_name = "%[3]s"
+}
 `, acctest.DomainVerifiedSandboxEnvironment(), resourceName, verifiedDomain)
 }
 
@@ -105,17 +105,17 @@ func testAccTrustedEmailDomainDataSourceConfig_ByIDFull(resourceName, verifiedDo
 	return fmt.Sprintf(`
 	%[1]s
 
-	data "pingone_trusted_email_domain" "%[2]s-name" {
-		environment_id = data.pingone_environment.domainverified_test.id
+data "pingone_trusted_email_domain" "%[2]s-name" {
+  environment_id = data.pingone_environment.domainverified_test.id
 
-		domain_name = "%[3]s"
-	}
-	
-	data "pingone_trusted_email_domain" "%[2]s" {
-		environment_id = data.pingone_environment.domainverified_test.id
+  domain_name = "%[3]s"
+}
 
-		trusted_email_domain_id = data.pingone_trusted_email_domain.%[2]s-name.id
-	}`, acctest.DomainVerifiedSandboxEnvironment(), resourceName, verifiedDomain)
+data "pingone_trusted_email_domain" "%[2]s" {
+  environment_id = data.pingone_environment.domainverified_test.id
+
+  trusted_email_domain_id = data.pingone_trusted_email_domain.%[2]s-name.id
+}`, acctest.DomainVerifiedSandboxEnvironment(), resourceName, verifiedDomain)
 }
 
 func testAccTrustedEmailDomainDataSourceConfig_NotFoundByName(resourceName string) string {
