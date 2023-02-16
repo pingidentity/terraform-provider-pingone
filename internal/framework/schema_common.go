@@ -8,6 +8,11 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
+type SchemaDescription struct {
+	Description         string
+	MarkdownDescription string
+}
+
 func Attr_ID() schema.StringAttribute {
 	return schema.StringAttribute{
 		Computed: true,

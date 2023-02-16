@@ -53,28 +53,23 @@ func (r *TrustedEmailAddressResource) Metadata(ctx context.Context, req resource
 	resp.TypeName = req.ProviderTypeName + "_trusted_email_address"
 }
 
-type SchemaDescription struct {
-	Description         string
-	MarkdownDescription string
-}
-
 // Schema
 func (r *TrustedEmailAddressResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	resourceDescriptionFmt := "Resource to create and manage trusted email addresses in PingOne.  PingOne supports the ability to configure up to 10 trusted email addresses for an existing trusted email domain. See %s.  Once configured and if the email address has not been previously verified, a verification email is sent."
-	providerDescription := SchemaDescription{
+	providerDescription := framework.SchemaDescription{
 		MarkdownDescription: fmt.Sprintf(resourceDescriptionFmt, "[Trusted email domains](https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains)"),
 		Description:         fmt.Sprintf(resourceDescriptionFmt, "Trusted email domains (https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains)"),
 	}
 
 	emailAddressDescriptionFmt := "The trusted email address, for example %s."
-	emailAddressDescription := SchemaDescription{
+	emailAddressDescription := framework.SchemaDescription{
 		MarkdownDescription: fmt.Sprintf(emailAddressDescriptionFmt, "`john.smith@bxretail.org`"),
 		Description:         fmt.Sprintf(emailAddressDescriptionFmt, "\"john.smith@bxretail.org\""),
 	}
 
 	statusDescriptionFmt := "The status of the trusted email address.  Possible values are %s."
-	statusDescription := SchemaDescription{
+	statusDescription := framework.SchemaDescription{
 		MarkdownDescription: fmt.Sprintf(statusDescriptionFmt, "`ACTIVE` and `VERIFICATION_REQUIRED`"),
 		Description:         fmt.Sprintf(statusDescriptionFmt, "\"ACTIVE\" and \"VERIFICATION_REQUIRED\""),
 	}
@@ -222,7 +217,7 @@ func (r *TrustedEmailAddressResource) Read(ctx context.Context, req resource.Rea
 			return r.client.TrustedEmailAddressesApi.ReadOneTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneTrustedEmailAddress",
-		framework.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(diags...)
