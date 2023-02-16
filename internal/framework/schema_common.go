@@ -19,8 +19,8 @@ func Attr_ID() schema.StringAttribute {
 
 func Attr_EnvironmentID(description string) schema.StringAttribute {
 	return schema.StringAttribute{
-		MarkdownDescription: description,
-		Required:            true,
+		Description: description,
+		Required:    true,
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},

@@ -6,7 +6,9 @@ import (
 )
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewTrustedEmailAddressResource,
+	}
 }
 
 func DataSources() []func() datasource.DataSource {
