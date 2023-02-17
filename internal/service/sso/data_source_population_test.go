@@ -135,7 +135,7 @@ resource "pingone_population" "%[2]s-name" {
 data "pingone_population" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  population_id = data.pingone_population.%[2]s-name.id
+  population_id = pingone_population.%[2]s-name.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
