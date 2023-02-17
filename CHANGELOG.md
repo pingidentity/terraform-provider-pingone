@@ -3,6 +3,13 @@
 NOTES:
 
 * Added plugin mux factory and plugin framework (v6 protocol) provider to facilitate migration from SDKv2 (v5 protocol) ([#252](https://github.com/pingidentity/terraform-provider-pingone/issues/252))
+* bump `github.com/hashicorp/go-getter` v1.6.2 => v1.7.0 ([#256](https://github.com/pingidentity/terraform-provider-pingone/issues/256))
+* bump `golang.org/x/net` v0.5.0 => v0.7.0 ([#257](https://github.com/pingidentity/terraform-provider-pingone/issues/257))
+
+FEATURES:
+
+* **New Data Source:** `pingone_population` ([#255](https://github.com/pingidentity/terraform-provider-pingone/issues/255))
+* **New Data Source:** `pingone_populations` ([#255](https://github.com/pingidentity/terraform-provider-pingone/issues/255))
 
 ## 0.8.1 (14 February 2023)
 
