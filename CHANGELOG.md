@@ -4,6 +4,11 @@ NOTES:
 
 * Added plugin mux factory and plugin framework (v6 protocol) provider to facilitate migration from SDKv2 (v5 protocol) ([#252](https://github.com/pingidentity/terraform-provider-pingone/issues/252))
 
+FEATURES:
+
+* **New Data Source:** `pingone_population` ([#255](https://github.com/pingidentity/terraform-provider-pingone/issues/255))
+* **New Data Source:** `pingone_populations` ([#255](https://github.com/pingidentity/terraform-provider-pingone/issues/255))
+
 ## 0.8.1 (14 February 2023)
 
 NOTES:
