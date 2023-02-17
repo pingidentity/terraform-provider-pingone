@@ -59,7 +59,7 @@ func Attr_EnvironmentID(description SchemaDescription) schema.StringAttribute {
 func Attr_SCIMFilter(description SchemaDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.StringAttribute {
 	filterMinLength := 1
 
-	cleanDescriptions(&description)
+	description.Clean(true)
 
 	description.MarkdownDescription = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: `%s`.", description.MarkdownDescription, strings.Join(acceptableAttributes, "`, `"))
 	description.Description = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: \"%s\".", description.Description, strings.Join(acceptableAttributes, "\", \""))
@@ -81,7 +81,7 @@ func Attr_SCIMFilter(description SchemaDescription, acceptableAttributes []strin
 func Attr_DataFilter(description SchemaDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.ListNestedBlock {
 	attrMinLength := 1
 
-	cleanDescriptions(&description)
+	description.Clean(true)
 
 	description.MarkdownDescription = fmt.Sprintf("%s.  Allowed attributes to filter: `%s`", description.MarkdownDescription, strings.Join(acceptableAttributes, "`, `"))
 	description.Description = fmt.Sprintf("%s.  Allowed attributes to filter: \"%s\"", description.Description, strings.Join(acceptableAttributes, "\", \""))
@@ -148,16 +148,26 @@ func Attr_DataSourceReturnIDs(description SchemaDescription) schema.ListAttribut
 }
 
 // Helpers
-func cleanDescriptions(description *SchemaDescription) {
-	if description.MarkdownDescription == "" {
+func (description *SchemaDescription) Clean(removeTrailingStop bool) {
+
+	// Trim trailing fullstop
+	if removeTrailingStop {
+		trailingDot := regexp.MustCompile(`(\.\s*)$`)
+		description.Description = trailingDot.ReplaceAllString(description.Description, "")
+		description.MarkdownDescription = trailingDot.ReplaceAllString(description.MarkdownDescription, "")
+	}
+
+	description.Description = strings.TrimSpace(description.Description)
+	description.MarkdownDescription = strings.TrimSpace(description.MarkdownDescription)
+
+	if description.MarkdownDescription == "" && description.Description != "" {
+		// Prefil the blank markdown description with the description value
 		description.MarkdownDescription = description.Description
 	}
 
-	// Trim trailing fullstop
-	trailingDot := regexp.MustCompile(`(\.\s*)$`)
+	if description.MarkdownDescription != "" && description.Description == "" {
+		// Prefil the blank description with the markdown description value, ignoring MD formatting
+		description.Description = description.MarkdownDescription
+	}
 
-	description.Description = strings.TrimSpace(trailingDot.ReplaceAllString(description.Description, ""))
-	description.MarkdownDescription = strings.TrimSpace(trailingDot.ReplaceAllString(description.MarkdownDescription, ""))
-
-	return
 }
