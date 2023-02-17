@@ -64,17 +64,17 @@ func Attr_SCIMFilter(description SchemaDescription, acceptableAttributes []strin
 	description.MarkdownDescription = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: `%s`.", description.MarkdownDescription, strings.Join(acceptableAttributes, "`, `"))
 	description.Description = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: \"%s\".", description.Description, strings.Join(acceptableAttributes, "\", \""))
 
-	exactlyOneOfValidators := make([]validator.String, 0)
-	exactlyOneOfValidators = append(exactlyOneOfValidators, stringvalidator.LengthAtLeast(filterMinLength))
+	stringValidators := make([]validator.String, 0)
+	stringValidators = append(stringValidators, stringvalidator.LengthAtLeast(filterMinLength))
 	for _, v := range mutuallyExclusiveAttributes {
-		exactlyOneOfValidators = append(exactlyOneOfValidators, stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName(v)))
+		stringValidators = append(stringValidators, stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName(v)))
 	}
 
 	return schema.StringAttribute{
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
 		Optional:            true,
-		Validators:          exactlyOneOfValidators,
+		Validators:          stringValidators,
 	}
 }
 
@@ -99,9 +99,9 @@ func Attr_DataFilter(description SchemaDescription, acceptableAttributes []strin
 	}
 
 	// The parent attribute validators
-	exactlyOneOfValidators := make([]validator.List, 0)
+	listValidators := make([]validator.List, 0)
 	for _, v := range mutuallyExclusiveAttributes {
-		exactlyOneOfValidators = append(exactlyOneOfValidators, listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName(v)))
+		listValidators = append(listValidators, listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName(v)))
 	}
 
 	return schema.ListNestedBlock{
@@ -120,17 +120,22 @@ func Attr_DataFilter(description SchemaDescription, acceptableAttributes []strin
 						stringvalidator.OneOf(acceptableAttributes...),
 					},
 				},
-				"values": schema.StringAttribute{
+				"values": schema.ListAttribute{
+					ElementType:         types.StringType,
 					Description:         childValueDescription.Description,
 					MarkdownDescription: childValueDescription.MarkdownDescription,
 					Required:            true,
-					Validators: []validator.String{
-						stringvalidator.LengthAtLeast(attrMinLength),
+					Validators: []validator.List{
+						listvalidator.SizeAtLeast(1),
+						listvalidator.UniqueValues(),
+						listvalidator.ValueStringsAre(
+							stringvalidator.LengthAtLeast(attrMinLength),
+						),
 					},
 				},
 			},
 		},
-		Validators: exactlyOneOfValidators,
+		Validators: listValidators,
 	}
 }
 

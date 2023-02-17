@@ -1,6 +1,8 @@
 package framework
 
 import (
+	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,4 +34,19 @@ func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 
 		return types.ListValue(types.StringType, list)
 	}
+}
+
+func TFListToStringSlice(ctx context.Context, v types.List) []*string {
+	var sliceOut []*string
+
+	if v.IsNull() || v.IsUnknown() {
+		return nil
+	} else {
+
+		if v.ElementsAs(ctx, &sliceOut, false).HasError() {
+			return nil
+		}
+	}
+
+	return sliceOut
 }

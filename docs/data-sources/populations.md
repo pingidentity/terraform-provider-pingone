@@ -51,4 +51,4 @@ data "pingone_populations" "by_data_filter" {
 Required:
 
 - `name` (String) The attribute name to filter on.  Must be one of the following values: `id`, `name`.
-- `values` (String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.
+- `values` (List of String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -21,11 +22,11 @@ type PopulationsDataSource struct {
 }
 
 type PopulationsDataSourceModel struct {
-	EnvironmentId types.String              `tfsdk:"environment_id"`
-	Id            types.String              `tfsdk:"id"`
-	ScimFilter    types.String              `tfsdk:"scim_filter"`
-	DataFilter    framework.DataFilterModel `tfsdk:"data_filter"`
-	Ids           types.List                `tfsdk:"ids"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	Id            types.String `tfsdk:"id"`
+	ScimFilter    types.String `tfsdk:"scim_filter"`
+	DataFilter    types.List   `tfsdk:"data_filter"`
+	Ids           types.List   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -135,21 +136,35 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 			return r.client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
-	} else if !data.DataFilter.Name.IsNull() {
+	} else if !data.DataFilter.IsNull() {
 
-		filterValues := make([]string, 0)
-		for _, v := range data.DataFilter.Values.Elements() {
-			filterValues = append(filterValues, v.String())
+		var dataFilterIn []framework.DataFilterModel
+		resp.Diagnostics.Append(data.DataFilter.ElementsAs(ctx, &dataFilterIn, false)...)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
 		filterSet := make([]interface{}, 0)
 
-		filterSet = append(filterSet, map[string]interface{}{
-			"name":   data.DataFilter.Name.ValueString(),
-			"values": filterValues,
-		})
+		for _, v := range dataFilterIn {
+
+			values := framework.TFListToStringSlice(ctx, v.Values)
+			tflog.Debug(ctx, "Filter set loop", map[string]interface{}{
+				"name":          v.Name.ValueString(),
+				"len(elements)": fmt.Sprintf("%d", len(v.Values.Elements())),
+				"len(values)":   fmt.Sprintf("%d", len(values)),
+			})
+			filterSet = append(filterSet, map[string]interface{}{
+				"name":   v.Name.ValueString(),
+				"values": values,
+			})
+		}
 
 		scimFilter := filter.BuildScimFilter(filterSet, map[string]string{})
+
+		tflog.Debug(ctx, "SCIM Filter", map[string]interface{}{
+			"scimFilter": scimFilter,
+		})
 
 		filterFunction = func() (interface{}, *http.Response, error) {
 			return r.client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()

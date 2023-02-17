@@ -18,7 +18,7 @@ func TestAccPopulationsDataSource_BySCIMFilter(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckPopulationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -46,7 +46,7 @@ func TestAccPopulationsDataSource_ByDataFilter(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckPopulationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
