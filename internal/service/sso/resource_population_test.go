@@ -112,6 +112,7 @@ func TestAccPopulation_Full(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
+					resource.TestMatchResourceAttr(resourceFullName, "password_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 				),
 			},
 		},
@@ -139,6 +140,7 @@ func TestAccPopulation_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "password_policy_id", ""),
 				),
 			},
 		},
@@ -159,10 +161,16 @@ func testAccPopulationConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_population" "%[2]s" {
+resource "pingone_password_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test description"
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id     = data.pingone_environment.general_test.id
+  name               = "%[3]s"
+  description        = "Test description"
+  password_policy_id = pingone_password_policy.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
