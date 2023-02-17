@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -60,7 +59,9 @@ func (r *PopulationDataSource) Schema(ctx context.Context, req datasource.Schema
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_EnvironmentID("The ID of the environment that is configured with the population."),
+			"environment_id": framework.Attr_EnvironmentID(framework.SchemaDescription{
+				Description: "The ID of the environment that is configured with the population."},
+			),
 
 			"population_id": schema.StringAttribute{
 				Description: "The ID of the population.",
@@ -109,20 +110,17 @@ func (r *PopulationDataSource) Configure(ctx context.Context, req datasource.Con
 		return
 	}
 
-	if resourceConfig.Client.API == nil || resourceConfig.Client.API.ManagementAPIClient == nil {
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
-			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+			err.Error(),
+		)
+
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": resourceConfig.Client.API.Region.URLSuffix,
-	})
-
-	tflog.Info(ctx, "PingOne provider client init successful")
-
-	r.client = resourceConfig.Client.API.ManagementAPIClient
+	r.client = preparedClient
 }
 
 func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -229,11 +227,11 @@ func (p *PopulationDataSourceModel) toState(v *management.Population) diag.Diagn
 		return diags
 	}
 
-	p.Id = types.StringValue(v.GetId())
-	p.PopulationId = types.StringValue(v.GetId())
-	p.Name = types.StringValue(v.GetName())
-	p.Description = types.StringValue(v.GetDescription())
-	p.PasswordPolicyId = types.StringValue(v.GetPasswordPolicy().Id)
+	p.Id = framework.StringToTF(v.GetId())
+	p.PopulationId = framework.StringToTF(v.GetId())
+	p.Name = framework.StringToTF(v.GetName())
+	p.Description = framework.StringToTF(v.GetDescription())
+	p.PasswordPolicyId = framework.StringToTF(v.GetPasswordPolicy().Id)
 
 	return diags
 }
