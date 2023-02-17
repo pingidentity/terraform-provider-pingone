@@ -22,6 +22,10 @@ func BuildScimFilter(filterSet []interface{}, attributeMapping map[string]string
 		switch v := valueObj["values"].(type) {
 		case []string:
 			valueFilter = v
+		case []*string:
+			for i := range v {
+				valueFilter = append(valueFilter, *v[i])
+			}
 		case *schema.Set:
 			valueFilter = make([]string, len(v.List()))
 			for i, c := range v.List() {
