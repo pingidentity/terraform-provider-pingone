@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_application`: Support for Huawei HMS push notification configuration.
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_application_push_credential`: Support for Huawei HMS push notification configuration.
+```
