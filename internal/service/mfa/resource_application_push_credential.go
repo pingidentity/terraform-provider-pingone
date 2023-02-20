@@ -49,7 +49,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
-				ExactlyOneOf: []string{"fcm", "apns"},
+				ExactlyOneOf: []string{"fcm", "apns", "hms"},
 				ForceNew:     true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -71,7 +71,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 				Type:         schema.TypeList,
 				MaxItems:     1,
 				Optional:     true,
-				ExactlyOneOf: []string{"fcm", "apns"},
+				ExactlyOneOf: []string{"fcm", "apns", "hms"},
 				ForceNew:     true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -96,6 +96,38 @@ func ResourceApplicationPushCredential() *schema.Resource {
 						},
 						"token_signing_key": {
 							Description: "A string that Apple uses as the authentication token signing key to securely connect to APNS. This is the contents of a p8 file with a private key format.",
+							Type:        schema.TypeString,
+							Required:    true,
+							Sensitive:   true,
+							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+								return old == "DUMMY_SUPPRESS_VALUE"
+							},
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+						},
+					},
+				},
+			},
+			"hms": {
+				Description:  "A block that specifies the credential settings for Huawei Moble Service push messaging.",
+				Type:         schema.TypeList,
+				MaxItems:     1,
+				Optional:     true,
+				ExactlyOneOf: []string{"fcm", "apns", "hms"},
+				ForceNew:     true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"client_id": {
+							Description: "A string that represents the OAuth 2.0 Client ID from the Huawei Developers API console.",
+							Type:        schema.TypeString,
+							Required:    true,
+							Sensitive:   true,
+							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+								return old == "DUMMY_SUPPRESS_VALUE"
+							},
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+						},
+						"client_secret": {
+							Description: "A string that represents the client secret associated with the OAuth 2.0 Client ID.",
 							Type:        schema.TypeString,
 							Required:    true,
 							Sensitive:   true,
@@ -151,23 +183,27 @@ func expandPushCredentialRequest(d *schema.ResourceData) (*mfa.CreateMFAPushCred
 	var diags diag.Diagnostics
 
 	if v, ok := d.GetOk("fcm"); ok {
-		mfaPushCredentialRequest.MFAPushCredential, diags = expandPushCredentialRequestFCM(v)
+		mfaPushCredentialRequest.MFAPushCredentialFCM, diags = expandPushCredentialRequestFCM(v)
 	}
 
 	if v, ok := d.GetOk("apns"); ok {
 		mfaPushCredentialRequest.MFAPushCredentialAPNS, diags = expandPushCredentialRequestAPNS(v)
 	}
 
+	if v, ok := d.GetOk("hms"); ok {
+		mfaPushCredentialRequest.MFAPushCredentialHMS, diags = expandPushCredentialRequestHMS(v)
+	}
+
 	return mfaPushCredentialRequest, diags
 }
 
-func expandPushCredentialRequestFCM(c interface{}) (*mfa.MFAPushCredential, diag.Diagnostics) {
+func expandPushCredentialRequestFCM(c interface{}) (*mfa.MFAPushCredentialFCM, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if v, ok := c.([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
-		credential := mfa.NewMFAPushCredential(
+		credential := mfa.NewMFAPushCredentialFCM(
 			mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_FCM,
 			vp["key"].(string),
 		)
@@ -204,6 +240,30 @@ func expandPushCredentialRequestAPNS(c interface{}) (*mfa.MFAPushCredentialAPNS,
 	diags = append(diags, diag.Diagnostic{
 		Severity: diag.Error,
 		Summary:  "Block `apns` must be defined when using the APNS push notification type",
+	})
+
+	return nil, diags
+}
+
+func expandPushCredentialRequestHMS(c interface{}) (*mfa.MFAPushCredentialHMS, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if v, ok := c.([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
+		vp := v[0].(map[string]interface{})
+
+		credential := mfa.NewMFAPushCredentialHMS(
+			mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_HMS,
+			vp["client_id"].(string),
+			vp["client_secret"].(string),
+		)
+
+		return credential, diags
+
+	}
+
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  "Block `hms` must be defined when using the HMS push notification type",
 	})
 
 	return nil, diags
@@ -256,6 +316,16 @@ func resourcePingOneApplicationPushCredentialRead(ctx context.Context, d *schema
 		}))
 	} else {
 		d.Set("apns", nil)
+	}
+
+	if respObject.GetType() == mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_HMS {
+		credential := make([]interface{}, 0)
+		d.Set("hms", append(credential, map[string]string{
+			"client_id":     "DUMMY_SUPPRESS_VALUE",
+			"client_secret": "DUMMY_SUPPRESS_VALUE",
+		}))
+	} else {
+		d.Set("hms", nil)
 	}
 
 	return diags
