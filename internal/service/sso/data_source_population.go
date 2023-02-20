@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -21,6 +22,7 @@ import (
 // Types
 type PopulationDataSource struct {
 	client *management.APIClient
+	region model.RegionMapping
 }
 
 type PopulationDataSourceModel struct {
@@ -121,6 +123,7 @@ func (r *PopulationDataSource) Configure(ctx context.Context, req datasource.Con
 	}
 
 	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -132,6 +135,10 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
