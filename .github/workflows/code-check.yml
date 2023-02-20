@@ -78,25 +78,23 @@ jobs:
             (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
 
   docscategory-lint:
-    needs: [generate]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      
+      - run: go generate ./...
+
       - name: docscategory lint
         run: |
           make docscategorycheck
 
-  terrafmt:
-    needs: [generate]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: terrafmt generate
-        run: |
-          make terrafmt
-
   terrafmtcheck:
-    needs: [terrafmt]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
