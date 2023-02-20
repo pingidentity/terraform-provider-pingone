@@ -90,30 +90,57 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	// Set the defaults
 	tflog.Info(ctx, "[v6] Provider setting defaults..")
-	infoLogMessage := "[v6] Provider parameter %s missing, defaulting to environment variable"
+	debugLogMessage := "[v6] Provider parameter %s missing, defaulting to environment variable"
 	if data.ClientID.IsNull() {
 		data.ClientID = basetypes.NewStringValue(os.Getenv("PINGONE_CLIENT_ID"))
-		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "client_id"))
+		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "client_id"), map[string]interface{}{
+			"env_var":       "PINGONE_CLIENT_ID",
+			"env_var_value": data.ClientID.String(),
+		})
 	}
 
 	if data.ClientSecret.IsNull() {
 		data.ClientSecret = basetypes.NewStringValue(os.Getenv("PINGONE_CLIENT_SECRET"))
-		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "client_secret"))
+		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "client_secret"), map[string]interface{}{
+			"env_var": "PINGONE_CLIENT_SECRET",
+			"env_var_value": func() string {
+				if len(data.ClientSecret.ValueString()) > 0 {
+					return "***"
+				}
+				return ""
+
+			}(),
+		})
 	}
 
 	if data.EnvironmentID.IsNull() {
 		data.EnvironmentID = basetypes.NewStringValue(os.Getenv("PINGONE_ENVIRONMENT_ID"))
-		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "environment_id"))
+		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "environment_id"), map[string]interface{}{
+			"env_var":       "PINGONE_ENVIRONMENT_ID",
+			"env_var_value": data.EnvironmentID.String(),
+		})
 	}
 
 	if data.APIAccessToken.IsNull() {
 		data.APIAccessToken = basetypes.NewStringValue(os.Getenv("PINGONE_API_ACCESS_TOKEN"))
-		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "api_access_token"))
+		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "api_access_token"), map[string]interface{}{
+			"env_var": "PINGONE_API_ACCESS_TOKEN",
+			"env_var_value": func() string {
+				if len(data.APIAccessToken.ValueString()) > 0 {
+					return "***"
+				}
+				return ""
+
+			}(),
+		})
 	}
 
 	if data.Region.IsNull() {
 		data.Region = basetypes.NewStringValue(os.Getenv("PINGONE_REGION"))
-		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "region"))
+		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "region"), map[string]interface{}{
+			"env_var":       "PINGONE_REGION",
+			"env_var_value": data.Region.String(),
+		})
 	}
 
 	if data.ForceDeleteProductionEnvironmentType.IsNull() {
@@ -121,7 +148,10 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		if err != nil {
 			v = false
 		}
-		tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "force_delete_production_type"))
+		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "force_delete_production_type"), map[string]interface{}{
+			"env_var":       "PINGONE_FORCE_DELETE_PRODUCTION_TYPE",
+			"env_var_value": v,
+		})
 		data.ForceDeleteProductionEnvironmentType = basetypes.NewBoolValue(v)
 	}
 

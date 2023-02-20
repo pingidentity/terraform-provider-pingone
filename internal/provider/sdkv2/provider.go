@@ -156,40 +156,67 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		var config client.Config
 
 		// Set the defaults
-		infoLogMessage := "[v5] Provider parameter %s missing, defaulting to environment variable"
+		debugLogMessage := "[v5] Provider parameter %s missing, defaulting to environment variable"
 		if v, ok := d.Get("client_id").(string); ok && v != "" {
 			config.ClientID = v
 		} else {
 			config.ClientID = os.Getenv("PINGONE_CLIENT_ID")
-			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "client_id"))
+			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "client_id"), map[string]interface{}{
+				"env_var":       "PINGONE_CLIENT_ID",
+				"env_var_value": config.ClientID,
+			})
 		}
 
 		if v, ok := d.Get("client_secret").(string); ok && v != "" {
 			config.ClientSecret = v
 		} else {
 			config.ClientSecret = os.Getenv("PINGONE_CLIENT_SECRET")
-			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "client_secret"))
+			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "client_secret"), map[string]interface{}{
+				"env_var": "PINGONE_CLIENT_SECRET",
+				"env_var_value": func() string {
+					if len(config.ClientSecret) > 0 {
+						return "***"
+					}
+					return ""
+
+				}(),
+			})
 		}
 
 		if v, ok := d.Get("environment_id").(string); ok && v != "" {
 			config.EnvironmentID = v
 		} else {
 			config.EnvironmentID = os.Getenv("PINGONE_ENVIRONMENT_ID")
-			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "environment_id"))
+			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "environment_id"), map[string]interface{}{
+				"env_var":       "PINGONE_ENVIRONMENT_ID",
+				"env_var_value": config.EnvironmentID,
+			})
 		}
 
 		if v, ok := d.Get("api_access_token").(string); ok && v != "" {
 			config.AccessToken = v
 		} else {
 			config.AccessToken = os.Getenv("PINGONE_API_ACCESS_TOKEN")
-			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "api_access_token"))
+			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "api_access_token"), map[string]interface{}{
+				"env_var": "PINGONE_API_ACCESS_TOKEN",
+				"env_var_value": func() string {
+					if len(config.AccessToken) > 0 {
+						return "***"
+					}
+					return ""
+
+				}(),
+			})
 		}
 
 		if v, ok := d.Get("region").(string); ok && v != "" {
 			config.Region = v
 		} else {
 			config.Region = os.Getenv("PINGONE_REGION")
-			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "region"))
+			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "region"), map[string]interface{}{
+				"env_var":       "PINGONE_REGION",
+				"env_var_value": config.Region,
+			})
 		}
 
 		if v, ok := d.Get("force_delete_production_type").(bool); ok {
@@ -199,7 +226,10 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			if err != nil {
 				forceDelete = false
 			}
-			tflog.Info(ctx, fmt.Sprintf(infoLogMessage, "force_delete_production_type"))
+			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "force_delete_production_type"), map[string]interface{}{
+				"env_var":       "PINGONE_FORCE_DELETE_PRODUCTION_TYPE",
+				"env_var_value": forceDelete,
+			})
 			config.ForceDelete = forceDelete
 		}
 

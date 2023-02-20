@@ -28,10 +28,6 @@ func prepareClient(ctx context.Context, resourceConfig framework.ResourceType) (
 		return nil, fmt.Errorf("Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": resourceConfig.Client.API.Region.URLSuffix,
-	})
-
 	tflog.Info(ctx, "PingOne provider client init successful")
 
 	return resourceConfig.Client.API.ManagementAPIClient, nil

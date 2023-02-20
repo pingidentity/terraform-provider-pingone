@@ -82,9 +82,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      
+      - run: go generate ./...
+
       - name: docscategory lint
         run: |
           make docscategorycheck
+
+  terrafmtcheck:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - run: go generate -tags tools tools/tools.go
+      
+      - name: terrafmtcheck lint
+        run: |
+          make terrafmtcheck
           
   golangci-lint:
     needs: [build]
@@ -163,21 +186,3 @@ jobs:
         run: |
           make tflint
 
-  testacc-lint:
-    name: terrafmt
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-
-      - run: go generate -tags tools tools/tools.go
-
-      - name: Check dependencies
-        run: make depscheck
-      
-      - run: |
-          make terrafmtcheck
