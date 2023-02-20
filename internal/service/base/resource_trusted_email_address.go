@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -26,6 +25,7 @@ import (
 // Types
 type TrustedEmailAddressResource struct {
 	client *management.APIClient
+	region model.RegionMapping
 }
 
 type TrustedEmailAddressResourceModel struct {
@@ -84,7 +84,9 @@ func (r *TrustedEmailAddressResource) Schema(ctx context.Context, req resource.S
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_EnvironmentID("The ID of the environment to associate the trusted email address with."),
+			"environment_id": framework.Attr_EnvironmentID(framework.SchemaDescription{
+				Description: "The ID of the environment to associate the trusted email address with."},
+			),
 
 			"email_domain_id": schema.StringAttribute{
 				Description: "The ID of the email domain to associate the trusted email address with.",
@@ -134,20 +136,18 @@ func (r *TrustedEmailAddressResource) Configure(ctx context.Context, req resourc
 		return
 	}
 
-	if resourceConfig.Client.API == nil || resourceConfig.Client.API.ManagementAPIClient == nil {
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
-			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+			err.Error(),
+		)
+
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": resourceConfig.Client.API.Region.URLSuffix,
-	})
-
-	tflog.Info(ctx, "PingOne provider client init successful")
-
-	r.client = resourceConfig.Client.API.ManagementAPIClient
+	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -159,6 +159,10 @@ func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.C
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -202,6 +206,10 @@ func (r *TrustedEmailAddressResource) Read(ctx context.Context, req resource.Rea
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -248,6 +256,10 @@ func (r *TrustedEmailAddressResource) Delete(ctx context.Context, req resource.D
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
