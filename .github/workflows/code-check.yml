@@ -98,6 +98,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - run: go generate -tags tools tools/tools.go
+      
       - name: terrafmtcheck lint
         run: |
           make terrafmtcheck
