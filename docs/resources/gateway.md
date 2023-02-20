@@ -63,6 +63,28 @@ resource "pingone_gateway" "my_ldap_gateway" {
 }
 ```
 
+## Example Usage - RADIUS
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ...
+}
+
+resource "pingone_gateway" "my_radius_gateway" {
+  environment_id = pingone_environment.my_environment.id
+  name           = "My RADIUS Gateway"
+  enabled        = true
+  type           = "RADIUS"
+
+  radius_default_shared_secret = var.radius_default_shared_secret
+  radius_davinci_policy_id     = var.radius_davinci_policy_id
+
+  radius_client {
+    ip = "127.0.0.1"
+  }
+}
+```
+
 ## Example Usage - PingFederate
 
 ```terraform
@@ -103,7 +125,7 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 - `enabled` (Boolean) Indicates whether the gateway is enabled.
 - `environment_id` (String) The ID of the environment to create the gateway in.
 - `name` (String) The name of the gateway resource.
-- `type` (String) The type of gateway resource. Options are `PING_FEDERATE`, `API_GATEWAY_INTEGRATION`, `LDAP` and `PING_INTELLIGENCE`.
+- `type` (String) The type of gateway resource. Options are `PING_FEDERATE`, `API_GATEWAY_INTEGRATION`, `LDAP`, `RADIUS` and `PING_INTELLIGENCE`.
 
 ### Optional
 
@@ -114,6 +136,9 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 - `kerberos_retain_previous_credentials_mins` (Number) For LDAP gateways only: The number of minutes for which the previous credentials are persisted.
 - `kerberos_service_account_password` (String, Sensitive) For LDAP gateways only: The password for the Kerberos service account.
 - `kerberos_service_account_upn` (String) For LDAP gateways only: The Kerberos service account user principal name (for example, `username@bxretail.org`).
+- `radius_client` (Block Set) For RADIUS gateways only: A collection of RADIUS clients. (see [below for nested schema](#nestedblock--radius_client))
+- `radius_davinci_policy_id` (String) For RADIUS gateways only: The ID of the DaVinci flow policy to use.
+- `radius_default_shared_secret` (String, Sensitive) For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
 - `servers` (Set of String) For LDAP gateways only: A list of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
 - `user_type` (Block Set) For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedblock--user_type))
 - `validate_tls_certificates` (Boolean) For LDAP gateways only: Indicates whether or not to trust all SSL certificates (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted. Defaults to `true`.
@@ -122,6 +147,18 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--radius_client"></a>
+### Nested Schema for `radius_client`
+
+Required:
+
+- `ip` (String) The IP of the RADIUS client.
+
+Optional:
+
+- `shared_secret` (String, Sensitive) The shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.
+
 
 <a id="nestedblock--user_type"></a>
 ### Nested Schema for `user_type`
