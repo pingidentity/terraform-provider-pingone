@@ -50,7 +50,7 @@ depscheck:
 	@git diff --exit-code -- go.mod go.sum || \
 		(echo; echo "Unexpected difference in go.mod/go.sum files. Run 'go mod tidy' command or revert any go.mod/go.sum changes and commit."; exit 1)
 
-lint: golangci-lint providerlint importlint tflint
+lint: golangci-lint providerlint importlint tflint terrafmtcheck
 
 golangci-lint:
 	@echo "==> Checking source code with golangci-lint..."
@@ -90,6 +90,6 @@ terrafmtcheck:
 		exit 1; \
 	fi
 
-devcheck: build vet tools generate docscategorycheck lint terrafmtcheck test sweep testacc
+devcheck: build vet tools generate terrafmt docscategorycheck lint test sweep testacc
 
 .PHONY: tools build generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
