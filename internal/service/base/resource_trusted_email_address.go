@@ -320,11 +320,11 @@ func (p *TrustedEmailAddressResourceModel) toState(v *management.EmailDomainTrus
 		return diags
 	}
 
-	p.Id = types.StringValue(v.GetId())
-	p.EnvironmentId = types.StringValue(*v.GetEnvironment().Id)
-	p.EmailDomainId = types.StringValue(*v.GetDomain().Id)
-	p.EmailAddress = types.StringValue(v.GetEmailAddress())
-	p.Status = types.StringValue(string(v.GetStatus()))
+	p.Id = framework.StringToTF(v.GetId())
+	p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
+	p.EmailDomainId = framework.StringToTF(*v.GetDomain().Id)
+	p.EmailAddress = framework.StringToTF(v.GetEmailAddress())
+	p.Status = framework.StringToTF(string(v.GetStatus()))
 
 	return diags
 }
