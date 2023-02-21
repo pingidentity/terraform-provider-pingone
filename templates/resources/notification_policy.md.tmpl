@@ -1,0 +1,32 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Platform"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage - Unlimited Quota
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-unlimited.tf") }}
+
+## Example Usage - Environment Quota
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-environment.tf") }}
+
+## Example Usage - User Quota
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-user.tf") }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import is supported using the following syntax:
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
+{{- end }}
