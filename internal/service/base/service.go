@@ -6,7 +6,9 @@ import (
 )
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewNotificationSettingsEmailResource,
+	}
 }
 
 func DataSources() []func() datasource.DataSource {
