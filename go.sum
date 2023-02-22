@@ -853,8 +853,8 @@ github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.1 h1:hUHruea7LNJUw6DqGb
 github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.1/go.mod h1:IMQjhejQfTfZkQNhbFq6VxRshTzJIpOEQO5x5w+n/nA=
 github.com/patrickcping/pingone-go-sdk-v2/management v0.15.0 h1:UWA0kfml0TcxqVo1uuveeJKeQ8mfBa9qsy5zHtVySZs=
 github.com/patrickcping/pingone-go-sdk-v2/management v0.15.0/go.mod h1:Xkmqw48/Rsrwm75MNurswvhPPQgffB8ufzqPJ960umc=
-github.com/patrickcping/pingone-go-sdk-v2/mfa v0.7.2 h1:1YsX1KiS0ww0a05lX6F8cS61ePKPLFKWVKCVk4Zjz+g=
-github.com/patrickcping/pingone-go-sdk-v2/mfa v0.7.2/go.mod h1:XvlVDdfz69zPFi549g2OZaUC8/wnRUMgrra9MDQ8Hhg=
+github.com/patrickcping/pingone-go-sdk-v2/mfa v0.8.0 h1:IIQcRz47MY+ZQ6SesxueTKJuV+KwFNJFObfPouJhnQc=
+github.com/patrickcping/pingone-go-sdk-v2/mfa v0.8.0/go.mod h1:Za2fDuDcf7IyD2NDomG/Q02gr/UyBRJwnGPH6JNo7E4=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.3.1 h1:63EPzV2qBUeuhi5nFfdGvEbdB0kRHI6WfbQnaxa7/ZU=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.3.1/go.mod h1:v6ANb988xfh9wvXs6WOAAosUwtogYpKmrrH88AW8Clo=
 github.com/pavius/impi v0.0.3 h1:DND6MzU+BLABhOZXbELR3FU8b+zDgcq4dOCNLhiTYuI=
@@ -1246,7 +1246,6 @@ golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1/go.mod h1:h4gKUeWbJ4rQPri
 golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783/go.mod h1:h4gKUeWbJ4rQPri7E0u6Gs4e9Ri2zaLxzw5DI5XGrYg=
 golang.org/x/oauth2 v0.1.0/go.mod h1:G9FE4dLTsbXUu90h/Pf85g4w1D+SSAgR+q46nJZ8M4A=
 golang.org/x/oauth2 v0.2.0/go.mod h1:Cwn6afJ8jrQwYMxQDTpISoXmXW9I6qF6vDeuuoX3Ibs=
-golang.org/x/oauth2 v0.4.0/go.mod h1:RznEsdpjGAINPTOF0UH/t+xJ75L18YO3Ho6Pyn+uRec=
 golang.org/x/oauth2 v0.5.0 h1:HuArIo48skDwlrvM3sEdHXElYslAMsf3KwRkkW4MC4s=
 golang.org/x/oauth2 v0.5.0/go.mod h1:9/XBHVqLaWO3/BRHs5jbpYCnOZVjj5V0ndyaAM7KB4I=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=

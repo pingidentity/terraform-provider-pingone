@@ -97,6 +97,7 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
 				),
 			},
 			{
@@ -107,6 +108,7 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
 				),
 			},
 		},
@@ -135,6 +137,7 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
 				),
 			},
 			{
@@ -145,6 +148,47 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplicationPushCredential_HMS(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_application_push_credential.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationPushCredentialConfig_HMS(resourceName, name, fmt.Sprintf("%s1", name)),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
+				),
+			},
+			{
+				Config: testAccApplicationPushCredentialConfig_HMS(resourceName, name, fmt.Sprintf("%s2", name)),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
 				),
 			},
 		},
@@ -173,6 +217,7 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
 				),
 			},
 			{
@@ -183,6 +228,18 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
+				),
+			},
+			{
+				Config: testAccApplicationPushCredentialConfig_HMS(resourceName, name, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
 				),
 			},
 		},
@@ -208,7 +265,6 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
     mobile_app {
-      bundle_id    = "com.%[2]s.bundle"
       package_name = "com.%[2]s.package"
 
       passcode_refresh_seconds = 45
@@ -222,7 +278,6 @@ resource "pingone_application" "%[2]s" {
       }
     }
 
-    bundle_id    = "com.%[2]s.bundle"
     package_name = "com.%[2]s.package"
   }
 }
@@ -256,8 +311,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
     mobile_app {
-      bundle_id    = "com.%[2]s.bundle"
-      package_name = "com.%[2]s.package"
+      bundle_id = "com.%[2]s.bundle"
 
       passcode_refresh_seconds = 45
 
@@ -270,8 +324,7 @@ resource "pingone_application" "%[2]s" {
       }
     }
 
-    bundle_id    = "com.%[2]s.bundle"
-    package_name = "com.%[2]s.package"
+    bundle_id = "com.%[2]s.bundle"
   }
 }
 
@@ -283,6 +336,52 @@ resource "pingone_mfa_application_push_credential" "%[2]s" {
     key               = "%[4]s"
     team_id           = "team.id.updated"
     token_signing_key = "-----BEGIN PRIVATE KEY-----%[4]s-----END PRIVATE KEY-----"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
+}
+
+func testAccApplicationPushCredentialConfig_HMS(resourceName, name, key string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      huawei_app_id       = "%[2]s"
+      huawei_package_name = "com.%[2]s.huaweipackage"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
+  }
+}
+
+resource "pingone_mfa_application_push_credential" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  hms {
+    client_id     = "%[3]s"
+    client_secret = "%[4]s"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
 }
