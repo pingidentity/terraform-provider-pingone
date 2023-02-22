@@ -16,7 +16,7 @@ require (
 	github.com/katbyte/terrafmt v0.5.2
 	github.com/patrickcping/pingone-go-sdk-v2 v0.5.2
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.1
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.14.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.15.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.7.2
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.45.0
@@ -266,7 +266,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/oauth2 v0.4.0 // indirect
+	golang.org/x/oauth2 v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect

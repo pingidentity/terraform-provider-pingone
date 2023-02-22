@@ -13,6 +13,10 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-ldap.tf") }}
 
+## Example Usage - RADIUS
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-radius.tf") }}
+
 ## Example Usage - PingFederate
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pf.tf") }}
