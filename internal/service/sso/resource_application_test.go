@@ -454,6 +454,8 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_app_id", resourceName),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.universal_app_link", "https://applink.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
@@ -520,6 +522,8 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_app_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.universal_app_link", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "false"),
@@ -597,6 +601,8 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_app_id", resourceName),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.universal_app_link", "https://applink.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
@@ -645,6 +651,8 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_app_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_package_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.universal_app_link", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "false"),
@@ -701,6 +709,8 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_app_id", resourceName),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.universal_app_link", "https://applink.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
@@ -2397,8 +2407,10 @@ resource "pingone_application" "%[2]s" {
     allow_wildcards_in_redirect_uris = true
 
     mobile_app {
-      bundle_id    = "com.%[2]s.bundle"
-      package_name = "com.%[2]s.package"
+      bundle_id           = "com.%[2]s.bundle"
+      package_name        = "com.%[2]s.package"
+      huawei_app_id       = "%[2]s"
+      huawei_package_name = "com.%[2]s.huaweipackage"
 
       passcode_refresh_seconds = 45
 
