@@ -1,3 +1,7 @@
 ```release-note:enhancement
 `resource/pingone_gateway`: Now supports RADIUS gateways.
 ```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.14.0 => v0.15.0
+```
