@@ -222,10 +222,10 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *PopulationDataSourceModel) toState(v *management.Population) diag.Diagnostics {
+func (p *PopulationDataSourceModel) toState(apiObject *management.Population) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if v == nil {
+	if apiObject == nil {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -234,11 +234,16 @@ func (p *PopulationDataSourceModel) toState(v *management.Population) diag.Diagn
 		return diags
 	}
 
-	p.Id = framework.StringToTF(v.GetId())
-	p.PopulationId = framework.StringToTF(v.GetId())
-	p.Name = framework.StringToTF(v.GetName())
-	p.Description = framework.StringToTF(v.GetDescription())
-	p.PasswordPolicyId = framework.StringToTF(v.GetPasswordPolicy().Id)
+	p.Id = framework.StringToTF(apiObject.GetId())
+	p.PopulationId = framework.StringToTF(apiObject.GetId())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+
+	if v, ok := apiObject.GetPasswordPolicyOk(); ok && v != nil {
+		p.PasswordPolicyId = framework.StringOkToTF(v.GetIdOk())
+	} else {
+		p.PasswordPolicyId = types.StringNull()
+	}
 
 	return diags
 }

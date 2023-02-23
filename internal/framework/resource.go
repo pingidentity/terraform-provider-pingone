@@ -42,6 +42,14 @@ func Int32OkToTF(i *int32, ok bool) basetypes.Int64Value {
 	}
 }
 
+func BoolOkToTF(b *bool, ok bool) basetypes.BoolValue {
+	if !ok || b == nil {
+		return types.BoolNull()
+	} else {
+		return types.BoolValue(*b)
+	}
+}
+
 func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 	if v == nil {
 		return types.ListNull(types.StringType), nil
