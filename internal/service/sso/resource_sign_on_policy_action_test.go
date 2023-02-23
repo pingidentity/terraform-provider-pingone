@@ -240,8 +240,19 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 	})
 }
 
-// func TestAccSignOnPolicyAction_MFAAction(t *testing.T) {
-// }
+func TestAccSignOnPolicyAction_MFAAction(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be defined") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{},
+		},
+	})
+}
 
 func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
 	t.Parallel()
@@ -309,8 +320,17 @@ func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
 	})
 }
 
-// func TestAccSignOnPolicyAction_AgreementAction(t *testing.T) {
-// }
+func TestAccSignOnPolicyAction_AgreementAction(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Awaiting support for agreements") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps:                    []resource.TestStep{},
+	})
+}
 
 func TestAccSignOnPolicyAction_ProgressiveProfilingAction(t *testing.T) {
 	t.Parallel()
@@ -816,295 +836,295 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 	})
 }
 
-// func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
-// 	t.Parallel()
+func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+	// resourceName := acctest.ResourceNameGen()
+	// resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-// 	environmentName := acctest.ResourceNameGenEnvironment()
+	// environmentName := acctest.ResourceNameGenEnvironment()
 
-// 	name := resourceName
+	// name := resourceName
 
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-// 		ErrorCheck:        acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be defined") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps:                    []resource.TestStep{
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+			// 	),
+			// },
+		},
+	})
+}
 
-// func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeMultiple(t *testing.T) {
-// 	t.Parallel()
+func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeMultiple(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+	// resourceName := acctest.ResourceNameGen()
+	// resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-// 	environmentName := acctest.ResourceNameGenEnvironment()
+	// environmentName := acctest.ResourceNameGenEnvironment()
 
-// 	name := resourceName
+	// name := resourceName
 
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-// 		ErrorCheck:        acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be defined") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps:                    []resource.TestStep{
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
+			// 	),
+			// },
+		},
+	})
+}
 
-// func TestAccSignOnPolicyAction_ConditionsIPHighRisk(t *testing.T) {
-// 	t.Parallel()
+func TestAccSignOnPolicyAction_ConditionsIPHighRisk(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+	// resourceName := acctest.ResourceNameGen()
+	// resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-// 	environmentName := acctest.ResourceNameGenEnvironment()
+	// environmentName := acctest.ResourceNameGenEnvironment()
 
-// 	name := resourceName
+	// name := resourceName
 
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-// 		ErrorCheck:        acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be defined") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps:                    []resource.TestStep{
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
+			// 	),
+			// },
+		},
+	})
+}
 
-// func TestAccSignOnPolicyAction_ConditionsGeovelocity(t *testing.T) {
-// 	t.Parallel()
+func TestAccSignOnPolicyAction_ConditionsGeovelocity(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+	// resourceName := acctest.ResourceNameGen()
+	// resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-// 	environmentName := acctest.ResourceNameGenEnvironment()
+	// environmentName := acctest.ResourceNameGenEnvironment()
 
-// 	name := resourceName
+	// name := resourceName
 
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-// 		ErrorCheck:        acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsGeovelocity(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsGeovelocity(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be defined") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps:                    []resource.TestStep{
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsGeovelocity(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsGeovelocity(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
+			// 	),
+			// },
+		},
+	})
+}
 
-// func TestAccSignOnPolicyAction_ConditionsAnonymousNetwork(t *testing.T) {
-// 	t.Parallel()
+func TestAccSignOnPolicyAction_ConditionsAnonymousNetwork(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+	// resourceName := acctest.ResourceNameGen()
+	// resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-// 	environmentName := acctest.ResourceNameGenEnvironment()
+	// environmentName := acctest.ResourceNameGenEnvironment()
 
-// 	name := resourceName
+	// name := resourceName
 
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-// 		ErrorCheck:        acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "0"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "0"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be defined") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps:                    []resource.TestStep{
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "0"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "0"),
+			// 	),
+			// },
+		},
+	})
+}
 
-// func TestAccSignOnPolicyAction_ConditionsAnonymousNetworkWithAllowed(t *testing.T) {
-// 	t.Parallel()
+func TestAccSignOnPolicyAction_ConditionsAnonymousNetworkWithAllowed(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+	// resourceName := acctest.ResourceNameGen()
+	// resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
-// 	environmentName := acctest.ResourceNameGenEnvironment()
+	// environmentName := acctest.ResourceNameGenEnvironment()
 
-// 	name := resourceName
+	// name := resourceName
 
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-// 		CheckDestroy:      testAccCheckSignOnPolicyActionDestroy,
-// 		ErrorCheck:        acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be defined") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps:                    []resource.TestStep{
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "0"),
+			// 	),
+			// },
+			// {
+			// 	Config: testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
+			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
+			// 	),
+			// },
+		},
+	})
+}
 
 func TestAccSignOnPolicyAction_ConditionsCompound(t *testing.T) {
 	t.Parallel()
