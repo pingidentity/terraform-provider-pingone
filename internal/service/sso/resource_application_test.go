@@ -3020,14 +3020,3 @@ resource "pingone_application" "%[2]s" {
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
 }
-
-// Error conditions
-
-// func testAccApplicationConfig_NoType(resourceName, name string) string {
-// 	return fmt.Sprintf(`
-// 		%[1]s
-// 		resource "pingone_application" "%[3]s" {
-// 			environment_id = data.pingone_environment.general_test.id
-// 			name = "%[3]s"
-// 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-// }
