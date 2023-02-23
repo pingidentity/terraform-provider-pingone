@@ -18,6 +18,7 @@ FEATURES:
 * **New Data Source:** `pingone_population` ([#255](https://github.com/pingidentity/terraform-provider-pingone/issues/255))
 * **New Data Source:** `pingone_populations` ([#255](https://github.com/pingidentity/terraform-provider-pingone/issues/255))
 * **New Data Source:** `pingone_trusted_email_domain` ([#253](https://github.com/pingidentity/terraform-provider-pingone/issues/253))
+* **New Resource:** `pingone_notification_policy` ([#268](https://github.com/pingidentity/terraform-provider-pingone/issues/268))
 * **New Resource:** `pingone_notification_settings_email` ([#269](https://github.com/pingidentity/terraform-provider-pingone/issues/269))
 * **New Resource:** `pingone_trusted_email_address` ([#253](https://github.com/pingidentity/terraform-provider-pingone/issues/253))
 
