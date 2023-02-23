@@ -151,13 +151,13 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 func TestAccEnvironment_DeleteProductionEnvironmentProtection(t *testing.T) {
 	t.Parallel()
 
-	// resourceName := acctest.ResourceNameGenEnvironment()
-	// resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+	resourceName := acctest.ResourceNameGenEnvironment()
+	//resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
-	// name := resourceName
-	// environmentType := "SANDBOX"
-	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	// region := os.Getenv("PINGONE_REGION")
+	name := resourceName
+	environmentType := "SANDBOX"
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := os.Getenv("PINGONE_REGION")
 
 	// os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "false")
 
@@ -166,20 +166,25 @@ func TestAccEnvironment_DeleteProductionEnvironmentProtection(t *testing.T) {
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps:                    []resource.TestStep{},
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
+				ExpectError: regexp.MustCompile(`Not defined`),
+			},
+		},
 	})
 }
 
 func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
 	t.Parallel()
 
-	// resourceName := acctest.ResourceNameGenEnvironment()
+	resourceName := acctest.ResourceNameGenEnvironment()
 	// resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
-	// name := resourceName
-	// environmentType := "SANDBOX"
-	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	// region := os.Getenv("PINGONE_REGION")
+	name := resourceName
+	environmentType := "SANDBOX"
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := os.Getenv("PINGONE_REGION")
 
 	// os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "true")
 
@@ -188,7 +193,12 @@ func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps:                    []resource.TestStep{},
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
+				ExpectError: regexp.MustCompile(`Not defined`),
+			},
+		},
 	})
 }
 
