@@ -286,7 +286,7 @@ func ResourceApplication() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"bundle_id": {
-										Description:      "A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the bundle_id property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `bundle_id` field",
+										Description:      "A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `bundle_id` field",
 										Type:             schema.TypeString,
 										Optional:         true,
 										ForceNew:         true,
@@ -297,6 +297,22 @@ func ResourceApplication() *schema.Resource {
 										Type:             schema.TypeString,
 										Optional:         true,
 										ForceNew:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+									},
+									"huawei_app_id": {
+										Description:      "The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_package_name`.",
+										Type:             schema.TypeString,
+										Optional:         true,
+										ForceNew:         true,
+										RequiredWith:     []string{"oidc_options.0.mobile_app.0.huawei_app_id", "oidc_options.0.mobile_app.0.huawei_package_name"},
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+									},
+									"huawei_package_name": {
+										Description:      "The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.",
+										Type:             schema.TypeString,
+										Optional:         true,
+										ForceNew:         true,
+										RequiredWith:     []string{"oidc_options.0.mobile_app.0.huawei_app_id", "oidc_options.0.mobile_app.0.huawei_package_name"},
 										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 									},
 									"passcode_refresh_seconds": {
@@ -1141,6 +1157,14 @@ func expandMobile(s map[string]interface{}) (*management.ApplicationOIDCAllOfMob
 		mobile.SetPackageName(v)
 	}
 
+	if v, ok := s["huawei_app_id"].(string); ok && v != "" {
+		mobile.SetHuaweiAppId(v)
+	}
+
+	if v, ok := s["huawei_package_name"].(string); ok && v != "" {
+		mobile.SetHuaweiPackageName(v)
+	}
+
 	if v, ok := s["passcode_refresh_seconds"].(int); ok {
 		mobile.SetPasscodeRefreshDuration(*management.NewApplicationOIDCAllOfMobilePasscodeRefreshDuration(int32(v), management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS))
 	}
@@ -1584,6 +1608,18 @@ func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) (interface{}, 
 		item["package_name"] = v
 	} else {
 		item["package_name"] = nil
+	}
+
+	if v, ok := mobile.GetHuaweiAppIdOk(); ok {
+		item["huawei_app_id"] = v
+	} else {
+		item["huawei_app_id"] = nil
+	}
+
+	if v, ok := mobile.GetHuaweiPackageNameOk(); ok {
+		item["huawei_package_name"] = v
+	} else {
+		item["huawei_package_name"] = nil
 	}
 
 	if v, ok := mobile.GetPasscodeRefreshDurationOk(); ok {

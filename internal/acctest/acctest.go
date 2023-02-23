@@ -111,6 +111,14 @@ func PreCheckEnvironment(t *testing.T) {
 	}
 }
 
+func PreCheckEnvironmentDomainVerified(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN"); v == "" {
+		t.Fatal("PINGONE_VERIFIED_EMAIL_DOMAIN is missing and must be set")
+	}
+}
+
 func PreCheckWorkforceEnvironment(t *testing.T) {
 
 	PreCheckEnvironment(t)
@@ -298,5 +306,12 @@ func WorkforceSandboxEnvironment() string {
 	return `
 		data "pingone_environment" "workforce_test" {
 			name = "tf-testacc-static-workforce-test"
+		}`
+}
+
+func DomainVerifiedSandboxEnvironment() string {
+	return `
+		data "pingone_environment" "domainverified_test" {
+			name = "tf-testacc-static-domainverified-test"
 		}`
 }

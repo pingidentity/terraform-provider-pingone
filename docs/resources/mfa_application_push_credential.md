@@ -17,9 +17,36 @@ resource "pingone_environment" "my_environment" {
 }
 
 resource "pingone_application" "my_application" {
-  # ...
+  environment_id = pingone_environment.my_environment.id
+  name           = "My Mobile App"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    token_endpoint_authn_method = "NONE"
+    pkce_enforcement            = "S256_REQUIRED"
+
+    mobile_app {
+
+      // Apple
+      bundle_id = "org.bxretail.mybundle"
+
+      // Android
+      package_name = "org.bxretail.mypackage"
+
+      // Huawei
+      huawei_app_id       = "12345679"
+      huawei_package_name = "org.bxretail.huaweipackage"
+    }
+
+    bundle_id    = "org.bxretail.mybundle"
+    package_name = "org.bxretail.mypackage"
+  }
 }
 
+// Android
 resource "pingone_mfa_application_push_credential" "example_fcm" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_application.id
@@ -29,6 +56,7 @@ resource "pingone_mfa_application_push_credential" "example_fcm" {
   }
 }
 
+// Apple
 resource "pingone_mfa_application_push_credential" "example_apns" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_application.id
@@ -37,6 +65,17 @@ resource "pingone_mfa_application_push_credential" "example_apns" {
     key               = var.apns_key
     team_id           = var.apns_team_id
     token_signing_key = var.apns_token_signing_key
+  }
+}
+
+// Huawei
+resource "pingone_mfa_application_push_credential" "example_hms" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_application.id
+
+  hms {
+    client_id     = var.hms_client_id
+    client_secret = var.hms_client_secret
   }
 }
 ```
@@ -53,6 +92,7 @@ resource "pingone_mfa_application_push_credential" "example_apns" {
 
 - `apns` (Block List, Max: 1) A block that specifies the credential settings for the Apple Push Notification Service. (see [below for nested schema](#nestedblock--apns))
 - `fcm` (Block List, Max: 1) A block that specifies the credential settings for the Firebase Cloud Messaging service. (see [below for nested schema](#nestedblock--fcm))
+- `hms` (Block List, Max: 1) A block that specifies the credential settings for Huawei Moble Service push messaging. (see [below for nested schema](#nestedblock--hms))
 
 ### Read-Only
 
@@ -74,6 +114,15 @@ Required:
 Required:
 
 - `key` (String, Sensitive) A string that represents the server key of the Firebase cloud messaging service.
+
+
+<a id="nestedblock--hms"></a>
+### Nested Schema for `hms`
+
+Required:
+
+- `client_id` (String, Sensitive) A string that represents the OAuth 2.0 Client ID from the Huawei Developers API console.
+- `client_secret` (String, Sensitive) A string that represents the client secret associated with the OAuth 2.0 Client ID.
 
 ## Import
 
