@@ -15,6 +15,7 @@ func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewTrustedEmailAddressResource,
 		NewNotificationPolicyResource,
+		NewNotificationSettingsEmailResource,
 	}
 }
 
