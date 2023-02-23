@@ -46,7 +46,7 @@ resource "pingone_trusted_email_address" "my_trusted_email" {
 
 ## Import
 
-Import is supported using the following syntax:
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
 $ terraform import pingone_trusted_email_address.example <environment_id>/<email_domain_id>/<trusted_email_address_id>

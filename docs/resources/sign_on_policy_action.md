@@ -329,7 +329,7 @@ Required:
 
 ## Import
 
-Import is supported using the following syntax:
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
 $ terraform import pingone_sign_on_policy_action.example <environment_id>/<sign_on_policy_id>/<sign_on_policy_action_id>
