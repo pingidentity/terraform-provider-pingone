@@ -117,7 +117,7 @@ resource "pingone_gateway_role_assignment" "organization_environment_admin_to_ga
 
 ## Import
 
-Import is supported using the following syntax:
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
 $ terraform import pingone_gateway_role_assignment.example <environment_id>/<gateway_id>/<role_assignment_id>
