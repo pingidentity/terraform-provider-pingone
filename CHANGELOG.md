@@ -3,15 +3,23 @@
 NOTES:
 
 * Added plugin mux factory and plugin framework (v6 protocol) provider to facilitate migration from SDKv2 (v5 protocol) ([#252](https://github.com/pingidentity/terraform-provider-pingone/issues/252))
+* bump `github.com/golangci/golangci-lint` v1.51.1 => v1.51.2 ([#270](https://github.com/pingidentity/terraform-provider-pingone/issues/270))
 * bump `github.com/hashicorp/go-getter` v1.6.2 => v1.7.0 ([#256](https://github.com/pingidentity/terraform-provider-pingone/issues/256))
+* bump `github.com/hashicorp/terraform-plugin-mux` v0.8.0 => v0.9.0 ([#270](https://github.com/pingidentity/terraform-provider-pingone/issues/270))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.24.1 => v2.25.0 ([#270](https://github.com/pingidentity/terraform-provider-pingone/issues/270))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.1 => v0.1.2 ([#270](https://github.com/pingidentity/terraform-provider-pingone/issues/270))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.14.0 => v0.15.0 ([#266](https://github.com/pingidentity/terraform-provider-pingone/issues/266))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.7.2 => v0.8.0 ([#264](https://github.com/pingidentity/terraform-provider-pingone/issues/264))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.5.2 => v0.5.3 ([#270](https://github.com/pingidentity/terraform-provider-pingone/issues/270))
 * bump `golang.org/x/net` v0.5.0 => v0.7.0 ([#257](https://github.com/pingidentity/terraform-provider-pingone/issues/257))
 
 FEATURES:
 
 * **New Data Source:** `pingone_population` ([#255](https://github.com/pingidentity/terraform-provider-pingone/issues/255))
 * **New Data Source:** `pingone_populations` ([#255](https://github.com/pingidentity/terraform-provider-pingone/issues/255))
+* **New Data Source:** `pingone_trusted_email_domain` ([#253](https://github.com/pingidentity/terraform-provider-pingone/issues/253))
+* **New Resource:** `pingone_notification_settings_email` ([#269](https://github.com/pingidentity/terraform-provider-pingone/issues/269))
+* **New Resource:** `pingone_trusted_email_address` ([#253](https://github.com/pingidentity/terraform-provider-pingone/issues/253))
 
 ENHANCEMENTS:
 
