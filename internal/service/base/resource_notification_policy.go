@@ -483,10 +483,10 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 	return data, diags
 }
 
-func (p *NotificationPolicyResourceModel) toState(v *management.NotificationsPolicy) diag.Diagnostics {
+func (p *NotificationPolicyResourceModel) toState(apiObject *management.NotificationsPolicy) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if v == nil {
+	if apiObject == nil {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -495,11 +495,11 @@ func (p *NotificationPolicyResourceModel) toState(v *management.NotificationsPol
 		return diags
 	}
 
-	p.Id = types.StringValue(v.GetId())
-	p.Name = types.StringValue(v.GetName())
-	p.Default = types.BoolValue(v.GetDefault())
+	p.Id = framework.StringToTF(apiObject.GetId())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
-	quota, d := toStateQuota(v.GetQuotas())
+	quota, d := toStateQuota(apiObject.GetQuotas())
 	diags.Append(d...)
 	p.Quota = quota
 
@@ -521,29 +521,20 @@ func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.Lis
 		// deliveryMethods, d := framework.StringSliceToTF(deliveryMethodsToStringSlice(v.GetDeliveryMethods()))
 		// diags.Append(d...)
 
-		quota := map[string]attr.Value{
-			"type": framework.StringToTF(string(v.GetType())),
-			// To enable when the platform supports individual configuration
-			// "delivery_method": deliveryMethods,
+		quota := map[string]attr.Value{}
+
+		if v, ok := v.GetTypeOk(); ok {
+			quota["type"] = framework.StringToTF(string(*v))
+		} else {
+			quota["type"] = types.StringNull()
 		}
 
-		if i, ok := v.GetTotalOk(); ok {
-			quota["total"] = framework.Int32ToTF(*i)
-		} else {
-			quota["total"] = types.Int64Null()
-		}
+		// To enable when the platform supports individual configuration
+		// "delivery_method": deliveryMethods,
 
-		if i, ok := v.GetClaimedOk(); ok {
-			quota["used"] = framework.Int32ToTF(*i)
-		} else {
-			quota["used"] = types.Int64Null()
-		}
-
-		if i, ok := v.GetUnclaimedOk(); ok {
-			quota["unused"] = framework.Int32ToTF(*i)
-		} else {
-			quota["unused"] = types.Int64Null()
-		}
+		quota["total"] = framework.Int32OkToTF(v.GetTotalOk())
+		quota["used"] = framework.Int32OkToTF(v.GetClaimedOk())
+		quota["unused"] = framework.Int32OkToTF(v.GetUnclaimedOk())
 
 		flattenedObj, d := types.ObjectValue(quotaTFObjectTypes, quota)
 		diags.Append(d...)

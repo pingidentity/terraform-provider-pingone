@@ -308,10 +308,10 @@ func (p *TrustedEmailAddressResourceModel) expand() *management.EmailDomainTrust
 	return data
 }
 
-func (p *TrustedEmailAddressResourceModel) toState(v *management.EmailDomainTrustedEmail) diag.Diagnostics {
+func (p *TrustedEmailAddressResourceModel) toState(apiObject *management.EmailDomainTrustedEmail) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if v == nil {
+	if apiObject == nil {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -320,11 +320,16 @@ func (p *TrustedEmailAddressResourceModel) toState(v *management.EmailDomainTrus
 		return diags
 	}
 
-	p.Id = framework.StringToTF(v.GetId())
-	p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-	p.EmailDomainId = framework.StringToTF(*v.GetDomain().Id)
-	p.EmailAddress = framework.StringToTF(v.GetEmailAddress())
-	p.Status = framework.StringToTF(string(v.GetStatus()))
+	p.Id = framework.StringToTF(apiObject.GetId())
+	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.EmailDomainId = framework.StringToTF(*apiObject.GetDomain().Id)
+	p.EmailAddress = framework.StringOkToTF(apiObject.GetEmailAddressOk())
+
+	if v, ok := apiObject.GetStatusOk(); ok {
+		p.Status = framework.StringToTF(string(*v))
+	} else {
+		p.Status = types.StringNull()
+	}
 
 	return diags
 }
