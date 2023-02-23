@@ -11,14 +11,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"golang.org/x/exp/slices"
 )
 
 func ResourceGateway() *schema.Resource {
 
 	ldapSchemaAttrList := []string{"bind_dn", "bind_password", "servers", "vendor"}
+	radiusSchemaAttrList := []string{"radius_davinci_policy_id", "radius_client"}
 
 	return &schema.Resource{
 
@@ -54,17 +57,19 @@ func ResourceGateway() *schema.Resource {
 				Optional:    true,
 			},
 			"type": {
-				Description:  fmt.Sprintf("The type of gateway resource. Options are `%s`, `%s`, `%s` and `%s`.", string(management.ENUMGATEWAYTYPE_PING_FEDERATE), string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION), string(management.ENUMGATEWAYTYPE_LDAP), string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+				Description:  fmt.Sprintf("The type of gateway resource. Options are `%s`, `%s`, `%s`, `%s` and `%s`.", string(management.ENUMGATEWAYTYPE_PING_FEDERATE), string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION), string(management.ENUMGATEWAYTYPE_LDAP), string(management.ENUMGATEWAYTYPE_RADIUS), string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{string(management.ENUMGATEWAYTYPE_PING_FEDERATE), string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION), string(management.ENUMGATEWAYTYPE_LDAP), string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)}, false),
+				ValidateFunc: validation.StringInSlice([]string{string(management.ENUMGATEWAYTYPE_PING_FEDERATE), string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION), string(management.ENUMGATEWAYTYPE_LDAP), string(management.ENUMGATEWAYTYPE_RADIUS), string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)}, false),
 			},
 			"enabled": {
 				Description: "Indicates whether the gateway is enabled.",
 				Type:        schema.TypeBool,
 				Required:    true,
 			},
+
+			// LDAP
 			"bind_dn": {
 				Description:      "For LDAP gateways only: The distinguished name information to bind to the LDAP database (for example, `uid=pingone,dc=bxretail,dc=org`).",
 				Type:             schema.TypeString,
@@ -81,11 +86,11 @@ func ResourceGateway() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 			"connection_security": {
-				Description:      fmt.Sprintf("For LDAP gateways only: The connection security type. Options are `%s`, `%s`, and `%s`.", string(management.ENUMGATEWAYLDAPSECURITY_NONE), string(management.ENUMGATEWAYLDAPSECURITY_TLS), string(management.ENUMGATEWAYLDAPSECURITY_START_TLS)),
+				Description:      fmt.Sprintf("For LDAP gateways only: The connection security type. Options are `%s`, `%s`, and `%s`.", string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE), string(management.ENUMGATEWAYTYPELDAPSECURITY_TLS), string(management.ENUMGATEWAYTYPELDAPSECURITY_START_TLS)),
 				Type:             schema.TypeString,
 				Optional:         true,
-				Default:          management.ENUMGATEWAYLDAPSECURITY_NONE,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMGATEWAYLDAPSECURITY_NONE), string(management.ENUMGATEWAYLDAPSECURITY_TLS), string(management.ENUMGATEWAYLDAPSECURITY_START_TLS)}, false)),
+				Default:          management.ENUMGATEWAYTYPELDAPSECURITY_NONE,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE), string(management.ENUMGATEWAYTYPELDAPSECURITY_TLS), string(management.ENUMGATEWAYTYPELDAPSECURITY_START_TLS)}, false)),
 			},
 			"kerberos_service_account_password": {
 				Description: "For LDAP gateways only: The password for the Kerberos service account.",
@@ -216,6 +221,45 @@ func ResourceGateway() *schema.Resource {
 					},
 				},
 			},
+
+			// RADIUS
+			"radius_davinci_policy_id": {
+				Description:      "For RADIUS gateways only: The ID of the DaVinci flow policy to use.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				RequiredWith:     radiusSchemaAttrList,
+				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+			},
+			"radius_default_shared_secret": {
+				Description:      "For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Sensitive:        true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+			},
+			"radius_client": {
+				Description:  "For RADIUS gateways only: A collection of RADIUS clients.",
+				Type:         schema.TypeSet,
+				Optional:     true,
+				RequiredWith: radiusSchemaAttrList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"ip": {
+							Description:      "The IP of the RADIUS client.",
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsIPv4Address),
+						},
+						"shared_secret": {
+							Description:      "The shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.",
+							Type:             schema.TypeString,
+							Optional:         true,
+							Sensitive:        true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -240,7 +284,7 @@ func resourceGatewayCreate(ctx context.Context, d *schema.ResourceData, meta int
 			return apiClient.GatewaysApi.CreateGateway(ctx, d.Get("environment_id").(string)).CreateGatewayRequest(*gatewayRequest).Execute()
 		},
 		"CreateGateway",
-		sdk.DefaultCustomError,
+		gatewayWriteErrors,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
@@ -251,7 +295,9 @@ func resourceGatewayCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	if gateway := respObject.Gateway; gateway != nil && gateway.GetId() != "" {
 		d.SetId(gateway.GetId())
-	} else if gateway := respObject.GatewayLDAP; gateway != nil && gateway.GetId() != "" {
+	} else if gateway := respObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" {
+		d.SetId(gateway.GetId())
+	} else if gateway := respObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" {
 		d.SetId(gateway.GetId())
 	}
 
@@ -298,7 +344,7 @@ func resourceGatewayRead(ctx context.Context, d *schema.ResourceData, meta inter
 		} else {
 			d.Set("description", nil)
 		}
-	} else if gateway := respObject.GatewayLDAP; gateway != nil && gateway.GetId() != "" {
+	} else if gateway := respObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" {
 
 		d.Set("name", gateway.GetName())
 		d.Set("enabled", gateway.GetEnabled())
@@ -345,6 +391,41 @@ func resourceGatewayRead(ctx context.Context, d *schema.ResourceData, meta inter
 
 		d.Set("user_type", flattenUserType(gateway.GetUserTypes()))
 
+	} else if gateway := respObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" {
+
+		d.Set("name", gateway.GetName())
+		d.Set("enabled", gateway.GetEnabled())
+		d.Set("type", gateway.GetType())
+
+		if v, ok := gateway.GetDescriptionOk(); ok {
+			d.Set("description", v)
+		} else {
+			d.Set("description", nil)
+		}
+
+		d.Set("radius_davinci_policy_id", gateway.GetDavinci().Policy.Id)
+
+		if v, ok := gateway.GetDefaultSharedSecretOk(); ok {
+			d.Set("radius_default_shared_secret", v)
+		} else {
+			d.Set("radius_default_shared_secret", nil)
+		}
+
+		radiusClientsFlattened := make([]interface{}, 0)
+		for _, v := range gateway.GetRadiusClients() {
+
+			radiusClient := map[string]interface{}{
+				"ip": v.GetIp(),
+			}
+
+			if v1, ok := v.GetSharedSecretOk(); ok {
+				radiusClient["shared_secret"] = *v1
+			}
+
+			radiusClientsFlattened = append(radiusClientsFlattened, radiusClient)
+		}
+
+		d.Set("radius_client", radiusClientsFlattened)
 	}
 
 	return diags
@@ -370,7 +451,7 @@ func resourceGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta int
 			return apiClient.GatewaysApi.UpdateGateway(ctx, d.Get("environment_id").(string), d.Id()).CreateGatewayRequest(*gatewayRequest).Execute()
 		},
 		"UpdateGateway",
-		sdk.DefaultCustomError,
+		gatewayWriteErrors,
 		sdk.DefaultRetryable,
 	)
 	if diags.HasError() {
@@ -424,6 +505,23 @@ func resourceGatewayImport(ctx context.Context, d *schema.ResourceData, meta int
 	return []*schema.ResourceData{d}, nil
 }
 
+var (
+	gatewayWriteErrors = func(error model.P1Error) diag.Diagnostics {
+		var diags diag.Diagnostics
+
+		// Invalid shared secret combination
+		if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
+				diags = diag.FromErr(fmt.Errorf(details[0].GetMessage()))
+
+				return diags
+			}
+		}
+
+		return nil
+	}
+)
+
 func expandGatewayRequest(d *schema.ResourceData) (*management.CreateGatewayRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -431,7 +529,26 @@ func expandGatewayRequest(d *schema.ResourceData) (*management.CreateGatewayRequ
 
 	gatewayType := management.EnumGatewayType(d.Get("type").(string))
 
-	if gatewayType == management.ENUMGATEWAYTYPE_LDAP {
+	diags = append(diags, checkIllegalParamsForGatewayType(d, gatewayType)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if slices.Contains([]management.EnumGatewayType{
+		"PING_FEDERATE",
+		"PING_INTELLIGENCE",
+		"API_GATEWAY_INTEGRATION",
+	}, gatewayType) {
+
+		gateway := *management.NewGateway(d.Get("name").(string), gatewayType, d.Get("enabled").(bool)) // Gateway |  (optional)
+
+		if v, ok := d.GetOk("description"); ok {
+			gateway.SetDescription(v.(string))
+		}
+
+		gatewayRequest.Gateway = &gateway
+
+	} else if gatewayType == management.ENUMGATEWAYTYPE_LDAP {
 
 		serversHostAndPort := make([]string, 0)
 
@@ -445,7 +562,7 @@ func expandGatewayRequest(d *schema.ResourceData) (*management.CreateGatewayRequ
 			}
 		}
 
-		gateway := *management.NewGatewayLDAP(
+		gateway := *management.NewGatewayTypeLDAP(
 			d.Get("name").(string),
 			gatewayType,
 			d.Get("enabled").(bool),
@@ -456,11 +573,11 @@ func expandGatewayRequest(d *schema.ResourceData) (*management.CreateGatewayRequ
 		)
 
 		if v, ok := d.GetOk("connection_security"); ok {
-			gateway.SetConnectionSecurity(management.EnumGatewayLDAPSecurity(v.(string)))
+			gateway.SetConnectionSecurity(management.EnumGatewayTypeLDAPSecurity(v.(string)))
 		}
 
 		if v, ok := d.GetOk("kerberos_service_account_upn"); ok {
-			kerberos := management.NewGatewayLDAPAllOfKerberos(v.(string))
+			kerberos := management.NewGatewayTypeLDAPAllOfKerberos(v.(string))
 
 			if v1, ok := d.GetOk("kerberos_service_account_password"); ok {
 				kerberos.SetServiceAccountPassword(v1.(string))
@@ -483,42 +600,72 @@ func expandGatewayRequest(d *schema.ResourceData) (*management.CreateGatewayRequ
 			gateway.SetUserTypes(expandLDAPUserTypes(v.(*schema.Set)))
 		}
 
-		gatewayRequest.GatewayLDAP = &gateway
+		gatewayRequest.GatewayTypeLDAP = &gateway
+
+	} else if gatewayType == management.ENUMGATEWAYTYPE_RADIUS {
+
+		radiusClients := make([]management.GatewayTypeRADIUSAllOfRadiusClients, 0)
+
+		if v, ok := d.GetOk("radius_client"); ok {
+			if c := v.(*schema.Set).List(); len(c) > 0 && c[0] != "" {
+
+				for _, client := range c {
+					clientMap := client.(map[string]interface{})
+					radiusClientObj := *management.NewGatewayTypeRADIUSAllOfRadiusClients(clientMap["ip"].(string))
+
+					if v, ok := clientMap["shared_secret"].(string); ok && v != "" {
+						radiusClientObj.SetSharedSecret(v)
+					}
+
+					radiusClients = append(radiusClients, radiusClientObj)
+				}
+
+			} else {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Missing RADIUS Clients",
+					Detail:   "Ensure that the `radius_client` parameter is set appropriately.",
+				})
+
+				return nil, diags
+			}
+		}
+
+		gateway := *management.NewGatewayTypeRADIUS(
+			d.Get("name").(string),
+			gatewayType,
+			d.Get("enabled").(bool),
+			*management.NewGatewayTypeRADIUSAllOfDavinci(*management.NewGatewayTypeRADIUSAllOfDavinciPolicy(d.Get("radius_davinci_policy_id").(string))),
+			radiusClients,
+		)
+
+		if v, ok := d.GetOk("radius_default_shared_secret"); ok {
+			gateway.SetDefaultSharedSecret(v.(string))
+		}
+
+		gatewayRequest.GatewayTypeRADIUS = &gateway
 
 	} else {
 
-		if string(gatewayType) == "" {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Cannot determine the gateway type",
-				Detail:   "Ensure that the `type` parameter is set appropriately.",
-			})
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Cannot determine the gateway type",
+			Detail:   "Ensure that the `type` parameter is set appropriately.",
+		})
 
-			return nil, diags
-		}
-
-		diags := checkLdapInNonLdapGateway(d, gatewayType)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		gateway := *management.NewGateway(d.Get("name").(string), gatewayType, d.Get("enabled").(bool)) // Gateway |  (optional)
-
-		if v, ok := d.GetOk("description"); ok {
-			gateway.SetDescription(v.(string))
-		}
-
-		gatewayRequest.Gateway = &gateway
+		return nil, diags
 	}
 
 	return gatewayRequest, diags
 }
 
-func checkLdapInNonLdapGateway(d *schema.ResourceData, gatewayType management.EnumGatewayType) diag.Diagnostics {
+func checkIllegalParamsForGatewayType(d *schema.ResourceData, gatewayType management.EnumGatewayType) diag.Diagnostics {
 	var diags diag.Diagnostics
 
+	attributes := make([]string, 0)
+
 	if gatewayType != management.ENUMGATEWAYTYPE_LDAP {
-		ldapAttributes := []string{
+		attributes = append(attributes, []string{
 			"bind_dn",
 			"bind_password",
 			// "connection_security",
@@ -529,28 +676,37 @@ func checkLdapInNonLdapGateway(d *schema.ResourceData, gatewayType management.En
 			// "validate_tls_certificates",
 			"vendor",
 			"user_type",
+		}...)
+	}
+
+	if gatewayType != management.ENUMGATEWAYTYPE_RADIUS {
+		attributes = append(attributes, []string{
+			"radius_default_shared_secret",
+			"radius_davinci_policy_id",
+			"radius_client",
+		}...)
+	}
+
+	for _, attribute := range attributes {
+		if _, ok := d.GetOk(attribute); ok {
+
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Unexpected parameter %s for %s gateway type.", attribute, string(gatewayType)),
+				Detail:   fmt.Sprintf("The parameter %s does not apply to this gateway type.", attribute),
+			})
+
 		}
 
-		for _, attribute := range ldapAttributes {
-			if _, ok := d.GetOk(attribute); ok {
-
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  fmt.Sprintf("Unexpected parameter %s for %s gateway type.", attribute, string(gatewayType)),
-					Detail:   fmt.Sprintf("The parameter %s does not apply to this gateway type.", attribute),
-				})
-
-			}
-		}
 	}
 
 	return diags
 
 }
 
-func expandLDAPUserTypes(c *schema.Set) []management.GatewayLDAPAllOfUserTypes {
+func expandLDAPUserTypes(c *schema.Set) []management.GatewayTypeLDAPAllOfUserTypes {
 
-	userTypes := make([]management.GatewayLDAPAllOfUserTypes, 0)
+	userTypes := make([]management.GatewayTypeLDAPAllOfUserTypes, 0)
 
 	for _, v := range c.List() {
 		obj := v.(map[string]interface{})
@@ -560,7 +716,7 @@ func expandLDAPUserTypes(c *schema.Set) []management.GatewayLDAPAllOfUserTypes {
 			orderedCorrelationAttribtues = append(orderedCorrelationAttribtues, str.(string))
 		}
 
-		userType := *management.NewGatewayLDAPAllOfUserTypes(
+		userType := *management.NewGatewayTypeLDAPAllOfUserTypes(
 			obj["name"].(string),
 			orderedCorrelationAttribtues,
 			management.EnumGatewayPasswordAuthority(obj["password_authority"].(string)),
@@ -582,28 +738,28 @@ func expandLDAPUserTypes(c *schema.Set) []management.GatewayLDAPAllOfUserTypes {
 
 }
 
-func expandLDAPUserLookup(c map[string]interface{}) *management.GatewayLDAPAllOfNewUserLookup {
+func expandLDAPUserLookup(c map[string]interface{}) *management.GatewayTypeLDAPAllOfNewUserLookup {
 
 	attributeMappings := expandLDAPUserLookupAttributeMappings(c["attribute_mapping"].(*schema.Set).List())
 
-	userLookup := *management.NewGatewayLDAPAllOfNewUserLookup(
+	userLookup := *management.NewGatewayTypeLDAPAllOfNewUserLookup(
 		attributeMappings,
 		c["lookup_filter_pattern"].(string),
-		*management.NewGatewayLDAPAllOfNewUserLookupPopulation(c["population_id"].(string)),
+		*management.NewGatewayTypeLDAPAllOfNewUserLookupPopulation(c["population_id"].(string)),
 	)
 
 	return &userLookup
 
 }
 
-func expandLDAPUserLookupAttributeMappings(c []interface{}) []management.GatewayLDAPAllOfNewUserLookupAttributeMappings {
-	mappings := make([]management.GatewayLDAPAllOfNewUserLookupAttributeMappings, 0)
+func expandLDAPUserLookupAttributeMappings(c []interface{}) []management.GatewayTypeLDAPAllOfNewUserLookupAttributeMappings {
+	mappings := make([]management.GatewayTypeLDAPAllOfNewUserLookupAttributeMappings, 0)
 
 	for _, v := range c {
 
 		obj := v.(map[string]interface{})
 
-		mappings = append(mappings, *management.NewGatewayLDAPAllOfNewUserLookupAttributeMappings(obj["name"].(string), obj["value"].(string)))
+		mappings = append(mappings, *management.NewGatewayTypeLDAPAllOfNewUserLookupAttributeMappings(obj["name"].(string), obj["value"].(string)))
 
 	}
 
@@ -623,7 +779,7 @@ func userItemsHash(v interface{}) int {
 	return 0
 }
 
-func flattenUserType(c []management.GatewayLDAPAllOfUserTypes) *schema.Set {
+func flattenUserType(c []management.GatewayTypeLDAPAllOfUserTypes) *schema.Set {
 
 	items := schema.NewSet(userItemsHash, nil)
 
@@ -667,7 +823,7 @@ func flattenUserType(c []management.GatewayLDAPAllOfUserTypes) *schema.Set {
 	return items
 }
 
-func flattenLDAPUserLookupAttributeMappings(c []management.GatewayLDAPAllOfNewUserLookupAttributeMappings) interface{} {
+func flattenLDAPUserLookupAttributeMappings(c []management.GatewayTypeLDAPAllOfNewUserLookupAttributeMappings) interface{} {
 	items := make([]interface{}, 0)
 
 	for _, v := range c {

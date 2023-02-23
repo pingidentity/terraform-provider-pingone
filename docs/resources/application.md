@@ -199,7 +199,9 @@ Read-Only:
 
 Optional:
 
-- `bundle_id` (String) A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the bundle_id property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `bundle_id` field
+- `bundle_id` (String) A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `bundle_id` field
+- `huawei_app_id` (String) The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_package_name`.
+- `huawei_package_name` (String) The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.
 - `integrity_detection` (Block List, Max: 1) Mobile application integrity detection settings. (see [below for nested schema](#nestedblock--oidc_options--mobile_app--integrity_detection))
 - `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `package_name` field.
 - `passcode_refresh_seconds` (Number) The amount of time a passcode should be displayed before being replaced with a new passcode - must be between 30 and 60.

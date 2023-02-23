@@ -22,6 +22,10 @@ func StringToTF(v string) basetypes.StringValue {
 	}
 }
 
+func Int32ToTF(i int32) basetypes.Int64Value {
+	return types.Int64Value(int64(i))
+}
+
 func StringOkToTF(v *string, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
