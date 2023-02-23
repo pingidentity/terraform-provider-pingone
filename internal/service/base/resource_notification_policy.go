@@ -78,9 +78,10 @@ func (r *NotificationPolicyResource) Metadata(ctx context.Context, req resource.
 // Schema
 func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
-	attrMinLength := 1
+	const attrMinLength = 1
+	const emailAddressMaxLength = 5
 
-	quotaDescriptionFmt := "A single object block that define the SMS/Voice limits. Each object contain the following elements: `type`, `deliveryMethods`, `total`. Currently, a policy can contain ony one such object. Note that instead of `total`, you can use the pair of fields: `used` and `unused`."
+	quotaDescriptionFmt := "A single object block that define the SMS/Voice limits."
 	quotaDescription := framework.SchemaDescription{
 		MarkdownDescription: quotaDescriptionFmt,
 		Description:         strings.ReplaceAll(quotaDescriptionFmt, "`", "\""),
@@ -97,10 +98,10 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 		quotaTypeAllowedValues = append(quotaTypeAllowedValues, string(v))
 	}
 
-	quotaTypeDescriptionFmt := "A string to specify whether the limit defined is per-user or per environment. Allowed values: %s."
+	quotaTypeDescriptionFmt := fmt.Sprintf("A string to specify whether the limit defined is per-user or per environment. Allowed values: `%s`.", strings.Join(quotaTypeAllowedValues, "`, `"))
 	quotaTypeDescription := framework.SchemaDescription{
-		MarkdownDescription: fmt.Sprintf(quotaTypeDescriptionFmt, fmt.Sprintf("`%s`", strings.Join(quotaTypeAllowedValues, "`, `"))),
-		Description:         fmt.Sprintf(quotaTypeDescriptionFmt, fmt.Sprintf("\"%s\"", strings.Join(quotaTypeAllowedValues, "\", \""))),
+		MarkdownDescription: quotaTypeDescriptionFmt,
+		Description:         strings.ReplaceAll(quotaTypeDescriptionFmt, "`", "\""),
 	}
 
 	quotaTotalDescriptionFmt := "The maximum number of notifications allowed per day.  Cannot be set with `used` and `unused`."
@@ -124,11 +125,9 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 		Description:         strings.ReplaceAll(quotaUnusedDescriptionFmt, "`", "\""),
 	}
 
-	const emailAddressMaxLength = 5
-
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage notification policies in PingOne.",
+		Description: "Resource to create and manage notification policies in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),

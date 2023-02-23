@@ -2,12 +2,12 @@
 page_title: "pingone_notification_policy Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage notification policies in PingOne.
+  Resource to create and manage notification policies in a PingOne environment.
 ---
 
 # pingone_notification_policy (Resource)
 
-Resource to create and manage notification policies in PingOne.
+Resource to create and manage notification policies in a PingOne environment.
 
 ## Example Usage - Unlimited Quota
 
@@ -71,7 +71,7 @@ resource "pingone_notification_policy" "user" {
 
 ### Optional
 
-- `quota` (Block List) A single object block that define the SMS/Voice limits. Each object contain the following elements: `type`, `deliveryMethods`, `total`. Currently, a policy can contain ony one such object. Note that instead of `total`, you can use the pair of fields: `used` and `unused`. (see [below for nested schema](#nestedblock--quota))
+- `quota` (Block List) A single object block that define the SMS/Voice limits. (see [below for nested schema](#nestedblock--quota))
 
 ### Read-Only
 
