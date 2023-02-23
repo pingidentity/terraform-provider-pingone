@@ -284,7 +284,7 @@ resource "pingone_notification_policy" "%[2]s" {
   name = "%[3]s"
 
   quota {
-    type      = "USER"
+    type   = "USER"
     used   = 40
     unused = 45
   }
@@ -313,7 +313,7 @@ resource "pingone_notification_policy" "%[2]s" {
   name = "%[3]s"
 
   quota {
-    type      = "USER"
+    type   = "USER"
     used   = 55
     unused = 45
   }
