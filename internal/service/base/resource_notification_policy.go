@@ -511,7 +511,7 @@ func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.Lis
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: quotaTFObjectTypes}
 
-	if quotas == nil || len(quotas) == 0 {
+	if len(quotas) == 0 {
 		return types.ListValueMust(tfObjType, []attr.Value{}), diags
 	}
 
