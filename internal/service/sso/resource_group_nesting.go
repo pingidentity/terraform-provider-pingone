@@ -38,14 +38,14 @@ func ResourceGroupNesting() *schema.Resource {
 				ForceNew:         true,
 			},
 			"group_id": {
-				Description:      "The ID of the environment to create the group in.",
+				Description:      "The ID of the parent group to assign the nested group to.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 				ForceNew:         true,
 			},
 			"nested_group_id": {
-				Description:      "The ID of the environment to create the group in.",
+				Description:      "The ID of the group to configure as a nested group.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),

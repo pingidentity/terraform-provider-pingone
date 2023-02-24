@@ -1,0 +1,3 @@
+```release-note:note
+`resource/pingone_group_nesting`: Corrected the schema documentation.
+```
