@@ -1,5 +1,10 @@
 ## 0.10.0 (Unreleased)
 
+NOTES:
+
+* Update `pingone_sign_on_policy` and `pingone_sign_on_policy_action` documentation example for the MFA action. ([#275](https://github.com/pingidentity/terraform-provider-pingone/issues/275))
+* `resource/pingone_group_nesting`: Corrected the schema documentation. ([#276](https://github.com/pingidentity/terraform-provider-pingone/issues/276))
+
 ## 0.9.0 (23 February 2023)
 
 NOTES:
