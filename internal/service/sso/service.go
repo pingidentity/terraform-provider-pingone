@@ -12,7 +12,9 @@ import (
 )
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewApplicationFlowPolicyAssignmentResource,
+	}
 }
 
 func DataSources() []func() datasource.DataSource {
