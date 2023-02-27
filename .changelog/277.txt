@@ -1,3 +1,11 @@
 ```release-note:new-resource
-`resource/pingone_application_flow_policy_assignment`
+pingone_application_flow_policy_assignment
+```
+
+```release-note:new-data-source
+pingone_flow_policy
+```
+
+```release-note:new-data-source
+pingone_flow_policies
 ```

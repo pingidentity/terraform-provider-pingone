@@ -116,10 +116,16 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
+data "pingone_flow_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "Test Flow 1"
+}
+
 resource "pingone_application_flow_policy_assignment" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  flow_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da084" // dummy ID
+  flow_policy_id = data.pingone_flow_policy.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
