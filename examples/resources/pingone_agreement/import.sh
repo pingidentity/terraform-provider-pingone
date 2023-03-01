@@ -1,0 +1,1 @@
+$ terraform import pingone_agreement.example <environment_id>/<agreement_id>

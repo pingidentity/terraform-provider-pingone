@@ -1,0 +1,11 @@
+```release-note:new-resource
+pingone_agreement
+```
+
+```release-note:new-resource
+pingone_agreement_localization
+```
+
+```release-note:new-resource
+pingone_agreement_revision
+```

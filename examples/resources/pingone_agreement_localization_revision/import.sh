@@ -1,0 +1,1 @@
+$ terraform import pingone_agreement_localization_revision.example <environment_id>/<agreement_id>/<agreement_localization_id>/<agreement_localization_revision_id>

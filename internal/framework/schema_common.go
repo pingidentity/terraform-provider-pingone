@@ -56,6 +56,24 @@ func Attr_EnvironmentID(description SchemaDescription) schema.StringAttribute {
 	}
 }
 
+func Attr_LinkID(description SchemaDescription) schema.StringAttribute {
+	if description.MarkdownDescription == "" {
+		description.MarkdownDescription = description.Description
+	}
+
+	return schema.StringAttribute{
+		Description:         description.Description,
+		MarkdownDescription: description.MarkdownDescription,
+		Required:            true,
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
+		Validators: []validator.String{
+			verify.P1ResourceIDValidator(),
+		},
+	}
+}
+
 func Attr_SCIMFilter(description SchemaDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.StringAttribute {
 	filterMinLength := 1
 
