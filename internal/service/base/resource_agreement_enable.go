@@ -55,17 +55,17 @@ func (r *AgreementEnableResource) Schema(ctx context.Context, req resource.Schem
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage agreements in a PingOne environment.",
+		Description: "Resource to create and manage the enabled status of an agreement in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to associate the agreement with."},
+				Description: "The ID of the environment configured with an agreement to enable/disable."},
 			),
 
 			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the agreement to enable."},
+				Description: "The ID of the agreement to set the enabled status for."},
 			),
 
 			"enabled": schema.BoolAttribute{

@@ -2,12 +2,12 @@
 page_title: "pingone_agreement Data Source - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Datasource to retrieve details of an agreement in a PingOne environment.
+  Datasource to retrieve details of an agreement configured in a PingOne environment.
 ---
 
 # pingone_agreement (Data Source)
 
-Datasource to retrieve details of an agreement in a PingOne environment.
+Datasource to retrieve details of an agreement configured in a PingOne environment.
 
 ## Example Usage
 
@@ -34,12 +34,12 @@ data "pingone_agreement" "example_by_id" {
 
 ### Optional
 
-- `agreement_id` (String) The ID of the agreement language.
-- `name` (String) A string that specifies the name of the agreement.
+- `agreement_id` (String) The ID of the agreement to retrieve. Either `agreement_id`, or `name` can be used to retrieve the agreement localization, but cannot be set together.
+- `name` (String) A string that specifies the name of the agreement to retrieve. Either `agreement_id`, or `name` can be used to retrieve the agreement localization, but cannot be set together.
 
 ### Read-Only
 
-- `consent_counts_updated_at` (String) The time the consent count metric was last updated. This value is typically updated once every 24 hours.
+- `consent_counts_updated_at` (String) The date and time the consent user count metrics were last updated. This value is typically updated once every 24 hours.
 - `description` (String) A string that specifies the description of the agreement.
 - `enabled` (Boolean) The current enabled state of the agreement.
 - `expired_user_consent_count` (Number) The number of users who have consented to the agreement, but their consent has expired. This value is last calculated at the `consent_counts_updated_at` time.

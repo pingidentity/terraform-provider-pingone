@@ -2,12 +2,12 @@
 page_title: "pingone_agreement_enable Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage agreements in a PingOne environment.
+  Resource to create and manage the enabled status of an agreement in a PingOne environment.
 ---
 
 # pingone_agreement_enable (Resource)
 
-Resource to create and manage agreements in a PingOne environment.
+Resource to create and manage the enabled status of an agreement in a PingOne environment.
 
 ## Example Usage
 
@@ -99,9 +99,9 @@ resource "pingone_agreement_enable" "my_agreement_enable" {
 
 ### Required
 
-- `agreement_id` (String) The ID of the agreement to enable.
+- `agreement_id` (String) The ID of the agreement to set the enabled status for.
 - `enabled` (Boolean) A boolean that specifies the current enabled state of the agreement. The agreement must support the default language to be enabled. It cannot be disabled if it is referenced by a sign-on policy action. When an agreement is disabled, it is not used anywhere that it is configured across PingOne.
-- `environment_id` (String) The ID of the environment to associate the agreement with.
+- `environment_id` (String) The ID of the environment configured with an agreement to enable/disable.
 
 ### Read-Only
 

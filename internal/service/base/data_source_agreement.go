@@ -73,7 +73,7 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Datasource to retrieve details of an agreement in a PingOne environment.",
+		Description: "Datasource to retrieve details of an agreement configured in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -83,7 +83,7 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 			),
 
 			"agreement_id": schema.StringAttribute{
-				Description: "The ID of the agreement language.",
+				Description: "The ID of the agreement to retrieve. Either `agreement_id`, or `name` can be used to retrieve the agreement localization, but cannot be set together.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
@@ -92,7 +92,7 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 			},
 
 			"name": schema.StringAttribute{
-				Description: "A string that specifies the name of the agreement.",
+				Description: "A string that specifies the name of the agreement to retrieve. Either `agreement_id`, or `name` can be used to retrieve the agreement localization, but cannot be set together.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("agreement_id")),
@@ -128,7 +128,7 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 			},
 
 			"consent_counts_updated_at": schema.StringAttribute{
-				Description: "The time the consent count metric was last updated. This value is typically updated once every 24 hours.",
+				Description: "The date and time the consent user count metrics were last updated. This value is typically updated once every 24 hours.",
 				Computed:    true,
 			},
 		},

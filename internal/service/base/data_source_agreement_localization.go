@@ -72,11 +72,11 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			),
 
 			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "A string that specifies the UUID that identifies the agreement ID that the localization is applied to."},
+				Description: "The UUID that identifies the agreement ID that the localization is applied to."},
 			),
 
 			"agreement_localization_id": schema.StringAttribute{
-				Description: "The ID of the agreement localization language.",
+				Description: "The ID of the agreement localization language to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
@@ -88,7 +88,7 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			},
 
 			"display_name": schema.StringAttribute{
-				Description: "A string used as the title of the agreement localization for the language presented to the user.",
+				Description: "A string used as the title of the agreement localization to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
@@ -100,7 +100,7 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			},
 
 			"locale": schema.StringAttribute{
-				Description: "A string used as the locale code of the agreement localization.",
+				Description: "A string used as the locale code of the agreement localization to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.",
 				Optional:    true,
 				Validators: []validator.String{ // TODO: regex validator
 					stringvalidator.ExactlyOneOf(
@@ -117,22 +117,22 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			},
 
 			"enabled": schema.BoolAttribute{
-				Description: "A boolean that specifies whether a localized text is enabled in the agreement.",
+				Description: "A boolean that specifies whether the localization (and it's revision text) is enabled in the agreement.",
 				Computed:    true,
 			},
 
 			"text_checkbox_accept": schema.StringAttribute{
-				Description: "A string that specifies the text next to the \"accept\" checkbox in the end user interface. Accepted character are unicode letters, combining marks, numeric characters, whitespace, and punctuation characters.",
+				Description: "A string that specifies the text next to the \"accept\" checkbox in the end user interface.",
 				Computed:    true,
 			},
 
 			"text_button_continue": schema.StringAttribute{
-				Description: "A string that specifies the text next to the \"continue\" button in the end user interface. Accepted character are unicode letters, combining marks, numeric characters, whitespace, and punctuation characters.",
+				Description: "A string that specifies the text next to the \"continue\" button in the end user interface.",
 				Computed:    true,
 			},
 
 			"text_button_decline": schema.StringAttribute{
-				Description: "A string that specifies the text next to the \"decline\" button in the end user interface. Accepted character are unicode letters, combining marks, numeric characters, whitespace, and punctuation characters.",
+				Description: "A string that specifies the text next to the \"decline\" button in the end user interface.",
 				Computed:    true,
 			},
 

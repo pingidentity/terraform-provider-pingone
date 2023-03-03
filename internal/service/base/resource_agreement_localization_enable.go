@@ -10,12 +10,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework/boolplanmodifierinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -57,34 +55,26 @@ func (r *AgreementLocalizationEnableResource) Schema(ctx context.Context, req re
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage agreements in a PingOne environment.",
+		Description: "Resource to create and manage the enabled status of an agreement localization in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to associate the agreement with."},
+				Description: "The ID of the environment configured with an agreement localization to enable/disable."},
 			),
 
 			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the agreement to enable."},
+				Description: "The ID of the agreement configured with an agreement localization to enable/disable."},
 			),
 
 			"agreement_localization_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the agreement localization to enable."},
+				Description: "The ID of the agreement localization to enable/disable."},
 			),
 
 			"enabled": schema.BoolAttribute{
-				Description: "A boolean that specifies the current enabled state of the agreement. The agreement must support the default language to be enabled. It cannot be disabled if it is referenced by a sign-on policy action. When an agreement is disabled, it is not used anywhere that it is configured across PingOne.",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifierinternal.BoolDefaultValue(
-						types.BoolValue(true),
-						"The default value for this attribute is \"true\".",
-						"The default value for this attribute is `true`.",
-					),
-				},
+				Description: "A boolean that specifies the current enabled state of the agreement localization. The agreement localization must have an active revision text to be enabled.",
+				Required:    true,
 			},
 		},
 	}

@@ -39,21 +39,21 @@ data "pingone_agreement_localization" "example_by_id" {
 
 ### Required
 
-- `agreement_id` (String) A string that specifies the UUID that identifies the agreement ID that the localization is applied to.
+- `agreement_id` (String) The UUID that identifies the agreement ID that the localization is applied to.
 - `environment_id` (String) The ID of the environment that is configured with the agreement localization.
 
 ### Optional
 
-- `agreement_localization_id` (String) The ID of the agreement localization language.
-- `display_name` (String) A string used as the title of the agreement localization for the language presented to the user.
-- `locale` (String) A string used as the locale code of the agreement localization.
+- `agreement_localization_id` (String) The ID of the agreement localization language to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.
+- `display_name` (String) A string used as the title of the agreement localization to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.
+- `locale` (String) A string used as the locale code of the agreement localization to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.
 
 ### Read-Only
 
 - `current_revision_id` (String) A string that specifies the UUID of the current revision associated with this agreement localization resource. The current revision is the one shown to users for new consents in the language.
-- `enabled` (Boolean) A boolean that specifies whether a localized text is enabled in the agreement.
+- `enabled` (Boolean) A boolean that specifies whether the localization (and it's revision text) is enabled in the agreement.
 - `id` (String) The ID of this resource.
 - `language_id` (String) The ID of the language used for the agreement localization.
-- `text_button_continue` (String) A string that specifies the text next to the "continue" button in the end user interface. Accepted character are unicode letters, combining marks, numeric characters, whitespace, and punctuation characters.
-- `text_button_decline` (String) A string that specifies the text next to the "decline" button in the end user interface. Accepted character are unicode letters, combining marks, numeric characters, whitespace, and punctuation characters.
-- `text_checkbox_accept` (String) A string that specifies the text next to the "accept" checkbox in the end user interface. Accepted character are unicode letters, combining marks, numeric characters, whitespace, and punctuation characters.
+- `text_button_continue` (String) A string that specifies the text next to the "continue" button in the end user interface.
+- `text_button_decline` (String) A string that specifies the text next to the "decline" button in the end user interface.
+- `text_checkbox_accept` (String) A string that specifies the text next to the "accept" checkbox in the end user interface.
