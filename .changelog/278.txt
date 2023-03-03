@@ -10,6 +10,14 @@ pingone_agreement_localization
 pingone_agreement_revision
 ```
 
+```release-note:new-resource
+pingone_agreement_enable
+```
+
+```release-note:new-resource
+pingone_agreement_localization_enable
+```
+
 ```release-note:new-data-source
 pingone_agreement
 ```
