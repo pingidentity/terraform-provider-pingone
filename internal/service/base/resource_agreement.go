@@ -86,7 +86,7 @@ func (r *AgreementResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 
 			"enabled": schema.BoolAttribute{
-				Description: "", // TODO
+				Description: "The current enabled state of the agreement.",
 				Computed:    true,
 			},
 
