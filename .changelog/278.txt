@@ -9,3 +9,11 @@ pingone_agreement_localization
 ```release-note:new-resource
 pingone_agreement_revision
 ```
+
+```release-note:new-data-source
+pingone_agreement
+```
+
+```release-note:new-data-source
+pingone_agreement_localization
+```
