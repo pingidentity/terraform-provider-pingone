@@ -39,7 +39,7 @@ resource "pingone_agreement" "my_agreement" {
 
 ### Read-Only
 
-- `enabled` (Boolean)
+- `enabled` (Boolean) The current enabled state of the agreement.
 - `id` (String) The ID of this resource.
 
 ## Import
