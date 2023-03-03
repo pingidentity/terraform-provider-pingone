@@ -479,7 +479,6 @@ func agreementLocalizationDeleteErrorHandler(error model.P1Error) diag.Diagnosti
 		return diags
 	}
 
-	// Last action in the policy
 	if v, ok := error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
 		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
 			if match, _ := regexp.MatchString("Agreement language with effective revision can not be deleted.", v[0].GetMessage()); match {

@@ -315,3 +315,10 @@ func DomainVerifiedSandboxEnvironment() string {
 			name = "tf-testacc-static-domainverified-test"
 		}`
 }
+
+func AgreementSandboxEnvironment() string {
+	return `
+		data "pingone_environment" "agreement_test" {
+			name = "tf-testacc-static-agreements-test"
+		}`
+}

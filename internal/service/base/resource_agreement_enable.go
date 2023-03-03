@@ -4,16 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -22,39 +19,37 @@ import (
 )
 
 // Types
-type AgreementResource struct {
+type AgreementEnableResource struct {
 	client *management.APIClient
 	region model.RegionMapping
 }
 
-type AgreementResourceModel struct {
-	Id                  types.String  `tfsdk:"id"`
-	EnvironmentId       types.String  `tfsdk:"environment_id"`
-	Name                types.String  `tfsdk:"name"`
-	Enabled             types.Bool    `tfsdk:"enabled"`
-	Description         types.String  `tfsdk:"description"`
-	ReconsentPeriodDays types.Float64 `tfsdk:"reconsent_period_days"`
+type AgreementEnableResourceModel struct {
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	AgreementId   types.String `tfsdk:"agreement_id"`
+	Enabled       types.Bool   `tfsdk:"enabled"`
 }
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &AgreementResource{}
-	_ resource.ResourceWithConfigure   = &AgreementResource{}
-	_ resource.ResourceWithImportState = &AgreementResource{}
+	_ resource.Resource                = &AgreementEnableResource{}
+	_ resource.ResourceWithConfigure   = &AgreementEnableResource{}
+	_ resource.ResourceWithImportState = &AgreementEnableResource{}
 )
 
 // New Object
-func NewAgreementResource() resource.Resource {
-	return &AgreementResource{}
+func NewAgreementEnableResource() resource.Resource {
+	return &AgreementEnableResource{}
 }
 
 // Metadata
-func (r *AgreementResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_agreement"
+func (r *AgreementEnableResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_agreement_enable"
 }
 
 // Schema.
-func (r *AgreementResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *AgreementEnableResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
 
@@ -69,36 +64,19 @@ func (r *AgreementResource) Schema(ctx context.Context, req resource.SchemaReque
 				Description: "The ID of the environment to associate the agreement with."},
 			),
 
-			"name": schema.StringAttribute{
-				Description: "A string that specifies the name of the agreement to configure.",
-				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
-				},
-			},
-
-			"description": schema.StringAttribute{
-				Description: "A string that specifies the description of the agreement.",
-				Optional:    true,
-			},
+			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
+				Description: "The ID of the agreement to enable."},
+			),
 
 			"enabled": schema.BoolAttribute{
-				Description: "The current enabled state of the agreement.",
-				Computed:    true,
-			},
-
-			"reconsent_period_days": schema.Float64Attribute{
-				Description: "A number that specifies the number of days until a consent to this agreement expires.",
-				Optional:    true,
+				Description: "A boolean that specifies the current enabled state of the agreement. The agreement must support the default language to be enabled. It cannot be disabled if it is referenced by a sign-on policy action. When an agreement is disabled, it is not used anywhere that it is configured across PingOne.",
+				Required:    true,
 			},
 		},
 	}
 }
 
-func (r *AgreementResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *AgreementEnableResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -128,8 +106,8 @@ func (r *AgreementResource) Configure(ctx context.Context, req resource.Configur
 	r.region = resourceConfig.Client.API.Region
 }
 
-func (r *AgreementResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state AgreementResourceModel
+func (r *AgreementEnableResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state AgreementEnableResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -148,18 +126,33 @@ func (r *AgreementResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
+	agreementResponse, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Execute()
+		},
+		"ReadOneAgreement",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Build the model for the API
-	createAgreement := plan.expand()
+	agreementEnable := plan.expand(agreementResponse.(*management.Agreement))
 
 	// Run the API call
 	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.CreateAgreement(ctx, plan.EnvironmentId.ValueString()).Agreement(*createAgreement).Execute()
+			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Agreement(*agreementEnable).Execute()
 		},
-		"CreateAgreement",
-		framework.DefaultCustomError,
+		"UpdateAgreement",
+		agreementEnableUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(d...)
@@ -175,8 +168,8 @@ func (r *AgreementResource) Create(ctx context.Context, req resource.CreateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (r *AgreementResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *AgreementResourceModel
+func (r *AgreementEnableResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *AgreementEnableResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -222,8 +215,8 @@ func (r *AgreementResource) Read(ctx context.Context, req resource.ReadRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *AgreementResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state AgreementResourceModel
+func (r *AgreementEnableResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state AgreementEnableResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -242,18 +235,33 @@ func (r *AgreementResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
+	agreementResponse, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Execute()
+		},
+		"ReadOneAgreement",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Build the model for the API
-	agreement := plan.expand()
+	agreementEnable := plan.expand(agreementResponse.(*management.Agreement))
 
 	// Run the API call
 	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Agreement(*agreement).Execute()
+			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Agreement(*agreementEnable).Execute()
 		},
 		"UpdateAgreement",
-		framework.DefaultCustomError,
+		agreementEnableUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(d...)
@@ -269,8 +277,8 @@ func (r *AgreementResource) Update(ctx context.Context, req resource.UpdateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (r *AgreementResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *AgreementResourceModel
+func (r *AgreementEnableResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *AgreementEnableResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -289,15 +297,13 @@ func (r *AgreementResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	// Run the API call
-	_, diags := framework.ParseResponse(
+	agreementResponse, diags := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := r.client.AgreementsResourcesApi.DeleteAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
 		},
-		"DeleteAgreement",
+		"ReadOneAgreement",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
@@ -305,9 +311,29 @@ func (r *AgreementResource) Delete(ctx context.Context, req resource.DeleteReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Build the model for the API
+	data.Enabled = types.BoolValue(false)
+	agreementDisable := data.expand(agreementResponse.(*management.Agreement))
+
+	// Run the API call
+	_, d := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Agreement(*agreementDisable).Execute()
+		},
+		"UpdateAgreement",
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
-func (r *AgreementResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *AgreementEnableResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	splitLength := 2
 	attributes := strings.SplitN(req.ID, "/", splitLength)
 
@@ -323,22 +349,22 @@ func (r *AgreementResource) ImportState(ctx context.Context, req resource.Import
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *AgreementResourceModel) expand() *management.Agreement {
+func (p *AgreementEnableResourceModel) expand(existingObject *management.Agreement) *management.Agreement {
 
-	data := management.NewAgreement(p.Enabled.ValueBool(), p.Name.ValueString())
+	data := management.NewAgreement(p.Enabled.ValueBool(), existingObject.GetName())
 
-	if !p.Description.IsNull() && !p.Description.IsUnknown() {
-		data.SetDescription(p.Description.ValueString())
+	if v, ok := existingObject.GetDescriptionOk(); ok {
+		data.SetDescription(*v)
 	}
 
-	if !p.ReconsentPeriodDays.IsNull() && !p.ReconsentPeriodDays.IsUnknown() {
-		data.SetReconsentPeriodDays(float32(p.ReconsentPeriodDays.ValueFloat64()))
+	if v, ok := existingObject.GetReconsentPeriodDaysOk(); ok {
+		data.SetReconsentPeriodDays(*v)
 	}
 
 	return data
 }
 
-func (p *AgreementResourceModel) toState(apiObject *management.Agreement) diag.Diagnostics {
+func (p *AgreementEnableResourceModel) toState(apiObject *management.Agreement) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -352,10 +378,27 @@ func (p *AgreementResourceModel) toState(apiObject *management.Agreement) diag.D
 
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.AgreementId = framework.StringToTF(apiObject.GetId())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
-	p.ReconsentPeriodDays = framework.Float32OkToTF(apiObject.GetReconsentPeriodDaysOk())
 
 	return diags
+}
+
+func agreementEnableUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if v, ok := error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+			if match, _ := regexp.MatchString("The agreement can not be enabled without supporting the default language configured for the environment.", v[0].GetMessage()); match {
+				diags.AddError(
+					v[0].GetMessage(),
+					"The agreement must have an enabled agreement localization for the default language of the environment.  Ensure that a `pingone_agreement_localization`, `pingone_agreement_localization_revision` and `pingone_agreement_localization_enable` resource exist for the default langauge, or the environment's default language is re-configured using the `pingone_language_update` resource.",
+				)
+
+				return diags
+			}
+		}
+	}
+
+	return nil
 }

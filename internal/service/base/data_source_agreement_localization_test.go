@@ -175,22 +175,22 @@ resource "pingone_agreement_localization" "%[2]s" {
 
   text_checkbox_accept = "Yeah"
   text_button_continue = "Move on"
-  text_button_decline = "Nah"
+  text_button_decline  = "Nah"
 }
 
 resource "pingone_agreement_localization_revision" "%[2]s" {
-	environment_id            = data.pingone_environment.general_test.id
-	agreement_id              = pingone_agreement.%[2]s.id
-	agreement_localization_id = pingone_agreement_localization.%[2]s.id
-  
-	content_type      = "text/html"
-	effective_at      = "%[4]s"
-	require_reconsent = true
-	text              = <<EOT
+  environment_id            = data.pingone_environment.general_test.id
+  agreement_id              = pingone_agreement.%[2]s.id
+  agreement_localization_id = pingone_agreement_localization.%[2]s.id
+
+  content_type      = "text/html"
+  effective_at      = "%[4]s"
+  require_reconsent = true
+  text              = <<EOT
 	<h1>Test</h1>
   EOT
-  
-  }
+
+}
 
 data "pingone_agreement_localization" "%[3]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -199,7 +199,7 @@ data "pingone_agreement_localization" "%[3]s" {
   display_name = pingone_agreement_localization.%[2]s.display_name
 
   depends_on = [
-	pingone_agreement_localization_revision.%[2]s
+    pingone_agreement_localization_revision.%[2]s
   ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
@@ -235,22 +235,22 @@ resource "pingone_agreement_localization" "%[2]s" {
 
   text_checkbox_accept = "Yeah"
   text_button_continue = "Move on"
-  text_button_decline = "Nah"
+  text_button_decline  = "Nah"
 }
 
 resource "pingone_agreement_localization_revision" "%[2]s" {
-	environment_id            = data.pingone_environment.general_test.id
-	agreement_id              = pingone_agreement.%[2]s.id
-	agreement_localization_id = pingone_agreement_localization.%[2]s.id
-  
-	content_type      = "text/html"
-	effective_at      = "%[4]s"
-	require_reconsent = true
-	text              = <<EOT
+  environment_id            = data.pingone_environment.general_test.id
+  agreement_id              = pingone_agreement.%[2]s.id
+  agreement_localization_id = pingone_agreement_localization.%[2]s.id
+
+  content_type      = "text/html"
+  effective_at      = "%[4]s"
+  require_reconsent = true
+  text              = <<EOT
 	<h1>Test</h1>
   EOT
-  
-  }
+
+}
 
 data "pingone_agreement_localization" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -259,7 +259,7 @@ data "pingone_agreement_localization" "%[2]s" {
   locale = pingone_agreement_localization.%[2]s.locale
 
   depends_on = [
-	pingone_agreement_localization_revision.%[2]s
+    pingone_agreement_localization_revision.%[2]s
   ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
@@ -295,22 +295,22 @@ resource "pingone_agreement_localization" "%[2]s" {
 
   text_checkbox_accept = "Yeah"
   text_button_continue = "Move on"
-  text_button_decline = "Nah"
+  text_button_decline  = "Nah"
 }
 
 resource "pingone_agreement_localization_revision" "%[2]s" {
-	environment_id            = data.pingone_environment.general_test.id
-	agreement_id              = pingone_agreement.%[2]s.id
-	agreement_localization_id = pingone_agreement_localization.%[2]s.id
-  
-	content_type      = "text/html"
-	effective_at      = "%[4]s"
-	require_reconsent = true
-	text              = <<EOT
+  environment_id            = data.pingone_environment.general_test.id
+  agreement_id              = pingone_agreement.%[2]s.id
+  agreement_localization_id = pingone_agreement_localization.%[2]s.id
+
+  content_type      = "text/html"
+  effective_at      = "%[4]s"
+  require_reconsent = true
+  text              = <<EOT
 	<h1>Test</h1>
   EOT
-  
-  }
+
+}
 
 data "pingone_agreement_localization" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -319,7 +319,7 @@ data "pingone_agreement_localization" "%[2]s" {
   agreement_localization_id = pingone_agreement_localization.%[2]s.id
 
   depends_on = [
-	pingone_agreement_localization_revision.%[2]s
+    pingone_agreement_localization_revision.%[2]s
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
 }

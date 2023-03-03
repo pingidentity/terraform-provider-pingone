@@ -15,6 +15,7 @@ import (
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewAgreementResource,
+		NewAgreementEnableResource,
 		NewAgreementLocalizationResource,
 		NewAgreementLocalizationEnableResource,
 		NewAgreementLocalizationRevisionResource,
