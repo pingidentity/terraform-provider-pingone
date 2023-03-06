@@ -2,12 +2,12 @@
 page_title: "pingone_agreement_localization Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage agreements in a PingOne environment.
+  Resource to create and manage agreement localizations in a PingOne environment.
 ---
 
 # pingone_agreement_localization (Resource)
 
-Resource to create and manage agreements in a PingOne environment.
+Resource to create and manage agreement localizations in a PingOne environment.
 
 ## Example Usage
 
@@ -88,10 +88,10 @@ resource "pingone_agreement_localization_enable" "my_agreement_fr_enable" {
 
 ### Required
 
-- `agreement_id` (String) A string that specifies the UUID that identifies the agreement ID to associate the localization to.
+- `agreement_id` (String) The ID of the agreement to associate the agreement localization with.
 - `display_name` (String) A string used as the title of the agreement for the language presented to the user.
-- `environment_id` (String) The ID of the environment to associate the agreement with.
-- `language_id` (String) A string that specifies the UUID that identifies the language ID of the agreement localization.
+- `environment_id` (String) The ID of the environment to associate the agreement localization with.
+- `language_id` (String) The ID of the language in the PingOne environment that the localization applies to.
 
 ### Optional
 
@@ -101,9 +101,9 @@ resource "pingone_agreement_localization_enable" "my_agreement_fr_enable" {
 
 ### Read-Only
 
-- `enabled` (Boolean) A boolean that specifies whether a localized text is enabled in the agreement.
+- `enabled` (Boolean) A boolean that specifies whether the localization (and it's revision text) is enabled in the agreement.
 - `id` (String) The ID of this resource.
-- `locale` (String)
+- `locale` (String) A string used as the locale code of the agreement localization to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.
 
 ## Import
 

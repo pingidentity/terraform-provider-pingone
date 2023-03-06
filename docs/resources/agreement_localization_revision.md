@@ -2,12 +2,12 @@
 page_title: "pingone_agreement_localization_revision Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage agreements in a PingOne environment.
+  Resource to create and manage agreement localization revisions in a PingOne environment.
 ---
 
 # pingone_agreement_localization_revision (Resource)
 
-Resource to create and manage agreements in a PingOne environment.
+Resource to create and manage agreement localization revisions in a PingOne environment.
 
 ## Example Usage
 
@@ -88,12 +88,12 @@ resource "pingone_agreement_localization_enable" "my_agreement_fr_enable" {
 
 ### Required
 
-- `agreement_id` (String) The ID of the environment to associate the agreement with.
-- `agreement_localization_id` (String) A string that specifies the UUID that identifies the agreement localization ID to associate the revision with.
-- `content_type` (String) The content type of `text`. Options are `text/html` and `text/plain`, as defined by [rfc-6838](https://datatracker.ietf.org/doc/html/rfc6838#section-4.2.1) and [Media Types/text](https://www.iana.org/assignments/media-types/media-types.xhtml#text).
-- `effective_at` (String) The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.
-- `environment_id` (String) The ID of the environment to associate the agreement with.
-- `require_reconsent` (Boolean) Whether the user is required to provide consent to the language revision after it becomes effective.
+- `agreement_id` (String) The ID of the agreement to associate the agreement localization revision with.
+- `agreement_localization_id` (String) The ID of the agreement localization to associate the revision with.
+- `content_type` (String) The content type to apply to the revision text configured in the `text` parameter. Options are `text/html` and `text/plain`, as defined by [rfc-6838](https://datatracker.ietf.org/doc/html/rfc6838#section-4.2.1) and [Media Types/text](https://www.iana.org/assignments/media-types/media-types.xhtml#text).
+- `effective_at` (String) The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.
+- `environment_id` (String) The ID of the environment to associate the agreement localization revision with.
+- `require_reconsent` (Boolean) Whether the user is required to provide a renewed consent to the language revision after it becomes effective.
 - `text` (String) Text or HTML for the revision. HTML support includes **tags** (italicize, bold, links, headers, paragraph, line breaks), **link (a) tags** (allow href, style, target attributes), **block tags (p, b, h)** (allow style and align attributes).
 
 ### Read-Only

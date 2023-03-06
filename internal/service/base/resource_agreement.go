@@ -91,7 +91,7 @@ func (r *AgreementResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 
 			"reconsent_period_days": schema.Float64Attribute{
-				Description: "A number that specifies the number of days until a consent to this agreement expires.",
+				Description: "A number that specifies the number of days until a user consent to this agreement expires, and users must then be prompted for reconsent.",
 				Optional:    true,
 			},
 		},

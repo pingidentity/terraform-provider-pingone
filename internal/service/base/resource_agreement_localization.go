@@ -63,21 +63,21 @@ func (r *AgreementLocalizationResource) Schema(ctx context.Context, req resource
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage agreements in a PingOne environment.",
+		Description: "Resource to create and manage agreement localizations in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to associate the agreement with."},
+				Description: "The ID of the environment to associate the agreement localization with."},
 			),
 
 			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "A string that specifies the UUID that identifies the agreement ID to associate the localization to."},
+				Description: "The ID of the agreement to associate the agreement localization with."},
 			),
 
 			"language_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "A string that specifies the UUID that identifies the language ID of the agreement localization."},
+				Description: "The ID of the language in the PingOne environment that the localization applies to."},
 			),
 
 			"display_name": schema.StringAttribute{
@@ -89,12 +89,12 @@ func (r *AgreementLocalizationResource) Schema(ctx context.Context, req resource
 			},
 
 			"locale": schema.StringAttribute{
-				Description: "", // TODO
+				Description: "A string used as the locale code of the agreement localization to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.",
 				Computed:    true,
 			},
 
 			"enabled": schema.BoolAttribute{
-				Description: "A boolean that specifies whether a localized text is enabled in the agreement.",
+				Description: "A boolean that specifies whether the localization (and it's revision text) is enabled in the agreement.",
 				Computed:    true,
 			},
 

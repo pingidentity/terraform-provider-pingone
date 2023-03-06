@@ -105,7 +105,7 @@ resource "pingone_agreement_enable" "my_agreement_enable" {
 ### Optional
 
 - `description` (String) A string that specifies the description of the agreement.
-- `reconsent_period_days` (Number) A number that specifies the number of days until a consent to this agreement expires.
+- `reconsent_period_days` (Number) A number that specifies the number of days until a user consent to this agreement expires, and users must then be prompted for reconsent.
 
 ### Read-Only
 

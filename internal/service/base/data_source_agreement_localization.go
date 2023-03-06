@@ -102,12 +102,12 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			"locale": schema.StringAttribute{
 				Description: "A string used as the locale code of the agreement localization to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.",
 				Optional:    true,
-				Validators: []validator.String{ // TODO: regex validator
+				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("agreement_localization_id"),
 						path.MatchRelative().AtParent().AtName("display_name"),
 					),
-					stringvalidator.LengthAtLeast(nameLength),
+					stringvalidator.OneOf(verify.FullIsoList()...),
 				},
 			},
 

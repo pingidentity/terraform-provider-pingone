@@ -67,46 +67,61 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 
 	const attrMinLength = 1
 
+	contentTypeFmt := "The content type to apply to the revision text configured in the `text` parameter. Options are `text/html` and `text/plain`, as defined by %s."
+	contentTypeDescription := framework.SchemaDescription{
+		MarkdownDescription: fmt.Sprintf(contentTypeFmt, "[rfc-6838](https://datatracker.ietf.org/doc/html/rfc6838#section-4.2.1) and [Media Types/text](https://www.iana.org/assignments/media-types/media-types.xhtml#text)"),
+		Description:         fmt.Sprintf(strings.ReplaceAll(contentTypeFmt, "`", "\""), "rfc-6838 (https://datatracker.ietf.org/doc/html/rfc6838#section-4.2.1) and  Media Types/text (https://www.iana.org/assignments/media-types/media-types.xhtml#text)"),
+	}
+
+	// "Text or HTML for the revision. HTML support includes \"tags\" (italicize, bold, links, headers, paragraph, line breaks), \"link (a) tags\" (allow href, style, target attributes), \"block tags (p, b, h)\" (allow style and align attributes).",
+	// "Text or HTML for the revision. HTML support includes **tags** (italicize, bold, links, headers, paragraph, line breaks), **link (a) tags** (allow href, style, target attributes), **block tags (p, b, h)** (allow style and align attributes).",
+
+	textDescriptionFmt := "Text or HTML for the revision. HTML support includes **tags** (italicize, bold, links, headers, paragraph, line breaks), **link (a) tags** (allow href, style, target attributes), **block tags (p, b, h)** (allow style and align attributes)."
+	textDescription := framework.SchemaDescription{
+		MarkdownDescription: textDescriptionFmt,
+		Description:         strings.ReplaceAll(textDescriptionFmt, "**", "\""),
+	}
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage agreements in a PingOne environment.",
+		Description: "Resource to create and manage agreement localization revisions in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to associate the agreement with."},
+				Description: "The ID of the environment to associate the agreement localization revision with."},
 			),
 
 			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to associate the agreement with."},
+				Description: "The ID of the agreement to associate the agreement localization revision with."},
 			),
 
 			"agreement_localization_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "A string that specifies the UUID that identifies the agreement localization ID to associate the revision with."},
+				Description: "The ID of the agreement localization to associate the revision with."},
 			),
 
 			"content_type": schema.StringAttribute{
-				Description:         "The content type of text. Options are text/html and text/plain, as defined by rfc-6838 (https://datatracker.ietf.org/doc/html/rfc6838#section-4.2.1) and Media Types/text (https://www.iana.org/assignments/media-types/media-types.xhtml#text).",
-				MarkdownDescription: "The content type of `text`. Options are `text/html` and `text/plain`, as defined by [rfc-6838](https://datatracker.ietf.org/doc/html/rfc6838#section-4.2.1) and [Media Types/text](https://www.iana.org/assignments/media-types/media-types.xhtml#text).",
+				Description:         contentTypeDescription.Description,
+				MarkdownDescription: contentTypeDescription.MarkdownDescription,
 				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
-				Validators: []validator.String{ // TODO validation
-					stringvalidator.LengthAtLeast(attrMinLength),
+				Validators: []validator.String{
+					stringvalidator.OneOf(string(management.ENUMAGREEMENTREVISIONCONTENTTYPE_HTML), string(management.ENUMAGREEMENTREVISIONCONTENTTYPE_PLAIN)),
 				},
 			},
 
 			"effective_at": schema.StringAttribute{
-				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.",
+				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Validators: []validator.String{ // TODO (RFC3339)
-					stringvalidator.LengthAtLeast(attrMinLength),
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile(`^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[\+-]\d{2}:\d{2})?)$`), "Attribute must be a valid RFC3339 date/time string."),
 				},
 			},
 
@@ -116,7 +131,7 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 			},
 
 			"require_reconsent": schema.BoolAttribute{
-				Description: "Whether the user is required to provide consent to the language revision after it becomes effective.",
+				Description: "Whether the user is required to provide a renewed consent to the language revision after it becomes effective.",
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.RequiresReplace(),
 				},
@@ -124,8 +139,8 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 			},
 
 			"text": schema.StringAttribute{
-				Description:         "Text or HTML for the revision. HTML support includes \"tags\" (italicize, bold, links, headers, paragraph, line breaks), \"link (a) tags\" (allow href, style, target attributes), \"block tags (p, b, h)\" (allow style and align attributes).",
-				MarkdownDescription: "Text or HTML for the revision. HTML support includes **tags** (italicize, bold, links, headers, paragraph, line breaks), **link (a) tags** (allow href, style, target attributes), **block tags (p, b, h)** (allow style and align attributes).",
+				Description:         textDescription.Description,
+				MarkdownDescription: textDescription.MarkdownDescription,
 				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
