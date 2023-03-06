@@ -1028,7 +1028,7 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		}
 
 		if v1, ok := oidcOptions["pkce_enforcement"].(string); ok && v1 != "" {
-			if application.GetType() == management.ENUMAPPLICATIONTYPE_WEB_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_CUSTOM_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SERVICE {
+			if application.GetType() == management.ENUMAPPLICATIONTYPE_WEB_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_NATIVE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_CUSTOM_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SERVICE {
 				application.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(v1))
 			}
 		}
