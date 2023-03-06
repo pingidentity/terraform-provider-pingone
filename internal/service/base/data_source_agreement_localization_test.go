@@ -357,7 +357,7 @@ data "pingone_agreement_localization" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   agreement_id   = pingone_agreement.%[2]s.id
 
-  locale = "doesnotexist"
+  locale = "da"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
