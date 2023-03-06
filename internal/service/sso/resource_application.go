@@ -180,10 +180,10 @@ func ResourceApplication() *schema.Resource {
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\".")),
 						},
 						"target_link_uri": {
-							Description:      "The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted.",
+							Description:      "The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted as well as custom mobile native schema (e.g., `org.bxretail.app://target`).",
 							Type:             schema.TypeString,
 							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://target`).")),
 						},
 						"grant_types": {
 							Description: fmt.Sprintf("A list that specifies the grant type for the authorization request.  Options are `%s`, `%s`, `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCGRANTTYPE_AUTHORIZATION_CODE), string(management.ENUMAPPLICATIONOIDCGRANTTYPE_IMPLICIT), string(management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN), string(management.ENUMAPPLICATIONOIDCGRANTTYPE_CLIENT_CREDENTIALS)),
@@ -217,11 +217,11 @@ func ResourceApplication() *schema.Resource {
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_REQUIRED), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_S256_REQUIRED)}, false)),
 						},
 						"redirect_uris": {
-							Description: "A list of strings that specifies the allowed callback URIs for the authentication response.    The provided URLs are expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
+							Description: "A list of strings that specifies the allowed callback URIs for the authentication response.    The provided URLs are expected to use the `https://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  The `http` schema is only permitted where the host is `localhost` or `127.0.0.1`.",
 							Type:        schema.TypeSet,
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
-								ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\".")),
+								ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`), "Expected value to have a url with schema of \"https\" or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\".")),
 							},
 							Optional: true,
 						},
@@ -232,30 +232,30 @@ func ResourceApplication() *schema.Resource {
 							Default:     false,
 						},
 						"post_logout_redirect_uris": {
-							Description: "A list of strings that specifies the URLs that the browser can be redirected to after logout.  Both `http://` and `https://` URLs are permitted.",
+							Description: "A list of strings that specifies the URLs that the browser can be redirected to after logout.  The provided URLs are expected to use the `https://`, `http://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://logout`).",
 							Type:        schema.TypeSet,
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
-								ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
+								ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://logout`).")),
 							},
 							Optional: true,
 						},
 						"refresh_token_duration": {
-							Description:      "An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is 2592000, or 30 days. Valid values are between 60 and 2147483647. If the refresh_token_rolling_duration property is specified for the application, then this property must be less than or equal to the value of refreshTokenRollingDuration. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
+							Description:      "An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is `2592000`, or 30 days. Valid values are between `60` and `2147483647`. If the `refresh_token_rolling_duration` property is specified for the application, then this property value must be less than or equal to the value of `refresh_token_rolling_duration`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.",
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          2592000,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(60, 2147483647)),
 						},
 						"refresh_token_rolling_duration": {
-							Description:      "An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. If a value is not provided, the default value is 15552000, or 180 days. Valid values are between 60 and 2147483647. After this property is set, the value cannot be nullified. This value is used to generate the value for the exp claim when minting a new refresh token.",
+							Description:      "An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. If a value is not provided, the default value is `15552000`, or 180 days. Valid values are between `60` and `2147483647`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.",
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          15552000,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(60, 2147483647)),
 						},
 						"refresh_token_rolling_grace_period_duration": {
-							Description:      "The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens. This is useful in the case of network errors on the client. Valid values are between 0 and 86400 seconds. Null is treated the same as 0.",
+							Description:      "The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens. This is useful in the case of network errors on the client. Valid values are between `0` and `86400` seconds. `Null` is treated the same as `0`.",
 							Type:             schema.TypeInt,
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 86400)),
@@ -1028,7 +1028,7 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		}
 
 		if v1, ok := oidcOptions["pkce_enforcement"].(string); ok && v1 != "" {
-			if application.GetType() == management.ENUMAPPLICATIONTYPE_WEB_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_CUSTOM_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SERVICE {
+			if application.GetType() == management.ENUMAPPLICATIONTYPE_WEB_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_NATIVE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_CUSTOM_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SERVICE {
 				application.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(v1))
 			}
 		}
