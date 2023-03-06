@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_application`: Fix input validation for mobile native uri values on `post_logout_redirect_uris`, `redirect_uris` and `target_link_uri` parameters.
+```
+
+```release-note:bug
+`resource/pingone_application`: Fix a bug where `pkce_enforcement` couldn't be set on native application types.
+```
