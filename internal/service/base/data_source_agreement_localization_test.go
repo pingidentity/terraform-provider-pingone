@@ -146,7 +146,7 @@ func TestAccAgreementLocalizationDataSource_NotFound(t *testing.T) {
 }
 
 func testAccAgreementLocalizationDataSourceConfig_ByNameFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Second * time.Duration(2))
+	date := time.Now().Local().Add(time.Second * time.Duration(5))
 
 	return fmt.Sprintf(`
 	%[1]s
@@ -206,7 +206,7 @@ data "pingone_agreement_localization" "%[3]s" {
 }
 
 func testAccAgreementLocalizationDataSourceConfig_ByLocaleFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Second * time.Duration(2))
+	date := time.Now().Local().Add(time.Second * time.Duration(5))
 
 	return fmt.Sprintf(`
 	%[1]s
@@ -266,7 +266,7 @@ data "pingone_agreement_localization" "%[2]s" {
 }
 
 func testAccAgreementLocalizationDataSourceConfig_ByIDFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Second * time.Duration(2))
+	date := time.Now().Local().Add(time.Second * time.Duration(5))
 
 	return fmt.Sprintf(`
 	%[1]s
