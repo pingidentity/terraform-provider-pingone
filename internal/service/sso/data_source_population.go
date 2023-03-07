@@ -247,3 +247,51 @@ func (p *PopulationDataSourceModel) toState(apiObject *management.Population) di
 
 	return diags
 }
+
+func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Population, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Run the API call
+	response, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+		},
+		"ReadAllPopulations-FetchDefaultPopulation",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	diags.Append(diags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	entityArray := response.(*management.EntityArray)
+
+	var population management.Population
+	if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
+
+		found := false
+		for _, populationItem := range populations {
+
+			if populationItem.GetDefault() {
+				population = populationItem
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			diags.AddWarning(
+				"Cannot find default population",
+				fmt.Sprintf("The default population for environment %s cannot be found", environmentID),
+			)
+			return nil, diags
+		}
+
+	}
+
+	return &population, diags
+
+}
