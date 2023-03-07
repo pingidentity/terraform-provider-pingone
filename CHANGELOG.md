@@ -5,6 +5,10 @@ NOTES:
 * Update `pingone_sign_on_policy` and `pingone_sign_on_policy_action` documentation example for the MFA action. ([#275](https://github.com/pingidentity/terraform-provider-pingone/issues/275))
 * `resource/pingone_group_nesting`: Corrected the schema documentation. ([#276](https://github.com/pingidentity/terraform-provider-pingone/issues/276))
 
+FEATURES:
+
+* **New Data Source:** `pingone_environments` ([#284](https://github.com/pingidentity/terraform-provider-pingone/issues/284))
+
 BUG FIXES:
 
 * `resource/pingone_application`: Fix a bug where `pkce_enforcement` couldn't be set on native application types. ([#282](https://github.com/pingidentity/terraform-provider-pingone/issues/282))
