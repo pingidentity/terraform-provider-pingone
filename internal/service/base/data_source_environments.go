@@ -123,9 +123,7 @@ func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	var filterFunction sdk.SDKInterfaceFunc
-
-	filterFunction = func() (interface{}, *http.Response, error) {
+	filterFunction := func() (interface{}, *http.Response, error) {
 		return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(data.ScimFilter.ValueString()).Execute()
 	}
 
