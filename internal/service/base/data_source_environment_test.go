@@ -326,7 +326,6 @@ data "pingone_environment" "%[1]s" {
 func testAccEnvironmentDataSourceConfig_NotFoundByID(resourceName string) string {
 	return fmt.Sprintf(`
 
-
 data "pingone_environment" "%[1]s" {
   environment_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 }`, resourceName)

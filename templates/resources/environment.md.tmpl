@@ -9,7 +9,7 @@ description: |-
 
 {{ .Description | trimspace }}
 
-~> PingOne environments are created with a default population and at least one service added.
+~> PingOne environments are created with a default population (managable with the `pingone_population_default` resource) and at least one service added.
 
 ~> This `pingone_environment` resource does not yet support creation of WORKFORCE enabled environments.
 
@@ -21,8 +21,10 @@ description: |-
 
 ## Import
 
-Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
+Import is supported using the following syntax examples, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 {{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
 
-~> The import command requires a `population_id` value on import, to associate that population as the default population.  Once imported, the `environment_id` of the import command will be stored in the `id` attribute of the environment resource, and the `population_id` stored in the `default_population_id` attribute of the environment resource.
+~> The following import command is supported for backward capability with previous provider versions, but importing with the use of a `population_id` is now deprecated and will be removed in the next major release of the provider.  Users should prefer to use the `pingone_population_default` resource.  The following example associates the defined population as the default population in the resource.  Once imported, the `environment_id` of the import command will be stored in the `id` attribute of the environment resource, and the `population_id` stored in the `default_population_id` attribute of the environment resource.
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import-definepopulation.sh") }}

@@ -246,3 +246,53 @@ func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 
 	return diags
 }
+
+func flattenBOMProducts(products []management.BillOfMaterialsProductsInner) ([]interface{}, error) {
+	productItems := make([]interface{}, 0)
+
+	for _, product := range products {
+
+		v, err := model.FindProductByAPICode(product.GetType())
+		if err != nil {
+			return nil, fmt.Errorf("Cannot retrieve the service from the service code: %w", err)
+		}
+
+		productItemsMap := map[string]interface{}{
+			"type": v.ProductCode,
+		}
+
+		if v, ok := product.Console.GetHrefOk(); ok {
+			productItemsMap["console_url"] = v
+		}
+
+		if v, ok := product.GetBookmarksOk(); ok {
+			productItemsMap["bookmark"] = flattenBOMProductsBookmarkList(v)
+		}
+
+		productItems = append(productItems, productItemsMap)
+
+	}
+
+	return productItems, nil
+}
+
+func flattenBOMProductsBookmarkList(bookmarkList []management.BillOfMaterialsProductsInnerBookmarksInner) []interface{} {
+	bookmarkItems := make([]interface{}, 0, len(bookmarkList))
+	for _, bookmark := range bookmarkList {
+
+		bookmarkName := ""
+		if _, ok := bookmark.GetNameOk(); ok {
+			bookmarkName = bookmark.GetName()
+		}
+		bookmarkHref := ""
+		if _, ok := bookmark.GetHrefOk(); ok {
+			bookmarkHref = bookmark.GetHref()
+		}
+
+		bookmarkItems = append(bookmarkItems, map[string]interface{}{
+			"name": bookmarkName,
+			"url":  bookmarkHref,
+		})
+	}
+	return bookmarkItems
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -143,9 +144,9 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "solution", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 					resource.TestMatchResourceAttr(resourceFullName, "organization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
-					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
 						"type":        "SSO",
@@ -489,8 +490,6 @@ func testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID stri
 resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
-  default_population {
-  }
 			%[4]s
 }`, resourceName, name, licenseID, composedServices)
 }
@@ -501,8 +500,6 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   type       = "%[3]s"
   license_id = "%[4]s"
-  default_population {
-  }
   service {
   }
 }`, resourceName, name, environmentType, licenseID)
@@ -515,8 +512,6 @@ resource "pingone_environment" "%[1]s" {
   type       = "%[3]s"
   region     = "%[4]s"
   license_id = "%[5]s"
-  default_population {
-  }
   service {
   }
 }`, resourceName, name, environmentType, region, licenseID)
@@ -524,14 +519,7 @@ resource "pingone_environment" "%[1]s" {
 
 func composeServices(services []string) string {
 
-	var composedServices = ""
-	for _, service := range services {
-		composedServices += fmt.Sprintf(`
-		service {
-			type = "%s"
-		}
-		`, service)
-	}
+	var composedServices = fmt.Sprintf(`service {\n  type = "%s"\n}`, strings.Join(services, `"\n}\nservice {\n  type = "`))
 
 	return composedServices
 

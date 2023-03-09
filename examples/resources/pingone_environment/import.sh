@@ -1,1 +1,1 @@
-$ terraform import pingone_environment.example <environment_id>/<population_id>
+$ terraform import pingone_environment.example <environment_id>
