@@ -41,9 +41,9 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "status", "ACTIVE"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "replaces_license_id", regexp.MustCompile(`^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$|^()$`)),
 					resource.TestMatchResourceAttr(dataSourceFullName, "replaced_by_license_id", regexp.MustCompile(`^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$|^()$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "begins_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "terminates_at", regexp.MustCompile(`^((\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d))$|^()$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "begins_at", regexp.MustCompile(`^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[\+-]\d{2}:\d{2})?)$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "expires_at", regexp.MustCompile(`^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[\+-]\d{2}:\d{2})?)$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "terminates_at", regexp.MustCompile(`^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[\+-]\d{2}:\d{2})?)$`)),
 					resource.TestCheckResourceAttrWith(dataSourceFullName, "assigned_environments_count", func(value string) error {
 
 						valueInt, err := strconv.Atoi(value)
