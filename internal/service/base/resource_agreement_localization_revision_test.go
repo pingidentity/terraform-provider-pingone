@@ -83,7 +83,6 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	dateVariant1 := time.Now().Local().Add(time.Hour * time.Duration(1))
 	dateVariant2 := time.Now().Local().Add(time.Hour * time.Duration(2))
 
 	variant1 := resource.ComposeTestCheckFunc(
@@ -92,7 +91,7 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "agreement_id", verify.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "agreement_localization_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "content_type", "text/html"),
-		resource.TestCheckResourceAttr(resourceFullName, "effective_at", dateVariant1.Format(time.RFC3339)),
+		resource.TestMatchResourceAttr(resourceFullName, "effective_at", regexp.MustCompile(`^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[\+-]\d{2}:\d{2})?)$`)),
 		resource.TestCheckNoResourceAttr(resourceFullName, "not_valid_after"),
 		resource.TestCheckResourceAttr(resourceFullName, "require_reconsent", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "text", "<h1>Variant 1</h1>\n\nPlease agree to the terms and conditions.\n\n<h2>Data Use</h2>\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\n<h2>Support</h2>\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\n"),
@@ -118,11 +117,11 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name, dateVariant1),
+				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
 				Check:  variant1,
 			},
 			{
-				Config:  testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name, dateVariant1),
+				Config:  testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
 				Destroy: true,
 			},
 			// Minimal
@@ -136,7 +135,7 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 			},
 			// Change (add new variant)
 			{
-				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name, dateVariant1),
+				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
 				Check:  variant1,
 			},
 			{
@@ -147,7 +146,7 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 	})
 }
 
-func testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name string, date time.Time) string {
+func testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -184,7 +183,6 @@ resource "pingone_agreement_localization_revision" "%[3]s" {
   agreement_localization_id = pingone_agreement_localization.%[3]s.id
 
   content_type      = "text/html"
-  effective_at      = "%[5]s"
   require_reconsent = true
   text              = <<EOT
 <h1>Variant 1</h1>
@@ -202,7 +200,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 EOT
 
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, date.Format(time.RFC3339))
+`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccAgreementLocalizationRevisionConfig_Variant2(environmentName, licenseID, resourceName, name string, date time.Time) string {

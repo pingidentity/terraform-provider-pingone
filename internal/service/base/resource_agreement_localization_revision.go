@@ -115,8 +115,9 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 			},
 
 			"effective_at": schema.StringAttribute{
-				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.",
-				Required:    true,
+				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time (the revision will be effective immediately).",
+				Optional:    true,
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 					stringplanmodifier.UseStateForUnknown(),
@@ -371,12 +372,19 @@ func (r *AgreementLocalizationRevisionResource) ImportState(ctx context.Context,
 func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.AgreementLanguageRevision, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	t, e := time.Parse(time.RFC3339, p.EffectiveAt.ValueString())
-	if e != nil {
-		diags.AddError(
-			"Invalid data format",
-			"Cannot convert effectve_at to a date/time.  Please check the format is a valid RFC3339 date time format.")
-		return nil, diags
+	var t time.Time
+
+	if !p.EffectiveAt.IsNull() && !p.EffectiveAt.IsUnknown() {
+		var e error
+		t, e = time.Parse(time.RFC3339, p.EffectiveAt.ValueString())
+		if e != nil {
+			diags.AddError(
+				"Invalid data format",
+				"Cannot convert effectve_at to a date/time.  Please check the format is a valid RFC3339 date time format.")
+			return nil, diags
+		}
+	} else {
+		t = time.Now().Local()
 	}
 
 	data := management.NewAgreementLanguageRevision(
