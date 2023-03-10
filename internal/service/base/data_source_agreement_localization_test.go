@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
@@ -146,8 +145,6 @@ func TestAccAgreementLocalizationDataSource_NotFound(t *testing.T) {
 }
 
 func testAccAgreementLocalizationDataSourceConfig_ByNameFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Second * time.Duration(5))
-
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -184,7 +181,6 @@ resource "pingone_agreement_localization_revision" "%[2]s" {
   agreement_localization_id = pingone_agreement_localization.%[2]s.id
 
   content_type      = "text/html"
-  effective_at      = "%[4]s"
   require_reconsent = true
   text              = <<EOT
 	<h1>Test</h1>
@@ -202,12 +198,10 @@ data "pingone_agreement_localization" "%[3]s" {
     pingone_agreement_localization_revision.%[2]s
   ]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccAgreementLocalizationDataSourceConfig_ByLocaleFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Second * time.Duration(5))
-
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -244,7 +238,6 @@ resource "pingone_agreement_localization_revision" "%[2]s" {
   agreement_localization_id = pingone_agreement_localization.%[2]s.id
 
   content_type      = "text/html"
-  effective_at      = "%[4]s"
   require_reconsent = true
   text              = <<EOT
 	<h1>Test</h1>
@@ -262,12 +255,10 @@ data "pingone_agreement_localization" "%[2]s" {
     pingone_agreement_localization_revision.%[2]s
   ]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccAgreementLocalizationDataSourceConfig_ByIDFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Second * time.Duration(5))
-
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -304,7 +295,6 @@ resource "pingone_agreement_localization_revision" "%[2]s" {
   agreement_localization_id = pingone_agreement_localization.%[2]s.id
 
   content_type      = "text/html"
-  effective_at      = "%[4]s"
   require_reconsent = true
   text              = <<EOT
 	<h1>Test</h1>
@@ -321,7 +311,7 @@ data "pingone_agreement_localization" "%[2]s" {
   depends_on = [
     pingone_agreement_localization_revision.%[2]s
   ]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccAgreementLocalizationDataSourceConfig_NotFoundByName(resourceName string) string {
