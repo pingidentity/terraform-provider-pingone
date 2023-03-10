@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -269,6 +270,9 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(1),
+				},
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
 				},
 			},
 			// Deprecated end
@@ -1037,7 +1041,9 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	///////////////////
 	// Deprecated start
 
-	p.DefaultPopulationId = types.StringValue("")
+	if p.DefaultPopulationId.IsNull() || p.DefaultPopulationId.IsUnknown() {
+		p.DefaultPopulationId = types.StringValue("")
+	}
 
 	if populationApiObject != nil {
 		defaultPopulation, d := toStateEnvironmentDefaultPopulation(populationApiObject)
