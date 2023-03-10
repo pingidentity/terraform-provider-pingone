@@ -1,0 +1,23 @@
+```release-note:note
+`data-source/pingone_trusted_email_domain`: Use common `environment_id` link ID schema definition.
+```
+
+```release-note:note
+`resource/pingone_notification_policy`: Use common `environment_id` link ID schema definition.
+```
+
+```release-note:note
+`resource/pingone_notification_settings_email`: Use common `environment_id` link ID schema definition.
+```
+
+```release-note:note
+`resource/pingone_trusted_email_address`: Use common `environment_id` link ID schema definition.
+```
+
+```release-note:note
+`data-source/pingone_population`: Use common `environment_id` link ID schema definition.
+```
+
+```release-note:note
+`data-source/pingone_populations`: Use common `environment_id` link ID schema definition.
+```
