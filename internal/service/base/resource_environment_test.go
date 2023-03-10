@@ -1,15 +1,53 @@
 package base_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
+
+func testAccCheckEnvironmentDestroy(s *terraform.State) error {
+	var ctx = context.Background()
+
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	apiClient := p1Client.API.ManagementAPIClient
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
+	})
+
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "pingone_environment" {
+			continue
+		}
+
+		_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.ID).Execute()
+
+		if r.StatusCode == 404 {
+			continue
+		}
+
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("PingOne Environment Instance %s still exists", rs.Primary.ID)
+	}
+
+	return nil
+}
 
 func TestAccEnvironment_Full(t *testing.T) {
 	t.Parallel()
@@ -39,7 +77,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -91,7 +129,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -137,7 +175,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -148,71 +186,59 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 	})
 }
 
-// func TestAccEnvironment_DeleteProductionEnvironmentProtection(t *testing.T) {
-// 	t.Parallel()
+func TestAccEnvironment_DeleteProductionEnvironmentProtection(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGenEnvironment()
-// 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+	resourceName := acctest.ResourceNameGenEnvironment()
+	//resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
-// 	name := resourceName
-// 	environmentType := "SANDBOX"
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-// 	region := os.Getenv("PINGONE_REGION")
+	name := resourceName
+	environmentType := "SANDBOX"
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := os.Getenv("PINGONE_REGION")
 
-// 	os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "false")
+	// os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "false")
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-// 		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
-// 		ErrorCheck:        acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-// 				),
-// 			},
-// 			{
-// 				Config:      testAccEnvironmentConfig_BlankPlan(),
-// 				ExpectError: regexp.MustCompile(fmt.Sprintf(`Cannot delete environment "%s" as it is a PRODUCTION type, where the force_delete_production_type is unset or set to false.  Set this provider parameter to true, or change the environment to a SANDBOX to continue.`, name)),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be defined") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
+				ExpectError: regexp.MustCompile(`Not defined`),
+			},
+		},
+	})
+}
 
-// func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
-// 	t.Parallel()
+func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGenEnvironment()
-// 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+	resourceName := acctest.ResourceNameGenEnvironment()
+	// resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
-// 	name := resourceName
-// 	environmentType := "SANDBOX"
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-// 	region := os.Getenv("PINGONE_REGION")
+	name := resourceName
+	environmentType := "SANDBOX"
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := os.Getenv("PINGONE_REGION")
 
-// 	os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "true")
+	// os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "true")
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-// 		CheckDestroy:      acctest.TestAccCheckEnvironmentDestroy,
-// 		ErrorCheck:        acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, region, licenseID),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-// 				),
-// 			},
-// 			{
-// 				Config:      testAccEnvironmentConfig_BlankPlan(),
-// 				ExpectError: regexp.MustCompile(fmt.Sprintf(`Cannot delete environment "%s" as it is a PRODUCTION type, where the force_delete_production_type is unset or set to false.  Set this provider parameter to true, or change the environment to a SANDBOX to continue.`, name)),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be defined") },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
+				ExpectError: regexp.MustCompile(`Not defined`),
+			},
+		},
+	})
+}
 
 func TestAccEnvironment_NonPopulationServices(t *testing.T) {
 	t.Parallel()
@@ -242,7 +268,7 @@ func TestAccEnvironment_NonPopulationServices(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -286,7 +312,7 @@ func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -339,7 +365,7 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -399,7 +425,7 @@ func TestAccEnvironment_Services(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             acctest.TestAccCheckEnvironmentDestroy,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -510,7 +536,3 @@ func composeServices(services []string) string {
 	return composedServices
 
 }
-
-// func testAccEnvironmentConfig_BlankPlan() string {
-// 	return ""
-// }

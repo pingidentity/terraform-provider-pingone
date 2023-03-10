@@ -946,99 +946,95 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 	})
 }
 
-// func TestAccIdentityProvider_SAML(t *testing.T) {
-// 	t.Parallel()
+func TestAccIdentityProvider_SAML(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
 
-// 	environmentName := acctest.ResourceNameGenEnvironment()
+	name := resourceName
 
-// 	name := resourceName
-
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:          func() { acctest.PreCheckEnvironment(t) },
-// 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-// 		CheckDestroy:      testAccCheckIdentityProviderDestroy,
-// 		ErrorCheck:        acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", "sp:entity"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids", "https://www.pingidentity.com/discovery"),
-// 					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccIdentityProviderConfig_SAMLMinimal(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", ""),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", ""),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", ""),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_REDIRECT"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", "sp:entity"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids", "https://www.pingidentity.com/discovery"),
-// 					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // Needs redefinition
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckIdentityProviderDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", "sp:entity"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids", "https://www.pingidentity.com/discovery"),
+					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
+				),
+			},
+			{
+				Config: testAccIdentityProviderConfig_SAMLMinimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_REDIRECT"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
+				),
+			},
+			{
+				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", "sp:entity"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids", "https://www.pingidentity.com/discovery"),
+					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
+				),
+			},
+		},
+	})
+}
 
 func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 	t.Parallel()
@@ -1537,38 +1533,38 @@ resource "pingone_identity_provider" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-// func testAccIdentityProviderConfig_SAMLFull(resourceName, name string) string {
-// 	return fmt.Sprintf(`
-// 		%[1]s
-// 		resource "pingone_identity_provider" "%[2]s" {
-// 			environment_id = data.pingone_environment.general_test.id
-// 			name = "%[3]s"
+func testAccIdentityProviderConfig_SAMLFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-// 			saml {
-// 				authentication_request_signed = true
-// 				idp_entity_id = "idp:entity"
-// 				sp_entity_id = "sp:entity"
-// 				idp_verification_certificate_ids = []
-// 				// sp_signing_key_id =
-// 				sso_binding = "HTTP_POST"
-// 				sso_endpoint = "https://www.pingidentity.com/sso"
-// 			}
-// 		}
-// 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
-// }
+  saml {
+    authentication_request_signed    = true
+    idp_entity_id                    = "idp:entity"
+    sp_entity_id                     = "sp:entity"
+    idp_verification_certificate_ids = []
+    // sp_signing_key_id =
+    sso_binding  = "HTTP_POST"
+    sso_endpoint = "https://www.pingidentity.com/sso"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
 
-// func testAccIdentityProviderConfig_SAMLMinimal(resourceName, name string) string {
-// 	return fmt.Sprintf(`
-// 		%[1]s
-// 		resource "pingone_identity_provider" "%[2]s" {
-// 			environment_id = data.pingone_environment.general_test.id
-// 			name = "%[3]s"
+func testAccIdentityProviderConfig_SAMLMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
 
-// 			saml {
-// 				idp_entity_id = "idp:entity"
-// 				sso_binding = "HTTP_REDIRECT"
-// 				sso_endpoint = "https://www.pingidentity.com/sso"
-// 			}
-// 		}
-// 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
-// }
+  saml {
+    idp_entity_id = "idp:entity"
+    sso_binding   = "HTTP_REDIRECT"
+    sso_endpoint  = "https://www.pingidentity.com/sso"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}

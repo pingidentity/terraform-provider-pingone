@@ -2018,6 +2018,34 @@ func TestAccApplication_OIDC_LocalhostAddresses(t *testing.T) {
 	})
 }
 
+func TestAccApplication_OIDC_NativeAppAddresses(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Localhost
+			{
+				Config: testAccApplicationConfig_OIDC_NativeAppAddresses(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "com.myapp.app://callback"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "com.myapp.app://logout"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.target_link_uri", "com.myapp.app://target"),
+				),
+			},
+		},
+	})
+}
+
 // SAML
 func TestAccApplication_SAMLFull(t *testing.T) {
 	t.Parallel()
@@ -2840,6 +2868,30 @@ resource "pingone_application" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, hostname)
 }
 
+func testAccApplicationConfig_OIDC_NativeAppAddresses(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["com.myapp.app://callback"]
+    post_logout_redirect_uris   = ["com.myapp.app://logout"]
+    initiate_login_uri          = "https://pingidentity.com/target"
+    target_link_uri             = "com.myapp.app://target"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccApplicationConfig_SAML_Full(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -3020,14 +3072,3 @@ resource "pingone_application" "%[2]s" {
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
 }
-
-// Error conditions
-
-// func testAccApplicationConfig_NoType(resourceName, name string) string {
-// 	return fmt.Sprintf(`
-// 		%[1]s
-// 		resource "pingone_application" "%[3]s" {
-// 			environment_id = data.pingone_environment.general_test.id
-// 			name = "%[3]s"
-// 		}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-// }

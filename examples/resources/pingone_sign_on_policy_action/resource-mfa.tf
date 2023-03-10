@@ -10,9 +10,20 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
     ip_reputation_high_risk      = true
     geovelocity_anomaly_detected = true
     anonymous_network_detected   = true
+
+    user_attribute_equals {
+      attribute_reference = "$${user.mfaEnabled}"
+      value_boolean       = true
+    }
+
+    user_attribute_equals {
+      attribute_reference = "$${user.lifecycle.status}"
+      value               = "ACCOUNT_OK"
+    }
   }
 
   mfa {
     device_sign_on_policy_id = var.my_device_sign_on_policy_id
+    no_device_mode           = "BYPASS"
   }
 }

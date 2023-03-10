@@ -10,8 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider/sdkv2"
@@ -101,6 +99,18 @@ func PreCheck(t *testing.T) {
 		t.Fatal("PINGONE_REGION is missing and must be set")
 	}
 
+}
+
+func PreCheckOrganisation(t *testing.T) {
+
+	PreCheck(t)
+	if v := os.Getenv("PINGONE_ORGANIZATION_ID"); v == "" {
+		t.Fatal("PINGONE_ORGANIZATION_ID is missing and must be set")
+	}
+
+	if v := os.Getenv("PINGONE_ORGANIZATION_NAME"); v == "" {
+		t.Fatal("PINGONE_ORGANIZATION_NAME is missing and must be set")
+	}
 }
 
 func PreCheckEnvironment(t *testing.T) {
@@ -241,41 +251,6 @@ func TestClient(ctx context.Context) (*client.Client, error) {
 
 	return config.APIClient(ctx)
 
-}
-
-func TestAccCheckEnvironmentDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_environment" {
-			continue
-		}
-
-		_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.ID).Execute()
-
-		if r.StatusCode == 404 {
-			continue
-		}
-
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("PingOne Environment Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
 }
 
 func MinimalSandboxEnvironment(resourceName, licenseID string) string {

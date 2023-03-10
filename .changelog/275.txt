@@ -1,0 +1,4 @@
+```release-note:note
+Update `pingone_sign_on_policy` and `pingone_sign_on_policy_action` documentation example for the MFA action.
+```
+
