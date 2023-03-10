@@ -35,7 +35,7 @@ resource "pingone_application_flow_policy_assignment" "foo" {
 
 ### Required
 
-- `application_id` (String) The ID of the application to create the sign-on policy assignment for.
+- `application_id` (String) The ID of the application to create the flow policy assignment for.
 - `environment_id` (String) The ID of the environment to create the application flow policy assignment in.
 - `flow_policy_id` (String) The ID of the DaVinci flow policy to associate.
 

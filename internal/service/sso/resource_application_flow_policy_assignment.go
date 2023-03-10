@@ -61,12 +61,12 @@ func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, re
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_EnvironmentID(framework.SchemaDescription{
+			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
 				Description: "The ID of the environment to create the application flow policy assignment in."},
 			),
 
-			"application_id": framework.Attr_ApplicationID(framework.SchemaDescription{
-				Description: "The ID of the application to create the sign-on policy assignment for.",
+			"application_id": framework.Attr_LinkID(framework.SchemaDescription{
+				Description: "The ID of the application to create the flow policy assignment for.",
 			}),
 
 			"flow_policy_id": schema.StringAttribute{
