@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckNotificationTemplateContentDestroy(s *terraform.State) error {
@@ -84,8 +85,8 @@ func TestAccNotificationTemplateContent_OverrideDefaultLocale(t *testing.T) {
 	locale := "en"
 
 	check := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "template_name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -133,8 +134,8 @@ func TestAccNotificationTemplateContent_NewLocale(t *testing.T) {
 	locale := "en-GB"
 
 	check := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "template_name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -192,8 +193,8 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 	variant := "My New Variant"
 
 	check := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "template_name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),

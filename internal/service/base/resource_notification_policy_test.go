@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckNotificationPolicyDestroy(s *terraform.State) error {
@@ -91,7 +92,7 @@ func TestAccNotificationPolicy_NewEnv(t *testing.T) {
 			{
 				Config: testAccNotificationPolicy_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
@@ -109,8 +110,8 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 	fullStep1 := resource.TestStep{
 		Config: testAccNotificationPolicyConfig_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),
@@ -120,8 +121,8 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 	fullStep2 := resource.TestStep{
 		Config: testAccNotificationPolicyConfig_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),

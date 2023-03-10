@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -12,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckAgreementLocalizationDestroy(s *terraform.State) error {
@@ -84,10 +84,10 @@ func TestAccAgreementLocalization_Full(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(resourceFullName, "agreement_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(resourceFullName, "language_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "agreement_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "language_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "display_name", nameFull),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", "en-GB"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -97,10 +97,10 @@ func TestAccAgreementLocalization_Full(t *testing.T) {
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(resourceFullName, "agreement_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(resourceFullName, "language_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "agreement_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "language_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "display_name", nameMin),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", "en-GB"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),

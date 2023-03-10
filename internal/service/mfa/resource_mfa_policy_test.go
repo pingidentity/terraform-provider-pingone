@@ -13,6 +13,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckMFAPolicyDestroy(s *terraform.State) error {
@@ -97,8 +98,8 @@ func TestAccMFAPolicy_NewEnv(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 				),
 			},
@@ -549,7 +550,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.otp_failure_cooldown_timeunit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"id":                           verify.P1ResourceIDRegexp,
 						"push_enabled":                 regexp.MustCompile(`^true$`),
 						"push_timeout_duration":        regexp.MustCompile(`^100$`),
 						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
@@ -560,7 +561,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                    regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"id":                    verify.P1ResourceIDRegexp,
 						"push_enabled":          regexp.MustCompile(`^false$`),
 						"push_timeout_duration": regexp.MustCompile(`^40$`),
 						"push_timeout_timeunit": regexp.MustCompile(`^SECONDS$`),
@@ -569,7 +570,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"id":                           verify.P1ResourceIDRegexp,
 						"push_enabled":                 regexp.MustCompile(`^true$`),
 						"push_timeout_duration":        regexp.MustCompile(`^40$`),
 						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
@@ -711,7 +712,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.otp_failure_cooldown_timeunit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"id":                           verify.P1ResourceIDRegexp,
 						"push_enabled":                 regexp.MustCompile(`^true$`),
 						"push_timeout_duration":        regexp.MustCompile(`^100$`),
 						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
@@ -722,7 +723,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                    regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"id":                    verify.P1ResourceIDRegexp,
 						"push_enabled":          regexp.MustCompile(`^false$`),
 						"push_timeout_duration": regexp.MustCompile(`^40$`),
 						"push_timeout_timeunit": regexp.MustCompile(`^SECONDS$`),
@@ -731,7 +732,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"id":                           verify.P1ResourceIDRegexp,
 						"push_enabled":                 regexp.MustCompile(`^true$`),
 						"push_timeout_duration":        regexp.MustCompile(`^40$`),
 						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
@@ -773,7 +774,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.otp_failure_cooldown_timeunit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"id":                           verify.P1ResourceIDRegexp,
 						"push_enabled":                 regexp.MustCompile(`^true$`),
 						"push_timeout_duration":        regexp.MustCompile(`^100$`),
 						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
@@ -784,7 +785,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                    regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"id":                    verify.P1ResourceIDRegexp,
 						"push_enabled":          regexp.MustCompile(`^false$`),
 						"push_timeout_duration": regexp.MustCompile(`^40$`),
 						"push_timeout_timeunit": regexp.MustCompile(`^SECONDS$`),
@@ -793,7 +794,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                           regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
+						"id":                           verify.P1ResourceIDRegexp,
 						"push_enabled":                 regexp.MustCompile(`^true$`),
 						"push_timeout_duration":        regexp.MustCompile(`^40$`),
 						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
@@ -964,7 +965,7 @@ func TestAccMFAPolicy_SecurityKey_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1026,7 +1027,7 @@ func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1052,7 +1053,7 @@ func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1084,7 +1085,7 @@ func TestAccMFAPolicy_Platform_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
@@ -1146,7 +1147,7 @@ func TestAccMFAPolicy_Platform_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
 				),
 			},
 			{
@@ -1172,7 +1173,7 @@ func TestAccMFAPolicy_Platform_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
@@ -1197,8 +1198,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalPlatform(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 				),
@@ -1211,8 +1212,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullPlatform(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 				),
@@ -1225,8 +1226,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullPlatform(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 				),
@@ -1234,8 +1235,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalPlatform(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 				),
@@ -1243,8 +1244,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullPlatform(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 				),
