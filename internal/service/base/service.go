@@ -23,6 +23,7 @@ func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewEnvironmentsDataSource,
 		NewTrustedEmailDomainDataSource,
+		NewOrganizationDataSource,
 	}
 }
 
