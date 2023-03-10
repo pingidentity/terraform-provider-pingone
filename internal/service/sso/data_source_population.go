@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -12,6 +15,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -251,47 +256,73 @@ func (p *PopulationDataSourceModel) toState(apiObject *management.Population) di
 func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// Run the API call
-	response, diags := framework.ParseResponse(
-		ctx,
-
-		func() (interface{}, *http.Response, error) {
-			return apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+	stateConf := &sdkv2resource.StateChangeConf{
+		Pending: []string{
+			"false",
 		},
-		"ReadAllPopulations-FetchDefaultPopulation",
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-	)
-	diags.Append(diags...)
-	if diags.HasError() {
+		Target: []string{
+			"true",
+			"err",
+		},
+		Refresh: func() (interface{}, string, error) {
+
+			// Run the API call
+			response, d := framework.ParseResponse(
+				ctx,
+
+				func() (interface{}, *http.Response, error) {
+					return apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+				},
+				"ReadAllPopulations-FetchDefaultPopulation",
+				framework.DefaultCustomError,
+				sdk.DefaultCreateReadRetryable,
+			)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, "err", fmt.Errorf("Error reading populations")
+			}
+
+			entityArray := response.(*management.EntityArray)
+
+			found := false
+
+			var population *management.Population
+
+			if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
+
+				for _, populationItem := range populations {
+
+					if populationItem.GetDefault() {
+						population = &populationItem
+						found = true
+						break
+					}
+				}
+			}
+
+			tflog.Debug(ctx, "Find default population attempt", map[string]interface{}{
+				"population": population,
+				"result":     strings.ToLower(strconv.FormatBool(found)),
+			})
+
+			return population, strings.ToLower(strconv.FormatBool(found)), nil
+		},
+		Timeout:                   20 * time.Minute,
+		Delay:                     5 * time.Second,
+		MinTimeout:                30 * time.Second,
+		ContinuousTargetOccurence: 2,
+	}
+	population, err := stateConf.WaitForState()
+
+	if err != nil {
+		diags.AddWarning(
+			"Cannot find default population",
+			fmt.Sprintf("The default population for environment %s cannot be found", environmentID),
+		)
+
 		return nil, diags
 	}
 
-	entityArray := response.(*management.EntityArray)
-
-	var population management.Population
-	if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
-
-		found := false
-		for _, populationItem := range populations {
-
-			if populationItem.GetDefault() {
-				population = populationItem
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			diags.AddWarning(
-				"Cannot find default population",
-				fmt.Sprintf("The default population for environment %s cannot be found", environmentID),
-			)
-			return nil, diags
-		}
-
-	}
-
-	return &population, diags
+	return population.(*management.Population), diags
 
 }

@@ -138,15 +138,14 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
 					resource.TestCheckResourceAttr(resourceFullName, "region", region),
-					resource.TestCheckResourceAttr(resourceFullName, "solution", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "solution"),
 					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 					resource.TestMatchResourceAttr(resourceFullName, "organization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
+					resource.TestCheckResourceAttr(resourceFullName, "default_population_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "default_population.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
 						"type":        "SSO",
@@ -519,7 +518,7 @@ resource "pingone_environment" "%[1]s" {
 
 func composeServices(services []string) string {
 
-	var composedServices = fmt.Sprintf(`service {\n  type = "%s"\n}`, strings.Join(services, `"\n}\nservice {\n  type = "`))
+	var composedServices = fmt.Sprintf("service {\n  type = \"%s\"\n}", strings.Join(services, "\"\n}\nservice {\n  type = \""))
 
 	return composedServices
 
