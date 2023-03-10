@@ -8,7 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
-var p1ResourceID = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+var P1ResourceIDRegexp = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+var RFC3339Regexp = regexp.MustCompile(`^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[\+-]\d{2}:\d{2})?)$`)
 
 // SDKv2
 func ValidP1ResourceID(v interface{}, k string) (ws []string, errors []error) {
@@ -17,10 +18,10 @@ func ValidP1ResourceID(v interface{}, k string) (ws []string, errors []error) {
 	if value == "" {
 		return ws, errors
 	}
-	if !p1ResourceID.MatchString(value) {
+	if !P1ResourceIDRegexp.MatchString(value) {
 		errors = append(errors, fmt.Errorf(
 			"%q PingOne resource ID is malformed(%q): %q",
-			k, p1ResourceID, value))
+			k, P1ResourceIDRegexp, value))
 	}
 
 	return
@@ -28,5 +29,5 @@ func ValidP1ResourceID(v interface{}, k string) (ws []string, errors []error) {
 
 // Framework
 func P1ResourceIDValidator() validator.String {
-	return stringvalidator.RegexMatches(p1ResourceID, fmt.Sprintf("The PingOne resource ID is malformed.  Must match regex %q", p1ResourceID))
+	return stringvalidator.RegexMatches(P1ResourceIDRegexp, fmt.Sprintf("The PingOne resource ID is malformed.  Must match regex %q", P1ResourceIDRegexp))
 }

@@ -101,6 +101,18 @@ func PreCheck(t *testing.T) {
 
 }
 
+func PreCheckOrganisation(t *testing.T) {
+
+	PreCheck(t)
+	if v := os.Getenv("PINGONE_ORGANIZATION_ID"); v == "" {
+		t.Fatal("PINGONE_ORGANIZATION_ID is missing and must be set")
+	}
+
+	if v := os.Getenv("PINGONE_ORGANIZATION_NAME"); v == "" {
+		t.Fatal("PINGONE_ORGANIZATION_NAME is missing and must be set")
+	}
+}
+
 func PreCheckEnvironment(t *testing.T) {
 
 	PreCheck(t)
@@ -276,5 +288,12 @@ func DomainVerifiedSandboxEnvironment() string {
 	return `
 		data "pingone_environment" "domainverified_test" {
 			name = "tf-testacc-static-domainverified-test"
+		}`
+}
+
+func AgreementSandboxEnvironment() string {
+	return `
+		data "pingone_environment" "agreement_test" {
+			name = "tf-testacc-static-agreements-test"
 		}`
 }

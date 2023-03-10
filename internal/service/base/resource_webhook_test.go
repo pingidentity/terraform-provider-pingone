@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -12,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckWebhookDestroy(s *terraform.State) error {
@@ -116,8 +116,8 @@ func TestAccWebhook_Full(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -131,13 +131,13 @@ func TestAccWebhook_Full(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_tags.*", "adminIdentityEvent"),
 				),
@@ -163,8 +163,8 @@ func TestAccWebhook_Minimal(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -201,8 +201,8 @@ func TestAccWebhook_Change(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -216,13 +216,13 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_tags.*", "adminIdentityEvent"),
 				),
@@ -230,8 +230,8 @@ func TestAccWebhook_Change(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -250,8 +250,8 @@ func TestAccWebhook_Change(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -265,13 +265,13 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_tags.*", "adminIdentityEvent"),
 				),
@@ -298,17 +298,17 @@ func TestAccWebhook_Applications(t *testing.T) {
 				Config: testAccWebhookConfig_Profile1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexp),
 				),
 			},
 			{
 				Config: testAccWebhookConfig_Profile2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
@@ -333,17 +333,17 @@ func TestAccWebhook_Populations(t *testing.T) {
 				Config: testAccWebhookConfig_Profile1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexp),
 				),
 			},
 			{
 				Config: testAccWebhookConfig_Profile2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
