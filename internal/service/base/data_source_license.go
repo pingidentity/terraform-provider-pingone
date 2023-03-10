@@ -3,6 +3,7 @@ package base
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -476,9 +477,9 @@ func datasourcePingOneLicenseRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set("status", resp.GetStatus())
 	d.Set("replaces_license_id", resp.GetReplacesLicense().Id)
 	d.Set("replaced_by_license_id", resp.GetReplacedByLicense().Id)
-	d.Set("begins_at", resp.GetBeginsAt())
-	d.Set("expires_at", resp.GetExpiresAt())
-	d.Set("terminates_at", resp.GetTerminatesAt())
+	d.Set("begins_at", resp.GetBeginsAt().Format(time.RFC3339))
+	d.Set("expires_at", resp.GetExpiresAt().Format(time.RFC3339))
+	d.Set("terminates_at", resp.GetTerminatesAt().Format(time.RFC3339))
 	d.Set("assigned_environments_count", int(resp.GetAssignedEnvironmentsCount()))
 
 	d.Set("advanced_services", flattenLicenseAdvancedServices(resp.GetAdvancedServices()))

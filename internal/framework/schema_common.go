@@ -56,7 +56,7 @@ func Attr_EnvironmentID(description SchemaDescription) schema.StringAttribute {
 	}
 }
 
-func Attr_ApplicationID(description SchemaDescription) schema.StringAttribute {
+func Attr_LinkID(description SchemaDescription) schema.StringAttribute {
 	if description.MarkdownDescription == "" {
 		description.MarkdownDescription = description.Description
 	}

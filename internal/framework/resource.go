@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -42,11 +43,27 @@ func Int32OkToTF(i *int32, ok bool) basetypes.Int64Value {
 	}
 }
 
+func Float32OkToTF(i *float32, ok bool) basetypes.Float64Value {
+	if !ok || i == nil {
+		return types.Float64Null()
+	} else {
+		return types.Float64Value(float64(*i))
+	}
+}
+
 func BoolOkToTF(b *bool, ok bool) basetypes.BoolValue {
 	if !ok || b == nil {
 		return types.BoolNull()
 	} else {
 		return types.BoolValue(*b)
+	}
+}
+
+func TimeOkToTF(v *time.Time, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		return types.StringValue(v.Format(time.RFC3339))
 	}
 }
 

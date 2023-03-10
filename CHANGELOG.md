@@ -4,6 +4,28 @@ NOTES:
 
 * Update `pingone_sign_on_policy` and `pingone_sign_on_policy_action` documentation example for the MFA action. ([#275](https://github.com/pingidentity/terraform-provider-pingone/issues/275))
 * `resource/pingone_group_nesting`: Corrected the schema documentation. ([#276](https://github.com/pingidentity/terraform-provider-pingone/issues/276))
+* bump `github.com/hashicorp/terraform-plugin-docs` v0.13.0 => v0.14.1 ([#285](https://github.com/pingidentity/terraform-provider-pingone/issues/285))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.2 => v0.1.3 ([#285](https://github.com/pingidentity/terraform-provider-pingone/issues/285))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.15.0 => v0.16.0 ([#285](https://github.com/pingidentity/terraform-provider-pingone/issues/285))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.8.0 => v0.9.0 ([#285](https://github.com/pingidentity/terraform-provider-pingone/issues/285))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.5.3 => v0.6.0 ([#285](https://github.com/pingidentity/terraform-provider-pingone/issues/285))
+
+FEATURES:
+
+* **New Data Source:** `pingone_agreement` ([#278](https://github.com/pingidentity/terraform-provider-pingone/issues/278))
+* **New Data Source:** `pingone_agreement_localization` ([#278](https://github.com/pingidentity/terraform-provider-pingone/issues/278))
+* **New Data Source:** `pingone_environments` ([#284](https://github.com/pingidentity/terraform-provider-pingone/issues/284))
+* **New Data Source:** `pingone_organization` ([#283](https://github.com/pingidentity/terraform-provider-pingone/issues/283))
+* **New Resource:** `pingone_agreement` ([#278](https://github.com/pingidentity/terraform-provider-pingone/issues/278))
+* **New Resource:** `pingone_agreement_enable` ([#278](https://github.com/pingidentity/terraform-provider-pingone/issues/278))
+* **New Resource:** `pingone_agreement_localization` ([#278](https://github.com/pingidentity/terraform-provider-pingone/issues/278))
+* **New Resource:** `pingone_agreement_localization_enable` ([#278](https://github.com/pingidentity/terraform-provider-pingone/issues/278))
+* **New Resource:** `pingone_agreement_revision` ([#278](https://github.com/pingidentity/terraform-provider-pingone/issues/278))
+
+BUG FIXES:
+
+* `resource/pingone_application`: Fix a bug where `pkce_enforcement` couldn't be set on native application types. ([#282](https://github.com/pingidentity/terraform-provider-pingone/issues/282))
+* `resource/pingone_application`: Fix input validation for mobile native uri values on `post_logout_redirect_uris`, `redirect_uris` and `target_link_uri` parameters. ([#282](https://github.com/pingidentity/terraform-provider-pingone/issues/282))
 
 ## 0.9.0 (23 February 2023)
 
