@@ -3,12 +3,12 @@ package base_test
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckNotificationSettingsEmailDestroy(s *terraform.State) error {
@@ -28,8 +28,8 @@ func TestAccNotificationSettingsEmail_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccNotificationSettingsEmailConfig_Full(environmentName, licenseID, resourceName),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "host", "smtp-example.pingidentity.com"),
 			resource.TestCheckResourceAttr(resourceFullName, "port", "25"),
 			resource.TestCheckResourceAttr(resourceFullName, "protocol", "SMTPS"),
