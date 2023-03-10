@@ -3,7 +3,13 @@
 NOTES:
 
 * Update `pingone_sign_on_policy` and `pingone_sign_on_policy_action` documentation example for the MFA action. ([#275](https://github.com/pingidentity/terraform-provider-pingone/issues/275))
+* `data-source/pingone_population`: Use common `environment_id` link ID schema definition. ([#287](https://github.com/pingidentity/terraform-provider-pingone/issues/287))
+* `data-source/pingone_populations`: Use common `environment_id` link ID schema definition. ([#287](https://github.com/pingidentity/terraform-provider-pingone/issues/287))
+* `data-source/pingone_trusted_email_domain`: Use common `environment_id` link ID schema definition. ([#287](https://github.com/pingidentity/terraform-provider-pingone/issues/287))
 * `resource/pingone_group_nesting`: Corrected the schema documentation. ([#276](https://github.com/pingidentity/terraform-provider-pingone/issues/276))
+* `resource/pingone_notification_policy`: Use common `environment_id` link ID schema definition. ([#287](https://github.com/pingidentity/terraform-provider-pingone/issues/287))
+* `resource/pingone_notification_settings_email`: Use common `environment_id` link ID schema definition. ([#287](https://github.com/pingidentity/terraform-provider-pingone/issues/287))
+* `resource/pingone_trusted_email_address`: Use common `environment_id` link ID schema definition. ([#287](https://github.com/pingidentity/terraform-provider-pingone/issues/287))
 * bump `github.com/hashicorp/terraform-plugin-docs` v0.13.0 => v0.14.1 ([#285](https://github.com/pingidentity/terraform-provider-pingone/issues/285))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.2 => v0.1.3 ([#285](https://github.com/pingidentity/terraform-provider-pingone/issues/285))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.15.0 => v0.16.0 ([#285](https://github.com/pingidentity/terraform-provider-pingone/issues/285))
