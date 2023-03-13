@@ -144,7 +144,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "region", region),
 					resource.TestCheckNoResourceAttr(resourceFullName, "solution"),
 					resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
-					resource.TestMatchResourceAttr(resourceFullName, "organization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
