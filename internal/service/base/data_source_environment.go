@@ -4,99 +4,183 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func DatasourceEnvironment() *schema.Resource {
-	return &schema.Resource{
+// Types
+type EnvironmentDataSource struct {
+	client *management.APIClient
+	region model.RegionMapping
+}
 
+type EnvironmentDataSourceModel struct {
+	Id             types.String `tfsdk:"id"`
+	EnvironmentId  types.String `tfsdk:"environment_id"`
+	Name           types.String `tfsdk:"name"`
+	Description    types.String `tfsdk:"description"`
+	Type           types.String `tfsdk:"type"`
+	Region         types.String `tfsdk:"region"`
+	LicenseId      types.String `tfsdk:"license_id"`
+	OrganizationId types.String `tfsdk:"organization_id"`
+	Solution       types.String `tfsdk:"solution"`
+	Services       types.Set    `tfsdk:"service"`
+}
+
+// Framework interfaces
+var (
+	_ datasource.DataSource = &EnvironmentDataSource{}
+)
+
+// New Object
+func NewEnvironmentDataSource() datasource.DataSource {
+	return &EnvironmentDataSource{}
+}
+
+// Metadata
+func (r *EnvironmentDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_environment"
+}
+
+// Schema
+func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+
+	nameLength := 1
+
+	typeDescriptionFmt := fmt.Sprintf("The type of the environment.  Options are `%s` for a development/testing environment and `%s` for environments that require protection from deletion.", management.ENUMENVIRONMENTTYPE_SANDBOX, management.ENUMENVIRONMENTTYPE_PRODUCTION)
+	typeDescription := framework.SchemaDescription{
+		MarkdownDescription: typeDescriptionFmt,
+		Description:         strings.ReplaceAll(typeDescriptionFmt, "`", "\""),
+	}
+
+	regionDescriptionFmt := "The region the environment is created in.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`."
+	regionDescription := framework.SchemaDescription{
+		MarkdownDescription: regionDescriptionFmt,
+		Description:         strings.ReplaceAll(regionDescriptionFmt, "`", "\""),
+	}
+
+	solutionDescriptionFmt := fmt.Sprintf("The solution context of the environment.  Blank or null values indicate a custom, non-workforce solution context.  Valid options are `%s`, `%s` or no value for custom solution context.", string(management.ENUMSOLUTIONTYPE_CUSTOMER), string(management.ENUMSOLUTIONTYPE_WORKFORCE))
+	solutionDescription := framework.SchemaDescription{
+		MarkdownDescription: solutionDescriptionFmt,
+		Description:         strings.ReplaceAll(solutionDescriptionFmt, "`", "\""),
+	}
+
+	serviceTypeDescriptionFmt := fmt.Sprintf("The service type applied to the environment.  Valid options are `%s`.", strings.Join(model.ProductsSelectableList(), "`, `"))
+	serviceTypeDescription := framework.SchemaDescription{
+		MarkdownDescription: serviceTypeDescriptionFmt,
+		Description:         strings.ReplaceAll(serviceTypeDescriptionFmt, "`", "\""),
+	}
+
+	serviceConsoleUrlDescriptionFmt := "A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`."
+	serviceConsoleUrlDescription := framework.SchemaDescription{
+		MarkdownDescription: serviceConsoleUrlDescriptionFmt,
+		Description:         strings.ReplaceAll(serviceConsoleUrlDescriptionFmt, "`", "\""),
+	}
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Datasource to read PingOne environment data",
+		Description: "Datasource to retrieve details of a PingOne environment.",
 
-		ReadContext: datasourcePingOneEnvironmentRead,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ConflictsWith:    []string{"name", "license_id"},
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+			"environment_id": schema.StringAttribute{
+				Description: "The ID of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
+					verify.P1ResourceIDValidator(),
+				},
 			},
-			"name": {
-				Description:   "The name of the environment.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"environment_id", "license_id"},
+
+			"name": schema.StringAttribute{
+				Description: "A string that specifies the name of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("environment_id")),
+					stringvalidator.LengthAtLeast(nameLength),
+				},
 			},
-			"description": {
-				Description: "A description of the environment.",
-				Type:        schema.TypeString,
+
+			"description": schema.StringAttribute{
+				Description: "A string that specifies the description of the environment.",
 				Computed:    true,
 			},
-			"type": {
-				Description: "The type of the environment.  Options are SANDBOX for a development/testing environment and PRODUCTION for environments that require protection from deletion.",
-				Type:        schema.TypeString,
+
+			"type": schema.StringAttribute{
+				Description:         typeDescription.Description,
+				MarkdownDescription: typeDescription.MarkdownDescription,
+				Computed:            true,
+			},
+
+			"region": schema.StringAttribute{
+				Description:         regionDescription.Description,
+				MarkdownDescription: regionDescription.MarkdownDescription,
+				Computed:            true,
+			},
+
+			"license_id": schema.StringAttribute{
+				Description: "An ID of a valid license applied to the environment.",
 				Computed:    true,
 			},
-			"region": {
-				Description: "The region the environment is created in.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"license_id": {
-				Description: "An ID of a valid license to apply to the environment.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"organization_id": {
+
+			"organization_id": schema.StringAttribute{
 				Description: "The ID of the PingOne organization tenant to which the environment belongs.",
-				Type:        schema.TypeString,
 				Computed:    true,
 			},
-			"solution": {
-				Description: fmt.Sprintf("The solution context of the environment.  Blank values indicate a custom solution context, without workforce solution additions.  Expected values are `%s`, `%s` or no value for a custom solution context.", management.ENUMSOLUTIONTYPE_WORKFORCE, management.ENUMSOLUTIONTYPE_CUSTOMER),
-				Type:        schema.TypeString,
-				Computed:    true,
+
+			"solution": schema.StringAttribute{
+				Description:         solutionDescription.Description,
+				MarkdownDescription: solutionDescription.MarkdownDescription,
+				Computed:            true,
 			},
-			"service": {
-				Description: "The services enabled in the environment.",
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"type": {
-							Description: "The service type.",
-							Type:        schema.TypeString,
-							Computed:    true,
+		},
+
+		Blocks: map[string]schema.Block{
+			"service": schema.SetNestedBlock{
+				Description: "The services that are enabled in the environment.",
+
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Description:         serviceTypeDescription.Description,
+							MarkdownDescription: serviceTypeDescription.MarkdownDescription,
+							Computed:            true,
 						},
-						"console_url": {
-							Description: "A custom console URL.  Generally used with services that are deployed separately to the PingOne SaaS service.",
-							Type:        schema.TypeString,
-							Computed:    true,
+
+						"console_url": schema.StringAttribute{
+							Description:         serviceConsoleUrlDescription.Description,
+							MarkdownDescription: serviceConsoleUrlDescription.MarkdownDescription,
+							Computed:            true,
 						},
-						"bookmark": {
+					},
+
+					Blocks: map[string]schema.Block{
+						"bookmark": schema.SetNestedBlock{
 							Description: "Custom bookmark links for the service.",
-							Type:        schema.TypeSet,
-							Computed:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"name": {
+
+							NestedObject: schema.NestedBlockObject{
+
+								Attributes: map[string]schema.Attribute{
+									"name": schema.StringAttribute{
 										Description: "Bookmark name.",
-										Type:        schema.TypeString,
 										Computed:    true,
 									},
-									"url": {
+
+									"url": schema.StringAttribute{
 										Description: "Bookmark URL.",
-										Type:        schema.TypeString,
 										Computed:    true,
 									},
 								},
@@ -109,190 +193,182 @@ func DatasourceEnvironment() *schema.Resource {
 	}
 }
 
-func datasourcePingOneEnvironmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *EnvironmentDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
+	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
+}
+
+func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *EnvironmentDataSourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
 	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
+		"suffix": r.region.URLSuffix,
 	})
-	var diags diag.Diagnostics
 
-	var resp management.Environment
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	if v, ok := d.GetOk("name"); ok {
+	var environment management.Environment
 
-		respList, diags := sdk.ParseResponse(
+	if !data.Name.IsNull() {
+
+		// Run the API call
+		response, diags := framework.ParseResponse(
 			ctx,
 
 			func() (interface{}, *http.Response, error) {
-				return apiClient.EnvironmentsApi.ReadAllEnvironments(ctx).Execute()
+				return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Execute()
 			},
 			"ReadAllEnvironments",
-			sdk.DefaultCustomError,
+			framework.DefaultCustomError,
 			retryEnvironmentDefault,
 		)
-		if diags.HasError() {
-			return diags
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
-		respObject := respList.(*management.EntityArray)
+		entityArray := response.(*management.EntityArray)
 
-		if environments, ok := respObject.Embedded.GetEnvironmentsOk(); ok {
+		if environments, ok := entityArray.Embedded.GetEnvironmentsOk(); ok {
 
 			found := false
-			for _, environment := range environments {
+			for _, environmentItem := range environments {
 
-				if environment.GetName() == v.(string) {
-					resp = environment
+				if environmentItem.GetName() == data.Name.ValueString() {
+					environment = environmentItem
 					found = true
 					break
 				}
 			}
 
 			if !found {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  fmt.Sprintf("Cannot find environment %s", v),
-				})
-
-				return diags
+				resp.Diagnostics.AddError(
+					"Cannot find environment from name",
+					fmt.Sprintf("The environment %s cannot be found", data.Name.String()),
+				)
+				return
 			}
 
 		}
 
-	} else if v, ok2 := d.GetOk("environment_id"); ok2 {
+	} else if !data.EnvironmentId.IsNull() {
 
-		environmentResp, diags := sdk.ParseResponse(
+		// Run the API call
+		response, diags := framework.ParseResponse(
 			ctx,
 
 			func() (interface{}, *http.Response, error) {
-				return apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, v.(string)).Execute()
+				return r.client.EnvironmentsApi.ReadOneEnvironment(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadOneEnvironment",
-			sdk.DefaultCustomError,
+			framework.DefaultCustomError,
 			retryEnvironmentDefault,
 		)
-		if diags.HasError() {
-			return diags
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
-		resp = *environmentResp.(*management.Environment)
-
+		environment = *response.(*management.Environment)
 	} else {
-
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Neither environment_id or name are set",
-			Detail:   "Neither environment_id or name are set",
-		})
-
-		return diags
-
+		resp.Diagnostics.AddError(
+			"Missing parameter",
+			"Cannot find the requested environment. environment_id or name must be set.",
+		)
+		return
 	}
-
-	d.SetId(resp.GetId())
-	d.Set("environment_id", resp.GetId())
-	d.Set("name", resp.GetName())
-
-	if v, ok := resp.GetDescriptionOk(); ok {
-		d.Set("description", v)
-	} else {
-		d.Set("description", nil)
-	}
-
-	d.Set("type", resp.GetType())
-	d.Set("region", model.FindRegionByAPICode(resp.GetRegion()).Region)
-	d.Set("license_id", resp.GetLicense().Id)
-	d.Set("organization_id", resp.GetOrganization().Id)
 
 	// The bill of materials
-
-	servicesResp, diags := sdk.ParseResponse(
+	billOfMaterialsResponse, d := framework.ParseResponse(
 		ctx,
+
 		func() (interface{}, *http.Response, error) {
-			return apiClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, resp.GetId()).Execute()
+			return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environment.GetId()).Execute()
 		},
 		"ReadOneBillOfMaterials",
-		sdk.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
 	)
-	if diags.HasError() {
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(&environment, billOfMaterialsResponse.(*management.BillOfMaterials))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (p *EnvironmentDataSourceModel) toState(environmentApiObject *management.Environment, servicesApiObject *management.BillOfMaterials) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if environmentApiObject == nil || servicesApiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
 		return diags
 	}
 
-	bomObject := servicesResp.(*management.BillOfMaterials)
+	p.Id = framework.StringOkToTF(environmentApiObject.GetIdOk())
+	p.EnvironmentId = framework.StringOkToTF(environmentApiObject.GetIdOk())
+	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
+	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
+	p.Type = enumEnvironmentTypeOkToTF(environmentApiObject.GetTypeOk())
+	p.Region = enumRegionCodeOkToTF(environmentApiObject.GetRegionOk())
 
-	if v, ok := bomObject.GetProductsOk(); ok {
-		productBOMItems, err := flattenBOMProducts(v)
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error mapping platform services with the configured services``: %v", err),
-				Detail:   fmt.Sprintf("Platform services: %v\n", v),
-			})
-
-			return diags
-		}
-		d.Set("service", productBOMItems)
-	} else {
-		d.Set("service", nil)
+	if v, ok := environmentApiObject.GetLicenseOk(); ok {
+		p.LicenseId = framework.StringOkToTF(v.GetIdOk())
 	}
 
-	if v, ok := bomObject.GetSolutionTypeOk(); ok {
-		d.Set("solution", string(*v))
+	if v, ok := environmentApiObject.GetOrganizationOk(); ok {
+		p.OrganizationId = framework.StringOkToTF(v.GetIdOk())
 	} else {
-		d.Set("solution", nil)
+		p.OrganizationId = types.StringNull()
 	}
+
+	p.Solution = enumSolutionTypeOkToTF(servicesApiObject.GetSolutionTypeOk())
+
+	services, d := toStateEnvironmentServices(servicesApiObject.GetProducts())
+	diags.Append(d...)
+	p.Services = services
 
 	return diags
-}
-
-func flattenBOMProducts(products []management.BillOfMaterialsProductsInner) ([]interface{}, error) {
-	productItems := make([]interface{}, 0)
-
-	for _, product := range products {
-
-		v, err := model.FindProductByAPICode(product.GetType())
-		if err != nil {
-			return nil, fmt.Errorf("Cannot retrieve the service from the service code: %w", err)
-		}
-
-		productItemsMap := map[string]interface{}{
-			"type": v.ProductCode,
-		}
-
-		if v, ok := product.Console.GetHrefOk(); ok {
-			productItemsMap["console_url"] = v
-		}
-
-		if v, ok := product.GetBookmarksOk(); ok {
-			productItemsMap["bookmark"] = flattenBOMProductsBookmarkList(v)
-		}
-
-		productItems = append(productItems, productItemsMap)
-
-	}
-
-	return productItems, nil
-}
-
-func flattenBOMProductsBookmarkList(bookmarkList []management.BillOfMaterialsProductsInnerBookmarksInner) []interface{} {
-	bookmarkItems := make([]interface{}, 0, len(bookmarkList))
-	for _, bookmark := range bookmarkList {
-
-		bookmarkName := ""
-		if _, ok := bookmark.GetNameOk(); ok {
-			bookmarkName = bookmark.GetName()
-		}
-		bookmarkHref := ""
-		if _, ok := bookmark.GetHrefOk(); ok {
-			bookmarkHref = bookmark.GetHref()
-		}
-
-		bookmarkItems = append(bookmarkItems, map[string]interface{}{
-			"name": bookmarkName,
-			"url":  bookmarkHref,
-		})
-	}
-	return bookmarkItems
 }

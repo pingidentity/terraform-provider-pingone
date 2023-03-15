@@ -75,7 +75,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_certificate":                    base.DatasourceCertificate(),
 				"pingone_certificate_export":             base.DatasourceCertificateExport(),
 				"pingone_certificate_signing_request":    base.DatasourceCertificateSigningRequest(),
-				"pingone_environment":                    base.DatasourceEnvironment(),
 				"pingone_language":                       base.DatasourceLanguage(),
 				"pingone_license":                        base.DatasourceLicense(),
 				"pingone_licenses":                       base.DatasourceLicenses(),

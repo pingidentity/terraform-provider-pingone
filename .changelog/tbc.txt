@@ -3,13 +3,9 @@
 ```
 
 ```release-note:note
-`resource/pingone_environment`: Deprecated the `default_population_id` computed attribute and `default_population` block.  The default population is now managed by the `pingone_population_default` resource.
+`data-source/pingone_environment`: Migrated to plugin framework.
 ```
 
-```release-note:new-resource
-`pingone_population_default`
-```
-
-```release-note:new-data-source
-`pingone_population_default`
+```release-note:enhancement
+`resource/pingone_environment`: The `default_population` and `default_population_id`, when created from new, now align correctly with the platform's Default population.
 ```
