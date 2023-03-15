@@ -520,7 +520,7 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
   default_population {
-	name = "%[4]s"
+    name = "%[4]s"
   }
   service {
     type = "PingAccess"
