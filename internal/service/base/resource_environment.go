@@ -1084,7 +1084,7 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 		p.LicenseId = framework.StringOkToTF(v.GetIdOk())
 	}
 
-	if v, ok := environmentApiObject.GetLicenseOk(); ok {
+	if v, ok := environmentApiObject.GetOrganizationOk(); ok {
 		p.OrganizationId = framework.StringOkToTF(v.GetIdOk())
 	} else {
 		p.OrganizationId = types.StringNull()
