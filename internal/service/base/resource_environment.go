@@ -235,7 +235,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			///////////////////
 			// Deprecated start
 			"default_population_id": schema.StringAttribute{
-				Description: "The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population, however this default population functionality has now moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
+				Description: "The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population.",
 				Computed:    true,
 				// DeprecationMessage: "The `default_population_id` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
 				PlanModifiers: []planmodifier.String{
@@ -250,7 +250,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			///////////////////
 			// Deprecated start
 			"default_population": schema.ListNestedBlock{
-				Description: "The environment's default population.  This attribute is deprecated as the default population functionality has now moved to the `pingone_population_default` resource.  This block parameter will be removed in the next major version of the provider.",
+				Description: "The environment's default population.",
 				// DeprecationMessage: "The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This block will be removed in the next major version of the provider.",
 
 				NestedObject: schema.NestedBlockObject{

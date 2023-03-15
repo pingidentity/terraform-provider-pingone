@@ -2,12 +2,12 @@
 page_title: "pingone_environment Data Source - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Datasource to read PingOne environment data
+  Datasource to retrieve details of a PingOne environment.
 ---
 
 # pingone_environment (Data Source)
 
-Datasource to read PingOne environment data
+Datasource to retrieve details of a PingOne environment.
 
 ## Example Usage
 
@@ -26,33 +26,33 @@ data "pingone_environment" "example_by_id" {
 
 ### Optional
 
-- `environment_id` (String) The ID of the environment.
-- `name` (String) The name of the environment.
+- `environment_id` (String) The ID of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.
+- `name` (String) A string that specifies the name of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.
 
 ### Read-Only
 
-- `description` (String) A description of the environment.
+- `description` (String) A string that specifies the description of the environment.
 - `id` (String) The ID of this resource.
-- `license_id` (String) An ID of a valid license to apply to the environment.
+- `license_id` (String) An ID of a valid license applied to the environment.
 - `organization_id` (String) The ID of the PingOne organization tenant to which the environment belongs.
-- `region` (String) The region the environment is created in.
-- `service` (Set of Object) The services enabled in the environment. (see [below for nested schema](#nestedatt--service))
-- `solution` (String) The solution context of the environment.  Blank values indicate a custom solution context, without workforce solution additions.  Expected values are `WORKFORCE`, `CUSTOMER` or no value for a custom solution context.
-- `type` (String) The type of the environment.  Options are SANDBOX for a development/testing environment and PRODUCTION for environments that require protection from deletion.
+- `region` (String) The region the environment is created in.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.
+- `service` (Block Set) The services that are enabled in the environment. (see [below for nested schema](#nestedblock--service))
+- `solution` (String) The solution context of the environment.  Blank or null values indicate a custom, non-workforce solution context.  Valid options are `CUSTOMER`, `WORKFORCE` or no value for custom solution context.
+- `type` (String) The type of the environment.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion.
 
-<a id="nestedatt--service"></a>
+<a id="nestedblock--service"></a>
 ### Nested Schema for `service`
 
 Read-Only:
 
-- `bookmark` (Set of Object) (see [below for nested schema](#nestedobjatt--service--bookmark))
-- `console_url` (String)
-- `type` (String)
+- `bookmark` (Block Set) Custom bookmark links for the service. (see [below for nested schema](#nestedblock--service--bookmark))
+- `console_url` (String) A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
+- `type` (String) The service type applied to the environment.  Valid options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `Risk`, `SSO`, `Verify`.
 
-<a id="nestedobjatt--service--bookmark"></a>
+<a id="nestedblock--service--bookmark"></a>
 ### Nested Schema for `service.bookmark`
 
 Read-Only:
 
-- `name` (String)
-- `url` (String)
+- `name` (String) Bookmark name.
+- `url` (String) Bookmark URL.
