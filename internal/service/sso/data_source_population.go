@@ -254,6 +254,11 @@ func (p *PopulationDataSourceModel) toState(apiObject *management.Population) di
 }
 
 func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Population, diag.Diagnostics) {
+	defaultTimeout := 5 * time.Second
+	return FetchDefaultPopulationWithTimeout(ctx, apiClient, environmentID, defaultTimeout)
+}
+
+func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *management.APIClient, environmentID string, timeout time.Duration) (*management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	stateConf := &sdkv2resource.StateChangeConf{
@@ -307,8 +312,8 @@ func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient
 
 			return population, strings.ToLower(strconv.FormatBool(found)), nil
 		},
-		Timeout:                   20 * time.Minute,
-		Delay:                     5 * time.Second,
+		Timeout:                   timeout,
+		Delay:                     1 * time.Second,
 		MinTimeout:                30 * time.Second,
 		ContinuousTargetOccurence: 2,
 	}
@@ -323,6 +328,8 @@ func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient
 		return nil, diags
 	}
 
-	return population.(*management.Population), diags
+	returnVar := population.(management.Population)
+
+	return &returnVar, diags
 
 }

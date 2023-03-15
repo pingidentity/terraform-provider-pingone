@@ -463,7 +463,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	if defaultPopulationResponse != nil {
 		defaultPopulation = defaultPopulationResponse
 	} else {
-		defaultPopulation, d = sso.FetchDefaultPopulation(ctx, r.client, environmentId)
+		defaultPopulation, d = sso.FetchDefaultPopulationWithTimeout(ctx, r.client, environmentId, createTimeout)
 		resp.Diagnostics.Append(d...)
 	}
 
@@ -834,7 +834,7 @@ func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.Impo
 	if len(attributes) < minSplitLength || len(attributes) > maxSplitLength {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id\" where the import should ignore the environment default population (strategic behaviour), or \"environment_id/population_id\" where the user specifies a population as the environment default (deprecated).", req.ID),
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id\" where the import should find and import the population marked as Default in the environment, or \"environment_id/population_id\" where the user specifies a population as the environment default.", req.ID),
 		)
 		return
 	}
@@ -844,6 +844,25 @@ func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.Impo
 	if len(attributes) == 2 {
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("default_population_id"), attributes[1])...)
 	}
+
+	if len(attributes) == 1 {
+		population, d := sso.FetchDefaultPopulation(ctx, r.client, attributes[0])
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if population == nil {
+			resp.Diagnostics.AddError(
+				"Default population not found",
+				"The Default population is not found in the environment.  Either ensure a population is configured to be the default, or you use the \"environment_id/population_id\" import ID pattern.",
+			)
+			return
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("default_population_id"), population.GetId())...)
+	}
+
 	// Deprecated end
 	///////////////////
 
