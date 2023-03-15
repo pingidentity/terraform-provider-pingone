@@ -394,7 +394,8 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		"suffix": r.region.URLSuffix,
 	})
 
-	createTimeout, d := plan.Timeouts.Create(ctx, 20*time.Minute)
+	defaultTimeout := 20 * time.Minute
+	createTimeout, d := plan.Timeouts.Create(ctx, defaultTimeout)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -640,7 +641,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// Run the API call
-	var environmentResponse (interface{}) = nil
+	var environmentResponse (interface{})
 	if !plan.Name.Equal(state.Name) ||
 		!plan.Description.Equal(state.Description) ||
 		!plan.LicenseId.Equal(state.LicenseId) {
@@ -675,7 +676,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// The bill of materials
-	var billOfMaterialsResponse (interface{}) = nil
+	var billOfMaterialsResponse (interface{})
 	if !plan.Services.Equal(state.Services) {
 
 		billOfMaterialsResponse, d = framework.ParseResponse(
@@ -1233,7 +1234,7 @@ func enumRegionCodeOkToTF(v *management.EnumRegionCode, ok bool) basetypes.Strin
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		return types.StringValue(model.FindRegionByAPICode(management.EnumRegionCode(*v)).Region)
+		return types.StringValue(model.FindRegionByAPICode(*v).Region)
 	}
 }
 

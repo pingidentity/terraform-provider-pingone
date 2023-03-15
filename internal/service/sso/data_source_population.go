@@ -286,14 +286,14 @@ func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient
 
 			found := false
 
-			var population *management.Population
+			var population management.Population
 
 			if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
 
 				for _, populationItem := range populations {
 
 					if populationItem.GetDefault() {
-						population = &populationItem
+						population = populationItem
 						found = true
 						break
 					}
