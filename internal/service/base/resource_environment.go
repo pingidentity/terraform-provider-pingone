@@ -130,7 +130,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 		Description:         strings.ReplaceAll(typeDescriptionFmt, "`", "\""),
 	}
 
-	regionDescriptionFmt := "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`."
+	regionDescriptionFmt := "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default can be set with the `PINGONE_REGION` environment variable."
 	regionDescription := framework.SchemaDescription{
 		MarkdownDescription: regionDescriptionFmt,
 		Description:         strings.ReplaceAll(regionDescriptionFmt, "`", "\""),
@@ -142,7 +142,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 		Description:         strings.ReplaceAll(solutionDescriptionFmt, "`", "\""),
 	}
 
-	serviceTypeDescriptionFmt := fmt.Sprintf("The service type to enable in the environment.  Valid options are `%s`.", strings.Join(model.ProductsSelectableList(), "`, `"))
+	serviceTypeDescriptionFmt := fmt.Sprintf("The service type to enable in the environment.  Valid options are `%s`.  Defaults to `SSO`.", strings.Join(model.ProductsSelectableList(), "`, `"))
 	serviceTypeDescription := framework.SchemaDescription{
 		MarkdownDescription: serviceTypeDescriptionFmt,
 		Description:         strings.ReplaceAll(serviceTypeDescriptionFmt, "`", "\""),
