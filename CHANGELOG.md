@@ -1,5 +1,14 @@
 ## 0.11.0 (Unreleased)
 
+NOTES:
+
+* `data-source/pingone_environment`: Migrated to plugin framework. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
+* `resource/pingone_environment`: Migrated to plugin framework. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
+
+ENHANCEMENTS:
+
+* `resource/pingone_environment`: The `default_population` parameter and `default_population_id` attributes, when an environment is created from new, now align correctly with the platform's own Default population. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
+
 ## 0.10.0 (13 March 2023)
 
 NOTES:
