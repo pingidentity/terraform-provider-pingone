@@ -432,24 +432,12 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	environmentId := environmentResponse.(*management.Environment).GetId()
-
-	// The bill of materials
-	billOfMaterialsResponse, d := framework.ParseResponse(
-		ctx,
-
-		func() (interface{}, *http.Response, error) {
-			return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environmentId).Execute()
-		},
-		"ReadOneBillOfMaterials",
-		framework.CustomErrorResourceNotFoundWarning,
-		retryEnvironmentDefault,
-	)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		resp.Diagnostics.Append(deleteEnvironment(ctx, r.client, environmentId, r.forceDelete)...)
-		return
+	var billOfMaterials (*management.BillOfMaterials) = nil
+	if v, ok := environmentResponse.(*management.Environment).GetBillOfMaterialsOk(); ok {
+		billOfMaterials = v
 	}
+
+	environmentId := environmentResponse.(*management.Environment).GetId()
 
 	// Seed a default population.  The platform does this implicitly but we see latencies.  This ensures we have a quick environment provision.
 	defaultPopulationObj := *management.NewPopulation("Default")
@@ -511,7 +499,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(environmentResponse.(*management.Environment), billOfMaterialsResponse.(*management.BillOfMaterials), populationResponse)...)
+	resp.Diagnostics.Append(state.toState(environmentResponse.(*management.Environment), billOfMaterials, populationResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -652,33 +640,71 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// Run the API call
-	environmentResponse, d := framework.ParseResponse(
-		ctx,
+	var environmentResponse (interface{}) = nil
+	if !plan.Name.Equal(state.Name) ||
+		!plan.Description.Equal(state.Description) ||
+		!plan.LicenseId.Equal(state.LicenseId) {
 
-		func() (interface{}, *http.Response, error) {
-			return r.client.EnvironmentsApi.UpdateEnvironment(ctx, plan.Id.ValueString()).Environment(*environment).Execute()
-		},
-		"UpdateEnvironment",
-		environmentCreateCustomErrorHandler,
-		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		environmentResponse, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.EnvironmentsApi.UpdateEnvironment(ctx, plan.Id.ValueString()).Environment(*environment).Execute()
+			},
+			"UpdateEnvironment",
+			environmentCreateCustomErrorHandler,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(d...)
+
+	} else {
+		environmentResponse, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.EnvironmentsApi.ReadOneEnvironment(ctx, plan.Id.ValueString()).Execute()
+			},
+			"ReadOneEnvironment",
+			framework.CustomErrorResourceNotFoundWarning,
+			retryEnvironmentDefault,
+		)
+		resp.Diagnostics.Append(d...)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// The bill of materials
-	billOfMaterialsResponse, d := framework.ParseResponse(
-		ctx,
+	var billOfMaterialsResponse (interface{}) = nil
+	if !plan.Services.Equal(state.Services) {
 
-		func() (interface{}, *http.Response, error) {
-			return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, plan.Id.ValueString()).Execute()
-		},
-		"ReadOneBillOfMaterials",
-		framework.CustomErrorResourceNotFoundWarning,
-		retryEnvironmentDefault,
-	)
-	resp.Diagnostics.Append(d...)
+		billOfMaterialsResponse, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.BillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, plan.Id.ValueString()).BillOfMaterials(*environment.BillOfMaterials).Execute()
+			},
+			"UpdateBillOfMaterials",
+			framework.CustomErrorResourceNotFoundWarning,
+			retryEnvironmentDefault,
+		)
+		resp.Diagnostics.Append(d...)
+
+	} else {
+
+		billOfMaterialsResponse, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, plan.Id.ValueString()).Execute()
+			},
+			"ReadOneBillOfMaterials",
+			framework.CustomErrorResourceNotFoundWarning,
+			retryEnvironmentDefault,
+		)
+		resp.Diagnostics.Append(d...)
+
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -695,6 +721,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			resp.Diagnostics.AddError(
 				"Default population not found.",
 				"A default population was expected to be found in the environment after update, but none was found.  Please report this issue to the provider maintainers.")
+			return
 		}
 
 		populationResponseIntf, d := framework.ParseResponse(
@@ -708,6 +735,9 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			sdk.DefaultCreateReadRetryable,
 		)
 		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		populationResponse = populationResponseIntf.(*management.Population)
 	}
@@ -1062,6 +1092,10 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 
 	p.Solution = enumSolutionTypeOkToTF(servicesApiObject.GetSolutionTypeOk())
 
+	services, d := toStateEnvironmentServices(servicesApiObject.GetProducts())
+	diags.Append(d...)
+	p.Services = services
+
 	///////////////////
 	// Deprecated start
 	if populationApiObject != nil {
@@ -1077,10 +1111,6 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	}
 	// Deprecated end
 	///////////////////
-
-	services, d := toStateEnvironmentServices(servicesApiObject.GetProducts())
-	diags.Append(d...)
-	p.Services = services
 
 	return diags
 }

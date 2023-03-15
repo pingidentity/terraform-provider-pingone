@@ -182,7 +182,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
-				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the organization tenant.  Expecting regions \[%s\], region provided: %s`, model.FindRegionByName(os.Getenv("PINGONE_REGION")).Region, model.FindRegionByName(region).Region)),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the organization tenant.  Allowed regions: \[%s\].`, model.FindRegionByName(os.Getenv("PINGONE_REGION")).Region)),
 			},
 		},
 	})
@@ -375,7 +375,7 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
-					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
 						"type":        "SSO",
