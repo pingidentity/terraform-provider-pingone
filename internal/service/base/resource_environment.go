@@ -29,7 +29,6 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework/planmodifiers"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/stringplanmodifierinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
@@ -180,7 +179,11 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
-					planmodifiers.StringDefaultValue(framework.StringToTF(string(management.ENUMENVIRONMENTTYPE_SANDBOX))),
+					stringplanmodifierinternal.StringDefaultValue(
+						framework.StringToTF(string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
+						fmt.Sprintf("Defaults to \"%s\"", string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
+						fmt.Sprintf("Defaults to `%s`", string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
+					),
 				},
 				Validators: []validator.String{
 					stringvalidator.OneOf(func() []string {
@@ -199,7 +202,11 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
-					planmodifiers.StringDefaultValue(framework.StringToTF(os.Getenv("PINGONE_REGION"))),
+					stringplanmodifierinternal.StringDefaultValue(
+						framework.StringToTF(os.Getenv("PINGONE_REGION")),
+						"Default can be set with the \"PINGONE_REGION\" environment variable.",
+						"Default can be set with the `PINGONE_REGION` environment variable.",
+					),
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
@@ -292,7 +299,11 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 							MarkdownDescription: serviceTypeDescription.MarkdownDescription,
 							Optional:            true,
 							PlanModifiers: []planmodifier.String{
-								planmodifiers.StringDefaultValue(framework.StringToTF("SSO")),
+								stringplanmodifierinternal.StringDefaultValue(
+									framework.StringToTF("SSO"),
+									"Defaults to \"SSO\".",
+									"Defaults to `SSO`.",
+								),
 							},
 							Validators: []validator.String{
 								stringvalidator.OneOf(model.ProductsSelectableList()...),
