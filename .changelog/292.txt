@@ -1,0 +1,11 @@
+```release-note:note
+`resource/pingone_environment`: Migrated to plugin framework.
+```
+
+```release-note:note
+`data-source/pingone_environment`: Migrated to plugin framework.
+```
+
+```release-note:enhancement
+`resource/pingone_environment`: The `default_population` parameter and `default_population_id` attributes, when an environment is created from new, now align correctly with the platform's own Default population.
+```

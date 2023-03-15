@@ -14,6 +14,10 @@ resource "pingone_environment" "my_environment" {
   }
 
   service {
+    type = "MFA"
+  }
+
+  service {
     type        = "PingFederate"
     console_url = "https://my-pingfederate-console.example.com/pingfederate"
   }
