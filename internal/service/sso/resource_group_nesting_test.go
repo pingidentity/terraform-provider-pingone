@@ -3,7 +3,6 @@ package sso_test
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -11,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckGroupNestingDestroy(s *terraform.State) error {
@@ -71,10 +71,10 @@ func TestAccGroupNesting_Full(t *testing.T) {
 			{
 				Config: testAccGroupNestingConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "group_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "nested_group_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "group_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "nested_group_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "DIRECT"),
 				),
 			},

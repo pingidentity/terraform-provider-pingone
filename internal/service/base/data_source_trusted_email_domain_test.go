@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccTrustedEmailDomainDataSource_ByNameFull(t *testing.T) {
@@ -28,9 +29,9 @@ func TestAccTrustedEmailDomainDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccTrustedEmailDomainDataSourceConfig_ByNameFull(resourceName, verifiedDomain),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "trusted_email_domain_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "trusted_email_domain_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "domain_name", verifiedDomain),
 				),
 			},
@@ -56,9 +57,9 @@ func TestAccTrustedEmailDomainDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccTrustedEmailDomainDataSourceConfig_ByIDFull(resourceName, verifiedDomain),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "trusted_email_domain_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "trusted_email_domain_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "domain_name", verifiedDomain),
 				),
 			},

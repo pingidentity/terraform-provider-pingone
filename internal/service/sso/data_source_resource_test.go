@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccResourceDataSource_ByNameFull(t *testing.T) {
@@ -27,9 +28,9 @@ func TestAccResourceDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccResourceDataSourceConfig_ByNameFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
@@ -58,9 +59,9 @@ func TestAccResourceDataSource_ByNameSystem(t *testing.T) {
 			{
 				Config: testAccResourceDataSourceConfig_ByNameSystem(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "openid"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "OPENID_CONNECT"),
@@ -92,9 +93,9 @@ func TestAccResourceDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccResourceDataSourceConfig_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),

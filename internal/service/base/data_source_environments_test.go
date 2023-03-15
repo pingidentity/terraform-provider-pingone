@@ -3,12 +3,12 @@ package base_test
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccEnvironmentsDataSource_BySCIMFilter(t *testing.T) {
@@ -30,11 +30,11 @@ func TestAccEnvironmentsDataSource_BySCIMFilter(t *testing.T) {
 			{
 				Config: testAccEnvironmentsDataSourceConfig_BySCIMFilter(resourceName, name, licenseID, fmt.Sprintf(`(name sw \"%s\")`, name)),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "3"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
@@ -56,7 +56,7 @@ func TestAccEnvironmentsDataSource_NotFound(t *testing.T) {
 			{
 				Config: testAccEnvironmentsDataSourceConfig_NotFound(resourceName, fmt.Sprintf(`(organization.id eq \"%s\")`, uuid.New().String())),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "0"),
 				),
 			},

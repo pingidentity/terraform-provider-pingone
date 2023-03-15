@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckSchemaAttributeDestroy(s *terraform.State) error {
@@ -119,8 +120,8 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, true, true, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -135,8 +136,8 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, true, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -151,8 +152,8 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, false, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -167,8 +168,8 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, false, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -183,8 +184,8 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, true, false, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -199,8 +200,8 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, true, true, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -215,8 +216,8 @@ func TestAccSchemaAttribute_FullString(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, true, true, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -257,8 +258,8 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, true, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -273,8 +274,8 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, false, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -289,8 +290,8 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, false, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -309,8 +310,8 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, true, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -325,8 +326,8 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, true, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -359,8 +360,8 @@ func TestAccSchemaAttribute_Minimal(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "display_name", ""),

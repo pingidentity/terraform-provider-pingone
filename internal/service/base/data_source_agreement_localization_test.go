@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccAgreementLocalizationDataSource_ByNameFull(t *testing.T) {
@@ -28,18 +28,18 @@ func TestAccAgreementLocalizationDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccAgreementLocalizationDataSourceConfig_ByNameFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_localization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "language_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_localization_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "language_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "display_name", name),
 					resource.TestCheckResourceAttr(dataSourceFullName, "locale", "en"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "text_checkbox_accept", "Yeah"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "text_button_continue", "Move on"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "text_button_decline", "Nah"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "current_revision_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "current_revision_id", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
@@ -64,18 +64,18 @@ func TestAccAgreementLocalizationDataSource_ByLocaleFull(t *testing.T) {
 			{
 				Config: testAccAgreementLocalizationDataSourceConfig_ByLocaleFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_localization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "language_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_localization_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "language_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "display_name", name),
 					resource.TestCheckResourceAttr(dataSourceFullName, "locale", "en"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "text_checkbox_accept", "Yeah"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "text_button_continue", "Move on"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "text_button_decline", "Nah"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "current_revision_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "current_revision_id", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
@@ -100,18 +100,18 @@ func TestAccAgreementLocalizationDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccAgreementLocalizationDataSourceConfig_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_localization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "language_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_localization_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "language_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "display_name", name),
 					resource.TestCheckResourceAttr(dataSourceFullName, "locale", "en"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "text_checkbox_accept", "Yeah"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "text_button_continue", "Move on"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "text_button_decline", "Nah"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "current_revision_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "current_revision_id", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
@@ -146,8 +146,6 @@ func TestAccAgreementLocalizationDataSource_NotFound(t *testing.T) {
 }
 
 func testAccAgreementLocalizationDataSourceConfig_ByNameFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Second * time.Duration(5))
-
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -184,7 +182,6 @@ resource "pingone_agreement_localization_revision" "%[2]s" {
   agreement_localization_id = pingone_agreement_localization.%[2]s.id
 
   content_type      = "text/html"
-  effective_at      = "%[4]s"
   require_reconsent = true
   text              = <<EOT
 	<h1>Test</h1>
@@ -202,12 +199,10 @@ data "pingone_agreement_localization" "%[3]s" {
     pingone_agreement_localization_revision.%[2]s
   ]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccAgreementLocalizationDataSourceConfig_ByLocaleFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Second * time.Duration(5))
-
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -244,7 +239,6 @@ resource "pingone_agreement_localization_revision" "%[2]s" {
   agreement_localization_id = pingone_agreement_localization.%[2]s.id
 
   content_type      = "text/html"
-  effective_at      = "%[4]s"
   require_reconsent = true
   text              = <<EOT
 	<h1>Test</h1>
@@ -262,12 +256,10 @@ data "pingone_agreement_localization" "%[2]s" {
     pingone_agreement_localization_revision.%[2]s
   ]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccAgreementLocalizationDataSourceConfig_ByIDFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Second * time.Duration(5))
-
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -304,7 +296,6 @@ resource "pingone_agreement_localization_revision" "%[2]s" {
   agreement_localization_id = pingone_agreement_localization.%[2]s.id
 
   content_type      = "text/html"
-  effective_at      = "%[4]s"
   require_reconsent = true
   text              = <<EOT
 	<h1>Test</h1>
@@ -321,7 +312,7 @@ data "pingone_agreement_localization" "%[2]s" {
   depends_on = [
     pingone_agreement_localization_revision.%[2]s
   ]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccAgreementLocalizationDataSourceConfig_NotFoundByName(resourceName string) string {

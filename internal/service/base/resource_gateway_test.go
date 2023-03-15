@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckGatewayDestroy(s *terraform.State) error {
@@ -115,8 +116,8 @@ func TestAccGateway_Full(t *testing.T) {
 			{
 				Config: testAccGatewayConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -144,8 +145,8 @@ func TestAccGateway_Minimal(t *testing.T) {
 			{
 				Config: testAccGatewayConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -173,8 +174,8 @@ func TestAccGateway_Change(t *testing.T) {
 			{
 				Config: testAccGatewayConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -184,8 +185,8 @@ func TestAccGateway_Change(t *testing.T) {
 			{
 				Config: testAccGatewayConfig_PingFederate(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -195,8 +196,8 @@ func TestAccGateway_Change(t *testing.T) {
 			{
 				Config: testAccGatewayConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -206,8 +207,8 @@ func TestAccGateway_Change(t *testing.T) {
 			{
 				Config: testAccGatewayConfig_APIGateway(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -301,8 +302,8 @@ func TestAccGateway_LDAP(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccGatewayConfig_LDAPFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -377,8 +378,8 @@ func TestAccGateway_LDAP(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccGatewayConfig_LDAPMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -436,13 +437,13 @@ func TestAccGateway_RADIUS(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccGatewayConfig_RADIUSFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "RADIUS"),
-			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", "sharedsecret123"),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_client.#", "2"),
 
@@ -460,13 +461,13 @@ func TestAccGateway_RADIUS(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccGatewayConfig_RADIUSDefaultSharedSecret(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "RADIUS"),
-			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", "sharedsecret123"),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_client.#", "1"),
 

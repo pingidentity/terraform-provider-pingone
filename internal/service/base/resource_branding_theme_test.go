@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckBrandingThemeDestroy(s *terraform.State) error {
@@ -123,16 +124,16 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 			{
 				Config: testAccBrandingThemeConfig_Full(resourceName, name, logo, background),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "logo.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "background_color", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
@@ -166,8 +167,8 @@ func TestAccBrandingTheme_Minimal(t *testing.T) {
 			{
 				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -211,16 +212,16 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 			{
 				Config: testAccBrandingThemeConfig_Full(resourceName, name, logo, background),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "logo.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "background_color", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
@@ -236,8 +237,8 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 			{
 				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -257,16 +258,16 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 			{
 				Config: testAccBrandingThemeConfig_Full(resourceName, name, logo, background),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "logo.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "background_color", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),

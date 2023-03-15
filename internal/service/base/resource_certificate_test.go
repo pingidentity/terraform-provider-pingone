@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckCertificateDestroy(s *terraform.State) error {
@@ -91,8 +92,8 @@ func TestAccCertificate_PKCS7(t *testing.T) {
 			{
 				Config: testAccCertificateConfig_PKCS7(environmentName, licenseID, resourceName, pkcs7_cert),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "terraform"),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "4096"),
@@ -133,8 +134,8 @@ func TestAccCertificate_PEM(t *testing.T) {
 			{
 				Config: testAccCertificateConfig_PEM(environmentName, licenseID, resourceName, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "terraform"),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "4096"),

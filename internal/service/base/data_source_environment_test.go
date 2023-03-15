@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
@@ -45,8 +46,8 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
@@ -82,10 +83,10 @@ func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByNameMinimal(resourceName, name, environmentType, region, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "description", ""),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "region", resourceFullName, "region"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "solution", resourceFullName, "solution"),
@@ -133,8 +134,8 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByIDFull(resourceName, name, description, environmentType, region, licenseID, solution, populationName, populationDescription, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
@@ -170,10 +171,10 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 			{
 				Config: testAccEnvironmentDataSourceConfig_ByIDMinimal(resourceName, name, environmentType, region, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "description", ""),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "region", resourceFullName, "region"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "solution", resourceFullName, "solution"),
@@ -199,7 +200,7 @@ func TestAccEnvironmentDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccEnvironmentDataSourceConfig_NotFoundByName(resourceName),
-				ExpectError: regexp.MustCompile("Cannot find environment doesnotexist"),
+				ExpectError: regexp.MustCompile("Cannot find environment from name"),
 			},
 			{
 				Config:      testAccEnvironmentDataSourceConfig_NotFoundByID(resourceName),
@@ -325,7 +326,6 @@ data "pingone_environment" "%[1]s" {
 
 func testAccEnvironmentDataSourceConfig_NotFoundByID(resourceName string) string {
 	return fmt.Sprintf(`
-
 
 data "pingone_environment" "%[1]s" {
   environment_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4

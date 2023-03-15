@@ -8,7 +8,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckOrganizationDestroy(s *terraform.State) error {
@@ -24,23 +26,11 @@ func TestAccOrganizationDataSource_Full(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 	organizationName := os.Getenv("PINGONE_ORGANIZATION_NAME")
 
-	region := os.Getenv("PINGONE_REGION")
-
-	domainTld := "not-set"
-	switch region {
-	case "Europe":
-		domainTld = "eu"
-	case "NorthAmerica":
-		domainTld = "com"
-	case "Canada":
-		domainTld = "ca"
-	case "AsiaPacific":
-		domainTld = "ap"
-	}
+	domainTld := model.FindRegionByName(os.Getenv("PINGONE_REGION")).URLSuffix
 
 	testCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-		resource.TestMatchResourceAttr(dataSourceFullName, "organization_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "organization_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(dataSourceFullName, "name", organizationName),
 		resource.TestMatchResourceAttr(dataSourceFullName, "description", regexp.MustCompile(`^[a-zA-Z0-9 -_\\.]*$`)),
 		resource.TestCheckResourceAttr(dataSourceFullName, "type", "INTERNAL"),

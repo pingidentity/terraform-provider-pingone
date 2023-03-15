@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccCertificateSigningResponse_Full(t *testing.T) {
@@ -32,8 +33,8 @@ func TestAccCertificateSigningResponse_Full(t *testing.T) {
 			{
 				Config: testAccCertificateSigningResponseConfig_Full(environmentName, licenseID, resourceName, pkcs12, pemResponse),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "terraform (Test CA)"),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "4096"),

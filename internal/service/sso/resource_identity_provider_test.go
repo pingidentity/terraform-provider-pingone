@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckIdentityProviderDestroy(s *terraform.State) error {
@@ -120,17 +121,17 @@ func TestAccIdentityProvider_Full(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Full(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test identity provider"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "registration_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "registration_population_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
@@ -155,8 +156,8 @@ func TestAccIdentityProvider_Minimal(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -189,25 +190,25 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Full(resourceName, fmt.Sprintf("%s 1", name), image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", fmt.Sprintf("%s 1", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test identity provider"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "registration_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "registration_population_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Minimal(resourceName, fmt.Sprintf("%s 2", name)),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", fmt.Sprintf("%s 2", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -219,17 +220,17 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Full(resourceName, fmt.Sprintf("%s 1", name), image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", fmt.Sprintf("%s 1", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test identity provider"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "registration_population_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "registration_population_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
@@ -844,10 +845,10 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 				Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -910,10 +911,10 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 				Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -979,7 +980,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", "sp:entity"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids", "https://www.pingidentity.com/discovery"),
-					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
 				),
@@ -1027,7 +1028,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", "sp:entity"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids", "https://www.pingidentity.com/discovery"),
-					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
 				),

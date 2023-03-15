@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -13,6 +12,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func testAccCheckFIDOPolicyDestroy(s *terraform.State) error {
@@ -97,8 +97,8 @@ func TestAccFIDOPolicy_NewEnv(t *testing.T) {
 			{
 				Config: testAccFIDOPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 				),
 			},

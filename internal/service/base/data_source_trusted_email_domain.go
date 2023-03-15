@@ -64,7 +64,7 @@ func (r *TrustedEmailDomainDataSource) Schema(ctx context.Context, req datasourc
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_EnvironmentID(framework.SchemaDescription{
+			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
 				Description: "The ID of the environment that is configured with the trusted email domain."},
 			),
 

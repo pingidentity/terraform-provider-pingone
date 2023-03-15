@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccCertificateDataSource_ByNameFull(t *testing.T) {
@@ -31,8 +32,8 @@ func TestAccCertificateDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "terraform"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "key_length", "4096"),
@@ -73,8 +74,8 @@ func TestAccCertificateDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccCertificateDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "terraform"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "key_length", "4096"),
