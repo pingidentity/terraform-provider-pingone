@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -31,6 +30,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/planmodifiers"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/stringplanmodifierinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -178,6 +178,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					planmodifiers.StringDefaultValue(framework.StringToTF(string(management.ENUMENVIRONMENTTYPE_SANDBOX))),
 				},
@@ -234,9 +235,9 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			///////////////////
 			// Deprecated start
 			"default_population_id": schema.StringAttribute{
-				Description:        "The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population, however this default population functionality has now moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
-				Computed:           true,
-				DeprecationMessage: "The `default_population_id` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
+				Description: "The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population, however this default population functionality has now moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
+				Computed:    true,
+				// DeprecationMessage: "The `default_population_id` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -249,30 +250,32 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			///////////////////
 			// Deprecated start
 			"default_population": schema.ListNestedBlock{
-				Description:        "The environment's default population.  This attribute is deprecated as the default population functionality has now moved to the `pingone_population_default` resource.  This block parameter will be removed in the next major version of the provider.",
-				DeprecationMessage: "The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This block will be removed in the next major version of the provider.",
+				Description: "The environment's default population.  This attribute is deprecated as the default population functionality has now moved to the `pingone_population_default` resource.  This block parameter will be removed in the next major version of the provider.",
+				// DeprecationMessage: "The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This block will be removed in the next major version of the provider.",
 
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Description:        "The name of the environment's default population.",
-							DeprecationMessage: "The `default_population.name` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This parameter will be removed in the next major version of the provider.",
-							Optional:           true,
+							Description: "The name of the environment's default population.",
+							// DeprecationMessage: "The `default_population.name` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This parameter will be removed in the next major version of the provider.",
+							Optional: true,
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifierinternal.StringDefaultValue(types.StringValue("Default"), "If left blank, the population will default to \"Default\".", "If left blank, the population will default to `Default`."),
+							},
 						},
 
 						"description": schema.StringAttribute{
-							Description:        "A description to apply to the environment's default population.",
-							DeprecationMessage: "The `default_population.description` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This parameter will be removed in the next major version of the provider.",
-							Optional:           true,
+							Description: "A description to apply to the environment's default population.",
+							// DeprecationMessage: "The `default_population.description` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This parameter will be removed in the next major version of the provider.",
+							Optional: true,
 						},
 					},
 				},
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(1),
-				},
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
+					listvalidator.SizeAtLeast(1),
 				},
 			},
 			// Deprecated end
@@ -708,6 +711,25 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 
 		populationResponse = populationResponseIntf.(*management.Population)
 	}
+
+	if populationResponse == nil && population != nil && !state.DefaultPopulationId.IsNull() {
+		populationResponseIntf, d := framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.PopulationsApi.ReadOnePopulation(ctx, state.Id.ValueString(), state.DefaultPopulationId.ValueString()).Execute()
+			},
+			"ReadOnePopulation",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		populationResponse = populationResponseIntf.(*management.Population)
+	}
 	// Deprecated end
 	///////////////////
 
@@ -1005,6 +1027,8 @@ func (p *environmentDefaultPopulationModel) expand() (*management.Population, di
 		population.SetDescription(p.Description.ValueString())
 	}
 
+	population.SetDefault(true)
+
 	return population, diags
 }
 
@@ -1040,17 +1064,15 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 
 	///////////////////
 	// Deprecated start
-
-	if p.DefaultPopulationId.IsNull() || p.DefaultPopulationId.IsUnknown() {
-		p.DefaultPopulationId = types.StringValue("")
-	}
-
 	if populationApiObject != nil {
+		p.DefaultPopulationId = framework.StringOkToTF(populationApiObject.GetIdOk())
+
 		defaultPopulation, d := toStateEnvironmentDefaultPopulation(populationApiObject)
 		diags.Append(d...)
 		p.DefaultPopulation = defaultPopulation
 
 	} else {
+		p.DefaultPopulationId = types.StringNull()
 		p.DefaultPopulation = types.ListNull(types.ObjectType{AttrTypes: environmentDefaultPopulationTFObjectTypes})
 	}
 	// Deprecated end
@@ -1071,7 +1093,7 @@ func toStateEnvironmentDefaultPopulation(population *management.Population) (typ
 	tfObjType := types.ObjectType{AttrTypes: environmentDefaultPopulationTFObjectTypes}
 
 	if population == nil {
-		return types.ListValueMust(tfObjType, []attr.Value{}), diags
+		return types.ListNull(types.ObjectType{AttrTypes: environmentDefaultPopulationTFObjectTypes}), diags
 	}
 
 	defaultPopulation := map[string]attr.Value{
