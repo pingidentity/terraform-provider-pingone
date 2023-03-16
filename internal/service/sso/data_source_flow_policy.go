@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -64,9 +62,6 @@ func (r *FlowPolicyDataSource) Metadata(ctx context.Context, req datasource.Meta
 
 // Schema
 func (r *FlowPolicyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-
-	nameLength := 1
-
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Datasource to retrieve a PingOne DaVinci flow policy.",
@@ -74,7 +69,7 @@ func (r *FlowPolicyDataSource) Schema(ctx context.Context, req datasource.Schema
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_EnvironmentID(framework.SchemaDescription{
+			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
 				Description: "The ID of the environment that is configured with the DaVinci flow policy."},
 			),
 
@@ -82,18 +77,13 @@ func (r *FlowPolicyDataSource) Schema(ctx context.Context, req datasource.Schema
 				Description: "The ID of the DaVinci flow policy.",
 				Optional:    true,
 				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
+					verify.P1DVResourceIDValidator(),
 				},
 			},
 
 			"name": schema.StringAttribute{
-				Description: "The name of the DaVinci flow folicy.",
-				Optional:    true,
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("flow_policy_id")),
-					stringvalidator.LengthAtLeast(nameLength),
-				},
+				Description: "The name of the DaVinci flow policy.",
+				Computed:    true,
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -186,79 +176,24 @@ func (r *FlowPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	var FlowPolicy management.FlowPolicy
+	// Run the API call
+	response, diags := framework.ParseResponse(
+		ctx,
 
-	if !data.Name.IsNull() {
-
-		// Run the API call
-		response, diags := framework.ParseResponse(
-			ctx,
-
-			func() (interface{}, *http.Response, error) {
-				return r.client.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
-			},
-			"ReadAllFlowPolicies",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		entityArray := response.(*management.EntityArray)
-
-		if flowPolicies, ok := entityArray.Embedded.GetFlowPoliciesOk(); ok {
-
-			found := false
-			for _, flowPolicyItem := range flowPolicies {
-
-				if flowPolicyItem.GetName() == data.Name.ValueString() {
-					FlowPolicy = flowPolicyItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find DaVinci flow policy from name",
-					fmt.Sprintf("The DaVinci flow policy %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
-		}
-
-	} else if !data.FlowPolicyId.IsNull() {
-
-		// Run the API call
-		response, diags := framework.ParseResponse(
-			ctx,
-
-			func() (interface{}, *http.Response, error) {
-				return r.client.FlowPoliciesApi.ReadOneFlowPolicy(ctx, data.EnvironmentId.ValueString(), data.FlowPolicyId.ValueString()).Execute()
-			},
-			"ReadOneFlowPolicy",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		FlowPolicy = *response.(*management.FlowPolicy)
-	} else {
-		resp.Diagnostics.AddError(
-			"Missing parameter",
-			"Cannot find the requested DaVinci Flow Policy. flow_policy_id or name must be set.",
-		)
+		func() (interface{}, *http.Response, error) {
+			return r.client.FlowPoliciesApi.ReadOneFlowPolicy(ctx, data.EnvironmentId.ValueString(), data.FlowPolicyId.ValueString()).Execute()
+		},
+		"ReadOneFlowPolicy",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&FlowPolicy)...)
+	resp.Diagnostics.Append(data.toState(response.(*management.FlowPolicy))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
