@@ -5,6 +5,8 @@ PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
 VERSION=0.11.0
 OS_ARCH=linux_amd64
+TESTARGS=-skip ^TestAccFeatureFlag
+TESTARGSFEATUREFLAG=-run ^TestAccFeatureFlag
 
 default: build
 
@@ -22,6 +24,9 @@ test: fmtcheck
 
 testacc: fmtcheck
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+
+testaccfeatureflag: fmtcheck
+	TF_ACC=1 go test $(TEST) -v $(TESTARGSFEATUREFLAG) -timeout 120m
 
 sweep:
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
@@ -90,6 +95,6 @@ terrafmtcheck:
 		exit 1; \
 	fi
 
-devcheck: build vet tools generate terrafmt docscategorycheck lint test sweep testacc
+devcheck: build vet tools generate terrafmt docscategorycheck lint test sweep testacc testaccfeatureflag
 
-.PHONY: tools build generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
+.PHONY: tools build generate docscategorycheck test testacc testaccfeatureflag sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
