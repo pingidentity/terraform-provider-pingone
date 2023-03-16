@@ -297,3 +297,10 @@ func AgreementSandboxEnvironment() string {
 			name = "tf-testacc-static-agreements-test"
 		}`
 }
+
+func DaVinciFlowPolicySandboxEnvironment() string {
+	return `
+		data "pingone_environment" "davinci_test" {
+			name = "tf-testacc-static-davinci-test"
+		}`
+}
