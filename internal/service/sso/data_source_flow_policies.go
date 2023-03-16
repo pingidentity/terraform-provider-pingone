@@ -58,7 +58,7 @@ func (r *FlowPoliciesDataSource) Schema(ctx context.Context, req datasource.Sche
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_EnvironmentID(framework.SchemaDescription{
+			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
 				Description: "The ID of the environment to filter DaVinci flow policies from.",
 			}),
 
