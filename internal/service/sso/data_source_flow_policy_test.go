@@ -62,7 +62,7 @@ func TestAccFlowPolicyDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccFlowPolicyDataSourceConfig_NotFoundByID(resourceName),
-				ExpectError: regexp.MustCompile("Error when calling `ReadOneFlowPolicy`: The request could not be completed. The requested resource was not found."),
+				ExpectError: regexp.MustCompile("Error when calling `ReadOneFlowPolicy`: Unable to find an active Flow Policy with ID: '[a-f0-9]{32}' in Environment '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'"),
 			},
 		},
 	})
