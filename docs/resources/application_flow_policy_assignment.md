@@ -2,12 +2,12 @@
 page_title: "pingone_application_flow_policy_assignment Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage a DaVinci flow policy assignment for applications configured in PingOne.
+  Resource to create and manage a DaVinci flow policy assignment for an application configured in PingOne.
 ---
 
 # pingone_application_flow_policy_assignment (Resource)
 
-Resource to create and manage a DaVinci flow policy assignment for applications configured in PingOne.
+Resource to create and manage a DaVinci flow policy assignment for an application configured in PingOne.
 
 ~> This resource is for assignment of a DaVinci flow policy only.  For assignment of a PingOne native sign-on policy, use the `pingone_application_sign_on_policy_assignment` resource.
 
@@ -27,6 +27,8 @@ resource "pingone_application_flow_policy_assignment" "foo" {
   application_id = pingone_application.my_application.id
 
   flow_policy_id = var.davinci_flow_policy_id
+
+  priority = 1
 }
 ```
 
@@ -38,11 +40,11 @@ resource "pingone_application_flow_policy_assignment" "foo" {
 - `application_id` (String) The ID of the application to create the flow policy assignment for.
 - `environment_id` (String) The ID of the environment to create the application flow policy assignment in.
 - `flow_policy_id` (String) The ID of the DaVinci flow policy to associate.
+- `priority` (Number) The order in which the policy referenced by this assignment is evaluated during an authentication flow relative to other policies. An assignment with a lower priority will be evaluated first.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `priority` (String) The order in which the policy referenced by this assignment is evaluated during an authentication flow relative to other policies. An assignment with a lower priority will be evaluated first.
 
 ## Import
 

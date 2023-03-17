@@ -103,7 +103,7 @@ func (r *FlowPolicyDataSource) Schema(ctx context.Context, req datasource.Schema
 							Computed:    true,
 						},
 						"name": schema.StringAttribute{
-							Description: "A string that specifies the ID of the DaVinci application to which the flow policy is assigned.",
+							Description: "A string that specifies the name of the DaVinci application to which the flow policy is assigned.",
 							Computed:    true,
 						},
 					},

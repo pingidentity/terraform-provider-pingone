@@ -56,7 +56,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Metadata(ctx context.Context, 
 func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a DaVinci flow policy assignment for applications configured in PingOne.",
+		Description: "Resource to create and manage a DaVinci flow policy assignment for an application configured in PingOne.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),

@@ -11,4 +11,6 @@ resource "pingone_application_flow_policy_assignment" "foo" {
   application_id = pingone_application.my_application.id
 
   flow_policy_id = var.davinci_flow_policy_id
+
+  priority = 1
 }

@@ -12,12 +12,6 @@ Datasource to retrieve a PingOne DaVinci flow policy.
 ## Example Usage
 
 ```terraform
-data "pingone_flow_policy" "example_by_name" {
-  environment_id = var.environment_id
-
-  name = "foo"
-}
-
 data "pingone_flow_policy" "example_by_id" {
   environment_id = var.environment_id
 
@@ -35,13 +29,13 @@ data "pingone_flow_policy" "example_by_id" {
 ### Optional
 
 - `flow_policy_id` (String) The ID of the DaVinci flow policy.
-- `name` (String) The name of the DaVinci flow folicy.
 
 ### Read-Only
 
 - `davinci_application` (Block List) A block that describes the DaVinci application that contains the flow policy. (see [below for nested schema](#nestedblock--davinci_application))
 - `enabled` (Boolean) A boolean to specify whether the flow policy is enabled in the environment or not.
 - `id` (String) The ID of this resource.
+- `name` (String) The name of the DaVinci flow policy.
 - `trigger` (Block List) A block that describes the configured DaVinci flow policy trigger. (see [below for nested schema](#nestedblock--trigger))
 
 <a id="nestedblock--davinci_application"></a>
@@ -50,7 +44,7 @@ data "pingone_flow_policy" "example_by_id" {
 Read-Only:
 
 - `id` (String) A string that specifies the ID of the DaVinci application to which the flow policy is assigned.
-- `name` (String) A string that specifies the ID of the DaVinci application to which the flow policy is assigned.
+- `name` (String) A string that specifies the name of the DaVinci application to which the flow policy is assigned.
 
 
 <a id="nestedblock--trigger"></a>
