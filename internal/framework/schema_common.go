@@ -39,6 +39,12 @@ func Attr_ID() schema.StringAttribute {
 }
 
 func Attr_LinkID(description SchemaDescription) schema.StringAttribute {
+	return Attr_LinkIDWithValidators(description, []validator.String{
+		verify.P1ResourceIDValidator(),
+	})
+}
+
+func Attr_LinkIDWithValidators(description SchemaDescription, validators []validator.String) schema.StringAttribute {
 	if description.MarkdownDescription == "" {
 		description.MarkdownDescription = description.Description
 	}
@@ -50,9 +56,7 @@ func Attr_LinkID(description SchemaDescription) schema.StringAttribute {
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
-		Validators: []validator.String{
-			verify.P1ResourceIDValidator(),
-		},
+		Validators: validators,
 	}
 }
 

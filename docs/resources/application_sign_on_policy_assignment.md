@@ -9,6 +9,8 @@ description: |-
 
 Resource to create and manage a sign-on policy assignment for applications configured in PingOne.
 
+~> This resource is for assignment of a PingOne native sign-on policy only.  For assignment of a DaVinci flow policy, use the `pingone_application_flow_policy_assignment` resource.
+
 ## Example Usage
 
 ```terraform
