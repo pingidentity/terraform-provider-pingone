@@ -56,6 +56,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
@@ -91,6 +92,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
@@ -129,7 +131,7 @@ jobs:
     - name: TF acceptance tests
       timeout-minutes: 45
       run: |
-        make testaccfeatureflag
+        make testacc
 
   cleanup-ap:
     name: Clean up AP
@@ -137,6 +139,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
@@ -170,6 +173,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
@@ -205,6 +209,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
@@ -243,7 +248,7 @@ jobs:
     - name: TF acceptance tests
       timeout-minutes: 45
       run: |
-        make testaccfeatureflag
+        make testacc
 
   cleanup-ca:
     name: Clean up CA
@@ -251,6 +256,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
@@ -284,6 +290,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
@@ -319,6 +326,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
@@ -357,7 +365,7 @@ jobs:
     - name: TF acceptance tests
       timeout-minutes: 45
       run: |
-        make testaccfeatureflag
+        make testacc
 
   cleanup-eu:
     name: Clean up EU
@@ -365,6 +373,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
@@ -398,6 +407,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
@@ -433,6 +443,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
@@ -473,7 +484,7 @@ jobs:
     - name: TF acceptance tests
       timeout-minutes: 45
       run: |
-        make testaccfeatureflag
+        make testacc
 
   cleanup-na:
     name: Clean up NA
@@ -481,6 +492,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FEATURE_FLAG: DAVINCI
       PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}

@@ -81,7 +81,17 @@ type MinMaxChecks struct {
 	Full    resource.TestCheckFunc
 }
 
+type EnumFeatureFlag string
+
+const (
+	ENUMFEATUREFLAG_DAVINCI EnumFeatureFlag = "DAVINCI"
+)
+
 func PreCheck(t *testing.T) {
+	PreCheckFeatureFlag(t, "")
+}
+
+func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
 
 	if v := os.Getenv("PINGONE_CLIENT_ID"); v == "" {
 		t.Fatal("PINGONE_CLIENT_ID is missing and must be set")
@@ -97,6 +107,10 @@ func PreCheck(t *testing.T) {
 
 	if v := os.Getenv("PINGONE_REGION"); v == "" {
 		t.Fatal("PINGONE_REGION is missing and must be set")
+	}
+
+	if v := os.Getenv("FEATURE_FLAG"); v != string(flag) {
+		t.Skipf("Skipping feature flag test.  Flag required: \"%s\"", string(flag))
 	}
 
 }
@@ -116,6 +130,14 @@ func PreCheckOrganisation(t *testing.T) {
 func PreCheckEnvironment(t *testing.T) {
 
 	PreCheck(t)
+	if v := os.Getenv("PINGONE_LICENSE_ID"); v == "" {
+		t.Fatal("PINGONE_LICENSE_ID is missing and must be set")
+	}
+}
+
+func PreCheckEnvironmentFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
+
+	PreCheckFeatureFlag(t, flag)
 	if v := os.Getenv("PINGONE_LICENSE_ID"); v == "" {
 		t.Fatal("PINGONE_LICENSE_ID is missing and must be set")
 	}
