@@ -443,7 +443,34 @@ func ResourceApplication() *schema.Resource {
 							Description:      "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
 							Type:             schema.TypeString,
 							Optional:         true,
+							Computed:         true,
+							ConflictsWith:    []string{"saml_options.0.idp_signing_key"},
+							Deprecated:       "The `idp_signing_key_id` attribute is deprecated and will be removed in the next major release.  Please use the `idp_signing_key` block going forward.",
 							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+						},
+						"idp_signing_key": {
+							Description:   "SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider.",
+							Type:          schema.TypeList,
+							MaxItems:      1,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"saml_options.0.idp_signing_key_id"},
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"algorithm": {
+										Description:      fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
+										Type:             schema.TypeString,
+										Required:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)}, false)),
+									},
+									"key_id": {
+										Description:      "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.",
+										Type:             schema.TypeString,
+										Required:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+									},
+								},
+							},
 						},
 						"nameid_format": {
 							Description: "A string that specifies the format of the Subject NameID attibute in the SAML assertion.",
@@ -1293,6 +1320,16 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetIdpSigning(*management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(v1)))
 		}
 
+		if v1, ok := samlOptions["idp_signing_key"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+
+			idpSigningOptions := v1[0].(map[string]interface{})
+
+			idpSigning := *management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(idpSigningOptions["key_id"].(string)))
+			idpSigning.SetAlgorithm(management.EnumCertificateKeySignagureAlgorithm(idpSigningOptions["algorithm"].(string)))
+
+			application.SetIdpSigning(idpSigning)
+		}
+
 		if v1, ok := samlOptions["nameid_format"].(string); ok && v1 != "" {
 			application.SetNameIdFormat(v1)
 		}
@@ -1717,15 +1754,12 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["assertion_signed_enabled"] = nil
 	}
 
-	var signingKeyID interface{}
 	if v, ok := application.GetIdpSigningOk(); ok {
-		if j, okJ := v.GetKeyOk(); okJ {
-			if k, okK := j.GetIdOk(); okK {
-				signingKeyID = k
-			}
-		}
+		item["idp_signing_key"], item["idp_signing_key_id"] = flattenIdpSigningOptions(v)
+	} else {
+		item["idp_signing_key"] = nil
+		item["idp_signing_key_id"] = nil
 	}
-	item["idp_signing_key_id"] = signingKeyID
 
 	if v, ok := application.GetNameIdFormatOk(); ok {
 		item["nameid_format"] = v
@@ -1772,4 +1806,28 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	items := make([]interface{}, 0)
 	return append(items, item)
 
+}
+
+func flattenIdpSigningOptions(idpSigning *management.ApplicationSAMLAllOfIdpSigning) (interface{}, *string) {
+
+	item := map[string]interface{}{}
+
+	var signingKeyID *string
+
+	if v, ok := idpSigning.GetAlgorithmOk(); ok {
+		item["algorithm"] = string(*v)
+	} else {
+		item["algorithm"] = nil
+	}
+
+	item["key_id"] = nil
+	if v, ok := idpSigning.GetKeyOk(); ok {
+		if v1, ok := v.GetIdOk(); ok {
+			item["key_id"] = v1
+			signingKeyID = v1
+		}
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item), signingKeyID
 }
