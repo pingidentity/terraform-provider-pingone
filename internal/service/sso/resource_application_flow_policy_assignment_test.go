@@ -200,11 +200,11 @@ resource "pingone_application_flow_policy_assignment" "%[2]s" {
 }
 
 resource "pingone_application_flow_policy_assignment" "%[2]s-2" {
-	environment_id = data.pingone_environment.davinci_test.id
-	application_id = pingone_application.%[2]s.id
-  
-	flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
-  
-	priority = 1
-  }`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+  environment_id = data.pingone_environment.davinci_test.id
+  application_id = pingone_application.%[2]s.id
+
+  flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
+
+  priority = 1
+}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
 }
