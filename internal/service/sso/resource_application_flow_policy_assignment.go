@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -69,20 +68,20 @@ func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, re
 				Description: "The ID of the application to create the flow policy assignment for.",
 			}),
 
-			"flow_policy_id": schema.StringAttribute{
+			"flow_policy_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
 				Description: "The ID of the DaVinci flow policy to associate.",
-				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
 			},
+				[]validator.String{
+					verify.P1DVResourceIDValidator(),
+				},
+			),
 
-			"priority": schema.StringAttribute{
+			"priority": schema.Int64Attribute{
 				Description: "The order in which the policy referenced by this assignment is evaluated during an authentication flow relative to other policies. An assignment with a lower priority will be evaluated first.",
-				Computed:    true,
+				Required:    true,
+				Validators: []validator.Int64{
+					int64validator.AtLeast(1),
+				},
 			},
 		},
 	}
@@ -274,6 +273,7 @@ func (p *ApplicationFlowPolicyAssignmentResourceModel) expand() *management.Flow
 
 	flowPolicy := management.NewApplicationAccessControlGroupGroupsInner(p.FlowPolicyId.ValueString())
 	data := management.NewFlowPolicyAssignment(*flowPolicy)
+	data.SetPriority(int32(p.Priority.ValueInt64()))
 
 	return data
 }

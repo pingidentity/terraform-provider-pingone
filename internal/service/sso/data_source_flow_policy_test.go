@@ -15,7 +15,7 @@ func testAccCheckFlowPolicyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccFeatureFlagFlowPolicyDataSource_ByIDFull(t *testing.T) {
+func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -25,7 +25,7 @@ func TestAccFeatureFlagFlowPolicyDataSource_ByIDFull(t *testing.T) {
 	name := "Test Flow Policy"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckFlowPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -49,13 +49,13 @@ func TestAccFeatureFlagFlowPolicyDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
-func TestAccFeatureFlagFlowPolicyDataSource_NotFound(t *testing.T) {
+func TestAccFlowPolicyDataSource_NotFound(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckFlowPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

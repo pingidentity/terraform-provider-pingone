@@ -18,7 +18,7 @@ func TestAccFlowPoliciesDataSource_BySCIMFilter(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckFlowPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -46,7 +46,7 @@ func TestAccFlowPoliciesDataSource_ByDataFilter(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckFlowPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -72,7 +72,7 @@ func TestAccFlowPoliciesDataSource_NotFound(t *testing.T) {
 	dataSourceFullName := fmt.Sprintf("data.pingone_flow_policies.%s", resourceName)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckFlowPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
