@@ -5,6 +5,12 @@ NOTES:
 * `data-source/pingone_environment`: Migrated to plugin framework. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
 * `resource/pingone_environment`: Migrated to plugin framework. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
 
+FEATURES:
+
+* **New Data Source:** `pingone_flow_policies` ([#277](https://github.com/pingidentity/terraform-provider-pingone/issues/277))
+* **New Data Source:** `pingone_flow_policy` ([#277](https://github.com/pingidentity/terraform-provider-pingone/issues/277))
+* **New Resource:** `pingone_application_flow_policy_assignment` ([#277](https://github.com/pingidentity/terraform-provider-pingone/issues/277))
+
 ENHANCEMENTS:
 
 * `resource/pingone_environment`: The `default_population` parameter and `default_population_id` attributes, when an environment is created from new, now align correctly with the platform's own Default population. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
