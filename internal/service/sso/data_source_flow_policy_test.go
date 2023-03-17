@@ -22,8 +22,6 @@ func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_flow_policy.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
-	name := "Test Flow Policy"
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
@@ -31,12 +29,12 @@ func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccFlowPolicyDataSourceConfig_ByIDFull(resourceName, name),
+				Config: testAccFlowPolicyDataSourceConfig_ByIDFull(resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1DVResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
+					resource.TestMatchResourceAttr(dataSourceFullName, "name", regexp.MustCompile(`^Test Flow Policy( 2)?$`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "davinci_application.#", "1"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "davinci_application.0.id", verify.P1DVResourceIDRegexp),
@@ -68,7 +66,7 @@ func TestAccFlowPolicyDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccFlowPolicyDataSourceConfig_ByIDFull(resourceName, name string) string {
+func testAccFlowPolicyDataSourceConfig_ByIDFull(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -82,7 +80,7 @@ data "pingone_flow_policy" "%[2]s" {
   environment_id = data.pingone_environment.davinci_test.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
-}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName)
 }
 
 func testAccFlowPolicyDataSourceConfig_NotFoundByID(resourceName string) string {
