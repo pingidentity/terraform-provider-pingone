@@ -1,5 +1,9 @@
 ## 0.11.1 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_application_flow_policy_assignment`: Expanded the HCL example in the registry documentation. ([#304](https://github.com/pingidentity/terraform-provider-pingone/issues/304))
+
 ## 0.11.0 (20 March 2023)
 
 NOTES:
