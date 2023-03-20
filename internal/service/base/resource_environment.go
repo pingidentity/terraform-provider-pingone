@@ -726,21 +726,29 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	var populationResponse *management.Population = nil
 
 	if !plan.DefaultPopulation.Equal(state.DefaultPopulation) && population != nil {
-		defaultPopulation, d := sso.FetchDefaultPopulation(ctx, r.client, plan.Id.ValueString())
-		resp.Diagnostics.Append(d...)
 
-		if defaultPopulation == nil {
-			resp.Diagnostics.AddError(
-				"Default population not found.",
-				"A default population was expected to be found in the environment after update, but none was found.  Please report this issue to the provider maintainers.")
-			return
+		var populationId string
+		if state.DefaultPopulationId.IsNull() {
+			defaultPopulation, d := sso.FetchDefaultPopulation(ctx, r.client, plan.Id.ValueString())
+			resp.Diagnostics.Append(d...)
+
+			if defaultPopulation == nil {
+				resp.Diagnostics.AddError(
+					"Default population not found.",
+					"A default population was expected to be found in the environment after update, but none was found.  Please report this issue to the provider maintainers.")
+				return
+			}
+
+			populationId = defaultPopulation.GetId()
+		} else {
+			populationId = state.DefaultPopulationId.ValueString()
 		}
 
 		populationResponseIntf, d := framework.ParseResponse(
 			ctx,
 
 			func() (interface{}, *http.Response, error) {
-				return r.client.PopulationsApi.UpdatePopulation(ctx, plan.Id.ValueString(), defaultPopulation.GetId()).Population(*population).Execute()
+				return r.client.PopulationsApi.UpdatePopulation(ctx, plan.Id.ValueString(), populationId).Population(*population).Execute()
 			},
 			"UpdatePopulation",
 			framework.DefaultCustomError,
