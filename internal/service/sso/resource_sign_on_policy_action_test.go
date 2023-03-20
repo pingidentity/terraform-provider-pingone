@@ -1735,7 +1735,7 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
   priority = 1
 
   agreement {
-    agreement_id        = pingone_agreement_enable.%[2]s.agreement_id
+    agreement_id = pingone_agreement_enable.%[2]s.agreement_id
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
