@@ -49,6 +49,18 @@ resource "pingone_application" "my_awesome_web_app" {
 ## Example Usage - SAML Application
 
 ```terraform
+resource "pingone_key" "my_awesome_key" {
+  environment_id = pingone_environment.my_environment.id
+
+  name                = "Example Signing Key"
+  algorithm           = "RSA"
+  key_length          = 4096
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=Example Signing Key, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
 resource "pingone_application" "my_awesome_saml_app" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome SAML App"
@@ -58,6 +70,11 @@ resource "pingone_application" "my_awesome_saml_app" {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:localhost"
+
+    idp_signing_key {
+      key_id    = pingone_key.my_awesome_key.id
+      algorithm = pingone_key.my_awesome_key.signature_algorithm
+    }
 
     sp_verification_certificate_ids = [var.sp_verification_certificate_id]
   }
@@ -244,7 +261,8 @@ Optional:
 
 - `assertion_signed_enabled` (Boolean) A boolean that specifies whether the SAML assertion itself should be signed. Defaults to `true`.
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
-- `idp_signing_key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.
+- `idp_signing_key` (Block List, Max: 1) SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider. (see [below for nested schema](#nestedblock--saml_options--idp_signing_key))
+- `idp_signing_key_id` (String, Deprecated) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.
 - `nameid_format` (String) A string that specifies the format of the Subject NameID attibute in the SAML assertion.
 - `response_is_signed` (Boolean) A boolean that specifies whether the SAML assertion response itself should be signed. Defaults to `false`.
 - `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response. Options are `HTTP_REDIRECT` and `HTTP_POST`.  Existing configurations with no data default to `HTTP_POST`. Defaults to `HTTP_POST`.
@@ -252,6 +270,14 @@ Optional:
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the sloEndpoint property value is used to submit SLO response.
 - `sp_verification_certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.
 - `type` (String) A string that specifies the type associated with the application.  Options are `WEB_APP` and `CUSTOM_APP`. Defaults to `WEB_APP`.
+
+<a id="nestedblock--saml_options--idp_signing_key"></a>
+### Nested Schema for `saml_options.idp_signing_key`
+
+Required:
+
+- `algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA224withRSA`, `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA224withECDSA`, `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
+- `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
 
 ## Import
 

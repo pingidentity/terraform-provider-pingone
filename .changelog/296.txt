@@ -1,0 +1,11 @@
+```release-note:note
+`resource/pingone_application`: Deprecates the `idp_signing_key_id` attribute for new `idp_signing_key` block in SAML apps.
+```
+
+```release-note:note
+`resource/pingone_application`: Changed the `idp_signing_key_id` attribute in SAML apps to expect a computed value from the platform (P14C-47055)
+```
+
+```release-note:enhancement
+`resource/pingone_application`: Adds support for defining the signing algorithm to apply to assertion/response signing in SAML apps.
+```
