@@ -4,6 +4,12 @@ NOTES:
 
 * `data-source/pingone_environment`: Migrated to plugin framework. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
 * `resource/pingone_environment`: Migrated to plugin framework. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
+* bump `github.com/golangci/golangci-lint` v1.51.2 => v1.52.0 ([#300](https://github.com/pingidentity/terraform-provider-pingone/issues/300))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.0 => v0.1.1 ([#300](https://github.com/pingidentity/terraform-provider-pingone/issues/300))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.3 => v0.1.4 ([#300](https://github.com/pingidentity/terraform-provider-pingone/issues/300))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.16.0 => v0.17.1 ([#300](https://github.com/pingidentity/terraform-provider-pingone/issues/300))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.9.0 => v0.9.1 ([#300](https://github.com/pingidentity/terraform-provider-pingone/issues/300))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.0 => v0.6.1 ([#300](https://github.com/pingidentity/terraform-provider-pingone/issues/300))
 
 FEATURES:
 
