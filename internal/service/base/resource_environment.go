@@ -203,10 +203,19 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifierinternal.StringDefaultValue(
-						framework.StringToTF(os.Getenv("PINGONE_REGION")),
+						func() basetypes.StringValue {
+
+							region := types.StringUnknown()
+							if v := os.Getenv("PINGONE_REGION"); v != "" {
+								region = framework.StringToTF(v)
+							}
+
+							return region
+						}(),
 						"Default can be set with the \"PINGONE_REGION\" environment variable.",
 						"Default can be set with the `PINGONE_REGION` environment variable.",
 					),
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
@@ -950,7 +959,7 @@ func (p *environmentResourceModel) expand(ctx context.Context, region management
 		environmentLicense = *management.NewEnvironmentLicense(p.LicenseId.ValueString())
 	}
 
-	if !p.Region.IsNull() {
+	if !p.Region.IsNull() && !p.Region.IsUnknown() {
 		region = model.FindRegionByName(p.Region.ValueString()).APICode
 	}
 
