@@ -3,6 +3,8 @@
 NOTES:
 
 * `data-source/pingone_environment`: Migrated to plugin framework. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
+* `resource/pingone_application`: Changed the `idp_signing_key_id` attribute in SAML apps to expect a computed value from the platform (P14C-47055) ([#296](https://github.com/pingidentity/terraform-provider-pingone/issues/296))
+* `resource/pingone_application`: Deprecates the `idp_signing_key_id` attribute for new `idp_signing_key` block in SAML apps. ([#296](https://github.com/pingidentity/terraform-provider-pingone/issues/296))
 * `resource/pingone_environment`: Migrated to plugin framework. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
 * bump `github.com/golangci/golangci-lint` v1.51.2 => v1.52.0 ([#300](https://github.com/pingidentity/terraform-provider-pingone/issues/300))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.0 => v0.1.1 ([#300](https://github.com/pingidentity/terraform-provider-pingone/issues/300))
@@ -19,6 +21,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
+* `resource/pingone_application`: Adds support for defining the signing algorithm to apply to assertion/response signing in SAML apps. ([#296](https://github.com/pingidentity/terraform-provider-pingone/issues/296))
 * `resource/pingone_environment`: The `default_population` parameter and `default_population_id` attributes, when an environment is created from new, now align correctly with the platform's own Default population. ([#292](https://github.com/pingidentity/terraform-provider-pingone/issues/292))
 
 ## 0.10.0 (13 March 2023)
