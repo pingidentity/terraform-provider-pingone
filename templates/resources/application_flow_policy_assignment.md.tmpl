@@ -14,6 +14,8 @@ description: |-
 {{ if .HasExample -}}
 ## Example Usage
 
+The following example includes a `davinci_application` resource.  More information about the use of the `davinci_application` resource, and other DaVinci provider resources can be found at the [DaVinci Provider registry documentation](https://registry.terraform.io/providers/pingidentity/davinci/latest/docs).
+
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
 {{- end }}
 
