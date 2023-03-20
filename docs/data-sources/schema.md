@@ -2,12 +2,12 @@
 page_title: "pingone_schema Data Source - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Datasource to read PingOne schema data
+  Datasource to read PingOne schema data.
 ---
 
 # pingone_schema (Data Source)
 
-Datasource to read PingOne schema data
+Datasource to read PingOne schema data.
 
 ## Example Usage
 
@@ -30,7 +30,7 @@ data "pingone_schema" "example_by_id" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment.
+- `environment_id` (String) The ID of the environment that is configured with the schema.
 
 ### Optional
 
