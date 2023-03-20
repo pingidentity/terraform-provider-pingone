@@ -1,5 +1,9 @@
 ## 0.12.0 (Unreleased)
 
+NOTES:
+
+* `data-source/pingone_schema`: Migrated to plugin framework. ([#306](https://github.com/pingidentity/terraform-provider-pingone/issues/306))
+
 ## 0.11.1 (20 March 2023)
 
 NOTES:
