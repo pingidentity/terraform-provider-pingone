@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_environment`: Fix for "inconsistent result" error when using implicitly defined default value (from the SDK client) for `pingone_environment` `region` attribute.
+```
