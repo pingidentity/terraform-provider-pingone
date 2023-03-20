@@ -332,19 +332,50 @@ func TestAccSignOnPolicyAction_AgreementAction(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
 	name := resourceName
 
+	fullStep := resource.TestStep{
+		Config: testAccSignOnPolicyActionConfig_AgreementFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "agreement.#", "1"),
+			resource.TestMatchResourceAttr(resourceFullName, "agreement.0.agreement_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "agreement.0.show_decline_option", "false"),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccSignOnPolicyActionConfig_AgreementMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "agreement.#", "1"),
+			resource.TestMatchResourceAttr(resourceFullName, "agreement.0.agreement_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "agreement.0.show_decline_option", "true"),
+		),
+	}
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Awaiting support for agreements") },
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Full
+			fullStep,
 			{
-				Config:      testAccSignOnPolicyActionConfig_IDPFull(resourceName, name),
-				ExpectError: regexp.MustCompile(`Not defined`),
+				Config:  testAccSignOnPolicyActionConfig_AgreementFull(resourceName, name),
+				Destroy: true,
 			},
+			// Minimal
+			minimalStep,
+			{
+				Config:  testAccSignOnPolicyActionConfig_AgreementMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Update
+			fullStep,
+			minimalStep,
+			fullStep,
 		},
 	})
 }
@@ -1534,12 +1565,181 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-// TODO: agreements
-// func testAccSignOnPolicyActionConfig_AgreementFull(resourceName, name string) string {
-// }
+func testAccSignOnPolicyActionConfig_AgreementFull(resourceName, name string) string {
 
-// func testAccSignOnPolicyActionConfig_AgreementMinimal(resourceName, name string) string {
-// }
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_agreement" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                  = "%[3]s"
+  description           = "Before the crowbar was invented, Crows would just drink at home."
+  reconsent_period_days = 31
+
+}
+
+data "pingone_language" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  locale = "en"
+}
+
+resource "pingone_agreement_localization" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  agreement_id   = pingone_agreement.%[2]s.id
+  language_id    = data.pingone_language.%[2]s.id
+
+  display_name = "%[3]s"
+
+  text_checkbox_accept = "Yeah"
+  text_button_continue = "Move on"
+  text_button_decline  = "Nah"
+}
+
+resource "pingone_agreement_localization_revision" "%[2]s" {
+  environment_id            = data.pingone_environment.general_test.id
+  agreement_id              = pingone_agreement.%[2]s.id
+  agreement_localization_id = pingone_agreement_localization.%[2]s.id
+
+  content_type      = "text/html"
+  require_reconsent = true
+  text              = <<EOT
+	<h1>Test</h1>
+  EOT
+
+}
+
+resource "pingone_agreement_localization_enable" "%[2]s" {
+  environment_id            = data.pingone_environment.general_test.id
+  agreement_id              = pingone_agreement.%[2]s.id
+  agreement_localization_id = pingone_agreement_localization.%[2]s.id
+
+  enabled = true
+
+  depends_on = [
+    pingone_agreement_localization_revision.%[2]s
+  ]
+}
+
+resource "pingone_agreement_enable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  agreement_id   = pingone_agreement.%[2]s.id
+
+  enabled = true
+
+  depends_on = [
+    pingone_agreement_localization_enable.%[2]s
+  ]
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  agreement {
+    agreement_id        = pingone_agreement_enable.%[2]s.agreement_id
+    show_decline_option = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_AgreementMinimal(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+
+resource "pingone_agreement" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                  = "%[3]s"
+  description           = "Before the crowbar was invented, Crows would just drink at home."
+  reconsent_period_days = 31
+
+}
+
+data "pingone_language" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  locale = "en"
+}
+
+resource "pingone_agreement_localization" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  agreement_id   = pingone_agreement.%[2]s.id
+  language_id    = data.pingone_language.%[2]s.id
+
+  display_name = "%[3]s"
+
+  text_checkbox_accept = "Yeah"
+  text_button_continue = "Move on"
+  text_button_decline  = "Nah"
+}
+
+resource "pingone_agreement_localization_revision" "%[2]s" {
+  environment_id            = data.pingone_environment.general_test.id
+  agreement_id              = pingone_agreement.%[2]s.id
+  agreement_localization_id = pingone_agreement_localization.%[2]s.id
+
+  content_type      = "text/html"
+  require_reconsent = true
+  text              = <<EOT
+	<h1>Test</h1>
+  EOT
+
+}
+
+resource "pingone_agreement_localization_enable" "%[2]s" {
+  environment_id            = data.pingone_environment.general_test.id
+  agreement_id              = pingone_agreement.%[2]s.id
+  agreement_localization_id = pingone_agreement_localization.%[2]s.id
+
+  enabled = true
+
+  depends_on = [
+    pingone_agreement_localization_revision.%[2]s
+  ]
+}
+
+resource "pingone_agreement_enable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  agreement_id   = pingone_agreement.%[2]s.id
+
+  enabled = true
+
+  depends_on = [
+    pingone_agreement_localization_enable.%[2]s
+  ]
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  agreement {
+    agreement_id = pingone_agreement_enable.%[2]s.agreement_id
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
 
 func testAccSignOnPolicyActionConfig_ProgressiveProfilingFull(resourceName, name string) string {
 
