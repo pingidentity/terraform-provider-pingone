@@ -74,7 +74,7 @@ func TestAccSchemaDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccSchemaDataSourceConfig_NotFoundByName(resourceName),
-				ExpectError: regexp.MustCompile("Cannot find schema doesnotexist"),
+				ExpectError: regexp.MustCompile("Cannot find schema from name"),
 			},
 			{
 				Config:      testAccSchemaDataSourceConfig_NotFoundByID(resourceName),

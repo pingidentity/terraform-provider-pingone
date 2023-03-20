@@ -87,7 +87,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_resource":           sso.DatasourceResource(),
 				"pingone_resource_attribute": sso.DatasourceResourceAttribute(),
 				"pingone_resource_scope":     sso.DatasourceResourceScope(),
-				"pingone_schema":             sso.DatasourceSchema(),
 				"pingone_user":               sso.DatasourceUser(),
 				"pingone_users":              sso.DatasourceUsers(),
 			},
