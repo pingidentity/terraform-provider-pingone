@@ -4,6 +4,10 @@ NOTES:
 
 * `resource/pingone_application_flow_policy_assignment`: Expanded the HCL example in the registry documentation. ([#304](https://github.com/pingidentity/terraform-provider-pingone/issues/304))
 
+BUG FIXES:
+
+* `resource/pingone_environment`: Fix for "inconsistent result" error when using implicitly defined default value (from the SDK client) for `pingone_environment` `region` attribute. ([#305](https://github.com/pingidentity/terraform-provider-pingone/issues/305))
+
 ## 0.11.0 (20 March 2023)
 
 NOTES:
