@@ -271,9 +271,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) ImportState(ctx context.Contex
 
 func (p *ApplicationFlowPolicyAssignmentResourceModel) expand() *management.FlowPolicyAssignment {
 
-	flowPolicy := management.NewApplicationAccessControlGroupGroupsInner(p.FlowPolicyId.ValueString())
-	data := management.NewFlowPolicyAssignment(*flowPolicy)
-	data.SetPriority(int32(p.Priority.ValueInt64()))
+	flowPolicy := management.NewFlowPolicyAssignmentFlowPolicy(p.FlowPolicyId.ValueString())
+	data := management.NewFlowPolicyAssignment(*flowPolicy, int32(p.Priority.ValueInt64()))
 
 	return data
 }
