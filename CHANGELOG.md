@@ -4,6 +4,10 @@ NOTES:
 
 * `data-source/pingone_schema`: Migrated to plugin framework. ([#306](https://github.com/pingidentity/terraform-provider-pingone/issues/306))
 
+ENHANCEMENTS:
+
+* `resource/pingone_application`: Provide support for certificate based authentication. ([#311](https://github.com/pingidentity/terraform-provider-pingone/issues/311))
+
 ## 0.11.1 (20 March 2023)
 
 NOTES:
