@@ -271,6 +271,22 @@ func ResourceApplication() *schema.Resource {
 							Computed:    true,
 							Sensitive:   true,
 						},
+						"certificate_based_authentication": {
+							Description: "Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `NATIVE_APP`.",
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"key_id": {
+										Description:      "A string that represents a PingOne ID for the issuance certificate key.  The key must be of type `ISSUANCE`.",
+										Type:             schema.TypeString,
+										Required:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+									},
+								},
+							},
+						},
 						"support_unsigned_request_object": {
 							Description: "A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If false or null (default), an unsigned request object is not allowed.",
 							Type:        schema.TypeBool,
@@ -1126,6 +1142,18 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 
 		application.SetAssignActorRoles(false)
 
+		if v1, ok := oidcOptions["certificate_based_authentication"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			if *applicationType != management.ENUMAPPLICATIONTYPE_NATIVE_APP {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  fmt.Sprintf("`certificate_based_authentication` can only be set with applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+				})
+				return nil, diags
+			}
+
+			application.SetKerberos(*expandKerberos(v1[0].(map[string]interface{})))
+		}
+
 		if v1, ok := oidcOptions["support_unsigned_request_object"].(bool); ok {
 			application.SetSupportUnsignedRequestObject(v1)
 		}
@@ -1170,6 +1198,14 @@ func expandGrantTypes(s *schema.Set) ([]management.EnumApplicationOIDCGrantType,
 	}
 
 	return grantTypes, refreshToken
+}
+
+func expandKerberos(s map[string]interface{}) *management.ApplicationOIDCAllOfKerberos {
+
+	key := management.NewApplicationOIDCAllOfKerberosKey(s["key_id"].(string))
+	kerberos := management.NewApplicationOIDCAllOfKerberos(*key)
+
+	return kerberos
 }
 
 func expandMobile(s map[string]interface{}) (*management.ApplicationOIDCAllOfMobile, diag.Diagnostics) {
@@ -1586,6 +1622,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["client_secret"] = nil
 	}
 
+	if v, ok := application.GetKerberosOk(); ok {
+		item["certificate_based_authentication"] = flattenKerberos(v)
+	} else {
+		item["certificate_based_authentication"] = nil
+	}
+
 	if v, ok := application.GetSupportUnsignedRequestObjectOk(); ok {
 		item["support_unsigned_request_object"] = v
 	} else {
@@ -1628,6 +1670,20 @@ func flattenGrantTypes(application *management.ApplicationOIDC) []string {
 		returnGrants = append(returnGrants, string(v))
 	}
 	return returnGrants
+}
+
+func flattenKerberos(kerberos *management.ApplicationOIDCAllOfKerberos) interface{} {
+
+	item := map[string]interface{}{}
+
+	if v, ok := kerberos.GetKeyOk(); ok {
+		item["key_id"] = v.GetId()
+	} else {
+		item["key_id"] = nil
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
 }
 
 func flattenMobile(mobile *management.ApplicationOIDCAllOfMobile) (interface{}, diag.Diagnostics) {
