@@ -148,13 +148,20 @@ func ResourceKey() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
 				ConflictsWith:    []string{"pkcs12_file_base64"},
 			},
+			"custom_crl": {
+				Type:             schema.TypeString,
+				Description:      "A URL string of a custom Certificate Revokation List endpoint.  Used for certificates of type `ISSUANCE`.",
+				Optional:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^http:\/\/[a-zA-Z0-9.-\/]*$`), "`custom_crl` must be a `http://` URL endpoint.")),
+				ConflictsWith:    []string{"pkcs12_file_base64"},
+			},
 			"pkcs12_file_base64": {
 				Description:   "A base64 encoded PKCS12 file.  Cannot be used with `name`, `algorithm`, `issuer_dn`, `key_length`, `serial_number`, `signature_algorithm`, `subject_dn` or `validity_period`.",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
 				Sensitive:     true,
-				ConflictsWith: []string{"name", "algorithm", "issuer_dn", "key_length", "serial_number", "signature_algorithm", "subject_dn", "validity_period"},
+				ConflictsWith: []string{"name", "algorithm", "issuer_dn", "key_length", "serial_number", "signature_algorithm", "subject_dn", "validity_period", "custom_crl"},
 			},
 		},
 	}
@@ -198,15 +205,29 @@ func resourceKeyCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	} else {
 
+		usageType := management.EnumCertificateKeyUsageType(d.Get("usage_type").(string))
+
 		certificateKey := *management.NewCertificate(
 			management.EnumCertificateKeyAlgorithm(d.Get("algorithm").(string)),
 			int32(d.Get("key_length").(int)),
 			d.Get("name").(string),
 			management.EnumCertificateKeySignagureAlgorithm(d.Get("signature_algorithm").(string)),
 			d.Get("subject_dn").(string),
-			management.EnumCertificateKeyUsageType(d.Get("usage_type").(string)),
+			usageType,
 			int32(d.Get("validity_period").(int)),
 		)
+
+		if v, ok := d.GetOk("custom_crl"); ok {
+			if usageType != management.ENUMCERTIFICATEKEYUSAGETYPE_ISSUANCE {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  fmt.Sprintf("`custom_crl` can only be set for keys that have a `type` value of `%s`.", management.ENUMCERTIFICATEKEYUSAGETYPE_ISSUANCE),
+					Detail:   "Ensure that the `custom_crl` attribute is unset for this key type, or review the value set for the `type` attribute.",
+				})
+				return diags
+			}
+			certificateKey.SetCustomCRL(v.(string))
+		}
 
 		if v, ok := d.GetOk("default"); ok {
 			certificateKey.SetDefault(v.(bool))
@@ -289,6 +310,10 @@ func resourceKeyRead(ctx context.Context, d *schema.ResourceData, meta interface
 	d.Set("subject_dn", respObject.GetSubjectDN())
 	d.Set("usage_type", string(respObject.GetUsageType()))
 	d.Set("validity_period", respObject.GetValidityPeriod())
+
+	if v, ok := respObject.GetCustomCRLOk(); ok {
+		d.Set("custom_crl", v)
+	}
 
 	return diags
 }

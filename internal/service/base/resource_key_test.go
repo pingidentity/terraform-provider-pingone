@@ -361,6 +361,43 @@ func TestAccKey_Change(t *testing.T) {
 	})
 }
 
+func TestAccKey_CustomCRL(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_key.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS12(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckKeyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccKeyConfig_CustomCRL(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "ISSUANCE"),
+					resource.TestCheckResourceAttr(resourceFullName, "custom_crl", "http://www.pingidentity.com/test.crl"),
+				),
+			},
+			{
+				Config:  testAccKeyConfig_CustomCRL(environmentName, licenseID, resourceName, name),
+				Destroy: true,
+			},
+			{
+				Config:      testAccKeyConfig_CustomCRLIncorrectKeyType(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile("`custom_crl` can only be set for keys that have a `type` value of `ISSUANCE`."),
+			},
+		},
+	})
+}
+
 func testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, usage string, defaultKey bool) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -396,6 +433,44 @@ resource "pingone_key" "%[3]s" {
   subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccKeyConfig_CustomCRL(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA224withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "ISSUANCE"
+  validity_period     = 365
+
+  custom_crl = "http://www.pingidentity.com/test.crl"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccKeyConfig_CustomCRLIncorrectKeyType(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA224withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+
+  custom_crl = "http://www.pingidentity.com/test.crl"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
