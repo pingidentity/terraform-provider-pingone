@@ -2,6 +2,7 @@
 
 NOTES:
 
+* Updated the index documentation to refer to the more detailed getting started guide at [pingidentity.github.io/terraform-docs/](https://pingidentity.github.io/terraform-docs/) ([#309](https://github.com/pingidentity/terraform-provider-pingone/issues/309))
 * `data-source/pingone_schema`: Migrated to plugin framework. ([#306](https://github.com/pingidentity/terraform-provider-pingone/issues/306))
 
 ENHANCEMENTS:
