@@ -18,6 +18,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 )
 
@@ -193,6 +194,7 @@ func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resou
 	v = append(v, base.Resources()...)
 	v = append(v, mfa.Resources()...)
 	v = append(v, sso.Resources()...)
+	v = append(v, risk.Resources()...)
 	return v
 }
 
@@ -202,6 +204,7 @@ func (p *pingOneProvider) DataSources(ctx context.Context) []func() datasource.D
 	v = append(v, base.DataSources()...)
 	v = append(v, mfa.DataSources()...)
 	v = append(v, sso.DataSources()...)
+	v = append(v, risk.DataSources()...)
 	return v
 }
 
