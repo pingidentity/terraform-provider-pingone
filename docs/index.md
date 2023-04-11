@@ -15,7 +15,7 @@ To get started using the PingOne Terraform provider, first you'll need an active
 
 ### Configure PingOne for Terraform access
 
-For detailed instructions on how to prepare PingOne for Terraform access, see the [PingOne getting started guide](https://terraform.pingidentity.com/getting-started/pingone/#configure-pingone-for-terraform-access) on [terraform.pingidentity.com](https://terraform.pingidentity.com).
+For detailed instructions on how to prepare PingOne for Terraform access, see the [PingOne getting started guide](https://pingidentity.github.io/terraform-docs//getting-started/pingone/#configure-pingone-for-terraform-access) at [pingidentity.github.io/terraform-docs/](https://pingidentity.github.io/terraform-docs/).
 
 ## Example Usage
 
