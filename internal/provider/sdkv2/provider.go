@@ -123,7 +123,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_password_policy":                       sso.ResourcePasswordPolicy(),
 				"pingone_population":                            sso.ResourcePopulation(),
 				"pingone_resource":                              sso.ResourceResource(),
-				"pingone_resource_attribute":                    sso.ResourceResourceAttribute(),
 				"pingone_resource_scope":                        sso.ResourceResourceScope(),
 				"pingone_resource_scope_openid":                 sso.ResourceResourceScopeOpenID(),
 				"pingone_resource_scope_pingone_api":            sso.ResourceResourceScopePingOneAPI(),
