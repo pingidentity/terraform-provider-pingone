@@ -114,7 +114,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_webhook":                       base.ResourceWebhook(),
 
 				"pingone_application":                           sso.ResourceApplication(),
-				"pingone_application_attribute_mapping":         sso.ResourceApplicationAttributeMapping(),
 				"pingone_application_sign_on_policy_assignment": sso.ResourceApplicationSignOnPolicyAssignment(),
 				"pingone_application_resource_grant":            sso.ResourceApplicationResourceGrant(),
 				"pingone_application_role_assignment":           sso.ResourceApplicationRoleAssignment(),

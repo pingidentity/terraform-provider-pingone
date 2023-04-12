@@ -44,12 +44,12 @@ resource "pingone_application_attribute_mapping" "bar" {
 
 - `application_id` (String) The ID of the application to create the attribute mapping for.
 - `environment_id` (String) The ID of the environment to create the application attribute mapping in.
-- `name` (String) A string that specifies the name of attribute and must be unique within an application. For SAML applications, the `samlAssertion.subject` name is a reserved case-insensitive name which indicates the mapping to be used for the subject in an assertion. For OpenID Connect applications, the following names are reserved and cannot be used `acr`, `amr`, `at_hash`, `aud`, `auth_time`, `azp`, `client_id`, `exp`, `iat`, `iss`, `jti`, `nbf`, `nonce`, `org`, `scope`, `sid`, `sub`.
+- `name` (String) A string that specifies the name of attribute and must be unique within an application. For SAML applications, the `samlAssertion.subject` name is a reserved case-insensitive name which indicates the mapping to be used for the subject in an assertion. For OpenID Connect applications, the following names are reserved and cannot be used: `acr`, `amr`, `at_hash`, `aud`, `auth_time`, `azp`, `client_id`, `exp`, `iat`, `iss`, `jti`, `nbf`, `nonce`, `org`, `scope`, `sid`, `sub`.
 - `value` (String) A string that specifies the string constants or expression for mapping the attribute path against a specific source. The expression format is `${<source>.<attribute_path>}`. The only supported source is user (for example, `${user.id}`).
 
 ### Optional
 
-- `required` (Boolean) A boolean to specify whether a mapping value is required for this attribute. If true, a value must be set and a non-empty value must be available in the SAML assertion or ID token. Defaults to `false`.
+- `required` (Boolean) A boolean to specify whether a mapping value is required for this attribute. If `true`, a value must be set and a non-empty value must be available in the SAML assertion or ID token. Defaults to `false`.
 
 ### Read-Only
 
