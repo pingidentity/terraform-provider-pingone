@@ -200,7 +200,7 @@ func TestAccIdentityProviderAttribute_Change(t *testing.T) {
 			},
 			{
 				Config:      testAccIdentityProviderAttributeConfig_ReservedAttributeName(resourceName, name),
-				ExpectError: regexp.MustCompile(`expected name to not be any of \[[a-zA-Z ]*\], got [a-zA-Z]*`),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
 			},
 			{
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
@@ -229,6 +229,7 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccIdentityProviderAttributeConfig_ReservedAttributeName(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
 				ExpectError: regexp.MustCompile(`expected name to not be any of \[[a-zA-Z ]*\], got [a-zA-Z]*`),
 			},
 		},
