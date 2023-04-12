@@ -6,16 +6,19 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -36,6 +39,8 @@ type ApplicationAttributeMappingResourceModel struct {
 	Required      types.Bool   `tfsdk:"required"`
 	Value         types.String `tfsdk:"value"`
 	MappingType   types.String `tfsdk:"mapping_type"`
+	OIDCOptions   types.List   `tfsdk:"oidc_mapping_options"`
+	SAMLOptions   types.List   `tfsdk:"saml_mapping_options"`
 }
 
 // Framework interfaces
@@ -49,6 +54,22 @@ var (
 func NewApplicationAttributeMappingResource() resource.Resource {
 	return &ApplicationAttributeMappingResource{}
 }
+
+var (
+	coreValueNames = map[string]struct {
+		applicationType string
+		defaultValue    string
+	}{
+		"sub": {
+			applicationType: string(management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT),
+			defaultValue:    "${user.id}",
+		},
+		"saml_subject": {
+			applicationType: string(management.ENUMAPPLICATIONPROTOCOL_SAML),
+			defaultValue:    "${user.id}",
+		},
+	}
+)
 
 // Metadata
 func (r *ApplicationAttributeMappingResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -85,6 +106,32 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 		Description:         strings.ReplaceAll(mappingTypeDescriptionFmt, "`", "\""),
 	}
 
+	//oidc block
+	oidcScopesDescriptionFmt := "OIDC resource scope IDs that this attribute mapping is available for exclusively. This setting overrides any global OIDC resource scopes that contain an attribute mapping with the same name. The list can contain only scope IDs that have been granted for the application through the `/grants` endpoint. At least one scope ID is expected."
+	oidcScopesDescription := framework.SchemaDescription{
+		MarkdownDescription: oidcScopesDescriptionFmt,
+		Description:         strings.ReplaceAll(oidcScopesDescriptionFmt, "`", "\""),
+	}
+
+	oidcIdTokenEnabledDescriptionFmt := "Whether the attribute mapping should be available in the ID Token. This property is applicable only when the application's `protocol` property is `OPENID_CONNECT`. If omitted, the default is `true`. Note that the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to `false`. At least one of these properties must have a value of `true`."
+	oidcIdTokenEnabledDescription := framework.SchemaDescription{
+		MarkdownDescription: oidcIdTokenEnabledDescriptionFmt,
+		Description:         strings.ReplaceAll(oidcIdTokenEnabledDescriptionFmt, "`", "\""),
+	}
+
+	oidcuserinfoEnabledDescriptionFmt := "Whether the attribute mapping should be available through the `/as/userinfo` endpoint. This property is applicable only when the application's protocol property is `OPENID_CONNECT`. If omitted, the default is `true`. Note that the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to `false`. At least one of these properties must have a value of `true`."
+	oidcUserinfoEnabledDescription := framework.SchemaDescription{
+		MarkdownDescription: oidcuserinfoEnabledDescriptionFmt,
+		Description:         strings.ReplaceAll(oidcuserinfoEnabledDescriptionFmt, "`", "\""),
+	}
+
+	//saml block
+	samlsubjectNameformatDescriptionFmt := "A URI reference representing the classification of the attribute. Helps the service provider interpret the attribute format.  Options are `urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified`, `urn:oasis:names:tc:SAML:2.0:attrname-format:uri`, `urn:oasis:names:tc:SAML:2.0:attrname-format:basic`."
+	samlsubjectNameformatDescription := framework.SchemaDescription{
+		MarkdownDescription: samlsubjectNameformatDescriptionFmt,
+		Description:         strings.ReplaceAll(samlsubjectNameformatDescriptionFmt, "`", "\""),
+	}
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage an attribute mapping for applications configured in PingOne.",
@@ -104,6 +151,18 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 				Description:         nameDescription.Description,
 				MarkdownDescription: nameDescription.MarkdownDescription,
 				Required:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplaceIf(
+						func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+							_, isCoreValueNameState := coreValueNames[req.StateValue.ValueString()]
+							_, isCoreValueNamePlan := coreValueNames[req.PlanValue.ValueString()]
+
+							resp.RequiresReplace = isCoreValueNameState != isCoreValueNamePlan
+						},
+						"The resource must be replaced if changing between core and custom attribute types.",
+						"The resource must be replaced if changing between core and custom attribute types.",
+					),
+				},
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
@@ -130,6 +189,66 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 				Description:         mappingTypeDescription.Description,
 				MarkdownDescription: mappingTypeDescription.MarkdownDescription,
 				Computed:            true,
+			},
+		},
+
+		Blocks: map[string]schema.Block{
+			"oidc_mapping_options": schema.ListNestedBlock{
+				Description: "A single block containing attribute mapping options specific to OpenID Connect applications.",
+
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"scopes": schema.SetAttribute{
+							Description:         oidcScopesDescription.Description,
+							MarkdownDescription: oidcScopesDescription.MarkdownDescription,
+							Required:            true,
+							Validators: []validator.Set{
+								setvalidator.SizeAtLeast(attrMinLength),
+							},
+						},
+
+						"id_token_enabled": schema.BoolAttribute{
+							Description:         oidcIdTokenEnabledDescription.Description,
+							MarkdownDescription: oidcIdTokenEnabledDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(true),
+						},
+
+						"userinfo_enabled": schema.BoolAttribute{
+							Description:         oidcUserinfoEnabledDescription.Description,
+							MarkdownDescription: oidcUserinfoEnabledDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(true),
+						},
+					},
+				},
+				Validators: []validator.List{
+					listvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("saml_mapping_options")),
+				},
+			},
+
+			"saml_mapping_options": schema.ListNestedBlock{
+				Description: "A single block containing attribute mapping options specific to SAML applications.",
+
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"saml_subject_nameformat": schema.StringAttribute{
+							Description:         samlsubjectNameformatDescription.Description,
+							MarkdownDescription: samlsubjectNameformatDescription.MarkdownDescription,
+							Required:            true,
+							Validators: []validator.String{
+								stringvalidator.LengthAtLeast(attrMinLength),
+							},
+						},
+					},
+				},
+				Validators: []validator.List{
+					listvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("oidc_mapping_options")),
+				},
 			},
 		},
 	}
@@ -185,20 +304,46 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 		return
 	}
 
+	var coreAttribute *management.ApplicationAttributeMapping
+	var d diag.Diagnostics
+
+	if v, ok := coreValueNames[plan.Name.ValueString()]; ok {
+		coreAttribute, d = validateAttributeAgainstApplicationType(ctx, r.client, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Name.ValueString(), v.applicationType)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	// Build the model for the API
-	createApplicationAttributeMapping := plan.expand()
+	applicationAttributeMapping := plan.expand(coreAttribute)
 
-	// Run the API call
-	response, d := framework.ParseResponse(
-		ctx,
+	var response interface{}
 
-		func() (interface{}, *http.Response, error) {
-			return r.client.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*createApplicationAttributeMapping).Execute()
-		},
-		"CreateApplicationAttributeMapping",
-		framework.CustomErrorInvalidValue,
-		sdk.DefaultCreateReadRetryable,
-	)
+	if coreAttribute == nil {
+		// Run the API call
+		response, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+			},
+			"CreateApplicationAttributeMapping",
+			framework.CustomErrorInvalidValue,
+			sdk.DefaultCreateReadRetryable,
+		)
+	} else {
+		response, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), coreAttribute.GetId()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+			},
+			"UpdateApplicationAttributeMapping",
+			framework.CustomErrorInvalidValue,
+			sdk.DefaultCreateReadRetryable,
+		)
+	}
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -279,14 +424,28 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 		return
 	}
 
-	// Build the model for the API
-	applicationAttributeMapping := plan.expand()
+	var coreAttribute *management.ApplicationAttributeMapping
+	if plan.MappingType.ValueString() == string(management.ENUMATTRIBUTEMAPPINGTYPE_CORE) {
+		response, diags := framework.ParseResponse(
+			ctx,
 
-	tflog.Debug(ctx, "WUT", map[string]interface{}{
-		"required-obj":   applicationAttributeMapping.GetRequired(),
-		"required-plan":  plan.Required.ValueBool(),
-		"required-state": state.Required.ValueBool(),
-	})
+			func() (interface{}, *http.Response, error) {
+				return r.client.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).Execute()
+			},
+			"ReadOneApplicationAttributeMapping",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		coreAttribute = response.(*management.ApplicationAttributeMapping)
+	}
+
+	// Build the model for the API
+	applicationAttributeMapping := plan.expand(coreAttribute)
 
 	// Run the API call
 	response, d := framework.ParseResponse(
@@ -333,18 +492,55 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
-		ctx,
+	var d diag.Diagnostics
+	if data.MappingType.ValueString() == string(management.ENUMATTRIBUTEMAPPINGTYPE_CORE) {
+		response, diags := framework.ParseResponse(
+			ctx,
 
-		func() (interface{}, *http.Response, error) {
-			r, err := r.client.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
-		},
-		"DeleteApplicationAttributeMapping",
-		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+			func() (interface{}, *http.Response, error) {
+				return r.client.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			},
+			"ReadOneApplicationAttributeMapping",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		coreAttribute := response.(*management.ApplicationAttributeMapping)
+
+		if v, ok := coreValueNames[coreAttribute.Name]; ok {
+
+			coreAttribute.SetValue(v.defaultValue)
+
+			_, d = framework.ParseResponse(
+				ctx,
+
+				func() (interface{}, *http.Response, error) {
+					return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).ApplicationAttributeMapping(*coreAttribute).Execute()
+				},
+				"UpdateApplicationAttributeMapping",
+				framework.CustomErrorInvalidValue,
+				sdk.DefaultCreateReadRetryable,
+			)
+		}
+
+	} else {
+		_, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				r, err := r.client.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+				return nil, r, err
+			},
+			"DeleteApplicationAttributeMapping",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+		)
+	}
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -367,9 +563,15 @@ func (r *ApplicationAttributeMappingResource) ImportState(ctx context.Context, r
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
 }
 
-func (p *ApplicationAttributeMappingResourceModel) expand() *management.ApplicationAttributeMapping {
+func (p *ApplicationAttributeMappingResourceModel) expand(coreAttribute *management.ApplicationAttributeMapping) *management.ApplicationAttributeMapping {
 
-	data := management.NewApplicationAttributeMapping(p.Name.ValueString(), p.Required.ValueBool(), p.Value.ValueString())
+	var data *management.ApplicationAttributeMapping
+
+	if coreAttribute == nil {
+		data = management.NewApplicationAttributeMapping(p.Name.ValueString(), p.Required.ValueBool(), p.Value.ValueString())
+	} else {
+		data.SetValue(p.Id.ValueString())
+	}
 
 	return data
 }
