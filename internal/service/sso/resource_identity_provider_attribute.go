@@ -280,14 +280,14 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 	}
 
 	// Build the model for the API
-	agreement := plan.expand()
+	applicationAttributeMapping := plan.expand()
 
 	// Run the API call
 	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*agreement).Execute()
+			return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*applicationAttributeMapping).Execute()
 		},
 		"UpdateIdentityProviderAttribute",
 		framework.DefaultCustomError,
