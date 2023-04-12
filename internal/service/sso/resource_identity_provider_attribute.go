@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -18,6 +20,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"golang.org/x/exp/slices"
 )
 
 // Types
@@ -83,6 +86,10 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 		Description:         strings.ReplaceAll(mappingTypeDescriptionFmt, "`", "\""),
 	}
 
+	coreValueNames := []string{
+		"username",
+	}
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage an attribute mapping for identity providers configured in PingOne.",
@@ -102,6 +109,23 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 				Description:         nameDescription.Description,
 				MarkdownDescription: nameDescription.MarkdownDescription,
 				Required:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplaceIf(
+						func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+							isCoreValueName := struct {
+								state bool
+								plan  bool
+							}{
+								state: slices.Contains(coreValueNames, req.StateValue.ValueString()),
+								plan:  slices.Contains(coreValueNames, req.PlanValue.ValueString()),
+							}
+
+							resp.RequiresReplace = isCoreValueName.state != isCoreValueName.plan
+						},
+						"The resource must be replaced if changing between core and custom attribute types.",
+						"The resource must be replaced if changing between core and custom attribute types.",
+					),
+				},
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 					stringvalidator.NoneOf(reservedNames...),
