@@ -84,7 +84,7 @@ func TestAccResourceAttribute_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceAttributeConfig_Full(resourceName, name, true, false),
+				Config: testAccResourceAttributeConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
@@ -98,7 +98,94 @@ func TestAccResourceAttribute_Full(t *testing.T) {
 	})
 }
 
-func testAccResourceAttributeConfig_Full(resourceName, name string, idToken, userInfo bool) string {
+func TestAccResourceAttribute_Expression(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_resource_attribute.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckResourceAttributeDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceAttributeConfig_Expression(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.given + ', ' + user.name.family}"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceAttribute_CoreAttribute(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_resource_attribute.%s", resourceName)
+
+	name := "sub"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckResourceAttributeDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceAttributeConfig_Full(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.family}"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "CORE"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceAttribute_OIDC(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_resource_attribute.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckResourceAttributeDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceAttributeConfig_Full(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.family}"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
+				),
+			},
+		},
+	})
+}
+
+func testAccResourceAttributeConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -114,5 +201,100 @@ resource "pingone_resource_attribute" "%[2]s" {
 
   name  = "%[3]s"
   value = "$${user.name.family}"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, idToken, userInfo)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceAttributeConfig_Expression(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_resource_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name  = "%[3]s"
+  value = "$${user.name.given + ', ' + user.name.family}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceAttributeConfig_OIDC_NewAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_resource" "openid" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
+
+resource "pingone_resource_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.openid.id
+
+  name  = "%[3]s"
+  value = "$${user.name.given + ', ' + user.name.family}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceAttributeConfig_OIDC_ExistingAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_resource" "openid" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
+
+resource "pingone_resource_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.openid.id
+
+  name  = "family_name"
+  value = "$${user.name.family}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceAttributeConfig_OIDC_ReservedAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_resource" "openid" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
+
+resource "pingone_resource_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.openid.id
+
+  name  = "aud"
+  value = "$${user.name.family}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceAttributeConfig_OIDC_CoreAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_resource" "openid" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
+
+resource "pingone_resource_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.openid.id
+
+  name  = "sub"
+  value = "$${user.name.family}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

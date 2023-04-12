@@ -230,7 +230,32 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 			{
 				Config:      testAccIdentityProviderAttributeConfig_ReservedAttributeName(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
-				ExpectError: regexp.MustCompile(`expected name to not be any of \[[a-zA-Z ]*\], got [a-zA-Z]*`),
+			},
+		},
+	})
+}
+
+func TestAccIdentityProviderAttribute_CoreAttribute(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_identity_provider_attribute.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIdentityProviderAttributeConfig_CoreAttribute(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", "username"),
+					resource.TestCheckResourceAttr(resourceFullName, "update", "EMPTY_ONLY"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.name.familyName}"),
+				),
 			},
 		},
 	})
@@ -304,7 +329,7 @@ resource "pingone_identity_provider_attribute" "%[2]s" {
 
   name   = "name.given"
   update = "ALWAYS"
-  value  = "$${providerAttributes.name.givenName}"
+  value  = "$${user.name.given + ', ' + user.name.family}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -329,5 +354,29 @@ resource "pingone_identity_provider_attribute" "%[2]s" {
   name   = "account"
   update = "ALWAYS"
   value  = "$${'test'}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccIdentityProviderAttributeConfig_CoreAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider_attribute" "%[2]s" {
+  environment_id       = data.pingone_environment.general_test.id
+  identity_provider_id = pingone_identity_provider.%[2]s.id
+
+  name   = "username"
+  update = "EMPTY_ONLY"
+  value  = "$${providerAttributes.name.familyName}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

@@ -235,6 +235,66 @@ func TestAccApplicationAttributeMapping_ReservedAttributeName(t *testing.T) {
 	})
 }
 
+func TestAccApplicationAttributeMapping_CoreAttributeOIDC(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationAttributeMappingConfig_CoreAttributeOIDC(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
+					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplicationAttributeMapping_CoreAttributeSAML(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationAttributeMappingConfig_CoreAttributeSAML(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "saml_subject"),
+					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
+				),
+			},
+		},
+	})
+}
+
 func testAccApplicationAttributeMappingConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -345,5 +405,58 @@ resource "pingone_application_attribute_mapping" "%[2]s" {
 
   name  = "aud"
   value = "$${'test'}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_CoreAttributeOIDC(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "sub"
+  value = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_CoreAttributeSAML(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://pingidentity.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[2]s"
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "saml_subject"
+  value = "$${user.email}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
