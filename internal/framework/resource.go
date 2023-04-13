@@ -67,6 +67,19 @@ func TimeOkToTF(v *time.Time, ok bool) basetypes.StringValue {
 	}
 }
 
+func StringSetOkToTF(v []string, ok bool) basetypes.SetValue {
+	if !ok || v == nil {
+		return types.SetNull(types.StringType)
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, StringToTF(item))
+		}
+
+		return types.SetValueMust(types.StringType, list)
+	}
+}
+
 func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 	if v == nil {
 		return types.ListNull(types.StringType), nil
@@ -82,6 +95,21 @@ func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 }
 
 func TFListToStringSlice(ctx context.Context, v types.List) []*string {
+	var sliceOut []*string
+
+	if v.IsNull() || v.IsUnknown() {
+		return nil
+	} else {
+
+		if v.ElementsAs(ctx, &sliceOut, false).HasError() {
+			return nil
+		}
+	}
+
+	return sliceOut
+}
+
+func TFSetToStringSlice(ctx context.Context, v types.Set) []*string {
 	var sliceOut []*string
 
 	if v.IsNull() || v.IsUnknown() {

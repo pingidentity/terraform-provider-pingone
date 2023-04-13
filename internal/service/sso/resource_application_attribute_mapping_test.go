@@ -70,7 +70,7 @@ func testAccCheckApplicationAttributeMappingDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccApplicationAttributeMapping_Full(t *testing.T) {
+func TestAccApplicationAttributeMapping_OIDC(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -78,65 +78,52 @@ func TestAccApplicationAttributeMapping_Full(t *testing.T) {
 
 	name := resourceName
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccApplicationAttributeMappingConfig_Full(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
-					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
-					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CUSTOM"),
-				),
-			},
-		},
-	})
-}
+	fullStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_OIDC_Full(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_scopes.#", "3"),
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.0", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.1", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.2", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_id_token_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_userinfo_enabled", "false"),
+		),
+	}
 
-func TestAccApplicationAttributeMapping_Minimal(t *testing.T) {
-	t.Parallel()
+	minimalStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_scopes.#", "1"),
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.0", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_id_token_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_userinfo_enabled", "true"),
+		),
+	}
 
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
+	expressionStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_OIDC_Expression(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "name", "full_name"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.given + ', ' + user.name.family}"),
+		),
+	}
 
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
-					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
-					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CUSTOM"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccApplicationAttributeMapping_Expression(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
-
-	name := resourceName
+	invalidParameterStep := resource.TestStep{
+		Config:      testAccApplicationAttributeMappingConfig_OIDC_WithSAMLAttrs(resourceName, name),
+		ExpectError: regexp.MustCompile(`buh`),
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
@@ -144,77 +131,35 @@ func TestAccApplicationAttributeMapping_Expression(t *testing.T) {
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Full
+			fullStep,
 			{
-				Config: testAccApplicationAttributeMappingConfig_Expression(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "full_name"),
-					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.given + ', ' + user.name.family}"),
-					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CUSTOM"),
-				),
+				Config:  testAccApplicationAttributeMappingConfig_OIDC_Full(resourceName, name),
+				Destroy: true,
 			},
+			// Minimal
+			minimalStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
+			fullStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_OIDC_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Expression
+			expressionStep,
+			// Invalid parameters
+			invalidParameterStep,
 		},
 	})
 }
 
-func TestAccApplicationAttributeMapping_Change(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
-					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
-				),
-			},
-			{
-				Config: testAccApplicationAttributeMappingConfig_Expression(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "name", "full_name"),
-					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.given + ', ' + user.name.family}"),
-				),
-			},
-			{
-				Config: testAccApplicationAttributeMappingConfig_Full(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
-					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
-				),
-			},
-			{
-				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name),
-				ExpectError: regexp.MustCompile("Attribute name '[a-zA-Z]*' is not valid for the '[A-Z_]*' application"),
-			},
-			{
-				Config: testAccApplicationAttributeMappingConfig_Minimal(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
-					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccApplicationAttributeMapping_ReservedAttributeName(t *testing.T) {
+func TestAccApplicationAttributeMapping_OIDC_ReservedAttributeName(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -228,18 +173,271 @@ func TestAccApplicationAttributeMapping_ReservedAttributeName(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name),
+				Config:      testAccApplicationAttributeMappingConfig_OIDC_ReservedAttributeName(resourceName, name),
 				ExpectError: regexp.MustCompile("Attribute name '[a-zA-Z]*' is not valid for the '[A-Z_]*' application"),
 			},
 		},
 	})
 }
 
-func TestAccApplicationAttributeMapping_CoreAttributeOIDC(t *testing.T) {
+func TestAccApplicationAttributeMapping_OIDC_CoreAttribute(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_OIDC_CoreAttribute(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+			resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
+		),
+	}
+
+	customFullStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_OIDC_Full(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+		),
+	}
+
+	badChangeStep := resource.TestStep{
+		Config:      testAccApplicationAttributeMappingConfig_OIDC_CoreAttribute_BadChange(resourceName, name),
+		ExpectError: regexp.MustCompile(`buh`),
+	}
+
+	coreAttrNameAppTypeStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_OIDC_CoreAttribute_SAML_Name(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "name", "saml_subject"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			fullStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_OIDC_CoreAttribute(resourceName, name),
+				Destroy: true,
+			},
+			// Core / custom switch
+			fullStep,
+			customFullStep,
+			fullStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_OIDC_CoreAttribute(resourceName, name),
+				Destroy: true,
+			},
+			// Error
+			badChangeStep,
+			// Allow core attribute name on other app types
+			coreAttrNameAppTypeStep,
+		},
+	})
+}
+
+func TestAccApplicationAttributeMapping_SAML(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_SAML_Full(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+			resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CUSTOM"),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_SAML_Minimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+			resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CUSTOM"),
+		),
+	}
+
+	expressionStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_SAML_Expression(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "name", "full_name"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.given + ', ' + user.name.family}"),
+		),
+	}
+
+	invalidParameterStep := resource.TestStep{
+		Config:      testAccApplicationAttributeMappingConfig_SAML_WithOIDCAttrs(resourceName, name),
+		ExpectError: regexp.MustCompile(`buh`),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			fullStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_SAML_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			minimalStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_SAML_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
+			fullStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_SAML_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Expression
+			expressionStep,
+			// Bad parameters
+			invalidParameterStep,
+		},
+	})
+}
+
+func TestAccApplicationAttributeMapping_SAML_CoreAttribute(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_Full(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "name", "saml_subject"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+			resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml_subject_nameformat", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_Minimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "name", "saml_subject"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+			resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml_subject_nameformat", "uhhhh"),
+		),
+	}
+
+	customFullStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_SAML_Full(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+		),
+	}
+
+	badChangeStep := resource.TestStep{
+		Config:      testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_BadChange(resourceName, name),
+		ExpectError: regexp.MustCompile(`buh`),
+	}
+
+	coreAttrNameAppTypeStep := resource.TestStep{
+		Config: testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_OIDC_Name(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
+			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			fullStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			minimalStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			minimalStep,
+			fullStep,
+			minimalStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Core / custom switch
+			fullStep,
+			customFullStep,
+			fullStep,
+			{
+				Config:  testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Error
+			badChangeStep,
+			// Allow core attribute name on other application types
+			coreAttrNameAppTypeStep,
+		},
+	})
+}
+
+func TestAccApplicationAttributeMapping_BadApplication(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
 
 	name := resourceName
 
@@ -250,52 +448,14 @@ func TestAccApplicationAttributeMapping_CoreAttributeOIDC(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationAttributeMappingConfig_CoreAttributeOIDC(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
-					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
-					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
-				),
+				Config:      testAccApplicationAttributeMappingConfig_BadApplication(resourceName, name),
+				ExpectError: regexp.MustCompile("Attribute name '[a-zA-Z]*' is not valid for the '[A-Z_]*' application"),
 			},
 		},
 	})
 }
 
-func TestAccApplicationAttributeMapping_CoreAttributeSAML(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccApplicationAttributeMappingConfig_CoreAttributeSAML(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttrSet(resourceFullName, "application_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "name", "saml_subject"),
-					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
-					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
-				),
-			},
-		},
-	})
-}
-
-func testAccApplicationAttributeMappingConfig_Full(resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_OIDC_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -314,6 +474,43 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
+
+data "pingone_resource_scope" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name = "openid"
+}
+
+resource "pingone_resource_scope_openid" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "newscope"
+}
+
+resource "pingone_resource_scope_openid" "%[2]s_2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "newscope2"
+}
+
+resource "pingone_application_resource_grant" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  resource_id = data.pingone_resource.%[2]s.id
+
+  scopes = [
+    pingone_resource_scope_openid.%[2]s_2.id,
+    pingone_resource_scope_openid.%[2]s.id,
+  ]
+}
+
 resource "pingone_application_attribute_mapping" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
@@ -321,10 +518,23 @@ resource "pingone_application_attribute_mapping" "%[2]s" {
   name     = "email"
   required = true
   value    = "$${user.email}"
+
+  oidc_scopes = [
+    data.pingone_resource_scope.%[2]s.id,
+    pingone_resource_scope_openid.%[2]s_2.id,
+    pingone_resource_scope_openid.%[2]s.id,
+  ]
+
+  oidc_id_token_enabled = true
+  oidc_userinfo_enabled = false
+
+  depends_on = [
+    pingone_application_resource_grant.%[2]s
+  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationAttributeMappingConfig_Minimal(resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -352,7 +562,7 @@ resource "pingone_application_attribute_mapping" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationAttributeMappingConfig_Expression(resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_OIDC_Expression(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -380,7 +590,7 @@ resource "pingone_application_attribute_mapping" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationAttributeMappingConfig_ReservedAttributeName(resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_OIDC_ReservedAttributeName(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -408,7 +618,37 @@ resource "pingone_application_attribute_mapping" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationAttributeMappingConfig_CoreAttributeOIDC(resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_OIDC_WithSAMLAttrs(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "full_name"
+  value = "$${user.name.given + ', ' + user.name.family}"
+
+  saml_subject_nameformat = "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_OIDC_CoreAttribute(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -436,7 +676,7 @@ resource "pingone_application_attribute_mapping" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationAttributeMappingConfig_CoreAttributeSAML(resourceName, name string) string {
+func testAccApplicationAttributeMappingConfig_OIDC_CoreAttribute_BadChange(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -445,10 +685,43 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
-    acs_urls           = ["https://pingidentity.com"]
-    assertion_duration = 3600
-    sp_entity_id       = "sp:entity:%[2]s"
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "sub"
+  value = "$${user.email}"
+
+  oidc_id_token_enabled = false // bad change, this can't be set to false
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_OIDC_CoreAttribute_SAML_Name(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
 
@@ -458,5 +731,390 @@ resource "pingone_application_attribute_mapping" "%[2]s" {
 
   name  = "saml_subject"
   value = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_SAML_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "RSA"
+  key_length          = 4096
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[3]s, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://my-saas-app.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    idp_signing_key {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name     = "email"
+  required = true
+  value    = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_SAML_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "RSA"
+  key_length          = 4096
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[3]s, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://my-saas-app.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    idp_signing_key {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "email"
+  value = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_SAML_Expression(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "RSA"
+  key_length          = 4096
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[3]s, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://my-saas-app.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    idp_signing_key {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "full_name"
+  value = "$${user.name.given + ', ' + user.name.family}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_SAML_WithOIDCAttrs(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "RSA"
+  key_length          = 4096
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[3]s, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://my-saas-app.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    idp_signing_key {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
+  }
+}
+
+data "pingone_resource" "%[2]s" {
+  environment_id = pingone_environment.general_test.id
+
+  name = "openid"
+}
+
+data "pingone_resource_scope" "%[2]s" {
+  environment_id = pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name = "openid"
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "email"
+  value = "$${user.email}"
+
+  oidc_scopes = [
+    data.pingone_resource_scope.%[2]s.id
+  ]
+
+  oidc_id_token_enabled = true
+  oidc_userinfo_enabled = false
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "RSA"
+  key_length          = 4096
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[3]s, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://my-saas-app.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    idp_signing_key {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name     = "saml_subject"
+  value    = "$${user.email}"
+  required = true
+
+  saml_subject_nameformat = "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "RSA"
+  key_length          = 4096
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[3]s, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://my-saas-app.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    idp_signing_key {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "saml_subject"
+  value = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_BadChange(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "RSA"
+  key_length          = 4096
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[3]s, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://my-saas-app.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    idp_signing_key {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name     = "saml_subject"
+  value    = "$${user.email}"
+  required = false // cannot be false
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_SAML_CoreAttribute_OIDC_Name(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "RSA"
+  key_length          = 4096
+  signature_algorithm = "SHA512withRSA"
+  subject_dn          = "CN=%[3]s, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  saml_options {
+    acs_urls           = ["https://my-saas-app.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    idp_signing_key {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "sub"
+  value = "$${user.email}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_BadApplication(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  external_link_options {
+    home_page_url = "https://demo.bxretail.org/"
+  }
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "full_name"
+  value = "$${user.name.given + ', ' + user.name.family}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
