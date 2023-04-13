@@ -13,3 +13,15 @@
 ```release-note:note
 bump `github.com/hashicorp/terraform-plugin-framework` v1.1.1 => v1.2.0
 ```
+
+```release-note:enhancement
+`resource/pingone_application_attribute_mapping`: Supports re-mapping the core attributes `sub` for OIDC applications and `saml_subject` for SAML applications.
+```
+
+```release-note:enhancement
+`resource/pingone_application_attribute_mapping`: Supports the ability to set attribute level scopes and enabled/disabled status in the ID token and on the userinfo endpoint for OIDC applications.
+```
+
+```release-note:enhancement
+`resource/pingone_application_attribute_mapping`: Supports the ability to update the `saml_subject` NameFormat value.
+```
