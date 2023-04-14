@@ -21,12 +21,12 @@ import (
 )
 
 // Types
-type IdentityProviderAttributeResource struct {
+type IdentityProviderCoreAttributeResource struct {
 	client *management.APIClient
 	region model.RegionMapping
 }
 
-type IdentityProviderAttributeResourceModel struct {
+type IdentityProviderCoreAttributeResourceModel struct {
 	Id                 types.String `tfsdk:"id"`
 	EnvironmentId      types.String `tfsdk:"environment_id"`
 	IdentityProviderId types.String `tfsdk:"identity_provider_id"`
@@ -36,30 +36,62 @@ type IdentityProviderAttributeResourceModel struct {
 	MappingType        types.String `tfsdk:"mapping_type"`
 }
 
+type coreIdentityProviderAttributeType struct {
+	name     string
+	defaults map[management.EnumIdentityProviderExt]string
+}
+
 // Framework interfaces
 var (
-	_ resource.Resource                = &IdentityProviderAttributeResource{}
-	_ resource.ResourceWithConfigure   = &IdentityProviderAttributeResource{}
-	_ resource.ResourceWithImportState = &IdentityProviderAttributeResource{}
+	_ resource.Resource                = &IdentityProviderCoreAttributeResource{}
+	_ resource.ResourceWithConfigure   = &IdentityProviderCoreAttributeResource{}
+	_ resource.ResourceWithImportState = &IdentityProviderCoreAttributeResource{}
 )
 
 // New Object
-func NewIdentityProviderAttributeResource() resource.Resource {
-	return &IdentityProviderAttributeResource{}
+func NewIdentityProviderCoreAttributeResource() resource.Resource {
+	return &IdentityProviderCoreAttributeResource{}
 }
 
+var (
+	idpCoreAttrMetadata = []coreIdentityProviderAttributeType{
+		{
+			name: "username",
+			defaults: map[management.EnumIdentityProviderExt]string{
+				management.ENUMIDENTITYPROVIDEREXT_AMAZON:         "${providerAttributes.user_id}",
+				management.ENUMIDENTITYPROVIDEREXT_APPLE:          "${providerAttributes.sub}",
+				management.ENUMIDENTITYPROVIDEREXT_FACEBOOK:       "${providerAttributes.email}",
+				management.ENUMIDENTITYPROVIDEREXT_GITHUB:         "${providerAttributes.id}",
+				management.ENUMIDENTITYPROVIDEREXT_GOOGLE:         "${providerAttributes.emailAddress.value}",
+				management.ENUMIDENTITYPROVIDEREXT_LINKEDIN:       "${providerAttributes.emailAddress}",
+				management.ENUMIDENTITYPROVIDEREXT_MICROSOFT:      "${providerAttributes.id}",
+				management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT: "${providerAttributes.sub}",
+				management.ENUMIDENTITYPROVIDEREXT_PAYPAL:         "${providerAttributes.user_id}",
+				management.ENUMIDENTITYPROVIDEREXT_SAML:           "${samlAssertion.subject}",
+				management.ENUMIDENTITYPROVIDEREXT_TWITTER:        "${providerAttributes.id}",
+				management.ENUMIDENTITYPROVIDEREXT_YAHOO:          "${providerAttributes.sub}",
+			},
+		},
+	}
+)
+
 // Metadata
-func (r *IdentityProviderAttributeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_identity_provider_attribute"
+func (r *IdentityProviderCoreAttributeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_identity_provider_core_attribute"
 }
 
 // Schema.
-func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *IdentityProviderCoreAttributeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
 
-	reservedNames := []string{"account", "id", "created", "updated", "lifecycle", "mfaEnabled", "enabled", "username"}
-	nameDescriptionFmt := fmt.Sprintf("The user attribute, which is unique per provider. The attribute must not be defined as read only from the user schema or of type `COMPLEX` based on the user schema. Valid examples `username`, and `name.first`. The following attributes may not be used: `%s`.", strings.Join(reservedNames, "`, `"))
+	nameAttributeValues := make([]string, 0)
+
+	// Loop the core attrs for the application type
+	for _, coreAttr := range idpCoreAttrMetadata {
+		nameAttributeValues = append(nameAttributeValues, coreAttr.name)
+	}
+	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of the PingOne core directory attribute.  The following are valid values: `%s`.", strings.Join(nameAttributeValues, "`, `"))
 	nameDescription := framework.SchemaDescription{
 		MarkdownDescription: nameDescriptionFmt,
 		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
@@ -85,7 +117,7 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage an attribute mapping for identity providers configured in PingOne.",
+		Description: "Resource to create and manage a core attribute mapping for identity providers configured in PingOne.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -104,17 +136,14 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.NoneOf(reservedNames...),
+					stringvalidator.OneOf(nameAttributeValues...),
 				},
 			},
 
 			"update": schema.StringAttribute{
 				Description:         updateDescription.Description,
 				MarkdownDescription: updateDescription.MarkdownDescription,
-				Required:            true,
-				Validators: []validator.String{
-					stringvalidator.OneOf(string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGUPDATE_EMPTY_ONLY), string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGUPDATE_ALWAYS)),
-				},
+				Computed:            true,
 			},
 
 			"value": schema.StringAttribute{
@@ -135,7 +164,7 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 	}
 }
 
-func (r *IdentityProviderAttributeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *IdentityProviderCoreAttributeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -165,8 +194,8 @@ func (r *IdentityProviderAttributeResource) Configure(ctx context.Context, req r
 	r.region = resourceConfig.Client.API.Region
 }
 
-func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state IdentityProviderAttributeResourceModel
+func (r *IdentityProviderCoreAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state IdentityProviderCoreAttributeResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -193,16 +222,20 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 	}
 
 	// Build the model for the API
-	identityProviderAttribute := plan.expand()
+	idpAttributeMapping, d := plan.expand(ctx, r.client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.IdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
+			return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), idpAttributeMapping.GetId()).IdentityProviderAttribute(*idpAttributeMapping).Execute()
 		},
-		"CreateIdentityProviderAttribute",
+		"UpdateIdentityProviderAttribute",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
@@ -219,8 +252,8 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *IdentityProviderAttributeResourceModel
+func (r *IdentityProviderCoreAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *IdentityProviderCoreAttributeResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -266,8 +299,8 @@ func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resour
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state IdentityProviderAttributeResourceModel
+func (r *IdentityProviderCoreAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state IdentityProviderCoreAttributeResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -294,14 +327,18 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 	}
 
 	// Build the model for the API
-	identityProviderAttributeMapping := plan.expand()
+	idpAttributeMapping, d := plan.expand(ctx, r.client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*identityProviderAttributeMapping).Execute()
+			return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*idpAttributeMapping).Execute()
 		},
 		"UpdateIdentityProviderAttribute",
 		framework.DefaultCustomError,
@@ -320,8 +357,8 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *IdentityProviderAttributeResourceModel
+func (r *IdentityProviderCoreAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *IdentityProviderCoreAttributeResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -341,31 +378,57 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
-		ctx,
+	var d diag.Diagnostics
 
-		func() (interface{}, *http.Response, error) {
-			r, err := r.client.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
-		},
-		"DeleteIdentityProviderAttribute",
-		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+	idpType, d := data.getIdentityProviderType(ctx, r.client)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	if coreAttributeData, ok := data.isCoreAttribute(); ok {
+
+		data.Value = framework.StringToTF(coreAttributeData.defaults[*idpType])
+
+		idpAttributeMapping, d := data.expand(ctx, r.client)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		_, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).IdentityProviderAttribute(*idpAttributeMapping).Execute()
+			},
+			"UpdateIdentityProviderAttribute",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+		)
+
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	} else {
+		resp.Diagnostics.AddError(
+			"Unexpected core attribute",
+			"The core attribute identified is unexpected.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+
 }
 
-func (r *IdentityProviderAttributeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *IdentityProviderCoreAttributeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	splitLength := 3
 	attributes := strings.SplitN(req.ID, "/", splitLength)
 
 	if len(attributes) != splitLength {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/identity_provider_id/identity_provider_attribute_id\"", req.ID),
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/identity_provider_id/identity_provider_core_attribute_id\"", req.ID),
 		)
 		return
 	}
@@ -375,14 +438,59 @@ func (r *IdentityProviderAttributeResource) ImportState(ctx context.Context, req
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
 }
 
-func (p *IdentityProviderAttributeResourceModel) validate(isCoreAttribute bool) diag.Diagnostics {
+func (p *IdentityProviderCoreAttributeResourceModel) getIdentityProviderType(ctx context.Context, apiClient *management.APIClient) (*management.EnumIdentityProviderExt, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// Check that we're not a core attribute
-	if isCoreAttribute {
+	// Get application type and verify against the set params
+	resp, d := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
+		},
+		"ReadOneIdentityProvider",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	respObject := resp.(*management.IdentityProvider)
+
+	var idpType *management.EnumIdentityProviderExt
+	if respObject.IdentityProviderApple != nil && respObject.IdentityProviderApple.GetId() != "" {
+		idpType = &respObject.IdentityProviderApple.Type
+	} else if respObject.IdentityProviderClientIDClientSecret != nil && respObject.IdentityProviderClientIDClientSecret.GetId() != "" {
+		idpType = &respObject.IdentityProviderClientIDClientSecret.Type
+	} else if respObject.IdentityProviderFacebook != nil && respObject.IdentityProviderFacebook.GetId() != "" {
+		idpType = &respObject.IdentityProviderFacebook.Type
+	} else if respObject.IdentityProviderOIDC != nil && respObject.IdentityProviderOIDC.GetId() != "" {
+		idpType = &respObject.IdentityProviderOIDC.Type
+	} else if respObject.IdentityProviderPaypal != nil && respObject.IdentityProviderPaypal.GetId() != "" {
+		idpType = &respObject.IdentityProviderPaypal.Type
+	} else if respObject.IdentityProviderSAML != nil && respObject.IdentityProviderSAML.GetId() != "" {
+		idpType = &respObject.IdentityProviderSAML.Type
+	} else {
+		diags.AddError(
+			"Invalid parameter value - Unmappable identity provider type",
+			fmt.Sprintf("The identity provider ID provided (%s) relates to an unknown type.  Attributes cannot be mapped to this identity provider.", p.IdentityProviderId.ValueString()),
+		)
+		return nil, diags
+	}
+
+	return idpType, diags
+}
+
+func (p *IdentityProviderCoreAttributeResourceModel) validate(isCoreAttribute bool) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Check that we're a core attribute
+	if !isCoreAttribute {
 		diags.AddError(
 			"Invalid parameter value - Invalid attribute name",
-			fmt.Sprintf("The attribute provided (%s) is a core attribute.  Use the `pingone_identity_provider_core_attribute_mapping` resource to map core attribute values.", p.Name.ValueString()),
+			fmt.Sprintf("The attribute provided (%s) is not a core attribute.  Use the `pingone_identity_provider_attribute_mapping` resource to map custom attribute values.", p.Name.ValueString()),
 		)
 		return diags
 	}
@@ -390,7 +498,7 @@ func (p *IdentityProviderAttributeResourceModel) validate(isCoreAttribute bool) 
 	return diags
 }
 
-func (p *IdentityProviderAttributeResourceModel) isCoreAttribute() (*coreIdentityProviderAttributeType, bool) {
+func (p *IdentityProviderCoreAttributeResourceModel) isCoreAttribute() (*coreIdentityProviderAttributeType, bool) {
 
 	// Loop the core attrs for the application type
 	for _, coreAttr := range idpCoreAttrMetadata {
@@ -403,14 +511,56 @@ func (p *IdentityProviderAttributeResourceModel) isCoreAttribute() (*coreIdentit
 	return nil, false
 }
 
-func (p *IdentityProviderAttributeResourceModel) expand() *management.IdentityProviderAttribute {
+func (p *IdentityProviderCoreAttributeResourceModel) expand(ctx context.Context, apiClient *management.APIClient) (*management.IdentityProviderAttribute, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	data := management.NewIdentityProviderAttribute(p.Name.ValueString(), p.Value.ValueString(), management.EnumIdentityProviderAttributeMappingUpdate(p.Update.ValueString()))
+	var data *management.IdentityProviderAttribute
 
-	return data
+	// fetch the attribute that already exists
+	response, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.IdentityProviderAttributesApi.ReadAllIdentityProviderAttributes(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
+		},
+		"ReadAllIdentityProviderAttributes",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	diags.Append(diags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if attributes, ok := response.(*management.EntityArray).Embedded.GetAttributesOk(); ok {
+
+		found := false
+		for _, attribute := range attributes {
+
+			if strings.ToUpper(attribute.IdentityProviderAttribute.GetName()) == strings.ToUpper(p.Name.ValueString()) {
+				data = attribute.IdentityProviderAttribute
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			diags.AddError(
+				"Core attribute not found",
+				fmt.Sprintf("The configured attribute name (\"%s\") is identified as a core attribute, but the attribute cannot be found in the platform.  Please raise this issue with the provider maintainers.", p.Name.ValueString()),
+			)
+
+			return nil, diags
+		}
+
+	}
+
+	data.SetValue(p.Value.ValueString())
+
+	return data, diags
 }
 
-func (p *IdentityProviderAttributeResourceModel) toState(apiObject *management.IdentityProviderAttribute) diag.Diagnostics {
+func (p *IdentityProviderCoreAttributeResourceModel) toState(apiObject *management.IdentityProviderAttribute) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -424,14 +574,14 @@ func (p *IdentityProviderAttributeResourceModel) toState(apiObject *management.I
 
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.Update = IdentityProviderAttributeMappingUpdateOkToTF(apiObject.GetUpdateOk())
+	p.Update = IdentityProviderCoreAttributeMappingUpdateOkToTF(apiObject.GetUpdateOk())
 	p.Value = framework.StringOkToTF(apiObject.GetValueOk())
-	p.MappingType = IdentityProviderAttributeMappingTypeOkToTF(apiObject.GetMappingTypeOk())
+	p.MappingType = IdentityProviderCoreAttributeMappingTypeOkToTF(apiObject.GetMappingTypeOk())
 
 	return diags
 }
 
-func IdentityProviderAttributeMappingTypeOkToTF(v *management.EnumIdentityProviderAttributeMappingType, ok bool) basetypes.StringValue {
+func IdentityProviderCoreAttributeMappingTypeOkToTF(v *management.EnumIdentityProviderAttributeMappingType, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
@@ -439,7 +589,7 @@ func IdentityProviderAttributeMappingTypeOkToTF(v *management.EnumIdentityProvid
 	}
 }
 
-func IdentityProviderAttributeMappingUpdateOkToTF(v *management.EnumIdentityProviderAttributeMappingUpdate, ok bool) basetypes.StringValue {
+func IdentityProviderCoreAttributeMappingUpdateOkToTF(v *management.EnumIdentityProviderAttributeMappingUpdate, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {

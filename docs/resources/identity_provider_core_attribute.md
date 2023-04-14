@@ -1,13 +1,13 @@
 ---
-page_title: "pingone_identity_provider_attribute Resource - terraform-provider-pingone"
+page_title: "pingone_identity_provider_core_attribute Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage an attribute mapping for identity providers configured in PingOne.
+  Resource to create and manage a core attribute mapping for identity providers configured in PingOne.
 ---
 
-# pingone_identity_provider_attribute (Resource)
+# pingone_identity_provider_core_attribute (Resource)
 
-Resource to create and manage an attribute mapping for identity providers configured in PingOne.
+Resource to create and manage a core attribute mapping for identity providers configured in PingOne.
 
 ## Example Usage
 
@@ -30,13 +30,12 @@ resource "pingone_identity_provider" "apple" {
   }
 }
 
-resource "pingone_identity_provider_attribute" "apple_email" {
+resource "pingone_identity_provider_attribute" "apple_username" {
   environment_id       = pingone_environment.my_environment.id
   identity_provider_id = pingone_identity_provider.apple.id
 
-  name   = "email"
-  update = "EMPTY_ONLY"
-  value  = "$${providerAttributes.user.email}"
+  name  = "username"
+  value = "$${providerAttributes.user.email}"
 }
 ```
 
@@ -47,19 +46,19 @@ resource "pingone_identity_provider_attribute" "apple_email" {
 
 - `environment_id` (String) The ID of the environment to create the identity provider attribute in.
 - `identity_provider_id` (String) The ID of the identity provider to create the attribute mapping for.
-- `name` (String) The user attribute, which is unique per provider. The attribute must not be defined as read only from the user schema or of type `COMPLEX` based on the user schema. Valid examples `username`, and `name.first`. The following attributes may not be used: `account`, `id`, `created`, `updated`, `lifecycle`, `mfaEnabled`, `enabled`, `username`.
-- `update` (String) Indicates whether to update the user attribute in the directory with the non-empty mapped value from the IdP. Options are `EMPTY_ONLY` (only update the user attribute if it has an empty value); `ALWAYS` (always update the user attribute value).
+- `name` (String) A string that specifies the name of the PingOne core directory attribute.  The following are valid values: `username`.
 - `value` (String) A placeholder referring to the attribute (or attributes) from the provider. Placeholders must be valid for the attributes returned by the IdP type and use the `${}` syntax (for example, `${email}`). For SAML, any placeholder is acceptable, and it is mapped against the attributes available in the SAML assertion after authentication. The `${samlAssertion.subject}` placeholder is a special reserved placeholder used to refer to the subject name ID in the SAML assertion response.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `mapping_type` (String) The mapping type. Options are `CORE` (This attribute is required by the schema and cannot be removed. The name and update properties cannot be changed.) or `CUSTOM` (All user-created attributes are of this type.)
+- `update` (String) Indicates whether to update the user attribute in the directory with the non-empty mapped value from the IdP. Options are `EMPTY_ONLY` (only update the user attribute if it has an empty value); `ALWAYS` (always update the user attribute value).
 
 ## Import
 
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_identity_provider_attribute.example <environment_id>/<identity_provider_id>/<identity_provider_attribute_id>
+$ terraform import pingone_identity_provider_core_attribute.example <environment_id>/<identity_provider_id>/<identity_provider_core_attribute_id>
 ```
