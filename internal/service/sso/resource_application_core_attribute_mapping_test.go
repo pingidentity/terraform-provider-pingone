@@ -331,8 +331,8 @@ resource "pingone_application_core_attribute_mapping" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  name     = "saml_subject"
-  value    = "$${user.email}"
+  name  = "saml_subject"
+  value = "$${user.email}"
 
   saml_subject_nameformat = "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
 
@@ -450,20 +450,20 @@ func testAccApplicationCoreAttributeMappingConfig_Expression(resourceName, name 
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_application" "%[2]s" {
-			environment_id = data.pingone_environment.general_test.id
-			name           = "%[3]s"
-			enabled        = true
-		  
-			oidc_options {
-			  type                        = "SINGLE_PAGE_APP"
-			  grant_types                 = ["AUTHORIZATION_CODE"]
-			  response_types              = ["CODE"]
-			  pkce_enforcement            = "S256_REQUIRED"
-			  token_endpoint_authn_method = "NONE"
-			  redirect_uris               = ["https://www.pingidentity.com"]
-			}
-		  }
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
 
 resource "pingone_application_core_attribute_mapping" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id

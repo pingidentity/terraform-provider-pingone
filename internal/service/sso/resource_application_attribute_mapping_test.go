@@ -447,8 +447,8 @@ resource "pingone_application_attribute_mapping" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  name     = "email"
-  value    = "$${user.email}"
+  name  = "email"
+  value = "$${user.email}"
 
   oidc_userinfo_enabled = false
 

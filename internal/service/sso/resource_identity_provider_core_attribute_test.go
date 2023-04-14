@@ -177,8 +177,8 @@ resource "pingone_identity_provider_core_attribute" "%[2]s" {
   environment_id       = data.pingone_environment.general_test.id
   identity_provider_id = pingone_identity_provider.%[2]s.id
 
-  name   = "username"
-  value  = "$${providerAttributes.emailAddress.value}"
+  name  = "username"
+  value = "$${providerAttributes.emailAddress.value}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -200,8 +200,8 @@ resource "pingone_identity_provider_core_attribute" "%[2]s" {
   environment_id       = data.pingone_environment.general_test.id
   identity_provider_id = pingone_identity_provider.%[2]s.id
 
-  name   = "username"
-  value  = "$${providerAttributes.name.displayName}"
+  name  = "username"
+  value = "$${providerAttributes.name.displayName}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -223,8 +223,8 @@ resource "pingone_identity_provider_core_attribute" "%[2]s" {
   environment_id       = data.pingone_environment.general_test.id
   identity_provider_id = pingone_identity_provider.%[2]s.id
 
-  name   = "username"
-  value  = "$${providerAttributes.name.displayName + ', ' + providerAttributes.name.displayName}"
+  name  = "username"
+  value = "$${providerAttributes.name.displayName + ', ' + providerAttributes.name.displayName}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -246,8 +246,8 @@ resource "pingone_identity_provider_core_attribute" "%[2]s" {
   environment_id       = data.pingone_environment.general_test.id
   identity_provider_id = pingone_identity_provider.%[2]s.id
 
-  name   = "account"
-  value  = "$${'test'}"
+  name  = "account"
+  value = "$${'test'}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
