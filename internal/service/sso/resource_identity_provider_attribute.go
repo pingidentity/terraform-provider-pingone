@@ -59,7 +59,7 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 	const attrMinLength = 1
 
 	reservedNames := []string{"account", "id", "created", "updated", "lifecycle", "mfaEnabled", "enabled", "username"}
-	nameDescriptionFmt := fmt.Sprintf("The user attribute, which is unique per provider. The attribute must not be defined as read only from the user schema or of type `COMPLEX` based on the user schema. Valid examples `username`, and `name.first`. The following attributes may not be used: `%s`.", strings.Join(reservedNames, "`, `"))
+	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of the PingOne directory attribute to map the Identity Provider attribute value to. The attribute must not be defined as read only from the user schema or of type `COMPLEX` based on the user schema. Examples are `email`, `name.given`.  The following attributes may not be used: `%s`.", strings.Join(reservedNames, "`, `"))
 	nameDescription := framework.SchemaDescription{
 		MarkdownDescription: nameDescriptionFmt,
 		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),

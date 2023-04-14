@@ -91,7 +91,7 @@ func (r *IdentityProviderCoreAttributeResource) Schema(ctx context.Context, req 
 	for _, coreAttr := range idpCoreAttrMetadata {
 		nameAttributeValues = append(nameAttributeValues, coreAttr.name)
 	}
-	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of the PingOne core directory attribute.  The following are valid values: `%s`.", strings.Join(nameAttributeValues, "`, `"))
+	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of the PingOne core directory attribute to map the Identity Provider attribute value to.  The following are valid values: `%s`.", strings.Join(nameAttributeValues, "`, `"))
 	nameDescription := framework.SchemaDescription{
 		MarkdownDescription: nameDescriptionFmt,
 		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),

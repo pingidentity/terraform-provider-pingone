@@ -46,7 +46,7 @@ resource "pingone_identity_provider_attribute" "apple_username" {
 
 - `environment_id` (String) The ID of the environment to create the identity provider attribute in.
 - `identity_provider_id` (String) The ID of the identity provider to create the attribute mapping for.
-- `name` (String) A string that specifies the name of the PingOne core directory attribute.  The following are valid values: `username`.
+- `name` (String) A string that specifies the name of the PingOne core directory attribute to map the Identity Provider attribute value to.  The following are valid values: `username`.
 - `value` (String) A placeholder referring to the attribute (or attributes) from the provider. Placeholders must be valid for the attributes returned by the IdP type and use the `${}` syntax (for example, `${email}`). For SAML, any placeholder is acceptable, and it is mapped against the attributes available in the SAML assertion after authentication. The `${samlAssertion.subject}` placeholder is a special reserved placeholder used to refer to the subject name ID in the SAML assertion response.
 
 ### Read-Only
