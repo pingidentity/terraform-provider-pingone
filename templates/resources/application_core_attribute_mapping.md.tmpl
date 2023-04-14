@@ -13,14 +13,6 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-oidc.tf") }}
 
-## Example Usage - OIDC Application (OIDC Resource Scope)
-
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-oidc-resource-scope.tf") }}
-
-## Example Usage - OIDC Application (Custom Resource Scope)
-
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-oidc-custom-resource-scope.tf") }}
-
 ## Example Usage - SAML Application
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-saml.tf") }}
