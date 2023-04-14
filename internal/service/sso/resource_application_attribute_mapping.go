@@ -264,7 +264,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, r.client, *applicationType)
+	applicationAttributeMapping, d := plan.expand(ctx, *applicationType)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -367,7 +367,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 		return
 	}
 
-	isCoreAttribute := plan.MappingType.ValueString() == string(management.ENUMATTRIBUTEMAPPINGTYPE_CORE)
+	_, isCoreAttribute := plan.isCoreAttribute(*applicationType)
 
 	resp.Diagnostics.Append(plan.validate(ctx, applicationType, isCoreAttribute)...)
 	if resp.Diagnostics.HasError() {
@@ -375,7 +375,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, r.client, *applicationType)
+	applicationAttributeMapping, d := plan.expand(ctx, *applicationType)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -535,10 +535,10 @@ func (p *ApplicationAttributeMappingResourceModel) validate(ctx context.Context,
 	return diags
 }
 
-func (p *ApplicationAttributeMappingResourceModel) isCoreAttribute(applicationType management.EnumApplicationProtocol) (*coreAttributeType, bool) {
+func (p *ApplicationAttributeMappingResourceModel) isCoreAttribute(applicationType management.EnumApplicationProtocol) (*coreApplicationAttributeType, bool) {
 
 	// Evaluate against the core attribute
-	if v, ok := applicationCoreAttrMetadata[string(applicationType)]; ok {
+	if v, ok := applicationCoreAttrMetadata[applicationType]; ok {
 		// Loop the core attrs for the application type
 		for _, coreAttr := range v {
 			if strings.ToUpper(p.Name.ValueString()) == strings.ToUpper(coreAttr.name) {
@@ -551,7 +551,7 @@ func (p *ApplicationAttributeMappingResourceModel) isCoreAttribute(applicationTy
 	return nil, false
 }
 
-func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, apiClient *management.APIClient, applicationType management.EnumApplicationProtocol) (*management.ApplicationAttributeMapping, diag.Diagnostics) {
+func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, applicationType management.EnumApplicationProtocol) (*management.ApplicationAttributeMapping, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var data *management.ApplicationAttributeMapping

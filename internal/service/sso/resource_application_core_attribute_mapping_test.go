@@ -93,7 +93,7 @@ func TestAccApplicationCoreAttributeMapping_OIDC(t *testing.T) {
 
 	coreAttrNameAppTypeStep := resource.TestStep{
 		Config:      testAccApplicationCoreAttributeMappingConfig_OIDC_SAML_Name(resourceName, name),
-		ExpectError: regexp.MustCompile(`Invalid parameter value`),
+		ExpectError: regexp.MustCompile(`Invalid parameter value - Not a core attribute`),
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -152,7 +152,7 @@ func TestAccApplicationCoreAttributeMapping_SAML(t *testing.T) {
 
 	coreAttrNameAppTypeStep := resource.TestStep{
 		Config:      testAccApplicationCoreAttributeMappingConfig_SAML_OIDC_Name(resourceName, name),
-		ExpectError: regexp.MustCompile(`Invalid parameter value`),
+		ExpectError: regexp.MustCompile(`Invalid parameter value - Not a core attribute`),
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -203,6 +203,36 @@ func TestAccApplicationCoreAttributeMapping_BadApplication(t *testing.T) {
 			{
 				Config:      testAccApplicationCoreAttributeMappingConfig_BadApplication(resourceName, name),
 				ExpectError: regexp.MustCompile("Invalid parameter value - Unmappable application type"),
+			},
+		},
+	})
+}
+
+func TestAccApplicationCoreAttributeMapping_Expression(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_core_attribute_mapping.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationCoreAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationCoreAttributeMappingConfig_Expression(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
+					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
+				),
 			},
 		},
 	})
@@ -412,6 +442,34 @@ resource "pingone_application_core_attribute_mapping" "%[2]s" {
   application_id = pingone_application.%[2]s.id
 
   name  = "saml_subject"
+  value = "$${user.name.given + ', ' + user.name.family}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationCoreAttributeMappingConfig_Expression(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+		resource "pingone_application" "%[2]s" {
+			environment_id = data.pingone_environment.general_test.id
+			name           = "%[3]s"
+			enabled        = true
+		  
+			oidc_options {
+			  type                        = "SINGLE_PAGE_APP"
+			  grant_types                 = ["AUTHORIZATION_CODE"]
+			  response_types              = ["CODE"]
+			  pkce_enforcement            = "S256_REQUIRED"
+			  token_endpoint_authn_method = "NONE"
+			  redirect_uris               = ["https://www.pingidentity.com"]
+			}
+		  }
+
+resource "pingone_application_core_attribute_mapping" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  name  = "sub"
   value = "$${user.name.given + ', ' + user.name.family}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

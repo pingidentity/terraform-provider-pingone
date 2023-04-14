@@ -39,7 +39,7 @@ type ApplicationCoreAttributeMappingResourceModel struct {
 	SAMLSubjectNameformat types.String `tfsdk:"saml_subject_nameformat"`
 }
 
-type coreAttributeType struct {
+type coreApplicationAttributeType struct {
 	name         string
 	defaultValue string
 }
@@ -57,14 +57,14 @@ func NewApplicationCoreAttributeMappingResource() resource.Resource {
 }
 
 var (
-	applicationCoreAttrMetadata = map[string][]coreAttributeType{
-		string(management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT): {
+	applicationCoreAttrMetadata = map[management.EnumApplicationProtocol][]coreApplicationAttributeType{
+		management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT: {
 			{
 				name:         "sub",
 				defaultValue: "${user.id}",
 			},
 		},
-		string(management.ENUMAPPLICATIONPROTOCOL_SAML): {
+		management.ENUMAPPLICATIONPROTOCOL_SAML: {
 			{
 				name:         "saml_subject",
 				defaultValue: "${user.id}",
@@ -408,7 +408,7 @@ func (r *ApplicationCoreAttributeMappingResource) Update(ctx context.Context, re
 		func() (interface{}, *http.Response, error) {
 			return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
 		},
-		"UpdateApplicationCoreAttributeMapping",
+		"UpdateApplicationAttributeMapping",
 		framework.CustomErrorInvalidValue,
 		sdk.DefaultCreateReadRetryable,
 	)
@@ -579,10 +579,10 @@ func (p *ApplicationCoreAttributeMappingResourceModel) validate(applicationType 
 	return diags
 }
 
-func (p *ApplicationCoreAttributeMappingResourceModel) isCoreAttribute(applicationType management.EnumApplicationProtocol) (*coreAttributeType, bool) {
+func (p *ApplicationCoreAttributeMappingResourceModel) isCoreAttribute(applicationType management.EnumApplicationProtocol) (*coreApplicationAttributeType, bool) {
 
 	// Evaluate against the core attribute
-	if v, ok := applicationCoreAttrMetadata[string(applicationType)]; ok {
+	if v, ok := applicationCoreAttrMetadata[applicationType]; ok {
 		// Loop the core attrs for the application type
 		for _, coreAttr := range v {
 			if strings.ToUpper(p.Name.ValueString()) == strings.ToUpper(coreAttr.name) {
