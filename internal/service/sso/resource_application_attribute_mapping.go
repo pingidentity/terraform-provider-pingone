@@ -256,15 +256,15 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 		return
 	}
 
-	_, isCoreAttribute := plan.isCoreAttribute(*applicationType)
+	isCoreAttribute := plan.isCoreAttribute(*applicationType)
 
-	resp.Diagnostics.Append(plan.validate(ctx, applicationType, isCoreAttribute)...)
+	resp.Diagnostics.Append(plan.validate(applicationType, isCoreAttribute)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, *applicationType)
+	applicationAttributeMapping, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -367,15 +367,15 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 		return
 	}
 
-	_, isCoreAttribute := plan.isCoreAttribute(*applicationType)
+	isCoreAttribute := plan.isCoreAttribute(*applicationType)
 
-	resp.Diagnostics.Append(plan.validate(ctx, applicationType, isCoreAttribute)...)
+	resp.Diagnostics.Append(plan.validate(applicationType, isCoreAttribute)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, *applicationType)
+	applicationAttributeMapping, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -497,7 +497,7 @@ func (p *ApplicationAttributeMappingResourceModel) getApplicationType(ctx contex
 	return applicationType, diags
 }
 
-func (p *ApplicationAttributeMappingResourceModel) validate(ctx context.Context, applicationType *management.EnumApplicationProtocol, isCoreAttribute bool) diag.Diagnostics {
+func (p *ApplicationAttributeMappingResourceModel) validate(applicationType *management.EnumApplicationProtocol, isCoreAttribute bool) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Check that we're not a core attribute
@@ -535,28 +535,26 @@ func (p *ApplicationAttributeMappingResourceModel) validate(ctx context.Context,
 	return diags
 }
 
-func (p *ApplicationAttributeMappingResourceModel) isCoreAttribute(applicationType management.EnumApplicationProtocol) (*coreApplicationAttributeType, bool) {
+func (p *ApplicationAttributeMappingResourceModel) isCoreAttribute(applicationType management.EnumApplicationProtocol) bool {
 
 	// Evaluate against the core attribute
 	if v, ok := applicationCoreAttrMetadata[applicationType]; ok {
 		// Loop the core attrs for the application type
 		for _, coreAttr := range v {
-			if strings.ToUpper(p.Name.ValueString()) == strings.ToUpper(coreAttr.name) {
+			if strings.EqualFold(p.Name.ValueString(), coreAttr.name) {
 				// We're a core attribute
-				return &coreAttr, true
+				return true
 			}
 		}
 	}
 
-	return nil, false
+	return false
 }
 
-func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, applicationType management.EnumApplicationProtocol) (*management.ApplicationAttributeMapping, diag.Diagnostics) {
+func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context) (*management.ApplicationAttributeMapping, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var data *management.ApplicationAttributeMapping
-
-	data = management.NewApplicationAttributeMapping(p.Name.ValueString(), p.Required.ValueBool(), p.Value.ValueString())
+	data := management.NewApplicationAttributeMapping(p.Name.ValueString(), p.Required.ValueBool(), p.Value.ValueString())
 
 	if !p.OIDCScopes.IsNull() {
 		scopesSet, d := p.OIDCScopes.ToSetValue(ctx)

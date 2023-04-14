@@ -21,10 +21,6 @@ type boolAtLeastOneOfMustBeTrueValidator struct {
 	PathExpressions    path.Expressions
 }
 
-type boolAtLeastOneOfMustBeTrueValidatorExpression struct {
-	expressionDefault basetypes.BoolValue
-}
-
 // Description describes the validation in plain text formatting.
 func (v boolAtLeastOneOfMustBeTrueValidator) Description(_ context.Context) string {
 	return fmt.Sprintf("Ensure that at least one attribute is true from the following: %v", v.PathExpressions)

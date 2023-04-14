@@ -185,7 +185,7 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	_, isCoreAttribute := plan.isCoreAttribute()
+	isCoreAttribute := plan.isCoreAttribute()
 
 	resp.Diagnostics.Append(plan.validate(isCoreAttribute)...)
 	if resp.Diagnostics.HasError() {
@@ -286,7 +286,7 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 		return
 	}
 
-	_, isCoreAttribute := plan.isCoreAttribute()
+	isCoreAttribute := plan.isCoreAttribute()
 
 	resp.Diagnostics.Append(plan.validate(isCoreAttribute)...)
 	if resp.Diagnostics.HasError() {
@@ -390,17 +390,17 @@ func (p *IdentityProviderAttributeResourceModel) validate(isCoreAttribute bool) 
 	return diags
 }
 
-func (p *IdentityProviderAttributeResourceModel) isCoreAttribute() (*coreIdentityProviderAttributeType, bool) {
+func (p *IdentityProviderAttributeResourceModel) isCoreAttribute() bool {
 
 	// Loop the core attrs for the application type
 	for _, coreAttr := range idpCoreAttrMetadata {
-		if strings.ToUpper(p.Name.ValueString()) == strings.ToUpper(coreAttr.name) {
+		if strings.EqualFold(p.Name.ValueString(), coreAttr.name) {
 			// We're a core attribute
-			return &coreAttr, true
+			return true
 		}
 	}
 
-	return nil, false
+	return false
 }
 
 func (p *IdentityProviderAttributeResourceModel) expand() *management.IdentityProviderAttribute {

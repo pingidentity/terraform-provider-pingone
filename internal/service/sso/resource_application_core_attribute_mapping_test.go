@@ -230,7 +230,7 @@ func TestAccApplicationCoreAttributeMapping_Expression(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.given + ', ' + user.name.family}"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
 				),
 			},

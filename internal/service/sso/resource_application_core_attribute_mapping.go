@@ -284,7 +284,7 @@ func (r *ApplicationCoreAttributeMappingResource) Create(ctx context.Context, re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, r.client, *applicationType)
+	applicationAttributeMapping, d := plan.expand(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -395,7 +395,7 @@ func (r *ApplicationCoreAttributeMappingResource) Update(ctx context.Context, re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, r.client, *applicationType)
+	applicationAttributeMapping, d := plan.expand(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -458,7 +458,7 @@ func (r *ApplicationCoreAttributeMappingResource) Delete(ctx context.Context, re
 
 		data.Value = framework.StringToTF(coreAttributeData.defaultValue)
 
-		applicationAttributeMapping, d := data.expand(ctx, r.client, *applicationType)
+		applicationAttributeMapping, d := data.expand(ctx, r.client)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -585,7 +585,7 @@ func (p *ApplicationCoreAttributeMappingResourceModel) isCoreAttribute(applicati
 	if v, ok := applicationCoreAttrMetadata[applicationType]; ok {
 		// Loop the core attrs for the application type
 		for _, coreAttr := range v {
-			if strings.ToUpper(p.Name.ValueString()) == strings.ToUpper(coreAttr.name) {
+			if strings.EqualFold(p.Name.ValueString(), coreAttr.name) {
 				// We're a core attribute
 				return &coreAttr, true
 			}
@@ -595,7 +595,7 @@ func (p *ApplicationCoreAttributeMappingResourceModel) isCoreAttribute(applicati
 	return nil, false
 }
 
-func (p *ApplicationCoreAttributeMappingResourceModel) expand(ctx context.Context, apiClient *management.APIClient, applicationType management.EnumApplicationProtocol) (*management.ApplicationAttributeMapping, diag.Diagnostics) {
+func (p *ApplicationCoreAttributeMappingResourceModel) expand(ctx context.Context, apiClient *management.APIClient) (*management.ApplicationAttributeMapping, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var data *management.ApplicationAttributeMapping
@@ -621,7 +621,7 @@ func (p *ApplicationCoreAttributeMappingResourceModel) expand(ctx context.Contex
 		found := false
 		for _, attribute := range attributes {
 
-			if strings.ToUpper(attribute.ApplicationAttributeMapping.GetName()) == strings.ToUpper(p.Name.ValueString()) {
+			if strings.EqualFold(attribute.ApplicationAttributeMapping.GetName(), p.Name.ValueString()) {
 				data = attribute.ApplicationAttributeMapping
 				found = true
 				break

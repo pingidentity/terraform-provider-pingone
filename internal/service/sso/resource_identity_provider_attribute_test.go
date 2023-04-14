@@ -162,6 +162,10 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 				Config:      testAccIdentityProviderAttributeConfig_ReservedAttributeName(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
 			},
+			{
+				Config:      testAccIdentityProviderAttributeConfig_CoreAttribute(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
+			},
 		},
 	})
 }

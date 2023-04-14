@@ -502,7 +502,7 @@ func (p *IdentityProviderCoreAttributeResourceModel) isCoreAttribute() (*coreIde
 
 	// Loop the core attrs for the application type
 	for _, coreAttr := range idpCoreAttrMetadata {
-		if strings.ToUpper(p.Name.ValueString()) == strings.ToUpper(coreAttr.name) {
+		if strings.EqualFold(p.Name.ValueString(), coreAttr.name) {
 			// We're a core attribute
 			return &coreAttr, true
 		}
@@ -537,7 +537,7 @@ func (p *IdentityProviderCoreAttributeResourceModel) expand(ctx context.Context,
 		found := false
 		for _, attribute := range attributes {
 
-			if strings.ToUpper(attribute.IdentityProviderAttribute.GetName()) == strings.ToUpper(p.Name.ValueString()) {
+			if strings.EqualFold(attribute.IdentityProviderAttribute.GetName(), p.Name.ValueString()) {
 				data = attribute.IdentityProviderAttribute
 				found = true
 				break

@@ -250,27 +250,3 @@ resource "pingone_identity_provider_core_attribute" "%[2]s" {
   value = "$${'test'}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
-
-func testAccIdentityProviderCoreAttributeConfig_CoreAttribute(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_identity_provider" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-
-  google {
-    client_id     = "testclientid"
-    client_secret = "testclientsecret"
-  }
-}
-
-resource "pingone_identity_provider_core_attribute" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  identity_provider_id = pingone_identity_provider.%[2]s.id
-
-  name   = "username"
-  update = "EMPTY_ONLY"
-  value  = "$${providerAttributes.name.familyName}"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
