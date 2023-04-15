@@ -13,7 +13,7 @@ The following describes the support of each of these services.
 | PingOne Risk        | risk          |    :x:     |  TBC  |
 | PingOne Authorize   | authorize     |    :large_orange_diamond:     | Upcoming v1.0.0 |
 | PingOne Verify      | verify        |    :x:     |  TBC  |
-| PingOne Credentials | credentials   |    :x:     |  TBC  |
+| PingOne Credentials | credentials   |    :large_orange_diamond:     | Upcoming v1.0.0 |
 
 Key:
 * :white_check_mark: - Supported / Released
