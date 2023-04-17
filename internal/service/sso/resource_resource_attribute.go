@@ -437,13 +437,8 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			return
 		}
 
-		resourceMapping, d := data.expand(ctx, r.client, *resourceType, true)
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
 		// defaults
+		var resourceMapping *management.ResourceAttribute
 		if data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_PREDEFINED))) {
 			defaultValues := map[string]string{
 				"address.country":        "${user.address.countryCode}",
@@ -472,19 +467,26 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 				"zoneinfo":               "${user.timezone}",
 			}
 
-			resourceMapping.SetValue(defaultValues[resourceMapping.GetName()])
+			data.Value = framework.StringToTF(defaultValues[data.Name.ValueString()])
 
 		} else if data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
 
-			resourceType, d := data.getResourceType(ctx, r.client)
-			resp.Diagnostics.Append(d...)
-			if resp.Diagnostics.HasError() {
+			coreAttributeData, ok := data.isCoreAttribute(*resourceType)
+			if !ok {
+				resp.Diagnostics.AddError(
+					"Core attribute mismatch error",
+					"The provider cannot determine the core attribute values to reset.  Please raise this issue to the provider maintainers.",
+				)
 				return
 			}
 
-			coreAttributeData, _ := data.isCoreAttribute(*resourceType)
+			data.Value = framework.StringToTF(coreAttributeData.defaultValue)
+		}
 
-			resourceMapping.SetValue(coreAttributeData.defaultValue)
+		resourceMapping, d = data.expand(ctx, r.client, *resourceType, true)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
 		_, d = framework.ParseResponse(
