@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 	"golang.org/x/exp/slices"
@@ -41,6 +42,11 @@ type ResourceAttributeResourceModel struct {
 	UserinfoEnabled types.Bool   `tfsdk:"userinfo_enabled"`
 }
 
+type coreResourceAttributeType struct {
+	name         string
+	defaultValue string
+}
+
 // Framework interfaces
 var (
 	_ resource.Resource                = &ResourceAttributeResource{}
@@ -53,6 +59,17 @@ func NewResourceAttributeResource() resource.Resource {
 	return &ResourceAttributeResource{}
 }
 
+var (
+	resourceCoreAttrMetadata = map[management.EnumResourceType][]coreResourceAttributeType{
+		management.ENUMRESOURCETYPE_CUSTOM: {
+			{
+				name:         "sub",
+				defaultValue: "${user.id}",
+			},
+		},
+	}
+)
+
 // Metadata
 func (r *ResourceAttributeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_resource_attribute"
@@ -63,13 +80,13 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 
 	const attrMinLength = 1
 
-	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of the custom resource attribute to be included in the access token. When the resource's type property is `OPENID_CONNECT`, the following are reserved names and cannot be used: %s.  When the resource's type property is `OPENID_CONNECT`, using the following names will override the default configured values, rather than creating new attributes: %s.", verify.IllegalOIDCAttributeNameString(), verify.OverrideOIDCAttributeNameString())
+	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of the resource attribute to map a value for. When the resource's type property is `OPENID_CONNECT`, the following are reserved names and cannot be used: %s.  The resource will also override the default configured values for a resource, rather than creating new attributes.  For resources of type `CUSTOM`, the `sub` name is overridden.  For resources of type `OPENID_CONNECT`, the following names are overridden: %s.", verify.IllegalOIDCAttributeNameString(), verify.OverrideOIDCAttributeNameString())
 	nameDescription := framework.SchemaDescription{
 		MarkdownDescription: nameDescriptionFmt,
 		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
 	}
 
-	valueDescriptionFmt := "A string that specifies the value of the custom resource attribute. This value can be a placeholder that references an attribute in the user schema, expressed as “${user.path.to.value}”, or it can be a static string. Placeholders must be valid, enabled attributes in the environment’s user schema. Examples of valid values are: `${user.email}`, `${user.name.family}`, and `myClaimValueString`."
+	valueDescriptionFmt := "A string that specifies the value of the custom resource attribute. This value can be a placeholder that references an attribute in the user schema, expressed as `${user.path.to.value}`, or it can be an expression, or a static string. Placeholders must be valid, enabled attributes in the environment’s user schema. Examples of valid values are: `${user.email}`, `${user.name.family}`, and `myClaimValueString`.  Note that definition in HCL requires escaping with the `$` character when defining attribute paths, for example `value = \"$${user.email}\"`."
 	valueDescription := framework.SchemaDescription{
 		MarkdownDescription: valueDescriptionFmt,
 		Description:         strings.ReplaceAll(valueDescriptionFmt, "`", "\""),
@@ -134,6 +151,13 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 				MarkdownDescription: idTokenEnabledDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+				Validators: []validator.Bool{
+					customboolvalidator.AtLeastOneOfMustBeTrue(
+						types.BoolValue(true),
+						types.BoolValue(true),
+						path.MatchRelative().AtParent().AtName("userinfo_enabled"),
+					),
+				},
 			},
 
 			"userinfo_enabled": schema.BoolAttribute{
@@ -141,12 +165,22 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 				MarkdownDescription: userinfoEnabledDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+				Validators: []validator.Bool{
+					customboolvalidator.AtLeastOneOfMustBeTrue(
+						types.BoolValue(true),
+						types.BoolValue(true),
+						path.MatchRelative().AtParent().AtName("id_token_enabled"),
+					),
+				},
 			},
 
 			"type": schema.StringAttribute{
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -202,18 +236,30 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	attributeID, resourceType, d := validateAttributeAgainstResourceType(ctx, r.client, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), plan.Name.ValueString())
+	resourceType, d := plan.getResourceType(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	_, isCoreAttribute := plan.isCoreAttribute(*resourceType)
+	isOverriddenAttribute := plan.isOverriddenAttribute(*resourceType)
+
+	resp.Diagnostics.Append(plan.validate(*resourceType)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Build the model for the API
-	resourceAttribute := plan.expand(resourceType)
+	resourceAttribute, d := plan.expand(ctx, r.client, *resourceType, isCoreAttribute || isOverriddenAttribute)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var response interface{}
-	if attributeID == nil {
+	if !isCoreAttribute && !isOverriddenAttribute {
 		response, d = framework.ParseResponse(
 			ctx,
 
@@ -229,7 +275,7 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 			ctx,
 
 			func() (interface{}, *http.Response, error) {
-				return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), *attributeID).ResourceAttribute(*resourceAttribute).Execute()
+				return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), resourceAttribute.GetId()).ResourceAttribute(*resourceAttribute).Execute()
 			},
 			"UpdateResourceAttribute",
 			framework.DefaultCustomError,
@@ -316,21 +362,33 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	_, resourceType, d := validateAttributeAgainstResourceType(ctx, r.client, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), plan.Name.ValueString())
+	resourceType, d := plan.getResourceType(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	_, isCoreAttribute := plan.isCoreAttribute(*resourceType)
+	isOverriddenAttribute := plan.isOverriddenAttribute(*resourceType)
+
+	resp.Diagnostics.Append(plan.validate(*resourceType)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Build the model for the API
-	resourceMapping := plan.expand(resourceType)
+	resourceAttribute, d := plan.expand(ctx, r.client, *resourceType, isCoreAttribute || isOverriddenAttribute)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), plan.Id.ValueString()).ResourceAttribute(*resourceMapping).Execute()
+			return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), plan.Id.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
 		},
 		"UpdateResourceAttribute",
 		framework.DefaultCustomError,
@@ -370,18 +428,91 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
-		ctx,
+	var d diag.Diagnostics
+	if data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_PREDEFINED))) || data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
 
-		func() (interface{}, *http.Response, error) {
-			r, err := r.client.ResourceAttributesApi.DeleteResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
-		},
-		"DeleteResourceAttribute",
-		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		resourceType, d := data.getResourceType(ctx, r.client)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resourceMapping, d := data.expand(ctx, r.client, *resourceType, true)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		// defaults
+		if data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_PREDEFINED))) {
+			defaultValues := map[string]string{
+				"address.country":        "${user.address.countryCode}",
+				"address.formatted":      "",
+				"address.locality":       "${user.address.locality}",
+				"address.postal_code":    "${user.address.postalCode}",
+				"address.region":         "${user.address.region}",
+				"address.street_address": "${user.address.streetAddress}",
+				"birthdate":              "",
+				"email_verified":         "",
+				"email":                  "${user.email}",
+				"family_name":            "${user.name.family}",
+				"gender":                 "",
+				"given_name":             "${user.name.given}",
+				"locale":                 "${user.locale}",
+				"middle_name":            "${user.name.middle}",
+				"name":                   "${user.name.formatted}",
+				"nickname":               "${user.nickname}",
+				"phone_number_verified":  "",
+				"phone_number":           "${user.primaryPhone}",
+				"picture":                "${user.photo.href}",
+				"preferred_username":     "${user.username}",
+				"profile":                "",
+				"updated_at":             "${#datetime.toUnixTimestamp(user.updatedAt)}",
+				"website":                "",
+				"zoneinfo":               "${user.timezone}",
+			}
+
+			resourceMapping.SetValue(defaultValues[resourceMapping.GetName()])
+
+		} else if data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
+
+			resourceType, d := data.getResourceType(ctx, r.client)
+			resp.Diagnostics.Append(d...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			coreAttributeData, _ := data.isCoreAttribute(*resourceType)
+
+			resourceMapping.SetValue(coreAttributeData.defaultValue)
+		}
+
+		_, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).ResourceAttribute(*resourceMapping).Execute()
+			},
+			"UpdateResourceAttribute",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(d...)
+	} else {
+
+		_, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				r, err := r.client.ResourceAttributesApi.DeleteResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).Execute()
+				return nil, r, err
+			},
+			"DeleteResourceAttribute",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(d...)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -404,58 +535,117 @@ func (r *ResourceAttributeResource) ImportState(ctx context.Context, req resourc
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
 }
 
-func validateAttributeAgainstResourceType(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceAttributeName string) (*string, management.EnumResourceType, diag.Diagnostics) {
+func (p *ResourceAttributeResourceModel) getResourceType(ctx context.Context, apiClient *management.APIClient) (*management.EnumResourceType, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	respObject, d := fetchResource_Framework(ctx, apiClient, environmentID, resourceID)
+	respObject, d := fetchResource_Framework(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString())
 	diags.Append(d...)
 	if diags.HasError() {
-		return nil, management.ENUMRESOURCETYPE_CUSTOM, diags
+		return nil, diags
 	}
 
-	if respObject.GetType() == management.ENUMRESOURCETYPE_OPENID_CONNECT {
-		if slices.Contains(verify.IllegalOIDCattributeNamesList(), resourceAttributeName) {
-			diags.AddError(
-				fmt.Sprintf("Invalid attribute name `%s` for the configured OpenID Connect resource.", resourceAttributeName),
-				fmt.Sprintf("The attribute name provided, `%s`, cannot be used for resource ID `%s`, which is of type `OPENID_CONNECT`.", resourceAttributeName, resourceID),
-			)
-			return nil, respObject.GetType(), diags
-		}
-
-		if slices.Contains(verify.OverrideOIDCAttributeNameList(), resourceAttributeName) {
-
-			resourceAttribute, d := fetchResourceAttributeFromName_Framework(ctx, apiClient, environmentID, resourceID, resourceAttributeName)
-			diags.Append(d...)
-			if diags.HasError() {
-				return nil, respObject.GetType(), diags
-			}
-
-			return resourceAttribute.Id, respObject.GetType(), diags
-		}
-	}
-
-	return nil, respObject.GetType(), diags
+	return respObject.GetType().Ptr(), diags
 }
 
-func (p *ResourceAttributeResourceModel) expand(resourceType management.EnumResourceType) *management.ResourceAttribute {
+func (p *ResourceAttributeResourceModel) validate(resourceType management.EnumResourceType) diag.Diagnostics {
+	var diags diag.Diagnostics
 
-	data := management.NewResourceAttribute(p.Name.ValueString(), p.Value.ValueString())
+	if resourceType != management.ENUMRESOURCETYPE_OPENID_CONNECT && resourceType != management.ENUMRESOURCETYPE_CUSTOM {
+		diags.AddError(
+			"Invalid parameter value - Invalid resource type",
+			fmt.Sprintf("The `resource_id` provided (%s) is neither %s or %s type.  Attributes can only be created for CUSTOM and OPENID_CONNECT (openid) resources.", p.ResourceId.ValueString(), string(management.ENUMRESOURCETYPE_CUSTOM), string(management.ENUMRESOURCETYPE_OPENID_CONNECT)),
+		)
+		return diags
+	}
 
-	if resourceType == management.ENUMRESOURCETYPE_OPENID_CONNECT {
-		if !p.IDTokenEnabled.IsNull() {
-			data.SetIdToken(p.IDTokenEnabled.ValueBool())
-		} else {
-			data.SetIdToken(true)
-		}
+	if resourceType != management.ENUMRESOURCETYPE_OPENID_CONNECT {
 
-		if !p.UserinfoEnabled.IsNull() {
-			data.SetUserInfo(p.UserinfoEnabled.ValueBool())
-		} else {
-			data.SetUserInfo(true)
+		// If we have defined values that we shouldn't.  If unknown, deal with when the values are known.
+		if (!p.IDTokenEnabled.IsNull() && !p.IDTokenEnabled.IsUnknown()) ||
+			(!p.UserinfoEnabled.IsNull() && !p.UserinfoEnabled.IsUnknown()) {
+			diags.AddError(
+				"Invalid parameter value - Parameter doesn't apply to resource type",
+				fmt.Sprintf("The `resource_id` provided (%s) is of type `%s`.  The `id_token_enabled` and `userinfo_enabled` attributes do not apply to this resource type.", p.ResourceId.ValueString(), resourceType),
+			)
+			return diags
 		}
 	}
 
-	return data
+	if resourceType == management.ENUMRESOURCETYPE_OPENID_CONNECT {
+		if slices.Contains(verify.IllegalOIDCattributeNamesList(), p.Name.ValueString()) {
+			diags.AddError(
+				fmt.Sprintf("Invalid attribute name `%s` for the configured OpenID Connect resource.", p.Name.ValueString()),
+				fmt.Sprintf("The `resource_id` provided (%s) is of type `%s`. The attribute name provided, `%s`, is reserved and cannot be used for this resource type.", p.ResourceId.ValueString(), resourceType, p.Name.ValueString()),
+			)
+			return diags
+		}
+	}
+
+	return diags
+}
+
+func (p *ResourceAttributeResourceModel) isCoreAttribute(resourceType management.EnumResourceType) (*coreResourceAttributeType, bool) {
+
+	// Evaluate against the core attribute
+	if v, ok := resourceCoreAttrMetadata[resourceType]; ok {
+		// Loop the core attrs for the resource type
+		for _, coreAttr := range v {
+			if strings.EqualFold(p.Name.ValueString(), coreAttr.name) {
+				// We're a core attribute
+				return &coreAttr, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
+func (p *ResourceAttributeResourceModel) isOverriddenAttribute(resourceType management.EnumResourceType) bool {
+
+	if resourceType == management.ENUMRESOURCETYPE_OPENID_CONNECT {
+		if slices.Contains(verify.OverrideOIDCAttributeNameList(), p.Name.ValueString()) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *ResourceAttributeResourceModel) expand(ctx context.Context, apiClient *management.APIClient, resourceType management.EnumResourceType, overrideExisting bool) (*management.ResourceAttribute, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var data *management.ResourceAttribute
+
+	if overrideExisting {
+
+		var d diag.Diagnostics
+		data, d = fetchResourceAttributeFromName_Framework(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString(), p.Name.ValueString())
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetValue(p.Value.ValueString())
+
+	} else {
+		data = management.NewResourceAttribute(p.Name.ValueString(), p.Value.ValueString())
+
+		if resourceType == management.ENUMRESOURCETYPE_OPENID_CONNECT {
+			if !p.IDTokenEnabled.IsNull() && !p.IDTokenEnabled.IsUnknown() {
+				data.SetIdToken(p.IDTokenEnabled.ValueBool())
+			} else {
+				data.SetIdToken(true)
+			}
+
+			if !p.UserinfoEnabled.IsNull() && !p.UserinfoEnabled.IsUnknown() {
+				data.SetUserInfo(p.UserinfoEnabled.ValueBool())
+			} else {
+				data.SetUserInfo(true)
+			}
+		}
+	}
+
+	return data, diags
 }
 
 func (p *ResourceAttributeResourceModel) toState(apiObject *management.ResourceAttribute) diag.Diagnostics {

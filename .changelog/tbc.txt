@@ -25,3 +25,11 @@ pingone_application_core_attribute_mapping
 ```release-note:new-resource
 pingone_identity_provider_core_attribute
 ```
+
+```release-note:bug
+`resource/pingone_resource_attribute`: Fix error when deleting predefined OpenID Connect resource attribute.  Now resets the value back to the environment default.
+```
+
+```release-note:enhancement
+`resource/pingone_resource_attribute`: Support the ability to override the `sub` core attribute for custom resources.
+```
