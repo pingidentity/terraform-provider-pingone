@@ -116,9 +116,9 @@ resource "pingone_application" "my_awesome_worker_app" {
 ## Example Usage - External Link
 
 ```terraform
-resource "pingone_application" "my_awesome_saml_app" {
+resource "pingone_application" "my_awesome_external_link" {
   environment_id = pingone_environment.my_environment.id
-  name           = "My Awesome External App"
+  name           = "My Awesome External Link"
   enabled        = true
 
   external_link_options {
