@@ -17,7 +17,6 @@ func Resources() []func() resource.Resource {
 		NewApplicationCoreAttributeMappingResource,
 		NewApplicationFlowPolicyAssignmentResource,
 		NewIdentityProviderAttributeResource,
-		NewIdentityProviderCoreAttributeResource,
 		NewResourceAttributeResource,
 	}
 }
