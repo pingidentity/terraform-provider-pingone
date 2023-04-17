@@ -63,6 +63,8 @@ Required:
 
 - `included_action_types` (Set of String) A non-empty list that specifies the list of action types that should be matched for the webhook.
 
+Refer to the [PingOne API Reference - Subscription Action Types](https://apidocs.pingidentity.com/pingone/platform/v1/api/#subscription-action-types) documentation for a full list of configurable action types.
+
 Optional:
 
 - `included_application_ids` (Set of String) An array that specifies the list of applications (by ID) whose events are monitored by the webhook (maximum of 10 IDs in the array). If a list of applications is not provided, events are monitored for all applications in the environment.
