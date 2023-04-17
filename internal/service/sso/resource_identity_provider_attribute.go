@@ -427,6 +427,7 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 		)
+		resp.Diagnostics.Append(d...)
 
 	} else {
 
@@ -441,8 +442,9 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 			framework.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 		)
+		resp.Diagnostics.Append(d...)
+
 	}
-	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
