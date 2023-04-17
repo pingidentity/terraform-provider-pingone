@@ -24,3 +24,186 @@ Import is supported using the following syntax, where attributes in `<>` bracket
 
 {{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
 {{- end }}
+
+## Social Provider and External Identity Provider Attribute Reference
+
+PingOne supports several external IdPs. IdP resources in PingOne configure the external IdP settings, which include the type of provider and the user attributes from the external IdP that are mapped to PingOne user attributes. These attributes might have one or many values assigned to them. As you might expect, mapping a single-value IdP attribute to a single-value PingOne attribute results in a PingOne attribute having the same value as the IdP attribute. Similarly, if the IdP attribute is also multi-valued, the PingOne attribute value will be an array of the IdP attribute values. If the attributes are not the same format, then the following rules apply:
+
+- If the IdP attribute is single-value and the PingOne attribute is multi-valued, then the PingOne attribute will be a single-element array containing the value of the IdP attribute.
+- If the IdP attribute is multi-valued and the PingOne attribute is single-value, then the PingOne attribute will use the first element in the IdP attribute as its value.
+The mapping attribute placeholder value must be expressed using the following syntax in the request body in the platform:
+
+`${providerAttributes.<IdP attribute name>}`
+
+Terraform HCL expects the attribute placeholder to be prefixed with an additional `$` (dollar) sign, for example when configuring the `value` argument of resources like the `pingone_identity_provider_attribute` resource.  E.g.
+
+```hcl
+...
+  value = "$${providerAttributes.user_id}"
+...
+```
+
+The following are IdP attributes expected per identity provider.
+
+### Amazon
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value     | Default PingOne Attribute Mapping |
+|----------------------|----------------|-------------------------------------|-----------------------------------|
+| `user_id`            | `profile`      | `${providerAttributes.user_id}`     | `username`                        |
+| `email`              | `profile`      | `${providerAttributes.email}`       |                                   |
+| `name`               | `profile`      | `${providerAttributes.name}`        |                                   |
+| `postal_code`        | `postal_code`  | `${providerAttributes.postal_code}` |                                   |
+
+### Apple
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value        | Default PingOne Attribute Mapping |
+|----------------------|----------------|----------------------------------------|-----------------------------------|
+| `sub`                | `name`         | `${providerAttributes.sub}`            | `username`                        |
+| `email`              | `email`        | `${providerAttributes.email}`          |                                   |
+| `email_verified`     | `email`        | `${providerAttributes.email_verified}` |                                   |
+
+### Facebook
+
+| Provider Token Claim | Required Scope   | PingOne Attribute Mapping Value     | Default PingOne Attribute Mapping |
+|----------------------|------------------|-------------------------------------|-----------------------------------|
+| `email`              |                  | `${providerAttributes.email}`       | `username`                        |
+| `id`                 |                  | `${providerAttributes.id}`          |                                   |
+| `first_name`         |                  | `${providerAttributes.first_name}`  |                                   |
+| `middle_name`        |                  | `${providerAttributes.middle_name}` |                                   |
+| `last_name`          |                  | `${providerAttributes.last_name}`   |                                   |
+| `name_format`        |                  | `${providerAttributes.name_format}` |                                   |
+| `name`               |                  | `${providerAttributes.name}`        |                                   |
+| `age_range`          | `USER_AGE_RANGE` | `${providerAttributes.age_range}`   |                                   |
+| `birthday`           | `USER_BIRTHDAY`  | `${providerAttributes.birthday}`    |                                   |
+| `gender`             | `USER_GENDER`    | `${providerAttributes.gender}`      |                                   |
+
+### Github
+
+| Provider Token Claim | Required Scope              | PingOne Attribute Mapping Value    | Default PingOne Attribute Mapping |
+|----------------------|-----------------------------|------------------------------------|-----------------------------------|
+| `id`                 | `read:user`                 | `${providerAttributes.id}`         | `username`                        |
+| `email`              | `read:user`, `read:email`   | `${providerAttributes.email}`      |                                   |
+| `name`               | `read:user`                 | `${providerAttributes.name}`       |                                   |
+| `login`              | `read:user`                 | `${providerAttributes.login}`      |                                   |
+| `node_id`            | `read:user`                 | `${providerAttributes.node_id}`    |                                   |
+| `avatar_url`         | `read:user`                 | `${providerAttributes.avatar_url}` |                                   |
+| `url`                | `read:user`                 | `${providerAttributes.url}`        |                                   |
+| `html_url`           | `read:user`                 | `${providerAttributes.html_url}`   |                                   |
+| `type`               | `read:user`                 | `${providerAttributes.type}`       |                                   |
+| `site_admin`         | `read:user`                 | `${providerAttributes.site_admin}` |                                   |
+| `company`            | `read:user`                 | `${providerAttributes.company}`    |                                   |
+| `blog`               | `read:user`                 | `${providerAttributes.blog}`       |                                   |
+| `location`           | `read:user`                 | `${providerAttributes.location}`   |                                   |
+
+### Google
+
+| Provider Token Claim    | Required Scope                                           | PingOne Attribute Mapping Value               | Default PingOne Attribute Mapping |
+|-------------------------|----------------------------------------------------------|-----------------------------------------------|-----------------------------------|
+| `emailAddress.value`    | `email`                                                  | `${providerAttributes.emailAddress.value}`    | `username`                        |
+| `resourceName`          | `profile`                                                | `${providerAttributes.resourceName}`          |                                   |
+| `etag`                  | `profile`                                                | `${providerAttributes.etag}`                  |                                   |
+| `name.displayName`      | `profile`                                                | `${providerAttributes.name.displayName}`      |                                   |
+| `name.familyName`       | `profile`                                                | `${providerAttributes.name.familyName}`       |                                   |
+| `name.middleName`       | `profile`                                                | `${providerAttributes.name.middleName}`       |                                   |
+| `name.givenName`        | `profile`                                                | `${providerAttributes.name.givenName}`        |                                   |
+| `nickname.value`        | `profile`                                                | `${providerAttributes.nickname.value}`        |                                   |
+| `nickname.type`         | `profile`                                                | `${providerAttributes.nickname.type}`         |                                   |
+| `gender.value`          | `profile`                                                | `${providerAttributes.gender.value}`          |                                   |
+| `gender.formattedValue` | `profile`                                                | `${providerAttributes.gender.formattedValue}` |                                   |
+| `ageRange.ageRange`     | `https://www.googleapis.com/auth/profile.agerange.read`  | `${providerAttributes.ageRange.ageRange}`     |                                   |
+| `locale.value`          | `https://www.googleapis.com/auth/profile.language.read`  | `${providerAttributes.locale.value}`          |                                   |
+| `birthday.date.day`     | `https://www.googleapis.com/auth/user.birthday.read`     | `${providerAttributes.birthday.date.day}`     |                                   |
+| `birthday.date.month`   | `https://www.googleapis.com/auth/user.birthday.read`     | `${providerAttributes.birthday.date.month}`   |                                   |
+| `birthday.date.year`    | `https://www.googleapis.com/auth/user.birthday.read`     | `${providerAttributes.birthday.date.year}`    |                                   |
+| `birthday.text`         | `https://www.googleapis.com/auth/user.birthday.read`     | `${providerAttributes.birthday.text}`         |                                   |
+| `phoneNumber.value`     | `https://www.googleapis.com/auth/user.phonenumbers.read` | `${providerAttributes.phoneNumber.value}`     |                                   |
+
+### LinkedIn
+
+| Provider Token Claim | Required Scope   | PingOne Attribute Mapping Value      | Default PingOne Attribute Mapping |
+|----------------------|------------------|--------------------------------------|-----------------------------------|
+| `emailAddress`       | `r_emailaddress` | `${providerAttributes.emailAddress}` | `username`                        |
+| `id`                 | `r_liteprofile`  | `${providerAttributes.id}`           |                                   |
+| `firstName`          | `r_liteprofile`  | `${providerAttributes.firstName}`    |                                   |
+| `lastName`           | `r_liteprofile`  | `${providerAttributes.lastName}`     |                                   |
+
+### Microsoft
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value           | Default PingOne Attribute Mapping |
+|----------------------|----------------|-------------------------------------------|-----------------------------------|
+| `id`                 | `User:Read`    | `${providerAttributes.id}`                | `username`                        |
+| `email`              | `email`        | `${providerAttributes.email}`             |                                   |
+| `userPrincipalName`  | `User:Read`    | `${providerAttributes.userPrincipalName}` |                                   |
+| `mail`               | `User:Read`    | `${providerAttributes.mail}`              |                                   |
+| `displayName`        | `User:Read`    | `${providerAttributes.displayName}`       |                                   |
+| `givenName`          | `User:Read`    | `${providerAttributes.givenName}`         |                                   |
+| `surname`            | `User:Read`    | `${providerAttributes.surname}`           |                                   |
+| `mainNickname`       | `User:Read`    | `${providerAttributes.mainNickname}`      |                                   |
+| `jobTitle`           | `User:Read`    | `${providerAttributes.jobTitle}`          |                                   |
+| `officeLocation`     | `User:Read`    | `${providerAttributes.officeLocation}`    |                                   |
+| `postalCode`         | `User:Read`    | `${providerAttributes.postalCode}`        |                                   |
+| `businessPhones`     | `User:Read`    | `${providerAttributes.businessPhones}`    |                                   |
+
+### Paypal
+
+| Provider Token Claim     | Required Scope               | PingOne Attribute Mapping Value                | Default PingOne Attribute Mapping |
+|--------------------------|------------------------------|------------------------------------------------|-----------------------------------|
+| `user_id`                | `openid`, `profile`, `email` | `${providerAttributes.user_id}`                | `username`                        |
+| `name`                   | `openid`, `profile`, `email` | `${providerAttributes.name}`                   |                                   |
+| `email`                  | `openid`, `profile`, `email` | `${providerAttributes.email}`                  |                                   |
+| `address.street_address` | `address`                    | `${providerAttributes.address.street_address}` |                                   |
+| `address.locality`       | `address`                    | `${providerAttributes.address.locality}`       |                                   |
+| `address.region`         | `address`                    | `${providerAttributes.address.region}`         |                                   |
+| `address.postal_code`    | `address`                    | `${providerAttributes.address.postal_code}`    |                                   |
+| `address.country`        | `address`                    | `${providerAttributes.address.country}`        |                                   |
+| `payer_id`               | `paypalattributes`           | `${providerAttributes.payer_id}`               |                                   |
+| `verified_account`       | `paypalattributes`           | `${providerAttributes.verified_account}`       |                                   |
+
+### Twitter
+
+| Provider Token Claim      | Required Scope | PingOne Attribute Mapping Value                 | Default PingOne Attribute Mapping |
+|---------------------------|----------------|-------------------------------------------------|-----------------------------------|
+| `id`                      |                | `${providerAttributes.id}`                      | `username`                        |
+| `email`                   |                | `${providerAttributes.email}`                   |                                   |
+| `name`                    |                | `${providerAttributes.name}`                    |                                   |
+| `screen_name`             |                | `${providerAttributes.screen_name}`             |                                   |
+| `created_at`              |                | `${providerAttributes.created_at}`              |                                   |
+| `statuses_count`          |                | `${providerAttributes.statuses_count}`          |                                   |
+| `favourites_count`        |                | `${providerAttributes.favourites_count}`        |                                   |
+| `friends_count`           |                | `${providerAttributes.friends_count}`           |                                   |
+| `followers_count`         |                | `${providerAttributes.followers_count}`         |                                   |
+| `verified`                |                | `${providerAttributes.verified}`                |                                   |
+| `protected`               |                | `${providerAttributes.protected}`               |                                   |
+| `description`             |                | `${providerAttributes.description}`             |                                   |
+| `url`                     |                | `${providerAttributes.url}`                     |                                   |
+| `location`                |                | `${providerAttributes.location}`                |                                   |
+| `profile_image_url_https` |                | `${providerAttributes.profile_image_url_https}` |                                   |
+
+### Yahoo
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value     | Default PingOne Attribute Mapping |
+|----------------------|----------------|-------------------------------------|-----------------------------------|
+| `sub`                | `openid`       | `${providerAttributes.sub}`         | `username`                        |
+| `email`              | `email`        | `${providerAttributes.email}`       |                                   |
+| `name`               | `profile`      | `${providerAttributes.name}`        |                                   |
+| `given_name`         | `profile`      | `${providerAttributes.given_name}`  |                                   |
+| `family_name`        | `profile`      | `${providerAttributes.family_name}` |                                   |
+| `picture`            | `profile`      | `${providerAttributes.picture}`     |                                   |
+| `nickname`           | `profile`      | `${providerAttributes.nickname}`    |                                   |
+| `locale`             | `profile`      | `${providerAttributes.locale}`      |                                   |
+
+### OpenID (Generic)
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value | Default PingOne Attribute Mapping |
+|----------------------|----------------|---------------------------------|-----------------------------------|
+| `sub`                | `openid`       | `${providerAttributes.sub}`     | `username`                        |
+
+Additional custom attributes may be mapped using the `${providerAttributes.*}` notation.
+
+### SAML (Generic)
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value | Default PingOne Attribute Mapping |
+|----------------------|----------------|---------------------------------|-----------------------------------|
+| `subject`            |                | `${samlAssertion.subject}`      | `username`                        |
+
+Additional custom attributes may be mapped using the `${providerAttributes.*}` notation.

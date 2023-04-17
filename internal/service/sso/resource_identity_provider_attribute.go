@@ -98,7 +98,7 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 		Description:         strings.ReplaceAll(updateDescriptionFmt, "`", "\""),
 	}
 
-	valueDescriptionFmt := "A placeholder referring to the attribute (or attributes) from the provider. Placeholders must be valid for the attributes returned by the IdP type and use the `${}` syntax (for example, `${email}`). For SAML, any placeholder is acceptable, and it is mapped against the attributes available in the SAML assertion after authentication. The `${samlAssertion.subject}` placeholder is a special reserved placeholder used to refer to the subject name ID in the SAML assertion response."
+	valueDescriptionFmt := "A placeholder referring to the attribute (or attributes) from the provider. Placeholders must be valid for the attributes returned by the IdP type and use the `${}` syntax (for example, `${email}`). For SAML, any placeholder is acceptable, and it is mapped against the attributes available in the SAML assertion after authentication. The `${samlAssertion.subject}` placeholder is a special reserved placeholder used to refer to the subject name ID in the SAML assertion response.\n\nFor a full list of social providers and their configurable attribute mappings, see the [Social Provider and External Identity Provider Attribute Reference](#social-provider-and-external-identity-provider-attribute-reference) below."
 	valueDescription := framework.SchemaDescription{
 		MarkdownDescription: valueDescriptionFmt,
 		Description:         strings.ReplaceAll(valueDescriptionFmt, "`", "\""),
@@ -112,7 +112,7 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage an attribute mapping for identity providers configured in PingOne.",
+		Description: "Resource to create and manage an attribute mapping for identity providers configured in PingOne.\n\nFor a full list of social providers and their configurable attribute mappings, see the [Social Provider and External Identity Provider Attribute Reference](#social-provider-and-external-identity-provider-attribute-reference) below.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
