@@ -2,6 +2,11 @@
 
 NOTES:
 
+* Bump `github.com/golangci/golangci-lint` from 1.52.0 to 1.52.2 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
+* Bump `github.com/hashicorp/terraform-plugin-framework` from 1.1.1 to 1.2.0 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
+* Bump `github.com/hashicorp/terraform-plugin-go` from 0.14.3 to 0.15.0 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
+* Bump `github.com/hashicorp/terraform-plugin-sdk/v2` from 2.25.0 to 2.26.1 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
+* Bump `github.com/terraform-linters/tflint` from 0.45.0 to 0.46.0 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
 * Updated the index documentation to refer to the more detailed getting started guide at [pingidentity.github.io/terraform-docs/](https://pingidentity.github.io/terraform-docs/) ([#309](https://github.com/pingidentity/terraform-provider-pingone/issues/309))
 * `data-source/pingone_schema`: Migrated to plugin framework. ([#306](https://github.com/pingidentity/terraform-provider-pingone/issues/306))
 * `resource/pingone_application`: Update the documentation example for external link. ([#333](https://github.com/pingidentity/terraform-provider-pingone/issues/333))
