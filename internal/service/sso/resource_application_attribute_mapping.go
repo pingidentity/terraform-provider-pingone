@@ -89,19 +89,19 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 	const attrMinLength = 1
 
 	reservedNames := []string{"acr", "amr", "at_hash", "aud", "auth_time", "azp", "client_id", "exp", "iat", "iss", "jti", "nbf", "nonce", "org", "scope", "sid"}
-	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of attribute and must be unique within an application. For SAML applications, the `samlAssertion.subject` name is a reserved case-insensitive name which indicates the mapping to be used for the subject in an assertion. For OpenID Connect applications, the following names are reserved and cannot be used: `%s`.", strings.Join(reservedNames, "`, `"))
+	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of attribute and must be unique within an application. For SAML applications, the `saml_subject` name is a case-insensitive name which indicates the mapping to be used for the subject in an assertion and can be overridden. For OpenID Connect applications, the `sub` name indicates the mapping to be used for the subject in the token and can be overridden.  The following OpenID Connect names are reserved and cannot be used: `%s`.", strings.Join(reservedNames, "`, `"))
 	nameDescription := framework.SchemaDescription{
 		MarkdownDescription: nameDescriptionFmt,
 		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
 	}
 
-	requiredDescriptionFmt := "A boolean to specify whether a mapping value is required for this attribute. If `true`, a value must be set and a non-empty value must be available in the SAML assertion or ID token. Defaults to `false`."
+	requiredDescriptionFmt := "A boolean to specify whether a mapping value is required for this attribute. If `true`, a value must be set and a non-empty value must be available in the SAML assertion or ID token. If overriding a core attribute mapping (`saml_subject` for SAML applications and `sub` for OpenID Connect applications), then this value must be set to `true`.  Defaults to `false`."
 	requiredDescription := framework.SchemaDescription{
 		MarkdownDescription: requiredDescriptionFmt,
 		Description:         strings.ReplaceAll(requiredDescriptionFmt, "`", "\""),
 	}
 
-	valueDescriptionFmt := "A string that specifies the string constants or expression for mapping the attribute path against a specific source. The expression format is `${<source>.<attribute_path>}`. The only supported source is user (for example, `${user.id}`)."
+	valueDescriptionFmt := "A string that specifies the string constants or expression for mapping the attribute path against a specific source. The expression format is `${<source>.<attribute_path>}`. The only supported source is user (for example, `${user.id}`).  When defining attribute mapping values in Terraform, the expression must be escaped (for example `value = \"$${user.id}}\"`)"
 	valueDescription := framework.SchemaDescription{
 		MarkdownDescription: valueDescriptionFmt,
 		Description:         strings.ReplaceAll(valueDescriptionFmt, "`", "\""),
@@ -133,7 +133,7 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 	}
 
 	//saml
-	samlsubjectNameformatDescriptionFmt := "A URI reference representing the classification of the attribute, which helps the service provider interpret the attribute format.  This property is applicable only when the application's protocol property is `SAML`.  Examples include `urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified`, `urn:oasis:names:tc:SAML:2.0:attrname-format:uri`, `urn:oasis:names:tc:SAML:2.0:attrname-format:basic`."
+	samlsubjectNameformatDescriptionFmt := "A URI reference representing the classification of the attribute, which helps the service provider interpret the attribute format.  This property is applicable only when the application's protocol property is `SAML` and the name is the `saml_subject` core attribute.  Examples include `urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified`, `urn:oasis:names:tc:SAML:2.0:attrname-format:uri`, `urn:oasis:names:tc:SAML:2.0:attrname-format:basic`."
 	samlsubjectNameformatDescription := framework.SchemaDescription{
 		MarkdownDescription: samlsubjectNameformatDescriptionFmt,
 		Description:         strings.ReplaceAll(samlsubjectNameformatDescriptionFmt, "`", "\""),
