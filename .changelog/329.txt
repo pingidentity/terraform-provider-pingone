@@ -23,6 +23,10 @@ bump `github.com/hashicorp/terraform-plugin-framework` v1.1.1 => v1.2.0
 ```
 
 ```release-note:note
+`resource/pingone_identity_provider_attribute`: Reformatted the social provider and external identity provider attribute reference documentation.
+```
+
+```release-note:note
 `resource/pingone_resource_attribute`: Migrated to plugin framework.
 ```
 
