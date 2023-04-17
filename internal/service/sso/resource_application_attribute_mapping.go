@@ -31,16 +31,22 @@ type ApplicationAttributeMappingResource struct {
 }
 
 type ApplicationAttributeMappingResourceModel struct {
-	Id                  types.String `tfsdk:"id"`
-	EnvironmentId       types.String `tfsdk:"environment_id"`
-	ApplicationId       types.String `tfsdk:"application_id"`
-	Name                types.String `tfsdk:"name"`
-	Required            types.Bool   `tfsdk:"required"`
-	Value               types.String `tfsdk:"value"`
-	MappingType         types.String `tfsdk:"mapping_type"`
-	OIDCScopes          types.Set    `tfsdk:"oidc_scopes"`
-	OIDCIDTokenEnabled  types.Bool   `tfsdk:"oidc_id_token_enabled"`
-	OIDCUserinfoEnabled types.Bool   `tfsdk:"oidc_userinfo_enabled"`
+	Id                    types.String `tfsdk:"id"`
+	EnvironmentId         types.String `tfsdk:"environment_id"`
+	ApplicationId         types.String `tfsdk:"application_id"`
+	Name                  types.String `tfsdk:"name"`
+	Required              types.Bool   `tfsdk:"required"`
+	Value                 types.String `tfsdk:"value"`
+	MappingType           types.String `tfsdk:"mapping_type"`
+	OIDCScopes            types.Set    `tfsdk:"oidc_scopes"`
+	OIDCIDTokenEnabled    types.Bool   `tfsdk:"oidc_id_token_enabled"`
+	OIDCUserinfoEnabled   types.Bool   `tfsdk:"oidc_userinfo_enabled"`
+	SAMLSubjectNameformat types.String `tfsdk:"saml_subject_nameformat"`
+}
+
+type coreApplicationAttributeType struct {
+	name         string
+	defaultValue string
 }
 
 // Framework interfaces
@@ -54,6 +60,23 @@ var (
 func NewApplicationAttributeMappingResource() resource.Resource {
 	return &ApplicationAttributeMappingResource{}
 }
+
+var (
+	applicationCoreAttrMetadata = map[management.EnumApplicationProtocol][]coreApplicationAttributeType{
+		management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT: {
+			{
+				name:         "sub",
+				defaultValue: "${user.id}",
+			},
+		},
+		management.ENUMAPPLICATIONPROTOCOL_SAML: {
+			{
+				name:         "saml_subject",
+				defaultValue: "${user.id}",
+			},
+		},
+	}
+)
 
 // Metadata
 func (r *ApplicationAttributeMappingResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -107,6 +130,13 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 	oidcUserinfoEnabledDescription := framework.SchemaDescription{
 		MarkdownDescription: oidcuserinfoEnabledDescriptionFmt,
 		Description:         strings.ReplaceAll(oidcuserinfoEnabledDescriptionFmt, "`", "\""),
+	}
+
+	//saml
+	samlsubjectNameformatDescriptionFmt := "A URI reference representing the classification of the attribute, which helps the service provider interpret the attribute format.  This property is applicable only when the application's protocol property is `SAML`.  Examples include `urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified`, `urn:oasis:names:tc:SAML:2.0:attrname-format:uri`, `urn:oasis:names:tc:SAML:2.0:attrname-format:basic`."
+	samlsubjectNameformatDescription := framework.SchemaDescription{
+		MarkdownDescription: samlsubjectNameformatDescriptionFmt,
+		Description:         strings.ReplaceAll(samlsubjectNameformatDescriptionFmt, "`", "\""),
 	}
 
 	resp.Schema = schema.Schema{
@@ -194,6 +224,12 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 						path.MatchRelative().AtParent().AtName("oidc_id_token_enabled")),
 				},
 			},
+
+			"saml_subject_nameformat": schema.StringAttribute{
+				Description:         samlsubjectNameformatDescription.Description,
+				MarkdownDescription: samlsubjectNameformatDescription.MarkdownDescription,
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -256,7 +292,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 		return
 	}
 
-	isCoreAttribute := plan.isCoreAttribute(*applicationType)
+	_, isCoreAttribute := plan.isCoreAttribute(*applicationType)
 
 	resp.Diagnostics.Append(plan.validate(applicationType, isCoreAttribute)...)
 	if resp.Diagnostics.HasError() {
@@ -264,23 +300,37 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx)
+	applicationAttributeMapping, d := plan.expand(ctx, r.client, isCoreAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
-		ctx,
+	var response interface{}
+	if !isCoreAttribute {
+		response, d = framework.ParseResponse(
+			ctx,
 
-		func() (interface{}, *http.Response, error) {
-			return r.client.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
-		},
-		"CreateApplicationAttributeMapping",
-		framework.CustomErrorInvalidValue,
-		sdk.DefaultCreateReadRetryable,
-	)
+			func() (interface{}, *http.Response, error) {
+				return r.client.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+			},
+			"CreateApplicationAttributeMapping",
+			framework.CustomErrorInvalidValue,
+			sdk.DefaultCreateReadRetryable,
+		)
+	} else {
+		response, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationAttributeMapping.GetId()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+			},
+			"UpdateApplicationAttributeMapping",
+			framework.CustomErrorInvalidValue,
+			sdk.DefaultCreateReadRetryable,
+		)
+	}
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -367,7 +417,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 		return
 	}
 
-	isCoreAttribute := plan.isCoreAttribute(*applicationType)
+	_, isCoreAttribute := plan.isCoreAttribute(*applicationType)
 
 	resp.Diagnostics.Append(plan.validate(applicationType, isCoreAttribute)...)
 	if resp.Diagnostics.HasError() {
@@ -375,7 +425,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx)
+	applicationAttributeMapping, d := plan.expand(ctx, r.client, isCoreAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -426,18 +476,59 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
-		ctx,
+	var d diag.Diagnostics
+	if data.MappingType.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
 
-		func() (interface{}, *http.Response, error) {
-			r, err := r.client.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
-		},
-		"DeleteApplicationAttributeMapping",
-		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		applicationType, d := data.getApplicationType(ctx, r.client)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		coreAttributeData, ok := data.isCoreAttribute(*applicationType)
+		if !ok {
+			resp.Diagnostics.AddError(
+				"Core attribute mismatch error",
+				"The provider cannot determine the core attribute values to reset.  Please raise this issue to the provider maintainers.",
+			)
+			return
+		}
+
+		data.Value = framework.StringToTF(coreAttributeData.defaultValue)
+
+		applicationAttributeMapping, d := data.expand(ctx, r.client, true)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		_, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+			},
+			"UpdateApplicationAttributeMapping",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+		)
+
+		resp.Diagnostics.Append(d...)
+
+	} else {
+		_, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				r, err := r.client.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+				return nil, r, err
+			},
+			"DeleteApplicationAttributeMapping",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(d...)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -500,16 +591,50 @@ func (p *ApplicationAttributeMappingResourceModel) getApplicationType(ctx contex
 func (p *ApplicationAttributeMappingResourceModel) validate(applicationType *management.EnumApplicationProtocol, isCoreAttribute bool) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Check that we're not a core attribute
-	if isCoreAttribute {
+	if isCoreAttribute && p.Required.Equal(types.BoolValue(false)) {
 		diags.AddError(
-			"Invalid parameter value - Invalid attribute name",
-			fmt.Sprintf("The attribute provided (%s) is a core attribute.  Use the `pingone_application_core_attribute_mapping` resource to map core attribute values.", p.Name.ValueString()),
+			"Invalid parameter value",
+			fmt.Sprintf("The attribute name provided (%s) is a core attribute.  The `required` attribute must be set to `true`.", p.Name.ValueString()),
 		)
 		return diags
 	}
 
-	if *applicationType == management.ENUMAPPLICATIONPROTOCOL_SAML {
+	if *applicationType != management.ENUMAPPLICATIONPROTOCOL_SAML {
+
+		// Check for SAML attributes that shouldn't be here
+		if !p.SAMLSubjectNameformat.IsNull() {
+			diags.AddError(
+				"Invalid parameter value - Parameter doesn't apply to application type",
+				fmt.Sprintf("The application ID provided (%s) is of type `%s`.  The `saml_subject_nameformat` attribute does not apply to this application type.", p.ApplicationId.ValueString(), management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT),
+			)
+			return diags
+		}
+	}
+
+	if *applicationType == management.ENUMAPPLICATIONPROTOCOL_SAML && !p.Name.Equal(types.StringValue("saml_subject")) {
+		// Check for SAML attributes that shouldn't be here
+		if !p.SAMLSubjectNameformat.IsNull() {
+			diags.AddError(
+				"Invalid parameter value - Attribute cannot be set",
+				fmt.Sprintf("The attribute name provided (%s) is not a SAML subject attribute.  The `saml_subject_nameformat` attribute only applies to the `saml_subject` attribute.", p.Name.ValueString()),
+			)
+			return diags
+		}
+	}
+
+	if *applicationType == management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT && isCoreAttribute {
+		if (!p.OIDCScopes.IsNull() && !p.OIDCScopes.IsUnknown()) ||
+			(!p.OIDCIDTokenEnabled.IsNull() && !p.OIDCIDTokenEnabled.IsUnknown()) ||
+			(!p.OIDCUserinfoEnabled.IsNull() && !p.OIDCUserinfoEnabled.IsUnknown()) {
+			diags.AddError(
+				"Invalid parameter value - Parameter doesn't apply to core attributes",
+				fmt.Sprintf("The application attribute name provided (%s) is a core attribute.  The `oidc_scopes`, `oidc_id_token_enabled` and `oidc_userinfo_enabled` attributes do not apply to this mapping type.", p.Name.ValueString()),
+			)
+			return diags
+		}
+	}
+
+	if *applicationType != management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT {
 
 		// If we have defined values that we shouldn't.  If unknown, deal with when the values are known.
 		if (!p.OIDCScopes.IsNull() && !p.OIDCScopes.IsUnknown()) ||
@@ -535,7 +660,7 @@ func (p *ApplicationAttributeMappingResourceModel) validate(applicationType *man
 	return diags
 }
 
-func (p *ApplicationAttributeMappingResourceModel) isCoreAttribute(applicationType management.EnumApplicationProtocol) bool {
+func (p *ApplicationAttributeMappingResourceModel) isCoreAttribute(applicationType management.EnumApplicationProtocol) (*coreApplicationAttributeType, bool) {
 
 	// Evaluate against the core attribute
 	if v, ok := applicationCoreAttrMetadata[applicationType]; ok {
@@ -543,47 +668,104 @@ func (p *ApplicationAttributeMappingResourceModel) isCoreAttribute(applicationTy
 		for _, coreAttr := range v {
 			if strings.EqualFold(p.Name.ValueString(), coreAttr.name) {
 				// We're a core attribute
-				return true
+				return &coreAttr, true
 			}
 		}
 	}
 
-	return false
+	return nil, false
 }
 
-func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context) (*management.ApplicationAttributeMapping, diag.Diagnostics) {
+func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, apiClient *management.APIClient, overrideExisting bool) (*management.ApplicationAttributeMapping, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := management.NewApplicationAttributeMapping(p.Name.ValueString(), p.Required.ValueBool(), p.Value.ValueString())
+	var data *management.ApplicationAttributeMapping
 
-	if !p.OIDCScopes.IsNull() {
-		scopesSet, d := p.OIDCScopes.ToSetValue(ctx)
-		diags.Append(d...)
+	if overrideExisting {
+
+		response, diags := framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return apiClient.ApplicationAttributeMappingApi.ReadAllApplicationAttributeMappings(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+			},
+			"ReadAllApplicationAttributeMappings",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		diags.Append(diags...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		scopesPointerSlice := framework.TFSetToStringSlice(ctx, scopesSet)
+		if attributes, ok := response.(*management.EntityArray).Embedded.GetAttributesOk(); ok {
 
-		if len(scopesPointerSlice) > 0 {
-			scopesSlice := make([]string, 0)
-			for i := range scopesPointerSlice {
-				scopesSlice = append(scopesSlice, *scopesPointerSlice[i])
+			found := false
+			for _, attribute := range attributes {
+
+				if strings.EqualFold(attribute.ApplicationAttributeMapping.GetName(), p.Name.ValueString()) {
+					data = attribute.ApplicationAttributeMapping
+					found = true
+					break
+				}
 			}
-			data.SetOidcScopes(scopesSlice)
+
+			if !found {
+				diags.AddError(
+					"Core attribute not found",
+					fmt.Sprintf("The configured attribute name (\"%s\") is identified as a core attribute, but the attribute cannot be found in the platform.  Please raise this issue with the provider maintainers.", p.Name.ValueString()),
+				)
+
+				return nil, diags
+			}
+
 		}
-	}
 
-	if !p.OIDCIDTokenEnabled.IsNull() && !p.OIDCIDTokenEnabled.IsUnknown() {
-		data.SetIdToken(p.OIDCIDTokenEnabled.ValueBool())
-	} else {
-		data.SetIdToken(true)
-	}
+		data.SetValue(p.Value.ValueString())
 
-	if !p.OIDCUserinfoEnabled.IsNull() && !p.OIDCUserinfoEnabled.IsUnknown() {
-		data.SetUserInfo(p.OIDCUserinfoEnabled.ValueBool())
+		if !p.SAMLSubjectNameformat.IsNull() {
+			data.SetNameFormat(p.SAMLSubjectNameformat.ValueString())
+		}
+
 	} else {
-		data.SetUserInfo(true)
+
+		data = management.NewApplicationAttributeMapping(p.Name.ValueString(), p.Required.ValueBool(), p.Value.ValueString())
+
+		if !p.Required.IsNull() && !p.Required.IsUnknown() {
+			data.SetRequired(p.Required.ValueBool())
+		} else {
+			data.SetRequired(false)
+		}
+
+		if !p.OIDCScopes.IsNull() && !p.OIDCScopes.IsUnknown() {
+			scopesSet, d := p.OIDCScopes.ToSetValue(ctx)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			scopesPointerSlice := framework.TFSetToStringSlice(ctx, scopesSet)
+
+			if len(scopesPointerSlice) > 0 {
+				scopesSlice := make([]string, 0)
+				for i := range scopesPointerSlice {
+					scopesSlice = append(scopesSlice, *scopesPointerSlice[i])
+				}
+				data.SetOidcScopes(scopesSlice)
+			}
+		}
+
+		if !p.OIDCIDTokenEnabled.IsNull() && !p.OIDCIDTokenEnabled.IsUnknown() {
+			data.SetIdToken(p.OIDCIDTokenEnabled.ValueBool())
+		} else {
+			data.SetIdToken(true)
+		}
+
+		if !p.OIDCUserinfoEnabled.IsNull() && !p.OIDCUserinfoEnabled.IsUnknown() {
+			data.SetUserInfo(p.OIDCUserinfoEnabled.ValueBool())
+		} else {
+			data.SetUserInfo(true)
+		}
 	}
 
 	return data, diags
