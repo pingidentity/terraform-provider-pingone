@@ -12,6 +12,8 @@ NOTES:
 * `resource/pingone_application`: Update the documentation example for external link. ([#333](https://github.com/pingidentity/terraform-provider-pingone/issues/333))
 * `resource/pingone_environment`: Code optimisations for default computed schema values. ([#335](https://github.com/pingidentity/terraform-provider-pingone/issues/335))
 * `resource/pingone_webhook`: Added link to "Subscription Action Types" api reference for a full list of configurable action types. ([#332](https://github.com/pingidentity/terraform-provider-pingone/issues/332))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.17.1 => v0.18.0 ([#336](https://github.com/pingidentity/terraform-provider-pingone/issues/336))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.1 => v0.6.2 ([#336](https://github.com/pingidentity/terraform-provider-pingone/issues/336))
 
 ENHANCEMENTS:
 
