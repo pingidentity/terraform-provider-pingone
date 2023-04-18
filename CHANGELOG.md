@@ -10,6 +10,7 @@ NOTES:
 * Updated the index documentation to refer to the more detailed getting started guide at [pingidentity.github.io/terraform-docs/](https://pingidentity.github.io/terraform-docs/) ([#309](https://github.com/pingidentity/terraform-provider-pingone/issues/309))
 * `data-source/pingone_schema`: Migrated to plugin framework. ([#306](https://github.com/pingidentity/terraform-provider-pingone/issues/306))
 * `resource/pingone_application`: Update the documentation example for external link. ([#333](https://github.com/pingidentity/terraform-provider-pingone/issues/333))
+* `resource/pingone_environment`: Code optimisations for default computed schema values. ([#335](https://github.com/pingidentity/terraform-provider-pingone/issues/335))
 * `resource/pingone_webhook`: Added link to "Subscription Action Types" api reference for a full list of configurable action types. ([#332](https://github.com/pingidentity/terraform-provider-pingone/issues/332))
 
 ENHANCEMENTS:
