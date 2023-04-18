@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,6 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -340,6 +342,7 @@ func resourceResourceImport(ctx context.Context, d *schema.ResourceData, meta in
 	return []*schema.ResourceData{d}, nil
 }
 
+// replace with fetchResource_Framework when migrating to the plugin framework
 func fetchResource(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -353,6 +356,29 @@ func fetchResource(ctx context.Context, apiClient *management.APIClient, environ
 		sdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	respObject := resp.(*management.Resource)
+
+	return respObject, diags
+}
+
+func fetchResource_Framework(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) (*management.Resource, frameworkdiag.Diagnostics) {
+	var diags frameworkdiag.Diagnostics
+
+	resp, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ResourcesApi.ReadOneResource(ctx, environmentID, resourceID).Execute()
+		},
+		"ReadOneResource",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	diags.Append(diags...)
 	if diags.HasError() {
 		return nil, diags
 	}
