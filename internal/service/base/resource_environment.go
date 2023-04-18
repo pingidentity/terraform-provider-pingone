@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -29,7 +30,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework/stringplanmodifierinternal"
+	stringdefaultinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringdefaultinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -178,13 +179,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: typeDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifierinternal.StringDefaultValue(
-						framework.StringToTF(string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
-						fmt.Sprintf("Defaults to \"%s\"", string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
-						fmt.Sprintf("Defaults to `%s`", string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
-					),
-				},
+				Default:             stringdefault.StaticString(string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
 				Validators: []validator.String{
 					stringvalidator.OneOf(func() []string {
 						strings := make([]string, 0)
@@ -201,20 +196,16 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: regionDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+				Default: stringdefaultinternal.StaticStringUnknownable(func() basetypes.StringValue {
+
+					region := types.StringUnknown()
+					if v := os.Getenv("PINGONE_REGION"); v != "" {
+						region = framework.StringToTF(v)
+					}
+
+					return region
+				}()),
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifierinternal.StringDefaultValue(
-						func() basetypes.StringValue {
-
-							region := types.StringUnknown()
-							if v := os.Getenv("PINGONE_REGION"); v != "" {
-								region = framework.StringToTF(v)
-							}
-
-							return region
-						}(),
-						"Default can be set with the \"PINGONE_REGION\" environment variable.",
-						"Default can be set with the `PINGONE_REGION` environment variable.",
-					),
 					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -277,9 +268,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 							// DeprecationMessage: "The `default_population.name` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This parameter will be removed in the next major version of the provider.",
 							Optional: true,
 							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifierinternal.StringDefaultValue(types.StringValue("Default"), "If left blank, the population will default to \"Default\".", "If left blank, the population will default to `Default`."),
-							},
+							Default:  stringdefault.StaticString("Default"),
 						},
 
 						"description": schema.StringAttribute{
@@ -307,13 +296,8 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 							Description:         serviceTypeDescription.Description,
 							MarkdownDescription: serviceTypeDescription.MarkdownDescription,
 							Optional:            true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifierinternal.StringDefaultValue(
-									framework.StringToTF("SSO"),
-									"Defaults to \"SSO\".",
-									"Defaults to `SSO`.",
-								),
-							},
+							Computed:            true,
+							Default:             stringdefault.StaticString("SSO"),
 							Validators: []validator.String{
 								stringvalidator.OneOf(model.ProductsSelectableList()...),
 							},

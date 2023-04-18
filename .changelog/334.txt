@@ -1,0 +1,19 @@
+```release-note:note
+Bump `github.com/terraform-linters/tflint` from 0.45.0 to 0.46.0 
+```
+
+```release-note:note
+Bump `github.com/hashicorp/terraform-plugin-go` from 0.14.3 to 0.15.0
+```
+
+```release-note:note
+Bump `github.com/golangci/golangci-lint` from 1.52.0 to 1.52.2
+```
+
+```release-note:note
+Bump `github.com/hashicorp/terraform-plugin-framework` from 1.1.1 to 1.2.0
+```
+
+```release-note:note
+Bump `github.com/hashicorp/terraform-plugin-sdk/v2` from 2.25.0 to 2.26.1
+```
