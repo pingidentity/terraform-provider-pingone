@@ -2211,8 +2211,8 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "0"),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_POST"),
@@ -2235,37 +2235,60 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 
 	name := resourceName
 
+	signingKeyNotSet := resource.TestStep{
+		Config: testAccApplicationConfig_SAML_SigningKeyNotSet(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
+		),
+	}
+
+	signingKeyIDAttr := resource.TestStep{
+		Config: testAccApplicationConfig_SAML_SigningKeyIDAttr(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", ""),
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexp),
+		),
+	}
+
+	signingKeyBlock := resource.TestStep{
+		Config: testAccApplicationConfig_SAML_SigningKeyBlock(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", "SHA224withECDSA"),
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexp),
+		),
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Create
+			signingKeyIDAttr,
 			{
-				Config: testAccApplicationConfig_SAML_SigningKeyNotSet(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "0"),
-				),
+				Config:  testAccApplicationConfig_SAML_SigningKeyIDAttr(resourceName, name),
+				Destroy: true,
 			},
+			signingKeyNotSet,
 			{
-				Config: testAccApplicationConfig_SAML_SigningKeyIDAttr(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", ""),
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexp),
-				),
+				Config:  testAccApplicationConfig_SAML_SigningKeyNotSet(resourceName, name),
+				Destroy: true,
 			},
+			signingKeyBlock,
 			{
-				Config: testAccApplicationConfig_SAML_SigningKeyBlock(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", "SHA224withECDSA"),
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexp),
-				),
+				Config:  testAccApplicationConfig_SAML_SigningKeyBlock(resourceName, name),
+				Destroy: true,
 			},
+			// Update
+			signingKeyIDAttr,
+			signingKeyNotSet,
+			signingKeyBlock,
 		},
 	})
 }
@@ -3203,6 +3226,18 @@ resource "pingone_application" "%[2]s" {
 func testAccApplicationConfig_SAML_SigningKeyNotSet(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA224withECDSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
 
 resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id

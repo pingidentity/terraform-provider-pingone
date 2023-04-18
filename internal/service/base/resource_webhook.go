@@ -84,7 +84,7 @@ func ResourceWebhook() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"included_action_types": {
-							Description: "A non-empty list that specifies the list of action types that should be matched for the webhook.",
+							Description: "A non-empty list that specifies the list of action types that should be matched for the webhook.\n\nRefer to the [PingOne API Reference - Subscription Action Types](https://apidocs.pingidentity.com/pingone/platform/v1/api/#subscription-action-types) documentation for a full list of configurable action types.",
 							Type:        schema.TypeSet,
 							Required:    true,
 							Elem: &schema.Schema{

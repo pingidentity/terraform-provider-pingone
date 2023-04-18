@@ -15,14 +15,7 @@ To get started using the PingOne Terraform provider, first you'll need an active
 
 ### Configure PingOne for Terraform access
 
-The following steps describe how to connect Terraform to your PingOne instance:
-
-1. Log in to your PingOne Administration Console.  On registration for a trial, a link will be sent to your provided email address.
-2. Open the *Administrators* environment
-3. Follow the guide [Create an application connection](https://apidocs.pingidentity.com/pingone/main/v1/api/#create-an-application-connection) to create a worker application.  Choose an appropriate name (e.g. *PingOne Terraform Provider*)
-4. In the resulting application on the *Configuration* tab, expand the *General* section and extract the *Client ID*, *Client Secret* and *Environment ID*.  These are used in the following examples to authenticate the provider to the PingOne organisation.
-
-Authenticating the provider also requires a code that represents the PingOne region.  See the [Schema](#schema) section below for a list of possible values.
+For detailed instructions on how to prepare PingOne for Terraform access, see the [PingOne getting started guide](https://pingidentity.github.io/terraform-docs/getting-started/pingone/#configure-pingone-for-terraform-access) at [pingidentity.github.io/terraform-docs/](https://pingidentity.github.io/terraform-docs/).
 
 ## Example Usage
 
@@ -33,7 +26,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.9"
+      version = "~> 0.11"
     }
   }
 }
@@ -59,7 +52,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.9"
+      version = "~> 0.11"
     }
   }
 }
@@ -87,7 +80,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.9"
+      version = "~> 0.11"
     }
   }
 }
