@@ -1,8 +1,4 @@
 ```release-note:note
-bump `github.com/hashicorp/terraform-plugin-framework` v1.1.1 => v1.2.0
-```
-
-```release-note:note
 `resource/pingone_application_attribute_mapping`: Migrated to plugin framework.
 ```
 
