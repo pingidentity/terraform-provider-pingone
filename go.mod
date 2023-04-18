@@ -1,6 +1,10 @@
 module github.com/pingidentity/terraform-provider-pingone
 
-go 1.19
+go 1.20
+
+replace github.com/patrickcping/pingone-go-sdk-v2/credentials => /Users/mikesimon/dev/src/github.com/pingone-go-sdk-v2/credentials
+
+replace github.com/patrickcping/pingone-go-sdk-v2 => /Users/mikesimon/dev/src/github.com/pingone-go-sdk-v2
 
 require (
 	github.com/bflad/tfproviderlint v0.28.1
@@ -16,15 +20,18 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.26.1
 	github.com/katbyte/terrafmt v0.5.2
-	github.com/patrickcping/pingone-go-sdk-v2 v0.6.1
+	github.com/patrickcping/pingone-go-sdk-v2 v0.6.2
 	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.1.1
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.4
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.17.1
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.1.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.18.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.9.1
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.45.0
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 )
+
+require github.com/rivo/uniseg v0.2.0 // indirect
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
@@ -183,8 +190,6 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/mjspi/pingone-neo-go-sdk v0.0.0-20230414225058-bd03e12cada4
-	github.com/mjspi/pingone-neo-go-sdk/credentials v0.0.0-20230413185621-c4a703f98a65
 	github.com/moricho/tparallel v0.3.1 // indirect
 	github.com/nakabonne/nestif v0.3.1 // indirect
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
@@ -195,7 +200,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/owenrumney/go-sarif v1.1.1 // indirect
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.3.4 // indirect
-	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/polyfloyd/go-errorlint v1.4.0 // indirect
