@@ -456,6 +456,9 @@ resource "pingone_resource_attribute" "%[3]s" {
 
   name  = "email"
   value = "$${user.%[4]s}"
+  depends_on = [
+    pingone_schema_attribute.%[3]s
+  ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
