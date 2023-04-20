@@ -24,12 +24,11 @@ type DigitalWalletApplicationResource struct {
 }
 
 type DigitalWalletApplicationResourceModel struct {
-	Id                         types.String `tfsdk:"id"`
-	EnvironmentId              types.String `tfsdk:"environment_id"`
-	ApplicationId              types.String `tfsdk:"application_id"`
-	DigitalWalletApplicationId types.String `tfsdk:"digital_wallet_application_id"`
-	AppOpenUrl                 types.String `tfsdk:"app_open_url"`
-	Name                       types.String `tfsdk:"name"`
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	ApplicationId types.String `tfsdk:"application_id"`
+	AppOpenUrl    types.String `tfsdk:"app_open_url"`
+	Name          types.String `tfsdk:"name"`
 }
 
 // Framework interfaces
@@ -65,13 +64,9 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 				Description: "The ID of the application to associate with the digital wallet application.",
 			}),
 
-			"digital_wallet_application_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the digital wallet application.",
-			}),
-
 			"app_open_url": schema.StringAttribute{
-				MarkdownDescription: "The URL sent in credential service notifications to the user to communicate with the service.",
-				Required:            true,
+				Description: "The URL sent in credential service notifications to the user to communicate with the service.",
+				Required:    true,
 			},
 
 			"name": schema.StringAttribute{
@@ -135,6 +130,21 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 	// Build the model for the API
 	digitalWalletApplication := plan.expand()
 
+	/*management.ReadOneApplicationRequest(ctx, )
+	if digitalWalletApplication.GetApplication().Id{
+			// make sure it exists
+
+		}
+
+	    t.GetOk("oidc_options"); ok {
+		    var application *management.ApplicationOIDC
+		    application, diags = expandApplicationOIDC(d)
+		    if diags.HasError() {
+		        return diags
+		    }
+		    applicationRequest.ApplicationOIDC = application
+		} */
+
 	// Run the API call
 	response, diags := framework.ParseResponse(
 		ctx,
@@ -185,7 +195,7 @@ func (r *DigitalWalletApplicationResource) Read(ctx context.Context, req resourc
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.DigitalWalletApplicationId.ValueString()).Execute()
+			return r.client.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneDigitalWalletApplication",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -207,8 +217,67 @@ func (r *DigitalWalletApplicationResource) Read(ctx context.Context, req resourc
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// TODO: update changes
 func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state DigitalWalletApplicationResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	digitalWalletApplication := plan.expand()
+
+	/*management.ReadOneApplicationRequest(ctx, )
+	if digitalWalletApplication.GetApplication().Id{
+			// make sure it exists
+
+		}
+
+	    t.GetOk("oidc_options"); ok {
+		    var application *management.ApplicationOIDC
+		    application, diags = expandApplicationOIDC(d)
+		    if diags.HasError() {
+		        return diags
+		    }
+		    applicationRequest.ApplicationOIDC = application
+		} */
+
+	// Run the API call
+	response, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.client.DigitalWalletAppsApi.UpdateDigitalWalletApp(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).DigitalWalletApplication(*digitalWalletApplication).Execute()
+		},
+		"UpdateDigitalWalletApplication",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Update the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response.(*credentials.DigitalWalletApplication))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *DigitalWalletApplicationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -236,7 +305,7 @@ func (r *DigitalWalletApplicationResource) Delete(ctx context.Context, req resou
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := r.client.DigitalWalletAppsApi.DeleteDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.DigitalWalletApplicationId.ValueString()).Execute()
+			r, err := r.client.DigitalWalletAppsApi.DeleteDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteDigitalWalletApplication",
@@ -262,7 +331,7 @@ func (r *DigitalWalletApplicationResource) ImportState(ctx context.Context, req 
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("digital_wallet_application_id"), attributes[1])...)
+	// resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("digital_wallet_application_id"), attributes[1])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
 }
 
@@ -293,7 +362,6 @@ func (p *DigitalWalletApplicationResourceModel) toState(apiObject *credentials.D
 	p.ApplicationId = framework.StringToTF(*apiObject.GetApplication().Id)
 	p.Name = framework.StringToTF(apiObject.GetName())
 	p.AppOpenUrl = framework.StringToTF(apiObject.GetAppOpenUrl())
-	// p.DigitalWalletApplicationId = framework.StringOkToTF(*apiObject.GetDigitalWalletApplicationId())
 
 	return diags
 }
