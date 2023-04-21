@@ -31,33 +31,35 @@ type RiskPredictorResource struct {
 }
 
 type riskPredictorResourceModel struct {
-	Id                           types.String `tfsdk:"id"`
-	EnvironmentId                types.String `tfsdk:"environment_id"`
-	Name                         types.String `tfsdk:"name"`
-	CompactName                  types.String `tfsdk:"compact_name"`
-	Description                  types.String `tfsdk:"description"`
-	Type                         types.String `tfsdk:"type"`
-	DefaultValues                types.List   `tfsdk:"default_values"`
-	Licensed                     types.Bool   `tfsdk:"licensed"`
-	PredictorAnonymousNetwork    types.List   `tfsdk:"predictor_anonymous_network"`
-	PredictorComposite           types.List   `tfsdk:"predictor_composite"`
-	PredictorCustom              types.List   `tfsdk:"predictor_custom"`
-	PredictorGeovelocity         types.List   `tfsdk:"predictor_geovelocity"`
-	PredictorIPReputation        types.List   `tfsdk:"predictor_ip_reputation"`
-	PredictorNewDevice           types.List   `tfsdk:"predictor_new_device"`
-	PredictorUserLocationAnomaly types.List   `tfsdk:"predictor_user_location_anomaly"`
-	PredictorUserRiskBehavior    types.List   `tfsdk:"predictor_user_risk_behavior"`
-	PredictorVelocity            types.List   `tfsdk:"predictor_velocity"`
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	Name          types.String `tfsdk:"name"`
+	CompactName   types.String `tfsdk:"compact_name"`
+	Description   types.String `tfsdk:"description"`
+	Type          types.String `tfsdk:"type"`
+	DefaultResult types.List   `tfsdk:"default_result"`
+	Licensed      types.Bool   `tfsdk:"licensed"`
+	Deletable     types.Bool   `tfsdk:"deletable"`
+	// Condition types.List `tfsdk:"condition"`
+	PredictorAnonymousNetwork    types.List `tfsdk:"predictor_anonymous_network"`
+	PredictorComposite           types.List `tfsdk:"predictor_composite"`
+	PredictorCustom              types.List `tfsdk:"predictor_custom"`
+	PredictorGeovelocity         types.List `tfsdk:"predictor_geovelocity"`
+	PredictorIPReputation        types.List `tfsdk:"predictor_ip_reputation"`
+	PredictorNewDevice           types.List `tfsdk:"predictor_new_device"`
+	PredictorUserLocationAnomaly types.List `tfsdk:"predictor_user_location_anomaly"`
+	PredictorUserRiskBehavior    types.List `tfsdk:"predictor_user_risk_behavior"`
+	PredictorVelocity            types.List `tfsdk:"predictor_velocity"`
 }
 
-type defaultValuesModel struct {
+type DefaultResultModel struct {
 	Weight    types.Int64 `tfsdk:"weight"`
 	Score     types.Int64 `tfsdk:"score"`
 	Evaluated types.Bool  `tfsdk:"evaluated"`
 	Result    types.List  `tfsdk:"result"`
 }
 
-type defaultValuesResultModel struct {
+type DefaultResultResultModel struct {
 	Level types.String `tfsdk:"level"`
 	Type  types.String `tfsdk:"type"`
 }
@@ -91,6 +93,7 @@ type predictorCustomMapListModel struct {
 	ListItems types.List `tfsdk:"list_items"`
 }
 
+// anonymous network, geovelocity, IP reputation
 type predictorMinimalAllowedCIDRModel struct {
 	AllowedCIDRList types.Set `tfsdk:"allowed_cidr_list"`
 }
@@ -245,11 +248,16 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Description: "A boolean that indicates whether PingOne Risk is licensed for the environment.",
 				Computed:    true,
 			},
+
+			"deletable": schema.BoolAttribute{
+				Description: "A boolean that indicates the PingOne Risk predictor can be deleted or not.",
+				Computed:    true,
+			},
 		},
 
 		Blocks: map[string]schema.Block{
-			"default_values": schema.ListNestedBlock{
-				Description: "A single block that contains the default values used for the risk predictor.",
+			"default_result": schema.ListNestedBlock{
+				Description: "A single block that contains the default result values for the risk predictor.",
 
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
@@ -314,9 +322,9 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					Attributes: map[string]schema.Attribute{
 						"allowed_cidr_list": schema.SetAttribute{
 							Description:         resultLevelDescription.Description,
-										MarkdownDescription: resultLevelDescription.MarkdownDescription,
-										Optional: true,
-										ElementType: types.StringType,
+							MarkdownDescription: resultLevelDescription.MarkdownDescription,
+							Optional:            true,
+							ElementType:         types.StringType,
 						},
 					},
 				},
@@ -335,196 +343,230 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 
-			"predictor_composite": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the composite risk predictor type.",
+			// "predictor_composite": schema.ListNestedBlock{
+			// 	Description: "A single block that contains configuration values for the composite risk predictor type.",
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{},
-				},
+			// 	NestedObject: schema.NestedBlockObject{
+			// 		Attributes: map[string]schema.Attribute{},
+			// 	},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-				},
-			},
+			// 	Validators: []validator.List{
+			// 		listvalidator.SizeAtMost(1),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+			// 	},
+			// },
 
-			"predictor_custom": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the custom mapping risk predictor type.",
+			// "predictor_custom": schema.ListNestedBlock{
+			// 	Description: "A single block that contains configuration values for the custom mapping risk predictor type.",
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"attribute_mapping"
-						"map_ip_range_values"
-						"map_range_values"
-						"map_list_values"
-					},
-				},
+			// 	NestedObject: schema.NestedBlockObject{
+			// 		Attributes: map[string]schema.Attribute{
+			// 			"attribute_mapping": schema.StringAttribute{
+			// 				Required: true,
+			// 				Validators: []validator.String{
+			// 					stringvalidator.LengthAtLeast(attrMinLength),
+			// 					stringvalidator.RegexMatches(regexp.MustCompile(`^\${(event|details)[a-z\.]+}$`), `Attribute mapping must match regex pattern "^\${(event|details)[a-z\.]+}$"`),
+			// 				},
+			// 			},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-				},
-			},
+			// 			"map_ip_range_values": schema.SetAttribute{
+			// 				Description: "The mapping of risk levels for the IP ranges specified.",
+			// 				Optional:    true,
+			// 				ElementType: types.StringType,
+			// 				Validators: []validator.Set{
+			// 					setvalidator.SizeAtLeast(attrMinLength),
+			// 					setvalidator.ValueStringsAre(
+			// 						stringvalidator.RegexMatches(regexp.MustCompile(`^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$`), `IP CIDR range must match regex pattern "^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$"`),
+			// 					),
+			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_ip_range_values")),
+			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_range_values")),
+			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_list_values")),
+			// 				},
+			// 			},
 
-			"predictor_geovelocity": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the Geovelocity risk predictor type.",
+			// 			"map_range_values": schema.SetAttribute{
+			// 				Description: "The mapping of risk levels for numerical values in a minimum, maxiumum boundary.",
+			// 				Optional:    true,
+			// 				ElementType: types.StringType,
+			// 				Validators: []validator.Set{
+			// 					setvalidator.SizeAtLeast(attrMinLength),
+			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_ip_range_values")),
+			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_range_values")),
+			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_list_values")),
+			// 				},
+			// 			},
+			// 		},
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"allowed_cidr_list": schema.ListAttribute{},
-					},
-				},
+			// 		Blocks: map[string]schema.Block{
+			// 			"map_range_values": schema.ListNestedBlock{
+			// 			}
+			// 	},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-				},
-			},
+			// 	Validators: []validator.List{
+			// 		listvalidator.SizeAtMost(1),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+			// 	},
+			// },
 
-			"predictor_ip_reputation": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the IP reputation risk predictor type.",
+			// "predictor_geovelocity": schema.ListNestedBlock{
+			// 	Description: "A single block that contains configuration values for the Geovelocity risk predictor type.",
 
-				Attributes: map[string]schema.Attribute{
-					"allowed_cidr_list": schema.ListAttribute{},
-				},
+			// 	NestedObject: schema.NestedBlockObject{
+			// 		Attributes: map[string]schema.Attribute{
+			// 			"allowed_cidr_list": schema.ListAttribute{},
+			// 		},
+			// 	},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-				},
-			},
+			// 	Validators: []validator.List{
+			// 		listvalidator.SizeAtMost(1),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+			// 	},
+			// },
 
-			"predictor_new_device": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the new device risk predictor type.",
+			// "predictor_ip_reputation": schema.ListNestedBlock{
+			// 	Description: "A single block that contains configuration values for the IP reputation risk predictor type.",
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"activation_at": schema.ListAttribute{},
-					},
-				},
+			// 	Attributes: map[string]schema.Attribute{
+			// 		"allowed_cidr_list": schema.ListAttribute{},
+			// 	},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-				},
-			},
+			// 	Validators: []validator.List{
+			// 		listvalidator.SizeAtMost(1),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+			// 	},
+			// },
 
-			"predictor_user_location_anomaly": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the user location anomaly risk predictor type.",
+			// "predictor_new_device": schema.ListNestedBlock{
+			// 	Description: "A single block that contains configuration values for the new device risk predictor type.",
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"days": schema.ListAttribute{},
-						"radius_distance": schema.ListAttribute{},
-					},
-				},
+			// 	NestedObject: schema.NestedBlockObject{
+			// 		Attributes: map[string]schema.Attribute{
+			// 			"activation_at": schema.ListAttribute{},
+			// 		},
+			// 	},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-				},
-			},
+			// 	Validators: []validator.List{
+			// 		listvalidator.SizeAtMost(1),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+			// 	},
+			// },
 
-			"predictor_user_risk_behavior": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the user risk behavior risk predictor type.",
+			// "predictor_user_location_anomaly": schema.ListNestedBlock{
+			// 	Description: "A single block that contains configuration values for the user location anomaly risk predictor type.",
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"prediction_model": schema.ListAttribute{},
-					},
-				},
+			// 	NestedObject: schema.NestedBlockObject{
+			// 		Attributes: map[string]schema.Attribute{
+			// 			"days":            schema.ListAttribute{},
+			// 			"radius_distance": schema.ListAttribute{},
+			// 		},
+			// 	},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-				},
-			},
+			// 	Validators: []validator.List{
+			// 		listvalidator.SizeAtMost(1),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+			// 	},
+			// },
 
-			"predictor_velocity": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the IP/user velocity risk predictor type.",
+			// "predictor_user_risk_behavior": schema.ListNestedBlock{
+			// 	Description: "A single block that contains configuration values for the user risk behavior risk predictor type.",
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"by": schema.ListAttribute{},
-						"every": schema.ListAttribute{},
-						"fallback": schema.ListAttribute{},
-						"max_delay": schema.ListAttribute{},
-						"measure": schema.ListAttribute{},
-						"of": schema.ListAttribute{},
-						"sliding_window": schema.ListAttribute{},
-						"use": schema.ListAttribute{},
-					},
-				},
+			// 	NestedObject: schema.NestedBlockObject{
+			// 		Attributes: map[string]schema.Attribute{
+			// 			"prediction_model": schema.ListAttribute{},
+			// 		},
+			// 	},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-				},
-			},
+			// 	Validators: []validator.List{
+			// 		listvalidator.SizeAtMost(1),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+			// 	},
+			// },
+
+			// "predictor_velocity": schema.ListNestedBlock{
+			// 	Description: "A single block that contains configuration values for the IP/user velocity risk predictor type.",
+
+			// 	NestedObject: schema.NestedBlockObject{
+			// 		Attributes: map[string]schema.Attribute{
+			// 			"by":             schema.ListAttribute{},
+			// 			"every":          schema.ListAttribute{},
+			// 			"fallback":       schema.ListAttribute{},
+			// 			"max_delay":      schema.ListAttribute{},
+			// 			"measure":        schema.ListAttribute{},
+			// 			"of":             schema.ListAttribute{},
+			// 			"sliding_window": schema.ListAttribute{},
+			// 			"use":            schema.ListAttribute{},
+			// 		},
+			// 	},
+
+			// 	Validators: []validator.List{
+			// 		listvalidator.SizeAtMost(1),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+			// 	},
+			// },
 		},
 	}
 }
@@ -580,7 +622,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Build the model for the API
-	notificationSettings, d := plan.expand(ctx)
+	riskPredictor, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -591,9 +633,9 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.NotificationsSettingsSMTPApi.UpdateEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsEmailDeliverySettings(*notificationSettings).Execute()
+			return r.client.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
 		},
-		"UpdateEmailNotificationsSettings-Create",
+		"CreateRiskPredictor",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
@@ -606,7 +648,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*risk.NotificationsSettingsEmailDeliverySettings))...)
+	resp.Diagnostics.Append(state.toState(response.(*risk.RiskPredictor))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -635,9 +677,9 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.NotificationsSettingsSMTPApi.ReadEmailNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.client.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
-		"ReadEmailNotificationsSettings",
+		"ReadOneRiskPredictor",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
@@ -653,7 +695,7 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*risk.NotificationsSettingsEmailDeliverySettings))...)
+	resp.Diagnostics.Append(data.toState(response.(*risk.RiskPredictor))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -678,7 +720,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Build the model for the API
-	notificationSettings, d := plan.expand(ctx)
+	riskPredictor, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -689,9 +731,9 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.NotificationsSettingsSMTPApi.UpdateEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsEmailDeliverySettings(*notificationSettings).Execute()
+			return r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPredictor(*riskPredictor).Execute()
 		},
-		"UpdateEmailNotificationsSettings-Create",
+		"UpdateRiskPredictor",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
@@ -704,7 +746,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*risk.NotificationsSettingsEmailDeliverySettings))...)
+	resp.Diagnostics.Append(state.toState(response.(*risk.RiskPredictor))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -733,10 +775,10 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := r.client.NotificationsSettingsSMTPApi.DeleteEmailDeliverySettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			r, err := r.client.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
-		"DeleteEmailDeliverySettings",
+		"DeleteRiskAdvancedPredictor",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
@@ -747,19 +789,19 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 }
 
 func (r *RiskPredictorResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 1
+	splitLength := 2
 	attributes := strings.SplitN(req.ID, "/", splitLength)
 
 	if len(attributes) != splitLength {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id\"", req.ID),
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/risk_predictor_id\"", req.ID),
 		)
 		return
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
 func (p *riskPredictorResourceModel) expand(ctx context.Context) (*risk.NotificationsSettingsEmailDeliverySettings, diag.Diagnostics) {
