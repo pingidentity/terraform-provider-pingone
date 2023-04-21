@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_application`: Provide support for certificate based authentication.
+```

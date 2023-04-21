@@ -13,7 +13,10 @@ import (
 
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
+		NewApplicationAttributeMappingResource,
 		NewApplicationFlowPolicyAssignmentResource,
+		NewIdentityProviderAttributeResource,
+		NewResourceAttributeResource,
 	}
 }
 

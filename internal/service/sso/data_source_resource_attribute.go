@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
+	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -136,6 +138,7 @@ func datasourcePingOneResourceAttributeRead(ctx context.Context, d *schema.Resou
 	return diags
 }
 
+// Replace with fetchResourceAttributeFromName_Framework when migrating to plugin framework
 func fetchResourceAttributeFromName(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceAttributeName string) (*management.ResourceAttribute, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -172,6 +175,52 @@ func fetchResourceAttributeFromName(ctx context.Context, apiClient *management.A
 				Severity: diag.Error,
 				Summary:  fmt.Sprintf("Cannot find resource attribute %s", resourceAttributeName),
 			})
+
+			return nil, diags
+		}
+
+	}
+
+	return resp, diags
+}
+
+func fetchResourceAttributeFromName_Framework(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceAttributeName string) (*management.ResourceAttribute, frameworkdiag.Diagnostics) {
+	var diags frameworkdiag.Diagnostics
+
+	var resp *management.ResourceAttribute
+
+	respList, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
+		},
+		"ReadAllResourceAttributes",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	diags.Append(diags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if resourceAttributes, ok := respList.(*management.EntityArray).Embedded.GetAttributesOk(); ok {
+
+		found := false
+		for _, resourceAttribute := range resourceAttributes {
+
+			if resourceAttribute.ResourceAttribute.GetName() == resourceAttributeName {
+				resp = resourceAttribute.ResourceAttribute
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			diags.AddError(
+				fmt.Sprintf("Cannot find resource attribute %s", resourceAttributeName),
+				"The resource attribute cannot be found by the provided name.",
+			)
 
 			return nil, diags
 		}

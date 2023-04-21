@@ -116,9 +116,9 @@ resource "pingone_application" "my_awesome_worker_app" {
 ## Example Usage - External Link
 
 ```terraform
-resource "pingone_application" "my_awesome_saml_app" {
+resource "pingone_application" "my_awesome_external_link" {
   environment_id = pingone_environment.my_environment.id
-  name           = "My Awesome External App"
+  name           = "My Awesome External Link"
   enabled        = true
 
   external_link_options {
@@ -192,6 +192,7 @@ Optional:
 
 - `allow_wildcards_in_redirect_uris` (Boolean) A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri). Defaults to `false`.
 - `bundle_id` (String) A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable; any change will force recreation of the applicationr resource.
+- `certificate_based_authentication` (Block List, Max: 1) Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `NATIVE_APP`. (see [below for nested schema](#nestedblock--oidc_options--certificate_based_authentication))
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `mobile_app` (Block List, Max: 1) Mobile application integration settings for `NATIVE_APP` type applications. (see [below for nested schema](#nestedblock--oidc_options--mobile_app))
@@ -210,6 +211,14 @@ Read-Only:
 
 - `client_id` (String) A string that specifies the application ID used to authenticate to the authorization server.
 - `client_secret` (String, Sensitive) A string that specifies the application secret ID used to authenticate to the authorization server.
+
+<a id="nestedblock--oidc_options--certificate_based_authentication"></a>
+### Nested Schema for `oidc_options.certificate_based_authentication`
+
+Required:
+
+- `key_id` (String) A string that represents a PingOne ID for the issuance certificate key.  The key must be of type `ISSUANCE`.
+
 
 <a id="nestedblock--oidc_options--mobile_app"></a>
 ### Nested Schema for `oidc_options.mobile_app`

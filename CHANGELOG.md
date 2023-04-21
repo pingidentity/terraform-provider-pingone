@@ -1,8 +1,36 @@
-## 0.12.0 (Unreleased)
+## 0.12.0 (18 April 2023)
 
 NOTES:
 
+* Bump `github.com/golangci/golangci-lint` from 1.52.0 to 1.52.2 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
+* Bump `github.com/hashicorp/terraform-plugin-framework` from 1.1.1 to 1.2.0 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
+* Bump `github.com/hashicorp/terraform-plugin-go` from 0.14.3 to 0.15.0 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
+* Bump `github.com/hashicorp/terraform-plugin-sdk/v2` from 2.25.0 to 2.26.1 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
+* Bump `github.com/terraform-linters/tflint` from 0.45.0 to 0.46.0 ([#334](https://github.com/pingidentity/terraform-provider-pingone/issues/334))
+* Updated the index documentation to refer to the more detailed getting started guide at [pingidentity.github.io/terraform-docs/](https://pingidentity.github.io/terraform-docs/) ([#309](https://github.com/pingidentity/terraform-provider-pingone/issues/309))
 * `data-source/pingone_schema`: Migrated to plugin framework. ([#306](https://github.com/pingidentity/terraform-provider-pingone/issues/306))
+* `resource/pingone_application_attribute_mapping`: Migrated to plugin framework. ([#329](https://github.com/pingidentity/terraform-provider-pingone/issues/329))
+* `resource/pingone_application`: Update the documentation example for external link. ([#333](https://github.com/pingidentity/terraform-provider-pingone/issues/333))
+* `resource/pingone_environment`: Code optimisations for default computed schema values. ([#335](https://github.com/pingidentity/terraform-provider-pingone/issues/335))
+* `resource/pingone_identity_provider_attribute`: Migrated to plugin framework. ([#329](https://github.com/pingidentity/terraform-provider-pingone/issues/329))
+* `resource/pingone_identity_provider_attribute`: Reformatted the social provider and external identity provider attribute reference documentation. ([#329](https://github.com/pingidentity/terraform-provider-pingone/issues/329))
+* `resource/pingone_resource_attribute`: Migrated to plugin framework. ([#329](https://github.com/pingidentity/terraform-provider-pingone/issues/329))
+* `resource/pingone_webhook`: Added link to "Subscription Action Types" api reference for a full list of configurable action types. ([#332](https://github.com/pingidentity/terraform-provider-pingone/issues/332))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.17.1 => v0.18.0 ([#336](https://github.com/pingidentity/terraform-provider-pingone/issues/336))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.1 => v0.6.2 ([#336](https://github.com/pingidentity/terraform-provider-pingone/issues/336))
+
+ENHANCEMENTS:
+
+* `resource/pingone_application_attribute_mapping`: Support the ability to override the `sub` and `saml_subject` core attributes. ([#329](https://github.com/pingidentity/terraform-provider-pingone/issues/329))
+* `resource/pingone_application_attribute_mapping`: Supports the ability to set attribute level scopes and enabled/disabled status in the ID token and on the userinfo endpoint for OIDC applications. ([#329](https://github.com/pingidentity/terraform-provider-pingone/issues/329))
+* `resource/pingone_application`: Provide support for certificate based authentication. ([#311](https://github.com/pingidentity/terraform-provider-pingone/issues/311))
+* `resource/pingone_identity_provider_attribute`: Support the ability to override the `username` core attribute. ([#329](https://github.com/pingidentity/terraform-provider-pingone/issues/329))
+* `resource/pingone_key`: Support custom CRL for keys with type `ISSUANCE`. ([#312](https://github.com/pingidentity/terraform-provider-pingone/issues/312))
+* `resource/pingone_resource_attribute`: Support the ability to override the `sub` core attribute for custom resources. ([#329](https://github.com/pingidentity/terraform-provider-pingone/issues/329))
+
+BUG FIXES:
+
+* `resource/pingone_resource_attribute`: Fix error when deleting predefined OpenID Connect resource attribute.  Now resets the value back to the environment default. ([#329](https://github.com/pingidentity/terraform-provider-pingone/issues/329))
 
 ## 0.11.1 (20 March 2023)
 
