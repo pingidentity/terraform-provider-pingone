@@ -4,14 +4,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -19,8 +23,9 @@ import (
 
 // Types
 type DigitalWalletApplicationResource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
+	client     *credentials.APIClient
+	mgmtClient *management.APIClient
+	region     model.RegionMapping
 }
 
 type DigitalWalletApplicationResourceModel struct {
@@ -49,6 +54,20 @@ func (r *DigitalWalletApplicationResource) Metadata(ctx context.Context, req res
 }
 
 func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	const attrMinLength = 1
+
+	appOpenUrlDescriptionFmt := "The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/endpoint`."
+	appOpenUrlDescription := framework.SchemaDescription{
+		MarkdownDescription: appOpenUrlDescriptionFmt,
+		Description:         strings.ReplaceAll(appOpenUrlDescriptionFmt, "`", "\""),
+	}
+
+	nameDescriptionFmt := "The name of the digital wallet application. For example, `Example Wallet Application`."
+	nameDescription := framework.SchemaDescription{
+		MarkdownDescription: nameDescriptionFmt,
+		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
+	}
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne Credentials digital wallet applications.",
@@ -65,13 +84,24 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 			}),
 
 			"app_open_url": schema.StringAttribute{
-				Description: "The URL sent in credential service notifications to the user to communicate with the service.",
-				Required:    true,
+				Description:         appOpenUrlDescription.Description,
+				MarkdownDescription: appOpenUrlDescription.MarkdownDescription,
+				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						// todo: regex has a bug
+						regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`),
+						"Expected value to have a url with scheme of \"https\". A scheme of \"http\" is allowed but not advised."),
+				},
 			},
 
 			"name": schema.StringAttribute{
-				MarkdownDescription: "The name of the digital wallet application.",
+				Description:         nameDescription.Description,
+				MarkdownDescription: nameDescription.MarkdownDescription,
 				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
 		},
 	}
@@ -103,6 +133,17 @@ func (r *DigitalWalletApplicationResource) Configure(ctx context.Context, req re
 		return
 	}
 
+	preparedMgmtClient, err := prepareMgmtClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
+	r.mgmtClient = preparedMgmtClient
 	r.client = preparedClient
 	r.region = resourceConfig.Client.API.Region
 }
@@ -128,22 +169,11 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 	}
 
 	// Build the model for the API
-	digitalWalletApplication := plan.expand()
-
-	/*management.ReadOneApplicationRequest(ctx, )
-	if digitalWalletApplication.GetApplication().Id{
-			// make sure it exists
-
-		}
-
-	    t.GetOk("oidc_options"); ok {
-		    var application *management.ApplicationOIDC
-		    application, diags = expandApplicationOIDC(d)
-		    if diags.HasError() {
-		        return diags
-		    }
-		    applicationRequest.ApplicationOIDC = application
-		} */
+	digitalWalletApplication, diags := plan.expand(ctx, r)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	response, diags := framework.ParseResponse(
@@ -238,22 +268,11 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 	}
 
 	// Build the model for the API
-	digitalWalletApplication := plan.expand()
-
-	/*management.ReadOneApplicationRequest(ctx, )
-	if digitalWalletApplication.GetApplication().Id{
-			// make sure it exists
-
-		}
-
-	    t.GetOk("oidc_options"); ok {
-		    var application *management.ApplicationOIDC
-		    application, diags = expandApplicationOIDC(d)
-		    if diags.HasError() {
-		        return diags
-		    }
-		    applicationRequest.ApplicationOIDC = application
-		} */
+	digitalWalletApplication, diags := plan.expand(ctx, r)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	response, diags := framework.ParseResponse(
@@ -331,18 +350,19 @@ func (r *DigitalWalletApplicationResource) ImportState(ctx context.Context, req 
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	// resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("digital_wallet_application_id"), attributes[1])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
 }
 
-func (p *DigitalWalletApplicationResourceModel) expand() *credentials.DigitalWalletApplication {
+func (p *DigitalWalletApplicationResourceModel) expand(ctx context.Context, r *DigitalWalletApplicationResource) (*credentials.DigitalWalletApplication, diag.Diagnostics) {
 
-	applicationObject := credentials.NewObjectApplication()
-	applicationObject.SetId(p.ApplicationId.ValueString())
+	// a digital wallet application is correlated to a Native Application - make sure it exists and is configured properly
+	application, diags := confirmParentAppExistsAndIsNative(ctx, r, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString())
+	if diags.HasError() {
+		return nil, diags
+	}
 
-	data := credentials.NewDigitalWalletApplication(*applicationObject, p.AppOpenUrl.ValueString(), p.Name.ValueString())
-
-	return data
+	data := credentials.NewDigitalWalletApplication(*application, p.AppOpenUrl.ValueString(), p.Name.ValueString())
+	return data, diags
 }
 
 func (p *DigitalWalletApplicationResourceModel) toState(apiObject *credentials.DigitalWalletApplication) diag.Diagnostics {
@@ -364,4 +384,83 @@ func (p *DigitalWalletApplicationResourceModel) toState(apiObject *credentials.D
 	p.AppOpenUrl = framework.StringToTF(apiObject.GetAppOpenUrl())
 
 	return diags
+}
+
+func confirmParentAppExistsAndIsNative(ctx context.Context, r *DigitalWalletApplicationResource, environmentId, applicationId string) (*credentials.ObjectApplication, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	ctxMgmt := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
+
+	// Run the API call
+	resp, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.mgmtClient.ApplicationsApi.ReadOneApplication(ctxMgmt, environmentId, applicationId).Execute()
+		},
+		"ReadOneApplication",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if resp == nil {
+		diags.AddError(
+			"Digital Wallet Parent Application Missing",
+			"Application referenced in `application.id` does not exist",
+		)
+		return nil, diags
+	}
+
+	respObject := resp.(*management.ReadOneApplication200Response)
+
+	// check if oidc
+	if respObject.ApplicationOIDC == nil {
+		diags.AddError(
+			"Application referenced in `application.id` is not of type OIDC",
+			"To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
+		)
+		return nil, diags
+	}
+
+	// check if native
+	if respObject.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_NATIVE_APP && respObject.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_CUSTOM_APP {
+		diags.AddError(
+			"Application referenced in `application.id` is OIDC, but is not the required `Native` OIDC application type",
+			"To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
+		)
+		return nil, diags
+	}
+
+	// check if mobile set and package/bundle set
+	if _, ok := respObject.ApplicationOIDC.GetMobileOk(); !ok {
+		diags.AddError(
+			"Application referenced in `application.id` does not contain mobile application configuration",
+			"To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
+		)
+		return nil, diags
+	}
+
+	if v, ok := respObject.ApplicationOIDC.GetMobileOk(); ok {
+
+		_, bundleIDOk := v.GetBundleIdOk()
+		_, packageNameOk := v.GetPackageNameOk()
+
+		if !bundleIDOk && !packageNameOk {
+			diags.AddError(
+				"Application referenced in `application.id` does not contain mobile application configuration",
+				"To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
+			)
+			return nil, diags
+		}
+	}
+
+	// checks complete - return app object the wallet want
+	applicationObject := credentials.NewObjectApplication()
+	applicationObject.SetId(applicationId)
+	return applicationObject, diags
 }
