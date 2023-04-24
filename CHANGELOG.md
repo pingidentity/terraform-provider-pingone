@@ -1,5 +1,18 @@
 ## 0.13.0 (Unreleased)
 
+NOTES:
+
+* Updated the external documentation site link to `terraform.pingidentity.com` for the getting started guide on the index docs page. ([#340](https://github.com/pingidentity/terraform-provider-pingone/issues/340))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.1 => v0.1.2 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.4 => v0.1.5 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.18.0 => v0.19.0 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.9.1 => v0.9.2 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.2 => v0.6.3 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+
+BUG FIXES:
+
+* `resource/pingone_application`: Fix for "There was an unexpected error with the service" error when attempting to create an application immediately after creation of the parent environment. ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+
 ## 0.12.0 (18 April 2023)
 
 NOTES:
