@@ -54,6 +54,8 @@ func (r *DigitalWalletApplicationResource) Metadata(ctx context.Context, req res
 }
 
 func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	// schema descriptions and validation settings
 	const attrMinLength = 1
 
 	appOpenUrlDescriptionFmt := "The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/endpoint`."
@@ -68,6 +70,7 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
 	}
 
+	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne Credentials digital wallet applications.",
@@ -89,9 +92,8 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
-						// todo: regex has a bug
-						regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`),
-						"Expected value to have a url with scheme of \"https\". A scheme of \"http\" is allowed but not advised."),
+						regexp.MustCompile(`^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/|\/|\/\/)?[A-z0-9_-]*?[:]?[A-z0-9_-]*?[@]?[A-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$`),
+						"Expected value to have a url with scheme of \"https\". A scheme of \"http\" is allowed but not recommended."),
 				},
 			},
 
