@@ -4,11 +4,13 @@ NOTES:
 
 * Updated the external documentation site link to `terraform.pingidentity.com` for the getting started guide on the index docs page. ([#340](https://github.com/pingidentity/terraform-provider-pingone/issues/340))
 * `resource/pingone_application`: Expanded the native application documentation example for mobile app use case. ([#344](https://github.com/pingidentity/terraform-provider-pingone/issues/344))
+* bump `github.com/bflad/tfproviderlint` v0.28.1 => v0.29.0 ([#347](https://github.com/pingidentity/terraform-provider-pingone/issues/347))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.1 => v0.1.2 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.4 => v0.1.5 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.18.0 => v0.19.0 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.9.1 => v0.9.2 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.2 => v0.6.3 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/terraform-linters/tflint` v0.46.0 => v0.46.1 ([#347](https://github.com/pingidentity/terraform-provider-pingone/issues/347))
 
 ENHANCEMENTS:
 
