@@ -7,7 +7,7 @@ The PingOne Terraform provider is a plugin for [Terraform](https://www.terraform
 
 ## Requirements
 * Terraform 1.1+
-* Go 1.19+
+* Go 1.20+ (for local development builds)
 
 ## Quickstarts
 
