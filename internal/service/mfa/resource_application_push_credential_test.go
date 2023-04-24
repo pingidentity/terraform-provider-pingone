@@ -275,6 +275,11 @@ resource "pingone_application" "%[2]s" {
           amount = 30
           units  = "HOURS"
         }
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "dummykeydoesnotexist"
+          verification_key  = "dummykeydoesnotexist"
+        }
       }
     }
 
@@ -320,6 +325,11 @@ resource "pingone_application" "%[2]s" {
         cache_duration {
           amount = 30
           units  = "HOURS"
+        }
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "dummykeydoesnotexist"
+          verification_key  = "dummykeydoesnotexist"
         }
       }
     }
@@ -369,6 +379,11 @@ resource "pingone_application" "%[2]s" {
         cache_duration {
           amount = 30
           units  = "HOURS"
+        }
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "dummykeydoesnotexist"
+          verification_key  = "dummykeydoesnotexist"
         }
       }
     }

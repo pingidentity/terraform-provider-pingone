@@ -1620,6 +1620,11 @@ resource "pingone_application" "%[2]s-2" {
           amount = 30
           units  = "HOURS"
         }
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "dummykeydoesnotexist"
+          verification_key  = "dummykeydoesnotexist"
+        }
       }
     }
 
@@ -1653,6 +1658,11 @@ resource "pingone_application" "%[2]s-3" {
         cache_duration {
           amount = 30
           units  = "HOURS"
+        }
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "dummykeydoesnotexist"
+          verification_key  = "dummykeydoesnotexist"
         }
       }
     }
@@ -1869,6 +1879,11 @@ resource "pingone_application" "%[2]s" {
         cache_duration {
           amount = 30
           units  = "HOURS"
+        }
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "dummykeydoesnotexist"
+          verification_key  = "dummykeydoesnotexist"
         }
       }
     }
