@@ -2,12 +2,13 @@
 
 The PingOne Terraform provider is a plugin for [Terraform](https://www.terraform.io/) that allows for the full lifecycle management of PingOne configuration. This provider is maintained internally by the Ping Identity team.
 
+* [Terraform at Ping Identity documentation](https://terraform.pingidentity.com)
 * [Discuss the PingOne Terraform Provider](https://support.pingidentity.com/s/topic/0TO1W000000IF30WAG/pingdevops)
 * [Ping Identity Home](https://www.pingidentity.com/en.html)
 
 ## Requirements
 * Terraform 1.1+
-* Go 1.19+
+* Go 1.20+ (for local development builds)
 
 ## Quickstarts
 
