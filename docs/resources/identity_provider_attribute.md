@@ -3,176 +3,14 @@ page_title: "pingone_identity_provider_attribute Resource - terraform-provider-p
 subcategory: "SSO"
 description: |-
   Resource to create and manage an attribute mapping for identity providers configured in PingOne.
+  For a full list of social providers and their configurable attribute mappings, see the Social Provider and External Identity Provider Attribute Reference below.
 ---
 
 # pingone_identity_provider_attribute (Resource)
 
 Resource to create and manage an attribute mapping for identity providers configured in PingOne.
 
-## Identity Provider Attribute Reference
-
-PingOne supports several external IdPs. IdP resources in PingOne configure the external IdP settings, which include the type of provider and the user attributes from the external IdP that are mapped to PingOne user attributes. These attributes might have one or many values assigned to them. As you might expect, mapping a single-value IdP attribute to a single-value PingOne attribute results in a PingOne attribute having the same value as the IdP attribute. Similarly, if the IdP attribute is also multi-valued, the PingOne attribute value will be an array of the IdP attribute values. If the attributes are not the same format, then the following rules apply:
-
-* If the IdP attribute is single-value and the PingOne attribute is multi-valued, then the PingOne attribute will be a single-element array containing the value of the IdP attribute.
-* If the IdP attribute is multi-valued and the PingOne attribute is single-value, then the PingOne attribute will use the first element in the IdP attribute as its value.
-
-The mapping attribute placeholder value must be expressed using the following syntax in the request body in the platform:
-
-`${providerAttributes.<IdP attribute name>}`
-
-Terraform HCL expects the attribute placeholder (used in the `value` argument of this `pingone_identity_provider_attribute` resource) to be prefixed with an additional `$` (dollar) sign:
-
-```
-...
-  value = "$${providerAttributes.<IdP attribute name>}"
-...
-```
-
-The following are IdP attributes expected per identity provider:
-
-### Amazon
-#### Core attributes
-| Property  | Description                                                                                                                                           |
-|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `user_id` | A string that specifies the core Amazon attribute. The default value is `${providerAttributes.user_id}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission    | Provider attributes                     |
-|---------------|-----------------------------------------|
-| `profile`     | Options are: `user_id`, `email`, `name` |
-| `postal_code` | Options are: `postal_code`              |
-
-### Apple
-#### Core attributes
-| Property | Description                                                                                                                                      |
-|----------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `sub`    | A string that specifies the core Apple attribute. The default value is `${providerAttributes.sub}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission | Provider attributes                                                         |
-|------------|-----------------------------------------------------------------------------|
-| `name`     | Options are: `sub`, `iss`, `iat`, `expt`, `aud`, `nonce`, `nonce_supported` |
-| `email`    | Options are: `email`, `email_verified`                                      |
-
-
-### Facebook
-#### Core attributes
-| Property   | Description                                                                                                                                           |
-|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `username` | A string that specifies the core Facebook attribute. The default value is `${providerAttributes.email}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission       | Provider attributes                                                                              |
-|------------------|--------------------------------------------------------------------------------------------------|
-| `<default>`      | Options are: `id`, `first_name`, `last_name`, `middle_name`, `name`, `name_format`, and `email`. |
-| `USER_AGE_RANGE` | Options are: `age_range`.                                                                        |
-| `USER_BIRTHDAY`  | Options are: `birthday`.                                                                         |
-| `USER_GENDER`    | Options are: `gender`.                                                                           |
-
-### Github
-#### Core attributes
-| Property | Description                                                                                                                                      |
-|----------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`     | A string that specifies the core Github attribute. The default value is `${providerAttributes.id}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission   | Provider attributes                                                                                                                          |
-|--------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| `read:user`  | Options are: `email`, `login`, `id`, `node_id`, `avatar_url`, `url`, `html_url`, `type`, `site_admin`, `name`, `company`, `blog`, `location` |
-| `user:email` | Options are: `email`.                                                                                                                        |
-
-### Google
-#### Core attributes
-| Property   | Description                                                                                                                                                      |
-|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `username` | A string that specifies the core Google attribute. The default value is `${providerAttributes.emailAddress.value}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission                                               | Provider attributes                                                                                                                                                                                                    |
-|----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `profile, email`                                         | Options are: `resourceName`, `etag`, `emailAddress.value`, `name.displayName`, `name.familyName`, `name.givenName`, `name.middleName`, `nickname.value`, `nickname.type`, `gender.value`, and `gender.formattedValue`. |
-| `https://www.googleapis.com/auth/profile.agerange.read`  | Options are: `ageRange.ageRange`.                                                                                                                                                                                      |
-| `https://www.googleapis.com/auth/profile.language.read`  | Options are: `locale.value`.                                                                                                                                                                                           |
-| `https://www.googleapis.com/auth/user.birthday.read`     | Options are: `birthday.date.month`, `birthday.date.day`, `birthday.date.year`, and `birthday.text`.                                                                                                                    |
-| `https://www.googleapis.com/auth/user.phonenumbers.read` | Options are: `phoneNumber.value`.                                                                                                                                                                                      |
-
-### LinkedIn
-#### Core attributes
-| Property   | Description                                                                                                                                                  |
-|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `username` | A string that specifies the core LinkedIn attribute. The default value is `${providerAttributes.emailAddress}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission       | Provider attributes                         |
-|------------------|---------------------------------------------|
-| `r_liteprofile`  | Options are: `id`, `firstName`, `lastName`. |
-| `r_emailaddress` | Options are: `emailAddress`.                |
-
-### Microsoft
-#### Core attributes
-| Property | Description                                                                                                                                         |
-|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`     | A string that specifies the core Microsoft attribute. The default value is `${providerAttributes.id}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission                               | Provider attributes                                                                                                                                                 |
-|------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| OpenID Connect scopes: `openid`, `email` | `email`                                                                                                                                                             |
-| `User:Read`                              | Options are: `displayName`, `surname`, `givenName`, `id`, `userPrincipalName`, `businessPhones`, `jobTitle`, `mail`, `officeLocation`, `postalCode`, `mainNickname` |
-
-### OpenID Connect (Generic)
-#### Core attributes
-| Property   | Description                                                                                                                                               |
-|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `username` | A string that specifies the core OpenID Connect attribute. The default value is `${providerAttributes.sub}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission | Provider attributes |
-|------------|---------------------|
-| `openid`   | `sub`               |
-
-### Paypal
-#### Core attributes
-| Property  | Description                                                                                                                                           |
-|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `user_id` | A string that specifies the core PayPal attribute. The default value is `${providerAttributes.user_id}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission                                          | Provider attributes                                                                                                   |
-|-----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| OpenID Connect scopes: `openid`, `profile`, `email` | Options are: `user_id`, `name`, `email`                                                                               |
-| `address`                                           | Options are: `address.street_address`, `address.locality`, `address.region`, `address.postal_code`, `address.country` |
-| `paypalattributes`                                  | Options are: `payer_id`, `verified_account`                                                                           |	
-
-### SAML (Generic)
-#### Core attributes
-| Property   | Description                                                                                                                                    |
-|------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| `username` | A string that specifies the core SAML attribute. The default value is `${samlAssertion.subject}` and the default update value is `EMPTY_ONLY`. |
-
-### Twitter
-#### Core attributes
-| Property | Description                                                                                                                                       |
-|----------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`     | A string that specifies the core Twitter attribute. The default value is `${providerAttributes.id}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission                | Provider attributes                                                                                                                                                                                                             |
-|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `{no defined permission}` | Options are: `id`, `email`, `name`, `screen_name`, `created_at`, `statuses_count`, `favourites_count`, `friends_count`, `followers_count`, `verified`, `protected`, `description`, `url`, `location`, `profile_image_url_https` |
-
-### Yahoo
-#### Core attributes
-| Property   | Description                                                                                                                                      |
-|------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `sub`      | A string that specifies the core Yahoo attribute. The default value is `${providerAttributes.sub}` and the default update value is `EMPTY_ONLY`. |
-
-#### Provider attributes
-| Permission | Provider attributes                                                               |
-|------------|-----------------------------------------------------------------------------------|
-| `openid`   | `sub`                                                                             |
-| `email`    | `email`                                                                           |
-| `profile`  | Options are: `name`, `given_name`, `family_name`, `picture`, `nickname`, `locale` |
+For a full list of social providers and their configurable attribute mappings, see the [Social Provider and External Identity Provider Attribute Reference](#social-provider-and-external-identity-provider-attribute-reference) below.
 
 ## Example Usage
 
@@ -212,9 +50,14 @@ resource "pingone_identity_provider_attribute" "apple_email" {
 
 - `environment_id` (String) The ID of the environment to create the identity provider attribute in.
 - `identity_provider_id` (String) The ID of the identity provider to create the attribute mapping for.
-- `name` (String) The user attribute, which is unique per provider. The attribute must not be defined as read only from the user schema or of type `COMPLEX` based on the user schema. Valid examples `username`, and `name.first`. The following attributes may not be used `account`, `id`, `created`, `updated`, `lifecycle`, `mfaEnabled`, and `enabled`.
-- `update` (String) Indicates whether to update the user attribute in the directory with the non-empty mapped value from the IdP. Options are `EMPTY_ONLY` (only update the user attribute if it has an empty value); `ALWAYS` (always update the user attribute value).
+- `name` (String) A string that specifies the name of the PingOne directory attribute to map the Identity Provider attribute value to. The attribute must not be defined as read only from the user schema or of type `COMPLEX` based on the user schema. Examples are `email`, `name.given`.  The following attributes may not be used: `account`, `id`, `created`, `updated`, `lifecycle`, `mfaEnabled`, `enabled`.
 - `value` (String) A placeholder referring to the attribute (or attributes) from the provider. Placeholders must be valid for the attributes returned by the IdP type and use the `${}` syntax (for example, `${email}`). For SAML, any placeholder is acceptable, and it is mapped against the attributes available in the SAML assertion after authentication. The `${samlAssertion.subject}` placeholder is a special reserved placeholder used to refer to the subject name ID in the SAML assertion response.
+
+For a full list of social providers and their configurable attribute mappings, see the [Social Provider and External Identity Provider Attribute Reference](#social-provider-and-external-identity-provider-attribute-reference) below.
+
+### Optional
+
+- `update` (String) Indicates whether to update the user attribute in the directory with the non-empty mapped value from the IdP. Options are `EMPTY_ONLY` (only update the user attribute if it has an empty value); `ALWAYS` (always update the user attribute value). Defaults to `EMPTY_ONLY`.
 
 ### Read-Only
 
@@ -228,3 +71,186 @@ Import is supported using the following syntax, where attributes in `<>` bracket
 ```shell
 $ terraform import pingone_identity_provider_attribute.example <environment_id>/<identity_provider_id>/<identity_provider_attribute_id>
 ```
+
+## Social Provider and External Identity Provider Attribute Reference
+
+PingOne supports several external IdPs. IdP resources in PingOne configure the external IdP settings, which include the type of provider and the user attributes from the external IdP that are mapped to PingOne user attributes. These attributes might have one or many values assigned to them. As you might expect, mapping a single-value IdP attribute to a single-value PingOne attribute results in a PingOne attribute having the same value as the IdP attribute. Similarly, if the IdP attribute is also multi-valued, the PingOne attribute value will be an array of the IdP attribute values. If the attributes are not the same format, then the following rules apply:
+
+- If the IdP attribute is single-value and the PingOne attribute is multi-valued, then the PingOne attribute will be a single-element array containing the value of the IdP attribute.
+- If the IdP attribute is multi-valued and the PingOne attribute is single-value, then the PingOne attribute will use the first element in the IdP attribute as its value.
+The mapping attribute placeholder value must be expressed using the following syntax in the request body in the platform:
+
+`${providerAttributes.<IdP attribute name>}`
+
+Terraform HCL expects the attribute placeholder to be prefixed with an additional `$` (dollar) sign, for example when configuring the `value` argument of resources like the `pingone_identity_provider_attribute` resource.  E.g.
+
+```hcl
+...
+  value = "$${providerAttributes.user_id}"
+...
+```
+
+The following are IdP attributes expected per identity provider.
+
+### Amazon
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value     | Default PingOne Attribute Mapping |
+|----------------------|----------------|-------------------------------------|-----------------------------------|
+| `user_id`            | `profile`      | `${providerAttributes.user_id}`     | `username`                        |
+| `email`              | `profile`      | `${providerAttributes.email}`       |                                   |
+| `name`               | `profile`      | `${providerAttributes.name}`        |                                   |
+| `postal_code`        | `postal_code`  | `${providerAttributes.postal_code}` |                                   |
+
+### Apple
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value        | Default PingOne Attribute Mapping |
+|----------------------|----------------|----------------------------------------|-----------------------------------|
+| `sub`                | `name`         | `${providerAttributes.sub}`            | `username`                        |
+| `email`              | `email`        | `${providerAttributes.email}`          |                                   |
+| `email_verified`     | `email`        | `${providerAttributes.email_verified}` |                                   |
+
+### Facebook
+
+| Provider Token Claim | Required Scope   | PingOne Attribute Mapping Value     | Default PingOne Attribute Mapping |
+|----------------------|------------------|-------------------------------------|-----------------------------------|
+| `email`              |                  | `${providerAttributes.email}`       | `username`                        |
+| `id`                 |                  | `${providerAttributes.id}`          |                                   |
+| `first_name`         |                  | `${providerAttributes.first_name}`  |                                   |
+| `middle_name`        |                  | `${providerAttributes.middle_name}` |                                   |
+| `last_name`          |                  | `${providerAttributes.last_name}`   |                                   |
+| `name_format`        |                  | `${providerAttributes.name_format}` |                                   |
+| `name`               |                  | `${providerAttributes.name}`        |                                   |
+| `age_range`          | `USER_AGE_RANGE` | `${providerAttributes.age_range}`   |                                   |
+| `birthday`           | `USER_BIRTHDAY`  | `${providerAttributes.birthday}`    |                                   |
+| `gender`             | `USER_GENDER`    | `${providerAttributes.gender}`      |                                   |
+
+### Github
+
+| Provider Token Claim | Required Scope              | PingOne Attribute Mapping Value    | Default PingOne Attribute Mapping |
+|----------------------|-----------------------------|------------------------------------|-----------------------------------|
+| `id`                 | `read:user`                 | `${providerAttributes.id}`         | `username`                        |
+| `email`              | `read:user`, `read:email`   | `${providerAttributes.email}`      |                                   |
+| `name`               | `read:user`                 | `${providerAttributes.name}`       |                                   |
+| `login`              | `read:user`                 | `${providerAttributes.login}`      |                                   |
+| `node_id`            | `read:user`                 | `${providerAttributes.node_id}`    |                                   |
+| `avatar_url`         | `read:user`                 | `${providerAttributes.avatar_url}` |                                   |
+| `url`                | `read:user`                 | `${providerAttributes.url}`        |                                   |
+| `html_url`           | `read:user`                 | `${providerAttributes.html_url}`   |                                   |
+| `type`               | `read:user`                 | `${providerAttributes.type}`       |                                   |
+| `site_admin`         | `read:user`                 | `${providerAttributes.site_admin}` |                                   |
+| `company`            | `read:user`                 | `${providerAttributes.company}`    |                                   |
+| `blog`               | `read:user`                 | `${providerAttributes.blog}`       |                                   |
+| `location`           | `read:user`                 | `${providerAttributes.location}`   |                                   |
+
+### Google
+
+| Provider Token Claim    | Required Scope                                           | PingOne Attribute Mapping Value               | Default PingOne Attribute Mapping |
+|-------------------------|----------------------------------------------------------|-----------------------------------------------|-----------------------------------|
+| `emailAddress.value`    | `email`                                                  | `${providerAttributes.emailAddress.value}`    | `username`                        |
+| `resourceName`          | `profile`                                                | `${providerAttributes.resourceName}`          |                                   |
+| `etag`                  | `profile`                                                | `${providerAttributes.etag}`                  |                                   |
+| `name.displayName`      | `profile`                                                | `${providerAttributes.name.displayName}`      |                                   |
+| `name.familyName`       | `profile`                                                | `${providerAttributes.name.familyName}`       |                                   |
+| `name.middleName`       | `profile`                                                | `${providerAttributes.name.middleName}`       |                                   |
+| `name.givenName`        | `profile`                                                | `${providerAttributes.name.givenName}`        |                                   |
+| `nickname.value`        | `profile`                                                | `${providerAttributes.nickname.value}`        |                                   |
+| `nickname.type`         | `profile`                                                | `${providerAttributes.nickname.type}`         |                                   |
+| `gender.value`          | `profile`                                                | `${providerAttributes.gender.value}`          |                                   |
+| `gender.formattedValue` | `profile`                                                | `${providerAttributes.gender.formattedValue}` |                                   |
+| `ageRange.ageRange`     | `https://www.googleapis.com/auth/profile.agerange.read`  | `${providerAttributes.ageRange.ageRange}`     |                                   |
+| `locale.value`          | `https://www.googleapis.com/auth/profile.language.read`  | `${providerAttributes.locale.value}`          |                                   |
+| `birthday.date.day`     | `https://www.googleapis.com/auth/user.birthday.read`     | `${providerAttributes.birthday.date.day}`     |                                   |
+| `birthday.date.month`   | `https://www.googleapis.com/auth/user.birthday.read`     | `${providerAttributes.birthday.date.month}`   |                                   |
+| `birthday.date.year`    | `https://www.googleapis.com/auth/user.birthday.read`     | `${providerAttributes.birthday.date.year}`    |                                   |
+| `birthday.text`         | `https://www.googleapis.com/auth/user.birthday.read`     | `${providerAttributes.birthday.text}`         |                                   |
+| `phoneNumber.value`     | `https://www.googleapis.com/auth/user.phonenumbers.read` | `${providerAttributes.phoneNumber.value}`     |                                   |
+
+### LinkedIn
+
+| Provider Token Claim | Required Scope   | PingOne Attribute Mapping Value      | Default PingOne Attribute Mapping |
+|----------------------|------------------|--------------------------------------|-----------------------------------|
+| `emailAddress`       | `r_emailaddress` | `${providerAttributes.emailAddress}` | `username`                        |
+| `id`                 | `r_liteprofile`  | `${providerAttributes.id}`           |                                   |
+| `firstName`          | `r_liteprofile`  | `${providerAttributes.firstName}`    |                                   |
+| `lastName`           | `r_liteprofile`  | `${providerAttributes.lastName}`     |                                   |
+
+### Microsoft
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value           | Default PingOne Attribute Mapping |
+|----------------------|----------------|-------------------------------------------|-----------------------------------|
+| `id`                 | `User:Read`    | `${providerAttributes.id}`                | `username`                        |
+| `email`              | `email`        | `${providerAttributes.email}`             |                                   |
+| `userPrincipalName`  | `User:Read`    | `${providerAttributes.userPrincipalName}` |                                   |
+| `mail`               | `User:Read`    | `${providerAttributes.mail}`              |                                   |
+| `displayName`        | `User:Read`    | `${providerAttributes.displayName}`       |                                   |
+| `givenName`          | `User:Read`    | `${providerAttributes.givenName}`         |                                   |
+| `surname`            | `User:Read`    | `${providerAttributes.surname}`           |                                   |
+| `mainNickname`       | `User:Read`    | `${providerAttributes.mainNickname}`      |                                   |
+| `jobTitle`           | `User:Read`    | `${providerAttributes.jobTitle}`          |                                   |
+| `officeLocation`     | `User:Read`    | `${providerAttributes.officeLocation}`    |                                   |
+| `postalCode`         | `User:Read`    | `${providerAttributes.postalCode}`        |                                   |
+| `businessPhones`     | `User:Read`    | `${providerAttributes.businessPhones}`    |                                   |
+
+### Paypal
+
+| Provider Token Claim     | Required Scope               | PingOne Attribute Mapping Value                | Default PingOne Attribute Mapping |
+|--------------------------|------------------------------|------------------------------------------------|-----------------------------------|
+| `user_id`                | `openid`, `profile`, `email` | `${providerAttributes.user_id}`                | `username`                        |
+| `name`                   | `openid`, `profile`, `email` | `${providerAttributes.name}`                   |                                   |
+| `email`                  | `openid`, `profile`, `email` | `${providerAttributes.email}`                  |                                   |
+| `address.street_address` | `address`                    | `${providerAttributes.address.street_address}` |                                   |
+| `address.locality`       | `address`                    | `${providerAttributes.address.locality}`       |                                   |
+| `address.region`         | `address`                    | `${providerAttributes.address.region}`         |                                   |
+| `address.postal_code`    | `address`                    | `${providerAttributes.address.postal_code}`    |                                   |
+| `address.country`        | `address`                    | `${providerAttributes.address.country}`        |                                   |
+| `payer_id`               | `paypalattributes`           | `${providerAttributes.payer_id}`               |                                   |
+| `verified_account`       | `paypalattributes`           | `${providerAttributes.verified_account}`       |                                   |
+
+### Twitter
+
+| Provider Token Claim      | Required Scope | PingOne Attribute Mapping Value                 | Default PingOne Attribute Mapping |
+|---------------------------|----------------|-------------------------------------------------|-----------------------------------|
+| `id`                      |                | `${providerAttributes.id}`                      | `username`                        |
+| `email`                   |                | `${providerAttributes.email}`                   |                                   |
+| `name`                    |                | `${providerAttributes.name}`                    |                                   |
+| `screen_name`             |                | `${providerAttributes.screen_name}`             |                                   |
+| `created_at`              |                | `${providerAttributes.created_at}`              |                                   |
+| `statuses_count`          |                | `${providerAttributes.statuses_count}`          |                                   |
+| `favourites_count`        |                | `${providerAttributes.favourites_count}`        |                                   |
+| `friends_count`           |                | `${providerAttributes.friends_count}`           |                                   |
+| `followers_count`         |                | `${providerAttributes.followers_count}`         |                                   |
+| `verified`                |                | `${providerAttributes.verified}`                |                                   |
+| `protected`               |                | `${providerAttributes.protected}`               |                                   |
+| `description`             |                | `${providerAttributes.description}`             |                                   |
+| `url`                     |                | `${providerAttributes.url}`                     |                                   |
+| `location`                |                | `${providerAttributes.location}`                |                                   |
+| `profile_image_url_https` |                | `${providerAttributes.profile_image_url_https}` |                                   |
+
+### Yahoo
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value     | Default PingOne Attribute Mapping |
+|----------------------|----------------|-------------------------------------|-----------------------------------|
+| `sub`                | `openid`       | `${providerAttributes.sub}`         | `username`                        |
+| `email`              | `email`        | `${providerAttributes.email}`       |                                   |
+| `name`               | `profile`      | `${providerAttributes.name}`        |                                   |
+| `given_name`         | `profile`      | `${providerAttributes.given_name}`  |                                   |
+| `family_name`        | `profile`      | `${providerAttributes.family_name}` |                                   |
+| `picture`            | `profile`      | `${providerAttributes.picture}`     |                                   |
+| `nickname`           | `profile`      | `${providerAttributes.nickname}`    |                                   |
+| `locale`             | `profile`      | `${providerAttributes.locale}`      |                                   |
+
+### OpenID (Generic)
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value | Default PingOne Attribute Mapping |
+|----------------------|----------------|---------------------------------|-----------------------------------|
+| `sub`                | `openid`       | `${providerAttributes.sub}`     | `username`                        |
+
+Additional custom attributes may be mapped using the `${providerAttributes.*}` notation.
+
+### SAML (Generic)
+
+| Provider Token Claim | Required Scope | PingOne Attribute Mapping Value | Default PingOne Attribute Mapping |
+|----------------------|----------------|---------------------------------|-----------------------------------|
+| `subject`            |                | `${samlAssertion.subject}`      | `username`                        |
+
+Additional custom attributes may be mapped using the `${providerAttributes.*}` notation.

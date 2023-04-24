@@ -108,8 +108,9 @@ jobs:
       PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM: ${{ secrets.PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM }}
       PINGONE_DOMAIN_KEY_PEM: ${{ secrets.PINGONE_DOMAIN_KEY_PEM }}
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
+      PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 45
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -138,7 +139,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 45
+      timeout-minutes: 60
       run: |
         make testacc
 
@@ -233,8 +234,9 @@ jobs:
       PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM: ${{ secrets.PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM }}
       PINGONE_DOMAIN_KEY_PEM: ${{ secrets.PINGONE_DOMAIN_KEY_PEM }}
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
+      PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 45
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -263,7 +265,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 45
+      timeout-minutes: 60
       run: |
         make testacc
 
@@ -358,8 +360,9 @@ jobs:
       PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM: ${{ secrets.PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM }}
       PINGONE_DOMAIN_KEY_PEM: ${{ secrets.PINGONE_DOMAIN_KEY_PEM }}
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
+      PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 45
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -388,7 +391,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 45
+      timeout-minutes: 60
       run: |
         make testacc
 
@@ -483,8 +486,9 @@ jobs:
       PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM: ${{ secrets.PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM }}
       PINGONE_DOMAIN_KEY_PEM: ${{ secrets.PINGONE_DOMAIN_KEY_PEM }}
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
+      PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 45
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -515,7 +519,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 45
+      timeout-minutes: 60
       run: |
         make testacc
 

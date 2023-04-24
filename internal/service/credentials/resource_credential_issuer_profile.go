@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -47,9 +49,14 @@ func (r *CredentialIssuerProfileResource) Metadata(ctx context.Context, req reso
 }
 
 func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	// schema descriptions and validation settings
+	const attrMinLength = 1
+
+	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage the PingOne Credentials issuer profile.",
+		Description: "Resource to enable the issuance of credentials, and manage the PingOne Credentials issuer profile.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -59,9 +66,19 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			),
 
 			"name": schema.StringAttribute{
-				Description: "name",
+				Description: "The name of the credential issuer. This will be included in credentials issued.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
+
+			// omitted logo because it is not used - API target is to deprecate
+			// placeholder just in case it needs to be enabled
+			//"logo": schema.StringAttribute{
+			//	Description: "An image containing the brand logo for the issuer. ",
+			//	Optional:    true,
+			//},
 		},
 	}
 }
@@ -271,11 +288,6 @@ func (r *CredentialIssuerProfileResource) ImportState(ctx context.Context, req r
 func (p *CredentialIssuerProfileResourceModel) expand(ctx context.Context) (*credentials.CredentialIssuerProfile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// issuerProfile := credentials.NewCredentialIssuerProfile()
-	// if !p.Name.IsNull() && !p.Name.IsUnknown() {
-	//	issuerProfile = credentials.NewCredentialIssuerProfile(p.Name.ValueString())
-	//}
-
 	data := credentials.NewCredentialIssuerProfile(p.Name.ValueString())
 	return data, diags
 }
@@ -293,7 +305,7 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 	}
 
 	p.Id = framework.StringToTF(apiObject.GetId())
-	// p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
+	p.Name = framework.StringToTF(apiObject.GetName())
 
 	return diags
 }

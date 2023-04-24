@@ -51,6 +51,7 @@ resource "pingone_key" "my_tls_key" {
 ### Optional
 
 - `algorithm` (String) Specifies the key algorithm. Options are `RSA`, `EC`, and `UNKNOWN`.  Cannot be used with `pkcs12_file_base64`.
+- `custom_crl` (String) A URL string of a custom Certificate Revokation List endpoint.  Used for certificates of type `ISSUANCE`.
 - `default` (Boolean) A boolean that specifies whether this is the default key for the specified environment. Defaults to `false`.
 - `issuer_dn` (String) A string that specifies the distinguished name of the certificate issuer.  Cannot be used with `pkcs12_file_base64`.
 - `key_length` (Number) An integer that specifies the key length. For RSA keys, options are `2048`, `3072`, `4096` and `7680`. For elliptical curve (EC) keys, options are `224`, `256`, `384` and `521`.  Cannot be used with `pkcs12_file_base64`.
