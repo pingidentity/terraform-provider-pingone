@@ -240,7 +240,8 @@ Optional:
 
 - `cache_duration` (Block List, Max: 1) Every attestation request entails a certain time tradeoff. You can choose to cache successful integrity detection calls for a predefined duration, between a minimum of 1 minute and a maximum of 48 hours. If integrity detection is ENABLED, the cache duration must be set. (see [below for nested schema](#nestedblock--oidc_options--mobile_app--integrity_detection--cache_duration))
 - `enabled` (Boolean) A boolean that specifies whether device integrity detection takes place on mobile devices. Defaults to `false`.
-- `excluded_platforms` (List of String) You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `GOOGLE` and `IOS` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.
+- `excluded_platforms` (List of String) You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `GOOGLE` and `IOS` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.  If `GOOGLE` is not included in this list, the `google_play` attribute block must be configured.
+- `google_play` (Block List, Max: 1) Required when `excluded_platforms` is unset or does not include `GOOGLE`.  A single block that describes Google Play Integrity API credential settings for Android device integrity detection. (see [below for nested schema](#nestedblock--oidc_options--mobile_app--integrity_detection--google_play))
 
 <a id="nestedblock--oidc_options--mobile_app--integrity_detection--cache_duration"></a>
 ### Nested Schema for `oidc_options.mobile_app.integrity_detection.cache_duration`
@@ -252,6 +253,20 @@ Required:
 Optional:
 
 - `units` (String) A string that specifies the time units of the `amount` parameter. Options are `MINUTES` and `HOURS`. Defaults to `MINUTES`.
+
+
+<a id="nestedblock--oidc_options--mobile_app--integrity_detection--google_play"></a>
+### Nested Schema for `oidc_options.mobile_app.integrity_detection.google_play`
+
+Required:
+
+- `verification_type` (String) The type of verification that should be used. The possible values are `GOOGLE` and `INTERNAL`. Using internal verification will not count against your Google API call quota. The value you select for this attribute determines what other parameters you must provide. When set to `GOOGLE`, you must provide `service_account_credentials_json`. When set to `INTERNAL`, you must provide both `decryption_key` and `verification_key`.
+
+Optional:
+
+- `decryption_key` (String, Sensitive) Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.
+- `service_account_credentials_json` (String, Sensitive) Contents of the JSON file that represents your Service Account Credentials. This parameter must be provided if you have set `verification_type` to `GOOGLE`.  Cannot be set with `decryption_key` or `verification_key`.
+- `verification_key` (String, Sensitive) Play Integrity verdict signature verification key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.
 
 
 
