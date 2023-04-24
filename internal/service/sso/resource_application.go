@@ -335,7 +335,7 @@ func ResourceApplication() *schema.Resource {
 										Description:      "The amount of time a passcode should be displayed before being replaced with a new passcode - must be between 30 and 60.",
 										Type:             schema.TypeInt,
 										Optional:         true,
-										Computed:         true,
+										Default:          30,
 										ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(30, 60)),
 									},
 									"universal_app_link": {

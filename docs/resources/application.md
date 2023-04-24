@@ -230,7 +230,7 @@ Optional:
 - `huawei_package_name` (String) The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.
 - `integrity_detection` (Block List, Max: 1) Mobile application integrity detection settings. (see [below for nested schema](#nestedblock--oidc_options--mobile_app--integrity_detection))
 - `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `package_name` field.
-- `passcode_refresh_seconds` (Number) The amount of time a passcode should be displayed before being replaced with a new passcode - must be between 30 and 60.
+- `passcode_refresh_seconds` (Number) The amount of time a passcode should be displayed before being replaced with a new passcode - must be between 30 and 60. Defaults to `30`.
 - `universal_app_link` (String) A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code. The URI prefix can be set to a universal link with a valid value (which can be a URL address that starts with `HTTP://` or `HTTPS://`, such as `https://www.bxretail.org`), or an app schema, which is just a string and requires no special validation.
 
 <a id="nestedblock--oidc_options--mobile_app--integrity_detection"></a>
