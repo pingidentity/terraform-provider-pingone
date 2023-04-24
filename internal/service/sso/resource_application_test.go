@@ -3152,9 +3152,9 @@ resource "pingone_application" "%[2]s" {
       integrity_detection {
         enabled = true
 
-		cache_duration {
-			amount = 30
-		}
+        cache_duration {
+          amount = 30
+        }
 
         excluded_platforms = ["GOOGLE"]
       }
@@ -3194,17 +3194,17 @@ resource "pingone_application" "%[2]s" {
       integrity_detection {
         enabled = true
 
-		cache_duration {
-			amount = 30
-		}
+        cache_duration {
+          amount = 30
+        }
 
         excluded_platforms = ["IOS"]
 
         google_play {
-			verification_type = "INTERNAL"
-			decryption_key    = "decryptionkeydoesnotexist"
-			verification_key  = "verificationkeydoesnotexist"
-		}
+          verification_type = "INTERNAL"
+          decryption_key    = "decryptionkeydoesnotexist"
+          verification_key  = "verificationkeydoesnotexist"
+        }
       }
     }
 
