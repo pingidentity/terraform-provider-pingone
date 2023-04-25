@@ -156,7 +156,7 @@ func resourceGatewayCredentialDelete(ctx context.Context, d *schema.ResourceData
 		},
 		"DeleteGatewayCredential",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

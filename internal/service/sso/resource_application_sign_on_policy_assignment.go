@@ -147,7 +147,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentUpdate(ctx context.Context,
 		},
 		"UpdateSignOnPolicyAssignment",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -173,7 +173,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentDelete(ctx context.Context,
 		},
 		"DeleteSignOnPolicyAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

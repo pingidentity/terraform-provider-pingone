@@ -340,7 +340,7 @@ func resourceKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		},
 		"UpdateKey",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

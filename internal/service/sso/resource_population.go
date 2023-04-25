@@ -160,7 +160,7 @@ func resourcePingOnePopulationDelete(ctx context.Context, d *schema.ResourceData
 		},
 		"DeletePopulation",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -242,7 +242,7 @@ func PingOnePopulationUpdate(ctx context.Context, apiClient *management.APIClien
 		},
 		"UpdatePopulation",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return nil, diags

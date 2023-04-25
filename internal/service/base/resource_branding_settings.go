@@ -217,7 +217,7 @@ func resourceBrandingSettingsDelete(ctx context.Context, d *schema.ResourceData,
 		},
 		"UpdateBrandingSettings-Delete",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

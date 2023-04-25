@@ -132,7 +132,7 @@ func resourceTrustedEmailDomainDelete(ctx context.Context, d *schema.ResourceDat
 		},
 		"DeleteTrustedEmailDomain",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

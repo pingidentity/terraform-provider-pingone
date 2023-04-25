@@ -348,7 +348,7 @@ func resourcePingOneApplicationPushCredentialDelete(ctx context.Context, d *sche
 		},
 		"DeleteMFAPushCredential",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

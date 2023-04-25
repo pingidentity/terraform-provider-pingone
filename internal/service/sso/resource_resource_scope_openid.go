@@ -99,7 +99,7 @@ func resourceResourceScopeOpenIDCreate(ctx context.Context, d *schema.ResourceDa
 			},
 			"UpdateResourceScope-OpenID-Create",
 			sdk.DefaultCustomError,
-			sdk.DefaultRetryable,
+			nil,
 		)
 
 	} else {
@@ -206,7 +206,7 @@ func resourceResourceScopeOpenIDUpdate(ctx context.Context, d *schema.ResourceDa
 		},
 		"UpdateResourceScope-OpenID",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -245,7 +245,7 @@ func resourceResourceScopeOpenIDDelete(ctx context.Context, d *schema.ResourceDa
 			},
 			"UpdateResourceScope-OpenID-Delete",
 			sdk.DefaultCustomError,
-			sdk.DefaultRetryable,
+			nil,
 		)
 		if diags.HasError() {
 			return diags
@@ -261,7 +261,7 @@ func resourceResourceScopeOpenIDDelete(ctx context.Context, d *schema.ResourceDa
 			},
 			"DeleteResourceScope-OpenID",
 			sdk.CustomErrorResourceNotFoundWarning,
-			sdk.DefaultRetryable,
+			nil,
 		)
 		if diags.HasError() {
 			return diags

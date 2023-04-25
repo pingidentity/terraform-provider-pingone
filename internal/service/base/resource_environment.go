@@ -636,7 +636,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			},
 			"UpdateEnvironmentType",
 			framework.DefaultCustomError,
-			sdk.DefaultRetryable,
+			nil,
 		)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
@@ -911,7 +911,7 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 			},
 			"UpdateEnvironmentType",
 			framework.CustomErrorResourceNotFoundWarning,
-			sdk.DefaultRetryable,
+			nil,
 		)
 		diags.Append(d...)
 		if diags.HasError() {
