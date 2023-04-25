@@ -1,5 +1,9 @@
 ## 0.14.0 (Unreleased)
 
+NOTES:
+
+* Simplified SDK request retry code for all resources/datasources. ([#348](https://github.com/pingidentity/terraform-provider-pingone/issues/348))
+
 ## 0.13.0 (25 April 2023)
 
 NOTES:
