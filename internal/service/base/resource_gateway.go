@@ -452,7 +452,7 @@ func resourceGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		},
 		"UpdateGateway",
 		gatewayWriteErrors,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -478,7 +478,7 @@ func resourceGatewayDelete(ctx context.Context, d *schema.ResourceData, meta int
 		},
 		"DeleteGateway",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

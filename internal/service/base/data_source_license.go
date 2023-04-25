@@ -463,7 +463,7 @@ func datasourcePingOneLicenseRead(ctx context.Context, d *schema.ResourceData, m
 		},
 		"ReadOneLicense",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

@@ -345,7 +345,7 @@ func resourceBrandingThemeDelete(ctx context.Context, d *schema.ResourceData, me
 		},
 		"DeleteBrandingTheme",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

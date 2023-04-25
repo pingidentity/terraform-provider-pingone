@@ -211,7 +211,7 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		},
 		"UpdateGroup",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -237,7 +237,7 @@ func resourceGroupDelete(ctx context.Context, d *schema.ResourceData, meta inter
 		},
 		"DeleteGroup",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

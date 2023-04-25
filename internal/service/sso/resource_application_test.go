@@ -465,6 +465,11 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
@@ -612,6 +617,11 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
@@ -720,6 +730,11 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
@@ -788,6 +803,233 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 			{
 				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name),
 				ExpectError: regexp.MustCompile("`certificate_based_authentication` can only be set with applications that have a `type` value of `NATIVE_APP`."),
+			},
+		},
+	})
+}
+
+func TestAccApplication_NativeMobile(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	withMobileTestStepFull := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_app_id", resourceName),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "45"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.universal_app_link", "https://applink.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.excluded_platforms.0", "IOS"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "HOURS"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
+		),
+	}
+
+	withMobileTestStepMinimal := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeMobile_Minimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_app_id", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_package_name", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "30"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.universal_app_link", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
+		),
+	}
+
+	withoutMobileTestStep := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_app_id", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.huawei_package_name", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.universal_app_link", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.excluded_platforms.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "30"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// With
+			withMobileTestStepFull,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Without
+			withMobileTestStepMinimal,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeMobile_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			withMobileTestStepFull,
+			withMobileTestStepMinimal,
+			withMobileTestStepFull,
+			withoutMobileTestStep,
+			withMobileTestStepFull,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name),
+				Destroy: true,
+			},
+		},
+	})
+}
+
+func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	googleJsonKey := os.Getenv("PINGONE_GOOGLE_JSON_KEY")
+
+	testStepFull := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Full(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.excluded_platforms.0", "IOS"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "45"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "MINUTES"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
+		),
+	}
+
+	testStepMinimal := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Minimal(resourceName, name, googleJsonKey),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.excluded_platforms.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "MINUTES"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "GOOGLE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", "DUMMY_SUPPRESS_VALUE"),
+		),
+	}
+
+	excludeGoogle := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeGoogle(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.excluded_platforms.0", "GOOGLE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "MINUTES"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.#", "0"),
+		),
+	}
+
+	excludeIOS := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeIOS(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.excluded_platforms.0", "IOS"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.amount", "30"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.cache_duration.0.units", "MINUTES"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
+		),
+	}
+
+	testStepWithout := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeMobile_Minimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "false"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndGoogleJSONKey(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// With
+			testStepFull,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Without
+			testStepMinimal,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Minimal(resourceName, name, googleJsonKey),
+				Destroy: true,
+			},
+			// Without
+			excludeGoogle,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeGoogle(resourceName, name),
+				Destroy: true,
+			},
+			// Without
+			excludeIOS,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeIOS(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			testStepFull,
+			testStepMinimal,
+			testStepFull,
+			testStepWithout,
+			testStepFull,
+			excludeGoogle,
+			excludeIOS,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Full(resourceName, name),
+				Destroy: true,
 			},
 		},
 	})
@@ -2491,9 +2733,7 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "OPTIONAL"
 
-
     support_unsigned_request_object = true
-
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
@@ -2585,6 +2825,12 @@ resource "pingone_application" "%[2]s" {
         cache_duration {
           amount = 30
           units  = "HOURS"
+        }
+
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "decryptionkeydoesnotexist"
+          verification_key  = "verificationkeydoesnotexist"
         }
       }
     }
@@ -2714,6 +2960,259 @@ resource "pingone_application" "%[2]s" {
   }
 }
 		`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id           = "com.%[2]s.bundle"
+      package_name        = "com.%[2]s.package"
+      huawei_app_id       = "%[2]s"
+      huawei_package_name = "com.%[2]s.huaweipackage"
+
+      passcode_refresh_seconds = 45
+
+      universal_app_link = "https://applink.com"
+
+      integrity_detection {
+        enabled = true
+
+        excluded_platforms = ["IOS"]
+
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "decryptionkeydoesnotexist"
+          verification_key  = "verificationkeydoesnotexist"
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeMobile_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {}
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id           = "com.%[2]s.bundle"
+      package_name        = "com.%[2]s.package"
+      huawei_app_id       = "%[2]s"
+      huawei_package_name = "com.%[2]s.huaweipackage"
+
+      passcode_refresh_seconds = 45
+
+      universal_app_link = "https://applink.com"
+
+      integrity_detection {
+        enabled = true
+
+        excluded_platforms = ["IOS"]
+
+        cache_duration {
+          amount = 45
+          units  = "MINUTES"
+        }
+
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "decryptionkeydoesnotexist"
+          verification_key  = "verificationkeydoesnotexist"
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Minimal(resourceName, name, googleJsonKey string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id           = "com.%[2]s.bundle"
+      package_name        = "com.%[2]s.package"
+      huawei_app_id       = "%[2]s"
+      huawei_package_name = "com.%[2]s.huaweipackage"
+
+      passcode_refresh_seconds = 45
+
+      universal_app_link = "https://applink.com"
+
+      integrity_detection {
+        enabled = true
+
+        cache_duration {
+          amount = 30
+        }
+
+        google_play {
+          verification_type                = "GOOGLE"
+          service_account_credentials_json = jsonencode(%[4]s)
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, googleJsonKey)
+}
+
+func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeGoogle(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id           = "com.%[2]s.bundle"
+      package_name        = "com.%[2]s.package"
+      huawei_app_id       = "%[2]s"
+      huawei_package_name = "com.%[2]s.huaweipackage"
+
+      passcode_refresh_seconds = 45
+
+      universal_app_link = "https://applink.com"
+
+      integrity_detection {
+        enabled = true
+
+        cache_duration {
+          amount = 30
+        }
+
+        excluded_platforms = ["GOOGLE"]
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeIOS(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id           = "com.%[2]s.bundle"
+      package_name        = "com.%[2]s.package"
+      huawei_app_id       = "%[2]s"
+      huawei_package_name = "com.%[2]s.huaweipackage"
+
+      passcode_refresh_seconds = 45
+
+      universal_app_link = "https://applink.com"
+
+      integrity_detection {
+        enabled = true
+
+        cache_duration {
+          amount = 30
+        }
+
+        excluded_platforms = ["IOS"]
+
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "decryptionkeydoesnotexist"
+          verification_key  = "verificationkeydoesnotexist"
+        }
+      }
+    }
+
+    bundle_id    = "com.%[2]s.bundle"
+    package_name = "com.%[2]s.package"
+  }
+}
+		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image string) string {

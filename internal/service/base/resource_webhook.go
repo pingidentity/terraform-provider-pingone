@@ -229,7 +229,7 @@ func resourceWebhookUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		},
 		"UpdateSubscription",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -255,7 +255,7 @@ func resourceWebhookDelete(ctx context.Context, d *schema.ResourceData, meta int
 		},
 		"DeleteSubscription",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

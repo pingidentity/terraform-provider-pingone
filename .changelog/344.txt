@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/pingone_application`: **BREAKING CHANGE** Moved from SafetyNet Attestation API to Google Play Integration API for Android integrity detection (P14C-37640).  Customers wanting to enable Android/Google integrity detection for mobile apps will need to upgrade to the latest provider version as `oidc_options.mobile_app.integrity_detection` now requires the `google_play` block to be defined.
+```
+
+```release-note:bug
+`resource/pingone_application`: Added a default value to optional `oidc_options.mobile_app.passcode_refresh_seconds` attribute.
+```
+
+```release-note:note
+`resource/pingone_application`: Expanded the native application documentation example for mobile app use case.
+```

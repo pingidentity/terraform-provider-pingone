@@ -47,27 +47,27 @@ var (
 	}
 )
 
-func ParseResponse(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, retryable sdk.Retryable) (interface{}, diag.Diagnostics) {
+func ParseResponse(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable) (interface{}, diag.Diagnostics) {
 	defaultTimeout := 10
-	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, retryable, time.Duration(defaultTimeout)*time.Minute)
+	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, customRetryConditions, time.Duration(defaultTimeout)*time.Minute)
 }
 
-func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, retryable sdk.Retryable, timeout time.Duration) (interface{}, diag.Diagnostics) {
+func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable, timeout time.Duration) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if customError == nil {
 		customError = DefaultCustomError
 	}
 
-	if retryable == nil {
-		retryable = sdk.DefaultRetryable
+	if customRetryConditions == nil {
+		customRetryConditions = sdk.DefaultRetryable
 	}
 
 	resp, r, err := sdk.RetryWrapper(
 		ctx,
 		timeout,
 		f,
-		retryable,
+		customRetryConditions,
 	)
 
 	if err != nil || r.StatusCode >= 300 {

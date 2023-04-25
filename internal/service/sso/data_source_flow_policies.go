@@ -191,7 +191,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		filterFunction,
 		"ReadAllFlowPolicies",
 		framework.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

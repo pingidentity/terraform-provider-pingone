@@ -289,7 +289,7 @@ func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		},
 		"UpdateResource",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -315,7 +315,7 @@ func resourceResourceDelete(ctx context.Context, d *schema.ResourceData, meta in
 		},
 		"DeleteResource",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

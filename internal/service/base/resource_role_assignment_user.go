@@ -173,7 +173,7 @@ func resourcePingOneRoleAssignmentUserRead(ctx context.Context, d *schema.Resour
 		},
 		"ReadOneUserRoleAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -234,7 +234,7 @@ func resourcePingOneRoleAssignmentUserDelete(ctx context.Context, d *schema.Reso
 		},
 		"DeleteUserRoleAssignment",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

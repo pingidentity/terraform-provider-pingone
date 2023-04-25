@@ -207,6 +207,14 @@ func PreCheckEnvironmentAndPKCS7(t *testing.T) {
 	}
 }
 
+func PreCheckEnvironmentAndGoogleJSONKey(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_GOOGLE_JSON_KEY"); v == "" {
+		t.Fatal("PINGONE_GOOGLE_JSON_KEY is missing and must be set")
+	}
+}
+
 func PreCheckEnvironmentAndPEM(t *testing.T) {
 
 	PreCheckEnvironment(t)

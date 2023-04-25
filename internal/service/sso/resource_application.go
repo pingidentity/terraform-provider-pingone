@@ -335,7 +335,7 @@ func ResourceApplication() *schema.Resource {
 										Description:      "The amount of time a passcode should be displayed before being replaced with a new passcode - must be between 30 and 60.",
 										Type:             schema.TypeInt,
 										Optional:         true,
-										Computed:         true,
+										Default:          30,
 										ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(30, 60)),
 									},
 									"universal_app_link": {
@@ -359,7 +359,7 @@ func ResourceApplication() *schema.Resource {
 													Default:     false,
 												},
 												"excluded_platforms": {
-													Description: fmt.Sprintf("You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `%s` and `%s` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.", string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE), string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_IOS)),
+													Description: fmt.Sprintf("You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `%s` and `%s` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.  If `%s` is not included in this list, the `google_play` attribute block must be configured.", string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE), string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_IOS), string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE)),
 													Type:        schema.TypeList,
 													MaxItems:    1,
 													Optional:    true,
@@ -387,6 +387,52 @@ func ResourceApplication() *schema.Resource {
 																Optional:         true,
 																Default:          string(management.ENUMDURATIONUNITMINSHOURS_MINUTES),
 																ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMDURATIONUNITMINSHOURS_MINUTES), string(management.ENUMDURATIONUNITMINSHOURS_HOURS)}, false)),
+															},
+														},
+													},
+												},
+												"google_play": {
+													Description: "Required when `excluded_platforms` is unset or does not include `GOOGLE`.  A single block that describes Google Play Integrity API credential settings for Android device integrity detection.",
+													Type:        schema.TypeList,
+													MaxItems:    1,
+													Optional:    true,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"decryption_key": {
+																Description: "Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.",
+																Type:        schema.TypeString,
+																Optional:    true,
+																Sensitive:   true,
+																DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+																	return old == "DUMMY_SUPPRESS_VALUE"
+																},
+																ConflictsWith: []string{"oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json"},
+															},
+															"service_account_credentials_json": {
+																Description: "Contents of the JSON file that represents your Service Account Credentials. This parameter must be provided if you have set `verification_type` to `GOOGLE`.  Cannot be set with `decryption_key` or `verification_key`.",
+																Type:        schema.TypeString,
+																Optional:    true,
+																Sensitive:   true,
+																DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+																	return old == "DUMMY_SUPPRESS_VALUE"
+																},
+																ConflictsWith: []string{"oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key"},
+															},
+															"verification_key": {
+																Description: "Play Integrity verdict signature verification key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.",
+																Type:        schema.TypeString,
+																Optional:    true,
+																Sensitive:   true,
+																DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+																	return old == "DUMMY_SUPPRESS_VALUE"
+																},
+																ConflictsWith: []string{"oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json"},
+															},
+															"verification_type": {
+																Description:      "The type of verification that should be used. The possible values are `GOOGLE` and `INTERNAL`. Using internal verification will not count against your Google API call quota. The value you select for this attribute determines what other parameters you must provide. When set to `GOOGLE`, you must provide `service_account_credentials_json`. When set to `INTERNAL`, you must provide both `decryption_key` and `verification_key`.",
+																Type:             schema.TypeString,
+																Required:         true,
+																ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_GOOGLE), string(management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_INTERNAL)}, false)),
 															},
 														},
 													},
@@ -928,7 +974,7 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 		},
 		"UpdateApplication",
 		applicationWriteCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -954,7 +1000,7 @@ func resourceApplicationDelete(ctx context.Context, d *schema.ResourceData, meta
 		},
 		"DeleteApplication",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -1252,11 +1298,15 @@ func expandMobile(s map[string]interface{}) (*management.ApplicationOIDCAllOfMob
 			integrityDetection.SetMode(mode)
 		}
 
+		googleVerificationIncluded := true
 		if j, okJ := obj["excluded_platforms"].([]interface{}); okJ && len(j) > 0 && j[0] != nil {
 			list := make([]management.EnumMobileIntegrityDetectionPlatform, 0)
 
 			for _, platform := range j {
 				list = append(list, management.EnumMobileIntegrityDetectionPlatform(platform.(string)))
+				if platform == string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE) {
+					googleVerificationIncluded = false
+				}
 			}
 
 			integrityDetection.SetExcludedPlatforms(list)
@@ -1268,7 +1318,26 @@ func expandMobile(s map[string]interface{}) (*management.ApplicationOIDCAllOfMob
 			if integrityDetection.GetMode() == management.ENUMENABLEDSTATUS_ENABLED {
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Attribute `cache_duration` is required when the mobile integrity check is enabled in the application",
+					Summary:  "Attribute block `cache_duration` is required when the mobile integrity check is enabled in the application",
+				})
+
+				return nil, diags
+			}
+		}
+
+		if j, okJ := obj["google_play"].([]interface{}); okJ && len(j) > 0 && j[0] != nil {
+			googlePlay, d := expandMobileIntegrityGooglePlay(j[0].(map[string]interface{}))
+			if d.HasError() {
+				return nil, d
+			}
+
+			integrityDetection.SetGooglePlay(*googlePlay)
+		} else {
+
+			if integrityDetection.GetMode() == management.ENUMENABLEDSTATUS_ENABLED && googleVerificationIncluded {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Attribute block `google_play` is required when the mobile integrity check is enabled in the application and `excluded_platforms` is unset, or `excluded_platforms` is not configured with `GOOGLE`.",
 				})
 
 				return nil, diags
@@ -1288,7 +1357,53 @@ func expandMobileIntegrityCacheDuration(s map[string]interface{}) management.App
 	obj.SetUnits(management.EnumDurationUnitMinsHours(s["units"].(string)))
 
 	return obj
+}
 
+func expandMobileIntegrityGooglePlay(s map[string]interface{}) (*management.ApplicationOIDCAllOfMobileIntegrityDetectionGooglePlay, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	obj := management.NewApplicationOIDCAllOfMobileIntegrityDetectionGooglePlay()
+
+	obj.SetVerificationType(management.EnumApplicationNativeGooglePlayVerificationType(s["verification_type"].(string)))
+
+	if obj.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_GOOGLE {
+		if v, ok := s["service_account_credentials_json"].(string); ok && v != "" {
+			obj.SetServiceAccountCredentials(v)
+		} else {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Attribute `service_account_credentials_json` is required when the `verification_type` is set to `GOOGLE`.",
+			})
+
+			return nil, diags
+		}
+	}
+
+	if obj.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_INTERNAL {
+		if v, ok := s["decryption_key"].(string); ok && v != "" {
+			obj.SetDecryptionKey(v)
+		} else {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Attribute `decryption_key` is required when the `verification_type` is set to `INTERNAL`.",
+			})
+
+			return nil, diags
+		}
+
+		if v, ok := s["verification_key"].(string); ok && v != "" {
+			obj.SetVerificationKey(v)
+		} else {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Attribute `verification_key` is required when the `verification_type` is set to `INTERNAL`.",
+			})
+
+			return nil, diags
+		}
+	}
+
+	return obj, diags
 }
 
 // SAML
@@ -1781,6 +1896,26 @@ func flattenMobileIntegrityDetection(obj *management.ApplicationOIDCAllOfMobileI
 		item["cache_duration"] = append(caches, cache)
 	} else {
 		item["cache_duration"] = nil
+	}
+
+	if v, ok := obj.GetGooglePlayOk(); ok {
+		googlePlay := map[string]interface{}{
+			"verification_type": v.GetVerificationType(),
+		}
+
+		if v.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_INTERNAL {
+			googlePlay["decryption_key"] = "DUMMY_SUPPRESS_VALUE"
+			googlePlay["verification_key"] = "DUMMY_SUPPRESS_VALUE"
+		}
+
+		if v.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_GOOGLE {
+			googlePlay["service_account_credentials_json"] = "DUMMY_SUPPRESS_VALUE"
+		}
+
+		googlePlays := make([]interface{}, 0)
+		item["google_play"] = append(googlePlays, googlePlay)
+	} else {
+		item["google_play"] = nil
 	}
 
 	items := make([]interface{}, 0)

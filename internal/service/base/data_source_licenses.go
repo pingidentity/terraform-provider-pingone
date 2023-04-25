@@ -101,7 +101,7 @@ func datasourcePingOneLicensesRead(ctx context.Context, d *schema.ResourceData, 
 		filterFunction,
 		"ReadAllLicenses",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

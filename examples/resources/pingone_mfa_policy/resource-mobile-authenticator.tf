@@ -21,9 +21,16 @@ resource "pingone_application" "my_mobile_application" {
 
       integrity_detection {
         enabled = true
+
         cache_duration {
           amount = 30
           units  = "HOURS"
+        }
+
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = var.google_play_integrity_api_decryption_key
+          verification_key  = var.google_play_integrity_api_verification_key
         }
       }
     }

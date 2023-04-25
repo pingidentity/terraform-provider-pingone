@@ -98,7 +98,7 @@ func resourceResourceScopePingOneAPICreate(ctx context.Context, d *schema.Resour
 			},
 			"UpdateResourceScope-PingOneAPI-Create",
 			sdk.DefaultCustomError,
-			sdk.DefaultRetryable,
+			nil,
 		)
 
 	} else {
@@ -205,7 +205,7 @@ func resourceResourceScopePingOneAPIUpdate(ctx context.Context, d *schema.Resour
 		},
 		"UpdateResourceScope-PingOneAPI",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -244,7 +244,7 @@ func resourceResourceScopePingOneAPIDelete(ctx context.Context, d *schema.Resour
 			},
 			"UpdateResourceScope-PingOneAPI-Delete",
 			sdk.DefaultCustomError,
-			sdk.DefaultRetryable,
+			nil,
 		)
 		if diags.HasError() {
 			return diags
@@ -260,7 +260,7 @@ func resourceResourceScopePingOneAPIDelete(ctx context.Context, d *schema.Resour
 			},
 			"DeleteResourceScope-PingOneAPI",
 			sdk.CustomErrorResourceNotFoundWarning,
-			sdk.DefaultRetryable,
+			nil,
 		)
 		if diags.HasError() {
 			return diags

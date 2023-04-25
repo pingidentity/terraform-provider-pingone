@@ -217,7 +217,7 @@ func resourceMFASettingsUpdate(ctx context.Context, d *schema.ResourceData, meta
 		},
 		"UpdateMFASettings",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -242,7 +242,7 @@ func resourceMFASettingsDelete(ctx context.Context, d *schema.ResourceData, meta
 		},
 		"ResetMFASettings",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

@@ -1,3 +1,36 @@
+## 0.14.0 (Unreleased)
+
+NOTES:
+
+* Simplified SDK request retry code for all resources/datasources. ([#348](https://github.com/pingidentity/terraform-provider-pingone/issues/348))
+
+BUG FIXES:
+
+* `resource/pingone_notification_template_content`: Fix issue where the notification template content with no variant is configured correctly in PingOne but the template content is not effective. ([#349](https://github.com/pingidentity/terraform-provider-pingone/issues/349))
+
+## 0.13.0 (25 April 2023)
+
+NOTES:
+
+* Updated the external documentation site link to `terraform.pingidentity.com` for the getting started guide on the index docs page. ([#340](https://github.com/pingidentity/terraform-provider-pingone/issues/340))
+* `resource/pingone_application`: Expanded the native application documentation example for mobile app use case. ([#344](https://github.com/pingidentity/terraform-provider-pingone/issues/344))
+* bump `github.com/bflad/tfproviderlint` v0.28.1 => v0.29.0 ([#347](https://github.com/pingidentity/terraform-provider-pingone/issues/347))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.1 => v0.1.2 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.4 => v0.1.5 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.18.0 => v0.19.0 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.9.1 => v0.9.2 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.2 => v0.6.3 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/terraform-linters/tflint` v0.46.0 => v0.46.1 ([#347](https://github.com/pingidentity/terraform-provider-pingone/issues/347))
+
+ENHANCEMENTS:
+
+* `resource/pingone_application`: **BREAKING CHANGE** Moved from SafetyNet Attestation API to Google Play Integration API for Android integrity detection (P14C-37640).  Customers wanting to enable Android/Google integrity detection for mobile apps will need to upgrade to the latest provider version as `oidc_options.mobile_app.integrity_detection` now requires the `google_play` block to be defined. ([#344](https://github.com/pingidentity/terraform-provider-pingone/issues/344))
+
+BUG FIXES:
+
+* `resource/pingone_application`: Added a default value to optional `oidc_options.mobile_app.passcode_refresh_seconds` attribute. ([#344](https://github.com/pingidentity/terraform-provider-pingone/issues/344))
+* `resource/pingone_application`: Fix for "There was an unexpected error with the service" error when attempting to create an application immediately after creation of the parent environment. ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+
 ## 0.12.0 (18 April 2023)
 
 NOTES:

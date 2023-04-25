@@ -212,7 +212,7 @@ func resourceDecisionEndpointUpdate(ctx context.Context, d *schema.ResourceData,
 		},
 		"UpdateDecisionEndpoint",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -238,7 +238,7 @@ func resourceDecisionEndpointDelete(ctx context.Context, d *schema.ResourceData,
 		},
 		"DeleteDecisionEndpoint",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
