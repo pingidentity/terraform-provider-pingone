@@ -1,0 +1,4 @@
+```release-note:note
+Simplified SDK request retry code for all resources/datasources.
+```
+
