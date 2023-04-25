@@ -4,6 +4,10 @@ NOTES:
 
 * Simplified SDK request retry code for all resources/datasources. ([#348](https://github.com/pingidentity/terraform-provider-pingone/issues/348))
 
+BUG FIXES:
+
+* `resource/pingone_notification_template_content`: Fix issue where the notification template content with no variant is configured correctly in PingOne but the template content is not effective. ([#349](https://github.com/pingidentity/terraform-provider-pingone/issues/349))
+
 ## 0.13.0 (25 April 2023)
 
 NOTES:
