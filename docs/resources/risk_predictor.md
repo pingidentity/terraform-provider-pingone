@@ -17,15 +17,14 @@ resource "pingone_risk_predictor" "my_awesome_anonymous_network_predictor" {
   name           = "My Awesome Anonymous Network Predictor"
   compact_name   = "my_awesome_anonymous_network_predictor"
 
-  default_result {
-    weight    = ""
-    score     = ""
-    evaluated = ""
-    result    = ""
-  }
+  default_decision_value = "MEDIUM"
 
   predictor_anonymous_network {
-    allowed_cidr_list = []
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
   }
 }
 ```
@@ -80,15 +79,14 @@ resource "pingone_risk_predictor" "my_awesome_geovelocity_predictor" {
   name           = "My Awesome Geovelocity Predictor"
   compact_name   = "my_awesome_geovelocity_predictor"
 
-  default_result {
-    weight    = ""
-    score     = ""
-    evaluated = ""
-    result    = ""
-  }
+  default_decision_value = "MEDIUM"
 
   predictor_geovelocity {
-
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
   }
 }
 ```
@@ -101,15 +99,14 @@ resource "pingone_risk_predictor" "my_awesome_ip_reputation_predictor" {
   name           = "My Awesome IP Reputation Predictor"
   compact_name   = "my_awesome_ip_reputation_predictor"
 
-  default_result {
-    weight    = ""
-    score     = ""
-    evaluated = ""
-    result    = ""
-  }
+  default_decision_value = "MEDIUM"
 
   predictor_ip_reputation {
-
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
   }
 }
 ```
@@ -209,9 +206,11 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor" {
 
 ### Optional
 
-- `default_result` (Block List) A single block that contains the default result values for the risk predictor. (see [below for nested schema](#nestedblock--default_result))
+- `default_decision_value` (String) A string that identifies the risk level. Options are `HIGH`, `MEDIUM`, and `LOW`.
 - `description` (String) A string that specifies the description of the risk predictor. Maximum length is 1024 characters.
 - `predictor_anonymous_network` (Block List) A single block that contains configuration values for the Anonymous Network risk predictor type. (see [below for nested schema](#nestedblock--predictor_anonymous_network))
+- `predictor_geovelocity` (Block List) A single block that contains configuration values for the Geovelocity risk predictor type. (see [below for nested schema](#nestedblock--predictor_geovelocity))
+- `predictor_ip_reputation` (Block List) A single block that contains configuration values for the IP Reputation risk predictor type. (see [below for nested schema](#nestedblock--predictor_ip_reputation))
 
 ### Read-Only
 
@@ -220,34 +219,24 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor" {
 - `licensed` (Boolean) A boolean that indicates whether PingOne Risk is licensed for the environment.
 - `type` (String) A string that specifies the type of the risk predictor.  This can be either `ANONYMOUS_NETWORK`, `COMPOSITE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `NEW_DEVICE`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR` or `VELOCITY`.
 
-<a id="nestedblock--default_result"></a>
-### Nested Schema for `default_result`
-
-Required:
-
-- `weight` (Number) An integer type that specifies the weight assigned to the risk predictor in a new policy by default.
-
-Optional:
-
-- `evaluated` (Boolean) A boolean type.
-- `result` (Block List) A single block that specifies the result assigned to the predictor if the predictor could not be calculated during the risk evaluation. If this field is not provided, and the predictor could not be calculated during risk evaluation, the following options are 1) If the predictor is used in an override, the override is skipped and 2) In the weighted policy, the predictor will have a weight of 0. (see [below for nested schema](#nestedblock--default_result--result))
-- `score` (Number) An integer type that specifies the score assigned to the risk predictor in a new policy by default.
-
-<a id="nestedblock--default_result--result"></a>
-### Nested Schema for `default_result.result`
-
-Required:
-
-- `level` (String) A string that identifies the risk level. Options are `HIGH`, `MEDIUM`, and `LOW`.
-
-Read-Only:
-
-- `type` (String) A string that specifies the risk evaluation result type. The only available option is `VALUE`.
-
-
-
 <a id="nestedblock--predictor_anonymous_network"></a>
 ### Nested Schema for `predictor_anonymous_network`
+
+Required:
+
+- `allowed_cidr_list` (Set of String) A string that identifies the risk level. Options are `HIGH`, `MEDIUM`, and `LOW`.
+
+
+<a id="nestedblock--predictor_geovelocity"></a>
+### Nested Schema for `predictor_geovelocity`
+
+Required:
+
+- `allowed_cidr_list` (Set of String) A string that identifies the risk level. Options are `HIGH`, `MEDIUM`, and `LOW`.
+
+
+<a id="nestedblock--predictor_ip_reputation"></a>
+### Nested Schema for `predictor_ip_reputation`
 
 Required:
 

@@ -3,14 +3,13 @@ resource "pingone_risk_predictor" "my_awesome_geovelocity_predictor" {
   name           = "My Awesome Geovelocity Predictor"
   compact_name   = "my_awesome_geovelocity_predictor"
 
-  default_result {
-    weight    = ""
-    score     = ""
-    evaluated = ""
-    result    = ""
-  }
+  default_decision_value = "MEDIUM"
 
   predictor_geovelocity {
-
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
   }
 }

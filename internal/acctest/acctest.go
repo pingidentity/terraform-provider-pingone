@@ -297,6 +297,9 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 			service {
 				type = "MFA"
 			}
+			service {
+				type = "Risk"
+			}
 		}`, resourceName, licenseID)
 }
 
