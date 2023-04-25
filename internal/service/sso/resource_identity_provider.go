@@ -748,7 +748,7 @@ func resourceIdentityProviderUpdate(ctx context.Context, d *schema.ResourceData,
 		},
 		"UpdateIdentityProvider",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -774,7 +774,7 @@ func resourceIdentityProviderDelete(ctx context.Context, d *schema.ResourceData,
 		},
 		"DeleteIdentityProvider",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

@@ -203,7 +203,7 @@ func resourceFIDOPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		},
 		"UpdateFIDOPolicy",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -229,7 +229,7 @@ func resourceFIDOPolicyDelete(ctx context.Context, d *schema.ResourceData, meta 
 		},
 		"DeleteFidoPolicy",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

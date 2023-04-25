@@ -132,7 +132,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 
 			return nil
 		},
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return fmt.Errorf("Cannot create environment `%s`", environment.GetName())

@@ -161,7 +161,7 @@ func resourceCustomDomainDelete(ctx context.Context, d *schema.ResourceData, met
 		},
 		"DeleteDomain",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

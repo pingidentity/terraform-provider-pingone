@@ -173,7 +173,7 @@ func resourcePingOneGatewayRoleAssignmentRead(ctx context.Context, d *schema.Res
 		},
 		"ReadOneGatewayRoleAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -234,7 +234,7 @@ func resourcePingOneGatewayRoleAssignmentDelete(ctx context.Context, d *schema.R
 		},
 		"DeleteGatewayRoleAssignment",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

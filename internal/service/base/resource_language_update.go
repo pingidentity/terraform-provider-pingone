@@ -208,7 +208,7 @@ func resourceLanguageUpdateDelete(ctx context.Context, d *schema.ResourceData, m
 		},
 		"UpdateLanguage-Delete",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -283,7 +283,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 		},
 		"UpdateLanguage-UpdateSequence1",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -301,7 +301,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 			},
 			"UpdateLanguage-UpdateSequence2",
 			sdk.DefaultCustomError,
-			sdk.DefaultRetryable,
+			nil,
 		)
 		if diags.HasError() {
 			return diags

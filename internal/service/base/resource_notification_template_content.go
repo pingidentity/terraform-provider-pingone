@@ -416,7 +416,7 @@ func resourceNotificationTemplateContentUpdate(ctx context.Context, d *schema.Re
 		},
 		"UpdateContent",
 		notificationTemplateCustomWriteError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -442,7 +442,7 @@ func resourceNotificationTemplateContentDelete(ctx context.Context, d *schema.Re
 		},
 		"DeleteContent",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

@@ -322,7 +322,7 @@ func resourceSignOnPolicyActionUpdate(ctx context.Context, d *schema.ResourceDat
 		},
 		"UpdateSignOnPolicyAction",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -377,7 +377,7 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 
 			return nil
 		},
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

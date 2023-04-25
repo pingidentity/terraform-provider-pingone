@@ -164,7 +164,7 @@ func resourceResourceScopeUpdate(ctx context.Context, d *schema.ResourceData, me
 		},
 		"UpdateResourceScope",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -195,7 +195,7 @@ func resourceResourceScopeDelete(ctx context.Context, d *schema.ResourceData, me
 		},
 		"DeleteResourceScope",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

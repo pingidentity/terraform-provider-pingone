@@ -409,7 +409,7 @@ func resourcePasswordPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 		},
 		"UpdatePasswordPolicy",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -435,7 +435,7 @@ func resourcePasswordPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 		},
 		"DeletePasswordPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

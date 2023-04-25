@@ -217,7 +217,7 @@ func resourceSchemaAttributeUpdate(ctx context.Context, d *schema.ResourceData, 
 		},
 		"UpdateAttributePatch",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -243,7 +243,7 @@ func resourceSchemaAttributeDelete(ctx context.Context, d *schema.ResourceData, 
 		},
 		"DeleteAttribute",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

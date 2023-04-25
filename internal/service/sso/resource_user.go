@@ -192,7 +192,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		},
 		"UpdateUserPut",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -215,7 +215,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		},
 		"UpdateUserEnabled",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -233,7 +233,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		},
 		"UpdateUserPopulation",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -259,7 +259,7 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta interf
 		},
 		"DeleteUser",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
