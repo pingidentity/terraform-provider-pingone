@@ -524,7 +524,7 @@ func expandNotificationTemplateContent(d *schema.ResourceData) (*management.Temp
 		var templateContent *management.TemplateContentEmail
 		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_EMAIL)
 
-		if v1, ok := d.Get("variant").(string); ok {
+		if v1, ok := d.Get("variant").(string); ok && v1 != "" {
 			common.SetVariant(v1)
 		}
 
@@ -536,7 +536,7 @@ func expandNotificationTemplateContent(d *schema.ResourceData) (*management.Temp
 		var templateContent *management.TemplateContentPush
 		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_PUSH)
 
-		if v1, ok := d.Get("variant").(string); ok {
+		if v1, ok := d.Get("variant").(string); ok && v1 != "" {
 			common.SetVariant(v1)
 		}
 
@@ -548,7 +548,7 @@ func expandNotificationTemplateContent(d *schema.ResourceData) (*management.Temp
 		var templateContent *management.TemplateContentSMS
 		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_SMS)
 
-		if v1, ok := d.Get("variant").(string); ok {
+		if v1, ok := d.Get("variant").(string); ok && v1 != "" {
 			common.SetVariant(v1)
 		}
 
@@ -560,7 +560,7 @@ func expandNotificationTemplateContent(d *schema.ResourceData) (*management.Temp
 		var templateContent *management.TemplateContentVoice
 		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_VOICE)
 
-		if v1, ok := d.Get("variant").(string); ok {
+		if v1, ok := d.Get("variant").(string); ok && v1 != "" {
 			common.SetVariant(v1)
 		}
 
@@ -585,7 +585,7 @@ func expandNotificationTemplateContentEmail(d []interface{}, common *management.
 		templateContent = *management.NewTemplateContentEmail(common.GetLocale(), common.GetDeliveryMethod(), options["body"].(string))
 
 		// From common
-		if v1, ok := common.GetVariantOk(); ok {
+		if v1, ok := common.GetVariantOk(); ok && v1 != nil && *v1 != "" {
 			templateContent.SetVariant(*v1)
 		}
 
