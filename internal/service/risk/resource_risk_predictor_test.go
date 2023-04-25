@@ -241,6 +241,43 @@ func TestAccRiskPredictor_Anonymous_Network(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictor_Anonymous_Network_Override(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := "Anonymous Network"
+	compactName := "anonymousNetwork"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", "Anonymous Network Detection"),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "anonymousNetwork"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_anonymous_network.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.*", "192.168.0.0/24"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.*", "10.0.0.0/8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.*", "172.16.0.0/12"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Anonymous_Network_Override(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+		},
+	})
+}
+
 func TestAccRiskPredictor_Geovelocity(t *testing.T) {
 	t.Parallel()
 
@@ -299,6 +336,43 @@ func TestAccRiskPredictor_Geovelocity(t *testing.T) {
 			},
 			{
 				Config: testAccRiskPredictorConfig_Geovelocity_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_Geovelocity_Override(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := "GeoVelocity"
+	compactName := "geoVelocity"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", "GeoVelocity"),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "geoVelocity"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "GEO_VELOCITY"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_geovelocity.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.*", "192.168.0.0/24"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.*", "10.0.0.0/8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.*", "172.16.0.0/12"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Geovelocity_Override(resourceName, name, compactName),
 				Check:  fullCheck,
 			},
 		},
@@ -369,6 +443,43 @@ func TestAccRiskPredictor_IP_Reputation(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictor_IPReputation_Override(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := "IP Reputation"
+	compactName := "ipRisk"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", "IP Reputation"),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "ipRisk"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "IP_REPUTATION"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_ip_reputation.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.*", "192.168.0.0/24"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.*", "10.0.0.0/8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.*", "172.16.0.0/12"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_IPReputation_Override(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+		},
+	})
+}
+
 func testAccRiskPredictorConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -432,6 +543,28 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccRiskPredictorConfig_Anonymous_Network_Override(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default_decision_value = "MEDIUM"
+
+  predictor_anonymous_network {
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
 func testAccRiskPredictorConfig_Geovelocity_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -471,6 +604,28 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccRiskPredictorConfig_Geovelocity_Override(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default_decision_value = "MEDIUM"
+
+  predictor_geovelocity {
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
 func testAccRiskPredictorConfig_IPReputation_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -508,4 +663,26 @@ resource "pingone_risk_predictor" "%[2]s" {
     allowed_cidr_list = []
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_IPReputation_Override(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default_decision_value = "MEDIUM"
+
+  predictor_ip_reputation {
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
