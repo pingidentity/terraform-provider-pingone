@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -82,9 +83,13 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 				Description: "The ID of the environment to create the digital wallet application in."},
 			),
 
-			"application_id": framework.Attr_LinkID(framework.SchemaDescription{
+			"application_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
 				Description: "The ID of the application to associate with the digital wallet application.",
-			}),
+			},
+				[]validator.String{
+					verify.P1ResourceIDValidator(),
+				},
+			),
 
 			"app_open_url": schema.StringAttribute{
 				Description:         appOpenUrlDescription.Description,
@@ -382,8 +387,8 @@ func (p *DigitalWalletApplicationResourceModel) toState(apiObject *credentials.D
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.ApplicationId = framework.StringToTF(*apiObject.GetApplication().Id)
-	p.Name = framework.StringToTF(apiObject.GetName())
 	p.AppOpenUrl = framework.StringToTF(apiObject.GetAppOpenUrl())
+	p.Name = framework.StringToTF(apiObject.GetName())
 
 	return diags
 }

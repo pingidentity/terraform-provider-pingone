@@ -31,7 +31,7 @@ type CredentialIssuanceRuleResourceModel struct {
 	Automation                 types.List   `tfsdk:"automation"`
 	Filter                     types.List   `tfsdk:"filter"`
 	Status                     types.String `tfsdk:"status"`
-	//Notification           types.String `tfsdk:"card_type"`
+	//Notification           types.String `tfsdk:"notification"`
 
 }
 

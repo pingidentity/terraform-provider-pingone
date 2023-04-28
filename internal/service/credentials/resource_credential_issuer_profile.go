@@ -265,8 +265,8 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 }
 
 func (r *CredentialIssuerProfileResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// Deletion of a profile is not allowed.  Only removal of the service.
-	// TODO: Proper handling.
+	// Deletion of a profile is not allowed.  Only removal of the Credential service.
+	// TODO: Identify the proper handling.
 }
 
 func (r *CredentialIssuerProfileResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

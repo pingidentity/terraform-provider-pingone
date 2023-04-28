@@ -4,12 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -116,26 +120,22 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							Optional:            true,
 						},
 						"bg_opacity_percent": schema.Int64Attribute{
-							Description:         "",
-							MarkdownDescription: "",
-							Optional:            true,
+							Description: "A numnber containing the percent opacity of the background image in the credential. High percentage opacity may make displayed text difficult to read.",
+							Optional:    true,
+							Validators: []validator.Int64{
+								int64validator.Between(0, 100),
+							},
 						},
 						"card_color": schema.StringAttribute{
-							Description:         "",
-							MarkdownDescription: "",
-							Optional:            true,
+							Description: "A string containing a 6-digit hexadecimal color code specifying the color of the credential.",
+							Optional:    true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(
+									regexp.MustCompile(`^#([A-Fa-f0-9]{6})$`),
+									"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
+							},
 						},
 						"description": schema.StringAttribute{
-							Description:         "",
-							MarkdownDescription: "",
-							Optional:            true,
-						},
-						"text_color": schema.StringAttribute{
-							Description:         "",
-							MarkdownDescription: "",
-							Optional:            true,
-						},
-						"version": schema.Int64Attribute{
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
@@ -150,6 +150,23 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							MarkdownDescription: "",
 							Optional:            true,
 						},
+						"text_color": schema.StringAttribute{
+							Description: "A string containing a 6-digit hexadecimal color code specifying the color of the credential text.",
+							Optional:    true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(
+									regexp.MustCompile(`^#([A-Fa-f0-9]{6})$`),
+									"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
+							},
+						},
+						"version": schema.Int64Attribute{
+							Description:         "",
+							MarkdownDescription: "",
+							Required:            true, // not requried in schema, but credentials will not display in P1 admin console if not provided
+							Validators: []validator.Int64{
+								int64validator.AtLeast(5),
+							},
+						},
 					},
 					Blocks: map[string]schema.Block{
 						"fields": schema.ListNestedBlock{
@@ -159,15 +176,20 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							NestedObject: schema.NestedBlockObject{
 
 								Attributes: map[string]schema.Attribute{
+									// Placeholder. The id value is constructed per specific API requirements. Future may allow user-provided id.
 									"id": schema.StringAttribute{
-										Description:         "",
-										MarkdownDescription: "",
-										Optional:            true,
+										Optional: true,
 									},
 									"type": schema.StringAttribute{
 										Description:         "",
 										MarkdownDescription: "",
-										Optional:            true,
+										Required:            true,
+										Validators: []validator.String{
+											stringvalidator.OneOf(
+												string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT),
+												string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE),
+												string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ISSUED_TIMESTAMP)),
+										},
 									},
 									"title": schema.StringAttribute{
 										Description:         "",
@@ -354,21 +376,6 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	/*management.ReadOneApplicationRequest(ctx, )
-	if CredentialType.GetApplication().Id{
-			// make sure it exists
-
-		}
-
-	    t.GetOk("oidc_options"); ok {
-		    var application *management.ApplicationOIDC
-		    application, diags = expandApplicationOIDC(d)
-		    if diags.HasError() {
-		        return diags
-		    }
-		    applicationRequest.ApplicationOIDC = application
-		} */
-
 	// Run the API call
 	response, diags := framework.ParseResponse(
 		ctx,
@@ -381,7 +388,6 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(diags...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -457,6 +463,7 @@ func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.
 		return nil, diags
 	}
 
+	// TODO: need expand metadata & fields
 	cardMetadata := credentials.NewCredentialTypeMetaDataWithDefaults()
 	for _, v := range metadata {
 		if !v.Fields.IsNull() && !v.Fields.IsUnknown() {
@@ -468,11 +475,25 @@ func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.
 			}
 			for _, i := range innerFields {
 				field := *credentials.NewCredentialTypeMetaDataFieldsInnerWithDefaults()
-				field.SetId(i.Attribute.ValueString())
+
+				attrType := credentials.EnumCredentialTypeMetaDataFieldsType(i.Type.ValueString())
+				attrId := i.Type.ValueString() + " -> " + i.Title.ValueString() // construct id per API requirements
+
+				if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT {
+					field.SetValue(i.Value.ValueString()) // required if static text attribute - todo: need to test & error if not provided
+				}
+
+				if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE {
+					field.SetAttribute(i.Attribute.ValueString()) // required if directory attribute - todo: need to test & error if not provided
+
+					// todo: check if the attribute exists, if it doesn't error? or warn?
+				}
+
+				field.SetId(attrId)
+				field.SetType(attrType)
 				field.SetTitle(i.Title.ValueString())
 				field.SetIsVisible(i.IsVisible.ValueBool())
-				field.SetType(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)
-				field.SetAttribute(i.Attribute.ValueString())
+
 				fields = append(fields, field)
 			}
 			// complete the meta data object
@@ -508,11 +529,10 @@ func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.
 		}
 	}
 
-	// tempCardTemplate := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><g><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#808993\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></rect><image href=\"${backgroundImage}\" opacity=\"${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><text fill=\"${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"80\">${cardTitle}</text><text fill=\"${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"120\">${cardTitle}</text><image href=\"${logoImage}\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line xmlns=\"http://www.w3.org/2000/svg\" y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"#808993\"></line><image href=\"data:image/jpeg;base64,${fields[0].value}\" x=\"42.5\" y=\"180\" rx=\"80px\" ry=\"80px\" height=\"130px\" width=\"130px\"></image><text fill=\"${textColor}\" font-weight=\"500\" font-size=\"20\" x=\"190\" y=\"230\">${fields[1].title}: ${fields[1].value}</text><text fill=\"${textColor}\" font-weight=\"500\" font-size=\"20\" x=\"190\" y=\"272\">${fields[2].title}: ${fields[2].value}</text><text fill=\"${textColor}\" font-weight=\"500\" font-size=\"20\" x=\"190\" y=\"314\">${fields[3].title}: ${fields[3].value}</text><text fill=\"${textColor}\" font-weight=\"500\" font-size=\"20\" x=\"190\" y=\"356\">${fields[3].title}: ${fields[3].value}</text></g></svg>"
-	// tempCardTemplate := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"${bgOpacityPercent}\"></rect><image href=\"${backgroundImage}\" opacity=\"${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"${textColor}\"></line><text fill=\"${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"45\" y=\"90\">${cardTitle}</text><text fill=\"${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"45\" y=\"130\">${cardTitle}</text><text fill=\"${textColor}\" font-weight=\"500\" font-size=\"20\" x=\"50\" y=\"228\">${fields[0].title}: ${fields[0].value}</text></svg>"
-	tempCardTemplate := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"${bgOpacityPercent}\"></rect><image href=\"${backgroundImage}\" opacity=\"${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><image href=\"${logoImage}\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"${textColor}\"></line><text fill=\"${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">${cardTitle}</text><text fill=\"${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\"></text></svg>"
-	//data := credentials.NewCredentialType(p.CardDesignTemplate.ValueString(), *cardMetadata, p.Title.ValueString())
-	data := credentials.NewCredentialType(tempCardTemplate, *cardMetadata, p.Title.ValueString())
+	data := credentials.NewCredentialType(p.CardDesignTemplate.ValueString(), *cardMetadata, p.Title.ValueString())
+
+	data.SetDescription(p.Description.ValueString())
+	data.SetCardType(p.CardType.ValueString())
 
 	return data, diags
 }
@@ -531,6 +551,12 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
+	p.Title = framework.StringToTF(apiObject.GetTitle())
+	p.Description = framework.StringToTF((apiObject.GetDescription()))
+	p.CardType = framework.StringToTF(apiObject.GetCardType())
+	p.CardDesignTemplate = framework.StringToTF(apiObject.GetCardDesignTemplate())
+
+	// TODO metadata & fields handling...
 
 	return diags
 }
