@@ -16,14 +16,14 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.26.1
 	github.com/katbyte/terrafmt v0.5.2
-	github.com/patrickcping/pingone-go-sdk-v2 v0.6.3
-	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.1.2
-	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.5
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.19.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.9.2
+	github.com/patrickcping/pingone-go-sdk-v2 v0.6.4
+	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.1.3
+	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.6
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.19.1
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.9.3
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.46.1
-	golang.org/x/exp v0.0.0-20230420155640-133eef4313cb
+	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
 )
 
 require (
@@ -192,7 +192,7 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/owenrumney/go-sarif v1.1.1 // indirect
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.5.0 // indirect
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.5.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
