@@ -59,7 +59,7 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
-	appOpenUrlDescriptionFmt := "The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/endpoint`."
+	appOpenUrlDescriptionFmt := "The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/endpoint`.  The provided URL is recommended to use the `https://` schema.  The `http` schema is permitted but not recommended."
 	appOpenUrlDescription := framework.SchemaDescription{
 		MarkdownDescription: appOpenUrlDescriptionFmt,
 		Description:         strings.ReplaceAll(appOpenUrlDescriptionFmt, "`", "\""),

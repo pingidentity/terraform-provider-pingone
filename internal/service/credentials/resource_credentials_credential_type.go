@@ -76,6 +76,13 @@ func (r *CredentialTypeResource) Metadata(ctx context.Context, req resource.Meta
 }
 
 func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	// schema descriptions and validation settings
+	const attrMinLength = 1
+	const attrMinVersion = 5
+	const attrMinPercent = 0
+	const attrMaxPercent = 100
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne Credentials credential types.",
@@ -88,23 +95,37 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			),
 
 			"title": schema.StringAttribute{
-				Description: "card title",
+				Description: "A string that specifies the title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the credential title.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
 
 			"description": schema.StringAttribute{
-				MarkdownDescription: "test",
-				Optional:            true,
+				Description: "",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
 
 			"card_type": schema.StringAttribute{
-				MarkdownDescription: "test",
-				Optional:            true,
+				Description: "",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
 
 			"card_design_template": schema.StringAttribute{
-				MarkdownDescription: "test",
-				Required:            true,
+				Description: "A string that specifies an SVG formatted image containing placeholders for the credential fields that need to be displayed in the image.",
+				Required:    true,
+				/*Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`<\?xml\s+version=["']1.0["']\s+encoding=["'][^"']*["']\s*\?>\s*<svg.*>[\s\S]*<\/svg>\s*$`),
+						"expected value to contain a valid SVG card template."),
+				},*/
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -118,12 +139,17 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
+							/*Validators: []validator.String{
+								stringvalidator.RegexMatches(
+									regexp.MustCompile(`^data:image\/(\w+);base64,([a-zA-Z0-9/+]+=*)$`), // basic base64 image encoding check
+									"expected value to contain a base64-encoded image."),
+							},*/
 						},
 						"bg_opacity_percent": schema.Int64Attribute{
 							Description: "A numnber containing the percent opacity of the background image in the credential. High percentage opacity may make displayed text difficult to read.",
 							Optional:    true,
 							Validators: []validator.Int64{
-								int64validator.Between(0, 100),
+								int64validator.Between(attrMinPercent, attrMaxPercent),
 							},
 						},
 						"card_color": schema.StringAttribute{
@@ -139,16 +165,27 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
+							Validators: []validator.String{
+								stringvalidator.LengthAtLeast(attrMinLength),
+							},
 						},
 						"logo_image": schema.StringAttribute{
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
+							/*Validators: []validator.String{
+								stringvalidator.RegexMatches(
+									regexp.MustCompile(`^data:image\/(\w+);base64,([a-zA-Z0-9/+]+=*)$`), // basic base64 image encoding check
+									"expected value to contain a base64-encoded image."),
+							},*/
 						},
 						"name": schema.StringAttribute{
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
+							Validators: []validator.String{
+								stringvalidator.LengthAtLeast(attrMinLength),
+							},
 						},
 						"text_color": schema.StringAttribute{
 							Description: "A string containing a 6-digit hexadecimal color code specifying the color of the credential text.",
@@ -164,7 +201,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							MarkdownDescription: "",
 							Required:            true, // not requried in schema, but credentials will not display in P1 admin console if not provided
 							Validators: []validator.Int64{
-								int64validator.AtLeast(5),
+								int64validator.AtLeast(attrMinVersion),
 							},
 						},
 					},
@@ -176,7 +213,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							NestedObject: schema.NestedBlockObject{
 
 								Attributes: map[string]schema.Attribute{
-									// Placeholder. The id value is constructed per specific API requirements. Future may allow user-provided id.
 									"id": schema.StringAttribute{
 										Optional: true,
 									},
@@ -195,21 +231,35 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 										Description:         "",
 										MarkdownDescription: "",
 										Optional:            true,
+										Validators: []validator.String{
+											stringvalidator.LengthAtLeast(attrMinLength),
+										},
 									},
 									"attribute": schema.StringAttribute{
 										Description:         "",
 										MarkdownDescription: "",
 										Optional:            true,
+										Validators: []validator.String{
+											stringvalidator.LengthAtLeast(attrMinLength),
+											stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
+											// todo: ensure attribute is present if type is directory attribute; likely need custom function because the following does not workß
+											//stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("type").AtSetValue(types.StringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)))),
+										},
 									},
 									"value": schema.StringAttribute{
 										Description:         "",
 										MarkdownDescription: "",
 										Optional:            true,
+										Validators: []validator.String{
+											stringvalidator.LengthAtLeast(attrMinLength),
+											stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
+										},
 									},
 									"is_visible": schema.BoolAttribute{
 										Description:         "",
 										MarkdownDescription: "",
 										Optional:            true,
+										Validators:          []validator.Bool{}, // todo: Am I using this properly?
 									},
 								},
 							},
@@ -457,84 +507,113 @@ func (r *CredentialTypeResource) ImportState(ctx context.Context, req resource.I
 func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.CredentialType, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	// expand metadata
 	var metadata []MetadataModel
+	credentialTypeMetadata := make([]credentials.CredentialTypeMetaData, 0)
 	diags.Append(p.Metadata.ElementsAs(ctx, &metadata, false)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	// TODO: need expand metadata & fields
-	cardMetadata := credentials.NewCredentialTypeMetaDataWithDefaults()
 	for _, v := range metadata {
-		if !v.Fields.IsNull() && !v.Fields.IsUnknown() {
-			var innerFields []FieldsModel
-			fields := make([]credentials.CredentialTypeMetaDataFieldsInner, 0)
-			diags.Append(v.Fields.ElementsAs(ctx, &innerFields, false)...)
-			if diags.HasError() {
-				return nil, diags
-			}
-			for _, i := range innerFields {
-				field := *credentials.NewCredentialTypeMetaDataFieldsInnerWithDefaults()
-
-				attrType := credentials.EnumCredentialTypeMetaDataFieldsType(i.Type.ValueString())
-				attrId := i.Type.ValueString() + " -> " + i.Title.ValueString() // construct id per API requirements
-
-				if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT {
-					field.SetValue(i.Value.ValueString()) // required if static text attribute - todo: need to test & error if not provided
-				}
-
-				if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE {
-					field.SetAttribute(i.Attribute.ValueString()) // required if directory attribute - todo: need to test & error if not provided
-
-					// todo: check if the attribute exists, if it doesn't error? or warn?
-				}
-
-				field.SetId(attrId)
-				field.SetType(attrType)
-				field.SetTitle(i.Title.ValueString())
-				field.SetIsVisible(i.IsVisible.ValueBool())
-
-				fields = append(fields, field)
-			}
-			// complete the meta data object
-			cardMetadata.SetFields(fields)
+		element, d := v.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
 		}
 
-		if !v.Name.IsNull() && !v.Name.IsUnknown() {
-			cardMetadata.SetName(v.Name.ValueString())
-		}
-
-		if !v.BackgroundImage.IsNull() && !v.BackgroundImage.IsUnknown() {
-			cardMetadata.SetBackgroundImage(v.BackgroundImage.ValueString())
-		}
-
-		if !v.BgOpacityPercent.IsNull() && !v.BgOpacityPercent.IsUnknown() {
-			cardMetadata.SetBgOpacityPercent(int32(v.BgOpacityPercent.ValueInt64()))
-		}
-
-		if !v.CardColor.IsNull() && !v.CardColor.IsUnknown() {
-			cardMetadata.SetCardColor(v.CardColor.ValueString())
-		}
-
-		if !v.LogoImage.IsNull() && !v.LogoImage.IsUnknown() {
-			cardMetadata.SetLogoImage(v.LogoImage.ValueString())
-		}
-
-		if !v.TextColor.IsNull() && !v.TextColor.IsUnknown() {
-			cardMetadata.SetTextColor(v.TextColor.ValueString())
-		}
-
-		if !v.Version.IsNull() && !v.Version.IsUnknown() {
-			cardMetadata.SetVersion(int32(v.Version.ValueInt64()))
-		}
+		credentialTypeMetadata = append(credentialTypeMetadata, *element)
 	}
 
-	data := credentials.NewCredentialType(p.CardDesignTemplate.ValueString(), *cardMetadata, p.Title.ValueString())
+	data := credentials.NewCredentialType(p.CardDesignTemplate.ValueString(), credentialTypeMetadata[0], p.Title.ValueString())
 
 	data.SetDescription(p.Description.ValueString())
 	data.SetCardType(p.CardType.ValueString())
 
 	return data, diags
+}
+
+func (p *MetadataModel) expand(ctx context.Context) (*credentials.CredentialTypeMetaData, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	cardMetadata := credentials.NewCredentialTypeMetaDataWithDefaults()
+
+	// expand fields
+	if !p.Fields.IsNull() && !p.Fields.IsUnknown() {
+		var innerFields []FieldsModel
+		fields := make([]credentials.CredentialTypeMetaDataFieldsInner, 0)
+		diags.Append(p.Fields.ElementsAs(ctx, &innerFields, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		for _, v := range innerFields {
+			field, d := v.expand(ctx)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			fields = append(fields, *field)
+		}
+		// complete the meta data object
+		cardMetadata.SetFields(fields)
+	}
+
+	if !p.Name.IsNull() && !p.Name.IsUnknown() {
+		cardMetadata.SetName(p.Name.ValueString())
+	}
+
+	if !p.BackgroundImage.IsNull() && !p.BackgroundImage.IsUnknown() {
+		cardMetadata.SetBackgroundImage(p.BackgroundImage.ValueString())
+	}
+
+	if !p.BgOpacityPercent.IsNull() && !p.BgOpacityPercent.IsUnknown() {
+		cardMetadata.SetBgOpacityPercent(int32(p.BgOpacityPercent.ValueInt64()))
+	}
+
+	if !p.CardColor.IsNull() && !p.CardColor.IsUnknown() {
+		cardMetadata.SetCardColor(p.CardColor.ValueString())
+	}
+
+	if !p.LogoImage.IsNull() && !p.LogoImage.IsUnknown() {
+		cardMetadata.SetLogoImage(p.LogoImage.ValueString())
+	}
+
+	if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
+		cardMetadata.SetTextColor(p.TextColor.ValueString())
+	}
+
+	if !p.Version.IsNull() && !p.Version.IsUnknown() {
+		cardMetadata.SetVersion(int32(p.Version.ValueInt64()))
+	}
+
+	return cardMetadata, diags
+}
+
+func (p *FieldsModel) expand(ctx context.Context) (*credentials.CredentialTypeMetaDataFieldsInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	innerFields := credentials.NewCredentialTypeMetaDataFieldsInnerWithDefaults()
+
+	attrType := credentials.EnumCredentialTypeMetaDataFieldsType(p.Type.ValueString())
+	attrId := p.Type.ValueString() + " -> " + p.Title.ValueString() // construct id per API requirements
+
+	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT {
+		innerFields.SetValue(p.Value.ValueString()) // required if static text attribute - todo: need to test & error if not provided at schema?
+	}
+
+	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE {
+		innerFields.SetAttribute(p.Attribute.ValueString()) // required if directory attribute - todo: need to test & error if not provided at schema?
+
+		// todo: check if the attribute exists, if it doesn't error? or warn?
+	}
+
+	innerFields.SetId(attrId)
+	innerFields.SetType(attrType)
+	innerFields.SetTitle(p.Title.ValueString())
+	innerFields.SetIsVisible(p.IsVisible.ValueBool())
+
+	return innerFields, diags
 }
 
 func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialType) diag.Diagnostics {
@@ -557,6 +636,7 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 	p.CardDesignTemplate = framework.StringToTF(apiObject.GetCardDesignTemplate())
 
 	// TODO metadata & fields handling...
+	//p.Metadata.BackgroundImage = framework.StringToTF(apiObject.Metadata.GetBackgroundImage())
 
 	return diags
 }
