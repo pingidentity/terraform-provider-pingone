@@ -9,12 +9,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -57,6 +59,29 @@ type FieldsModel struct {
 	Attribute types.String `tfsdk:"attribute"`
 	Value     types.String `tfsdk:"value"`
 }
+
+var (
+	metadataServiceTFObjectTypes = map[string]attr.Type{
+		"background_image":   types.StringType,
+		"bg_opacity_percent": types.Int64Type,
+		"card_color":         types.StringType,
+		"description":        types.StringType,
+		"text_color":         types.StringType,
+		"version":            types.Int64Type,
+		"logo_image":         types.StringType,
+		"name":               types.StringType,
+		"fields":             types.ListType{ElemType: types.ObjectType{AttrTypes: innerFieldsServiceTFObjectTypes}},
+	}
+
+	innerFieldsServiceTFObjectTypes = map[string]attr.Type{
+		"id":         types.StringType,
+		"type":       types.StringType,
+		"title":      types.StringType,
+		"is_visible": types.BoolType,
+		"attribute":  types.StringType,
+		"value":      types.StringType,
+	}
+)
 
 // Framework interfaces
 var (
@@ -121,11 +146,9 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			"card_design_template": schema.StringAttribute{
 				Description: "A string that specifies an SVG formatted image containing placeholders for the credential fields that need to be displayed in the image.",
 				Required:    true,
-				/*Validators: []validator.String{
-					stringvalidator.RegexMatches(
-						regexp.MustCompile(`<\?xml\s+version=["']1.0["']\s+encoding=["'][^"']*["']\s*\?>\s*<svg.*>[\s\S]*<\/svg>\s*$`),
-						"expected value to contain a valid SVG card template."),
-				},*/
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile(`^<svg.*>[\s\S]*<\/svg>\s*$`), "expected value to contain a valid PingOne Credentials SVG card template."),
+				},
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -139,11 +162,11 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
-							/*Validators: []validator.String{
+							Validators: []validator.String{
 								stringvalidator.RegexMatches(
-									regexp.MustCompile(`^data:image\/(\w+);base64,([a-zA-Z0-9/+]+=*)$`), // basic base64 image encoding check
+									regexp.MustCompile(`^data:image\/(\w+);base64,[^\s]*={0,2}`), // very basic initial image encoding check
 									"expected value to contain a base64-encoded image."),
-							},*/
+							},
 						},
 						"bg_opacity_percent": schema.Int64Attribute{
 							Description: "A numnber containing the percent opacity of the background image in the credential. High percentage opacity may make displayed text difficult to read.",
@@ -173,11 +196,11 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
-							/*Validators: []validator.String{
+							Validators: []validator.String{
 								stringvalidator.RegexMatches(
-									regexp.MustCompile(`^data:image\/(\w+);base64,([a-zA-Z0-9/+]+=*)$`), // basic base64 image encoding check
+									regexp.MustCompile(`^data:image\/(\w+);base64,[^\s]*={0,2}`), // very basic initial image encoding check
 									"expected value to contain a base64-encoded image."),
-							},*/
+							},
 						},
 						"name": schema.StringAttribute{
 							Description:         "",
@@ -214,7 +237,9 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
-										Optional: true,
+										Description:         "",
+										MarkdownDescription: "",
+										Computed:            true,
 									},
 									"type": schema.StringAttribute{
 										Description:         "",
@@ -242,7 +267,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 										Validators: []validator.String{
 											stringvalidator.LengthAtLeast(attrMinLength),
 											stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
-											// todo: ensure attribute is present if type is directory attribute; likely need custom function because the following does not workß
+											// todo: ensure attribute is present if type is directory attribute; likely need custom function because the following does not work
 											//stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("type").AtSetValue(types.StringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)))),
 										},
 									},
@@ -565,6 +590,8 @@ func (p *MetadataModel) expand(ctx context.Context) (*credentials.CredentialType
 
 	if !p.BackgroundImage.IsNull() && !p.BackgroundImage.IsUnknown() {
 		cardMetadata.SetBackgroundImage(p.BackgroundImage.ValueString())
+	} else {
+		cardMetadata.SetBackgroundImage("") // handle scenarios if the card design template references values not defined in the HCL
 	}
 
 	if !p.BgOpacityPercent.IsNull() && !p.BgOpacityPercent.IsUnknown() {
@@ -573,6 +600,10 @@ func (p *MetadataModel) expand(ctx context.Context) (*credentials.CredentialType
 
 	if !p.CardColor.IsNull() && !p.CardColor.IsUnknown() {
 		cardMetadata.SetCardColor(p.CardColor.ValueString())
+	}
+
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		cardMetadata.SetDescription(p.Description.ValueString())
 	}
 
 	if !p.LogoImage.IsNull() && !p.LogoImage.IsUnknown() {
@@ -606,6 +637,7 @@ func (p *FieldsModel) expand(ctx context.Context) (*credentials.CredentialTypeMe
 		innerFields.SetAttribute(p.Attribute.ValueString()) // required if directory attribute - todo: need to test & error if not provided at schema?
 
 		// todo: check if the attribute exists, if it doesn't error? or warn?
+		// current APIs makes this... not simple to do
 	}
 
 	innerFields.SetId(attrId)
@@ -631,12 +663,120 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
 	p.Title = framework.StringToTF(apiObject.GetTitle())
-	p.Description = framework.StringToTF((apiObject.GetDescription()))
+	p.Description = framework.StringToTF(apiObject.GetDescription())
 	p.CardType = framework.StringToTF(apiObject.GetCardType())
 	p.CardDesignTemplate = framework.StringToTF(apiObject.GetCardDesignTemplate())
 
-	// TODO metadata & fields handling...
-	//p.Metadata.BackgroundImage = framework.StringToTF(apiObject.Metadata.GetBackgroundImage())
+	metadata, d := toStateMetadata(apiObject.GetMetadataOk())
+	diags.Append(d...)
+	p.Metadata = metadata
 
 	return diags
+}
+
+func toStateMetadata(metadata *credentials.CredentialTypeMetaData, ok bool) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: metadataServiceTFObjectTypes}
+
+	metadataMap := map[string]attr.Value{}
+	/*metadataMap := map[string]attr.Value{
+		"background_image":   framework.StringOkToTF(metadata.GetBackgroundImageOk()),
+		"bg_opacity_percent": framework.Int32OkToTF(metadata.GetBgOpacityPercentOk()),
+		"card_color":         framework.StringOkToTF(metadata.GetCardColorOk()),
+		"description":        framework.StringOkToTF(metadata.GetDescriptionOk()),
+		"text_color":         framework.StringOkToTF(metadata.GetTextColorOk()),
+		"version":            framework.Int32OkToTF(metadata.GetVersionOk()),
+		"logo_image":         framework.StringOkToTF(metadata.GetLogoImageOk()),
+		"name":               framework.StringOkToTF(metadata.GetNameOk()),
+	}*/
+
+	if v, ok := metadata.GetBackgroundImageOk(); ok {
+		metadataMap["background_image"] = framework.StringToTF(string(*v))
+	} else {
+		metadataMap["background_image"] = types.StringNull()
+	}
+
+	if v, ok := metadata.GetBgOpacityPercentOk(); ok {
+		metadataMap["bg_opacity_percent"] = framework.Int32ToTF(int32(*v))
+	} else {
+		metadataMap["bg_opacity_percent"] = types.Int64Null()
+	}
+
+	if v, ok := metadata.GetCardColorOk(); ok {
+		metadataMap["card_color"] = framework.StringToTF(string(*v))
+	} else {
+		metadataMap["card_color"] = types.StringNull()
+	}
+
+	if v, ok := metadata.GetDescriptionOk(); ok {
+		metadataMap["description"] = framework.StringToTF(string(*v))
+	} else {
+		metadataMap["description"] = types.StringNull()
+	}
+
+	if v, ok := metadata.GetTextColorOk(); ok {
+		metadataMap["text_color"] = framework.StringToTF(string(*v))
+	} else {
+		metadataMap["text_color"] = types.StringNull()
+	}
+
+	if v, ok := metadata.GetVersionOk(); ok {
+		metadataMap["version"] = framework.Int32ToTF(int32(*v))
+	} else {
+		metadataMap["version"] = types.Int64Null()
+	}
+
+	if v, ok := metadata.GetLogoImageOk(); ok {
+		metadataMap["logo_image"] = framework.StringToTF(string(*v))
+	} else {
+		metadataMap["logo_image"] = types.StringNull()
+	}
+
+	if v, ok := metadata.GetNameOk(); ok {
+		metadataMap["name"] = framework.StringToTF(string(*v))
+	} else {
+		metadataMap["name"] = types.StringNull()
+	}
+
+	// move to function after getting it working...
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	tfInnerObjType := types.ObjectType{AttrTypes: innerFieldsServiceTFObjectTypes}
+	innerFields := metadata.GetFields()
+	innerflattenedList := []attr.Value{}
+	for _, v := range innerFields {
+
+		fieldsMap := map[string]attr.Value{
+			"id":         framework.StringOkToTF(v.GetIdOk()),
+			"title":      framework.StringOkToTF(v.GetTitleOk()),
+			"attribute":  framework.StringOkToTF(v.GetAttributeOk()),
+			"value":      framework.StringOkToTF(v.GetValueOk()),
+			"is_visible": framework.BoolOkToTF(v.GetIsVisibleOk()),
+			"type":       enumCredentialTypeMetaDataFieldsOkToTF(v.GetTypeOk()),
+		}
+		innerflattenedObj, d := types.ObjectValue(innerFieldsServiceTFObjectTypes, fieldsMap)
+		diags.Append(d...)
+
+		innerflattenedList = append(innerflattenedList, innerflattenedObj)
+	}
+	fields, d := types.ListValue(tfInnerObjType, innerflattenedList)
+	diags.Append(d...)
+	metadataMap["fields"] = fields
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	flattenedObj, d := types.ObjectValue(metadataServiceTFObjectTypes, metadataMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+
+}
+
+func enumCredentialTypeMetaDataFieldsOkToTF(v *credentials.EnumCredentialTypeMetaDataFieldsType, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		return types.StringValue(string(*v))
+	}
 }
