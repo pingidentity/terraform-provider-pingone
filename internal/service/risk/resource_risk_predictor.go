@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -24,6 +25,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -44,10 +46,10 @@ type riskPredictorResourceModel struct {
 	Deletable                 types.Bool   `tfsdk:"deletable"`
 	PredictorAnonymousNetwork types.List   `tfsdk:"predictor_anonymous_network"`
 	// PredictorComposite           types.List `tfsdk:"predictor_composite"`
-	// PredictorCustom              types.List `tfsdk:"predictor_custom"`
+	// PredictorCustom       types.List `tfsdk:"predictor_custom"`
 	PredictorGeovelocity  types.List `tfsdk:"predictor_geovelocity"`
 	PredictorIPReputation types.List `tfsdk:"predictor_ip_reputation"`
-	// PredictorNewDevice           types.List `tfsdk:"predictor_new_device"`
+	PredictorNewDevice    types.List `tfsdk:"predictor_new_device"`
 	// PredictorUserLocationAnomaly types.List `tfsdk:"predictor_user_location_anomaly"`
 	// PredictorUEBA                types.List `tfsdk:"predictor_user_risk_behavior"`
 	// PredictorVelocity            types.List `tfsdk:"predictor_velocity"`
@@ -89,6 +91,7 @@ type predictorMinimalAllowedCIDRModel struct {
 
 type predictorNewDeviceModel struct {
 	ActivationAt types.String `tfsdk:"activation_at"`
+	Detect       types.String `tfsdk:"detect"`
 }
 
 type predictorUserLocationModel struct {
@@ -188,6 +191,7 @@ var (
 
 	riskPredictorNewDeviceModelTFObjectTypes = map[string]attr.Type{
 		"activation_at": types.StringType,
+		"detect":        types.StringType,
 	}
 
 	// anonymous network, geovelocity, IP reputation
@@ -301,7 +305,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	const emailAddressMaxLength = 5
 	const attrDescriptionMaxLength = 1024
 
-	typeDescriptionFmt := "A string that specifies the type of the risk predictor.  This can be either `ANONYMOUS_NETWORK`, `COMPOSITE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `NEW_DEVICE`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR` or `VELOCITY`."
+	typeDescriptionFmt := "A string that specifies the type of the risk predictor.  This can be either `ANONYMOUS_NETWORK`, `COMPOSITE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `DEVICE`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR` or `VELOCITY`."
 	typeDescription := framework.SchemaDescription{
 		MarkdownDescription: typeDescriptionFmt,
 		Description:         strings.ReplaceAll(typeDescriptionFmt, "`", "\""),
@@ -412,7 +416,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						// path.MatchRelative().AtParent().AtName("predictor_custom"),
 						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
 						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-					// path.MatchRelative().AtParent().AtName("predictor_new_device"),
+						path.MatchRelative().AtParent().AtName("predictor_new_device"),
 					// path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
 					// path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
 					// path.MatchRelative().AtParent().AtName("predictor_velocity"),
@@ -490,14 +494,14 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			// 	Validators: []validator.List{
 			// 		listvalidator.SizeAtMost(1),
 			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+			// 		// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
 			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
 			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
 			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
 			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+			// 		// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+			// 		// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+			// 		// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
 			// 	},
 			// },
 
@@ -528,7 +532,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						// path.MatchRelative().AtParent().AtName("predictor_custom"),
 						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
 						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-					// path.MatchRelative().AtParent().AtName("predictor_new_device"),
+						path.MatchRelative().AtParent().AtName("predictor_new_device"),
 					// path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
 					// path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
 					// path.MatchRelative().AtParent().AtName("predictor_velocity"),
@@ -563,7 +567,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						// path.MatchRelative().AtParent().AtName("predictor_custom"),
 						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
 						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-					// path.MatchRelative().AtParent().AtName("predictor_new_device"),
+						path.MatchRelative().AtParent().AtName("predictor_new_device"),
 					// path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
 					// path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
 					// path.MatchRelative().AtParent().AtName("predictor_velocity"),
@@ -571,28 +575,47 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 
-			// "predictor_new_device": schema.ListNestedBlock{
-			// 	Description: "A single block that contains configuration values for the new device risk predictor type.",
+			"predictor_new_device": schema.ListNestedBlock{
+				Description: "A single block that contains configuration values for the new device risk predictor type.",
 
-			// 	NestedObject: schema.NestedBlockObject{
-			// 		Attributes: map[string]schema.Attribute{
-			// 			"activation_at": schema.ListAttribute{},
-			// 		},
-			// 	},
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"detect": schema.StringAttribute{
+							Required: true,
+							Validators: []validator.String{
+								stringvalidator.OneOf(func() []string {
+									strings := make([]string, 0)
+									for _, v := range risk.AllowedEnumPredictorNewDeviceDetectTypeEnumValues {
+										strings = append(strings, string(v))
+									}
+									return strings
+								}()...),
+							},
+						},
 
-			// 	Validators: []validator.List{
-			// 		listvalidator.SizeAtMost(1),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-			// 	},
-			// },
+						"activation_at": schema.StringAttribute{
+							Description: "You can use the `activation_at` parameter to specify a date on which the learning process for the predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.",
+							Optional:    true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
+							},
+						},
+					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
+					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
+					// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
+					// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
+					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
+					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
+					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
+					// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
+					// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
+					// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
+				},
+			},
 
 			// "predictor_user_location_anomaly": schema.ListNestedBlock{
 			// 	Description: "A single block that contains configuration values for the user location anomaly risk predictor type.",
@@ -953,13 +976,13 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context) (*risk.RiskPred
 		}
 	}
 
-	// if !p.PredictorNewDevice.IsNull() {
-	// 	riskPredictor.RiskPredictorNewDevice, d = p.expandPredictorNewDevice(ctx)
-	// 	diags.Append(d...)
-	// 	if diags.HasError() {
-	// 		return nil, diags
-	// 	}
-	// }
+	if !p.PredictorNewDevice.IsNull() {
+		riskPredictor.RiskPredictorNewDevice, d = p.expandPredictorNewDevice(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+	}
 
 	// if !p.PredictorUserLocationAnomaly.IsNull() {
 	// 	riskPredictor.RiskPredictorUserLocationAnomaly, d = p.expandPredictorUserLocationAnomaly(ctx)
@@ -1115,7 +1138,40 @@ func (p *riskPredictorResourceModel) expandPredictorIPReputation(ctx context.Con
 func (p *riskPredictorResourceModel) expandPredictorNewDevice(ctx context.Context) (*risk.RiskPredictorNewDevice, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var data *risk.RiskPredictorNewDevice
+	data := risk.NewRiskPredictorNewDevice(p.Name.ValueString(), p.CompactName.ValueString(), risk.ENUMPREDICTORTYPE_DEVICE, risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)
+
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
+
+	if !p.DefaultDecisionValue.IsNull() && !p.DefaultDecisionValue.IsUnknown() {
+		defaultModel := risk.NewRiskPredictorCommonDefault(int32(5))
+		defaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumRiskLevel(p.DefaultDecisionValue.ValueString()))
+
+		defaultModel.SetResult(*defaultResult)
+
+		data.SetDefault(*defaultModel)
+	}
+
+	if !p.PredictorNewDevice.IsNull() && !p.PredictorNewDevice.IsUnknown() {
+		var plan []predictorNewDeviceModel
+		d := p.PredictorNewDevice.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+
+		data.SetDetect(risk.EnumPredictorNewDeviceDetectType(plan[0].Detect.ValueString()))
+
+		if !plan[0].ActivationAt.IsNull() && !plan[0].ActivationAt.IsUnknown() {
+			t, e := time.Parse(time.RFC3339, plan[0].ActivationAt.ValueString())
+			if e != nil {
+				diags.AddError(
+					"Invalid data format",
+					"Cannot convert activation_at to a date/time.  Please check the format is a valid RFC3339 date time format.")
+				return nil, diags
+			}
+
+			data.SetActivationAt(t)
+		}
+	}
 
 	return data, diags
 }
@@ -1245,7 +1301,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorAnonymousNetwork(apiObj
 	// p.PredictorCustom = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCustomModelTFObjectTypes})
 	p.PredictorGeovelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
 	p.PredictorIPReputation = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	// p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
+	p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
 	// p.PredictorUEBA = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUEBAModelTFObjectTypes})
 	// p.PredictorUserLocationAnomaly = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUserLocationModelTFObjectTypes})
 	// p.PredictorVelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorVelocityModelTFObjectTypes})
@@ -1328,7 +1384,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorGeovelocity(apiObject *
 	// p.PredictorCustom = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCustomModelTFObjectTypes})
 	p.PredictorGeovelocity = predictorGeovelocity
 	p.PredictorIPReputation = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	// p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
+	p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
 	// p.PredictorUEBA = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUEBAModelTFObjectTypes})
 	// p.PredictorUserLocationAnomaly = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUserLocationModelTFObjectTypes})
 	// p.PredictorVelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorVelocityModelTFObjectTypes})
@@ -1381,7 +1437,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorIPReputation(apiObject 
 	// p.PredictorCustom = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCustomModelTFObjectTypes})
 	p.PredictorGeovelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
 	p.PredictorIPReputation = predictorIPReputation
-	// p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
+	p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
 	// p.PredictorUEBA = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUEBAModelTFObjectTypes})
 	// p.PredictorUserLocationAnomaly = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUserLocationModelTFObjectTypes})
 	// p.PredictorVelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorVelocityModelTFObjectTypes})
@@ -1400,6 +1456,45 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorNewDevice(apiObject *ri
 
 		return diags
 	}
+
+	p.Id = framework.StringToTF(apiObject.GetId())
+	// p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+	p.CompactName = framework.StringOkToTF(apiObject.GetCompactNameOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.Type = enumRiskPredictorTypeOkToTF(apiObject.GetTypeOk())
+
+	p.DefaultDecisionValue = types.StringNull()
+	if v, ok := apiObject.GetDefaultOk(); ok {
+		if c, ok := v.GetResultOk(); ok {
+			p.DefaultDecisionValue = enumRiskPredictorDefaultResultLevelOkToTF(c.GetLevelOk())
+		}
+	}
+
+	p.Licensed = framework.BoolOkToTF(apiObject.GetLicensedOk())
+	p.Deletable = framework.BoolOkToTF(apiObject.GetDeletableOk())
+
+	tfObjType := types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes}
+	blockObject := map[string]attr.Value{
+		"activation_at": framework.TimeOkToTF(apiObject.GetActivationAtOk()),
+		"detect":        enumRiskPredictorNewDeviceDetectOkToTF(apiObject.GetDetectOk()),
+	}
+
+	flattenedObj, d := types.ObjectValue(riskPredictorNewDeviceModelTFObjectTypes, blockObject)
+	diags.Append(d...)
+
+	predictorNewDevice, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	p.PredictorAnonymousNetwork = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
+	// p.PredictorComposite = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCompositeModelTFObjectTypes})
+	// p.PredictorCustom = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCustomModelTFObjectTypes})
+	p.PredictorGeovelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
+	p.PredictorIPReputation = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
+	p.PredictorNewDevice = predictorNewDevice
+	// p.PredictorUEBA = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUEBAModelTFObjectTypes})
+	// p.PredictorUserLocationAnomaly = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUserLocationModelTFObjectTypes})
+	// p.PredictorVelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorVelocityModelTFObjectTypes})
 
 	return diags
 }
@@ -1462,6 +1557,18 @@ func enumRiskPredictorTypeOkToTF(v *risk.EnumPredictorType, ok bool) basetypes.S
 }
 
 func enumRiskPredictorDefaultResultLevelOkToTF(v *risk.EnumRiskLevel, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		if sv := string(*v); sv == "" {
+			return types.StringNull()
+		} else {
+			return types.StringValue(sv)
+		}
+	}
+}
+
+func enumRiskPredictorNewDeviceDetectOkToTF(v *risk.EnumPredictorNewDeviceDetectType, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {

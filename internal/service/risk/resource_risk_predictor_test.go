@@ -117,7 +117,7 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", fmt.Sprintf("%s1", name)),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Before the crowbar was invented, Crows would just drink at home."),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
 		resource.TestCheckResourceAttr(resourceFullName, "licensed", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
@@ -480,6 +480,104 @@ func TestAccRiskPredictor_IPReputation_Override(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictor_NewDevice(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.detect", "NEW_DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.activation_at", "2023-05-02T00:00:00Z"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.detect", "NEW_DEVICE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_new_device.0.activation_at"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_NewDevice_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPredictorConfig_NewDevice_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_NewDevice_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_NewDevice_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_NewDevice_Override(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := "IP Reputation"
+	compactName := "ipRisk"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", "New Device"),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "newDevice"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.detect", "NEW_DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.activation_at", "2023-05-02T00:00:00Z"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_NewDevice_Override(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+		},
+	})
+}
+
 func testAccRiskPredictorConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -513,7 +611,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   name         = "%[3]s"
   compact_name = "%[3]s1"
-  description  = "Before the crowbar was invented, Crows would just drink at home."
+  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
 
   default_decision_value = "MEDIUM"
 
@@ -574,7 +672,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   name         = "%[3]s"
   compact_name = "%[3]s1"
-  description  = "Before the crowbar was invented, Crows would just drink at home."
+  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
 
   default_decision_value = "MEDIUM"
 
@@ -635,7 +733,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   name         = "%[3]s"
   compact_name = "%[3]s1"
-  description  = "Before the crowbar was invented, Crows would just drink at home."
+  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
 
   default_decision_value = "MEDIUM"
 
@@ -683,6 +781,61 @@ resource "pingone_risk_predictor" "%[2]s" {
       "172.16.0.0/12",
       "192.168.0.0/24"
     ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_NewDevice_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
+
+  default_decision_value = "MEDIUM"
+
+  predictor_new_device {
+    detect        = "NEW_DEVICE"
+    activation_at = "2023-05-02T00:00:00Z"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_NewDevice_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_new_device {
+    detect = "NEW_DEVICE"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_NewDevice_Override(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default_decision_value = "MEDIUM"
+
+  predictor_new_device {
+    detect        = "NEW_DEVICE"
+    activation_at = "2023-05-02T00:00:00Z"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
