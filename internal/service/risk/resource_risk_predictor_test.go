@@ -549,8 +549,8 @@ func TestAccRiskPredictor_NewDevice_Override(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
-	name := "IP Reputation"
-	compactName := "ipRisk"
+	name := "New Device"
+	compactName := "newDevice"
 
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "name", "New Device"),
@@ -572,6 +572,104 @@ func TestAccRiskPredictor_NewDevice_Override(t *testing.T) {
 			// Full
 			{
 				Config: testAccRiskPredictorConfig_NewDevice_Override(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_LOCATION_ANOMALY"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance", "100"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance_unit", "miles"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_LOCATION_ANOMALY"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance", "51"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance_unit", "kilometers"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPredictorConfig_UserLocationAnomaly_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_UserLocationAnomaly_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_UserLocationAnomaly_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_UserLocationAnomaly_Override(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := "User Location Anomaly"
+	compactName := "userLocationAnomaly"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", "User Location Anomaly"),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "userLocationAnomaly"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_LOCATION_ANOMALY"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance", "100"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance_unit", "miles"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_UserLocationAnomaly_Override(resourceName, name, compactName),
 				Check:  fullCheck,
 			},
 		},
@@ -836,6 +934,61 @@ resource "pingone_risk_predictor" "%[2]s" {
   predictor_new_device {
     detect        = "NEW_DEVICE"
     activation_at = "2023-05-02T00:00:00Z"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
+
+  default_decision_value = "MEDIUM"
+
+  predictor_user_location_anomaly {
+    radius_distance      = 100
+    radius_distance_unit = "miles"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_UserLocationAnomaly_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_user_location_anomaly {
+    radius_distance = 51
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_UserLocationAnomaly_Override(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default_decision_value = "MEDIUM"
+
+  predictor_user_location_anomaly {
+    radius_distance      = 100
+    radius_distance_unit = "miles"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
