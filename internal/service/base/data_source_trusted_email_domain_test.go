@@ -22,7 +22,7 @@ func TestAccTrustedEmailDomainDataSource_ByNameFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -50,7 +50,7 @@ func TestAccTrustedEmailDomainDataSource_ByIDFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -74,7 +74,7 @@ func TestAccTrustedEmailDomainDataSource_NotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{

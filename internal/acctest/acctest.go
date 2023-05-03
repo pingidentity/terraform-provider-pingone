@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -33,7 +33,7 @@ var Provider *schema.Provider
 // The factory function will be invoked for every Terraform CLI command executed
 // to create a provider server to which the CLI can reattach.
 
-var ProtoV5ProviderFactories map[string]func() (tfprotov5.ProviderServer, error) = protoV5ProviderFactoriesInit(context.Background(), "pingone")
+var ProtoV6ProviderFactories map[string]func() (tfprotov6.ProviderServer, error) = protoV6ProviderFactoriesInit(context.Background(), "pingone")
 
 func init() {
 	Provider = sdkv2.New("dev")()
@@ -52,13 +52,13 @@ func init() {
 	}
 }
 
-func protoV5ProviderFactoriesInit(ctx context.Context, providerNames ...string) map[string]func() (tfprotov5.ProviderServer, error) {
-	factories := make(map[string]func() (tfprotov5.ProviderServer, error), len(providerNames))
+func protoV6ProviderFactoriesInit(ctx context.Context, providerNames ...string) map[string]func() (tfprotov6.ProviderServer, error) {
+	factories := make(map[string]func() (tfprotov6.ProviderServer, error), len(providerNames))
 
 	for _, name := range providerNames {
 
-		factories[name] = func() (tfprotov5.ProviderServer, error) {
-			providerServerFactory, _, err := provider.ProviderServerFactoryV5(ctx, "acctest")
+		factories[name] = func() (tfprotov6.ProviderServer, error) {
+			providerServerFactory, err := provider.ProviderServerFactoryV6(ctx, "acctest")
 
 			if err != nil {
 				return nil, err

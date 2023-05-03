@@ -1,3 +1,10 @@
+## 0.14.0 (Unreleased)
+
+NOTES:
+
+* Upgraded the provider protocol version from 5 to 6.  Use of the provider requires Terraform CLI 1.0 or later. ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
+* bump `github.com/hashicorp/terraform-plugin-mux` from v0.9.0 => v0.10.0 ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
+
 ## 0.13.1 (02 May 2023)
 
 NOTES:

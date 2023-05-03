@@ -1,0 +1,7 @@
+```release-note:note
+Upgraded the provider protocol version from 5 to 6.  Use of the provider requires Terraform CLI 1.0 or later.
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-mux` from v0.9.0 => v0.10.0
+```
