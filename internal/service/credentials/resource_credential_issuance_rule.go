@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -52,39 +53,43 @@ type AutomationModel struct {
 }
 
 type NotificationModel struct {
-	Methods  types.List `tfsdk:"methods"`
-	Template types.List `tfsdk:"template"`
+	Methods types.Set `tfsdk:"methods"`
+	// placeholder for future support - Credentials API is not clear on templates
+	//Template types.List `tfsdk:"template"`
 }
 
-type NotificationTemplateModel struct {
-	Locale    types.String `tfsdk:"locale"`
-	Variables types.List   `tfsdk:"variables"`
-	Variant   types.String `tfsdk:"variant"`
-}
+// placeholder for future support - Credentials API is not clear on templates
+//type NotificationTemplateModel struct {
+//	Locale    types.String `tfsdk:"locale"`
+//	Variables types.List   `tfsdk:"variables"`
+//	Variant   types.String `tfsdk:"variant"`
+//}
 
 var (
-	filterTypes = map[string]attr.Type{
+	filterTypes = map[string]attr.Type{ // todo: make naming consistent with Tfobjecttype
 		"group_ids":      types.SetType{ElemType: types.StringType},
 		"population_ids": types.SetType{ElemType: types.StringType},
 		"scim":           types.StringType,
 	}
 
-	automationTypes = map[string]attr.Type{
+	automationTypes = map[string]attr.Type{ // todo: make naming consistent with tfobjecttypes
 		"issue":  types.StringType,
 		"revoke": types.StringType,
 		"update": types.StringType,
 	}
 
-	notificationTypes = map[string]attr.Type{
-		"methods":  types.StringType,
-		"template": types.ListType{ElemType: types.StringType}, // todo - test & review
+	notificationServiceTFObjectTypes = map[string]attr.Type{
+		"methods": types.SetType{ElemType: types.StringType},
+		// placeholder for future support - Credentials API is not clear on templates
+		//"template": types.ListType{ElemType: types.ObjectType{AttrTypes: notificationTemplateServiceTFObjectTypes}},
 	}
 
-	notificationTemplate = map[string]attr.Type{
-		"locale":    types.StringType,
-		"variables": types.ObjectType{},
-		"variant":   types.StringType,
-	}
+	// placeholder for future support - Credentials API is not clear on templates
+	//notificationTemplateServiceTFObjectTypes = map[string]attr.Type{
+	//	"locale":    types.StringType,
+	//	"variables": types.ObjectType{}, // todo: resolve
+	//	"variant":   types.StringType,
+	//}
 )
 
 // Framework interfaces
@@ -211,17 +216,49 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
-						"methods": schema.StringAttribute{
+						"methods": schema.SetAttribute{
+							ElementType:         types.StringType,
 							Description:         "",
 							MarkdownDescription: "",
 							Required:            true,
-						},
-						"template": schema.ObjectAttribute{
-							Description:         "",
-							MarkdownDescription: "",
-							Required:            true,
+							//Validators: []validator.Set{
+							//	setvalidator.ValueStringsAre(
+							//		string(credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_EMAIL),
+							//		string(credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_SMS)),
+							//},
 						},
 					},
+
+					// future: notification template handling in creds api is currently unclear
+					/*Blocks: map[string]schema.Block{
+						"template": schema.ListNestedBlock{
+							Description:         "",
+							MarkdownDescription: "",
+							NestedObject: schema.NestedBlockObject{
+
+								Attributes: map[string]schema.Attribute{
+									"locale": schema.SetAttribute{
+										ElementType:         types.StringType,
+										Description:         "",
+										MarkdownDescription: "",
+										Optional:            true,
+									},
+									"variables": schema.ListAttribute{ // todo: review this
+										ElementType:         types.StringType,
+										Description:         "",
+										MarkdownDescription: "",
+										Optional:            true,
+									},
+									"variant": schema.SetAttribute{
+										ElementType:         types.StringType,
+										Description:         "",
+										MarkdownDescription: "",
+										Optional:            true,
+									},
+								},
+							},
+						},
+					},*/
 				},
 			},
 		},
@@ -383,21 +420,6 @@ func (r *CredentialIssuanceRuleResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	/*management.ReadOneApplicationRequest(ctx, )
-	if CredentialIssuanceRule.GetApplication().Id{
-			// make sure it exists
-
-		}
-
-	    t.GetOk("oidc_options"); ok {
-		    var application *management.ApplicationOIDC
-		    application, diags = expandApplicationOIDC(d)
-		    if diags.HasError() {
-		        return diags
-		    }
-		    applicationRequest.ApplicationOIDC = application
-		} */
-
 	// Run the API call
 	response, diags := framework.ParseResponse(
 		ctx,
@@ -532,15 +554,45 @@ func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*cred
 		}
 	}
 
-	// much to do...
-	data := credentials.NewCredentialIssuanceRule(*automation, credentials.EnumCredentialIssuanceRuleStatus(p.Status.ValueString()))
+	// expand notifications
+	var notificationRules []NotificationModel
+	diags.Append(p.Notification.ElementsAs(ctx, &notificationRules, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+	notification := credentials.NewCredentialIssuanceRuleNotificationWithDefaults()
 
-	// set digital wallet if present - what if not present
-	application := credentials.NewCredentialIssuanceRuleDigitalWalletApplication(p.DigitalWalletApplicationId.ValueString())
-	data.SetDigitalWalletApplication(*application)
+	for _, v := range notificationRules {
+		if !v.Methods.IsNull() && !v.Methods.IsUnknown() {
+			var slice []string
+			diags.Append(v.Methods.ElementsAs(ctx, &slice, false)...)
+
+			enumSlice := make([]credentials.EnumCredentialIssuanceRuleNotificationMethod, len(slice))
+			for i := 0; i < len(slice); i++ {
+				enumVal, err := credentials.NewEnumCredentialIssuanceRuleNotificationMethodFromValue(slice[i])
+				if err != nil {
+					return nil, diags
+				}
+				enumSlice[i] = *enumVal
+				notification.Methods = append(notification.Methods, *enumVal)
+			}
+		}
+	}
+
+	// build issuance rule with required attributes
+	data := credentials.NewCredentialIssuanceRule(*automation, credentials.EnumCredentialIssuanceRuleStatus(p.Status.ValueString()))
 
 	// set filter
 	data.SetFilter(*filter)
+
+	// set notifications
+	if notification.HasMethods() {
+		data.SetNotification(*notification)
+	}
+
+	// set digital wallet application
+	application := credentials.NewCredentialIssuanceRuleDigitalWalletApplication(p.DigitalWalletApplicationId.ValueString())
+	data.SetDigitalWalletApplication(*application)
 
 	return data, diags
 }
@@ -594,5 +646,40 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	diags.Append(d...)
 	p.Filter = filter
 
+	// notifications
+	// move to function
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	notificationMethodState := enumCredentialIssuanceRuleNotificationMethodOkToTF(apiObject.Notification.GetMethodsOk())
+
+	if notificationMethodState.IsNull() {
+
+	} else {
+		tfObjType = types.ObjectType{AttrTypes: notificationServiceTFObjectTypes}
+		notificationMap := map[string]attr.Value{
+			"methods": enumCredentialIssuanceRuleNotificationMethodOkToTF(apiObject.Notification.GetMethodsOk()),
+		}
+		flattenedObj, d = types.ObjectValue(notificationServiceTFObjectTypes, notificationMap)
+		diags.Append(d...)
+
+		notification, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+		diags.Append(d...)
+		p.Notification = notification
+	}
+
 	return diags
+}
+
+func enumCredentialIssuanceRuleNotificationMethodOkToTF(v []credentials.EnumCredentialIssuanceRuleNotificationMethod, ok bool) basetypes.SetValue {
+	if !ok || v == nil {
+		return types.SetNull(types.StringType)
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			method := types.StringValue(string(item))
+			list = append(list, method)
+		}
+
+		return types.SetValueMust(types.StringType, list)
+	}
 }
