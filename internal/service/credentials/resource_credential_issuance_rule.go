@@ -6,15 +6,20 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -30,14 +35,13 @@ type CredentialIssuanceRuleResourceModel struct {
 	DigitalWalletApplicationId types.String `tfsdk:"digital_wallet_application_id"`
 	Automation                 types.List   `tfsdk:"automation"`
 	Filter                     types.List   `tfsdk:"filter"`
+	Notification               types.List   `tfsdk:"notification"`
 	Status                     types.String `tfsdk:"status"`
-	//Notification           types.String `tfsdk:"notification"`
-
 }
 
 type FilterModel struct {
-	GroupIds      types.String `tfsdk:"group_ids"`
-	PopulationIds types.String `tfsdk:"population_ids"`
+	GroupIds      types.Set    `tfsdk:"group_ids"`
+	PopulationIds types.Set    `tfsdk:"population_ids"`
 	Scim          types.String `tfsdk:"scim"`
 }
 
@@ -46,6 +50,42 @@ type AutomationModel struct {
 	Revoke types.String `tfsdk:"revoke"`
 	Update types.String `tfsdk:"update"`
 }
+
+type NotificationModel struct {
+	Methods  types.List `tfsdk:"methods"`
+	Template types.List `tfsdk:"template"`
+}
+
+type NotificationTemplateModel struct {
+	Locale    types.String `tfsdk:"locale"`
+	Variables types.List   `tfsdk:"variables"`
+	Variant   types.String `tfsdk:"variant"`
+}
+
+var (
+	filterTypes = map[string]attr.Type{
+		"group_ids":      types.SetType{ElemType: types.StringType},
+		"population_ids": types.SetType{ElemType: types.StringType},
+		"scim":           types.StringType,
+	}
+
+	automationTypes = map[string]attr.Type{
+		"issue":  types.StringType,
+		"revoke": types.StringType,
+		"update": types.StringType,
+	}
+
+	notificationTypes = map[string]attr.Type{
+		"methods":  types.StringType,
+		"template": types.ListType{ElemType: types.StringType}, // todo - test & review
+	}
+
+	notificationTemplate = map[string]attr.Type{
+		"locale":    types.StringType,
+		"variables": types.ObjectType{},
+		"variant":   types.StringType,
+	}
+)
 
 // Framework interfaces
 var (
@@ -76,17 +116,30 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 				Description: "The ID of the environment to create the credential type in."},
 			),
 
-			"credential_type_id": framework.Attr_LinkID(framework.SchemaDescription{
+			"credential_type_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
 				Description: "The ID of the credential type with which this credential issuance rule is associated.",
-			}),
+			},
+				[]validator.String{
+					verify.P1ResourceIDValidator(),
+				},
+			),
 
-			"digital_wallet_application_id": framework.Attr_LinkID(framework.SchemaDescription{
+			"digital_wallet_application_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
 				Description: "The ID of the digital wallet application that will interact with the user's Digital Wallet",
-			}),
+			},
+				[]validator.String{
+					verify.P1ResourceIDValidator(),
+				},
+			),
 
 			"status": schema.StringAttribute{
 				MarkdownDescription: "ACTIVE or DISABLED status of the credential issuance rule.",
 				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						string(credentials.ENUMCREDENTIALISSUANCERULESTATUS_ACTIVE),
+						string(credentials.ENUMCREDENTIALISSUANCERULESTATUS_DISABLED)),
+				},
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -96,20 +149,34 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
-						"group_ids": schema.StringAttribute{
+						"group_ids": schema.SetAttribute{
+							ElementType:         types.StringType,
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
+							Validators: []validator.Set{
+								setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
+								setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
+							},
 						},
-						"population_ids": schema.StringAttribute{
+						"population_ids": schema.SetAttribute{
+							ElementType:         types.StringType,
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
+							Validators: []validator.Set{
+								setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
+								setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
+							},
 						},
 						"scim": schema.StringAttribute{
 							Description:         "",
 							MarkdownDescription: "",
 							Optional:            true,
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
+								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
+							},
 						},
 					},
 				},
@@ -131,6 +198,25 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 							Required:            true,
 						},
 						"update": schema.StringAttribute{
+							Description:         "",
+							MarkdownDescription: "",
+							Required:            true,
+						},
+					},
+				},
+			},
+			"notification": schema.ListNestedBlock{
+				Description:         "",
+				MarkdownDescription: "",
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"methods": schema.StringAttribute{
+							Description:         "",
+							MarkdownDescription: "",
+							Required:            true,
+						},
+						"template": schema.ObjectAttribute{
 							Description:         "",
 							MarkdownDescription: "",
 							Required:            true,
@@ -415,28 +501,46 @@ func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*cred
 			automation.SetUpdate(credentials.EnumCredentialIssuanceRuleAutomationMethod(v.Update.ValueString()))
 		}
 	}
-	/*
-		// expand filter
-		// todo: move to function
-		var filterRules []FilterModel
-		diags.Append(p.Filter.ElementsAs(ctx, &filterRules, false)...)
-		if diags.HasError() {
-			return nil, diags
-		}
-		filter := credentials.NewCredentialIssuanceRuleFilterWithDefaults()
-		for _, v := range filterRules {
-			if !v.PopulationIds.IsNull() && !v.PopulationIds.IsUnknown() {
-				filter.SetPopulationIds(v.PopulationIds.)
 
+	// expand filter
+	// todo: move to function
+	var filterRules []FilterModel
+	diags.Append(p.Filter.ElementsAs(ctx, &filterRules, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+	filter := credentials.NewCredentialIssuanceRuleFilterWithDefaults()
+	for _, v := range filterRules {
+		if !v.PopulationIds.IsNull() && !v.PopulationIds.IsUnknown() {
+			diags.Append(v.PopulationIds.ElementsAs(ctx, &filter.PopulationIds, false)...)
+			if diags.HasError() {
+				return nil, diags
 			}
+			filter.SetPopulationIds(filter.PopulationIds)
+		}
 
-		}*/
+		if !v.GroupIds.IsNull() && !v.GroupIds.IsUnknown() {
+			diags.Append(v.GroupIds.ElementsAs(ctx, &filter.GroupIds, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			filter.SetGroupIds(filter.GroupIds)
+		}
+
+		if !v.Scim.IsNull() && !v.Scim.IsUnknown() {
+			filter.SetScim(v.Scim.ValueString())
+		}
+	}
+
 	// much to do...
 	data := credentials.NewCredentialIssuanceRule(*automation, credentials.EnumCredentialIssuanceRuleStatus(p.Status.ValueString()))
 
-	// set digital wallet if present - clean all of this up
+	// set digital wallet if present - what if not present
 	application := credentials.NewCredentialIssuanceRuleDigitalWalletApplication(p.DigitalWalletApplicationId.ValueString())
 	data.SetDigitalWalletApplication(*application)
+
+	// set filter
+	data.SetFilter(*filter)
 
 	return data, diags
 }
@@ -455,6 +559,40 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
+	p.DigitalWalletApplicationId = framework.StringToTF((apiObject.GetDigitalWalletApplication().Id))
+	p.CredentialTypeId = framework.StringToTF((apiObject.CredentialType.Id))
+
+	// automation
+	// move to function
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	tfObjType := types.ObjectType{AttrTypes: automationTypes}
+	automationMap := map[string]attr.Value{
+		"issue":  framework.StringToTF(string(apiObject.GetAutomation().Issue)),
+		"revoke": framework.StringToTF(string(apiObject.GetAutomation().Revoke)),
+		"update": framework.StringToTF(string(apiObject.GetAutomation().Update)),
+	}
+	flattenedObj, d := types.ObjectValue(automationTypes, automationMap)
+	diags.Append(d...)
+
+	automation, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+	p.Automation = automation
+
+	// fields
+	// move to function
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	tfObjType = types.ObjectType{AttrTypes: filterTypes}
+	filterMap := map[string]attr.Value{
+		"population_ids": framework.StringSetOkToTF(apiObject.Filter.GetPopulationIdsOk()),
+		"group_ids":      framework.StringSetOkToTF(apiObject.Filter.GetGroupIdsOk()),
+		"scim":           framework.StringOkToTF(apiObject.Filter.GetScimOk()),
+	}
+	flattenedObj, d = types.ObjectValue(filterTypes, filterMap)
+	diags.Append(d...)
+
+	filter, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+	p.Filter = filter
 
 	return diags
 }

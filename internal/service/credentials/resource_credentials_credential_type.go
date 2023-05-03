@@ -738,7 +738,7 @@ func toStateMetadata(metadata *credentials.CredentialTypeMetaData, ok bool) (typ
 		metadataMap["name"] = types.StringNull()
 	}
 
-	// move to function after getting it working...
+	// move to function
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	tfInnerObjType := types.ObjectType{AttrTypes: innerFieldsServiceTFObjectTypes}
 	innerFields := metadata.GetFields()
