@@ -121,7 +121,7 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
 		resource.TestCheckResourceAttr(resourceFullName, "licensed", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -133,7 +133,7 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
 		resource.TestCheckResourceAttr(resourceFullName, "licensed", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "default_decision_value"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -187,17 +187,17 @@ func TestAccRiskPredictor_Anonymous_Network(t *testing.T) {
 
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_anonymous_network.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.#", "3"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.*", "192.168.0.0/24"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.*", "10.0.0.0/8"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.*", "172.16.0.0/12"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "allowed_cidr_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "192.168.0.0/24"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "10.0.0.0/8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "172.16.0.0/12"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_anonymous_network.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "allowed_cidr_list.#", "0"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -255,12 +255,11 @@ func TestAccRiskPredictor_Anonymous_Network_Override(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "anonymousNetwork"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_anonymous_network.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.#", "3"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.*", "192.168.0.0/24"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.*", "10.0.0.0/8"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_anonymous_network.0.allowed_cidr_list.*", "172.16.0.0/12"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "allowed_cidr_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "192.168.0.0/24"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "10.0.0.0/8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "172.16.0.0/12"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -288,17 +287,17 @@ func TestAccRiskPredictor_Geovelocity(t *testing.T) {
 
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "GEO_VELOCITY"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_geovelocity.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.#", "3"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.*", "192.168.0.0/24"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.*", "10.0.0.0/8"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.*", "172.16.0.0/12"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "allowed_cidr_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "192.168.0.0/24"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "10.0.0.0/8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "172.16.0.0/12"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "GEO_VELOCITY"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_geovelocity.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "allowed_cidr_list.#", "0"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -356,12 +355,11 @@ func TestAccRiskPredictor_Geovelocity_Override(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "geoVelocity"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "GEO_VELOCITY"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_geovelocity.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.#", "3"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.*", "192.168.0.0/24"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.*", "10.0.0.0/8"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_geovelocity.0.allowed_cidr_list.*", "172.16.0.0/12"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "allowed_cidr_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "192.168.0.0/24"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "10.0.0.0/8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "172.16.0.0/12"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -389,17 +387,17 @@ func TestAccRiskPredictor_IP_Reputation(t *testing.T) {
 
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "IP_REPUTATION"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_ip_reputation.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.#", "3"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.*", "192.168.0.0/24"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.*", "10.0.0.0/8"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.*", "172.16.0.0/12"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "allowed_cidr_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "192.168.0.0/24"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "10.0.0.0/8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "172.16.0.0/12"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "IP_REPUTATION"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_ip_reputation.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "allowed_cidr_list.#", "0"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -457,12 +455,11 @@ func TestAccRiskPredictor_IPReputation_Override(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "ipRisk"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "IP_REPUTATION"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_ip_reputation.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.#", "3"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.*", "192.168.0.0/24"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.*", "10.0.0.0/8"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_ip_reputation.0.allowed_cidr_list.*", "172.16.0.0/12"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "allowed_cidr_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "192.168.0.0/24"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "10.0.0.0/8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "allowed_cidr_list.*", "172.16.0.0/12"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -490,16 +487,16 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.detect", "NEW_DEVICE"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.activation_at", "2023-05-02T00:00:00Z"),
+		resource.TestCheckResourceAttr(resourceFullName, "detect", "NEW_DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "activation_at", "2023-05-02T00:00:00Z"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.detect", "NEW_DEVICE"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_new_device.0.activation_at"),
+		resource.TestCheckResourceAttr(resourceFullName, "detect", "NEW_DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "activation_at"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -557,10 +554,9 @@ func TestAccRiskPredictor_NewDevice_Override(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "newDevice"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.detect", "NEW_DEVICE"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_new_device.0.activation_at", "2023-05-02T00:00:00Z"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "detect", "NEW_DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "activation_at", "2023-05-02T00:00:00Z"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -588,16 +584,18 @@ func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
 
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_LOCATION_ANOMALY"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance", "100"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance_unit", "miles"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "radius.distance", "100"),
+		resource.TestCheckResourceAttr(resourceFullName, "radius.unit", "miles"),
+		resource.TestCheckResourceAttr(resourceFullName, "days", "50"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_LOCATION_ANOMALY"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance", "51"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance_unit", "kilometers"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "radius.distance", "51"),
+		resource.TestCheckResourceAttr(resourceFullName, "radius.unit", "kilometers"),
+		resource.TestCheckResourceAttr(resourceFullName, "days", "50"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -655,10 +653,10 @@ func TestAccRiskPredictor_UserLocationAnomaly_Override(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "userLocationAnomaly"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_LOCATION_ANOMALY"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "default_decision_value", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance", "100"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.0.radius_distance_unit", "miles"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "radius.distance", "100"),
+		resource.TestCheckResourceAttr(resourceFullName, "radius.unit", "miles"),
+		resource.TestCheckResourceAttr(resourceFullName, "days", "50"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -676,6 +674,198 @@ func TestAccRiskPredictor_UserLocationAnomaly_Override(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictor_Velocity(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	byUserCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "VELOCITY"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.ip}"),
+		resource.TestCheckResourceAttr(resourceFullName, "by.#", "1"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "by", "${event.user.id}"),
+		resource.TestCheckResourceAttr(resourceFullName, "measure", "DISTINCT_COUNT"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.type", "POISSON_WITH_MAX"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.medium", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.high", "4"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.strategy", "ENVIRONMENT_MAX"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.high", "30"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.medium", "20"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.unit", "HOUR"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.quantity", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.min_sample", "5"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.unit", "DAY"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.quantity", "7"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.min_sample", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "max_delay.unit", "DAY"),
+		resource.TestCheckResourceAttr(resourceFullName, "max_delay.quantity", "1"),
+	)
+
+	byIPCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "VELOCITY"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.user.id}"),
+		resource.TestCheckResourceAttr(resourceFullName, "by.#", "1"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "by", "${event.ip}"),
+		resource.TestCheckResourceAttr(resourceFullName, "measure", "DISTINCT_COUNT"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.type", "POISSON_WITH_MAX"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.medium", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.high", "4"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.strategy", "ENVIRONMENT_MAX"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.high", "3500"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.medium", "2500"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.unit", "HOUR"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.quantity", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.min_sample", "5"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.unit", "DAY"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.quantity", "7"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.min_sample", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "max_delay.unit", "DAY"),
+		resource.TestCheckResourceAttr(resourceFullName, "max_delay.quantity", "1"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// By User
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full(resourceName, name),
+				Check:  byUserCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full(resourceName, name),
+				Destroy: true,
+			},
+			// By IP
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full(resourceName, name),
+				Check:  byIPCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full(resourceName, name),
+				Check:  byUserCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full(resourceName, name),
+				Check:  byIPCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full(resourceName, name),
+				Check:  byUserCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_Velocity_Override(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := "User Location Anomaly"
+	compactName := "userLocationAnomaly"
+
+	byUserCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactName),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "VELOCITY"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.ip}"),
+		resource.TestCheckResourceAttr(resourceFullName, "by.#", "1"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "by", "${event.user.id}"),
+		resource.TestCheckResourceAttr(resourceFullName, "measure", "DISTINCT_COUNT"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.type", "POISSON_WITH_MAX"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.medium", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.high", "4"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.strategy", "ENVIRONMENT_MAX"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.high", "30"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.medium", "20"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.unit", "HOUR"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.quantity", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.min_sample", "5"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.unit", "DAY"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.quantity", "7"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.min_sample", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "max_delay.unit", "DAY"),
+		resource.TestCheckResourceAttr(resourceFullName, "max_delay.quantity", "1"),
+	)
+
+	byIPCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "VELOCITY"),
+		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.user.id}"),
+		resource.TestCheckResourceAttr(resourceFullName, "by.#", "1"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "by", "${event.ip}"),
+		resource.TestCheckResourceAttr(resourceFullName, "measure", "DISTINCT_COUNT"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.type", "POISSON_WITH_MAX"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.medium", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "use.high", "4"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.strategy", "ENVIRONMENT_MAX"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.high", "3500"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.medium", "2500"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.unit", "HOUR"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.quantity", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "every.min_sample", "5"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.unit", "DAY"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.quantity", "7"),
+		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.min_sample", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "max_delay.unit", "DAY"),
+		resource.TestCheckResourceAttr(resourceFullName, "max_delay.quantity", "1"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// By User
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName),
+				Check:  byUserCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName),
+				Destroy: true,
+			},
+			// By IP
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_Override(resourceName, name, compactName),
+				Check:  byIPCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full_Override(resourceName, name, compactName),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName),
+				Check:  byUserCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_Override(resourceName, name, compactName),
+				Check:  byIPCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName),
+				Check:  byUserCheck,
+			},
+		},
+	})
+}
+
 func testAccRiskPredictorConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -686,9 +876,8 @@ resource "pingone_risk_predictor" "%[3]s" {
   name         = "%[4]s"
   compact_name = "%[4]s1"
 
-  predictor_anonymous_network {
-    allowed_cidr_list = []
-  }
+  type = "ANONYMOUS_NETWORK"
+
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -711,15 +900,20 @@ resource "pingone_risk_predictor" "%[2]s" {
   compact_name = "%[3]s1"
   description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
 
-  default_decision_value = "MEDIUM"
+  type = "ANONYMOUS_NETWORK"
 
-  predictor_anonymous_network {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
-    ]
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  allowed_cidr_list = [
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/24"
+  ]
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -733,9 +927,7 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[3]s1"
 
-  predictor_anonymous_network {
-    allowed_cidr_list = []
-  }
+  type = "ANONYMOUS_NETWORK"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -749,15 +941,20 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[4]s"
 
-  default_decision_value = "MEDIUM"
+  type = "ANONYMOUS_NETWORK"
 
-  predictor_anonymous_network {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
-    ]
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  allowed_cidr_list = [
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/24"
+  ]
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
@@ -772,15 +969,20 @@ resource "pingone_risk_predictor" "%[2]s" {
   compact_name = "%[3]s1"
   description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
 
-  default_decision_value = "MEDIUM"
+  type = "GEO_VELOCITY"
 
-  predictor_geovelocity {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
-    ]
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  allowed_cidr_list = [
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/24"
+  ]
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -794,9 +996,8 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[3]s1"
 
-  predictor_geovelocity {
-    allowed_cidr_list = []
-  }
+  type = "GEO_VELOCITY"
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -810,15 +1011,20 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[4]s"
 
-  default_decision_value = "MEDIUM"
+  type = "GEO_VELOCITY"
 
-  predictor_geovelocity {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
-    ]
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  allowed_cidr_list = [
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/24"
+  ]
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
@@ -833,15 +1039,20 @@ resource "pingone_risk_predictor" "%[2]s" {
   compact_name = "%[3]s1"
   description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
 
-  default_decision_value = "MEDIUM"
+  type = "IP_REPUTATION"
 
-  predictor_ip_reputation {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
-    ]
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  allowed_cidr_list = [
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/24"
+  ]
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -855,9 +1066,8 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[3]s1"
 
-  predictor_ip_reputation {
-    allowed_cidr_list = []
-  }
+  type = "IP_REPUTATION"
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -871,15 +1081,20 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[4]s"
 
-  default_decision_value = "MEDIUM"
+  type = "IP_REPUTATION"
 
-  predictor_ip_reputation {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
-    ]
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  allowed_cidr_list = [
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/24"
+  ]
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
@@ -894,12 +1109,16 @@ resource "pingone_risk_predictor" "%[2]s" {
   compact_name = "%[3]s1"
   description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
 
-  default_decision_value = "MEDIUM"
+  type   = "DEVICE"
+  detect = "NEW_DEVICE"
 
-  predictor_new_device {
-    detect        = "NEW_DEVICE"
-    activation_at = "2023-05-02T00:00:00Z"
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  activation_at = "2023-05-02T00:00:00Z"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -913,9 +1132,7 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[3]s1"
 
-  predictor_new_device {
-    detect = "NEW_DEVICE"
-  }
+  type = "DEVICE"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -929,12 +1146,16 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[4]s"
 
-  default_decision_value = "MEDIUM"
+  type   = "DEVICE"
+  detect = "NEW_DEVICE"
 
-  predictor_new_device {
-    detect        = "NEW_DEVICE"
-    activation_at = "2023-05-02T00:00:00Z"
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  activation_at = "2023-05-02T00:00:00Z"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
@@ -949,12 +1170,19 @@ resource "pingone_risk_predictor" "%[2]s" {
   compact_name = "%[3]s1"
   description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
 
-  default_decision_value = "MEDIUM"
+  type = "USER_LOCATION_ANOMALY"
 
-  predictor_user_location_anomaly {
-    radius_distance      = 100
-    radius_distance_unit = "miles"
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  radius = {
+    distance = 100
+    unit     = "miles"
+  }
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -968,9 +1196,12 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[3]s1"
 
-  predictor_user_location_anomaly {
-    radius_distance = 51
+  type = "USER_LOCATION_ANOMALY"
+
+  radius = {
+    distance = 51
   }
+
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -984,11 +1215,102 @@ resource "pingone_risk_predictor" "%[2]s" {
   name         = "%[3]s"
   compact_name = "%[4]s"
 
-  default_decision_value = "MEDIUM"
+  type = "USER_LOCATION_ANOMALY"
 
-  predictor_user_location_anomaly {
-    radius_distance      = 100
-    radius_distance_unit = "miles"
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
+
+  radius = {
+    distance = 100
+    unit     = "miles"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_Velocity_ByUser_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
+
+  type = "VELOCITY"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  of = "$${event.user.id}"
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Velocity_ByIP_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  type = "VELOCITY"
+
+  of = "$${event.ip}"
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  type = "VELOCITY"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  of = "$${event.user.id}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_Velocity_ByIP_Full_Override(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  type = "VELOCITY"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  of = "$${event.ip}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }

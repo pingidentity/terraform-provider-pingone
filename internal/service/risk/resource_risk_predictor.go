@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -37,235 +35,123 @@ type RiskPredictorResource struct {
 }
 
 type riskPredictorResourceModel struct {
-	Id                        types.String `tfsdk:"id"`
-	EnvironmentId             types.String `tfsdk:"environment_id"`
-	Name                      types.String `tfsdk:"name"`
-	CompactName               types.String `tfsdk:"compact_name"`
-	Description               types.String `tfsdk:"description"`
-	Type                      types.String `tfsdk:"type"`
-	DefaultDecisionValue      types.String `tfsdk:"default_decision_value"`
-	Licensed                  types.Bool   `tfsdk:"licensed"`
-	Deletable                 types.Bool   `tfsdk:"deletable"`
-	PredictorAnonymousNetwork types.List   `tfsdk:"predictor_anonymous_network"`
-	// PredictorComposite           types.List `tfsdk:"predictor_composite"`
-	// PredictorCustom       types.List `tfsdk:"predictor_custom"`
-	PredictorGeovelocity         types.List `tfsdk:"predictor_geovelocity"`
-	PredictorIPReputation        types.List `tfsdk:"predictor_ip_reputation"`
-	PredictorNewDevice           types.List `tfsdk:"predictor_new_device"`
-	PredictorUserLocationAnomaly types.List `tfsdk:"predictor_user_location_anomaly"`
-	// PredictorUEBA                types.List `tfsdk:"predictor_user_risk_behavior"`
-	// PredictorVelocity            types.List `tfsdk:"predictor_velocity"`
-}
-
-type predictorCompositeModel struct { // TODO
-}
-
-type predictorCustomModel struct {
-	AttributeMapping types.String `tfsdk:"attribute_mapping"`
-	MapIPRangeValues types.List   `tfsdk:"map_ip_range_values"`
-	MapRangeValues   types.List   `tfsdk:"map_range_values"`
-	MapListValues    types.List   `tfsdk:"map_list_values"`
-}
-
-type predictorCustomMapModel struct {
-	High   types.List `tfsdk:"high"`
-	Medium types.List `tfsdk:"medium"`
-	Low    types.List `tfsdk:"low"`
-}
-
-type predictorCustomMapIPRangeModel struct {
-	CIDRRangeList types.Set `tfsdk:"cidr_range_list"`
-}
-
-type predictorCustomMapBetweenModel struct {
-	MinimumValue types.List `tfsdk:"minimum_value"`
-	MaximumValue types.List `tfsdk:"maximum_value"`
-}
-
-type predictorCustomMapListModel struct {
-	ListItems types.List `tfsdk:"list_items"`
-}
-
-// anonymous network, geovelocity, IP reputation
-type predictorMinimalAllowedCIDRModel struct {
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	Name          types.String `tfsdk:"name"`
+	CompactName   types.String `tfsdk:"compact_name"`
+	Description   types.String `tfsdk:"description"`
+	Type          types.String `tfsdk:"type"`
+	Default       types.Object `tfsdk:"default"`
+	Licensed      types.Bool   `tfsdk:"licensed"`
+	Deletable     types.Bool   `tfsdk:"deletable"`
+	// Anonymous network, IP reputation, geovelocity
 	AllowedCIDRList types.Set `tfsdk:"allowed_cidr_list"`
-}
-
-type predictorNewDeviceModel struct {
+	// New device
 	ActivationAt types.String `tfsdk:"activation_at"`
 	Detect       types.String `tfsdk:"detect"`
-}
-
-type predictorUserLocationModel struct {
-	RadiusDistanceUnit types.String `tfsdk:"radius_distance_unit"`
-	RadiusDistance     types.Int64  `tfsdk:"radius_distance"`
-}
-
-type predictorUEBAModel struct {
-	PredictionModel types.String `tfsdk:"prediction_model"`
-}
-
-type predictorVelocityModel struct {
-	By            types.List   `tfsdk:"by"`
-	Every         types.List   `tfsdk:"every"`
-	Fallback      types.List   `tfsdk:"fallback"`
-	MaxDelay      types.List   `tfsdk:"max_delay"`
+	// User Location Anomaly
+	Radius types.Object `tfsdk:"radius"`
+	Days   types.Int64  `tfsdk:"days"`
+	// Velocity
+	By            types.Set    `tfsdk:"by"`
+	Every         types.Object `tfsdk:"every"`
+	Fallback      types.Object `tfsdk:"fallback"`
+	MaxDelay      types.Object `tfsdk:"max_delay"`
 	Measure       types.String `tfsdk:"measure"`
 	Of            types.String `tfsdk:"of"`
-	SlidingWindow types.List   `tfsdk:"sliding_window"`
-	Use           types.List   `tfsdk:"use"`
+	SlidingWindow types.Object `tfsdk:"sliding_window"`
+	Use           types.Object `tfsdk:"use"`
 }
 
-type predictorVelocityEveryModel struct {
+type predictorDefault struct {
+	Weight types.Int64  `tfsdk:"weight"`
+	Result types.Object `tfsdk:"result"`
+}
+
+type predictorDefaultResult struct {
+	ResultType types.String `tfsdk:"type"`
+	Level      types.String `tfsdk:"level"`
+}
+
+type predictorUserLocationAnomalyRadius struct {
+	Distance types.Int64  `tfsdk:"distance"`
+	Unit     types.String `tfsdk:"unit"`
+}
+
+type predictorVelocityEvery struct {
 	Unit      types.String `tfsdk:"unit"`
 	Quantity  types.Int64  `tfsdk:"quantity"`
 	MinSample types.Int64  `tfsdk:"min_sample"`
 }
 
-type predictorVelocityFallbackModel struct {
+type predictorVelocityFallback struct {
 	Strategy types.String `tfsdk:"strategy"`
 	High     types.Int64  `tfsdk:"high"`
 	Medium   types.Int64  `tfsdk:"medium"`
 }
 
-type predictorVelocityMaxDelayModel struct {
+type predictorVelocityMaxDelay struct {
 	Unit     types.String `tfsdk:"unit"`
-	Quantity types.String `tfsdk:"quantity"`
+	Quantity types.Int64  `tfsdk:"quantity"`
 }
 
-type predictorVelocitySlidingWindowModel struct {
-	MinSample types.Int64  `tfsdk:"min_sample"`
-	Quantity  types.Int64  `tfsdk:"quantity"`
+type predictorVelocitySlidingWindow struct {
 	Unit      types.String `tfsdk:"unit"`
+	Quantity  types.Int64  `tfsdk:"quantity"`
+	MinSample types.Int64  `tfsdk:"min_sample"`
 }
 
-type predictorVelocityUseModel struct {
-	High   types.Int64  `tfsdk:"high"`
-	Medium types.Int64  `tfsdk:"medium"`
-	Type   types.String `tfsdk:"type"`
+type predictorVelocityUse struct {
+	UseType types.String `tfsdk:"type"`
+	Medium  types.Int64  `tfsdk:"medium"`
+	High    types.Int64  `tfsdk:"high"`
 }
 
 var (
-	riskPredictorCompositeModelTFObjectTypes = map[string]attr.Type{} // TODO
-
-	riskPredictorCustomModelTFObjectTypes = map[string]attr.Type{
-		"attribute_mapping": types.StringType,
-		"map_ip_range_values": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: riskPredictorCustomMapIPRangeTFObjectTypes,
-			},
-		},
-		"map_range_values": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: riskPredictorCustomMapBetweenTFObjectTypes,
-			},
-		},
-		"map_list_values": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: riskPredictorCustomMapListTFObjectTypes,
-			},
+	defaultTFObjectTypes = map[string]attr.Type{
+		"weight": types.Int64Type,
+		"result": types.ObjectType{
+			AttrTypes: defaultResultTFObjectTypes,
 		},
 	}
 
-	riskPredictorCustomMapTFObjectTypes = map[string]attr.Type{
-		"high":   types.ListType{ElemType: types.StringType},
-		"medium": types.ListType{ElemType: types.StringType},
-		"low":    types.ListType{ElemType: types.StringType},
+	defaultResultTFObjectTypes = map[string]attr.Type{
+		"type":  types.StringType,
+		"level": types.StringType,
 	}
 
-	riskPredictorCustomMapIPRangeTFObjectTypes = map[string]attr.Type{
-		"cidr_range_list": types.SetType{ElemType: types.StringType},
+	predictorUserLocationAnomalyRadiusTFObjectTypes = map[string]attr.Type{
+		"distance": types.Int64Type,
+		"unit":     types.StringType,
 	}
 
-	riskPredictorCustomMapBetweenTFObjectTypes = map[string]attr.Type{
-		"minimum_value": types.ListType{ElemType: types.StringType},
-		"maximum_value": types.ListType{ElemType: types.StringType},
+	predictorVelocityEveryTFObjectTypes = map[string]attr.Type{
+		"unit":       types.StringType,
+		"quantity":   types.Int64Type,
+		"min_sample": types.Int64Type,
 	}
 
-	riskPredictorCustomMapListTFObjectTypes = map[string]attr.Type{
-		"list_items": types.ListType{ElemType: types.StringType},
+	predictorVelocityFallbackTFObjectTypes = map[string]attr.Type{
+		"strategy": types.StringType,
+		"high":     types.Int64Type,
+		"medium":   types.Int64Type,
 	}
 
-	riskPredictorNewDeviceModelTFObjectTypes = map[string]attr.Type{
-		"activation_at": types.StringType,
-		"detect":        types.StringType,
+	predictorVelocityMaxDelayTFObjectTypes = map[string]attr.Type{
+		"unit":     types.StringType,
+		"quantity": types.Int64Type,
 	}
 
-	// anonymous network, geovelocity, IP reputation
-	riskPredictorMinimalAllowedCIDRModelTFObjectTypes = map[string]attr.Type{
-		"allowed_cidr_list": types.SetType{ElemType: types.StringType},
+	predictorVelocitySlidingWindowTFObjectTypes = map[string]attr.Type{
+		"unit":       types.StringType,
+		"quantity":   types.Int64Type,
+		"min_sample": types.Int64Type,
 	}
 
-	riskPredictorUEBAModelTFObjectTypes = map[string]attr.Type{
-		"prediction_model": types.StringType,
-	}
-
-	riskPredictorUserLocationModelTFObjectTypes = map[string]attr.Type{
-		"radius_distance":      types.Int64Type,
-		"radius_distance_unit": types.StringType,
-	}
-
-	riskPredictorVelocityModelTFObjectTypes = map[string]attr.Type{
-		"by": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: riskPredictorVelocityByModelTFObjectTypes,
-			},
-		},
-		"every": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: riskPredictorVelocityEveryModelTFObjectTypes,
-			},
-		},
-		"fallback": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: riskPredictorVelocityFallbackModelTFObjectTypes,
-			},
-		},
-		"max_delay": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: riskPredictorVelocityMaxDelayModelTFObjectTypes,
-			},
-		},
-		"sliding_window": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: riskPredictorVelocitySlidingWindowModelTFObjectTypes,
-			},
-		},
-		"use": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: riskPredictorVelocityUseModelTFObjectTypes,
-			},
-		},
-	}
-
-	riskPredictorVelocityByModelTFObjectTypes = map[string]attr.Type{
-		"ip_address": types.BoolType,
-		"username":   types.BoolType,
-	}
-
-	riskPredictorVelocityEveryModelTFObjectTypes = map[string]attr.Type{
-		"ip_address": types.Int64Type,
-		"username":   types.Int64Type,
-	}
-
-	riskPredictorVelocityFallbackModelTFObjectTypes = map[string]attr.Type{
-		"ip_address": types.StringType,
-		"username":   types.StringType,
-	}
-
-	riskPredictorVelocityMaxDelayModelTFObjectTypes = map[string]attr.Type{
-		"ip_address": types.Int64Type,
-		"username":   types.Int64Type,
-	}
-
-	riskPredictorVelocitySlidingWindowModelTFObjectTypes = map[string]attr.Type{
-		"ip_address": types.Int64Type,
-		"username":   types.Int64Type,
-	}
-
-	riskPredictorVelocityUseModelTFObjectTypes = map[string]attr.Type{
-		"ip_address": types.BoolType,
-		"username":   types.BoolType,
+	predictorVelocityUseTFObjectTypes = map[string]attr.Type{
+		"type":   types.StringType,
+		"medium": types.Int64Type,
+		"high":   types.Int64Type,
 	}
 )
 
@@ -299,11 +185,11 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 		Description:         strings.ReplaceAll(typeDescriptionFmt, "`", "\""),
 	}
 
-	resultLevelDescriptionFmt := "A string that identifies the risk level. Options are `HIGH`, `MEDIUM`, and `LOW`."
-	resultLevelDescription := framework.SchemaDescription{
-		MarkdownDescription: resultLevelDescriptionFmt,
-		Description:         strings.ReplaceAll(resultLevelDescriptionFmt, "`", "\""),
-	}
+	// resultLevelDescriptionFmt := "A string that identifies the risk level. Options are `HIGH`, `MEDIUM`, and `LOW`."
+	// resultLevelDescription := framework.SchemaDescription{
+	// 	MarkdownDescription: resultLevelDescriptionFmt,
+	// 	Description:         strings.ReplaceAll(resultLevelDescriptionFmt, "`", "\""),
+	// }
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -347,21 +233,75 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			"type": schema.StringAttribute{
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
-				Computed:            true,
-			},
+				Required:            true,
 
-			"default_decision_value": schema.StringAttribute{
-				Description:         resultLevelDescription.Description,
-				MarkdownDescription: resultLevelDescription.MarkdownDescription,
-				Optional:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
 				Validators: []validator.String{
 					stringvalidator.OneOf(func() []string {
 						strings := make([]string, 0)
-						for _, v := range risk.AllowedEnumRiskLevelEnumValues {
+						for _, v := range risk.AllowedEnumPredictorTypeEnumValues {
 							strings = append(strings, string(v))
 						}
 						return strings
 					}()...),
+				},
+			},
+
+			"default": schema.SingleNestedAttribute{
+				Description: "",
+				Optional:    true,
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"weight": schema.Int64Attribute{
+						Description: "A number that specifies the default weight for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
+						Optional:    true,
+						Computed:    true,
+					},
+
+					"result": schema.SingleNestedAttribute{
+						Description: "",
+						Optional:    true,
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								Description:         typeDescription.Description,
+								MarkdownDescription: typeDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(func() []string {
+										strings := make([]string, 0)
+										for _, v := range risk.AllowedEnumResultTypeEnumValues {
+											strings = append(strings, string(v))
+										}
+										return strings
+									}()...),
+								},
+							},
+
+							"level": schema.StringAttribute{
+								Description:         typeDescription.Description,
+								MarkdownDescription: typeDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(func() []string {
+										strings := make([]string, 0)
+										for _, v := range risk.AllowedEnumRiskLevelEnumValues {
+											strings = append(strings, string(v))
+										}
+										return strings
+									}()...),
+								},
+							},
+						},
+					},
 				},
 			},
 
@@ -374,338 +314,215 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Description: "A boolean that indicates the PingOne Risk predictor can be deleted or not.",
 				Computed:    true,
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"predictor_anonymous_network": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the Anonymous Network risk predictor type.",
-
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"allowed_cidr_list": schema.SetAttribute{
-							Description:         resultLevelDescription.Description,
-							MarkdownDescription: resultLevelDescription.MarkdownDescription,
-							Required:            true,
-							ElementType:         types.StringType,
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.RegexMatches(regexp.MustCompile(`^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$`), "Values must be valid CIDR format."),
-								),
-							},
-						},
-					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						// path.MatchRelative().AtParent().AtName("predictor_composite"),
-						// path.MatchRelative().AtParent().AtName("predictor_custom"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_new_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-					// path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-					// path.MatchRelative().AtParent().AtName("predictor_velocity"),
+			// Anonymous network, IP reputation, geovelocity
+			"allowed_cidr_list": schema.SetAttribute{
+				Description: "",
+				Optional:    true,
+				ElementType: types.StringType,
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(
+						stringvalidator.RegexMatches(regexp.MustCompile(`^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$`), "Values must be valid CIDR format."),
 					),
 				},
 			},
 
-			// "predictor_composite": schema.ListNestedBlock{
-			// 	Description: "A single block that contains configuration values for the composite risk predictor type.",
+			// New device
+			"detect": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)),
 
-			// 	NestedObject: schema.NestedBlockObject{
-			// 		Attributes: map[string]schema.Attribute{},
-			// 	},
+				Validators: []validator.String{
+					stringvalidator.OneOf(func() []string {
+						strings := make([]string, 0)
+						for _, v := range risk.AllowedEnumPredictorNewDeviceDetectTypeEnumValues {
+							strings = append(strings, string(v))
+						}
+						return strings
+					}()...),
+				},
+			},
 
-			// 	Validators: []validator.List{
-			// 		listvalidator.SizeAtMost(1),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-			// 	},
-			// },
+			"activation_at": schema.StringAttribute{
+				Description: "You can use the `activation_at` parameter to specify a date on which the learning process for the predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
+				},
+			},
 
-			// "predictor_custom": schema.ListNestedBlock{
-			// 	Description: "A single block that contains configuration values for the custom mapping risk predictor type.",
+			// User Location Anomaly
+			"radius": schema.SingleNestedAttribute{
+				Description: "",
+				Optional:    true,
 
-			// 	NestedObject: schema.NestedBlockObject{
-			// 		Attributes: map[string]schema.Attribute{
-			// 			"attribute_mapping": schema.StringAttribute{
-			// 				Required: true,
-			// 				Validators: []validator.String{
-			// 					stringvalidator.LengthAtLeast(attrMinLength),
-			// 					stringvalidator.RegexMatches(regexp.MustCompile(`^\${(event|details)[a-z\.]+}$`), `Attribute mapping must match regex pattern "^\${(event|details)[a-z\.]+}$"`),
-			// 				},
-			// 			},
+				Attributes: map[string]schema.Attribute{
+					"distance": schema.Int64Attribute{
+						Description: "",
+						Required:    true,
+					},
 
-			// 			"map_ip_range_values": schema.SetAttribute{
-			// 				Description: "The mapping of risk levels for the IP ranges specified.",
-			// 				Optional:    true,
-			// 				ElementType: types.StringType,
-			// 				Validators: []validator.Set{
-			// 					setvalidator.SizeAtLeast(attrMinLength),
-			// 					setvalidator.ValueStringsAre(
-			// 						stringvalidator.RegexMatches(regexp.MustCompile(`^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$`), `IP CIDR range must match regex pattern "^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$"`),
-			// 					),
-			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_ip_range_values")),
-			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_range_values")),
-			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_list_values")),
-			// 				},
-			// 			},
+					"unit": schema.StringAttribute{
+						Description: "",
+						Required:    true,
 
-			// 			"map_range_values": schema.SetAttribute{
-			// 				Description: "The mapping of risk levels for numerical values in a minimum, maxiumum boundary.",
-			// 				Optional:    true,
-			// 				ElementType: types.StringType,
-			// 				Validators: []validator.Set{
-			// 					setvalidator.SizeAtLeast(attrMinLength),
-			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_ip_range_values")),
-			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_range_values")),
-			// 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("map_list_values")),
-			// 				},
-			// 			},
-			// 		},
-
-			// 		Blocks: map[string]schema.Block{
-			// 			"map_range_values": schema.ListNestedBlock{
-			// 			}
-			// 	},
-
-			// 	Validators: []validator.List{
-			// 		listvalidator.SizeAtMost(1),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-			// 		// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-			// 		// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-			// 		// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-			// 		// listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-			// 	},
-			// },
-
-			"predictor_geovelocity": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the Geovelocity risk predictor type.",
-
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"allowed_cidr_list": schema.SetAttribute{
-							Description:         resultLevelDescription.Description,
-							MarkdownDescription: resultLevelDescription.MarkdownDescription,
-							Required:            true,
-							ElementType:         types.StringType,
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.RegexMatches(regexp.MustCompile(`^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$`), "Values must be valid CIDR format."),
-								),
-							},
+						Validators: []validator.String{
+							stringvalidator.OneOf(func() []string {
+								strings := make([]string, 0)
+								for _, v := range risk.AllowedEnumDistanceUnitEnumValues {
+									strings = append(strings, string(v))
+								}
+								return strings
+							}()...),
 						},
 					},
 				},
+			},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						// path.MatchRelative().AtParent().AtName("predictor_composite"),
-						// path.MatchRelative().AtParent().AtName("predictor_custom"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_new_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-					// path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-					// path.MatchRelative().AtParent().AtName("predictor_velocity"),
+			"days": schema.Int64Attribute{
+				Description: "",
+				Optional:    true,
+				Computed:    true,
+			},
+
+			// Velocity
+			"measure": schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(func() []string {
+						strings := make([]string, 0)
+						for _, v := range risk.AllowedEnumPredictorVelocityMeasureEnumValues {
+							strings = append(strings, string(v))
+						}
+						return strings
+					}()...),
+				},
+			},
+
+			"of": schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("${event.ip}", "${event.user.id}"),
+				},
+			},
+
+			"by": schema.SetAttribute{
+				Description: "",
+				Computed:    true,
+				ElementType: types.StringType,
+
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(
+						stringvalidator.OneOf("${event.user.id}", "${event.ip}"),
 					),
 				},
 			},
 
-			"predictor_ip_reputation": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the IP Reputation risk predictor type.",
+			"use": schema.SingleNestedAttribute{
+				Description: "",
+				Computed:    true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"allowed_cidr_list": schema.SetAttribute{
-							Description:         resultLevelDescription.Description,
-							MarkdownDescription: resultLevelDescription.MarkdownDescription,
-							Required:            true,
-							ElementType:         types.StringType,
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.RegexMatches(regexp.MustCompile(`^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$`), "Values must be valid CIDR format."),
-								),
-							},
-						},
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Description: "The type of the risk predictor.",
+						Computed:    true,
 					},
-				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						// path.MatchRelative().AtParent().AtName("predictor_composite"),
-						// path.MatchRelative().AtParent().AtName("predictor_custom"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_new_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-					// path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-					// path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
+					"medium": schema.Int64Attribute{
+						Description: "The medium risk level.",
+						Computed:    true,
+					},
+
+					"high": schema.Int64Attribute{
+						Description: "The high risk level.",
+						Computed:    true,
+					},
 				},
 			},
 
-			"predictor_new_device": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the new device risk predictor type.",
+			"fallback": schema.SingleNestedAttribute{
+				Description: "An object that contains configuration values for the fallback risk predictor type.",
+				Computed:    true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"detect": schema.StringAttribute{
-							Required: true,
-							Validators: []validator.String{
-								stringvalidator.OneOf(func() []string {
-									strings := make([]string, 0)
-									for _, v := range risk.AllowedEnumPredictorNewDeviceDetectTypeEnumValues {
-										strings = append(strings, string(v))
-									}
-									return strings
-								}()...),
-							},
-						},
-
-						"activation_at": schema.StringAttribute{
-							Description: "You can use the `activation_at` parameter to specify a date on which the learning process for the predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.",
-							Optional:    true,
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
-							},
-						},
+				Attributes: map[string]schema.Attribute{
+					"strategy": schema.StringAttribute{
+						Description: "The strategy to use when the risk predictor is not able to determine a risk level.",
+						Computed:    true,
 					},
-				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						// path.MatchRelative().AtParent().AtName("predictor_composite"),
-						// path.MatchRelative().AtParent().AtName("predictor_custom"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_new_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-					// path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-					// path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
+					"high": schema.Int64Attribute{
+						Description: "The high risk level.",
+						Computed:    true,
+					},
+
+					"medium": schema.Int64Attribute{
+						Description: "The medium risk level.",
+						Computed:    true,
+					},
 				},
 			},
 
-			"predictor_user_location_anomaly": schema.ListNestedBlock{
-				Description: "A single block that contains configuration values for the user location anomaly risk predictor type.",
+			"every": schema.SingleNestedAttribute{
+				Description: "An object that contains configuration values for the every risk predictor type.",
+				Computed:    true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"radius_distance_unit": schema.StringAttribute{
-							Description: "The unit of measurement for the `radius_distance` parameter.",
-							Optional:    true,
-							Computed:    true,
-							Default:     stringdefault.StaticString(string(risk.ENUMDISTANCEUNIT_KILOMETERS)),
-							Validators: []validator.String{
-								stringvalidator.OneOf(func() []string {
-									strings := make([]string, 0)
-									for _, v := range risk.AllowedEnumDistanceUnitEnumValues {
-										strings = append(strings, string(v))
-									}
-									return strings
-								}()...),
-							},
-						},
-						"radius_distance": schema.Int64Attribute{
-							Description: "The radius distance above which anomalies are detected.",
-							Required:    true,
-							Validators: []validator.Int64{
-								int64validator.AtLeast(10),
-								int64validator.AtMost(160),
-							},
-						},
+				Attributes: map[string]schema.Attribute{
+					"unit": schema.StringAttribute{
+						Description: "The unit of measurement for the `interval` parameter.",
+						Computed:    true,
 					},
-				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						// path.MatchRelative().AtParent().AtName("predictor_composite"),
-						// path.MatchRelative().AtParent().AtName("predictor_custom"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_new_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-					// path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-					// path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
+					"quantity": schema.Int64Attribute{
+						Description: "The number of `unit` intervals to use for the risk predictor.",
+						Computed:    true,
+					},
+
+					"min_sample": schema.Int64Attribute{
+						Description: "The minimum number of samples to use for the risk predictor.",
+						Computed:    true,
+					},
 				},
 			},
 
-			// "predictor_user_risk_behavior": schema.ListNestedBlock{
-			// 	Description: "A single block that contains configuration values for the user risk behavior risk predictor type.",
+			"sliding_window": schema.SingleNestedAttribute{
+				Description: "An object that contains configuration values for the sliding window risk predictor type.",
+				Computed:    true,
 
-			// 	NestedObject: schema.NestedBlockObject{
-			// 		Attributes: map[string]schema.Attribute{
-			// 			"prediction_model": schema.ListAttribute{},
-			// 		},
-			// 	},
+				Attributes: map[string]schema.Attribute{
+					"unit": schema.StringAttribute{
+						Description: "The unit of measurement for the `interval` parameter.",
+						Computed:    true,
+					},
 
-			// 	Validators: []validator.List{
-			// 		listvalidator.SizeAtMost(1),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-			// 	},
-			// },
+					"quantity": schema.Int64Attribute{
+						Description: "The number of `unit` intervals to use for the risk predictor.",
+						Computed:    true,
+					},
 
-			// "predictor_velocity": schema.ListNestedBlock{
-			// 	Description: "A single block that contains configuration values for the IP/user velocity risk predictor type.",
+					"min_sample": schema.Int64Attribute{
+						Description: "The minimum number of samples to use for the risk predictor.",
+						Computed:    true,
+					},
+				},
+			},
 
-			// 	NestedObject: schema.NestedBlockObject{
-			// 		Attributes: map[string]schema.Attribute{
-			// 			"by":             schema.ListAttribute{},
-			// 			"every":          schema.ListAttribute{},
-			// 			"fallback":       schema.ListAttribute{},
-			// 			"max_delay":      schema.ListAttribute{},
-			// 			"measure":        schema.ListAttribute{},
-			// 			"of":             schema.ListAttribute{},
-			// 			"sliding_window": schema.ListAttribute{},
-			// 			"use":            schema.ListAttribute{},
-			// 		},
-			// 	},
+			"max_delay": schema.SingleNestedAttribute{
+				Description: "An object that contains configuration values for the max delay risk predictor type.",
+				Computed:    true,
 
-			// 	Validators: []validator.List{
-			// 		listvalidator.SizeAtMost(1),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_anonymous_network")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_composite")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_custom")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_geovelocity")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_ip_reputation")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_new_device")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior")),
-			// 		listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("predictor_velocity")),
-			// 	},
-			// },
+				Attributes: map[string]schema.Attribute{
+					"unit": schema.StringAttribute{
+						Description: "The unit of measurement for the `interval` parameter.",
+						Computed:    true,
+					},
+
+					"quantity": schema.Int64Attribute{
+						Description: "The number of `unit` intervals to use for the risk predictor.",
+						Computed:    true,
+					},
+				},
+			},
 		},
 	}
 }
@@ -787,7 +604,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*risk.RiskPredictor))...)
+	resp.Diagnostics.Append(state.toState(ctx, response.(*risk.RiskPredictor))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -834,7 +651,7 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*risk.RiskPredictor))...)
+	resp.Diagnostics.Append(data.toState(ctx, response.(*risk.RiskPredictor))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -885,7 +702,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*risk.RiskPredictor))...)
+	resp.Diagnostics.Append(state.toState(ctx, response.(*risk.RiskPredictor))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -949,105 +766,89 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context) (*risk.RiskPred
 	riskPredictor := &risk.RiskPredictor{}
 	var d diag.Diagnostics
 
-	if !p.PredictorAnonymousNetwork.IsNull() {
-		riskPredictor.RiskPredictorAnonymousNetwork, d = p.expandPredictorAnonymousNetwork(ctx)
+	if !p.Type.IsNull() {
+
+		data := risk.NewRiskPredictorCommon(p.Name.ValueString(), p.CompactName.ValueString(), risk.EnumPredictorType(p.Type.ValueString()))
+
+		if !p.Description.IsNull() && !p.Description.IsUnknown() {
+			data.SetDescription(p.Description.ValueString())
+		}
+
+		if !p.Default.IsNull() && !p.Default.IsUnknown() {
+			var defaultPlan predictorDefault
+			d := p.Default.As(ctx, &defaultPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			dataDefault := risk.NewRiskPredictorCommonDefault(int32(defaultPlan.Weight.ValueInt64()))
+
+			if !defaultPlan.Result.IsNull() && !defaultPlan.Result.IsUnknown() {
+				var defaultResultPlan predictorDefaultResult
+				d := defaultPlan.Result.As(ctx, &defaultResultPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				dataDefaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumRiskLevel(defaultResultPlan.Level.ValueString()))
+				dataDefaultResult.SetType(risk.EnumResultType(defaultResultPlan.ResultType.ValueString()))
+				dataDefault.SetResult(*dataDefaultResult)
+
+				data.SetDefault(*dataDefault)
+			}
+
+			data.SetDefault(*dataDefault)
+		}
+
+		switch p.Type.ValueString() {
+		case string(risk.ENUMPREDICTORTYPE_ANONYMOUS_NETWORK):
+			riskPredictor.RiskPredictorAnonymousNetwork, d = p.expandPredictorAnonymousNetwork(ctx, data)
+		case string(risk.ENUMPREDICTORTYPE_GEO_VELOCITY):
+			riskPredictor.RiskPredictorGeovelocity, d = p.expandPredictorGeovelocity(ctx, data)
+		case string(risk.ENUMPREDICTORTYPE_IP_REPUTATION):
+			riskPredictor.RiskPredictorIPReputation, d = p.expandPredictorIPReputation(ctx, data)
+		case string(risk.ENUMPREDICTORTYPE_DEVICE):
+			riskPredictor.RiskPredictorNewDevice, d = p.expandPredictorNewDevice(data)
+		case string(risk.ENUMPREDICTORTYPE_USER_LOCATION_ANOMALY):
+			riskPredictor.RiskPredictorUserLocationAnomaly, d = p.expandPredictorUserLocationAnomaly(ctx, data)
+		}
+
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 	}
-
-	// if !p.PredictorComposite.IsNull() {
-	// 	riskPredictor.RiskPredictorComposite, d = p.expandPredictorComposite(ctx)
-	// 	diags.Append(d...)
-	// 	if diags.HasError() {
-	// 		return nil, diags
-	// 	}
-	// }
-
-	// if !p.PredictorCustom.IsNull() {
-	// 	riskPredictor.RiskPredictorCustom, d = p.expandPredictorCustom(ctx)
-	// 	diags.Append(d...)
-	// 	if diags.HasError() {
-	// 		return nil, diags
-	// 	}
-	// }
-
-	if !p.PredictorGeovelocity.IsNull() {
-		riskPredictor.RiskPredictorGeovelocity, d = p.expandPredictorGeovelocity(ctx)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-	}
-
-	if !p.PredictorIPReputation.IsNull() {
-		riskPredictor.RiskPredictorIPReputation, d = p.expandPredictorIPReputation(ctx)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-	}
-
-	if !p.PredictorNewDevice.IsNull() {
-		riskPredictor.RiskPredictorNewDevice, d = p.expandPredictorNewDevice(ctx)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-	}
-
-	if !p.PredictorUserLocationAnomaly.IsNull() {
-		riskPredictor.RiskPredictorUserLocationAnomaly, d = p.expandPredictorUserLocationAnomaly(ctx)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-	}
-
-	// if !p.PredictorUEBA.IsNull() {
-	// 	riskPredictor.RiskPredictorUEBA, d = p.expandPredictorUEBA(ctx)
-	// 	diags.Append(d...)
-	// 	if diags.HasError() {
-	// 		return nil, diags
-	// 	}
-	// }
-
-	// if !p.PredictorVelocity.IsNull() {
-	// 	riskPredictor.RiskPredictorVelocity, d = p.expandPredictorVelocity(ctx)
-	// 	diags.Append(d...)
-	// 	if diags.HasError() {
-	// 		return nil, diags
-	// 	}
-	// }
 
 	return riskPredictor, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context.Context) (*risk.RiskPredictorAnonymousNetwork, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorAnonymousNetwork, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := risk.NewRiskPredictorAnonymousNetwork(p.Name.ValueString(), p.CompactName.ValueString(), risk.ENUMPREDICTORTYPE_ANONYMOUS_NETWORK)
-
-	if !p.Description.IsNull() && !p.Description.IsUnknown() {
-		data.SetDescription(p.Description.ValueString())
+	data := risk.RiskPredictorAnonymousNetwork{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        riskPredictorCommon.Type,
+		Default:     riskPredictorCommon.Default,
 	}
 
-	if !p.DefaultDecisionValue.IsNull() && !p.DefaultDecisionValue.IsUnknown() {
-		defaultModel := risk.NewRiskPredictorCommonDefault(int32(5))
-		defaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumRiskLevel(p.DefaultDecisionValue.ValueString()))
-
-		defaultModel.SetResult(*defaultResult)
-
-		data.SetDefault(*defaultModel)
-	}
-
-	if !p.PredictorAnonymousNetwork.IsNull() && !p.PredictorAnonymousNetwork.IsUnknown() {
-		var plan []predictorMinimalAllowedCIDRModel
-		d := p.PredictorAnonymousNetwork.ElementsAs(ctx, &plan, false)
+	if !p.AllowedCIDRList.IsNull() && !p.AllowedCIDRList.IsUnknown() {
+		allowedCIDRListSet, d := p.AllowedCIDRList.ToSetValue(ctx)
 		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 
-		valuesPointerSlice := framework.TFSetToStringSlice(ctx, plan[0].AllowedCIDRList)
+		valuesPointerSlice := framework.TFSetToStringSlice(ctx, allowedCIDRListSet)
 		if len(valuesPointerSlice) > 0 {
 			valuesSlice := make([]string, 0)
 			for i := range valuesPointerSlice {
@@ -1057,7 +858,7 @@ func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context
 		}
 	}
 
-	return data, diags
+	return &data, diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Context) (*risk.RiskPredictorComposite, diag.Diagnostics) {
@@ -1076,30 +877,25 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context) 
 	return data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorGeovelocity(ctx context.Context) (*risk.RiskPredictorGeovelocity, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorGeovelocity(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorGeovelocity, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := risk.NewRiskPredictorGeovelocity(p.Name.ValueString(), p.CompactName.ValueString(), risk.ENUMPREDICTORTYPE_GEO_VELOCITY)
-
-	if !p.Description.IsNull() && !p.Description.IsUnknown() {
-		data.SetDescription(p.Description.ValueString())
+	data := risk.RiskPredictorGeovelocity{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        riskPredictorCommon.Type,
+		Default:     riskPredictorCommon.Default,
 	}
 
-	if !p.DefaultDecisionValue.IsNull() && !p.DefaultDecisionValue.IsUnknown() {
-		defaultModel := risk.NewRiskPredictorCommonDefault(int32(5))
-		defaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumRiskLevel(p.DefaultDecisionValue.ValueString()))
-
-		defaultModel.SetResult(*defaultResult)
-
-		data.SetDefault(*defaultModel)
-	}
-
-	if !p.PredictorGeovelocity.IsNull() && !p.PredictorGeovelocity.IsUnknown() {
-		var plan []predictorMinimalAllowedCIDRModel
-		d := p.PredictorGeovelocity.ElementsAs(ctx, &plan, false)
+	if !p.AllowedCIDRList.IsNull() && !p.AllowedCIDRList.IsUnknown() {
+		allowedCIDRListSet, d := p.AllowedCIDRList.ToSetValue(ctx)
 		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 
-		valuesPointerSlice := framework.TFSetToStringSlice(ctx, plan[0].AllowedCIDRList)
+		valuesPointerSlice := framework.TFSetToStringSlice(ctx, allowedCIDRListSet)
 		if len(valuesPointerSlice) > 0 {
 			valuesSlice := make([]string, 0)
 			for i := range valuesPointerSlice {
@@ -1109,33 +905,28 @@ func (p *riskPredictorResourceModel) expandPredictorGeovelocity(ctx context.Cont
 		}
 	}
 
-	return data, diags
+	return &data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorIPReputation(ctx context.Context) (*risk.RiskPredictorIPReputation, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorIPReputation(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorIPReputation, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := risk.NewRiskPredictorIPReputation(p.Name.ValueString(), p.CompactName.ValueString(), risk.ENUMPREDICTORTYPE_IP_REPUTATION)
-
-	if !p.Description.IsNull() && !p.Description.IsUnknown() {
-		data.SetDescription(p.Description.ValueString())
+	data := risk.RiskPredictorIPReputation{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        riskPredictorCommon.Type,
+		Default:     riskPredictorCommon.Default,
 	}
 
-	if !p.DefaultDecisionValue.IsNull() && !p.DefaultDecisionValue.IsUnknown() {
-		defaultModel := risk.NewRiskPredictorCommonDefault(int32(5))
-		defaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumRiskLevel(p.DefaultDecisionValue.ValueString()))
-
-		defaultModel.SetResult(*defaultResult)
-
-		data.SetDefault(*defaultModel)
-	}
-
-	if !p.PredictorIPReputation.IsNull() && !p.PredictorIPReputation.IsUnknown() {
-		var plan []predictorMinimalAllowedCIDRModel
-		d := p.PredictorIPReputation.ElementsAs(ctx, &plan, false)
+	if !p.AllowedCIDRList.IsNull() && !p.AllowedCIDRList.IsUnknown() {
+		allowedCIDRListSet, d := p.AllowedCIDRList.ToSetValue(ctx)
 		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 
-		valuesPointerSlice := framework.TFSetToStringSlice(ctx, plan[0].AllowedCIDRList)
+		valuesPointerSlice := framework.TFSetToStringSlice(ctx, allowedCIDRListSet)
 		if len(valuesPointerSlice) > 0 {
 			valuesSlice := make([]string, 0)
 			for i := range valuesPointerSlice {
@@ -1145,79 +936,65 @@ func (p *riskPredictorResourceModel) expandPredictorIPReputation(ctx context.Con
 		}
 	}
 
-	return data, diags
+	return &data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorNewDevice(ctx context.Context) (*risk.RiskPredictorNewDevice, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorNewDevice(riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorNewDevice, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := risk.NewRiskPredictorNewDevice(p.Name.ValueString(), p.CompactName.ValueString(), risk.ENUMPREDICTORTYPE_DEVICE, risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)
-
-	if !p.Description.IsNull() && !p.Description.IsUnknown() {
-		data.SetDescription(p.Description.ValueString())
+	data := risk.RiskPredictorNewDevice{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        riskPredictorCommon.Type,
+		Default:     riskPredictorCommon.Default,
 	}
 
-	if !p.DefaultDecisionValue.IsNull() && !p.DefaultDecisionValue.IsUnknown() {
-		defaultModel := risk.NewRiskPredictorCommonDefault(int32(5))
-		defaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumRiskLevel(p.DefaultDecisionValue.ValueString()))
+	data.SetDetect(risk.EnumPredictorNewDeviceDetectType(p.Detect.ValueString()))
 
-		defaultModel.SetResult(*defaultResult)
-
-		data.SetDefault(*defaultModel)
-	}
-
-	if !p.PredictorNewDevice.IsNull() && !p.PredictorNewDevice.IsUnknown() {
-		var plan []predictorNewDeviceModel
-		d := p.PredictorNewDevice.ElementsAs(ctx, &plan, false)
-		diags.Append(d...)
-
-		data.SetDetect(risk.EnumPredictorNewDeviceDetectType(plan[0].Detect.ValueString()))
-
-		if !plan[0].ActivationAt.IsNull() && !plan[0].ActivationAt.IsUnknown() {
-			t, e := time.Parse(time.RFC3339, plan[0].ActivationAt.ValueString())
-			if e != nil {
-				diags.AddError(
-					"Invalid data format",
-					"Cannot convert activation_at to a date/time.  Please check the format is a valid RFC3339 date time format.")
-				return nil, diags
-			}
-
-			data.SetActivationAt(t)
+	if !p.ActivationAt.IsNull() && !p.ActivationAt.IsUnknown() {
+		t, e := time.Parse(time.RFC3339, p.ActivationAt.ValueString())
+		if e != nil {
+			diags.AddError(
+				"Invalid data format",
+				"Cannot convert activation_at to a date/time.  Please check the format is a valid RFC3339 date time format.")
+			return nil, diags
 		}
+
+		data.SetActivationAt(t)
 	}
 
-	return data, diags
+	return &data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorUserLocationAnomaly(ctx context.Context) (*risk.RiskPredictorUserLocationAnomaly, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorUserLocationAnomaly(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorUserLocationAnomaly, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var radius *risk.RiskPredictorUserLocationAnomalyAllOfRadius
+	data := risk.RiskPredictorUserLocationAnomaly{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        riskPredictorCommon.Type,
+		Default:     riskPredictorCommon.Default,
+	}
 
-	if !p.PredictorUserLocationAnomaly.IsNull() && !p.PredictorUserLocationAnomaly.IsUnknown() {
-		var plan []predictorUserLocationModel
-		d := p.PredictorUserLocationAnomaly.ElementsAs(ctx, &plan, false)
+	if !p.Radius.IsNull() && !p.Radius.IsUnknown() {
+		var radiusPlan predictorUserLocationAnomalyRadius
+		d := p.Radius.As(ctx, &radiusPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 
-		radius = risk.NewRiskPredictorUserLocationAnomalyAllOfRadius(int32(plan[0].RadiusDistance.ValueInt64()), risk.EnumDistanceUnit(plan[0].RadiusDistanceUnit.ValueString()))
+		radius := risk.NewRiskPredictorUserLocationAnomalyAllOfRadius(int32(radiusPlan.Distance.ValueInt64()), risk.EnumDistanceUnit(radiusPlan.Unit.ValueString()))
+
+		data.SetRadius(*radius)
 	}
 
-	data := risk.NewRiskPredictorUserLocationAnomaly(p.Name.ValueString(), p.CompactName.ValueString(), risk.ENUMPREDICTORTYPE_USER_LOCATION_ANOMALY, 50, *radius)
-
-	if !p.Description.IsNull() && !p.Description.IsUnknown() {
-		data.SetDescription(p.Description.ValueString())
-	}
-
-	if !p.DefaultDecisionValue.IsNull() && !p.DefaultDecisionValue.IsUnknown() {
-		defaultModel := risk.NewRiskPredictorCommonDefault(int32(5))
-		defaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumRiskLevel(p.DefaultDecisionValue.ValueString()))
-
-		defaultModel.SetResult(*defaultResult)
-
-		data.SetDefault(*defaultModel)
-	}
-
-	return data, diags
+	return &data, diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorUEBA(ctx context.Context) (*risk.RiskPredictorUEBA, diag.Diagnostics) {
@@ -1228,15 +1005,190 @@ func (p *riskPredictorResourceModel) expandPredictorUEBA(ctx context.Context) (*
 	return data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context) (*risk.RiskPredictorVelocity, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorVelocity, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var data *risk.RiskPredictorVelocity
+	data := risk.RiskPredictorVelocity{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        riskPredictorCommon.Type,
+		Default:     riskPredictorCommon.Default,
+	}
 
-	return data, diags
+	// By
+	if !p.By.IsNull() && !p.By.IsUnknown() {
+		bySet, d := p.By.ToSetValue(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		byPointerSlice := framework.TFSetToStringSlice(ctx, bySet)
+
+		if len(byPointerSlice) > 0 {
+			bySlice := make([]string, 0)
+			for i := range byPointerSlice {
+				bySlice = append(bySlice, *byPointerSlice[i])
+			}
+			data.SetBy(bySlice)
+		}
+	}
+
+	// Every
+	if !p.Every.IsNull() && !p.Every.IsUnknown() {
+		var plan predictorVelocityEvery
+		d := p.Every.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		every := risk.NewRiskPredictorVelocityAllOfEvery()
+
+		if !plan.Unit.IsNull() && !plan.Unit.IsUnknown() {
+			every.SetUnit(risk.EnumPredictorUnit(plan.Unit.ValueString()))
+		}
+
+		if !plan.Quantity.IsNull() && !plan.Quantity.IsUnknown() {
+			every.SetQuantity(int32(plan.Quantity.ValueInt64()))
+		}
+
+		if !plan.MinSample.IsNull() && !plan.MinSample.IsUnknown() {
+			every.SetMinSample(int32(plan.MinSample.ValueInt64()))
+		}
+
+		data.SetEvery(*every)
+	}
+
+	// Fallback
+	if !p.Fallback.IsNull() && !p.Fallback.IsUnknown() {
+		var plan predictorVelocityFallback
+		d := p.Fallback.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		fallback := risk.NewRiskPredictorVelocityAllOfFallback()
+
+		if !plan.Strategy.IsNull() && !plan.Strategy.IsUnknown() {
+			fallback.SetStrategy(risk.EnumPredictorVelocityFallbackStrategy(plan.Strategy.ValueString()))
+		}
+
+		if !plan.High.IsNull() && !plan.High.IsUnknown() {
+			fallback.SetHigh(int32(plan.High.ValueInt64()))
+		}
+
+		if !plan.Medium.IsNull() && !plan.Medium.IsUnknown() {
+			fallback.SetMedium(int32(plan.Medium.ValueInt64()))
+		}
+
+		data.SetFallback(*fallback)
+	}
+
+	// MaxDelay
+	if !p.MaxDelay.IsNull() && !p.MaxDelay.IsUnknown() {
+		var plan predictorVelocityMaxDelay
+		d := p.MaxDelay.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		maxDelay := risk.NewRiskPredictorVelocityAllOfMaxDelay()
+
+		if !plan.Unit.IsNull() && !plan.Unit.IsUnknown() {
+			maxDelay.SetUnit(risk.EnumPredictorUnit(plan.Unit.ValueString()))
+		}
+
+		if !plan.Quantity.IsNull() && !plan.Quantity.IsUnknown() {
+			maxDelay.SetQuantity(int32(plan.Quantity.ValueInt64()))
+		}
+
+		data.SetMaxDelay(*maxDelay)
+	}
+
+	// Measure
+	if !p.Measure.IsNull() && !p.Measure.IsUnknown() {
+		data.SetMeasure(risk.EnumPredictorVelocityMeasure(p.Measure.ValueString()))
+	}
+
+	// Of
+	if !p.Of.IsNull() && !p.Of.IsUnknown() {
+		data.SetOf(p.Of.ValueString())
+	}
+
+	// SlidingWindow
+	if !p.SlidingWindow.IsNull() && !p.SlidingWindow.IsUnknown() {
+		var plan predictorVelocitySlidingWindow
+		d := p.SlidingWindow.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		slidingWindow := risk.NewRiskPredictorVelocityAllOfSlidingWindow()
+
+		if !plan.Unit.IsNull() && !plan.Unit.IsUnknown() {
+			slidingWindow.SetUnit(risk.EnumPredictorUnit(plan.Unit.ValueString()))
+		}
+
+		if !plan.Quantity.IsNull() && !plan.Quantity.IsUnknown() {
+			slidingWindow.SetQuantity(int32(plan.Quantity.ValueInt64()))
+		}
+
+		if !plan.MinSample.IsNull() && !plan.MinSample.IsUnknown() {
+			slidingWindow.SetMinSample(int32(plan.MinSample.ValueInt64()))
+		}
+
+		data.SetSlidingWindow(*slidingWindow)
+	}
+
+	// Use
+	if !p.Use.IsNull() && !p.Use.IsUnknown() {
+		var plan predictorVelocityUse
+		d := p.Use.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		use := risk.NewRiskPredictorVelocityAllOfUse()
+
+		if !plan.UseType.IsNull() && !plan.UseType.IsUnknown() {
+			use.SetType(risk.EnumPredictorVelocityUseType(plan.UseType.ValueString()))
+		}
+
+		if !plan.Medium.IsNull() && !plan.Medium.IsUnknown() {
+			use.SetMedium(int32(plan.Medium.ValueInt64()))
+		}
+
+		if !plan.High.IsNull() && !plan.High.IsUnknown() {
+			use.SetHigh(int32(plan.High.ValueInt64()))
+		}
+
+		data.SetUse(*use)
+	}
+
+	return &data, diags
 }
 
-func (p *riskPredictorResourceModel) toState(apiObject *risk.RiskPredictor) diag.Diagnostics {
+func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *risk.RiskPredictor) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -1248,46 +1200,215 @@ func (p *riskPredictorResourceModel) toState(apiObject *risk.RiskPredictor) diag
 		return diags
 	}
 
+	apiObjectCommon := risk.RiskPredictorCommon{}
+
+	if apiObject.RiskPredictorAnonymousNetwork != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorAnonymousNetwork.Id,
+			Name:        apiObject.RiskPredictorAnonymousNetwork.Name,
+			CompactName: apiObject.RiskPredictorAnonymousNetwork.CompactName,
+			Description: apiObject.RiskPredictorAnonymousNetwork.Description,
+			Type:        apiObject.RiskPredictorAnonymousNetwork.Type,
+			Default:     apiObject.RiskPredictorAnonymousNetwork.Default,
+			Licensed:    apiObject.RiskPredictorAnonymousNetwork.Licensed,
+			Deletable:   apiObject.RiskPredictorAnonymousNetwork.Deletable,
+		}
+	}
+
+	if apiObject.RiskPredictorComposite != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorComposite.Id,
+			Name:        apiObject.RiskPredictorComposite.Name,
+			CompactName: apiObject.RiskPredictorComposite.CompactName,
+			Description: apiObject.RiskPredictorComposite.Description,
+			Type:        apiObject.RiskPredictorComposite.Type,
+			Default:     apiObject.RiskPredictorComposite.Default,
+			Licensed:    apiObject.RiskPredictorComposite.Licensed,
+			Deletable:   apiObject.RiskPredictorComposite.Deletable,
+		}
+	}
+
+	if apiObject.RiskPredictorCustom != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorCustom.Id,
+			Name:        apiObject.RiskPredictorCustom.Name,
+			CompactName: apiObject.RiskPredictorCustom.CompactName,
+			Description: apiObject.RiskPredictorCustom.Description,
+			Type:        apiObject.RiskPredictorCustom.Type,
+			Default:     apiObject.RiskPredictorCustom.Default,
+			Licensed:    apiObject.RiskPredictorCustom.Licensed,
+			Deletable:   apiObject.RiskPredictorCustom.Deletable,
+		}
+	}
+
+	if apiObject.RiskPredictorGeovelocity != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorGeovelocity.Id,
+			Name:        apiObject.RiskPredictorGeovelocity.Name,
+			CompactName: apiObject.RiskPredictorGeovelocity.CompactName,
+			Description: apiObject.RiskPredictorGeovelocity.Description,
+			Type:        apiObject.RiskPredictorGeovelocity.Type,
+			Default:     apiObject.RiskPredictorGeovelocity.Default,
+			Licensed:    apiObject.RiskPredictorGeovelocity.Licensed,
+			Deletable:   apiObject.RiskPredictorGeovelocity.Deletable,
+		}
+	}
+
+	if apiObject.RiskPredictorIPReputation != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorIPReputation.Id,
+			Name:        apiObject.RiskPredictorIPReputation.Name,
+			CompactName: apiObject.RiskPredictorIPReputation.CompactName,
+			Description: apiObject.RiskPredictorIPReputation.Description,
+			Type:        apiObject.RiskPredictorIPReputation.Type,
+			Default:     apiObject.RiskPredictorIPReputation.Default,
+			Licensed:    apiObject.RiskPredictorIPReputation.Licensed,
+			Deletable:   apiObject.RiskPredictorIPReputation.Deletable,
+		}
+	}
+
+	if apiObject.RiskPredictorNewDevice != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorNewDevice.Id,
+			Name:        apiObject.RiskPredictorNewDevice.Name,
+			CompactName: apiObject.RiskPredictorNewDevice.CompactName,
+			Description: apiObject.RiskPredictorNewDevice.Description,
+			Type:        apiObject.RiskPredictorNewDevice.Type,
+			Default:     apiObject.RiskPredictorNewDevice.Default,
+			Licensed:    apiObject.RiskPredictorNewDevice.Licensed,
+			Deletable:   apiObject.RiskPredictorNewDevice.Deletable,
+		}
+	}
+
+	if apiObject.RiskPredictorUEBA != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorUEBA.Id,
+			Name:        apiObject.RiskPredictorUEBA.Name,
+			CompactName: apiObject.RiskPredictorUEBA.CompactName,
+			Description: apiObject.RiskPredictorUEBA.Description,
+			Type:        apiObject.RiskPredictorUEBA.Type,
+			Default:     apiObject.RiskPredictorUEBA.Default,
+			Licensed:    apiObject.RiskPredictorUEBA.Licensed,
+			Deletable:   apiObject.RiskPredictorUEBA.Deletable,
+		}
+	}
+
+	if apiObject.RiskPredictorUserLocationAnomaly != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorUserLocationAnomaly.Id,
+			Name:        apiObject.RiskPredictorUserLocationAnomaly.Name,
+			CompactName: apiObject.RiskPredictorUserLocationAnomaly.CompactName,
+			Description: apiObject.RiskPredictorUserLocationAnomaly.Description,
+			Type:        apiObject.RiskPredictorUserLocationAnomaly.Type,
+			Default:     apiObject.RiskPredictorUserLocationAnomaly.Default,
+			Licensed:    apiObject.RiskPredictorUserLocationAnomaly.Licensed,
+			Deletable:   apiObject.RiskPredictorUserLocationAnomaly.Deletable,
+		}
+	}
+
+	if apiObject.RiskPredictorVelocity != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorVelocity.Id,
+			Name:        apiObject.RiskPredictorVelocity.Name,
+			CompactName: apiObject.RiskPredictorVelocity.CompactName,
+			Description: apiObject.RiskPredictorVelocity.Description,
+			Type:        apiObject.RiskPredictorVelocity.Type,
+			Default:     apiObject.RiskPredictorVelocity.Default,
+			Licensed:    apiObject.RiskPredictorVelocity.Licensed,
+			Deletable:   apiObject.RiskPredictorVelocity.Deletable,
+		}
+	}
+
+	p.Id = framework.StringToTF(apiObjectCommon.GetId())
+	// p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Name = framework.StringOkToTF(apiObjectCommon.GetNameOk())
+	p.CompactName = framework.StringOkToTF(apiObjectCommon.GetCompactNameOk())
+	p.Description = framework.StringOkToTF(apiObjectCommon.GetDescriptionOk())
+	p.Type = enumRiskPredictorTypeOkToTF(apiObjectCommon.GetTypeOk())
+	p.Licensed = framework.BoolOkToTF(apiObjectCommon.GetLicensedOk())
+	p.Deletable = framework.BoolOkToTF(apiObjectCommon.GetDeletableOk())
+
+	// Default block
+	p.Default = types.ObjectNull(defaultTFObjectTypes)
+	if v, ok := apiObjectCommon.GetDefaultOk(); ok {
+		var d diag.Diagnostics
+
+		defaultResultObj := types.ObjectNull(defaultResultTFObjectTypes)
+		if v1, ok := v.GetResultOk(); ok {
+			o := map[string]attr.Value{
+				"type":  enumRiskPredictorResultTypeOkToTF(v1.GetTypeOk()),
+				"level": enumRiskPredictorDefaultResultLevelOkToTF(v1.GetLevelOk()),
+			}
+
+			defaultResultObj, d = types.ObjectValue(defaultResultTFObjectTypes, o)
+			diags.Append(d...)
+		}
+
+		o := map[string]attr.Value{
+			"weight": framework.Int32OkToTF(v.GetWeightOk()),
+			"result": defaultResultObj,
+		}
+
+		objValue, d := types.ObjectValue(defaultTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.Default = objValue
+	}
+
+	p.Licensed = framework.BoolOkToTF(apiObjectCommon.GetLicensedOk())
+	p.Deletable = framework.BoolOkToTF(apiObjectCommon.GetDeletableOk())
+
+	// Set all the predictor specific fields all to null before we overwrite them with a value
+	p.AllowedCIDRList = types.SetNull(types.StringType)
+	p.ActivationAt = types.StringNull()
+	p.Detect = types.StringNull()
+	p.Radius = types.ObjectNull(predictorUserLocationAnomalyRadiusTFObjectTypes)
+	p.Days = types.Int64Null()
+	p.By = types.SetNull(types.StringType)
+	p.Every = types.ObjectNull(predictorVelocityEveryTFObjectTypes)
+	p.Fallback = types.ObjectNull(predictorVelocityFallbackTFObjectTypes)
+	p.MaxDelay = types.ObjectNull(predictorVelocityMaxDelayTFObjectTypes)
+	p.Measure = types.StringNull()
+	p.Of = types.StringNull()
+	p.SlidingWindow = types.ObjectNull(predictorVelocitySlidingWindowTFObjectTypes)
+	p.Use = types.ObjectNull(predictorVelocityUseTFObjectTypes)
+
+	// Set the predictor specific fields by object type
 	if apiObject.RiskPredictorAnonymousNetwork != nil && apiObject.RiskPredictorAnonymousNetwork.GetId() != "" {
-		return p.toStateRiskPredictorAnonymousNetwork(apiObject.RiskPredictorAnonymousNetwork)
+		diags.Append(p.toStateRiskPredictorAnonymousNetwork(apiObject.RiskPredictorAnonymousNetwork)...)
 	}
 
 	if apiObject.RiskPredictorComposite != nil && apiObject.RiskPredictorComposite.GetId() != "" {
-		return p.toStateRiskPredictorComposite(apiObject.RiskPredictorComposite)
+		diags.Append(p.toStateRiskPredictorComposite(apiObject.RiskPredictorComposite)...)
 	}
 
 	if apiObject.RiskPredictorCustom != nil && apiObject.RiskPredictorCustom.GetId() != "" {
-		return p.toStateRiskPredictorCustom(apiObject.RiskPredictorCustom)
+		diags.Append(p.toStateRiskPredictorCustom(apiObject.RiskPredictorCustom)...)
 	}
 
 	if apiObject.RiskPredictorGeovelocity != nil && apiObject.RiskPredictorGeovelocity.GetId() != "" {
-		return p.toStateRiskPredictorGeovelocity(apiObject.RiskPredictorGeovelocity)
+		diags.Append(p.toStateRiskPredictorGeovelocity(apiObject.RiskPredictorGeovelocity)...)
 	}
 
 	if apiObject.RiskPredictorIPReputation != nil && apiObject.RiskPredictorIPReputation.GetId() != "" {
-		return p.toStateRiskPredictorIPReputation(apiObject.RiskPredictorIPReputation)
+		diags.Append(p.toStateRiskPredictorIPReputation(apiObject.RiskPredictorIPReputation)...)
 	}
 
 	if apiObject.RiskPredictorNewDevice != nil && apiObject.RiskPredictorNewDevice.GetId() != "" {
-		return p.toStateRiskPredictorNewDevice(apiObject.RiskPredictorNewDevice)
+		diags.Append(p.toStateRiskPredictorNewDevice(apiObject.RiskPredictorNewDevice)...)
 	}
 
 	if apiObject.RiskPredictorUEBA != nil && apiObject.RiskPredictorUEBA.GetId() != "" {
-		return p.toStateRiskPredictorUEBA(apiObject.RiskPredictorUEBA)
+		diags.Append(p.toStateRiskPredictorUEBA(apiObject.RiskPredictorUEBA)...)
 	}
 
 	if apiObject.RiskPredictorUserLocationAnomaly != nil && apiObject.RiskPredictorUserLocationAnomaly.GetId() != "" {
-		return p.toStateRiskPredictorUserLocationAnomaly(apiObject.RiskPredictorUserLocationAnomaly)
+		diags.Append(p.toStateRiskPredictorUserLocationAnomaly(apiObject.RiskPredictorUserLocationAnomaly)...)
 	}
 
 	if apiObject.RiskPredictorVelocity != nil && apiObject.RiskPredictorVelocity.GetId() != "" {
-		return p.toStateRiskPredictorVelocity(apiObject.RiskPredictorVelocity)
+		diags.Append(p.toStateRiskPredictorVelocity(apiObject.RiskPredictorVelocity)...)
 	}
-
-	diags.AddError(
-		"Data object missing",
-		"Cannot convert the data object to state as the predictor type is not supported.  Please report this to the provider maintainers.",
-	)
 
 	return diags
 }
@@ -1304,43 +1425,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorAnonymousNetwork(apiObj
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	// p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.CompactName = framework.StringOkToTF(apiObject.GetCompactNameOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.Type = enumRiskPredictorTypeOkToTF(apiObject.GetTypeOk())
-
-	p.DefaultDecisionValue = types.StringNull()
-	if v, ok := apiObject.GetDefaultOk(); ok {
-		if c, ok := v.GetResultOk(); ok {
-			p.DefaultDecisionValue = enumRiskPredictorDefaultResultLevelOkToTF(c.GetLevelOk())
-		}
-	}
-
-	p.Licensed = framework.BoolOkToTF(apiObject.GetLicensedOk())
-	p.Deletable = framework.BoolOkToTF(apiObject.GetDeletableOk())
-
-	tfObjType := types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes}
-	blockObject := map[string]attr.Value{
-		"allowed_cidr_list": framework.StringSetOkToTF(apiObject.GetWhiteListOk()),
-	}
-
-	flattenedObj, d := types.ObjectValue(riskPredictorMinimalAllowedCIDRModelTFObjectTypes, blockObject)
-	diags.Append(d...)
-
-	predictorAnonymousNetwork, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	p.PredictorAnonymousNetwork = predictorAnonymousNetwork
-	// p.PredictorComposite = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCompositeModelTFObjectTypes})
-	// p.PredictorCustom = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCustomModelTFObjectTypes})
-	p.PredictorGeovelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	p.PredictorIPReputation = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
-	// p.PredictorUEBA = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUEBAModelTFObjectTypes})
-	p.PredictorUserLocationAnomaly = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUserLocationModelTFObjectTypes})
-	// p.PredictorVelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorVelocityModelTFObjectTypes})
+	p.AllowedCIDRList = framework.StringSetOkToTF(apiObject.GetWhiteListOk())
 
 	return diags
 }
@@ -1387,43 +1472,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorGeovelocity(apiObject *
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	// p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.CompactName = framework.StringOkToTF(apiObject.GetCompactNameOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.Type = enumRiskPredictorTypeOkToTF(apiObject.GetTypeOk())
-
-	p.DefaultDecisionValue = types.StringNull()
-	if v, ok := apiObject.GetDefaultOk(); ok {
-		if c, ok := v.GetResultOk(); ok {
-			p.DefaultDecisionValue = enumRiskPredictorDefaultResultLevelOkToTF(c.GetLevelOk())
-		}
-	}
-
-	p.Licensed = framework.BoolOkToTF(apiObject.GetLicensedOk())
-	p.Deletable = framework.BoolOkToTF(apiObject.GetDeletableOk())
-
-	tfObjType := types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes}
-	blockObject := map[string]attr.Value{
-		"allowed_cidr_list": framework.StringSetOkToTF(apiObject.GetWhiteListOk()),
-	}
-
-	flattenedObj, d := types.ObjectValue(riskPredictorMinimalAllowedCIDRModelTFObjectTypes, blockObject)
-	diags.Append(d...)
-
-	predictorGeovelocity, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	p.PredictorAnonymousNetwork = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	// p.PredictorComposite = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCompositeModelTFObjectTypes})
-	// p.PredictorCustom = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCustomModelTFObjectTypes})
-	p.PredictorGeovelocity = predictorGeovelocity
-	p.PredictorIPReputation = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
-	// p.PredictorUEBA = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUEBAModelTFObjectTypes})
-	p.PredictorUserLocationAnomaly = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUserLocationModelTFObjectTypes})
-	// p.PredictorVelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorVelocityModelTFObjectTypes})
+	p.AllowedCIDRList = framework.StringSetOkToTF(apiObject.GetWhiteListOk())
 
 	return diags
 }
@@ -1440,43 +1489,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorIPReputation(apiObject 
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	// p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.CompactName = framework.StringOkToTF(apiObject.GetCompactNameOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.Type = enumRiskPredictorTypeOkToTF(apiObject.GetTypeOk())
-
-	p.DefaultDecisionValue = types.StringNull()
-	if v, ok := apiObject.GetDefaultOk(); ok {
-		if c, ok := v.GetResultOk(); ok {
-			p.DefaultDecisionValue = enumRiskPredictorDefaultResultLevelOkToTF(c.GetLevelOk())
-		}
-	}
-
-	p.Licensed = framework.BoolOkToTF(apiObject.GetLicensedOk())
-	p.Deletable = framework.BoolOkToTF(apiObject.GetDeletableOk())
-
-	tfObjType := types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes}
-	blockObject := map[string]attr.Value{
-		"allowed_cidr_list": framework.StringSetOkToTF(apiObject.GetWhiteListOk()),
-	}
-
-	flattenedObj, d := types.ObjectValue(riskPredictorMinimalAllowedCIDRModelTFObjectTypes, blockObject)
-	diags.Append(d...)
-
-	predictorIPReputation, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	p.PredictorAnonymousNetwork = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	// p.PredictorComposite = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCompositeModelTFObjectTypes})
-	// p.PredictorCustom = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCustomModelTFObjectTypes})
-	p.PredictorGeovelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	p.PredictorIPReputation = predictorIPReputation
-	p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
-	// p.PredictorUEBA = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUEBAModelTFObjectTypes})
-	p.PredictorUserLocationAnomaly = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUserLocationModelTFObjectTypes})
-	// p.PredictorVelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorVelocityModelTFObjectTypes})
+	p.AllowedCIDRList = framework.StringSetOkToTF(apiObject.GetWhiteListOk())
 
 	return diags
 }
@@ -1493,44 +1506,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorNewDevice(apiObject *ri
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	// p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.CompactName = framework.StringOkToTF(apiObject.GetCompactNameOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.Type = enumRiskPredictorTypeOkToTF(apiObject.GetTypeOk())
-
-	p.DefaultDecisionValue = types.StringNull()
-	if v, ok := apiObject.GetDefaultOk(); ok {
-		if c, ok := v.GetResultOk(); ok {
-			p.DefaultDecisionValue = enumRiskPredictorDefaultResultLevelOkToTF(c.GetLevelOk())
-		}
-	}
-
-	p.Licensed = framework.BoolOkToTF(apiObject.GetLicensedOk())
-	p.Deletable = framework.BoolOkToTF(apiObject.GetDeletableOk())
-
-	tfObjType := types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes}
-	blockObject := map[string]attr.Value{
-		"activation_at": framework.TimeOkToTF(apiObject.GetActivationAtOk()),
-		"detect":        enumRiskPredictorNewDeviceDetectOkToTF(apiObject.GetDetectOk()),
-	}
-
-	flattenedObj, d := types.ObjectValue(riskPredictorNewDeviceModelTFObjectTypes, blockObject)
-	diags.Append(d...)
-
-	predictorNewDevice, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	p.PredictorAnonymousNetwork = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	// p.PredictorComposite = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCompositeModelTFObjectTypes})
-	// p.PredictorCustom = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCustomModelTFObjectTypes})
-	p.PredictorGeovelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	p.PredictorIPReputation = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	p.PredictorNewDevice = predictorNewDevice
-	// p.PredictorUEBA = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUEBAModelTFObjectTypes})
-	p.PredictorUserLocationAnomaly = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUserLocationModelTFObjectTypes})
-	// p.PredictorVelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorVelocityModelTFObjectTypes})
+	p.ActivationAt = framework.TimeOkToTF(apiObject.GetActivationAtOk())
+	p.Detect = enumRiskPredictorNewDeviceDetectOkToTF(apiObject.GetDetectOk())
 
 	return diags
 }
@@ -1562,44 +1539,23 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorUserLocationAnomaly(api
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	// p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.CompactName = framework.StringOkToTF(apiObject.GetCompactNameOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.Type = enumRiskPredictorTypeOkToTF(apiObject.GetTypeOk())
+	p.Radius = types.ObjectNull(predictorUserLocationAnomalyRadiusTFObjectTypes)
 
-	p.DefaultDecisionValue = types.StringNull()
-	if v, ok := apiObject.GetDefaultOk(); ok {
-		if c, ok := v.GetResultOk(); ok {
-			p.DefaultDecisionValue = enumRiskPredictorDefaultResultLevelOkToTF(c.GetLevelOk())
+	if v, ok := apiObject.GetRadiusOk(); ok {
+		var d diag.Diagnostics
+
+		o := map[string]attr.Value{
+			"distance": framework.Int32OkToTF(v.GetDistanceOk()),
+			"unit":     enumRiskPredictorDistanceUnitOkToTF(v.GetUnitOk()),
 		}
+
+		objValue, d := types.ObjectValue(predictorUserLocationAnomalyRadiusTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.Radius = objValue
 	}
 
-	p.Licensed = framework.BoolOkToTF(apiObject.GetLicensedOk())
-	p.Deletable = framework.BoolOkToTF(apiObject.GetDeletableOk())
-
-	tfObjType := types.ObjectType{AttrTypes: riskPredictorUserLocationModelTFObjectTypes}
-	blockObject := map[string]attr.Value{
-		"radius_distance":      framework.Int32OkToTF(apiObject.Radius.GetDistanceOk()),
-		"radius_distance_unit": enumRiskPredictorDistanceUnitOkToTF(apiObject.Radius.GetUnitOk()),
-	}
-
-	flattenedObj, d := types.ObjectValue(riskPredictorUserLocationModelTFObjectTypes, blockObject)
-	diags.Append(d...)
-
-	predictorUserLocationAnomaly, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	p.PredictorAnonymousNetwork = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	// p.PredictorComposite = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCompositeModelTFObjectTypes})
-	// p.PredictorCustom = types.ListNull(types.ObjectType{AttrTypes: riskPredictorCustomModelTFObjectTypes})
-	p.PredictorGeovelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	p.PredictorIPReputation = types.ListNull(types.ObjectType{AttrTypes: riskPredictorMinimalAllowedCIDRModelTFObjectTypes})
-	p.PredictorNewDevice = types.ListNull(types.ObjectType{AttrTypes: riskPredictorNewDeviceModelTFObjectTypes})
-	// p.PredictorUEBA = types.ListNull(types.ObjectType{AttrTypes: riskPredictorUEBAModelTFObjectTypes})
-	p.PredictorUserLocationAnomaly = predictorUserLocationAnomaly
-	// p.PredictorVelocity = types.ListNull(types.ObjectType{AttrTypes: riskPredictorVelocityModelTFObjectTypes})
+	p.Days = framework.Int32OkToTF(apiObject.GetDaysOk())
 
 	return diags
 }
@@ -1616,10 +1572,128 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 		return diags
 	}
 
+	p.By = framework.StringSetOkToTF(apiObject.GetByOk())
+
+	// Every
+	p.Every = types.ObjectNull(predictorVelocityEveryTFObjectTypes)
+
+	if v, ok := apiObject.GetEveryOk(); ok {
+		var d diag.Diagnostics
+
+		o := map[string]attr.Value{
+			"unit":       enumRiskPredictorUnitOkToTF(v.GetUnitOk()),
+			"quantity":   framework.Int32OkToTF(v.GetQuantityOk()),
+			"min_sample": framework.Int32OkToTF(v.GetMinSampleOk()),
+		}
+
+		objValue, d := types.ObjectValue(predictorVelocityEveryTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.Every = objValue
+	}
+
+	// Fallback
+	p.Fallback = types.ObjectNull(predictorVelocityFallbackTFObjectTypes)
+
+	if v, ok := apiObject.GetFallbackOk(); ok {
+		var d diag.Diagnostics
+
+		o := map[string]attr.Value{
+			"strategy": enumRiskPredictorVelocityFallbackStrategyOkToTF(v.GetStrategyOk()),
+			"high":     framework.Int32OkToTF(v.GetHighOk()),
+			"medium":   framework.Int32OkToTF(v.GetMediumOk()),
+		}
+
+		objValue, d := types.ObjectValue(predictorVelocityFallbackTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.Fallback = objValue
+	}
+
+	// MaxDelay
+	p.MaxDelay = types.ObjectNull(predictorVelocityMaxDelayTFObjectTypes)
+
+	if v, ok := apiObject.GetMaxDelayOk(); ok {
+		var d diag.Diagnostics
+
+		o := map[string]attr.Value{
+			"unit":     enumRiskPredictorUnitOkToTF(v.GetUnitOk()),
+			"quantity": framework.Int32OkToTF(v.GetQuantityOk()),
+		}
+
+		objValue, d := types.ObjectValue(predictorVelocityMaxDelayTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.MaxDelay = objValue
+	}
+
+	p.Measure = enumRiskPredictorVelocityMeasureOkToTF(apiObject.GetMeasureOk())
+	p.Of = framework.StringOkToTF(apiObject.GetOfOk())
+
+	// SlidingWindow
+	p.SlidingWindow = types.ObjectNull(predictorVelocitySlidingWindowTFObjectTypes)
+
+	if v, ok := apiObject.GetSlidingWindowOk(); ok {
+		var d diag.Diagnostics
+
+		o := map[string]attr.Value{
+			"unit":       enumRiskPredictorUnitOkToTF(v.GetUnitOk()),
+			"quantity":   framework.Int32OkToTF(v.GetQuantityOk()),
+			"min_sample": framework.Int32OkToTF(v.GetMinSampleOk()),
+		}
+
+		objValue, d := types.ObjectValue(predictorVelocitySlidingWindowTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.SlidingWindow = objValue
+	}
+
+	// Use
+	p.Use = types.ObjectNull(predictorVelocityUseTFObjectTypes)
+
+	if v, ok := apiObject.GetUseOk(); ok {
+		var d diag.Diagnostics
+
+		o := map[string]attr.Value{
+			"type":   enumRiskPredictorVelocityUseTypeOkToTF(v.GetTypeOk()),
+			"medium": framework.Int32OkToTF(v.GetMediumOk()),
+			"high":   framework.Int32OkToTF(v.GetHighOk()),
+		}
+
+		objValue, d := types.ObjectValue(predictorVelocityUseTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.Use = objValue
+	}
+
 	return diags
 }
 
+func enumRiskPredictorResultTypeOkToTF(v *risk.EnumResultType, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		if sv := string(*v); sv == "" {
+			return types.StringNull()
+		} else {
+			return types.StringValue(sv)
+		}
+	}
+}
+
 func enumRiskPredictorTypeOkToTF(v *risk.EnumPredictorType, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		if sv := string(*v); sv == "" {
+			return types.StringNull()
+		} else {
+			return types.StringValue(sv)
+		}
+	}
+}
+
+func enumRiskPredictorUnitOkToTF(v *risk.EnumPredictorUnit, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
@@ -1656,6 +1730,42 @@ func enumRiskPredictorNewDeviceDetectOkToTF(v *risk.EnumPredictorNewDeviceDetect
 }
 
 func enumRiskPredictorDistanceUnitOkToTF(v *risk.EnumDistanceUnit, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		if sv := string(*v); sv == "" {
+			return types.StringNull()
+		} else {
+			return types.StringValue(sv)
+		}
+	}
+}
+
+func enumRiskPredictorVelocityFallbackStrategyOkToTF(v *risk.EnumPredictorVelocityFallbackStrategy, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		if sv := string(*v); sv == "" {
+			return types.StringNull()
+		} else {
+			return types.StringValue(sv)
+		}
+	}
+}
+
+func enumRiskPredictorVelocityMeasureOkToTF(v *risk.EnumPredictorVelocityMeasure, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		if sv := string(*v); sv == "" {
+			return types.StringNull()
+		} else {
+			return types.StringValue(sv)
+		}
+	}
+}
+
+func enumRiskPredictorVelocityUseTypeOkToTF(v *risk.EnumPredictorVelocityUseType, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
