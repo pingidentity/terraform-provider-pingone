@@ -46,6 +46,8 @@ type riskPredictorResourceModel struct {
 	Deletable     types.Bool   `tfsdk:"deletable"`
 	// Anonymous network, IP reputation, geovelocity
 	AllowedCIDRList types.Set `tfsdk:"allowed_cidr_list"`
+	// Custom map
+	CustomMap types.Object `tfsdk:"custom_map"`
 	// New device
 	ActivationAt types.String `tfsdk:"activation_at"`
 	Detect       types.String `tfsdk:"detect"`
@@ -72,6 +74,29 @@ type predictorDefault struct {
 type predictorDefaultResult struct {
 	ResultType types.String `tfsdk:"type"`
 	Level      types.String `tfsdk:"level"`
+}
+
+type predictorCustomMap struct {
+	Contains      types.String `tfsdk:"contains"`
+	Type          types.String `tfsdk:"type"`
+	BetweenRanges types.Object `tfsdk:"between_ranges"`
+	IPRanges      types.Object `tfsdk:"ip_ranges"`
+	StringList    types.Object `tfsdk:"string_list"`
+}
+
+type predictorCustomMapHML struct {
+	High   types.Object `tfsdk:"high"`
+	Medium types.Object `tfsdk:"medium"`
+	Low    types.Object `tfsdk:"low"`
+}
+
+type predictorCustomMapHMLBetweenRanges struct {
+	MinScore types.Float64 `tfsdk:"min_score"`
+	MaxScore types.Float64 `tfsdk:"max_score"`
+}
+
+type predictorCustomMapHMLList struct {
+	Values types.Set `tfsdk:"values"`
 }
 
 type predictorUserLocationAnomalyRadius struct {
@@ -118,6 +143,47 @@ var (
 	defaultResultTFObjectTypes = map[string]attr.Type{
 		"type":  types.StringType,
 		"level": types.StringType,
+	}
+
+	predictorCustomMapTFObjectTypes = map[string]attr.Type{
+		"contains": types.StringType,
+		"type":     types.StringType,
+		"between_ranges": types.ObjectType{
+			AttrTypes: predictorCustomMapBetweenHMLTFObjectTypes,
+		},
+		"ip_ranges": types.ObjectType{
+			AttrTypes: predictorCustomMapIPRangesHMLTFObjectTypes,
+		},
+		"string_list": types.ObjectType{
+			AttrTypes: predictorCustomMapStringListHMLTFObjectTypes,
+		},
+	}
+
+	predictorCustomMapBetweenHMLTFObjectTypes = map[string]attr.Type{
+		"high":   types.ObjectType{AttrTypes: predictorCustomMapHMLBetweenRangesTFObjectTypes},
+		"medium": types.ObjectType{AttrTypes: predictorCustomMapHMLBetweenRangesTFObjectTypes},
+		"low":    types.ObjectType{AttrTypes: predictorCustomMapHMLBetweenRangesTFObjectTypes},
+	}
+
+	predictorCustomMapIPRangesHMLTFObjectTypes = map[string]attr.Type{
+		"high":   types.ObjectType{AttrTypes: predictorCustomMapHMLListTFObjectTypes},
+		"medium": types.ObjectType{AttrTypes: predictorCustomMapHMLListTFObjectTypes},
+		"low":    types.ObjectType{AttrTypes: predictorCustomMapHMLListTFObjectTypes},
+	}
+
+	predictorCustomMapStringListHMLTFObjectTypes = map[string]attr.Type{
+		"high":   types.ObjectType{AttrTypes: predictorCustomMapHMLListTFObjectTypes},
+		"medium": types.ObjectType{AttrTypes: predictorCustomMapHMLListTFObjectTypes},
+		"low":    types.ObjectType{AttrTypes: predictorCustomMapHMLListTFObjectTypes},
+	}
+
+	predictorCustomMapHMLBetweenRangesTFObjectTypes = map[string]attr.Type{
+		"min_score": types.Float64Type,
+		"max_score": types.Float64Type,
+	}
+
+	predictorCustomMapHMLListTFObjectTypes = map[string]attr.Type{
+		"values": types.SetType{ElemType: types.StringType},
 	}
 
 	predictorUserLocationAnomalyRadiusTFObjectTypes = map[string]attr.Type{
@@ -323,6 +389,173 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					setvalidator.ValueStringsAre(
 						stringvalidator.RegexMatches(regexp.MustCompile(`^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$`), "Values must be valid CIDR format."),
 					),
+				},
+			},
+
+			"custom_map": schema.SingleNestedAttribute{
+				Description: "",
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"contains": schema.StringAttribute{
+						Description: "A string that specifies the value to match in the custom map. Maximum length is 1024 characters.",
+						Required:    true,
+					},
+
+					"type": schema.StringAttribute{
+						Description: typeDescription.Description,
+						Computed:    true,
+					},
+
+					"between_ranges": schema.SingleNestedAttribute{
+						Description: "",
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"high": schema.SingleNestedAttribute{
+								Description: "",
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"min_score": schema.Int64Attribute{
+										Description: "A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
+										Required:    true,
+									},
+
+									"max_score": schema.Int64Attribute{
+										Description: "A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
+										Required:    true,
+									},
+								},
+							},
+
+							"medium": schema.SingleNestedAttribute{
+								Description: "",
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"min_score": schema.Int64Attribute{
+										Description: "A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
+										Required:    true,
+									},
+
+									"max_score": schema.Int64Attribute{
+										Description: "A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
+										Required:    true,
+									},
+								},
+							},
+
+							"low": schema.SingleNestedAttribute{
+								Description: "",
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"min_score": schema.Int64Attribute{
+										Description: "A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
+										Required:    true,
+									},
+
+									"max_score": schema.Int64Attribute{
+										Description: "A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
+										Required:    true,
+									},
+								},
+							},
+						},
+					},
+
+					"ip_ranges": schema.SingleNestedAttribute{
+						Description: "",
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"high": schema.SingleNestedAttribute{
+								Description: "",
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"values": schema.SetAttribute{
+										Description: "",
+										Optional:    true,
+										ElementType: types.StringType,
+									},
+								},
+							},
+
+							"medium": schema.SingleNestedAttribute{
+								Description: "",
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"values": schema.SetAttribute{
+										Description: "",
+										Optional:    true,
+										ElementType: types.StringType,
+									},
+								},
+							},
+
+							"low": schema.SingleNestedAttribute{
+								Description: "",
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"values": schema.SetAttribute{
+										Description: "",
+										Optional:    true,
+										ElementType: types.StringType,
+									},
+								},
+							},
+						},
+					},
+
+					"string_list": schema.SingleNestedAttribute{
+						Description: "",
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"high": schema.SingleNestedAttribute{
+								Description: "",
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"values": schema.SetAttribute{
+										Description: "",
+										Optional:    true,
+										ElementType: types.StringType,
+									},
+								},
+							},
+
+							"medium": schema.SingleNestedAttribute{
+								Description: "",
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"values": schema.SetAttribute{
+										Description: "",
+										Optional:    true,
+										ElementType: types.StringType,
+									},
+								},
+							},
+
+							"low": schema.SingleNestedAttribute{
+								Description: "",
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"values": schema.SetAttribute{
+										Description: "",
+										Optional:    true,
+										ElementType: types.StringType,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 
@@ -889,9 +1122,376 @@ func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Contex
 func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorCustom, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var data *risk.RiskPredictorCustom
+	data := risk.RiskPredictorCustom{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        riskPredictorCommon.Type,
+		Default:     riskPredictorCommon.Default,
+	}
 
-	return data, diags
+	if !p.CustomMap.IsNull() && !p.CustomMap.IsUnknown() {
+		var plan predictorCustomMap
+		d := p.CustomMap.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		var contains string
+		if !plan.Contains.IsNull() && !plan.Contains.IsUnknown() {
+			contains = plan.Contains.ValueString()
+		}
+
+		high := risk.RiskPredictorCustomItem{}
+		medium := risk.RiskPredictorCustomItem{}
+		low := risk.RiskPredictorCustomItem{}
+
+		if !plan.BetweenRanges.IsNull() && !plan.BetweenRanges.IsUnknown() {
+			var hmlPlan predictorCustomMapHML
+			d := plan.BetweenRanges.As(ctx, &hmlPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			// High
+			if !hmlPlan.High.IsNull() && !hmlPlan.High.IsUnknown() {
+				var highHmlPlan predictorCustomMapHMLBetweenRanges
+				d := hmlPlan.High.As(ctx, &hmlPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				v := risk.NewRiskPredictorCustomItemBetween(
+					contains,
+					*risk.NewRiskPredictorCustomItemBetweenBetween(
+						float32(highHmlPlan.MinScore.ValueFloat64()),
+						float32(highHmlPlan.MaxScore.ValueFloat64()),
+					),
+				)
+
+				high = risk.RiskPredictorCustomItem{
+					RiskPredictorCustomItemBetween: v,
+				}
+			}
+
+			// Medium
+			if !hmlPlan.Medium.IsNull() && !hmlPlan.Medium.IsUnknown() {
+				var mediumHmlPlan predictorCustomMapHMLBetweenRanges
+				d := hmlPlan.Medium.As(ctx, &mediumHmlPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				v := risk.NewRiskPredictorCustomItemBetween(
+					contains,
+					*risk.NewRiskPredictorCustomItemBetweenBetween(
+						float32(mediumHmlPlan.MinScore.ValueFloat64()),
+						float32(mediumHmlPlan.MaxScore.ValueFloat64()),
+					),
+				)
+
+				medium = risk.RiskPredictorCustomItem{
+					RiskPredictorCustomItemBetween: v,
+				}
+			}
+
+			// Low
+			if !hmlPlan.Low.IsNull() && !hmlPlan.Low.IsUnknown() {
+				var lowHmlPlan predictorCustomMapHMLBetweenRanges
+				d := hmlPlan.Low.As(ctx, &lowHmlPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				v := risk.NewRiskPredictorCustomItemBetween(
+					contains,
+					*risk.NewRiskPredictorCustomItemBetweenBetween(
+						float32(lowHmlPlan.MinScore.ValueFloat64()),
+						float32(lowHmlPlan.MaxScore.ValueFloat64()),
+					),
+				)
+
+				low = risk.RiskPredictorCustomItem{
+					RiskPredictorCustomItemBetween: v,
+				}
+			}
+		}
+
+		if !plan.IPRanges.IsNull() && !plan.IPRanges.IsUnknown() {
+			var hmlPlan predictorCustomMapHML
+			d := plan.IPRanges.As(ctx, &hmlPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			// High
+			if !hmlPlan.High.IsNull() && !hmlPlan.High.IsUnknown() {
+				var highHmlPlan predictorCustomMapHMLList
+				d := hmlPlan.High.As(ctx, &highHmlPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				valuesSlice := make([]string, 0)
+				valueSet, d := highHmlPlan.Values.ToSetValue(ctx)
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+				pointerSlice := framework.TFSetToStringSlice(ctx, valueSet)
+
+				if len(pointerSlice) > 0 {
+
+					for i := range pointerSlice {
+						valuesSlice = append(valuesSlice, *pointerSlice[i])
+					}
+				}
+
+				v := risk.NewRiskPredictorCustomItemIPRange(
+					contains,
+					valuesSlice,
+				)
+
+				high = risk.RiskPredictorCustomItem{
+					RiskPredictorCustomItemIPRange: v,
+				}
+			}
+
+			// Medium
+			if !hmlPlan.Medium.IsNull() && !hmlPlan.Medium.IsUnknown() {
+				var mediumHmlPlan predictorCustomMapHMLList
+				d := hmlPlan.Medium.As(ctx, &mediumHmlPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				valuesSlice := make([]string, 0)
+				valueSet, d := mediumHmlPlan.Values.ToSetValue(ctx)
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+				pointerSlice := framework.TFSetToStringSlice(ctx, valueSet)
+
+				if len(pointerSlice) > 0 {
+
+					for i := range pointerSlice {
+						valuesSlice = append(valuesSlice, *pointerSlice[i])
+					}
+				}
+
+				v := risk.NewRiskPredictorCustomItemIPRange(
+					contains,
+					valuesSlice,
+				)
+
+				medium = risk.RiskPredictorCustomItem{
+					RiskPredictorCustomItemIPRange: v,
+				}
+			}
+
+			// Low
+			if !hmlPlan.Low.IsNull() && !hmlPlan.Low.IsUnknown() {
+				var lowHmlPlan predictorCustomMapHMLList
+				d := hmlPlan.Low.As(ctx, &lowHmlPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				valuesSlice := make([]string, 0)
+				valueSet, d := lowHmlPlan.Values.ToSetValue(ctx)
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+				pointerSlice := framework.TFSetToStringSlice(ctx, valueSet)
+
+				if len(pointerSlice) > 0 {
+
+					for i := range pointerSlice {
+						valuesSlice = append(valuesSlice, *pointerSlice[i])
+					}
+				}
+
+				v := risk.NewRiskPredictorCustomItemIPRange(
+					contains,
+					valuesSlice,
+				)
+
+				low = risk.RiskPredictorCustomItem{
+					RiskPredictorCustomItemIPRange: v,
+				}
+			}
+		}
+
+		if !plan.StringList.IsNull() && !plan.StringList.IsUnknown() {
+			var hmlPlan predictorCustomMapHML
+			d := plan.StringList.As(ctx, &hmlPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			// High
+			if !hmlPlan.High.IsNull() && !hmlPlan.High.IsUnknown() {
+				var highHmlPlan predictorCustomMapHMLList
+				d := hmlPlan.High.As(ctx, &highHmlPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				valuesSlice := make([]string, 0)
+				valueSet, d := highHmlPlan.Values.ToSetValue(ctx)
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+				pointerSlice := framework.TFSetToStringSlice(ctx, valueSet)
+
+				if len(pointerSlice) > 0 {
+
+					for i := range pointerSlice {
+						valuesSlice = append(valuesSlice, *pointerSlice[i])
+					}
+				}
+
+				v := risk.NewRiskPredictorCustomItemList(
+					contains,
+					valuesSlice,
+				)
+
+				high = risk.RiskPredictorCustomItem{
+					RiskPredictorCustomItemList: v,
+				}
+			}
+
+			// Medium
+			if !hmlPlan.Medium.IsNull() && !hmlPlan.Medium.IsUnknown() {
+				var mediumHmlPlan predictorCustomMapHMLList
+				d := hmlPlan.Medium.As(ctx, &mediumHmlPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				valuesSlice := make([]string, 0)
+				valueSet, d := mediumHmlPlan.Values.ToSetValue(ctx)
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+				pointerSlice := framework.TFSetToStringSlice(ctx, valueSet)
+
+				if len(pointerSlice) > 0 {
+
+					for i := range pointerSlice {
+						valuesSlice = append(valuesSlice, *pointerSlice[i])
+					}
+				}
+
+				v := risk.NewRiskPredictorCustomItemList(
+					contains,
+					valuesSlice,
+				)
+
+				medium = risk.RiskPredictorCustomItem{
+					RiskPredictorCustomItemList: v,
+				}
+			}
+
+			// Low
+			if !hmlPlan.Low.IsNull() && !hmlPlan.Low.IsUnknown() {
+				var lowHmlPlan predictorCustomMapHMLList
+				d := hmlPlan.Low.As(ctx, &lowHmlPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				valuesSlice := make([]string, 0)
+				valueSet, d := lowHmlPlan.Values.ToSetValue(ctx)
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+				pointerSlice := framework.TFSetToStringSlice(ctx, valueSet)
+
+				if len(pointerSlice) > 0 {
+
+					for i := range pointerSlice {
+						valuesSlice = append(valuesSlice, *pointerSlice[i])
+					}
+				}
+
+				v := risk.NewRiskPredictorCustomItemList(
+					contains,
+					valuesSlice,
+				)
+
+				low = risk.RiskPredictorCustomItem{
+					RiskPredictorCustomItemList: v,
+				}
+			}
+		}
+
+		customMap := risk.NewRiskPredictorCustomAllOfMap()
+		customMap.SetHigh(high)
+		customMap.SetMedium(medium)
+		customMap.SetLow(low)
+
+		data.SetMap(*customMap)
+	}
+
+	return &data, diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorGeovelocity(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorGeovelocity, diag.Diagnostics) {
@@ -1425,6 +2025,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.Detect = types.StringNull()
 	p.Radius = types.ObjectNull(predictorUserLocationAnomalyRadiusTFObjectTypes)
 	p.Days = types.Int64Null()
+	p.CustomMap = types.ObjectNull(predictorCustomMapTFObjectTypes)
 	p.PredictionModel = types.ObjectNull(predictorUserRiskBehaviorPredictionModelTFObjectTypes)
 	p.By = types.SetNull(types.StringType)
 	p.Every = types.ObjectNull(predictorVelocityEveryTFObjectTypes)
@@ -1516,6 +2117,25 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 		)
 
 		return diags
+	}
+
+	p.CustomMap = types.ObjectNull(predictorCustomMapTFObjectTypes)
+
+	if _, ok := apiObject.GetMapOk(); ok {
+		var d diag.Diagnostics
+
+		o := map[string]attr.Value{
+			"contains":       nil,
+			"type":           nil,
+			"between_ranges": nil,
+			"ip_ranges":      nil,
+			"string_list":    nil,
+		}
+
+		objValue, d := types.ObjectValue(predictorUserRiskBehaviorPredictionModelTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.PredictionModel = objValue
 	}
 
 	return diags
