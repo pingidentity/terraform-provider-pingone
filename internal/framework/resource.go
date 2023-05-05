@@ -68,7 +68,7 @@ func TimeOkToTF(v *time.Time, ok bool) basetypes.StringValue {
 }
 
 func StringSetOkToTF(v []string, ok bool) basetypes.SetValue {
-	if !ok || v == nil {
+	if !ok || v == nil || len(v) == 0 {
 		return types.SetNull(types.StringType)
 	} else {
 		list := make([]attr.Value, 0)
