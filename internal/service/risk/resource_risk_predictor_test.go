@@ -687,7 +687,7 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.ip}"),
 		resource.TestCheckResourceAttr(resourceFullName, "by.#", "1"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "by", "${event.user.id}"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "by.*", "${event.user.id}"),
 		resource.TestCheckResourceAttr(resourceFullName, "measure", "DISTINCT_COUNT"),
 		resource.TestCheckResourceAttr(resourceFullName, "use.type", "POISSON_WITH_MAX"),
 		resource.TestCheckResourceAttr(resourceFullName, "use.medium", "2"),
@@ -701,8 +701,6 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.unit", "DAY"),
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.quantity", "7"),
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.min_sample", "3"),
-		resource.TestCheckResourceAttr(resourceFullName, "max_delay.unit", "DAY"),
-		resource.TestCheckResourceAttr(resourceFullName, "max_delay.quantity", "1"),
 	)
 
 	byIPCheck := resource.ComposeTestCheckFunc(
@@ -710,7 +708,7 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.user.id}"),
 		resource.TestCheckResourceAttr(resourceFullName, "by.#", "1"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "by", "${event.ip}"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "by.*", "${event.ip}"),
 		resource.TestCheckResourceAttr(resourceFullName, "measure", "DISTINCT_COUNT"),
 		resource.TestCheckResourceAttr(resourceFullName, "use.type", "POISSON_WITH_MAX"),
 		resource.TestCheckResourceAttr(resourceFullName, "use.medium", "2"),
@@ -724,8 +722,6 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.unit", "DAY"),
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.quantity", "7"),
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.min_sample", "3"),
-		resource.TestCheckResourceAttr(resourceFullName, "max_delay.unit", "DAY"),
-		resource.TestCheckResourceAttr(resourceFullName, "max_delay.quantity", "1"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -785,7 +781,7 @@ func TestAccRiskPredictor_Velocity_Override(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.ip}"),
 		resource.TestCheckResourceAttr(resourceFullName, "by.#", "1"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "by", "${event.user.id}"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "by.*", "${event.user.id}"),
 		resource.TestCheckResourceAttr(resourceFullName, "measure", "DISTINCT_COUNT"),
 		resource.TestCheckResourceAttr(resourceFullName, "use.type", "POISSON_WITH_MAX"),
 		resource.TestCheckResourceAttr(resourceFullName, "use.medium", "2"),
@@ -799,15 +795,15 @@ func TestAccRiskPredictor_Velocity_Override(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.unit", "DAY"),
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.quantity", "7"),
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.min_sample", "3"),
-		resource.TestCheckResourceAttr(resourceFullName, "max_delay.unit", "DAY"),
-		resource.TestCheckResourceAttr(resourceFullName, "max_delay.quantity", "1"),
 	)
 
 	byIPCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactName),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "VELOCITY"),
 		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.user.id}"),
 		resource.TestCheckResourceAttr(resourceFullName, "by.#", "1"),
-		resource.TestCheckTypeSetElemAttr(resourceFullName, "by", "${event.ip}"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "by.*", "${event.ip}"),
 		resource.TestCheckResourceAttr(resourceFullName, "measure", "DISTINCT_COUNT"),
 		resource.TestCheckResourceAttr(resourceFullName, "use.type", "POISSON_WITH_MAX"),
 		resource.TestCheckResourceAttr(resourceFullName, "use.medium", "2"),
@@ -821,8 +817,6 @@ func TestAccRiskPredictor_Velocity_Override(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.unit", "DAY"),
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.quantity", "7"),
 		resource.TestCheckResourceAttr(resourceFullName, "sliding_window.min_sample", "3"),
-		resource.TestCheckResourceAttr(resourceFullName, "max_delay.unit", "DAY"),
-		resource.TestCheckResourceAttr(resourceFullName, "max_delay.quantity", "1"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -860,6 +854,133 @@ func TestAccRiskPredictor_Velocity_Override(t *testing.T) {
 			},
 			{
 				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName),
+				Check:  byUserCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_UserRiskBehavior(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	byUserCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_RISK_BEHAVIOR"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "prediction_model.name", "points"),
+	)
+
+	byOrgCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_RISK_BEHAVIOR"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "prediction_model.name", "login_anomaly_statistic"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// By User
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full(resourceName, name),
+				Check:  byUserCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full(resourceName, name),
+				Destroy: true,
+			},
+			// By Org
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full(resourceName, name),
+				Check:  byOrgCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full(resourceName, name),
+				Check:  byUserCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full(resourceName, name),
+				Check:  byOrgCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full(resourceName, name),
+				Check:  byUserCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_UserRiskBehavior_Override(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := "User Location Anomaly"
+	compactName := "userLocationAnomaly"
+
+	byUserCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactName),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_RISK_BEHAVIOR"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "prediction_model.name", "points"),
+	)
+
+	byIPCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactName),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_RISK_BEHAVIOR"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "prediction_model.name", "login_anomaly_statistic"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// By User
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName),
+				Check:  byUserCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName),
+				Destroy: true,
+			},
+			// By Org
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_Override(resourceName, name, compactName),
+				Check:  byIPCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_Override(resourceName, name, compactName),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName),
+				Check:  byUserCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_Override(resourceName, name, compactName),
+				Check:  byIPCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName),
 				Check:  byUserCheck,
 			},
 		},
@@ -1249,7 +1370,7 @@ resource "pingone_risk_predictor" "%[2]s" {
     }
   }
 
-  of = "$${event.user.id}"
+  of = "$${event.ip}"
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -1266,7 +1387,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   type = "VELOCITY"
 
-  of = "$${event.ip}"
+  of = "$${event.user.id}"
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -1289,7 +1410,7 @@ resource "pingone_risk_predictor" "%[2]s" {
     }
   }
 
-  of = "$${event.user.id}"
+  of = "$${event.ip}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
@@ -1311,6 +1432,97 @@ resource "pingone_risk_predictor" "%[2]s" {
     }
   }
 
-  of = "$${event.ip}"
+  of = "$${event.user.id}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
+
+  type = "USER_RISK_BEHAVIOR"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  prediction_model = {
+	name = "points"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  type = "USER_RISK_BEHAVIOR"
+
+  prediction_model = {
+	name = "login_anomaly_statistic"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  type = "USER_RISK_BEHAVIOR"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  prediction_model = {
+	name = "points"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_Override(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  type = "USER_RISK_BEHAVIOR"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  prediction_model = {
+	name = "login_anomaly_statistic"
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -52,11 +52,12 @@ type riskPredictorResourceModel struct {
 	// User Location Anomaly
 	Radius types.Object `tfsdk:"radius"`
 	Days   types.Int64  `tfsdk:"days"`
+	// User Risk Behavior
+	PredictionModel types.Object `tfsdk:"prediction_model"`
 	// Velocity
 	By            types.Set    `tfsdk:"by"`
 	Every         types.Object `tfsdk:"every"`
 	Fallback      types.Object `tfsdk:"fallback"`
-	MaxDelay      types.Object `tfsdk:"max_delay"`
 	Measure       types.String `tfsdk:"measure"`
 	Of            types.String `tfsdk:"of"`
 	SlidingWindow types.Object `tfsdk:"sliding_window"`
@@ -78,6 +79,10 @@ type predictorUserLocationAnomalyRadius struct {
 	Unit     types.String `tfsdk:"unit"`
 }
 
+type predictorUserRiskBehaviorPredictionModel struct {
+	Name types.String `tfsdk:"name"`
+}
+
 type predictorVelocityEvery struct {
 	Unit      types.String `tfsdk:"unit"`
 	Quantity  types.Int64  `tfsdk:"quantity"`
@@ -85,14 +90,9 @@ type predictorVelocityEvery struct {
 }
 
 type predictorVelocityFallback struct {
-	Strategy types.String `tfsdk:"strategy"`
-	High     types.Int64  `tfsdk:"high"`
-	Medium   types.Int64  `tfsdk:"medium"`
-}
-
-type predictorVelocityMaxDelay struct {
-	Unit     types.String `tfsdk:"unit"`
-	Quantity types.Int64  `tfsdk:"quantity"`
+	Strategy types.String  `tfsdk:"strategy"`
+	High     types.Float64 `tfsdk:"high"`
+	Medium   types.Float64 `tfsdk:"medium"`
 }
 
 type predictorVelocitySlidingWindow struct {
@@ -102,9 +102,9 @@ type predictorVelocitySlidingWindow struct {
 }
 
 type predictorVelocityUse struct {
-	UseType types.String `tfsdk:"type"`
-	Medium  types.Int64  `tfsdk:"medium"`
-	High    types.Int64  `tfsdk:"high"`
+	UseType types.String  `tfsdk:"type"`
+	Medium  types.Float64 `tfsdk:"medium"`
+	High    types.Float64 `tfsdk:"high"`
 }
 
 var (
@@ -125,6 +125,10 @@ var (
 		"unit":     types.StringType,
 	}
 
+	predictorUserRiskBehaviorPredictionModelTFObjectTypes = map[string]attr.Type{
+		"name": types.StringType,
+	}
+
 	predictorVelocityEveryTFObjectTypes = map[string]attr.Type{
 		"unit":       types.StringType,
 		"quantity":   types.Int64Type,
@@ -133,13 +137,8 @@ var (
 
 	predictorVelocityFallbackTFObjectTypes = map[string]attr.Type{
 		"strategy": types.StringType,
-		"high":     types.Int64Type,
-		"medium":   types.Int64Type,
-	}
-
-	predictorVelocityMaxDelayTFObjectTypes = map[string]attr.Type{
-		"unit":     types.StringType,
-		"quantity": types.Int64Type,
+		"high":     types.Float64Type,
+		"medium":   types.Float64Type,
 	}
 
 	predictorVelocitySlidingWindowTFObjectTypes = map[string]attr.Type{
@@ -150,8 +149,8 @@ var (
 
 	predictorVelocityUseTFObjectTypes = map[string]attr.Type{
 		"type":   types.StringType,
-		"medium": types.Int64Type,
-		"high":   types.Int64Type,
+		"medium": types.Float64Type,
+		"high":   types.Float64Type,
 	}
 )
 
@@ -331,7 +330,6 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			"detect": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
-				Default:  stringdefault.StaticString(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)),
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(func() []string {
@@ -386,9 +384,33 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:    true,
 			},
 
+			// User Risk Behavior
+			"prediction_model": schema.SingleNestedAttribute{
+				Description: "",
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Description: "",
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(func() []string {
+								strings := make([]string, 0)
+								for _, v := range risk.AllowedEnumRiskModelEnumValues {
+									strings = append(strings, string(v))
+								}
+								return strings
+							}()...),
+						},
+					},
+				},
+			},
+
 			// Velocity
 			"measure": schema.StringAttribute{
 				Optional: true,
+				Computed: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(func() []string {
 						strings := make([]string, 0)
@@ -411,6 +433,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Description: "",
 				Computed:    true,
 				ElementType: types.StringType,
+
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.RequiresReplace(),
+				},
 
 				Validators: []validator.Set{
 					setvalidator.ValueStringsAre(
@@ -502,23 +528,6 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 					"min_sample": schema.Int64Attribute{
 						Description: "The minimum number of samples to use for the risk predictor.",
-						Computed:    true,
-					},
-				},
-			},
-
-			"max_delay": schema.SingleNestedAttribute{
-				Description: "An object that contains configuration values for the max delay risk predictor type.",
-				Computed:    true,
-
-				Attributes: map[string]schema.Attribute{
-					"unit": schema.StringAttribute{
-						Description: "The unit of measurement for the `interval` parameter.",
-						Computed:    true,
-					},
-
-					"quantity": schema.Int64Attribute{
-						Description: "The number of `unit` intervals to use for the risk predictor.",
 						Computed:    true,
 					},
 				},
@@ -811,14 +820,22 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context) (*risk.RiskPred
 		switch p.Type.ValueString() {
 		case string(risk.ENUMPREDICTORTYPE_ANONYMOUS_NETWORK):
 			riskPredictor.RiskPredictorAnonymousNetwork, d = p.expandPredictorAnonymousNetwork(ctx, data)
+		case string(risk.ENUMPREDICTORTYPE_COMPOSITE):
+			riskPredictor.RiskPredictorComposite, d = p.expandPredictorComposite(ctx, data)
+		case string(risk.ENUMPREDICTORTYPE_MAP):
+			riskPredictor.RiskPredictorCustom, d = p.expandPredictorCustom(ctx, data)
 		case string(risk.ENUMPREDICTORTYPE_GEO_VELOCITY):
 			riskPredictor.RiskPredictorGeovelocity, d = p.expandPredictorGeovelocity(ctx, data)
 		case string(risk.ENUMPREDICTORTYPE_IP_REPUTATION):
 			riskPredictor.RiskPredictorIPReputation, d = p.expandPredictorIPReputation(ctx, data)
 		case string(risk.ENUMPREDICTORTYPE_DEVICE):
-			riskPredictor.RiskPredictorNewDevice, d = p.expandPredictorNewDevice(data)
+			riskPredictor.RiskPredictorDevice, d = p.expandPredictorDevice(data)
+		case string(risk.ENUMPREDICTORTYPE_USER_RISK_BEHAVIOR):
+			riskPredictor.RiskPredictorUserRiskBehavior, d = p.expandPredictorUserRiskBehavior(ctx, data)
 		case string(risk.ENUMPREDICTORTYPE_USER_LOCATION_ANOMALY):
 			riskPredictor.RiskPredictorUserLocationAnomaly, d = p.expandPredictorUserLocationAnomaly(ctx, data)
+		case string(risk.ENUMPREDICTORTYPE_VELOCITY):
+			riskPredictor.RiskPredictorVelocity, d = p.expandPredictorVelocity(ctx, data)
 		}
 
 		diags.Append(d...)
@@ -861,7 +878,7 @@ func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context
 	return &data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Context) (*risk.RiskPredictorComposite, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorComposite, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var data *risk.RiskPredictorComposite
@@ -869,7 +886,7 @@ func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Contex
 	return data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context) (*risk.RiskPredictorCustom, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorCustom, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var data *risk.RiskPredictorCustom
@@ -939,15 +956,19 @@ func (p *riskPredictorResourceModel) expandPredictorIPReputation(ctx context.Con
 	return &data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorNewDevice(riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorNewDevice, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorDevice(riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorDevice, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := risk.RiskPredictorNewDevice{
+	data := risk.RiskPredictorDevice{
 		Name:        riskPredictorCommon.Name,
 		CompactName: riskPredictorCommon.CompactName,
 		Description: riskPredictorCommon.Description,
 		Type:        riskPredictorCommon.Type,
 		Default:     riskPredictorCommon.Default,
+	}
+
+	if p.Detect.IsNull() || p.Detect.IsUnknown() {
+		p.Detect = types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE))
 	}
 
 	data.SetDetect(risk.EnumPredictorNewDeviceDetectType(p.Detect.ValueString()))
@@ -997,12 +1018,34 @@ func (p *riskPredictorResourceModel) expandPredictorUserLocationAnomaly(ctx cont
 	return &data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorUEBA(ctx context.Context) (*risk.RiskPredictorUEBA, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expandPredictorUserRiskBehavior(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorUserRiskBehavior, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var data *risk.RiskPredictorUEBA
+	data := risk.RiskPredictorUserRiskBehavior{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        riskPredictorCommon.Type,
+		Default:     riskPredictorCommon.Default,
+	}
 
-	return data, diags
+	if !p.PredictionModel.IsNull() && !p.PredictionModel.IsUnknown() {
+		var plan predictorUserRiskBehaviorPredictionModel
+		d := p.PredictionModel.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		predictionModel := risk.NewRiskPredictorUserRiskBehaviorAllOfPredictionModel(risk.EnumUserRiskBehaviorRiskModel(plan.Name.ValueString()))
+
+		data.SetPredictionModel(*predictionModel)
+	}
+
+	return &data, diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorVelocity, diag.Diagnostics) {
@@ -1014,6 +1057,11 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		Description: riskPredictorCommon.Description,
 		Type:        riskPredictorCommon.Type,
 		Default:     riskPredictorCommon.Default,
+	}
+
+	// Of
+	if !p.Of.IsNull() && !p.Of.IsUnknown() {
+		data.SetOf(p.Of.ValueString())
 	}
 
 	// By
@@ -1031,6 +1079,14 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 				bySlice = append(bySlice, *byPointerSlice[i])
 			}
 			data.SetBy(bySlice)
+		}
+	} else {
+		if p.Of.Equal(types.StringValue("${event.ip}")) {
+			data.SetBy([]string{"${event.user.id}"})
+		}
+
+		if p.Of.Equal(types.StringValue("${event.user.id}")) {
+			data.SetBy([]string{"${event.ip}"})
 		}
 	}
 
@@ -1061,6 +1117,12 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		}
 
 		data.SetEvery(*every)
+	} else {
+		every := risk.NewRiskPredictorVelocityAllOfEvery()
+		every.SetUnit(risk.ENUMPREDICTORUNIT_HOUR)
+		every.SetQuantity(int32(1))
+		every.SetMinSample(int32(5))
+		data.SetEvery(*every)
 	}
 
 	// Fallback
@@ -1082,49 +1144,36 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		}
 
 		if !plan.High.IsNull() && !plan.High.IsUnknown() {
-			fallback.SetHigh(int32(plan.High.ValueInt64()))
+			fallback.SetHigh(float32(plan.High.ValueFloat64()))
 		}
 
 		if !plan.Medium.IsNull() && !plan.Medium.IsUnknown() {
-			fallback.SetMedium(int32(plan.Medium.ValueInt64()))
+			fallback.SetMedium(float32(plan.Medium.ValueFloat64()))
+		}
+
+		data.SetFallback(*fallback)
+	} else {
+		fallback := risk.NewRiskPredictorVelocityAllOfFallback()
+		fallback.SetStrategy(risk.ENUMPREDICTORVELOCITYFALLBACKSTRATEGY_ENVIRONMENT_MAX)
+
+		if p.Of.Equal(types.StringValue("${event.ip}")) {
+			fallback.SetHigh(float32(30))
+			fallback.SetMedium(float32(20))
+		}
+
+		if p.Of.Equal(types.StringValue("${event.user.id}")) {
+			fallback.SetHigh(float32(3500))
+			fallback.SetMedium(float32(2500))
 		}
 
 		data.SetFallback(*fallback)
 	}
 
-	// MaxDelay
-	if !p.MaxDelay.IsNull() && !p.MaxDelay.IsUnknown() {
-		var plan predictorVelocityMaxDelay
-		d := p.MaxDelay.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		maxDelay := risk.NewRiskPredictorVelocityAllOfMaxDelay()
-
-		if !plan.Unit.IsNull() && !plan.Unit.IsUnknown() {
-			maxDelay.SetUnit(risk.EnumPredictorUnit(plan.Unit.ValueString()))
-		}
-
-		if !plan.Quantity.IsNull() && !plan.Quantity.IsUnknown() {
-			maxDelay.SetQuantity(int32(plan.Quantity.ValueInt64()))
-		}
-
-		data.SetMaxDelay(*maxDelay)
-	}
-
 	// Measure
 	if !p.Measure.IsNull() && !p.Measure.IsUnknown() {
 		data.SetMeasure(risk.EnumPredictorVelocityMeasure(p.Measure.ValueString()))
-	}
-
-	// Of
-	if !p.Of.IsNull() && !p.Of.IsUnknown() {
-		data.SetOf(p.Of.ValueString())
+	} else {
+		data.SetMeasure(risk.ENUMPREDICTORVELOCITYMEASURE_DISTINCT_COUNT)
 	}
 
 	// SlidingWindow
@@ -1154,6 +1203,12 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		}
 
 		data.SetSlidingWindow(*slidingWindow)
+	} else {
+		slidingWindow := risk.NewRiskPredictorVelocityAllOfSlidingWindow()
+		slidingWindow.SetUnit(risk.ENUMPREDICTORUNIT_DAY)
+		slidingWindow.SetQuantity(int32(7))
+		slidingWindow.SetMinSample(int32(3))
+		data.SetSlidingWindow(*slidingWindow)
 	}
 
 	// Use
@@ -1175,13 +1230,19 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		}
 
 		if !plan.Medium.IsNull() && !plan.Medium.IsUnknown() {
-			use.SetMedium(int32(plan.Medium.ValueInt64()))
+			use.SetMedium(float32(plan.Medium.ValueFloat64()))
 		}
 
 		if !plan.High.IsNull() && !plan.High.IsUnknown() {
-			use.SetHigh(int32(plan.High.ValueInt64()))
+			use.SetHigh(float32(plan.High.ValueFloat64()))
 		}
 
+		data.SetUse(*use)
+	} else {
+		use := risk.NewRiskPredictorVelocityAllOfUse()
+		use.SetType(risk.ENUMPREDICTORVELOCITYUSETYPE_POISSON_WITH_MAX)
+		use.SetMedium(float32(2.0))
+		use.SetHigh(float32(4.0))
 		data.SetUse(*use)
 	}
 
@@ -1267,29 +1328,29 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		}
 	}
 
-	if apiObject.RiskPredictorNewDevice != nil {
+	if apiObject.RiskPredictorDevice != nil {
 		apiObjectCommon = risk.RiskPredictorCommon{
-			Id:          apiObject.RiskPredictorNewDevice.Id,
-			Name:        apiObject.RiskPredictorNewDevice.Name,
-			CompactName: apiObject.RiskPredictorNewDevice.CompactName,
-			Description: apiObject.RiskPredictorNewDevice.Description,
-			Type:        apiObject.RiskPredictorNewDevice.Type,
-			Default:     apiObject.RiskPredictorNewDevice.Default,
-			Licensed:    apiObject.RiskPredictorNewDevice.Licensed,
-			Deletable:   apiObject.RiskPredictorNewDevice.Deletable,
+			Id:          apiObject.RiskPredictorDevice.Id,
+			Name:        apiObject.RiskPredictorDevice.Name,
+			CompactName: apiObject.RiskPredictorDevice.CompactName,
+			Description: apiObject.RiskPredictorDevice.Description,
+			Type:        apiObject.RiskPredictorDevice.Type,
+			Default:     apiObject.RiskPredictorDevice.Default,
+			Licensed:    apiObject.RiskPredictorDevice.Licensed,
+			Deletable:   apiObject.RiskPredictorDevice.Deletable,
 		}
 	}
 
-	if apiObject.RiskPredictorUEBA != nil {
+	if apiObject.RiskPredictorUserRiskBehavior != nil {
 		apiObjectCommon = risk.RiskPredictorCommon{
-			Id:          apiObject.RiskPredictorUEBA.Id,
-			Name:        apiObject.RiskPredictorUEBA.Name,
-			CompactName: apiObject.RiskPredictorUEBA.CompactName,
-			Description: apiObject.RiskPredictorUEBA.Description,
-			Type:        apiObject.RiskPredictorUEBA.Type,
-			Default:     apiObject.RiskPredictorUEBA.Default,
-			Licensed:    apiObject.RiskPredictorUEBA.Licensed,
-			Deletable:   apiObject.RiskPredictorUEBA.Deletable,
+			Id:          apiObject.RiskPredictorUserRiskBehavior.Id,
+			Name:        apiObject.RiskPredictorUserRiskBehavior.Name,
+			CompactName: apiObject.RiskPredictorUserRiskBehavior.CompactName,
+			Description: apiObject.RiskPredictorUserRiskBehavior.Description,
+			Type:        apiObject.RiskPredictorUserRiskBehavior.Type,
+			Default:     apiObject.RiskPredictorUserRiskBehavior.Default,
+			Licensed:    apiObject.RiskPredictorUserRiskBehavior.Licensed,
+			Deletable:   apiObject.RiskPredictorUserRiskBehavior.Deletable,
 		}
 	}
 
@@ -1364,10 +1425,10 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.Detect = types.StringNull()
 	p.Radius = types.ObjectNull(predictorUserLocationAnomalyRadiusTFObjectTypes)
 	p.Days = types.Int64Null()
+	p.PredictionModel = types.ObjectNull(predictorUserRiskBehaviorPredictionModelTFObjectTypes)
 	p.By = types.SetNull(types.StringType)
 	p.Every = types.ObjectNull(predictorVelocityEveryTFObjectTypes)
 	p.Fallback = types.ObjectNull(predictorVelocityFallbackTFObjectTypes)
-	p.MaxDelay = types.ObjectNull(predictorVelocityMaxDelayTFObjectTypes)
 	p.Measure = types.StringNull()
 	p.Of = types.StringNull()
 	p.SlidingWindow = types.ObjectNull(predictorVelocitySlidingWindowTFObjectTypes)
@@ -1394,12 +1455,12 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		diags.Append(p.toStateRiskPredictorIPReputation(apiObject.RiskPredictorIPReputation)...)
 	}
 
-	if apiObject.RiskPredictorNewDevice != nil && apiObject.RiskPredictorNewDevice.GetId() != "" {
-		diags.Append(p.toStateRiskPredictorNewDevice(apiObject.RiskPredictorNewDevice)...)
+	if apiObject.RiskPredictorDevice != nil && apiObject.RiskPredictorDevice.GetId() != "" {
+		diags.Append(p.toStateRiskPredictorDevice(apiObject.RiskPredictorDevice)...)
 	}
 
-	if apiObject.RiskPredictorUEBA != nil && apiObject.RiskPredictorUEBA.GetId() != "" {
-		diags.Append(p.toStateRiskPredictorUEBA(apiObject.RiskPredictorUEBA)...)
+	if apiObject.RiskPredictorUserRiskBehavior != nil && apiObject.RiskPredictorUserRiskBehavior.GetId() != "" {
+		diags.Append(p.toStateRiskPredictorUserRiskBehavior(apiObject.RiskPredictorUserRiskBehavior)...)
 	}
 
 	if apiObject.RiskPredictorUserLocationAnomaly != nil && apiObject.RiskPredictorUserLocationAnomaly.GetId() != "" {
@@ -1494,7 +1555,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorIPReputation(apiObject 
 	return diags
 }
 
-func (p *riskPredictorResourceModel) toStateRiskPredictorNewDevice(apiObject *risk.RiskPredictorNewDevice) diag.Diagnostics {
+func (p *riskPredictorResourceModel) toStateRiskPredictorDevice(apiObject *risk.RiskPredictorDevice) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -1512,7 +1573,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorNewDevice(apiObject *ri
 	return diags
 }
 
-func (p *riskPredictorResourceModel) toStateRiskPredictorUEBA(apiObject *risk.RiskPredictorUEBA) diag.Diagnostics {
+func (p *riskPredictorResourceModel) toStateRiskPredictorUserRiskBehavior(apiObject *risk.RiskPredictorUserRiskBehavior) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -1522,6 +1583,21 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorUEBA(apiObject *risk.Ri
 		)
 
 		return diags
+	}
+
+	p.PredictionModel = types.ObjectNull(predictorUserRiskBehaviorPredictionModelTFObjectTypes)
+
+	if v, ok := apiObject.GetPredictionModelOk(); ok {
+		var d diag.Diagnostics
+
+		o := map[string]attr.Value{
+			"name": enumRiskPredictorUserRiskBehaviorRiskModelOkToTF(v.GetNameOk()),
+		}
+
+		objValue, d := types.ObjectValue(predictorUserRiskBehaviorPredictionModelTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.PredictionModel = objValue
 	}
 
 	return diags
@@ -1600,31 +1676,14 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 
 		o := map[string]attr.Value{
 			"strategy": enumRiskPredictorVelocityFallbackStrategyOkToTF(v.GetStrategyOk()),
-			"high":     framework.Int32OkToTF(v.GetHighOk()),
-			"medium":   framework.Int32OkToTF(v.GetMediumOk()),
+			"high":     framework.Float32OkToTF(v.GetHighOk()),
+			"medium":   framework.Float32OkToTF(v.GetMediumOk()),
 		}
 
 		objValue, d := types.ObjectValue(predictorVelocityFallbackTFObjectTypes, o)
 		diags.Append(d...)
 
 		p.Fallback = objValue
-	}
-
-	// MaxDelay
-	p.MaxDelay = types.ObjectNull(predictorVelocityMaxDelayTFObjectTypes)
-
-	if v, ok := apiObject.GetMaxDelayOk(); ok {
-		var d diag.Diagnostics
-
-		o := map[string]attr.Value{
-			"unit":     enumRiskPredictorUnitOkToTF(v.GetUnitOk()),
-			"quantity": framework.Int32OkToTF(v.GetQuantityOk()),
-		}
-
-		objValue, d := types.ObjectValue(predictorVelocityMaxDelayTFObjectTypes, o)
-		diags.Append(d...)
-
-		p.MaxDelay = objValue
 	}
 
 	p.Measure = enumRiskPredictorVelocityMeasureOkToTF(apiObject.GetMeasureOk())
@@ -1656,8 +1715,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 
 		o := map[string]attr.Value{
 			"type":   enumRiskPredictorVelocityUseTypeOkToTF(v.GetTypeOk()),
-			"medium": framework.Int32OkToTF(v.GetMediumOk()),
-			"high":   framework.Int32OkToTF(v.GetHighOk()),
+			"medium": framework.Float32OkToTF(v.GetMediumOk()),
+			"high":   framework.Float32OkToTF(v.GetHighOk()),
 		}
 
 		objValue, d := types.ObjectValue(predictorVelocityUseTFObjectTypes, o)
@@ -1730,6 +1789,18 @@ func enumRiskPredictorNewDeviceDetectOkToTF(v *risk.EnumPredictorNewDeviceDetect
 }
 
 func enumRiskPredictorDistanceUnitOkToTF(v *risk.EnumDistanceUnit, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		if sv := string(*v); sv == "" {
+			return types.StringNull()
+		} else {
+			return types.StringValue(sv)
+		}
+	}
+}
+
+func enumRiskPredictorUserRiskBehaviorRiskModelOkToTF(v *risk.EnumUserRiskBehaviorRiskModel, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
