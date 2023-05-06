@@ -22,7 +22,9 @@ func Resources() []func() resource.Resource {
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewCredentialIssuerProfileDataSource,
+	}
 }
 
 func prepareClient(ctx context.Context, resourceConfig framework.ResourceType) (*credentials.APIClient, error) {

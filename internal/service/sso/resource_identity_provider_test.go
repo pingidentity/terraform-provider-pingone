@@ -87,7 +87,7 @@ func TestAccIdentityProvider_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -114,7 +114,7 @@ func TestAccIdentityProvider_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -149,7 +149,7 @@ func TestAccIdentityProvider_Minimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -183,7 +183,7 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -248,7 +248,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -306,7 +306,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -364,7 +364,7 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -422,7 +422,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -480,7 +480,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -538,7 +538,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -596,7 +596,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -658,7 +658,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -718,7 +718,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -776,7 +776,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -837,7 +837,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -957,7 +957,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // Needs redefinition
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -1047,7 +1047,7 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{

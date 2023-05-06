@@ -59,13 +59,13 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
-	appOpenUrlDescriptionFmt := "The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/endpoint`.  The provided URL is recommended to use the `https://` schema.  The `http` schema is permitted but not recommended."
+	appOpenUrlDescriptionFmt := "The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/appopenurl`.  The `https://` schema is recommended, but not required."
 	appOpenUrlDescription := framework.SchemaDescription{
 		MarkdownDescription: appOpenUrlDescriptionFmt,
 		Description:         strings.ReplaceAll(appOpenUrlDescriptionFmt, "`", "\""),
 	}
 
-	nameDescriptionFmt := "The name of the digital wallet application. For example, `Example Wallet Application`."
+	nameDescriptionFmt := "The name of the digital wallet application."
 	nameDescription := framework.SchemaDescription{
 		MarkdownDescription: nameDescriptionFmt,
 		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
@@ -74,7 +74,7 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne Credentials digital wallet applications.",
+		Description: "Resource to create and manage PingOne Credentials digital wallet applications. The service controls the relationship between the customer's digital wallet app, which communicates with users' digital wallets, and a customer's PingOne application.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -140,6 +140,7 @@ func (r *DigitalWalletApplicationResource) Configure(ctx context.Context, req re
 		return
 	}
 
+	// management client is used to perform checks for the prerequisite native application
 	preparedMgmtClient, err := prepareMgmtClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -176,14 +177,14 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 	}
 
 	// Build the model for the API
-	digitalWalletApplication, diags := plan.expand(ctx, r)
-	resp.Diagnostics.Append(diags...)
+	digitalWalletApplication, d := plan.expand(ctx, r)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -193,8 +194,7 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	resp.Diagnostics.Append(diags...)
-
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -275,14 +275,14 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 	}
 
 	// Build the model for the API
-	digitalWalletApplication, diags := plan.expand(ctx, r)
-	resp.Diagnostics.Append(diags...)
+	digitalWalletApplication, d := plan.expand(ctx, r)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -292,7 +292,7 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(d...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -327,7 +327,7 @@ func (r *DigitalWalletApplicationResource) Delete(ctx context.Context, req resou
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
+	_, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -338,14 +338,14 @@ func (r *DigitalWalletApplicationResource) Delete(ctx context.Context, req resou
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 }
 
 func (r *DigitalWalletApplicationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 3
+	splitLength := 2
 	attributes := strings.SplitN(req.ID, "/", splitLength)
 
 	if len(attributes) != splitLength {

@@ -91,7 +91,7 @@ func TestAccResourceScopePingOneAPI_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -135,7 +135,7 @@ func TestAccResourceScopePingOneAPI_Minimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -175,7 +175,7 @@ func TestAccResourceScopePingOneAPI_Change(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -232,7 +232,7 @@ func TestAccResourceScopePingOneAPI_OverridePredefined(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -259,7 +259,7 @@ func TestAccResourceScopePingOneAPI_InvalidParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{

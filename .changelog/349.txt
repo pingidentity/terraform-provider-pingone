@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_notification_template_content`: Fix issue where the notification template content with no variant is configured correctly in PingOne but the template content is not effective.
+```

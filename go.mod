@@ -7,7 +7,7 @@ replace github.com/patrickcping/pingone-go-sdk-v2/credentials => /Users/mikesimo
 replace github.com/patrickcping/pingone-go-sdk-v2 => /Users/mikesimon/dev/src/github.com/pingone-go-sdk-v2
 
 require (
-	github.com/bflad/tfproviderlint v0.28.1
+	github.com/bflad/tfproviderlint v0.29.0
 	github.com/golangci/golangci-lint v1.52.2
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-changelog v0.0.0-20220419201213-5edfc0d651d8
@@ -17,17 +17,17 @@ require (
 	github.com/hashicorp/terraform-plugin-framework-validators v0.10.0
 	github.com/hashicorp/terraform-plugin-go v0.15.0
 	github.com/hashicorp/terraform-plugin-log v0.8.0
-	github.com/hashicorp/terraform-plugin-mux v0.9.0
+	github.com/hashicorp/terraform-plugin-mux v0.10.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.26.1
 	github.com/katbyte/terrafmt v0.5.2
-	github.com/patrickcping/pingone-go-sdk-v2 v0.6.1
-	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.1.2
-	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.5
+	github.com/patrickcping/pingone-go-sdk-v2 v0.6.4
+	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.1.3
+	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.6
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.1.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.19.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.9.2
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.19.1
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.9.3
 	github.com/pavius/impi v0.0.3
-	github.com/terraform-linters/tflint v0.46.0
+	github.com/terraform-linters/tflint v0.46.1
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
 )
 
@@ -199,7 +199,7 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/owenrumney/go-sarif v1.1.1 // indirect
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.5.0 // indirect
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.5.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/polyfloyd/go-errorlint v1.4.0 // indirect
@@ -243,7 +243,7 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
-	github.com/terraform-linters/tflint-plugin-sdk v0.16.0 // indirect
+	github.com/terraform-linters/tflint-plugin-sdk v0.16.1 // indirect
 	github.com/terraform-linters/tflint-ruleset-terraform v0.2.2 // indirect
 	github.com/tetafro/godot v1.4.11 // indirect
 	github.com/timakin/bodyclose v0.0.0-20221125081123-e39cf3fc478e // indirect
@@ -268,16 +268,16 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230224173230-c95f2b4c22f2 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	golang.org/x/tools v0.7.0 // indirect
+	golang.org/x/tools v0.8.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.107.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

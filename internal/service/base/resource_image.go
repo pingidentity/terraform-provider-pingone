@@ -205,7 +205,7 @@ func resourceImageDelete(ctx context.Context, d *schema.ResourceData, meta inter
 		},
 		"DeleteImage",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

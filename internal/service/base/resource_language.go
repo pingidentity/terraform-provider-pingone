@@ -173,7 +173,7 @@ func resourceLanguageDelete(ctx context.Context, d *schema.ResourceData, meta in
 		},
 		"DeleteLanguage",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

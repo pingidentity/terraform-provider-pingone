@@ -108,7 +108,7 @@ func datasourcePingOneUsersRead(ctx context.Context, d *schema.ResourceData, met
 		filterFunction,
 		"ReadAllUsers",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

@@ -20,16 +20,7 @@ import (
 type Retryable func(context.Context, *http.Response, *model.P1Error) bool
 
 var (
-	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
-
-		// Gateway errors
-		if r.StatusCode >= 502 && r.StatusCode <= 504 {
-			tflog.Warn(ctx, "Gateway error detected, available for retry")
-			return true
-		}
-
-		return false
-	}
+	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool { return false }
 
 	DefaultCreateReadRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 

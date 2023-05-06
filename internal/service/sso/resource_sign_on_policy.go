@@ -151,7 +151,7 @@ func resourceSignOnPolicyUpdate(ctx context.Context, d *schema.ResourceData, met
 		},
 		"UpdateSignOnPolicy",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -177,7 +177,7 @@ func resourceSignOnPolicyDelete(ctx context.Context, d *schema.ResourceData, met
 		},
 		"DeleteSignOnPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

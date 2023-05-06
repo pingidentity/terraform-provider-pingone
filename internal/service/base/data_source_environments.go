@@ -14,7 +14,6 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
@@ -133,7 +132,7 @@ func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 		filterFunction,
 		"ReadAllEnvironments",
 		framework.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

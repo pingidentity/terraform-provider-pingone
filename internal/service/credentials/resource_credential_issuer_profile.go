@@ -48,21 +48,23 @@ func (r *CredentialIssuerProfileResource) Metadata(ctx context.Context, req reso
 	resp.TypeName = req.ProviderTypeName + "_credential_issuer_profile"
 }
 
+// Schema
 func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	// schema descriptions and validation settings
 	const attrMinLength = 1
+	const attrMaxLength = 256
 
 	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to enable the issuance of credentials, and manage the PingOne Credentials issuer profile.",
+		Description: "Resource to create and manage a credential issuer profile (enabling the issuance of credentials) in PingOne.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the credential type in."},
+				Description: "The ID of the environment to create the credential issuer in."},
 			),
 
 			"name": schema.StringAttribute{
@@ -70,10 +72,11 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.LengthAtMost(attrMaxLength),
 				},
 			},
 
-			// omitted logo because it is not used - API target is to deprecate
+			// omitted logo because it is not used
 			// placeholder just in case it needs to be enabled
 			//"logo": schema.StringAttribute{
 			//	Description: "An image containing the brand logo for the issuer. ",
@@ -145,7 +148,9 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+			// Important:  The API no longer allows profile creation because the profile is automatically created when the P1Credentials service is enabled.
+			// CredentialIssuerProfileResource invokes UpdateCredentialIssuerProfile to allow for the initial creation of the TF resource, but the API is only updating the 'name' field.
+			return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 		},
 		"CreateCredentialIssuerProfile",
 		framework.DefaultCustomError,
@@ -265,12 +270,11 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 }
 
 func (r *CredentialIssuerProfileResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// Deletion of a profile is not allowed.  Only removal of the Credential service.
-	// TODO: Identify the proper handling.
+	// Deletion of a credential issuer profile is not allowed, and there is not an associated API.
 }
 
 func (r *CredentialIssuerProfileResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 3
+	splitLength := 2
 	attributes := strings.SplitN(req.ID, "/", splitLength)
 
 	if len(attributes) != splitLength {

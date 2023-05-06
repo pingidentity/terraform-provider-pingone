@@ -142,7 +142,7 @@ func resourceGroupNestingDelete(ctx context.Context, d *schema.ResourceData, met
 		},
 		"DeleteGroupNesting",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

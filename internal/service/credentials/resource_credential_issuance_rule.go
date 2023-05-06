@@ -579,18 +579,20 @@ func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*cred
 		}
 	}
 
-	// build issuance rule with required attributes
+	// buuild issuance rule object with required attributes
 	data := credentials.NewCredentialIssuanceRule(*automation, credentials.EnumCredentialIssuanceRuleStatus(p.Status.ValueString()))
 
-	// set filter
-	data.SetFilter(*filter)
+	// set the filter details
+	if filter.HasGroupIds() || filter.HasPopulationIds() || filter.HasScim() {
+		data.SetFilter(*filter)
+	}
 
-	// set notifications
+	// set the notification details
 	if notification.HasMethods() {
 		data.SetNotification(*notification)
 	}
 
-	// set digital wallet application
+	// set the digital wallet application
 	application := credentials.NewCredentialIssuanceRuleDigitalWalletApplication(p.DigitalWalletApplicationId.ValueString())
 	data.SetDigitalWalletApplication(*application)
 
@@ -611,8 +613,9 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
-	p.DigitalWalletApplicationId = framework.StringToTF((apiObject.GetDigitalWalletApplication().Id))
-	p.CredentialTypeId = framework.StringToTF((apiObject.CredentialType.Id))
+	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
+	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.Id)
+	p.Status = framework.StringToTF(string(apiObject.GetStatus()))
 
 	// automation
 	// move to function

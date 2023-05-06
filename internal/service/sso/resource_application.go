@@ -974,7 +974,7 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 		},
 		"UpdateApplication",
 		applicationWriteCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -1000,7 +1000,7 @@ func resourceApplicationDelete(ctx context.Context, d *schema.ResourceData, meta
 		},
 		"DeleteApplication",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

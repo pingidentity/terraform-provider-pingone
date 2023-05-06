@@ -36,7 +36,7 @@ type CredentialTypeResourceModel struct {
 	Description        types.String `tfsdk:"description"`
 	CardType           types.String `tfsdk:"card_type"`
 	CardDesignTemplate types.String `tfsdk:"card_design_template"`
-	Metadata           types.List   `tfsdk:"metadata"`
+	Metadata           types.Object `tfsdk:"metadata"`
 }
 
 type MetadataModel struct {
@@ -45,7 +45,7 @@ type MetadataModel struct {
 	CardColor        types.String `tfsdk:"card_color"`
 	Description      types.String `tfsdk:"description"`
 	TextColor        types.String `tfsdk:"text_color"`
-	Version          types.Int64  `tfsdk:"version"` // Watch Item - Best practice is to allow service to set, but if version of 5 or higher is not provided, creds do not appear in UI
+	Version          types.Int64  `tfsdk:"version"` // Watch Item - Best practice is to allow service to set, but if version of 5 or higher is not provided, creds do not appear in UI!
 	LogoImage        types.String `tfsdk:"logo_image"`
 	Name             types.String `tfsdk:"name"`
 	Fields           types.List   `tfsdk:"fields"`
@@ -150,8 +150,153 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					stringvalidator.RegexMatches(regexp.MustCompile(`^<svg.*>[\s\S]*<\/svg>\s*$`), "expected value to contain a valid PingOne Credentials SVG card template."),
 				},
 			},
+
+			"metadata": schema.SingleNestedAttribute{
+				Description:         "",
+				MarkdownDescription: "",
+				Required:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"background_image": schema.StringAttribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Optional:            true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(
+								regexp.MustCompile(`^data:image\/(\w+);base64,[^\s]*={0,2}`), // very basic initial image encoding check
+								"expected value to contain a base64-encoded image."),
+						},
+					},
+
+					"bg_opacity_percent": schema.Int64Attribute{
+						Description: "A numnber containing the percent opacity of the background image in the credential. High percentage opacity may make displayed text difficult to read.",
+						Optional:    true,
+						Validators: []validator.Int64{
+							int64validator.Between(attrMinPercent, attrMaxPercent),
+						},
+					},
+
+					"card_color": schema.StringAttribute{
+						Description: "A string containing a 6-digit hexadecimal color code specifying the color of the credential.",
+						Optional:    true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(
+								regexp.MustCompile(`^#([A-Fa-f0-9]{6})$`),
+								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
+						},
+					},
+
+					"description": schema.StringAttribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Optional:            true,
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+						},
+					},
+
+					"logo_image": schema.StringAttribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Optional:            true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(
+								regexp.MustCompile(`^data:image\/(\w+);base64,[^\s]*={0,2}`), // very basic initial image encoding check
+								"expected value to contain a base64-encoded image."),
+						},
+					},
+
+					"name": schema.StringAttribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Optional:            true,
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+						},
+					},
+
+					"text_color": schema.StringAttribute{
+						Description: "A string containing a 6-digit hexadecimal color code specifying the color of the credential text.",
+						Optional:    true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(
+								regexp.MustCompile(`^#([A-Fa-f0-9]{6})$`),
+								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
+						},
+					},
+
+					"version": schema.Int64Attribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Required:            true, // not requried in schema, but credentials will not display in P1 admin console if not provided
+						Validators: []validator.Int64{
+							int64validator.AtLeast(attrMinVersion),
+						},
+					},
+
+					"fields": schema.ListNestedAttribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Required:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Description:         "",
+									MarkdownDescription: "",
+									Computed:            true,
+								},
+								"type": schema.StringAttribute{
+									Description:         "",
+									MarkdownDescription: "",
+									Required:            true,
+									Validators: []validator.String{
+										stringvalidator.OneOf(
+											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT),
+											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE),
+											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ISSUED_TIMESTAMP)),
+									},
+								},
+								"title": schema.StringAttribute{
+									Description:         "",
+									MarkdownDescription: "",
+									Optional:            true,
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(attrMinLength),
+									},
+								},
+								"attribute": schema.StringAttribute{
+									Description:         "",
+									MarkdownDescription: "",
+									Optional:            true,
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(attrMinLength),
+										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
+										// todo: ensure attribute is present if type is directory attribute; likely need custom function because the following does not work
+										//stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("type").AtSetValue(types.StringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)))),
+									},
+								},
+								"value": schema.StringAttribute{
+									Description:         "",
+									MarkdownDescription: "",
+									Optional:            true,
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(attrMinLength),
+										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
+									},
+								},
+								"is_visible": schema.BoolAttribute{
+									Description:         "",
+									MarkdownDescription: "",
+									Optional:            true,
+									Validators:          []validator.Bool{},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
-		Blocks: map[string]schema.Block{
+		/*Blocks: map[string]schema.Block{
 			"metadata": schema.ListNestedBlock{
 				Description:         "",
 				MarkdownDescription: "",
@@ -284,7 +429,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 										Description:         "",
 										MarkdownDescription: "",
 										Optional:            true,
-										Validators:          []validator.Bool{}, // todo: Am I using this properly?
+										Validators:          []validator.Bool{},
 									},
 								},
 							},
@@ -292,7 +437,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					},
 				},
 			},
-		},
+		},*/
 	}
 }
 
@@ -514,7 +659,7 @@ func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.Delete
 }
 
 func (r *CredentialTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 3
+	splitLength := 2
 	attributes := strings.SplitN(req.ID, "/", splitLength)
 
 	if len(attributes) != splitLength {
@@ -532,57 +677,39 @@ func (r *CredentialTypeResource) ImportState(ctx context.Context, req resource.I
 func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.CredentialType, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// expand metadata
-	var metadata []MetadataModel
-	credentialTypeMetadata := make([]credentials.CredentialTypeMetaData, 0)
-	diags.Append(p.Metadata.ElementsAs(ctx, &metadata, false)...)
-	if diags.HasError() {
-		return nil, diags
-	}
+	credentialTypeMetaData := credentials.NewCredentialTypeMetaData()
 
-	for _, v := range metadata {
-		element, d := v.expand(ctx)
+	// expand credential type metadata and metadata fields
+	if !p.Metadata.IsNull() && !p.Metadata.IsUnknown() {
+		var metadata MetadataModel
+		d := p.Metadata.As(ctx, &metadata, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		credentialTypeMetadata = append(credentialTypeMetadata, *element)
+		credentialTypeMetaData, d = metadata.expandMetaDataModel(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 	}
 
-	data := credentials.NewCredentialType(p.CardDesignTemplate.ValueString(), credentialTypeMetadata[0], p.Title.ValueString())
-
+	data := credentials.NewCredentialType(p.CardDesignTemplate.ValueString(), *credentialTypeMetaData, p.Title.ValueString())
 	data.SetDescription(p.Description.ValueString())
 	data.SetCardType(p.CardType.ValueString())
 
 	return data, diags
 }
 
-func (p *MetadataModel) expand(ctx context.Context) (*credentials.CredentialTypeMetaData, diag.Diagnostics) {
+func (p *MetadataModel) expandMetaDataModel(ctx context.Context) (*credentials.CredentialTypeMetaData, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	cardMetadata := credentials.NewCredentialTypeMetaDataWithDefaults()
-
-	// expand fields
-	if !p.Fields.IsNull() && !p.Fields.IsUnknown() {
-		var innerFields []FieldsModel
-		fields := make([]credentials.CredentialTypeMetaDataFieldsInner, 0)
-		diags.Append(p.Fields.ElementsAs(ctx, &innerFields, false)...)
-		if diags.HasError() {
-			return nil, diags
-		}
-		for _, v := range innerFields {
-			field, d := v.expand(ctx)
-			diags.Append(d...)
-			if diags.HasError() {
-				return nil, diags
-			}
-
-			fields = append(fields, *field)
-		}
-		// complete the meta data object
-		cardMetadata.SetFields(fields)
-	}
+	//cardMetadata := credentials.NewCredentialTypeMetaData()
 
 	if !p.Name.IsNull() && !p.Name.IsUnknown() {
 		cardMetadata.SetName(p.Name.ValueString())
@@ -590,8 +717,6 @@ func (p *MetadataModel) expand(ctx context.Context) (*credentials.CredentialType
 
 	if !p.BackgroundImage.IsNull() && !p.BackgroundImage.IsUnknown() {
 		cardMetadata.SetBackgroundImage(p.BackgroundImage.ValueString())
-	} else {
-		cardMetadata.SetBackgroundImage("") // handle scenarios if the card design template references values not defined in the HCL
 	}
 
 	if !p.BgOpacityPercent.IsNull() && !p.BgOpacityPercent.IsUnknown() {
@@ -618,10 +743,31 @@ func (p *MetadataModel) expand(ctx context.Context) (*credentials.CredentialType
 		cardMetadata.SetVersion(int32(p.Version.ValueInt64()))
 	}
 
+	// expand fields
+	if !p.Fields.IsNull() && !p.Fields.IsUnknown() {
+		var innerFields []FieldsModel
+		fields := make([]credentials.CredentialTypeMetaDataFieldsInner, 0)
+		diags.Append(p.Fields.ElementsAs(ctx, &innerFields, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		for _, v := range innerFields {
+			field, d := v.expandFields(ctx)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			fields = append(fields, *field)
+		}
+		// complete the meta data object
+		cardMetadata.SetFields(fields)
+	}
+
 	return cardMetadata, diags
 }
 
-func (p *FieldsModel) expand(ctx context.Context) (*credentials.CredentialTypeMetaDataFieldsInner, diag.Diagnostics) {
+func (p *FieldsModel) expandFields(ctx context.Context) (*credentials.CredentialTypeMetaDataFieldsInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	innerFields := credentials.NewCredentialTypeMetaDataFieldsInnerWithDefaults()
@@ -656,17 +802,18 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
 		)
-
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
+	// credential attributes
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
-	p.Title = framework.StringToTF(apiObject.GetTitle())
-	p.Description = framework.StringToTF(apiObject.GetDescription())
-	p.CardType = framework.StringToTF(apiObject.GetCardType())
-	p.CardDesignTemplate = framework.StringToTF(apiObject.GetCardDesignTemplate())
+	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.CardType = framework.StringOkToTF(apiObject.GetCardTypeOk())
+	p.CardDesignTemplate = framework.StringOkToTF(apiObject.GetCardDesignTemplateOk())
 
+	// credential metadata
 	metadata, d := toStateMetadata(apiObject.GetMetadataOk())
 	diags.Append(d...)
 	p.Metadata = metadata
@@ -674,12 +821,11 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 	return diags
 }
 
-func toStateMetadata(metadata *credentials.CredentialTypeMetaData, ok bool) (types.List, diag.Diagnostics) {
+func toStateMetadata(metadata *credentials.CredentialTypeMetaData, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: metadataServiceTFObjectTypes}
 
-	metadataMap := map[string]attr.Value{}
-	/*metadataMap := map[string]attr.Value{
+	// core metadata object
+	metadataMap := map[string]attr.Value{
 		"background_image":   framework.StringOkToTF(metadata.GetBackgroundImageOk()),
 		"bg_opacity_percent": framework.Int32OkToTF(metadata.GetBgOpacityPercentOk()),
 		"card_color":         framework.StringOkToTF(metadata.GetCardColorOk()),
@@ -688,60 +834,23 @@ func toStateMetadata(metadata *credentials.CredentialTypeMetaData, ok bool) (typ
 		"version":            framework.Int32OkToTF(metadata.GetVersionOk()),
 		"logo_image":         framework.StringOkToTF(metadata.GetLogoImageOk()),
 		"name":               framework.StringOkToTF(metadata.GetNameOk()),
-	}*/
-
-	if v, ok := metadata.GetBackgroundImageOk(); ok {
-		metadataMap["background_image"] = framework.StringToTF(string(*v))
-	} else {
-		metadataMap["background_image"] = types.StringNull()
 	}
 
-	if v, ok := metadata.GetBgOpacityPercentOk(); ok {
-		metadataMap["bg_opacity_percent"] = framework.Int32ToTF(int32(*v))
-	} else {
-		metadataMap["bg_opacity_percent"] = types.Int64Null()
-	}
+	// metadata fields objects
+	fields, d := toStateFields(metadata.GetFieldsOk())
+	diags.Append(d...)
 
-	if v, ok := metadata.GetCardColorOk(); ok {
-		metadataMap["card_color"] = framework.StringToTF(string(*v))
-	} else {
-		metadataMap["card_color"] = types.StringNull()
-	}
+	metadataMap["fields"] = fields
+	flattenedObj, d := types.ObjectValue(metadataServiceTFObjectTypes, metadataMap)
+	diags.Append(d...)
 
-	if v, ok := metadata.GetDescriptionOk(); ok {
-		metadataMap["description"] = framework.StringToTF(string(*v))
-	} else {
-		metadataMap["description"] = types.StringNull()
-	}
+	return flattenedObj, diags
+}
 
-	if v, ok := metadata.GetTextColorOk(); ok {
-		metadataMap["text_color"] = framework.StringToTF(string(*v))
-	} else {
-		metadataMap["text_color"] = types.StringNull()
-	}
+func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, ok bool) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	if v, ok := metadata.GetVersionOk(); ok {
-		metadataMap["version"] = framework.Int32ToTF(int32(*v))
-	} else {
-		metadataMap["version"] = types.Int64Null()
-	}
-
-	if v, ok := metadata.GetLogoImageOk(); ok {
-		metadataMap["logo_image"] = framework.StringToTF(string(*v))
-	} else {
-		metadataMap["logo_image"] = types.StringNull()
-	}
-
-	if v, ok := metadata.GetNameOk(); ok {
-		metadataMap["name"] = framework.StringToTF(string(*v))
-	} else {
-		metadataMap["name"] = types.StringNull()
-	}
-
-	// move to function
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	tfInnerObjType := types.ObjectType{AttrTypes: innerFieldsServiceTFObjectTypes}
-	innerFields := metadata.GetFields()
 	innerflattenedList := []attr.Value{}
 	for _, v := range innerFields {
 
@@ -760,17 +869,8 @@ func toStateMetadata(metadata *credentials.CredentialTypeMetaData, ok bool) (typ
 	}
 	fields, d := types.ListValue(tfInnerObjType, innerflattenedList)
 	diags.Append(d...)
-	metadataMap["fields"] = fields
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	flattenedObj, d := types.ObjectValue(metadataServiceTFObjectTypes, metadataMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	return returnVar, diags
-
+	return fields, diags
 }
 
 func enumCredentialTypeMetaDataFieldsOkToTF(v *credentials.EnumCredentialTypeMetaDataFieldsType, ok bool) basetypes.StringValue {

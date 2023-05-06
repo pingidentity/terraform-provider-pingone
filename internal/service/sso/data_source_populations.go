@@ -191,7 +191,7 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		filterFunction,
 		"ReadAllPopulations",
 		framework.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

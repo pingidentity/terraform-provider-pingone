@@ -93,7 +93,7 @@ func datasourcePingOneLanguageRead(ctx context.Context, d *schema.ResourceData, 
 			},
 			"ReadOneLanguage",
 			sdk.DefaultCustomError,
-			sdk.DefaultRetryable,
+			nil,
 		)
 		if diags.HasError() {
 			return diags
@@ -141,7 +141,7 @@ func findLanguageByLocale(ctx context.Context, apiClient *management.APIClient, 
 		},
 		"ReadAllLanguages",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return nil, diags

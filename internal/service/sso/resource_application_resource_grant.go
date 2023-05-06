@@ -156,7 +156,7 @@ func resourcePingOneApplicationResourceGrantUpdate(ctx context.Context, d *schem
 		},
 		"UpdateApplicationGrant",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -182,7 +182,7 @@ func resourcePingOneApplicationResourceGrantDelete(ctx context.Context, d *schem
 		},
 		"DeleteApplicationGrant",
 		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

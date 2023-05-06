@@ -430,7 +430,7 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		},
 		"UpdateMFAPolicy",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags
@@ -456,7 +456,7 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 		},
 		"DeleteDeviceAuthenticationPolicy",
 		sdk.DefaultCustomError,
-		sdk.DefaultRetryable,
+		nil,
 	)
 	if diags.HasError() {
 		return diags

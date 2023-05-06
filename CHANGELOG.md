@@ -1,14 +1,39 @@
-## 0.13.0 (Unreleased)
+## 0.14.0 (Unreleased)
+
+NOTES:
+
+* Upgraded the provider protocol version from 5 to 6.  Use of the provider requires Terraform CLI 1.0 or later. ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
+* bump `github.com/hashicorp/terraform-plugin-mux` from v0.9.0 => v0.10.0 ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
+
+## 0.13.1 (02 May 2023)
+
+NOTES:
+
+* Simplified SDK request retry code for all resources/datasources. ([#348](https://github.com/pingidentity/terraform-provider-pingone/issues/348))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.2 => v0.1.3 ([#351](https://github.com/pingidentity/terraform-provider-pingone/issues/351))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.5 => v0.1.6 ([#351](https://github.com/pingidentity/terraform-provider-pingone/issues/351))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.19.0 => v0.19.1 ([#351](https://github.com/pingidentity/terraform-provider-pingone/issues/351))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.9.2 => v0.9.3 ([#351](https://github.com/pingidentity/terraform-provider-pingone/issues/351))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.3 => v0.6.4 ([#351](https://github.com/pingidentity/terraform-provider-pingone/issues/351))
+
+BUG FIXES:
+
+* `resource/pingone_application`: Fix for "There was an unexpected error with the service" error when attempting to create an application immediately after creation of the parent environment. (2) ([#351](https://github.com/pingidentity/terraform-provider-pingone/issues/351))
+* `resource/pingone_notification_template_content`: Fix issue where the notification template content with no variant is configured correctly in PingOne but the template content is not effective. ([#349](https://github.com/pingidentity/terraform-provider-pingone/issues/349))
+
+## 0.13.0 (25 April 2023)
 
 NOTES:
 
 * Updated the external documentation site link to `terraform.pingidentity.com` for the getting started guide on the index docs page. ([#340](https://github.com/pingidentity/terraform-provider-pingone/issues/340))
 * `resource/pingone_application`: Expanded the native application documentation example for mobile app use case. ([#344](https://github.com/pingidentity/terraform-provider-pingone/issues/344))
+* bump `github.com/bflad/tfproviderlint` v0.28.1 => v0.29.0 ([#347](https://github.com/pingidentity/terraform-provider-pingone/issues/347))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.1 => v0.1.2 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.4 => v0.1.5 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.18.0 => v0.19.0 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.9.1 => v0.9.2 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.2 => v0.6.3 ([#345](https://github.com/pingidentity/terraform-provider-pingone/issues/345))
+* bump `github.com/terraform-linters/tflint` v0.46.0 => v0.46.1 ([#347](https://github.com/pingidentity/terraform-provider-pingone/issues/347))
 
 ENHANCEMENTS:
 
