@@ -34,9 +34,9 @@ type CredentialIssuanceRuleResourceModel struct {
 	EnvironmentId              types.String `tfsdk:"environment_id"`
 	CredentialTypeId           types.String `tfsdk:"credential_type_id"`
 	DigitalWalletApplicationId types.String `tfsdk:"digital_wallet_application_id"`
-	Automation                 types.List   `tfsdk:"automation"`
-	Filter                     types.List   `tfsdk:"filter"`
-	Notification               types.List   `tfsdk:"notification"`
+	Automation                 types.Object `tfsdk:"automation"`
+	Filter                     types.Object `tfsdk:"filter"`
+	Notification               types.Object `tfsdk:"notification"`
 	Status                     types.String `tfsdk:"status"`
 }
 
@@ -146,89 +146,80 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 						string(credentials.ENUMCREDENTIALISSUANCERULESTATUS_DISABLED)),
 				},
 			},
-		},
-		Blocks: map[string]schema.Block{
-			"filter": schema.ListNestedBlock{
-				Description:         "",
-				MarkdownDescription: "",
-				NestedObject: schema.NestedBlockObject{
 
-					Attributes: map[string]schema.Attribute{
-						"group_ids": schema.SetAttribute{
-							ElementType:         types.StringType,
-							Description:         "",
-							MarkdownDescription: "",
-							Optional:            true,
-							Validators: []validator.Set{
-								setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
-								setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
-							},
+			"filter": schema.SingleNestedAttribute{
+				MarkdownDescription: "",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"group_ids": schema.SetAttribute{
+						ElementType:         types.StringType,
+						Description:         "",
+						MarkdownDescription: "",
+						Optional:            true,
+						Validators: []validator.Set{
+							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
+							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
 						},
-						"population_ids": schema.SetAttribute{
-							ElementType:         types.StringType,
-							Description:         "",
-							MarkdownDescription: "",
-							Optional:            true,
-							Validators: []validator.Set{
-								setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
-								setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
-							},
+					},
+					"population_ids": schema.SetAttribute{
+						ElementType:         types.StringType,
+						Description:         "",
+						MarkdownDescription: "",
+						Optional:            true,
+						Validators: []validator.Set{
+							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
+							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
 						},
-						"scim": schema.StringAttribute{
-							Description:         "",
-							MarkdownDescription: "",
-							Optional:            true,
-							Validators: []validator.String{
-								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
-								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
-							},
+					},
+					"scim": schema.StringAttribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Optional:            true,
+						Validators: []validator.String{
+							stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
+							stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
 						},
 					},
 				},
 			},
-			"automation": schema.ListNestedBlock{
-				Description:         "",
-				MarkdownDescription: "",
-				NestedObject: schema.NestedBlockObject{
 
-					Attributes: map[string]schema.Attribute{
-						"issue": schema.StringAttribute{
-							Description:         "",
-							MarkdownDescription: "",
-							Required:            true,
-						},
-						"revoke": schema.StringAttribute{
-							Description:         "",
-							MarkdownDescription: "",
-							Required:            true,
-						},
-						"update": schema.StringAttribute{
-							Description:         "",
-							MarkdownDescription: "",
-							Required:            true,
-						},
+			"automation": schema.SingleNestedAttribute{
+				MarkdownDescription: "",
+				Required:            true,
+				Attributes: map[string]schema.Attribute{
+					"issue": schema.StringAttribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Required:            true,
+					},
+					"revoke": schema.StringAttribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Required:            true,
+					},
+					"update": schema.StringAttribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Required:            true,
 					},
 				},
 			},
-			"notification": schema.ListNestedBlock{
-				Description:         "",
-				MarkdownDescription: "",
-				NestedObject: schema.NestedBlockObject{
 
-					Attributes: map[string]schema.Attribute{
-						"methods": schema.SetAttribute{
-							ElementType:         types.StringType,
-							Description:         "",
-							MarkdownDescription: "",
-							Required:            true,
-							//Validators: []validator.Set{
-							//	setvalidator.ValueStringsAre(
-							//		string(credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_EMAIL),
-							//		string(credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_SMS)),
-							//},
+			"notification": schema.SingleNestedAttribute{
+				MarkdownDescription: "",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"methods": schema.SetAttribute{
+						ElementType:         types.StringType,
+						Description:         "",
+						MarkdownDescription: "",
+						Required:            true,
+						Validators:          []validator.Set{
+							//setvalidator.AtLeastOneOf([]string{string(credentials.ENUMCREDENTIALISSUANCERULEAUTOMATIONMETHOD_ON_DEMAND)}),
+							//credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_EMAIL),
+							//credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_SMS),
 						},
 					},
-
 					// future: notification template handling in creds api is currently unclear
 					/*Blocks: map[string]schema.Block{
 						"template": schema.ListNestedBlock{
@@ -502,94 +493,77 @@ func (r *CredentialIssuanceRuleResource) ImportState(ctx context.Context, req re
 func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*credentials.CredentialIssuanceRule, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// expand automation
-	// todo: move to function
-	var automationRules []AutomationModel
-	diags.Append(p.Automation.ElementsAs(ctx, &automationRules, false)...)
-	if diags.HasError() {
-		return nil, diags
-	}
-	automation := credentials.NewCredentialIssuanceRuleAutomationWithDefaults()
-	for _, v := range automationRules {
-		if !v.Issue.IsNull() && !v.Issue.IsUnknown() {
-			automation.SetIssue(credentials.EnumCredentialIssuanceRuleAutomationMethod(v.Issue.ValueString()))
+	// expand automation rules
+	credentialIssuanceRuleAutomation := credentials.NewCredentialIssuanceRuleAutomationWithDefaults()
+	if !p.Automation.IsNull() && !p.Automation.IsUnknown() {
+		var automationRules AutomationModel
+		d := p.Automation.As(ctx, &automationRules, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
 		}
 
-		if !v.Revoke.IsNull() && !v.Revoke.IsUnknown() {
-			automation.SetRevoke(credentials.EnumCredentialIssuanceRuleAutomationMethod(v.Revoke.ValueString()))
-		}
-
-		if !v.Update.IsNull() && !v.Update.IsUnknown() {
-			automation.SetUpdate(credentials.EnumCredentialIssuanceRuleAutomationMethod(v.Update.ValueString()))
+		credentialIssuanceRuleAutomation, d = automationRules.expandAutomationModel(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
 		}
 	}
 
 	// expand filter
-	// todo: move to function
-	var filterRules []FilterModel
-	diags.Append(p.Filter.ElementsAs(ctx, &filterRules, false)...)
-	if diags.HasError() {
-		return nil, diags
-	}
-	filter := credentials.NewCredentialIssuanceRuleFilterWithDefaults()
-	for _, v := range filterRules {
-		if !v.PopulationIds.IsNull() && !v.PopulationIds.IsUnknown() {
-			diags.Append(v.PopulationIds.ElementsAs(ctx, &filter.PopulationIds, false)...)
-			if diags.HasError() {
-				return nil, diags
-			}
-			filter.SetPopulationIds(filter.PopulationIds)
+	credentialIssuanceRuleFilter := credentials.NewCredentialIssuanceRuleFilterWithDefaults()
+	if !p.Filter.IsNull() && !p.Filter.IsUnknown() {
+		var filterRules FilterModel
+		d := p.Filter.As(ctx, &filterRules, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
 		}
 
-		if !v.GroupIds.IsNull() && !v.GroupIds.IsUnknown() {
-			diags.Append(v.GroupIds.ElementsAs(ctx, &filter.GroupIds, false)...)
-			if diags.HasError() {
-				return nil, diags
-			}
-			filter.SetGroupIds(filter.GroupIds)
-		}
-
-		if !v.Scim.IsNull() && !v.Scim.IsUnknown() {
-			filter.SetScim(v.Scim.ValueString())
+		credentialIssuanceRuleFilter, d = filterRules.expandFilterModel(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
 		}
 	}
 
 	// expand notifications
-	var notificationRules []NotificationModel
-	diags.Append(p.Notification.ElementsAs(ctx, &notificationRules, false)...)
-	if diags.HasError() {
-		return nil, diags
-	}
-	notification := credentials.NewCredentialIssuanceRuleNotificationWithDefaults()
+	credentialIssuanceRuleNotification := credentials.NewCredentialIssuanceRuleNotificationWithDefaults()
+	if !p.Notification.IsNull() && !p.Notification.IsUnknown() {
+		var notificationRules NotificationModel
+		d := p.Notification.As(ctx, &notificationRules, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 
-	for _, v := range notificationRules {
-		if !v.Methods.IsNull() && !v.Methods.IsUnknown() {
-			var slice []string
-			diags.Append(v.Methods.ElementsAs(ctx, &slice, false)...)
-
-			enumSlice := make([]credentials.EnumCredentialIssuanceRuleNotificationMethod, len(slice))
-			for i := 0; i < len(slice); i++ {
-				enumVal, err := credentials.NewEnumCredentialIssuanceRuleNotificationMethodFromValue(slice[i])
-				if err != nil {
-					return nil, diags
-				}
-				enumSlice[i] = *enumVal
-				notification.Methods = append(notification.Methods, *enumVal)
-			}
+		credentialIssuanceRuleNotification, d = notificationRules.expandNotificationModel(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
 		}
 	}
 
 	// buuild issuance rule object with required attributes
-	data := credentials.NewCredentialIssuanceRule(*automation, credentials.EnumCredentialIssuanceRuleStatus(p.Status.ValueString()))
+	data := credentials.NewCredentialIssuanceRule(*credentialIssuanceRuleAutomation, credentials.EnumCredentialIssuanceRuleStatus(p.Status.ValueString()))
 
 	// set the filter details
-	if filter.HasGroupIds() || filter.HasPopulationIds() || filter.HasScim() {
-		data.SetFilter(*filter)
+	if credentialIssuanceRuleFilter.HasGroupIds() || credentialIssuanceRuleFilter.HasPopulationIds() || credentialIssuanceRuleFilter.HasScim() {
+		data.SetFilter(*credentialIssuanceRuleFilter)
 	}
 
 	// set the notification details
-	if notification.HasMethods() {
-		data.SetNotification(*notification)
+	if credentialIssuanceRuleNotification.HasMethods() {
+		data.SetNotification(*credentialIssuanceRuleNotification)
 	}
 
 	// set the digital wallet application
@@ -597,6 +571,80 @@ func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*cred
 	data.SetDigitalWalletApplication(*application)
 
 	return data, diags
+}
+
+func (p *AutomationModel) expandAutomationModel(ctx context.Context) (*credentials.CredentialIssuanceRuleAutomation, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	automation := credentials.NewCredentialIssuanceRuleAutomationWithDefaults()
+
+	if !p.Issue.IsNull() && !p.Issue.IsUnknown() {
+		automation.SetIssue(credentials.EnumCredentialIssuanceRuleAutomationMethod(p.Issue.ValueString()))
+	}
+
+	if !p.Revoke.IsNull() && !p.Revoke.IsUnknown() {
+		automation.SetRevoke(credentials.EnumCredentialIssuanceRuleAutomationMethod(p.Revoke.ValueString()))
+	}
+
+	if !p.Update.IsNull() && !p.Update.IsUnknown() {
+		automation.SetUpdate(credentials.EnumCredentialIssuanceRuleAutomationMethod(p.Update.ValueString()))
+	}
+
+	return automation, diags
+
+}
+
+func (p *FilterModel) expandFilterModel(ctx context.Context) (*credentials.CredentialIssuanceRuleFilter, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	filter := credentials.NewCredentialIssuanceRuleFilterWithDefaults()
+
+	if !p.PopulationIds.IsNull() && !p.PopulationIds.IsUnknown() {
+		diags.Append(p.PopulationIds.ElementsAs(ctx, &filter.PopulationIds, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		filter.SetPopulationIds(filter.PopulationIds)
+	}
+
+	if !p.GroupIds.IsNull() && !p.GroupIds.IsUnknown() {
+		diags.Append(p.GroupIds.ElementsAs(ctx, &filter.GroupIds, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		filter.SetGroupIds(filter.GroupIds)
+	}
+
+	if !p.Scim.IsNull() && !p.Scim.IsUnknown() {
+		filter.SetScim(p.Scim.ValueString())
+	}
+
+	return filter, diags
+
+}
+
+func (p *NotificationModel) expandNotificationModel(ctx context.Context) (*credentials.CredentialIssuanceRuleNotification, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	notification := credentials.NewCredentialIssuanceRuleNotificationWithDefaults()
+
+	if !p.Methods.IsNull() && !p.Methods.IsUnknown() {
+		var slice []string
+		diags.Append(p.Methods.ElementsAs(ctx, &slice, false)...)
+
+		enumSlice := make([]credentials.EnumCredentialIssuanceRuleNotificationMethod, len(slice))
+		for i := 0; i < len(slice); i++ {
+			enumVal, err := credentials.NewEnumCredentialIssuanceRuleNotificationMethodFromValue(slice[i])
+			if err != nil {
+				return nil, diags
+			}
+			enumSlice[i] = *enumVal
+			notification.Methods = append(notification.Methods, *enumVal)
+		}
+	}
+
+	return notification, diags
+
 }
 
 func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.CredentialIssuanceRule) diag.Diagnostics {
@@ -611,66 +659,82 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 		return diags
 	}
 
+	// core issuance rule attributes
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
 	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
 	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.Id)
 	p.Status = framework.StringToTF(string(apiObject.GetStatus()))
 
-	// automation
-	// move to function
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	tfObjType := types.ObjectType{AttrTypes: automationTypes}
-	automationMap := map[string]attr.Value{
-		"issue":  framework.StringToTF(string(apiObject.GetAutomation().Issue)),
-		"revoke": framework.StringToTF(string(apiObject.GetAutomation().Revoke)),
-		"update": framework.StringToTF(string(apiObject.GetAutomation().Update)),
-	}
-	flattenedObj, d := types.ObjectValue(automationTypes, automationMap)
-	diags.Append(d...)
-
-	automation, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	// automation object
+	automation, d := toStateAutomation(apiObject.GetAutomationOk())
 	diags.Append(d...)
 	p.Automation = automation
 
-	// fields
-	// move to function
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	tfObjType = types.ObjectType{AttrTypes: filterTypes}
-	filterMap := map[string]attr.Value{
-		"population_ids": framework.StringSetOkToTF(apiObject.Filter.GetPopulationIdsOk()),
-		"group_ids":      framework.StringSetOkToTF(apiObject.Filter.GetGroupIdsOk()),
-		"scim":           framework.StringOkToTF(apiObject.Filter.GetScimOk()),
-	}
-	flattenedObj, d = types.ObjectValue(filterTypes, filterMap)
-	diags.Append(d...)
-
-	filter, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	// filter object
+	filter, d := toStateFilter(apiObject.GetFilterOk())
 	diags.Append(d...)
 	p.Filter = filter
 
-	// notifications
-	// move to function
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+	// notification object
 	notificationMethodState := enumCredentialIssuanceRuleNotificationMethodOkToTF(apiObject.Notification.GetMethodsOk())
 
 	if notificationMethodState.IsNull() {
+		// todo: not sure how to handle this at the moment...
 
 	} else {
-		tfObjType = types.ObjectType{AttrTypes: notificationServiceTFObjectTypes}
-		notificationMap := map[string]attr.Value{
-			"methods": enumCredentialIssuanceRuleNotificationMethodOkToTF(apiObject.Notification.GetMethodsOk()),
-		}
-		flattenedObj, d = types.ObjectValue(notificationServiceTFObjectTypes, notificationMap)
+		notification, d := toStateNotification(apiObject.GetNotificationOk())
 		diags.Append(d...)
 
-		notification, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-		diags.Append(d...)
 		p.Notification = notification
 	}
 
 	return diags
+}
+
+func toStateAutomation(automation *credentials.CredentialIssuanceRuleAutomation, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	automationMap := map[string]attr.Value{
+		"issue":  framework.StringToTF(string(automation.GetIssue())),
+		"revoke": framework.StringToTF(string(automation.GetRevoke())),
+		"update": framework.StringToTF(string(automation.GetUpdate())),
+	}
+	flattenedObj, d := types.ObjectValue(automationTypes, automationMap)
+	diags.Append(d...)
+
+	return flattenedObj, diags
+}
+
+func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	filterMap := map[string]attr.Value{
+		"population_ids": framework.StringSetOkToTF(filter.GetPopulationIdsOk()),
+		"group_ids":      framework.StringSetOkToTF(filter.GetGroupIdsOk()),
+		"scim":           framework.StringOkToTF(filter.GetScimOk()),
+	}
+	flattenedObj, d := types.ObjectValue(filterTypes, filterMap)
+	diags.Append(d...)
+
+	return flattenedObj, diags
+}
+
+func toStateNotification(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	//notificationMap := map[string]attr.Value{}
+
+	//if notification.HasMethods() {
+	notificationMap := map[string]attr.Value{
+		"methods": enumCredentialIssuanceRuleNotificationMethodOkToTF(notification.GetMethodsOk()),
+	}
+	//}
+
+	flattenedObj, d := types.ObjectValue(notificationServiceTFObjectTypes, notificationMap)
+	diags.Append(d...)
+
+	return flattenedObj, diags
 }
 
 func enumCredentialIssuanceRuleNotificationMethodOkToTF(v []credentials.EnumCredentialIssuanceRuleNotificationMethod, ok bool) basetypes.SetValue {

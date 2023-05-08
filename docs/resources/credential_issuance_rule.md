@@ -17,6 +17,7 @@ Resource to create and manage PingOne Credentials credential issuance rules.
 
 ### Required
 
+- `automation` (Attributes) (see [below for nested schema](#nestedatt--automation))
 - `credential_type_id` (String) The ID of the credential type with which this credential issuance rule is associated.
 - `digital_wallet_application_id` (String) The ID of the digital wallet application that will interact with the user's Digital Wallet
 - `environment_id` (String) The ID of the environment to create the credential type in.
@@ -24,15 +25,14 @@ Resource to create and manage PingOne Credentials credential issuance rules.
 
 ### Optional
 
-- `automation` (Block List) (see [below for nested schema](#nestedblock--automation))
-- `filter` (Block List) (see [below for nested schema](#nestedblock--filter))
-- `notification` (Block List) (see [below for nested schema](#nestedblock--notification))
+- `filter` (Attributes) (see [below for nested schema](#nestedatt--filter))
+- `notification` (Attributes) (see [below for nested schema](#nestedatt--notification))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--automation"></a>
+<a id="nestedatt--automation"></a>
 ### Nested Schema for `automation`
 
 Required:
@@ -42,7 +42,7 @@ Required:
 - `update` (String)
 
 
-<a id="nestedblock--filter"></a>
+<a id="nestedatt--filter"></a>
 ### Nested Schema for `filter`
 
 Optional:
@@ -52,7 +52,7 @@ Optional:
 - `scim` (String)
 
 
-<a id="nestedblock--notification"></a>
+<a id="nestedatt--notification"></a>
 ### Nested Schema for `notification`
 
 Required:

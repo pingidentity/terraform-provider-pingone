@@ -17,14 +17,11 @@ Datasource to retrieve a PingOne Credentials issuer profile.  A PingOne environm
 
 ### Required
 
-- `environment_id` (String) TThe ID of the environment to create the credential issuer in.
-
-### Optional
-
-- `name` (String) The name of the credential issuer. This will be included in credentials issued.
+- `environment_id` (String) TThe ID of the environment that contains the credential issuer.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `name` (String) The name of the credential issuer.
 
 

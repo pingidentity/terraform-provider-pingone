@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -47,10 +44,6 @@ func (r *CredentialIssuerProfileDataSource) Metadata(ctx context.Context, req da
 
 // Schema
 func (r *CredentialIssuerProfileDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	// schema descriptions and validation settings
-	const attrMinLength = 1
-	const attrMaxLength = 256
-
 	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -60,20 +53,12 @@ func (r *CredentialIssuerProfileDataSource) Schema(ctx context.Context, req data
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "TThe ID of the environment to create the credential issuer in."},
-			//Validators: []validator.String{
-			//	stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
-			//},
+				Description: "TThe ID of the environment that contains the credential issuer."},
 			),
 
 			"name": schema.StringAttribute{
-				Description: "The name of the credential issuer. This will be included in credentials issued.",
-				Optional:    true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.LengthAtMost(attrMaxLength),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
-				},
+				Description: "The name of the credential issuer.",
+				Computed:    true,
 			},
 		},
 	}
