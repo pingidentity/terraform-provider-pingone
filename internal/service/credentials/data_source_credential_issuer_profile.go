@@ -130,6 +130,15 @@ func (r *CredentialIssuerProfileDataSource) Read(ctx context.Context, req dataso
 		return
 	}
 
+	// Error if not found
+	if response == nil {
+		resp.Diagnostics.AddError(
+			"Cannot find credential issuer profile",
+			fmt.Sprintf("The credential issuer profile for environment %s cannot be found.", data.EnvironmentId.String()),
+		)
+		return
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response.(*credentials.CredentialIssuerProfile))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

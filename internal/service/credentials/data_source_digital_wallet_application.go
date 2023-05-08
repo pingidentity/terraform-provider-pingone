@@ -10,11 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -23,9 +21,8 @@ import (
 
 // Types
 type DigitalWalletApplicationDataSource struct {
-	client     *credentials.APIClient
-	mgmtClient *management.APIClient
-	region     model.RegionMapping
+	client *credentials.APIClient
+	region model.RegionMapping
 }
 
 type DigitalWalletApplicationDataSourceModel struct {
@@ -72,7 +69,7 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne Credentials digital wallet applications. The service controls the relationship between the customer's digital wallet app, which communicates with users' digital wallets, and a customer's PingOne application.",
+		Description: "Datasource to retrieve a PingOne Credentials digital wallet application. The service controls the relationship between the customer's digital wallet app, which communicates with users' digital wallets, and a customer's PingOne application.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -81,26 +78,26 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 				Description: "The ID of the environment to create the digital wallet application in."},
 			),
 
-			"digital_wallet_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
+			"digital_wallet_id": schema.StringAttribute{
 				Description: "The ID of the digital wallet applicatoin.",
-			},
-				[]validator.String{
+				Optional:    true,
+				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
 				},
-			),
+			},
 
-			"application_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
+			"application_id": schema.StringAttribute{
 				Description: "The ID of the application associated with the digital wallet application.",
-			},
-				[]validator.String{
+				Optional:    true,
+				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
 				},
-			),
+			},
 
 			"name": schema.StringAttribute{
 				Description:         nameDescription.Description,
 				MarkdownDescription: nameDescription.MarkdownDescription,
-				Required:            true,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
@@ -115,7 +112,7 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 	}
 }
 
-func (r *DigitalWalletApplicationDataSource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *DigitalWalletApplicationDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -141,18 +138,6 @@ func (r *DigitalWalletApplicationDataSource) Configure(ctx context.Context, req 
 		return
 	}
 
-	// management client is used to perform checks for the prerequisite native application
-	preparedMgmtClient, err := prepareMgmtClient(ctx, resourceConfig)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
-		)
-
-		return
-	}
-
-	r.mgmtClient = preparedMgmtClient
 	r.client = preparedClient
 	r.region = resourceConfig.Client.API.Region
 }
@@ -308,8 +293,8 @@ func (p *DigitalWalletApplicationDataSourceModel) toState(apiObject *credentials
 	}
 
 	p.Id = framework.StringToTF(apiObject.GetId())
-	p.DigitalWalletId = framework.StringToTF(apiObject.GetId())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.DigitalWalletId = framework.StringToTF(apiObject.GetId())
 	p.ApplicationId = framework.StringToTF(*apiObject.GetApplication().Id)
 	p.AppOpenUrl = framework.StringToTF(apiObject.GetAppOpenUrl())
 	p.Name = framework.StringToTF(apiObject.GetName())
