@@ -209,11 +209,13 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 						Description:         "",
 						MarkdownDescription: "",
 						Optional:            true,
-						Validators:          []validator.Set{
-							//setvalidator.
-							//setvalidator.AtLeastOneOf(string(credentials.ENUMCREDENTIALISSUANCERULEAUTOMATIONMETHOD_ON_DEMAND)),
-							//credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_EMAIL),
-							//credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_SMS),
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(
+								stringvalidator.OneOf(
+									string(credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_EMAIL),
+									string(credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_SMS),
+								),
+							),
 						},
 					},
 					"template": schema.SingleNestedAttribute{
@@ -670,11 +672,11 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	}
 
 	// core issuance rule attributes
-	p.Id = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
 	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
-	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.Id)
-	p.Status = framework.StringToTF(string(apiObject.GetStatus()))
+	p.CredentialTypeId = framework.StringToTF(apiObject.GetCredentialType().Id)
+	p.Status = enumCredentialIssuanceStatusOkToTF(apiObject.GetStatusOk())
 
 	// automation object
 	automation, d := toStateAutomation(apiObject.GetAutomationOk())
@@ -706,9 +708,9 @@ func toStateAutomation(automation *credentials.CredentialIssuanceRuleAutomation,
 	var diags diag.Diagnostics
 
 	automationMap := map[string]attr.Value{
-		"issue":  framework.StringToTF(string(automation.GetIssue())),
-		"revoke": framework.StringToTF(string(automation.GetRevoke())),
-		"update": framework.StringToTF(string(automation.GetUpdate())),
+		"issue":  enumCredentialIssuanceRuleAutomationOkToTF(automation.GetIssueOk()),
+		"revoke": enumCredentialIssuanceRuleAutomationOkToTF(automation.GetRevokeOk()),
+		"update": enumCredentialIssuanceRuleAutomationOkToTF(automation.GetUpdateOk()),
 	}
 	flattenedObj, d := types.ObjectValue(automationTypes, automationMap)
 	diags.Append(d...)
@@ -733,23 +735,10 @@ func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (t
 func toStateNotification(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	//notificationTemplateVars := map[string]attr.Value{}
-	//flattenedTemplateVars, d := types.ObjectValue(map[string]attr.Type{}, notificationTemplateVars)
-	//diags.Append(d...)
-
-	//notificationTemplate := map[string]attr.Value{}
-	//if !flattenedTemplateVars.IsNull() && !flattenedTemplateVars.IsUnknown() {
 	notificationTemplate := map[string]attr.Value{
-		"locale": framework.StringOkToTF(notification.Template.GetLocaleOk()),
-		//"variables": flattenedTemplateVars,
+		"locale":  framework.StringOkToTF(notification.Template.GetLocaleOk()),
 		"variant": framework.StringOkToTF(notification.Template.GetVariantOk()),
 	}
-	//} else {
-	//	notificationTemplate = map[string]attr.Value{
-	//		"locale":  framework.StringOkToTF(notification.Template.GetLocaleOk()),
-	//		"variant": framework.StringOkToTF(notification.Template.GetVariantOk()),
-	//	}
-	//}
 
 	flattenedTemplate, d := types.ObjectValue(notificationTemplateServiceTFObjectTypes, notificationTemplate)
 	diags.Append(d...)
@@ -776,5 +765,21 @@ func enumCredentialIssuanceRuleNotificationMethodOkToTF(v []credentials.EnumCred
 		}
 
 		return types.SetValueMust(types.StringType, list)
+	}
+}
+
+func enumCredentialIssuanceRuleAutomationOkToTF(v *credentials.EnumCredentialIssuanceRuleAutomationMethod, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		return types.StringValue(string(*v))
+	}
+}
+
+func enumCredentialIssuanceStatusOkToTF(v *credentials.EnumCredentialIssuanceRuleStatus, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		return types.StringValue(string(*v))
 	}
 }
