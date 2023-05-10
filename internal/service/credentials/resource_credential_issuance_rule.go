@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -53,17 +54,15 @@ type AutomationModel struct {
 }
 
 type NotificationModel struct {
-	Methods types.Set `tfsdk:"methods"`
-	// placeholder for future support - Credentials API is not clear on templates
-	//Template types.List `tfsdk:"template"`
+	Methods  types.Set    `tfsdk:"methods"`
+	Template types.Object `tfsdk:"template"`
 }
 
-// placeholder for future support - Credentials API is not clear on templates
-//type NotificationTemplateModel struct {
-//	Locale    types.String `tfsdk:"locale"`
-//	Variables types.List   `tfsdk:"variables"`
-//	Variant   types.String `tfsdk:"variant"`
-//}
+type NotificationTemplateModel struct {
+	Locale    types.String `tfsdk:"locale"`
+	Variables types.Object `tfsdk:"variables"`
+	Variant   types.String `tfsdk:"variant"`
+}
 
 var (
 	filterTypes = map[string]attr.Type{ // todo: make naming consistent with Tfobjecttype
@@ -79,17 +78,15 @@ var (
 	}
 
 	notificationServiceTFObjectTypes = map[string]attr.Type{
-		"methods": types.SetType{ElemType: types.StringType},
-		// placeholder for future support - Credentials API is not clear on templates
-		//"template": types.ListType{ElemType: types.ObjectType{AttrTypes: notificationTemplateServiceTFObjectTypes}},
+		"methods":  types.SetType{ElemType: types.StringType},
+		"template": types.ObjectType{AttrTypes: notificationTemplateServiceTFObjectTypes},
 	}
 
-	// placeholder for future support - Credentials API is not clear on templates
-	//notificationTemplateServiceTFObjectTypes = map[string]attr.Type{
-	//	"locale":    types.StringType,
-	//	"variables": types.ObjectType{}, // todo: resolve
-	//	"variant":   types.StringType,
-	//}
+	notificationTemplateServiceTFObjectTypes = map[string]attr.Type{
+		"locale":    types.StringType,
+		"variables": types.ObjectType{AttrTypes: map[string]attr.Type{}}, // contents of object are dynamic - how to handle
+		"variant":   types.StringType,
+	}
 )
 
 // Framework interfaces
@@ -171,6 +168,7 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
 						},
 					},
+
 					"scim": schema.StringAttribute{
 						Description:         "",
 						MarkdownDescription: "",
@@ -213,43 +211,35 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 						ElementType:         types.StringType,
 						Description:         "",
 						MarkdownDescription: "",
-						Required:            true,
+						Optional:            true,
 						Validators:          []validator.Set{
-							//setvalidator.AtLeastOneOf([]string{string(credentials.ENUMCREDENTIALISSUANCERULEAUTOMATIONMETHOD_ON_DEMAND)}),
+							//setvalidator.
+							//setvalidator.AtLeastOneOf(string(credentials.ENUMCREDENTIALISSUANCERULEAUTOMATIONMETHOD_ON_DEMAND)),
 							//credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_EMAIL),
 							//credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_SMS),
 						},
 					},
-					// future: notification template handling in creds api is currently unclear
-					/*Blocks: map[string]schema.Block{
-						"template": schema.ListNestedBlock{
-							Description:         "",
-							MarkdownDescription: "",
-							NestedObject: schema.NestedBlockObject{
-
-								Attributes: map[string]schema.Attribute{
-									"locale": schema.SetAttribute{
-										ElementType:         types.StringType,
-										Description:         "",
-										MarkdownDescription: "",
-										Optional:            true,
-									},
-									"variables": schema.ListAttribute{ // todo: review this
-										ElementType:         types.StringType,
-										Description:         "",
-										MarkdownDescription: "",
-										Optional:            true,
-									},
-									"variant": schema.SetAttribute{
-										ElementType:         types.StringType,
-										Description:         "",
-										MarkdownDescription: "",
-										Optional:            true,
-									},
-								},
+					"template": schema.SingleNestedAttribute{
+						MarkdownDescription: "",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"locale": schema.StringAttribute{
+								Description:         "",
+								MarkdownDescription: "",
+								Optional:            true,
+							},
+							"variables": schema.ObjectAttribute{ // todo: review this
+								Description:         "",
+								MarkdownDescription: "",
+								Optional:            true,
+							},
+							"variant": schema.StringAttribute{
+								Description:         "",
+								MarkdownDescription: "",
+								Optional:            true,
 							},
 						},
-					},*/
+					},
 				},
 			},
 		},
@@ -643,6 +633,59 @@ func (p *NotificationModel) expandNotificationModel(ctx context.Context) (*crede
 		}
 	}
 
+	// notification template
+	if !p.Template.IsNull() && !p.Template.IsUnknown() {
+		var notificationTemplate NotificationTemplateModel
+		d := p.Template.As(ctx, &notificationTemplate, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		template := credentials.NewCredentialIssuanceRuleNotificationTemplate()
+		if !notificationTemplate.Locale.IsNull() && !notificationTemplate.Locale.IsUnknown() {
+			template.SetLocale(notificationTemplate.Locale.ValueString())
+		}
+
+		if !notificationTemplate.Variant.IsNull() && !notificationTemplate.Variant.IsUnknown() {
+			template.SetVariant(notificationTemplate.Variant.ValueString())
+		}
+		tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+		tflog.Info(ctx, "BEFORE VARS")
+		tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+		if !notificationTemplate.Variables.IsNull() && !notificationTemplate.Variables.IsUnknown() {
+			//var templatevars map[string]interface{}
+			tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+			tflog.Info(ctx, "VARS IS NOT NULL")
+			tflog.Info(ctx, notificationTemplate.Variables.String())
+			tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+
+			m := notificationTemplate.Variables.Attributes()
+			m2 := make(map[string]interface{}, len(m))
+			for k, v := range m {
+				tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+				tflog.Info(ctx, k)
+				tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+				m2[k] = v
+			}
+
+			//d := notificationTemplate.Variables.As(ctx, &templatevars, basetypes.ObjectAsOptions{
+			//	UnhandledNullAsEmpty:    false,
+			//	UnhandledUnknownAsEmpty: false,
+			//})
+			//diags.Append(d...)
+			//if diags.HasError() {
+			//	return nil, diags
+			//}
+			template.SetVariables(m2)
+		}
+		notification.SetTemplate(*template)
+	}
+	// end notificaiton template
+
 	return notification, diags
 
 }
@@ -723,13 +766,31 @@ func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (t
 func toStateNotification(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	//notificationMap := map[string]attr.Value{}
+	notificationTemplateVars := map[string]attr.Value{}
+	flattenedTemplateVars, d := types.ObjectValue(map[string]attr.Type{}, notificationTemplateVars)
+	diags.Append(d...)
 
-	//if notification.HasMethods() {
-	notificationMap := map[string]attr.Value{
-		"methods": enumCredentialIssuanceRuleNotificationMethodOkToTF(notification.GetMethodsOk()),
+	//notificationTemplate := map[string]attr.Value{}
+	//if !flattenedTemplateVars.IsNull() && !flattenedTemplateVars.IsUnknown() {
+	notificationTemplate := map[string]attr.Value{
+		"locale":    framework.StringOkToTF(notification.Template.GetLocaleOk()),
+		"variables": flattenedTemplateVars,
+		"variant":   framework.StringOkToTF(notification.Template.GetVariantOk()),
 	}
+	//} else {
+	//	notificationTemplate = map[string]attr.Value{
+	//		"locale":  framework.StringOkToTF(notification.Template.GetLocaleOk()),
+	//		"variant": framework.StringOkToTF(notification.Template.GetVariantOk()),
+	//	}
 	//}
+
+	flattenedTemplate, d := types.ObjectValue(notificationTemplateServiceTFObjectTypes, notificationTemplate)
+	diags.Append(d...)
+
+	notificationMap := map[string]attr.Value{
+		"methods":  enumCredentialIssuanceRuleNotificationMethodOkToTF(notification.GetMethodsOk()),
+		"template": flattenedTemplate,
+	}
 
 	flattenedObj, d := types.ObjectValue(notificationServiceTFObjectTypes, notificationMap)
 	diags.Append(d...)

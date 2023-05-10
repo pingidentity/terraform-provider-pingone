@@ -107,6 +107,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMinVersion = 5
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
+	const imageMaxSize = 50000
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -162,9 +163,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						MarkdownDescription: "",
 						Optional:            true,
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(
-								regexp.MustCompile(`^data:image\/(\w+);base64,[^\s]*={0,2}`), // very basic initial image encoding check
-								"expected value to contain a base64-encoded image."),
+							isbase64EncodedValidator{},
+							stringvalidator.LengthAtMost(imageMaxSize),
 						},
 					},
 
@@ -200,9 +200,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						MarkdownDescription: "",
 						Optional:            true,
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(
-								regexp.MustCompile(`^data:image\/(\w+);base64,[^\s]*={0,2}`), // very basic initial image encoding check
-								"expected value to contain a base64-encoded image."),
+							isbase64EncodedValidator{},
+							stringvalidator.LengthAtMost(imageMaxSize),
 						},
 					},
 

@@ -55,8 +55,23 @@ Optional:
 <a id="nestedatt--notification"></a>
 ### Nested Schema for `notification`
 
-Required:
+Optional:
 
 - `methods` (Set of String)
+- `template` (Attributes) (see [below for nested schema](#nestedatt--notification--template))
+
+<a id="nestedatt--notification--template"></a>
+### Nested Schema for `notification.template`
+
+Optional:
+
+- `locale` (String)
+- `variables` (Object) (see [below for nested schema](#nestedatt--notification--template--variables))
+- `variant` (String)
+
+<a id="nestedatt--notification--template--variables"></a>
+### Nested Schema for `notification.template.variables`
+
+Optional:
 
 
