@@ -97,7 +97,7 @@ func NewCredentialTypeResource() resource.Resource {
 
 // Metadata
 func (r *CredentialTypeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_credentials_credential_type"
+	resp.TypeName = req.ProviderTypeName + "_credential_type"
 }
 
 func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -270,8 +270,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
-										// todo: ensure attribute is present if type is directory attribute; likely need custom function because the following does not work
-										//stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("type").AtSetValue(types.StringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)))),
 									},
 								},
 								"value": schema.StringAttribute{
@@ -522,7 +520,7 @@ func (r *CredentialTypeResource) ImportState(ctx context.Context, req resource.I
 	if len(attributes) != splitLength {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/credentials_credential_type_id/\"", req.ID),
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/credential_type_id/\"", req.ID),
 		)
 		return
 	}

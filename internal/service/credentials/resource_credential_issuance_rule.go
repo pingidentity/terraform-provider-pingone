@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -59,9 +58,8 @@ type NotificationModel struct {
 }
 
 type NotificationTemplateModel struct {
-	Locale    types.String `tfsdk:"locale"`
-	Variables types.Object `tfsdk:"variables"`
-	Variant   types.String `tfsdk:"variant"`
+	Locale  types.String `tfsdk:"locale"`
+	Variant types.String `tfsdk:"variant"`
 }
 
 var (
@@ -83,9 +81,8 @@ var (
 	}
 
 	notificationTemplateServiceTFObjectTypes = map[string]attr.Type{
-		"locale":    types.StringType,
-		"variables": types.ObjectType{AttrTypes: map[string]attr.Type{}}, // contents of object are dynamic - how to handle
-		"variant":   types.StringType,
+		"locale":  types.StringType,
+		"variant": types.StringType,
 	}
 )
 
@@ -227,11 +224,9 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 								Description:         "",
 								MarkdownDescription: "",
 								Optional:            true,
-							},
-							"variables": schema.ObjectAttribute{ // todo: review this
-								Description:         "",
-								MarkdownDescription: "",
-								Optional:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf(verify.FullIsoList()...),
+								},
 							},
 							"variant": schema.StringAttribute{
 								Description:         "",
@@ -618,6 +613,7 @@ func (p *NotificationModel) expandNotificationModel(ctx context.Context) (*crede
 
 	notification := credentials.NewCredentialIssuanceRuleNotificationWithDefaults()
 
+	// notification methods
 	if !p.Methods.IsNull() && !p.Methods.IsUnknown() {
 		var slice []string
 		diags.Append(p.Methods.ElementsAs(ctx, &slice, false)...)
@@ -653,38 +649,9 @@ func (p *NotificationModel) expandNotificationModel(ctx context.Context) (*crede
 		if !notificationTemplate.Variant.IsNull() && !notificationTemplate.Variant.IsUnknown() {
 			template.SetVariant(notificationTemplate.Variant.ValueString())
 		}
-		tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-		tflog.Info(ctx, "BEFORE VARS")
-		tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-		if !notificationTemplate.Variables.IsNull() && !notificationTemplate.Variables.IsUnknown() {
-			//var templatevars map[string]interface{}
-			tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-			tflog.Info(ctx, "VARS IS NOT NULL")
-			tflog.Info(ctx, notificationTemplate.Variables.String())
-			tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
-			m := notificationTemplate.Variables.Attributes()
-			m2 := make(map[string]interface{}, len(m))
-			for k, v := range m {
-				tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-				tflog.Info(ctx, k)
-				tflog.Info(ctx, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-				m2[k] = v
-			}
-
-			//d := notificationTemplate.Variables.As(ctx, &templatevars, basetypes.ObjectAsOptions{
-			//	UnhandledNullAsEmpty:    false,
-			//	UnhandledUnknownAsEmpty: false,
-			//})
-			//diags.Append(d...)
-			//if diags.HasError() {
-			//	return nil, diags
-			//}
-			template.SetVariables(m2)
-		}
 		notification.SetTemplate(*template)
 	}
-	// end notificaiton template
 
 	return notification, diags
 
@@ -766,16 +733,16 @@ func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (t
 func toStateNotification(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	notificationTemplateVars := map[string]attr.Value{}
-	flattenedTemplateVars, d := types.ObjectValue(map[string]attr.Type{}, notificationTemplateVars)
-	diags.Append(d...)
+	//notificationTemplateVars := map[string]attr.Value{}
+	//flattenedTemplateVars, d := types.ObjectValue(map[string]attr.Type{}, notificationTemplateVars)
+	//diags.Append(d...)
 
 	//notificationTemplate := map[string]attr.Value{}
 	//if !flattenedTemplateVars.IsNull() && !flattenedTemplateVars.IsUnknown() {
 	notificationTemplate := map[string]attr.Value{
-		"locale":    framework.StringOkToTF(notification.Template.GetLocaleOk()),
-		"variables": flattenedTemplateVars,
-		"variant":   framework.StringOkToTF(notification.Template.GetVariantOk()),
+		"locale": framework.StringOkToTF(notification.Template.GetLocaleOk()),
+		//"variables": flattenedTemplateVars,
+		"variant": framework.StringOkToTF(notification.Template.GetVariantOk()),
 	}
 	//} else {
 	//	notificationTemplate = map[string]attr.Value{

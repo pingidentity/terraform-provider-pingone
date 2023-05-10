@@ -92,7 +92,7 @@ func NewCredentialTypeDataSource() datasource.DataSource {
 
 // Metadata
 func (r *CredentialTypeDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_credentials_credential_type"
+	resp.TypeName = req.ProviderTypeName + "_credential_type"
 }
 
 func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
