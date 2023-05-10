@@ -2447,14 +2447,20 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 		}
 
 		if setBetweenRanges {
+			betweenRangesObjValue, d := types.ObjectValue(predictorCustomMapBetweenHMLTFObjectTypes, betweenObj)
+			diags.Append(d...)
 			o["between_ranges"] = betweenRangesObjValue
 		}
 
 		if setIpRanges {
+			ipRangesObjValue, d := types.ObjectValue(predictorCustomMapIPRangesHMLTFObjectTypes, ipRangesObj)
+			diags.Append(d...)
 			o["ip_ranges"] = ipRangesObjValue
 		}
 
 		if setStringList {
+			stringListObjValue, d := types.ObjectValue(predictorCustomMapStringListHMLTFObjectTypes, stringListObj)
+			diags.Append(d...)
 			o["string_list"] = stringListObjValue
 		}
 
