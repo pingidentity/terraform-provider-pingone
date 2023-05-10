@@ -466,7 +466,7 @@ func (r *CredentialIssuanceRuleResource) ImportState(ctx context.Context, req re
 	if len(attributes) != splitLength {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/credentials_credential_type_id/\"", req.ID),
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/credential_type_id/credential_issuance_rule_id\"", req.ID),
 		)
 		return
 	}

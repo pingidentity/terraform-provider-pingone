@@ -1,1 +1,0 @@
-$ terraform import pingone_credentials_credential_type.example <environment_id>/<credential_type_id>

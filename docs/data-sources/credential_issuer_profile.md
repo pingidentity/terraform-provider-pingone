@@ -27,7 +27,10 @@ data "pingone_credential_issuer_profile" "example_by_id" {
 
 ### Read-Only
 
+- `application_instance_id` (String)
+- `created_at` (String)
 - `id` (String) The ID of this resource.
 - `name` (String) The name of the credential issuer.
+- `updated_at` (String)
 
 
