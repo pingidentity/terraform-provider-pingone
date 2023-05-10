@@ -417,12 +417,12 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Optional:    true,
 
 								Attributes: map[string]schema.Attribute{
-									"min_score": schema.Int64Attribute{
+									"min_score": schema.Float64Attribute{
 										Description: "A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
 										Required:    true,
 									},
 
-									"max_score": schema.Int64Attribute{
+									"max_score": schema.Float64Attribute{
 										Description: "A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
 										Required:    true,
 									},
@@ -434,12 +434,12 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Optional:    true,
 
 								Attributes: map[string]schema.Attribute{
-									"min_score": schema.Int64Attribute{
+									"min_score": schema.Float64Attribute{
 										Description: "A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
 										Required:    true,
 									},
 
-									"max_score": schema.Int64Attribute{
+									"max_score": schema.Float64Attribute{
 										Description: "A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
 										Required:    true,
 									},
@@ -451,12 +451,12 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Optional:    true,
 
 								Attributes: map[string]schema.Attribute{
-									"min_score": schema.Int64Attribute{
+									"min_score": schema.Float64Attribute{
 										Description: "A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
 										Required:    true,
 									},
 
-									"max_score": schema.Int64Attribute{
+									"max_score": schema.Float64Attribute{
 										Description: "A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
 										Required:    true,
 									},
@@ -596,7 +596,8 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 					"unit": schema.StringAttribute{
 						Description: "",
-						Required:    true,
+						Optional:    true,
+						Computed:    true,
 
 						Validators: []validator.String{
 							stringvalidator.OneOf(func() []string {
@@ -630,7 +631,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Validators: []validator.String{
 							stringvalidator.OneOf(func() []string {
 								strings := make([]string, 0)
-								for _, v := range risk.AllowedEnumRiskModelEnumValues {
+								for _, v := range risk.AllowedEnumUserRiskBehaviorRiskModelEnumValues {
 									strings = append(strings, string(v))
 								}
 								return strings
@@ -1164,7 +1165,7 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 			// High
 			if !hmlPlan.High.IsNull() && !hmlPlan.High.IsUnknown() {
 				var highHmlPlan predictorCustomMapHMLBetweenRanges
-				d := hmlPlan.High.As(ctx, &hmlPlan, basetypes.ObjectAsOptions{
+				d := hmlPlan.High.As(ctx, &highHmlPlan, basetypes.ObjectAsOptions{
 					UnhandledNullAsEmpty:    false,
 					UnhandledUnknownAsEmpty: false,
 				})
@@ -1610,10 +1611,18 @@ func (p *riskPredictorResourceModel) expandPredictorUserLocationAnomaly(ctx cont
 			return nil, diags
 		}
 
-		radius := risk.NewRiskPredictorUserLocationAnomalyAllOfRadius(int32(radiusPlan.Distance.ValueInt64()), risk.EnumDistanceUnit(radiusPlan.Unit.ValueString()))
+		radiusPlanUnit := risk.ENUMDISTANCEUNIT_KILOMETERS
+
+		if !radiusPlan.Unit.IsNull() && !radiusPlan.Unit.IsUnknown() {
+			radiusPlanUnit = risk.EnumDistanceUnit(radiusPlan.Unit.ValueString())
+		}
+
+		radius := risk.NewRiskPredictorUserLocationAnomalyAllOfRadius(int32(radiusPlan.Distance.ValueInt64()), radiusPlanUnit)
 
 		data.SetRadius(*radius)
 	}
+
+	data.SetDays(50)
 
 	return &data, diags
 }
@@ -2121,21 +2130,338 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 
 	p.CustomMap = types.ObjectNull(predictorCustomMapTFObjectTypes)
 
-	if _, ok := apiObject.GetMapOk(); ok {
+	if v, ok := apiObject.GetMapOk(); ok {
 		var d diag.Diagnostics
 
+		// Set all to null before we overwrite them with a value
+		betweenRangesObjValue := types.ObjectNull(predictorCustomMapBetweenHMLTFObjectTypes)
+		ipRangesObjValue := types.ObjectNull(predictorCustomMapIPRangesHMLTFObjectTypes)
+		stringListObjValue := types.ObjectNull(predictorCustomMapStringListHMLTFObjectTypes)
+
 		o := map[string]attr.Value{
-			"contains":       nil,
-			"type":           nil,
-			"between_ranges": nil,
-			"ip_ranges":      nil,
-			"string_list":    nil,
+			"contains":       types.StringNull(),
+			"type":           types.StringNull(),
+			"between_ranges": betweenRangesObjValue,
+			"ip_ranges":      ipRangesObjValue,
+			"string_list":    stringListObjValue,
 		}
 
-		objValue, d := types.ObjectValue(predictorUserRiskBehaviorPredictionModelTFObjectTypes, o)
+		setBetweenRanges := false
+		betweenObj := map[string]attr.Value{
+			"high":   types.ObjectNull(predictorCustomMapHMLBetweenRangesTFObjectTypes),
+			"medium": types.ObjectNull(predictorCustomMapHMLBetweenRangesTFObjectTypes),
+			"low":    types.ObjectNull(predictorCustomMapHMLBetweenRangesTFObjectTypes),
+		}
+
+		setIpRanges := false
+		ipRangesObj := map[string]attr.Value{
+			"high":   types.ObjectNull(predictorCustomMapHMLListTFObjectTypes),
+			"medium": types.ObjectNull(predictorCustomMapHMLListTFObjectTypes),
+			"low":    types.ObjectNull(predictorCustomMapHMLListTFObjectTypes),
+		}
+
+		setStringList := false
+		stringListObj := map[string]attr.Value{
+			"high":   types.ObjectNull(predictorCustomMapHMLListTFObjectTypes),
+			"medium": types.ObjectNull(predictorCustomMapHMLListTFObjectTypes),
+			"low":    types.ObjectNull(predictorCustomMapHMLListTFObjectTypes),
+		}
+
+		if high, ok := v.GetHighOk(); ok {
+			// Between
+			if v1 := high.RiskPredictorCustomItemBetween; v1 != nil {
+				o["type"] = framework.StringOkToTF(v1.GetTypeOk())
+
+				// Contains
+				contains := framework.StringOkToTF(v1.GetContainsOk())
+
+				if !o["contains"].IsNull() && !contains.Equal(o["contains"]) {
+					diags.AddError(
+						"Data object inconsistent",
+						"Cannot convert the data object to state as the data object is inconsistent (\"contains\" value).  Please report this to the provider maintainers.",
+					)
+
+					return diags
+				}
+
+				o["contains"] = contains
+
+				// Between Ranges
+				setBetweenRanges = true
+
+				levelObj := map[string]attr.Value{
+					"min_score": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
+					"max_score": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
+				}
+				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLBetweenRangesTFObjectTypes, levelObj)
+				diags.Append(d...)
+
+				betweenObj["high"] = levelObjValue
+			}
+
+			// IP Range
+			if v1 := high.RiskPredictorCustomItemIPRange; v1 != nil {
+				o["type"] = framework.StringOkToTF(v1.GetTypeOk())
+
+				// Contains
+				contains := framework.StringOkToTF(v1.GetContainsOk())
+
+				if !o["contains"].IsNull() && !contains.Equal(o["contains"]) {
+					diags.AddError(
+						"Data object inconsistent",
+						"Cannot convert the data object to state as the data object is inconsistent (\"contains\" value).  Please report this to the provider maintainers.",
+					)
+
+					return diags
+				}
+
+				o["contains"] = contains
+
+				// IP Ranges
+				setIpRanges = true
+
+				levelObj := map[string]attr.Value{
+					"values": framework.StringSetOkToTF(v1.GetIpRangeOk()),
+				}
+				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLListTFObjectTypes, levelObj)
+				diags.Append(d...)
+
+				ipRangesObj["high"] = levelObjValue
+			}
+
+			// String list
+			if v1 := high.RiskPredictorCustomItemList; v1 != nil {
+				o["type"] = framework.StringOkToTF(v1.GetTypeOk())
+
+				// Contains
+				contains := framework.StringOkToTF(v1.GetContainsOk())
+
+				if !o["contains"].IsNull() && !contains.Equal(o["contains"]) {
+					diags.AddError(
+						"Data object inconsistent",
+						"Cannot convert the data object to state as the data object is inconsistent (\"contains\" value).  Please report this to the provider maintainers.",
+					)
+
+					return diags
+				}
+
+				o["contains"] = contains
+
+				// String list
+				setStringList = true
+
+				levelObj := map[string]attr.Value{
+					"values": framework.StringSetOkToTF(v1.GetListOk()),
+				}
+				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLListTFObjectTypes, levelObj)
+				diags.Append(d...)
+
+				stringListObj["high"] = levelObjValue
+			}
+		}
+
+		if medium, ok := v.GetMediumOk(); ok {
+			// Between
+			if v1 := medium.RiskPredictorCustomItemBetween; v1 != nil {
+				o["type"] = framework.StringOkToTF(v1.GetTypeOk())
+
+				// Contains
+				contains := framework.StringOkToTF(v1.GetContainsOk())
+
+				if !o["contains"].IsNull() && !contains.Equal(o["contains"]) {
+					diags.AddError(
+						"Data object inconsistent",
+						"Cannot convert the data object to state as the data object is inconsistent (\"contains\" value).  Please report this to the provider maintainers.",
+					)
+
+					return diags
+				}
+
+				o["contains"] = contains
+
+				// Between Ranges
+				setBetweenRanges = true
+
+				levelObj := map[string]attr.Value{
+					"min_score": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
+					"max_score": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
+				}
+				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLBetweenRangesTFObjectTypes, levelObj)
+				diags.Append(d...)
+
+				betweenObj["medium"] = levelObjValue
+			}
+
+			// IP Range
+			if v1 := medium.RiskPredictorCustomItemIPRange; v1 != nil {
+				o["type"] = framework.StringOkToTF(v1.GetTypeOk())
+
+				// Contains
+				contains := framework.StringOkToTF(v1.GetContainsOk())
+
+				if !o["contains"].IsNull() && !contains.Equal(o["contains"]) {
+					diags.AddError(
+						"Data object inconsistent",
+						"Cannot convert the data object to state as the data object is inconsistent (\"contains\" value).  Please report this to the provider maintainers.",
+					)
+
+					return diags
+				}
+
+				o["contains"] = contains
+
+				// IP Ranges
+				setIpRanges = true
+
+				levelObj := map[string]attr.Value{
+					"values": framework.StringSetOkToTF(v1.GetIpRangeOk()),
+				}
+				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLListTFObjectTypes, levelObj)
+				diags.Append(d...)
+
+				ipRangesObj["medium"] = levelObjValue
+			}
+
+			// String list
+			if v1 := medium.RiskPredictorCustomItemList; v1 != nil {
+				o["type"] = framework.StringOkToTF(v1.GetTypeOk())
+
+				// Contains
+				contains := framework.StringOkToTF(v1.GetContainsOk())
+
+				if !o["contains"].IsNull() && !contains.Equal(o["contains"]) {
+					diags.AddError(
+						"Data object inconsistent",
+						"Cannot convert the data object to state as the data object is inconsistent (\"contains\" value).  Please report this to the provider maintainers.",
+					)
+
+					return diags
+				}
+
+				o["contains"] = contains
+
+				// String list
+				setStringList = true
+
+				levelObj := map[string]attr.Value{
+					"values": framework.StringSetOkToTF(v1.GetListOk()),
+				}
+				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLListTFObjectTypes, levelObj)
+				diags.Append(d...)
+
+				stringListObj["medium"] = levelObjValue
+			}
+		}
+
+		if low, ok := v.GetLowOk(); ok {
+			// Between
+			if v1 := low.RiskPredictorCustomItemBetween; v1 != nil {
+				o["type"] = framework.StringOkToTF(v1.GetTypeOk())
+
+				// Contains
+				contains := framework.StringOkToTF(v1.GetContainsOk())
+
+				if !o["contains"].IsNull() && !contains.Equal(o["contains"]) {
+					diags.AddError(
+						"Data object inconsistent",
+						"Cannot convert the data object to state as the data object is inconsistent (\"contains\" value).  Please report this to the provider maintainers.",
+					)
+
+					return diags
+				}
+
+				o["contains"] = contains
+
+				// Between Ranges
+				setBetweenRanges = true
+
+				levelObj := map[string]attr.Value{
+					"min_score": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
+					"max_score": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
+				}
+				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLBetweenRangesTFObjectTypes, levelObj)
+				diags.Append(d...)
+
+				betweenObj["low"] = levelObjValue
+			}
+
+			// IP Range
+			if v1 := low.RiskPredictorCustomItemIPRange; v1 != nil {
+				o["type"] = framework.StringOkToTF(v1.GetTypeOk())
+
+				// Contains
+				contains := framework.StringOkToTF(v1.GetContainsOk())
+
+				if !o["contains"].IsNull() && !contains.Equal(o["contains"]) {
+					diags.AddError(
+						"Data object inconsistent",
+						"Cannot convert the data object to state as the data object is inconsistent (\"contains\" value).  Please report this to the provider maintainers.",
+					)
+
+					return diags
+				}
+
+				o["contains"] = contains
+
+				// IP Ranges
+				setIpRanges = true
+
+				levelObj := map[string]attr.Value{
+					"values": framework.StringSetOkToTF(v1.GetIpRangeOk()),
+				}
+				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLListTFObjectTypes, levelObj)
+				diags.Append(d...)
+
+				ipRangesObj["low"] = levelObjValue
+			}
+
+			// String list
+			if v1 := low.RiskPredictorCustomItemList; v1 != nil {
+				o["type"] = framework.StringOkToTF(v1.GetTypeOk())
+
+				// Contains
+				contains := framework.StringOkToTF(v1.GetContainsOk())
+
+				if !o["contains"].IsNull() && !contains.Equal(o["contains"]) {
+					diags.AddError(
+						"Data object inconsistent",
+						"Cannot convert the data object to state as the data object is inconsistent (\"contains\" value).  Please report this to the provider maintainers.",
+					)
+
+					return diags
+				}
+
+				o["contains"] = contains
+
+				// String list
+				setStringList = true
+
+				levelObj := map[string]attr.Value{
+					"values": framework.StringSetOkToTF(v1.GetListOk()),
+				}
+				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLListTFObjectTypes, levelObj)
+				diags.Append(d...)
+
+				stringListObj["low"] = levelObjValue
+			}
+		}
+
+		if setBetweenRanges {
+			o["between_ranges"] = betweenRangesObjValue
+		}
+
+		if setIpRanges {
+			o["ip_ranges"] = ipRangesObjValue
+		}
+
+		if setStringList {
+			o["string_list"] = stringListObjValue
+		}
+
+		objValue, d := types.ObjectValue(predictorCustomMapTFObjectTypes, o)
 		diags.Append(d...)
 
-		p.PredictionModel = objValue
+		p.CustomMap = objValue
 	}
 
 	return diags
