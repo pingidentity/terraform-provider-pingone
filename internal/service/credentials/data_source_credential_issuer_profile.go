@@ -22,9 +22,12 @@ type CredentialIssuerProfileDataSource struct {
 }
 
 type CredentialIssuerProfileDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Name          types.String `tfsdk:"name"`
+	Id                    types.String `tfsdk:"id"`
+	EnvironmentId         types.String `tfsdk:"environment_id"`
+	ApplicationInstanceId types.String `tfsdk:"application_instance_id"`
+	CreatedAt             types.String `tfsdk:"updated_at"`
+	UpdatedAt             types.String `tfsdk:"created_at"`
+	Name                  types.String `tfsdk:"name"`
 }
 
 // Framework interfaces
@@ -55,6 +58,21 @@ func (r *CredentialIssuerProfileDataSource) Schema(ctx context.Context, req data
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
 				Description: "TThe ID of the environment that contains the credential issuer."},
 			),
+
+			"application_instance_id": schema.StringAttribute{
+				Description: "",
+				Computed:    true,
+			},
+
+			"created_at": schema.StringAttribute{
+				Description: "",
+				Computed:    true,
+			},
+
+			"updated_at": schema.StringAttribute{
+				Description: "",
+				Computed:    true,
+			},
 
 			"name": schema.StringAttribute{
 				Description: "The name of the credential issuer.",
@@ -157,6 +175,10 @@ func (p *CredentialIssuerProfileDataSourceModel) toState(apiObject *credentials.
 	}
 
 	p.Id = framework.StringToTF(apiObject.GetId())
+	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
+	p.ApplicationInstanceId = framework.StringToTF(apiObject.GetApplicationInstance().Id)
+	p.CreatedAt = framework.StringToTF(apiObject.GetCreatedAt())
+	p.UpdatedAt = framework.StringToTF(apiObject.GetUpdatedAt())
 	p.Name = framework.StringToTF(apiObject.GetName())
 
 	return diags

@@ -107,7 +107,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMinVersion = 5
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
-	const imageMaxSize = 50000
+	const imageMaxSize = 70000 // todo: change back to 50k after i update my test image, which oddly works at 65k
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

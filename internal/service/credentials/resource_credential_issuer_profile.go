@@ -136,29 +136,64 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	// Build the model for the API
+	// Historical:  Pre-EA and initial-EA environments required creation of the issuer profile. Environments created after 2023.05.01 no longer have this requirement.
+	// On 'create' [adding to state], check to see if the profile exists, and if not, create it.  Otherwise, only update the profile, while still adding to TF state.
+	readIssuerProfileResponse, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).Execute()
+		},
+		"ReadCredentialIssuerProfile",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the Create API call
 	CredentialIssuerProfile, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Run the API call
-	response, d := framework.ParseResponse(
-		ctx,
+	// Execute a Create or Update depending on existance of credential issuer profile
+	var response interface{}
+	if readIssuerProfileResponse == nil {
+		// create the issuer profile
+		response, d = framework.ParseResponse(
+			ctx,
 
-		func() (interface{}, *http.Response, error) {
-			// Important:  The API no longer allows profile creation because the profile is automatically created when the P1Credentials service is enabled.
-			// CredentialIssuerProfileResource invokes UpdateCredentialIssuerProfile to allow for the initial creation of the TF resource, but the API is only updating the 'name' field.
-			return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
-		},
-		"CreateCredentialIssuerProfile",
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
+			func() (interface{}, *http.Response, error) {
+				return r.client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+			},
+			"CreateCredentialIssuerProfile",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	} else {
+		// update existing issuer profile
+		response, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+			},
+			"CreateCredentialIssuerProfile",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
 	// Create the state to save
