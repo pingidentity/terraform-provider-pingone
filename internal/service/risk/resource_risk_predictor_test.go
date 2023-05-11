@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -172,6 +173,78 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_Full(resourceName, name),
 				Check:  fullCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_Composite(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "composition.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "composition.level", "HIGH"),
+	)
+
+	fullCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "composition.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "composition.level", "LOW"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
+				Check:  fullCheck1,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPredictorConfig_Composite_Full_2(resourceName, name),
+				Check:  fullCheck2,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Composite_Full_2(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
+				Check:  fullCheck1,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Composite_Full_2(resourceName, name),
+				Check:  fullCheck2,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
+				Check:  fullCheck1,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
+				Destroy: true,
+			},
+			// Error
+			{
+				Config:      testAccRiskPredictorConfig_Composite_InvalidJSON(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid "composition.condition" policy JSON.`),
 			},
 		},
 	})
@@ -1275,6 +1348,119 @@ resource "pingone_risk_predictor" "%[2]s" {
     "172.16.0.0/12",
     "192.168.0.0/24"
   ]
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Composite_Full_1(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
+
+  type = "COMPOSITE"
+
+  composition = {
+    level = "HIGH"
+    condition = jsonencode({
+      "not" : {
+        "or" : [{
+          "equals" : 0,
+          "value" : "$${details.counters.predictorLevels.medium}",
+          "type" : "VALUE_COMPARISON"
+          }, {
+          "equals" : "High",
+          "value" : "$${details.geoVelocity.level}",
+          "type" : "VALUE_COMPARISON"
+          }, {
+          "and" : [{
+            "equals" : "High",
+            "value" : "$${details.anonymousNetwork.level}",
+            "type" : "VALUE_COMPARISON"
+          }],
+          "type" : "AND"
+        }],
+        "type" : "OR"
+      },
+      "type" : "NOT"
+    })
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Composite_Full_2(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  type = "COMPOSITE"
+
+  composition = {
+    level = "LOW"
+    condition = jsonencode({
+      "and" : [
+        {
+          "value" : "$${details.counters.predictorLevels.medium}",
+          "equals" : 5,
+          "type" : "VALUE_COMPARISON"
+        },
+        {
+          "value" : "$${details.anonymousNetwork.level}",
+          "equals" : "low",
+          "type" : "VALUE_COMPARISON"
+        },
+        {
+          "and" : [
+            {
+              "value" : "$${details.anonymousNetwork.level}",
+              "equals" : "high",
+              "type" : "VALUE_COMPARISON"
+            },
+            {
+              "or" : [
+                {
+                  "value" : "$${details.anonymousNetwork.level}",
+                  "notEquals" : "high",
+                  "type" : "VALUE_COMPARISON"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    })
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Composite_InvalidJSON(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  type = "COMPOSITE"
+
+  composition = {
+    level     = "LOW"
+    condition = jsonencode({})
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

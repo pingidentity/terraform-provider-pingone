@@ -2,6 +2,7 @@ package risk
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -24,6 +25,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -46,6 +48,8 @@ type riskPredictorResourceModel struct {
 	Deletable     types.Bool   `tfsdk:"deletable"`
 	// Anonymous network, IP reputation, geovelocity
 	AllowedCIDRList types.Set `tfsdk:"allowed_cidr_list"`
+	// Composite
+	Composition types.Object `tfsdk:"composition"`
 	// Custom map
 	CustomMap types.Object `tfsdk:"custom_map"`
 	// New device
@@ -74,6 +78,11 @@ type predictorDefault struct {
 type predictorDefaultResult struct {
 	ResultType types.String `tfsdk:"type"`
 	Level      types.String `tfsdk:"level"`
+}
+
+type predictorComposition struct {
+	Condition types.String `tfsdk:"condition"`
+	Level     types.String `tfsdk:"level"`
 }
 
 type predictorCustomMap struct {
@@ -143,6 +152,11 @@ var (
 	defaultResultTFObjectTypes = map[string]attr.Type{
 		"type":  types.StringType,
 		"level": types.StringType,
+	}
+
+	predictorCompositionTFObjectTypes = map[string]attr.Type{
+		"condition": types.StringType,
+		"level":     types.StringType,
 	}
 
 	predictorCustomMapTFObjectTypes = map[string]attr.Type{
@@ -392,6 +406,38 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 
+			// Composite
+			"composition": schema.SingleNestedAttribute{
+				Description: "",
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"condition": schema.StringAttribute{
+						Description: "A string that specifies the condition for the composite risk predictor. The value must be a valid JSON string.",
+						Required:    true,
+						Validators: []validator.String{
+							stringvalidatorinternal.IsParseableJSON(),
+							isValidRiskPredictorComposite(),
+						},
+					},
+
+					"level": schema.StringAttribute{
+						Description: "A string that specifies the risk level for the composite risk predictor. The value must be one of the following: LOW, MEDIUM, HIGH.",
+						Required:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(func() []string {
+								strings := make([]string, 0)
+								for _, v := range risk.AllowedEnumRiskLevelEnumValues {
+									strings = append(strings, string(v))
+								}
+								return strings
+							}()...),
+						},
+					},
+				},
+			},
+
+			// Custom map
 			"custom_map": schema.SingleNestedAttribute{
 				Description: "",
 				Optional:    true,
@@ -835,7 +881,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 			return r.client.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
 		},
 		"CreateRiskPredictor",
-		framework.DefaultCustomError,
+		riskPredictorCreateUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(d...)
@@ -933,7 +979,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 			return r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPredictor(*riskPredictor).Execute()
 		},
 		"UpdateRiskPredictor",
-		framework.DefaultCustomError,
+		riskPredictorCreateUpdateCustomErrorHandler,
 		nil,
 	)
 	resp.Diagnostics.Append(d...)
@@ -1001,6 +1047,24 @@ func (r *RiskPredictorResource) ImportState(ctx context.Context, req resource.Im
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+}
+
+func riskPredictorCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Invalid composition
+	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+		if target, ok := details[0].GetTargetOk(); ok && *target == "composition.condition" {
+			diags.AddError(
+				"Invalid \"composition.condition\" policy JSON.",
+				"Please check the \"composition.condition\" policy JSON structure and contents and try again.",
+			)
+
+			return diags
+		}
+	}
+
+	return nil
 }
 
 func (p *riskPredictorResourceModel) expand(ctx context.Context) (*risk.RiskPredictor, diag.Diagnostics) {
@@ -1115,9 +1179,51 @@ func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context
 func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorComposite, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var data *risk.RiskPredictorComposite
+	data := risk.RiskPredictorComposite{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        riskPredictorCommon.Type,
+		Default:     riskPredictorCommon.Default,
+	}
 
-	return data, diags
+	if !p.Composition.IsNull() && !p.Composition.IsUnknown() {
+		var plan predictorComposition
+		d := p.Composition.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		var level risk.EnumRiskLevel
+		if !plan.Level.IsNull() && !plan.Level.IsUnknown() {
+			level = risk.EnumRiskLevel(plan.Level.ValueString())
+		}
+
+		var condition map[string]interface{}
+		if !plan.Condition.IsNull() && !plan.Condition.IsUnknown() {
+			err := json.Unmarshal([]byte(plan.Condition.ValueString()), &condition)
+			if err != nil {
+				diags.AddError(
+					"Cannot parse the `condition` JSON",
+					"The JSON string passed to the `condition` parameter cannot be parsed as JSON.  Please check the policy is a valid JSON structure.",
+				)
+				return nil, diags
+			}
+
+		}
+
+		dataComposition := risk.NewRiskPredictorCompositeAllOfComposition(
+			condition,
+			level,
+		)
+		data.SetComposition(*dataComposition)
+	}
+
+	return &data, diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorCustom, diag.Diagnostics) {
@@ -2009,7 +2115,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		if v1, ok := v.GetResultOk(); ok {
 			o := map[string]attr.Value{
 				"type":  enumRiskPredictorResultTypeOkToTF(v1.GetTypeOk()),
-				"level": enumRiskPredictorDefaultResultLevelOkToTF(v1.GetLevelOk()),
+				"level": enumRiskPredictorRiskLevelOkToTF(v1.GetLevelOk()),
 			}
 
 			defaultResultObj, d = types.ObjectValue(defaultResultTFObjectTypes, o)
@@ -2036,6 +2142,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.Detect = types.StringNull()
 	p.Radius = types.ObjectNull(predictorUserLocationAnomalyRadiusTFObjectTypes)
 	p.Days = types.Int64Null()
+	p.Composition = types.ObjectNull(predictorCompositionTFObjectTypes)
 	p.CustomMap = types.ObjectNull(predictorCustomMapTFObjectTypes)
 	p.PredictionModel = types.ObjectNull(predictorUserRiskBehaviorPredictionModelTFObjectTypes)
 	p.By = types.SetNull(types.StringType)
@@ -2113,6 +2220,38 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 		)
 
 		return diags
+	}
+
+	p.Composition = types.ObjectNull(predictorCompositionTFObjectTypes)
+
+	if v, ok := apiObject.GetCompositionOk(); ok {
+
+		condition := types.StringNull()
+
+		if v1, ok := v.GetConditionOk(); ok {
+			jsonString, err := json.Marshal(v1)
+			if err != nil {
+				diags.AddError(
+					"Cannot convert map object to JSON string",
+					"The provider cannot convert the `composite` map object to JSON.  Please report this to the provider maintainers.",
+				)
+
+				return diags
+			}
+
+			condition = types.StringValue(string(jsonString))
+		}
+
+		o := map[string]attr.Value{
+			"condition": condition,
+			"level":     enumRiskPredictorRiskLevelOkToTF(v.GetLevelOk()),
+		}
+
+		objValue, d := types.ObjectValue(predictorCompositionTFObjectTypes, o)
+		diags.Append(d...)
+
+		p.Composition = objValue
+
 	}
 
 	return diags
@@ -2718,7 +2857,7 @@ func enumRiskPredictorUnitOkToTF(v *risk.EnumPredictorUnit, ok bool) basetypes.S
 	}
 }
 
-func enumRiskPredictorDefaultResultLevelOkToTF(v *risk.EnumRiskLevel, ok bool) basetypes.StringValue {
+func enumRiskPredictorRiskLevelOkToTF(v *risk.EnumRiskLevel, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
