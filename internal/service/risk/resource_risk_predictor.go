@@ -1132,6 +1132,7 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 	}
 
 	if !p.CustomMap.IsNull() && !p.CustomMap.IsUnknown() {
+
 		var plan predictorCustomMap
 		d := p.CustomMap.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
@@ -1147,8 +1148,11 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 			contains = plan.Contains.ValueString()
 		}
 
+		setHigh := false
 		high := risk.RiskPredictorCustomItem{}
+		setMedium := false
 		medium := risk.RiskPredictorCustomItem{}
+		setLow := false
 		low := risk.RiskPredictorCustomItem{}
 
 		if !plan.BetweenRanges.IsNull() && !plan.BetweenRanges.IsUnknown() {
@@ -1182,9 +1186,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 					),
 				)
 
-				high = risk.RiskPredictorCustomItem{
-					RiskPredictorCustomItemBetween: v,
-				}
+				high.RiskPredictorCustomItemBetween = v
+				setHigh = true
 			}
 
 			// Medium
@@ -1207,9 +1210,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 					),
 				)
 
-				medium = risk.RiskPredictorCustomItem{
-					RiskPredictorCustomItemBetween: v,
-				}
+				medium.RiskPredictorCustomItemBetween = v
+				setMedium = true
 			}
 
 			// Low
@@ -1232,9 +1234,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 					),
 				)
 
-				low = risk.RiskPredictorCustomItem{
-					RiskPredictorCustomItemBetween: v,
-				}
+				low.RiskPredictorCustomItemBetween = v
+				setLow = true
 			}
 		}
 
@@ -1281,9 +1282,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 					valuesSlice,
 				)
 
-				high = risk.RiskPredictorCustomItem{
-					RiskPredictorCustomItemIPRange: v,
-				}
+				high.RiskPredictorCustomItemIPRange = v
+				setHigh = true
 			}
 
 			// Medium
@@ -1318,9 +1318,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 					valuesSlice,
 				)
 
-				medium = risk.RiskPredictorCustomItem{
-					RiskPredictorCustomItemIPRange: v,
-				}
+				medium.RiskPredictorCustomItemIPRange = v
+				setMedium = true
 			}
 
 			// Low
@@ -1355,9 +1354,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 					valuesSlice,
 				)
 
-				low = risk.RiskPredictorCustomItem{
-					RiskPredictorCustomItemIPRange: v,
-				}
+				low.RiskPredictorCustomItemIPRange = v
+				setLow = true
 			}
 		}
 
@@ -1404,9 +1402,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 					valuesSlice,
 				)
 
-				high = risk.RiskPredictorCustomItem{
-					RiskPredictorCustomItemList: v,
-				}
+				high.RiskPredictorCustomItemList = v
+				setHigh = true
 			}
 
 			// Medium
@@ -1441,9 +1438,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 					valuesSlice,
 				)
 
-				medium = risk.RiskPredictorCustomItem{
-					RiskPredictorCustomItemList: v,
-				}
+				medium.RiskPredictorCustomItemList = v
+				setMedium = true
 			}
 
 			// Low
@@ -1478,16 +1474,22 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 					valuesSlice,
 				)
 
-				low = risk.RiskPredictorCustomItem{
-					RiskPredictorCustomItemList: v,
-				}
+				low.RiskPredictorCustomItemList = v
+				setLow = true
 			}
 		}
 
 		customMap := risk.NewRiskPredictorCustomAllOfMap()
-		customMap.SetHigh(high)
-		customMap.SetMedium(medium)
-		customMap.SetLow(low)
+
+		if setHigh {
+			customMap.SetHigh(high)
+		}
+		if setMedium {
+			customMap.SetMedium(medium)
+		}
+		if setLow {
+			customMap.SetLow(low)
+		}
 
 		data.SetMap(*customMap)
 	}

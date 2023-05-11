@@ -681,33 +681,33 @@ func TestAccRiskPredictor_CustomMap_StringList(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccRiskPredictorConfig_CustomMap_IPRanges_Full(resourceName, name),
+				Config: testAccRiskPredictorConfig_CustomMap_StringList_Full(resourceName, name),
 				Check:  fullCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_CustomMap_IPRanges_Full(resourceName, name),
+				Config:  testAccRiskPredictorConfig_CustomMap_StringList_Full(resourceName, name),
 				Destroy: true,
 			},
 			// Minimal
 			{
-				Config: testAccRiskPredictorConfig_CustomMap_IPRanges_Minimal(resourceName, name),
+				Config: testAccRiskPredictorConfig_CustomMap_StringList_Minimal(resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_CustomMap_IPRanges_Minimal(resourceName, name),
+				Config:  testAccRiskPredictorConfig_CustomMap_StringList_Minimal(resourceName, name),
 				Destroy: true,
 			},
 			// Change
 			{
-				Config: testAccRiskPredictorConfig_CustomMap_IPRanges_Full(resourceName, name),
+				Config: testAccRiskPredictorConfig_CustomMap_StringList_Full(resourceName, name),
 				Check:  fullCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_CustomMap_IPRanges_Minimal(resourceName, name),
+				Config: testAccRiskPredictorConfig_CustomMap_StringList_Minimal(resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_CustomMap_IPRanges_Full(resourceName, name),
+				Config: testAccRiskPredictorConfig_CustomMap_StringList_Full(resourceName, name),
 				Check:  fullCheck,
 			},
 		},
