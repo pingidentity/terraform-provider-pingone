@@ -334,3 +334,10 @@ func DaVinciFlowPolicySandboxEnvironment() string {
 			name = "tf-testacc-static-davinci-test"
 		}`
 }
+
+func CredentialsSandboxEnvironment() string {
+	return `
+		data "pingone_environment" "credentials_test" {
+			name = "tf-testacc-static-credentials-test"
+		}`
+}
