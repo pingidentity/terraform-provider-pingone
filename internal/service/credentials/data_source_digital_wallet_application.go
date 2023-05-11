@@ -181,6 +181,14 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 			return
 		}
 
+		// If the ID is invalid, I land here, but unsure why - handling...
+		if response == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find digital wallet application from id",
+				fmt.Sprintf("The id %s for environment %s cannot be found", data.DigitalWalletId.String(), data.EnvironmentId.String()),
+			)
+			return
+		}
 		digitalWalletApp = *response.(*credentials.DigitalWalletApplication)
 
 	} else if !data.ApplicationId.IsNull() {

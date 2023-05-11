@@ -10,7 +10,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccCredentialIssuerProfileDataSource_ByEnvironmentID(t *testing.T) {
+func TestAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -33,7 +33,7 @@ func TestAccCredentialIssuerProfileDataSource_ByEnvironmentID(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCredentialIssuerProfileDataSourceConfigDataSource_ByEnvironmentID(resourceName, name),
+				Config: testAccCredentialIssuerProfileDataSourceConfigDataSource_ByEnvironmentIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
@@ -70,7 +70,7 @@ func TestAccCredentialIssuerProfileDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccCredentialIssuerProfileDataSourceConfigDataSource_ByEnvironmentID(resourceName, name string) string {
+func testAccCredentialIssuerProfileDataSourceConfigDataSource_ByEnvironmentIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -84,7 +84,7 @@ func testAccCredentialIssuerProfileDataSourceConfigDataSource_NotFound(resourceN
 	%[1]s
 
 data "pingone_credential_issuer_profile" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+	environment_id = data.pingone_environment.general_test.id // generic environmet doesn't have P1Creds configured
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
