@@ -35,7 +35,10 @@ resource "pingone_credential_issuer_profile" "my_credential_issuer" {
 
 ### Read-Only
 
+- `application_instance_id` (String)
+- `created_at` (String)
 - `id` (String) The ID of this resource.
+- `updated_at` (String)
 
 ## Import
 

@@ -26,9 +26,12 @@ type CredentialIssuerProfileResource struct {
 }
 
 type CredentialIssuerProfileResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Name          types.String `tfsdk:"name"`
+	Id                    types.String `tfsdk:"id"`
+	EnvironmentId         types.String `tfsdk:"environment_id"`
+	ApplicationInstanceId types.String `tfsdk:"application_instance_id"`
+	CreatedAt             types.String `tfsdk:"updated_at"`
+	UpdatedAt             types.String `tfsdk:"created_at"`
+	Name                  types.String `tfsdk:"name"`
 }
 
 // Framework interfaces
@@ -66,6 +69,21 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
 				Description: "The ID of the environment to create the credential issuer in."},
 			),
+
+			"application_instance_id": schema.StringAttribute{
+				Description: "",
+				Computed:    true,
+			},
+
+			"created_at": schema.StringAttribute{
+				Description: "",
+				Computed:    true,
+			},
+
+			"updated_at": schema.StringAttribute{
+				Description: "",
+				Computed:    true,
+			},
 
 			"name": schema.StringAttribute{
 				Description: "The name of the credential issuer. This will be included in credentials issued.",
@@ -328,6 +346,10 @@ func (p *CredentialIssuerProfileResourceModel) expand(ctx context.Context) (*cre
 	var diags diag.Diagnostics
 
 	data := credentials.NewCredentialIssuerProfile(p.Name.ValueString())
+	data.SetApplicationInstance(*credentials.NewCredentialIssuerProfileApplicationInstance(p.ApplicationInstanceId.ValueString()))
+	data.SetCreatedAt(p.CreatedAt.ValueString())
+	data.SetUpdatedAt(p.UpdatedAt.ValueString())
+
 	return data, diags
 }
 
@@ -343,8 +365,12 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.Name = framework.StringToTF(apiObject.GetName())
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
+	p.ApplicationInstanceId = framework.StringToTF(apiObject.GetApplicationInstance().Id)
+	p.CreatedAt = framework.StringOkToTF(apiObject.GetUpdatedAtOk())
+	p.UpdatedAt = framework.StringOkToTF(apiObject.GetUpdatedAtOk())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	return diags
 }
