@@ -21,11 +21,11 @@ func TestAccDigitalWalletApplicationDataSource_ByIDFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil,
+		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDigitalWalletApplicationDataSourceConfigDataSource_ByIDFull(resourceName, name),
+				Config: testAccDigitalWalletApplicationDataSource_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
@@ -50,11 +50,11 @@ func TestAccDigitalWalletApplicationDataSource_ByApplicationIDFull(t *testing.T)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil,
+		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDigitalWalletApplicationDataSourceConfigDataSource_ByApplicationIDFull(resourceName, name),
+				Config: testAccDigitalWalletApplicationDataSource_ByApplicationIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
@@ -79,11 +79,11 @@ func TestAccDigitalWalletApplicationDataSource_ByNameFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil,
+		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDigitalWalletApplicationDataSourceConfigDataSource_ByNameFull(resourceName, name),
+				Config: testAccDigitalWalletApplicationDataSource_ByNameFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
@@ -105,26 +105,26 @@ func TestAccDigitalWalletApplicationDataSource_NotFound(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil,
+		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccDigitalWalletApplicationDataSourceConfigDataSource_NotFoundByID(resourceName),
+				Config:      testAccDigitalWalletApplicationDataSource_NotFoundByID(resourceName),
 				ExpectError: regexp.MustCompile("Error: Cannot find digital wallet application from id"),
 			},
 			{
-				Config:      testAccDigitalWalletApplicationDataSourceConfigDataSource_NotFoundByApplicationID(resourceName),
+				Config:      testAccDigitalWalletApplicationDataSource_NotFoundByApplicationID(resourceName),
 				ExpectError: regexp.MustCompile("Error: Cannot find digital wallet application from application_id"),
 			},
 			{
-				Config:      testAccDigitalWalletApplicationDataSourceConfigDataSource_NotFoundByName(resourceName),
+				Config:      testAccDigitalWalletApplicationDataSource_NotFoundByName(resourceName),
 				ExpectError: regexp.MustCompile("Error: Cannot find digital wallet application from name"),
 			},
 		},
 	})
 }
 
-func testAccDigitalWalletApplicationDataSourceConfigDataSource_ByIDFull(resourceName, name string) string {
+func testAccDigitalWalletApplicationDataSource_ByIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s-appname" {
@@ -161,7 +161,7 @@ data "pingone_digital_wallet_application" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
-func testAccDigitalWalletApplicationDataSourceConfigDataSource_ByApplicationIDFull(resourceName, name string) string {
+func testAccDigitalWalletApplicationDataSource_ByApplicationIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s-appname" {
@@ -202,7 +202,7 @@ data "pingone_digital_wallet_application" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
-func testAccDigitalWalletApplicationDataSourceConfigDataSource_ByNameFull(resourceName, name string) string {
+func testAccDigitalWalletApplicationDataSource_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s-appname" {
@@ -243,7 +243,7 @@ data "pingone_digital_wallet_application" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
-func testAccDigitalWalletApplicationDataSourceConfigDataSource_NotFoundByID(resourceName string) string {
+func testAccDigitalWalletApplicationDataSource_NotFoundByID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -254,7 +254,7 @@ data "pingone_digital_wallet_application" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }
 
-func testAccDigitalWalletApplicationDataSourceConfigDataSource_NotFoundByApplicationID(resourceName string) string {
+func testAccDigitalWalletApplicationDataSource_NotFoundByApplicationID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -265,7 +265,7 @@ data "pingone_digital_wallet_application" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }
 
-func testAccDigitalWalletApplicationDataSourceConfigDataSource_NotFoundByName(resourceName string) string {
+func testAccDigitalWalletApplicationDataSource_NotFoundByName(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
