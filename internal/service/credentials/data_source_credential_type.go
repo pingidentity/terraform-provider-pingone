@@ -281,6 +281,15 @@ func (r *CredentialTypeDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
+	// Error if credential type id wasn't provided
+	if data.CredentialTypeId.IsNull() || data.CredentialTypeId.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Credential Type ID not provided",
+			fmt.Sprintf("A valid credential type ID for environment %s was not provided.", data.EnvironmentId.String()),
+		)
+		return
+	}
+
 	// Run the API call
 	response, diags := framework.ParseResponse(
 		ctx,

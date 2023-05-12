@@ -97,7 +97,7 @@ func TestAccDigitalWalletApplicationDataSource_ByNameFull(t *testing.T) {
 	})
 }
 
-func TestAccDigitalWalletApplicationDataSource_NotFoundByID(t *testing.T) {
+func TestAccDigitalWalletApplicationDataSource_NotFound(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -112,40 +112,10 @@ func TestAccDigitalWalletApplicationDataSource_NotFoundByID(t *testing.T) {
 				Config:      testAccDigitalWalletApplicationDataSourceConfigDataSource_NotFoundByID(resourceName),
 				ExpectError: regexp.MustCompile("Error: Cannot find digital wallet application from id"),
 			},
-		},
-	})
-}
-
-func TestAccDigitalWalletApplicationDataSource_NotFoundByApplicationID(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
 			{
 				Config:      testAccDigitalWalletApplicationDataSourceConfigDataSource_NotFoundByApplicationID(resourceName),
 				ExpectError: regexp.MustCompile("Error: Cannot find digital wallet application from application_id"),
 			},
-		},
-	})
-}
-
-func TestAccDigitalWalletApplicationDataSource_NotFoundByName(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
 			{
 				Config:      testAccDigitalWalletApplicationDataSourceConfigDataSource_NotFoundByName(resourceName),
 				ExpectError: regexp.MustCompile("Error: Cannot find digital wallet application from name"),
@@ -244,12 +214,12 @@ resource "pingone_application" "%[2]s-appname" {
 	  type                        = "NATIVE_APP"
 	  grant_types                 = ["CLIENT_CREDENTIALS"]
 	  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-	  bundle_id        = "com.pingidentity.ios_wallet_byname"
-	  package_name     = "com.pingidentity.android_wallet_byname"
+	  bundle_id        = "com.pingidentity.ios_%[2]s"
+	  package_name     = "com.pingidentity.android_%[2]s"
   
 	  mobile_app {
-		 bundle_id        = "com.pingidentity.ios_wallet_byname"
-		 package_name     = "com.pingidentity.android_wallet_byname"
+		 bundle_id        = "com.pingidentity.ios_%[2]s"
+		 package_name     = "com.pingidentity.android_%[2]s"
 		 passcode_refresh_seconds = 30
 	  }
 	}

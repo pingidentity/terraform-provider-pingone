@@ -63,13 +63,13 @@ type NotificationTemplateModel struct {
 }
 
 var (
-	filterTypes = map[string]attr.Type{ // todo: make naming consistent with Tfobjecttype
+	filterServiceTFObjectTypes = map[string]attr.Type{ // todo: make naming consistent with Tfobjecttype
 		"group_ids":      types.SetType{ElemType: types.StringType},
 		"population_ids": types.SetType{ElemType: types.StringType},
 		"scim":           types.StringType,
 	}
 
-	automationTypes = map[string]attr.Type{ // todo: make naming consistent with tfobjecttypes
+	automationServiceTFObjectTypes = map[string]attr.Type{ // todo: make naming consistent with tfobjecttypes
 		"issue":  types.StringType,
 		"revoke": types.StringType,
 		"update": types.StringType,
@@ -712,7 +712,7 @@ func toStateAutomation(automation *credentials.CredentialIssuanceRuleAutomation,
 		"revoke": enumCredentialIssuanceRuleAutomationOkToTF(automation.GetRevokeOk()),
 		"update": enumCredentialIssuanceRuleAutomationOkToTF(automation.GetUpdateOk()),
 	}
-	flattenedObj, d := types.ObjectValue(automationTypes, automationMap)
+	flattenedObj, d := types.ObjectValue(automationServiceTFObjectTypes, automationMap)
 	diags.Append(d...)
 
 	return flattenedObj, diags
@@ -726,7 +726,7 @@ func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (t
 		"group_ids":      framework.StringSetOkToTF(filter.GetGroupIdsOk()),
 		"scim":           framework.StringOkToTF(filter.GetScimOk()),
 	}
-	flattenedObj, d := types.ObjectValue(filterTypes, filterMap)
+	flattenedObj, d := types.ObjectValue(filterServiceTFObjectTypes, filterMap)
 	diags.Append(d...)
 
 	return flattenedObj, diags

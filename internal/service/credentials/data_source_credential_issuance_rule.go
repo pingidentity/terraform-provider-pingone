@@ -50,17 +50,14 @@ type AutomationDataSourceModel struct {
 }
 
 type NotificationDataSourceModel struct {
-	Methods types.Set `tfsdk:"methods"`
-	// placeholder for future support - Credentials API is not clear on templates
-	//Template types.List `tfsdk:"template"`
+	Methods  types.Set    `tfsdk:"methods"`
+	Template types.Object `tfsdk:"template"`
 }
 
-// placeholder for future support - Credentials API is not clear on templates
-//type NotificationTemplateModel struct {
-//	Locale    types.String `tfsdk:"locale"`
-//	Variables types.List   `tfsdk:"variables"`
-//	Variant   types.String `tfsdk:"variant"`
-//}
+type NotificationTemplateDataSourceModel struct {
+	Locale  types.String `tfsdk:"locale"`
+	Variant types.String `tfsdk:"variant"`
+}
 
 var (
 	filterDataSourceServiceTFObjectTypes = map[string]attr.Type{ // todo: make naming consistent with Tfobjecttype
@@ -76,17 +73,14 @@ var (
 	}
 
 	notificationDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"methods": types.SetType{ElemType: types.StringType},
-		// placeholder for future support - Credentials API is not clear on templates
-		//"template": types.ListType{ElemType: types.ObjectType{AttrTypes: notificationTemplateServiceTFObjectTypes}},
+		"methods":  types.SetType{ElemType: types.StringType},
+		"template": types.ObjectType{AttrTypes: notificationTemplateDataSourceServiceTFObjectTypes},
 	}
 
-	// placeholder for future support - Credentials API is not clear on templates
-	//notificationTemplateServiceTFObjectTypes = map[string]attr.Type{
-	//	"locale":    types.StringType,
-	//	"variables": types.ObjectType{}, // todo: resolve
-	//	"variant":   types.StringType,
-	//}
+	notificationTemplateDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"locale":  types.StringType,
+		"variant": types.StringType,
+	}
 )
 
 // Framework interfaces
@@ -198,36 +192,22 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 						MarkdownDescription: "",
 						Computed:            true,
 					},
-					// future: notification template handling in creds api is currently unclear
-					/*Blocks: map[string]schema.Block{
-						"template": schema.ListNestedBlock{
-							Description:         "",
-							MarkdownDescription: "",
-							NestedObject: schema.NestedBlockObject{
-
-								Attributes: map[string]schema.Attribute{
-									"locale": schema.SetAttribute{
-										ElementType:         types.StringType,
-										Description:         "",
-										MarkdownDescription: "",
-										Computed:            true,
-									},
-									"variables": schema.ListAttribute{ // todo: review this
-										ElementType:         types.StringType,
-										Description:         "",
-										MarkdownDescription: "",
-										Computed:            true,
-									},
-									"variant": schema.SetAttribute{
-										ElementType:         types.StringType,
-										Description:         "",
-										MarkdownDescription: "",
-										Computed:            true,
-									},
-								},
+					"template": schema.SingleNestedAttribute{
+						MarkdownDescription: "",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"locale": schema.StringAttribute{
+								Description:         "",
+								MarkdownDescription: "",
+								Computed:            true,
+							},
+							"variant": schema.StringAttribute{
+								Description:         "",
+								MarkdownDescription: "",
+								Computed:            true,
 							},
 						},
-					},*/
+					},
 				},
 			},
 		},
@@ -332,7 +312,7 @@ func (p *CredentialIssuanceRuleDataSourceModel) toState(apiObject *credentials.C
 	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
 	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.Id)
 	p.CredentialIssuanceRuleId = framework.StringToTF(apiObject.GetId())
-	p.Status = framework.StringToTF(string(apiObject.GetStatus()))
+	p.Status = enumCredentialIssuanceStatusDataSourceOkToTF(apiObject.GetStatusOk())
 
 	// automation object
 	automation, d := toStateAutomationDataSource(apiObject.GetAutomationOk())
@@ -345,7 +325,7 @@ func (p *CredentialIssuanceRuleDataSourceModel) toState(apiObject *credentials.C
 	p.Filter = filter
 
 	// notification object
-	notificationMethodState := enumCredentialIssuanceRuleNotificationDataSourceMethodOkToTF(apiObject.Notification.GetMethodsOk())
+	notificationMethodState := enumCredentialIssuanceRuleNotificationMethodDataSourceOkToTF(apiObject.Notification.GetMethodsOk())
 
 	if notificationMethodState.IsNull() {
 		// todo: not sure how to handle this at the moment...
@@ -364,9 +344,9 @@ func toStateAutomationDataSource(automation *credentials.CredentialIssuanceRuleA
 	var diags diag.Diagnostics
 
 	automationMap := map[string]attr.Value{
-		"issue":  framework.StringToTF(string(automation.GetIssue())),
-		"revoke": framework.StringToTF(string(automation.GetRevoke())),
-		"update": framework.StringToTF(string(automation.GetUpdate())),
+		"issue":  enumCredentialIssuanceRuleAutomationDataSourceOkToTF(automation.GetIssueOk()),
+		"revoke": enumCredentialIssuanceRuleAutomationDataSourceOkToTF(automation.GetRevokeOk()),
+		"update": enumCredentialIssuanceRuleAutomationDataSourceOkToTF(automation.GetUpdateOk()),
 	}
 	flattenedObj, d := types.ObjectValue(automationDataSourceServiceTFObjectTypes, automationMap)
 	diags.Append(d...)
@@ -391,13 +371,18 @@ func toStateFilterDataSource(filter *credentials.CredentialIssuanceRuleFilter, o
 func toStateNotificationDataSource(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	//notificationMap := map[string]attr.Value{}
-
-	//if notification.HasMethods() {
-	notificationMap := map[string]attr.Value{
-		"methods": enumCredentialIssuanceRuleNotificationDataSourceMethodOkToTF(notification.GetMethodsOk()),
+	notificationTemplate := map[string]attr.Value{
+		"locale":  framework.StringOkToTF(notification.Template.GetLocaleOk()),
+		"variant": framework.StringOkToTF(notification.Template.GetVariantOk()),
 	}
-	//}
+
+	flattenedTemplate, d := types.ObjectValue(notificationTemplateDataSourceServiceTFObjectTypes, notificationTemplate)
+	diags.Append(d...)
+
+	notificationMap := map[string]attr.Value{
+		"methods":  enumCredentialIssuanceRuleNotificationMethodDataSourceOkToTF(notification.GetMethodsOk()),
+		"template": flattenedTemplate,
+	}
 
 	flattenedObj, d := types.ObjectValue(notificationDataSourceServiceTFObjectTypes, notificationMap)
 	diags.Append(d...)
@@ -405,7 +390,7 @@ func toStateNotificationDataSource(notification *credentials.CredentialIssuanceR
 	return flattenedObj, diags
 }
 
-func enumCredentialIssuanceRuleNotificationDataSourceMethodOkToTF(v []credentials.EnumCredentialIssuanceRuleNotificationMethod, ok bool) basetypes.SetValue {
+func enumCredentialIssuanceRuleNotificationMethodDataSourceOkToTF(v []credentials.EnumCredentialIssuanceRuleNotificationMethod, ok bool) basetypes.SetValue {
 	if !ok || v == nil {
 		return types.SetNull(types.StringType)
 	} else {
@@ -416,5 +401,21 @@ func enumCredentialIssuanceRuleNotificationDataSourceMethodOkToTF(v []credential
 		}
 
 		return types.SetValueMust(types.StringType, list)
+	}
+}
+
+func enumCredentialIssuanceRuleAutomationDataSourceOkToTF(v *credentials.EnumCredentialIssuanceRuleAutomationMethod, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		return types.StringValue(string(*v))
+	}
+}
+
+func enumCredentialIssuanceStatusDataSourceOkToTF(v *credentials.EnumCredentialIssuanceRuleStatus, ok bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	} else {
+		return types.StringValue(string(*v))
 	}
 }

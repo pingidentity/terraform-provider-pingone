@@ -16,15 +16,7 @@ func TestAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(t *testing.T) 
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_credential_issuer_profile.%s", resourceName)
 
-	name := resourceName
-
-	// test i'd prefer - but needs work
-	//organizationName := "internal_mikesimontf_444489364" // i need to get the org name dynamically, not a fixed value - how within current framework
-
-	// preference is to do some date comparisons, but limited options other than comparing yyyy-mm-dd components of dates, which has limited utility
-	//date := time.Now().Format(time.RFC3339)
-	//createdAt := date
-	//updatedAt := date
+	name := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
@@ -38,13 +30,9 @@ func TestAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(t *testing.T) 
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "application_instance_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "name"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "name"), // P1Creds is returning the organization name in this value
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "created_at"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "updated_at"),
-					// future improvement?
-					//resource.TestCheckResourceAttr(dataSourceFullName, "name", organizationName),
-					//resource.TestCheckResourceAttr(dataSourceFullName, "created_at", createdAt),
-					//resource.TestCheckResourceAttr(dataSourceFullName, "updated_at", updatedAt),
 				),
 			},
 		},
