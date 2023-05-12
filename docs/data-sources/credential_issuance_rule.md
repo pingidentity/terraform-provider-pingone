@@ -61,8 +61,20 @@ Read-Only:
 <a id="nestedatt--notification"></a>
 ### Nested Schema for `notification`
 
+Optional:
+
+- `template` (Attributes) (see [below for nested schema](#nestedatt--notification--template))
+
 Read-Only:
 
 - `methods` (Set of String)
+
+<a id="nestedatt--notification--template"></a>
+### Nested Schema for `notification.template`
+
+Read-Only:
+
+- `locale` (String)
+- `variant` (String)
 
 
