@@ -339,7 +339,7 @@ func (r *CredentialIssuerProfileResource) ImportState(ctx context.Context, req r
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
 func (p *CredentialIssuerProfileResourceModel) expand(ctx context.Context) (*credentials.CredentialIssuerProfile, diag.Diagnostics) {

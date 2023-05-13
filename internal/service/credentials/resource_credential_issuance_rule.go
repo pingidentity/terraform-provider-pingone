@@ -474,6 +474,7 @@ func (r *CredentialIssuanceRuleResource) ImportState(ctx context.Context, req re
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("credential_type_id"), attributes[1])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
 }
 
