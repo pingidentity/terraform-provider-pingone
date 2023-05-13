@@ -107,7 +107,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMinVersion = 5
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
-	const imageMaxSize = 70000 // todo: change back to 50k after i update my test image, which oddly works at 65k
+	const imageMaxSize = 50000
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -631,14 +631,11 @@ func (p *FieldsModel) expandFields(ctx context.Context) (*credentials.Credential
 	attrId := p.Type.ValueString() + " -> " + p.Title.ValueString() // construct id per API requirements
 
 	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT {
-		innerFields.SetValue(p.Value.ValueString()) // required if static text attribute - todo: need to test & error if not provided at schema?
+		innerFields.SetValue(p.Value.ValueString())
 	}
 
 	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE {
-		innerFields.SetAttribute(p.Attribute.ValueString()) // required if directory attribute - todo: need to test & error if not provided at schema?
-
-		// todo: check if the attribute exists, if it doesn't error? or warn?
-		// current APIs makes this... not simple to do
+		innerFields.SetAttribute(p.Attribute.ValueString())
 	}
 
 	innerFields.SetId(attrId)

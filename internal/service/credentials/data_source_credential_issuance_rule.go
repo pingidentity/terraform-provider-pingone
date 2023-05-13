@@ -60,13 +60,13 @@ type NotificationTemplateDataSourceModel struct {
 }
 
 var (
-	filterDataSourceServiceTFObjectTypes = map[string]attr.Type{ // todo: make naming consistent with Tfobjecttype
+	filterDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"group_ids":      types.SetType{ElemType: types.StringType},
 		"population_ids": types.SetType{ElemType: types.StringType},
 		"scim":           types.StringType,
 	}
 
-	automationDataSourceServiceTFObjectTypes = map[string]attr.Type{ // todo: make naming consistent with tfobjecttypes
+	automationDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"issue":  types.StringType,
 		"revoke": types.StringType,
 		"update": types.StringType,
@@ -325,17 +325,9 @@ func (p *CredentialIssuanceRuleDataSourceModel) toState(apiObject *credentials.C
 	p.Filter = filter
 
 	// notification object
-	notificationMethodState := enumCredentialIssuanceRuleNotificationMethodDataSourceOkToTF(apiObject.Notification.GetMethodsOk())
-
-	if notificationMethodState.IsNull() {
-		// todo: not sure how to handle this at the moment...
-
-	} else {
-		notification, d := toStateNotificationDataSource(apiObject.GetNotificationOk())
-		diags.Append(d...)
-
-		p.Notification = notification
-	}
+	notification, d := toStateNotification(apiObject.GetNotificationOk())
+	diags.Append(d...)
+	p.Notification = notification
 
 	return diags
 }
@@ -370,21 +362,37 @@ func toStateFilterDataSource(filter *credentials.CredentialIssuanceRuleFilter, o
 
 func toStateNotificationDataSource(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
+	//tfObjType := types.ObjectType{AttrTypes: notificationTemplateServiceTFObjectTypes}
 
-	notificationTemplate := map[string]attr.Value{
-		"locale":  framework.StringOkToTF(notification.Template.GetLocaleOk()),
-		"variant": framework.StringOkToTF(notification.Template.GetVariantOk()),
+	if notification == nil {
+		return types.ObjectNull(notificationServiceTFObjectTypes), diags
 	}
 
-	flattenedTemplate, d := types.ObjectValue(notificationTemplateDataSourceServiceTFObjectTypes, notificationTemplate)
-	diags.Append(d...)
+	notificationMap := map[string]attr.Value{}
 
-	notificationMap := map[string]attr.Value{
-		"methods":  enumCredentialIssuanceRuleNotificationMethodDataSourceOkToTF(notification.GetMethodsOk()),
-		"template": flattenedTemplate,
+	// notification.methods
+	if v, ok := notification.GetMethodsOk(); ok {
+		notificationMap["methods"] = enumCredentialIssuanceRuleNotificationMethodOkToTF(v, ok)
+	} else {
+		notificationMap["methods"] = types.SetNull(types.StringType)
 	}
 
-	flattenedObj, d := types.ObjectValue(notificationDataSourceServiceTFObjectTypes, notificationMap)
+	// notification.template
+	if notification.Template == nil {
+		notificationMap["template"] = types.ObjectNull(notificationTemplateServiceTFObjectTypes)
+	} else {
+		notificationTemplate := map[string]attr.Value{
+			"locale":  framework.StringOkToTF(notification.Template.GetLocaleOk()),
+			"variant": framework.StringOkToTF(notification.Template.GetVariantOk()),
+		}
+
+		flattenedTemplate, d := types.ObjectValue(notificationTemplateServiceTFObjectTypes, notificationTemplate)
+		diags.Append(d...)
+
+		notificationMap["template"] = flattenedTemplate
+	}
+
+	flattenedObj, d := types.ObjectValue(notificationServiceTFObjectTypes, notificationMap)
 	diags.Append(d...)
 
 	return flattenedObj, diags

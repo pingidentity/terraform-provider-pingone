@@ -63,13 +63,13 @@ type NotificationTemplateModel struct {
 }
 
 var (
-	filterServiceTFObjectTypes = map[string]attr.Type{ // todo: make naming consistent with Tfobjecttype
+	filterServiceTFObjectTypes = map[string]attr.Type{
 		"group_ids":      types.SetType{ElemType: types.StringType},
 		"population_ids": types.SetType{ElemType: types.StringType},
 		"scim":           types.StringType,
 	}
 
-	automationServiceTFObjectTypes = map[string]attr.Type{ // todo: make naming consistent with tfobjecttypes
+	automationServiceTFObjectTypes = map[string]attr.Type{
 		"issue":  types.StringType,
 		"revoke": types.StringType,
 		"update": types.StringType,

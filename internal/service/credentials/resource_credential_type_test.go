@@ -108,7 +108,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "title", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "VerifiedEmployee"),
-			resource.TestCheckResourceAttrSet(resourceFullName, "card_design_template"), // todo: save valid and invalid tempaltes to assets dir, and use
+			resource.TestCheckResourceAttrSet(resourceFullName, "card_design_template"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"),
@@ -136,7 +136,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "title", updatedName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", updatedName)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "DemonstrationCard"),
-			resource.TestCheckResourceAttrSet(resourceFullName, "card_design_template"), // todo: save valid and invalid tempaltes to assets dir, and use
+			resource.TestCheckResourceAttrSet(resourceFullName, "card_design_template"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.name", updatedName),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.bg_opacity_percent", "100"),
