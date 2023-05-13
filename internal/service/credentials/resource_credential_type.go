@@ -163,8 +163,9 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						MarkdownDescription: "",
 						Optional:            true,
 						Validators: []validator.String{
-							isbase64EncodedValidator{},
 							stringvalidator.LengthAtMost(imageMaxSize),
+							//stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must include Content-type and Content-encoding prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
+							isbase64EncodedValidator{},
 						},
 					},
 

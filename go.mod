@@ -28,7 +28,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.9.3
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.46.1
-	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
+	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
 )
 
 require github.com/rivo/uniseg v0.2.0 // indirect

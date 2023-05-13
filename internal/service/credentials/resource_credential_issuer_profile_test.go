@@ -2,6 +2,7 @@ package credentials_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -137,6 +138,9 @@ func TestAccCredentialIssuerProfile_InvalidConfig(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	name := acctest.ResourceNameGen()
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -147,6 +151,10 @@ func TestAccCredentialIssuerProfile_InvalidConfig(t *testing.T) {
 				Config:      testAccCredentialIssuerProfileInvalidConfig_InvalidName(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Error when calling `CreateCredentialIssuerProfile`: Validation Error : \\[name must not be empty or blank\\]"),
 			},
+			{
+				Config:      testAccCredentialIssuerProfileInvalidConfig_CredentialServuceNotEnabled(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Error when calling `ReadCredentialIssuerProfile`: Issuer not found for environment"),
+			},
 		},
 	})
 }
@@ -155,9 +163,9 @@ func testAccCredentialIssuerProfile_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_issuer_profile" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+	environment_id = data.pingone_environment.credentials_test.id
 	name = "%[3]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuerProfileInvalidConfig_InvalidName(resourceName, name string) string {
@@ -165,8 +173,19 @@ func testAccCredentialIssuerProfileInvalidConfig_InvalidName(resourceName, name 
 	%[1]s
 
 resource "pingone_credential_issuer_profile" "%[3]s" {
-	environment_id = data.pingone_environment.general_test.id
+	environment_id = data.pingone_environment.credentials_test.id
 	name = " "
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}
+
+func testAccCredentialIssuerProfileInvalidConfig_CredentialServuceNotEnabled(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_credential_issuer_profile" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+	name = "%[3]s"
+
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
