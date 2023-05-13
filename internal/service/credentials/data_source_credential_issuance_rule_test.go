@@ -21,7 +21,7 @@ func TestAccCredentialIssuanceRuleDataSource_ByIDFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil,
+		CheckDestroy:             testAccCheckCredentiaIssuanceRuleDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -51,7 +51,7 @@ func TestAccCredentialIssuanceRuleDataSource_NotFound(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil,
+		CheckDestroy:             testAccCheckCredentiaIssuanceRuleDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -71,7 +71,7 @@ func TestAccCredentialIssuanceRuleDataSourceInvalidConfig(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil,
+		CheckDestroy:             testAccCheckCredentiaIssuanceRuleDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
