@@ -40,6 +40,7 @@ type MetadataDataSourceModel struct {
 	BackgroundImage  types.String `tfsdk:"background_image"`
 	BgOpacityPercent types.Int64  `tfsdk:"bg_opacity_percent"`
 	CardColor        types.String `tfsdk:"card_color"`
+	Columns          types.Int64  `tfsdk:"columns"`
 	Description      types.String `tfsdk:"description"`
 	TextColor        types.String `tfsdk:"text_color"`
 	Version          types.Int64  `tfsdk:"version"` // Watch Item - Best practice is to allow service to set, but if version of 5 or higher is not provided, creds do not appear in UI!
@@ -62,6 +63,7 @@ var (
 		"background_image":   types.StringType,
 		"bg_opacity_percent": types.Int64Type,
 		"card_color":         types.StringType,
+		"columns":            types.Int64Type,
 		"description":        types.StringType,
 		"text_color":         types.StringType,
 		"version":            types.Int64Type,
@@ -155,6 +157,11 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 
 					"card_color": schema.StringAttribute{
 						Description: "A string containing a 6-digit hexadecimal color code specifying the color of the credential.",
+						Computed:    true,
+					},
+
+					"columns": schema.Int64Attribute{
+						Description: "",
 						Computed:    true,
 					},
 
@@ -356,6 +363,7 @@ func toStateMetadataDataSource(metadata *credentials.CredentialTypeMetaData, ok 
 		"background_image":   framework.StringOkToTF(metadata.GetBackgroundImageOk()),
 		"bg_opacity_percent": framework.Int32OkToTF(metadata.GetBgOpacityPercentOk()),
 		"card_color":         framework.StringOkToTF(metadata.GetCardColorOk()),
+		"columns":            framework.Int32OkToTF(metadata.GetColumnsOk()),
 		"description":        framework.StringOkToTF(metadata.GetDescriptionOk()),
 		"text_color":         framework.StringOkToTF(metadata.GetTextColorOk()),
 		"version":            framework.Int32OkToTF(metadata.GetVersionOk()),

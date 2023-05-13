@@ -43,6 +43,7 @@ type MetadataModel struct {
 	BackgroundImage  types.String `tfsdk:"background_image"`
 	BgOpacityPercent types.Int64  `tfsdk:"bg_opacity_percent"`
 	CardColor        types.String `tfsdk:"card_color"`
+	Columns          types.Int64  `tfsdk:"columns"`
 	Description      types.String `tfsdk:"description"`
 	TextColor        types.String `tfsdk:"text_color"`
 	Version          types.Int64  `tfsdk:"version"` // Watch Item - Best practice is to allow service to set, but if version of 5 or higher is not provided, creds do not appear in UI!
@@ -65,6 +66,7 @@ var (
 		"background_image":   types.StringType,
 		"bg_opacity_percent": types.Int64Type,
 		"card_color":         types.StringType,
+		"columns":            types.Int64Type,
 		"description":        types.StringType,
 		"text_color":         types.StringType,
 		"version":            types.Int64Type,
@@ -104,6 +106,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 	// schema descriptions and validation settings
 	const attrMinLength = 1
+	const attrMinColumns = 1
+	const attrMaxColumns = 3
 	const attrMinVersion = 5
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
@@ -184,6 +188,15 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							stringvalidator.RegexMatches(
 								regexp.MustCompile(`^#([A-Fa-f0-9]{6})$`),
 								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
+						},
+					},
+
+					"columns": schema.Int64Attribute{
+						Description:         "",
+						MarkdownDescription: "",
+						Optional:            true,
+						Validators: []validator.Int64{
+							int64validator.Between(attrMinColumns, attrMaxColumns),
 						},
 					},
 
@@ -582,6 +595,10 @@ func (p *MetadataModel) expandMetaDataModel(ctx context.Context) (*credentials.C
 		cardMetadata.SetCardColor(p.CardColor.ValueString())
 	}
 
+	if !p.Columns.IsNull() && !p.Columns.IsUnknown() {
+		cardMetadata.SetColumns(int32(p.Columns.ValueInt64()))
+	}
+
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		cardMetadata.SetDescription(p.Description.ValueString())
 	}
@@ -681,6 +698,7 @@ func toStateMetadata(metadata *credentials.CredentialTypeMetaData, ok bool) (typ
 		"background_image":   framework.StringOkToTF(metadata.GetBackgroundImageOk()),
 		"bg_opacity_percent": framework.Int32OkToTF(metadata.GetBgOpacityPercentOk()),
 		"card_color":         framework.StringOkToTF(metadata.GetCardColorOk()),
+		"columns":            framework.Int32OkToTF(metadata.GetColumnsOk()),
 		"description":        framework.StringOkToTF(metadata.GetDescriptionOk()),
 		"text_color":         framework.StringOkToTF(metadata.GetTextColorOk()),
 		"version":            framework.Int32OkToTF(metadata.GetVersionOk()),

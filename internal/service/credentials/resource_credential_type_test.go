@@ -112,6 +112,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.columns", "1"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.background_image", backgroundImage),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.logo_image", logoImage),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.bg_opacity_percent", "100"),
@@ -139,6 +140,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttrSet(resourceFullName, "card_design_template"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.name", updatedName),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.columns", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.bg_opacity_percent", "100"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.card_color", "#000000"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.text_color", "#eff0f1"),
@@ -250,6 +252,7 @@ resource "pingone_credential_type" "%[2]s" {
     name = "%[3]s"
     description = "%[3]s Example Description"
     version = 5
+	columns = 1
 	background_image = "%[4]s"
 	logo_image = "%[5]s"
     bg_opacity_percent = 100
@@ -318,6 +321,7 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name = "%[3]s"
     version = 5
+	columns = 3
     bg_opacity_percent = 100
     card_color = "#000000"
     text_color = "#eff0f1"

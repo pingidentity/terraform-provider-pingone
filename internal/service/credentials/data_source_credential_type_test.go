@@ -97,6 +97,7 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name = "%[3]s"
+	columns = 1
     description = "%[3]s Example Description"
     version = 5
     bg_opacity_percent = 100
