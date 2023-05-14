@@ -149,7 +149,7 @@ resource "pingone_digital_wallet_application" "%[2]s-walletappname3" {
 data "pingone_digital_wallet_applications" "%[2]s" {
 	environment_id = data.pingone_environment.credentials_test.id
 
-	depends_on = [pingone_digital_wallet_application.%[2]s-walletappname, pingone_digital_wallet_application.%[2]s-walletappname2, pingone_digital_wallet_application.%[2]s-walletappname3]
+	depends_on = [pingone_digital_wallet_application.%[2]s-walletappname1, pingone_digital_wallet_application.%[2]s-walletappname2, pingone_digital_wallet_application.%[2]s-walletappname3]
   }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 

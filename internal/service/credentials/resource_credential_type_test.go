@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"testing"
 
@@ -94,10 +94,10 @@ func TestAccCredentialType_Full(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/credential_background_base64.png")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/credential_background_base64.png")
 	backgroundImage := base64.StdEncoding.EncodeToString(data) //string(data)
 
-	data, _ = ioutil.ReadFile("../../acctest/test_assets/image/credential_logo_base64.png")
+	data, _ = os.ReadFile("../../acctest/test_assets/image/credential_logo_base64.png")
 	logoImage := base64.StdEncoding.EncodeToString(data) //string(data)
 
 	fullStep := resource.TestStep{
@@ -185,15 +185,13 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	//resourceFullName := fmt.Sprintf("pingone_credential_type.%s", resourceName)
-
 	name := acctest.ResourceNameGen()
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-background.jpg") // >90kb
-	backgroundImage := base64.StdEncoding.EncodeToString(data)                         //string(data)
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-background.jpg") // >90kb
+	backgroundImage := base64.StdEncoding.EncodeToString(data)                     //string(data)
 
-	data, _ = ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif") // >50kb
-	logoImage := base64.StdEncoding.EncodeToString(data)                        //string(data)
+	data, _ = os.ReadFile("../../acctest/test_assets/image/image-logo.gif") // >50kb
+	logoImage := base64.StdEncoding.EncodeToString(data)                    //string(data)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
