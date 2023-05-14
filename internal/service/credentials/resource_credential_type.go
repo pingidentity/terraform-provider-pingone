@@ -267,6 +267,19 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT),
 											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE),
 											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ISSUED_TIMESTAMP)),
+										/*stringvalidator.Any(
+											stringvalidator.All(
+												stringvalidator.OneOf(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)),
+												stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("value")),
+											),
+											stringvalidator.All(
+												stringvalidator.OneOf(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)),
+												stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("attribute")),
+											),
+											stringvalidator.All(
+												stringvalidator.OneOf(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ISSUED_TIMESTAMP)),
+											),
+										),*/
 									},
 								},
 								"title": schema.StringAttribute{
@@ -284,6 +297,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
+										IsRequiredIfPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)), path.MatchRelative().AtParent().AtName("type")),
 									},
 								},
 								"value": schema.StringAttribute{
@@ -293,6 +307,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
+										IsRequiredIfPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
 									},
 								},
 								"is_visible": schema.BoolAttribute{

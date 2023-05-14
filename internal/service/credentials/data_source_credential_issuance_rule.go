@@ -325,7 +325,7 @@ func (p *CredentialIssuanceRuleDataSourceModel) toState(apiObject *credentials.C
 	p.Filter = filter
 
 	// notification object
-	notification, d := toStateNotification(apiObject.GetNotificationOk())
+	notification, d := toStateNotificationDataSource(apiObject.GetNotificationOk())
 	diags.Append(d...)
 	p.Notification = notification
 
@@ -362,31 +362,30 @@ func toStateFilterDataSource(filter *credentials.CredentialIssuanceRuleFilter, o
 
 func toStateNotificationDataSource(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	//tfObjType := types.ObjectType{AttrTypes: notificationTemplateServiceTFObjectTypes}
 
 	if notification == nil {
-		return types.ObjectNull(notificationServiceTFObjectTypes), diags
+		return types.ObjectNull(notificationDataSourceServiceTFObjectTypes), diags
 	}
 
 	notificationMap := map[string]attr.Value{}
 
 	// notification.methods
 	if v, ok := notification.GetMethodsOk(); ok {
-		notificationMap["methods"] = enumCredentialIssuanceRuleNotificationMethodOkToTF(v, ok)
+		notificationMap["methods"] = enumCredentialIssuanceRuleNotificationMethodDataSourceOkToTF(v, ok)
 	} else {
 		notificationMap["methods"] = types.SetNull(types.StringType)
 	}
 
 	// notification.template
 	if notification.Template == nil {
-		notificationMap["template"] = types.ObjectNull(notificationTemplateServiceTFObjectTypes)
+		notificationMap["template"] = types.ObjectNull(notificationTemplateDataSourceServiceTFObjectTypes)
 	} else {
 		notificationTemplate := map[string]attr.Value{
 			"locale":  framework.StringOkToTF(notification.Template.GetLocaleOk()),
 			"variant": framework.StringOkToTF(notification.Template.GetVariantOk()),
 		}
 
-		flattenedTemplate, d := types.ObjectValue(notificationTemplateServiceTFObjectTypes, notificationTemplate)
+		flattenedTemplate, d := types.ObjectValue(notificationTemplateDataSourceServiceTFObjectTypes, notificationTemplate)
 		diags.Append(d...)
 
 		notificationMap["template"] = flattenedTemplate
