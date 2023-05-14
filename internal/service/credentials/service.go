@@ -25,7 +25,9 @@ func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCredentialIssuerProfileDataSource,
 		NewDigitalWalletApplicationDataSource,
+		NewDigitalWalletApplicationsDataSource,
 		NewCredentialTypeDataSource,
+		NewCredentialTypesDataSource,
 		NewCredentialIssuanceRuleDataSource,
 	}
 }

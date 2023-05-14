@@ -101,7 +101,7 @@ func (r *CredentialIssuanceRuleDataSource) Metadata(ctx context.Context, req dat
 func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne Credentials credential issuance rules.",
+		Description: "Datasource to retrieve a PingOne Credentials credential issuance rule for the specified credential type.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -284,7 +284,7 @@ func (r *CredentialIssuanceRuleDataSource) Read(ctx context.Context, req datasou
 	if response == nil {
 		resp.Diagnostics.AddError(
 			"Cannot find credential issuance rule",
-			fmt.Sprintf("The credential issuance rule %s for environment %s cannot be found.", data.CredentialTypeId.String(), data.EnvironmentId.String()),
+			fmt.Sprintf("The credential issuance rule %s for credential type id %s for environment %s cannot be found.", data.CredentialIssuanceRuleId.String(), data.CredentialTypeId.String(), data.EnvironmentId.String()),
 		)
 		return
 	}

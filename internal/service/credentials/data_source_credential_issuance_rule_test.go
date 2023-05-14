@@ -25,7 +25,7 @@ func TestAccCredentialIssuanceRuleDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCredentialIssuanceRuleDataSourceConfigDataSource_ByIDFull(resourceName, name),
+				Config: testAccCredentialIssuanceRuleDataSource_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -55,7 +55,7 @@ func TestAccCredentialIssuanceRuleDataSource_NotFound(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialIssuanceRuleDataSourceConfigDataSource_NotFoundByID(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleDataSource_NotFoundByID(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Cannot find credential issuance rule"),
 			},
 		},
@@ -75,18 +75,18 @@ func TestAccCredentialIssuanceRuleDataSourceInvalidConfig(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialIssuanceRuleDataSourceConfigDataSource_NoEnvironmentID(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleDataSource_NoEnvironmentID(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Missing required argument"),
 			},
 			{
-				Config:      testAccCredentialIssuanceRuleDataSourceConfigDataSource_NoCredentialIssuanceRuleID(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleDataSource_NoCredentialIssuanceRuleID(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Missing required argument"),
 			},
 		},
 	})
 }
 
-func testAccCredentialIssuanceRuleDataSourceConfigDataSource_ByIDFull(resourceName, name string) string {
+func testAccCredentialIssuanceRuleDataSource_ByIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -214,7 +214,7 @@ data "pingone_credential_issuance_rule" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRuleDataSourceConfigDataSource_NotFoundByID(resourceName, name string) string {
+func testAccCredentialIssuanceRuleDataSource_NotFoundByID(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
@@ -250,7 +250,7 @@ data "pingone_credential_issuance_rule" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }
 
-func testAccCredentialIssuanceRuleDataSourceConfigDataSource_NoEnvironmentID(resourceName, name string) string {
+func testAccCredentialIssuanceRuleDataSource_NoEnvironmentID(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
@@ -285,7 +285,7 @@ data "pingone_credential_issuance_rule" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }
 
-func testAccCredentialIssuanceRuleDataSourceConfigDataSource_NoCredentialIssuanceRuleID(resourceName, name string) string {
+func testAccCredentialIssuanceRuleDataSource_NoCredentialIssuanceRuleID(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {

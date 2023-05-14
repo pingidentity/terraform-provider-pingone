@@ -115,6 +115,7 @@ Optional:
 - `background_image` (String)
 - `bg_opacity_percent` (Number) A numnber containing the percent opacity of the background image in the credential. High percentage opacity may make displayed text difficult to read.
 - `card_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential.
+- `columns` (Number)
 - `description` (String)
 - `logo_image` (String)
 - `name` (String)

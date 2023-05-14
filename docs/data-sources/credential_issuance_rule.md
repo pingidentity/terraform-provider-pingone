@@ -3,12 +3,12 @@
 page_title: "pingone_credential_issuance_rule Data Source - terraform-provider-pingone"
 subcategory: ""
 description: |-
-  Resource to create and manage PingOne Credentials credential issuance rules.
+  Datasource to retrieve a PingOne Credentials credential issuance rule for the specified credential type.
 ---
 
 # pingone_credential_issuance_rule (Data Source)
 
-Resource to create and manage PingOne Credentials credential issuance rules.
+Datasource to retrieve a PingOne Credentials credential issuance rule for the specified credential type.
 
 ## Example Usage
 

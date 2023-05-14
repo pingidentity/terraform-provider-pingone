@@ -25,7 +25,7 @@ func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCredentialTypeDataSourceConfigDataSource_ByIDFull(resourceName, name),
+				Config: testAccCredentialTypeDataSource_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -54,7 +54,7 @@ func TestAccCredentialTypeDataSource_NotFound(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialTypeDataSourceConfigDataSource_NotFoundByID(resourceName),
+				Config:      testAccCredentialTypeDataSource_NotFoundByID(resourceName),
 				ExpectError: regexp.MustCompile("Error: Cannot find credential type"),
 			},
 		},
@@ -73,18 +73,18 @@ func TestAccCredentialTypeDataSourceInvalidConfig(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialTypeDataSourceConfigDataSource_NoEnvironmentID(resourceName),
+				Config:      testAccCredentialTypeDataSource_NoEnvironmentID(resourceName),
 				ExpectError: regexp.MustCompile("Error: Missing required argument"),
 			},
 			{
-				Config:      testAccCredentialTypeDataSourceConfigDataSource_NoCredentialTypeID(resourceName),
+				Config:      testAccCredentialTypeDataSource_NoCredentialTypeID(resourceName),
 				ExpectError: regexp.MustCompile("Error: Credential Type ID not provided"),
 			},
 		},
 	})
 }
 
-func testAccCredentialTypeDataSourceConfigDataSource_ByIDFull(resourceName, name string) string {
+func testAccCredentialTypeDataSource_ByIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -158,7 +158,7 @@ data "pingone_credential_type" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeDataSourceConfigDataSource_NotFoundByID(resourceName string) string {
+func testAccCredentialTypeDataSource_NotFoundByID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -169,7 +169,7 @@ data "pingone_credential_type" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }
 
-func testAccCredentialTypeDataSourceConfigDataSource_NoEnvironmentID(resourceName string) string {
+func testAccCredentialTypeDataSource_NoEnvironmentID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -179,7 +179,7 @@ data "pingone_credential_type" "%[2]s" {
   }`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }
 
-func testAccCredentialTypeDataSourceConfigDataSource_NoCredentialTypeID(resourceName string) string {
+func testAccCredentialTypeDataSource_NoCredentialTypeID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
