@@ -170,6 +170,16 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							stringvalidator.LengthAtMost(imageMaxSize),
 							//stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must include Content-type and Content-encoding prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
 							isbase64EncodedValidator{},
+							IsRequiredIfRegexMatchesPathValue(
+								regexp.MustCompile(`\${backgroundImage}`),
+								"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
+							RegexMatchesPathValue(
+								regexp.MustCompile(`\${backgroundImage}`),
+								"The metadata.background_image argument is defined but the card_design_template does not have a ${backgroundImage} element.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
 						},
 					},
 
@@ -188,6 +198,16 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							stringvalidator.RegexMatches(
 								regexp.MustCompile(`^#([A-Fa-f0-9]{6})$`),
 								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
+							IsRequiredIfRegexMatchesPathValue(
+								regexp.MustCompile(`\${cardColor}`),
+								"The metadata.card_color argument is required because the ${$cardColor} element is defined in the card_design_template.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
+							RegexMatchesPathValue(
+								regexp.MustCompile(`\${cardColor}`),
+								"The metadata.card_color argument is defined but the card_design_template does not have a ${cardColor} element.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
 						},
 					},
 
@@ -206,6 +226,16 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(attrMinLength),
+							IsRequiredIfRegexMatchesPathValue(
+								regexp.MustCompile(`\${cardSubtitle}`),
+								"The metadata.description argument is required because the ${$cardSubtitle} element is defined in the card_design_template.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
+							RegexMatchesPathValue(
+								regexp.MustCompile(`\${cardSubtitle}`),
+								"The metadata.description argument is defined but the card_design_template does not have a ${cardSubtitle} element.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
 						},
 					},
 
@@ -216,6 +246,16 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Validators: []validator.String{
 							isbase64EncodedValidator{},
 							stringvalidator.LengthAtMost(imageMaxSize),
+							IsRequiredIfRegexMatchesPathValue(
+								regexp.MustCompile(`\${logoImage}`),
+								"The metadata.card_color argument is required because the ${$logoImage} element is defined in the card_design_template.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
+							RegexMatchesPathValue(
+								regexp.MustCompile(`\${logoImage}`),
+								"The metadata.logo_image argument is defined but the card_design_template does not have a ${logoImage} element.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
 						},
 					},
 
@@ -225,6 +265,16 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(attrMinLength),
+							IsRequiredIfRegexMatchesPathValue(
+								regexp.MustCompile(`\${cardTitle}`),
+								"The metadata.name argument is required because the ${$cardTitle} element is defined in the card_design_template.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
+							RegexMatchesPathValue(
+								regexp.MustCompile(`\${cardTitle}`),
+								"The metadata.name argument is defined but the card_design_template does not have a ${cardTitle} element.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
 						},
 					},
 
@@ -233,8 +283,19 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(
-								regexp.MustCompile(`^#([A-Fa-f0-9]{6})$`),
+								regexp.MustCompile(
+									`^#([A-Fa-f0-9]{6})$`),
 								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
+							IsRequiredIfRegexMatchesPathValue(
+								regexp.MustCompile(`\${textColor}`),
+								"The metadata.text_color argument is required because the ${$textColor} element is defined in the card_design_template.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
+							RegexMatchesPathValue(
+								regexp.MustCompile(`\${textColor}`),
+								"The metadata.text_color argument is defined but the card_design_template does not have a ${textColor} element.", // move to other description configs
+								path.MatchRoot("card_design_template"),
+							),
 						},
 					},
 
@@ -267,19 +328,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT),
 											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE),
 											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ISSUED_TIMESTAMP)),
-										/*stringvalidator.Any(
-											stringvalidator.All(
-												stringvalidator.OneOf(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)),
-												stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("value")),
-											),
-											stringvalidator.All(
-												stringvalidator.OneOf(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)),
-												stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("attribute")),
-											),
-											stringvalidator.All(
-												stringvalidator.OneOf(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ISSUED_TIMESTAMP)),
-											),
-										),*/
 									},
 								},
 								"title": schema.StringAttribute{
@@ -297,7 +345,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
-										IsRequiredIfPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)), path.MatchRelative().AtParent().AtName("type")),
+										IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)), path.MatchRelative().AtParent().AtName("type")),
 									},
 								},
 								"value": schema.StringAttribute{
@@ -307,14 +355,13 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
-										IsRequiredIfPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
+										IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
 									},
 								},
 								"is_visible": schema.BoolAttribute{
 									Description:         "",
 									MarkdownDescription: "",
 									Optional:            true,
-									Validators:          []validator.Bool{},
 								},
 							},
 						},

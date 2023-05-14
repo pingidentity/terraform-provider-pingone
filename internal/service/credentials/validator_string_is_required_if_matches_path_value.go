@@ -14,23 +14,23 @@ import (
 //var _ validator.Int64 = &int64IsGreaterThanValidator{}
 
 // int64IsGreaterThanValidator is the underlying type implementing Int64IsGreaterThan.
-type stringIsRequiredIfPathValueValidator struct {
+type stringIsRequiredIfMatchesPathValueValidator struct {
 	targetValue basetypes.StringValue
 	expressions path.Expressions
 }
 
 // Description returns a plaintext string describing the validator.
-func (v stringIsRequiredIfPathValueValidator) Description(_ context.Context) string {
+func (v stringIsRequiredIfMatchesPathValueValidator) Description(_ context.Context) string {
 	return fmt.Sprintf("If configured, must be greater than %s attributes", v.expressions)
 }
 
 // MarkdownDescription returns a Markdown formatted string describing the validator.
-func (v stringIsRequiredIfPathValueValidator) MarkdownDescription(ctx context.Context) string {
+func (v stringIsRequiredIfMatchesPathValueValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
 // Validate performs the validation logic for the validator.
-func (v stringIsRequiredIfPathValueValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+func (v stringIsRequiredIfMatchesPathValueValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	// Combine the given path expressions with the current attribute path
 	// expression. This call automatically handles relative and absolute
 	// expressions.
@@ -82,8 +82,8 @@ func (v stringIsRequiredIfPathValueValidator) ValidateString(ctx context.Context
 
 // Int64IsGreaterThan checks that any Int64 values in the paths described by the
 // path.Expression are less than the current attribute value.
-func IsRequiredIfPathValue(targetValue basetypes.StringValue, expressions ...path.Expression) validator.String {
-	return &stringIsRequiredIfPathValueValidator{
+func IsRequiredIfMatchesPathValue(targetValue basetypes.StringValue, expressions ...path.Expression) validator.String {
+	return &stringIsRequiredIfMatchesPathValueValidator{
 		targetValue: targetValue,
 		expressions: expressions,
 	}
