@@ -335,7 +335,7 @@ Optional:
 
 Required:
 
-- `algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA224withRSA`, `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA224withECDSA`, `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
+- `algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
 - `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
 
 ## Import
