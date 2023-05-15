@@ -10,7 +10,8 @@ import (
 )
 
 func TestAccCredentialTypesDataSource_NoFilter(t *testing.T) {
-	t.Parallel()
+	// If run in parallel, unique environments are needed to prevent collisions within the same environment.
+	//t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_credential_types.%s", resourceName)
@@ -34,12 +35,17 @@ func TestAccCredentialTypesDataSource_NoFilter(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", verify.P1ResourceIDRegexp),
 				),
 			},
+			{
+				Config:  testAccCredentialTypesDataSource_NoFilter(resourceName, name),
+				Destroy: true,
+			},
 		},
 	})
 }
 
 func TestAccCredentialTypesDataSource_NotFound(t *testing.T) {
-	t.Parallel()
+	// If run in parallel, unique environments are needed to prevent collisions within the same environment.
+	//t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_credential_types.%s", resourceName)

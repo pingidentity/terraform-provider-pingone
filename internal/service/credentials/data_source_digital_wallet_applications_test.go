@@ -10,7 +10,8 @@ import (
 )
 
 func TestAccDigitalWalletApplicationsDataSource_NoFilter(t *testing.T) {
-	t.Parallel()
+	// If run in parallel, unique environments are needed to prevent collisions within the same environment.
+	//t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_digital_wallet_applications.%s", resourceName)
@@ -39,7 +40,8 @@ func TestAccDigitalWalletApplicationsDataSource_NoFilter(t *testing.T) {
 }
 
 func TestAccDigitalWalletApplicationsDataSource_NotFound(t *testing.T) {
-	t.Parallel()
+	// If run in parallel, unique environments are needed to prevent collisions within the same environment.
+	//t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_digital_wallet_applications.%s", resourceName)

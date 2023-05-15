@@ -494,7 +494,7 @@ func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*cred
 			return nil, diags
 		}
 
-		credentialIssuanceRuleAutomation, d = automationRules.expandAutomationModel(ctx)
+		credentialIssuanceRuleAutomation, d = automationRules.expandAutomationModel()
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
@@ -561,7 +561,7 @@ func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*cred
 	return data, diags
 }
 
-func (p *AutomationModel) expandAutomationModel(ctx context.Context) (*credentials.CredentialIssuanceRuleAutomation, diag.Diagnostics) {
+func (p *AutomationModel) expandAutomationModel() (*credentials.CredentialIssuanceRuleAutomation, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	automation := credentials.NewCredentialIssuanceRuleAutomationWithDefaults()

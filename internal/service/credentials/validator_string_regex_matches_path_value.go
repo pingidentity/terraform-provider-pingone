@@ -11,30 +11,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
-// Ensure our implementation satisfies the validator.Int64 interface.
-//var _ validator.Int64 = &int64IsGreaterThanValidator{}
-
-// int64IsGreaterThanValidator is the underlying type implementing Int64IsGreaterThan.
+// stringRegexMatchesPathValueValidator validates if the provided regex matches
+// the value at the provided path expression(s).  If a list of expressions is provided,
+// all expressions are checked until a match is found, or the list of expressions is exhausted.
 type stringRegexMatchesPathValueValidator struct {
 	regexp      *regexp.Regexp
 	message     string
 	expressions path.Expressions
 }
 
-// Description returns a plaintext string describing the validator.
+// Description describes the validation in plain text formatting.
 func (v stringRegexMatchesPathValueValidator) Description(_ context.Context) string {
 	if v.message != "" {
 		return v.message
 	}
-	return fmt.Sprintf("value must match regular expression '%s'", v.regexp)
+	return fmt.Sprintf("The value at path %v must match regular expression '%s'", v.expressions, v.regexp)
 }
 
-// MarkdownDescription returns a Markdown formatted string describing the validator.
+// MarkdownDescription describes the validation in Markdown formatting.
 func (v stringRegexMatchesPathValueValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-// Validate performs the validation logic for the validator.
+// Validate runs the main validation logic of the validator, reading configuration data out of `req` and updating `resp` with diagnostics.
 func (v stringRegexMatchesPathValueValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	// If the value is unknown or null, there is nothing to validate.
 	if req.ConfigValue.IsUnknown() || req.ConfigValue.IsNull() {
@@ -76,6 +75,8 @@ func (v stringRegexMatchesPathValueValidator) ValidateString(ctx context.Context
 				continue
 			}
 
+			// Found a matched path.  Compare the matched path to the provided path.
+			// If there is not a regex match, return the provided error message.
 			if !v.regexp.MatchString(matchedPathValue.String()) {
 				resp.Diagnostics.Append(validatordiag.InvalidAttributeValueMatchDiagnostic(
 					req.Path,
@@ -87,8 +88,9 @@ func (v stringRegexMatchesPathValueValidator) ValidateString(ctx context.Context
 	}
 }
 
-// Int64IsGreaterThan checks that any Int64 values in the paths described by the
-// path.Expression are less than the current attribute value.
+// RegexMatchesPathValue validates if the provided regex matches
+// the value at the provided path expression(s).  If a list of expressions is provided,
+// all expressions are checked until a match is found, or the list of expressions is exhausted.
 func RegexMatchesPathValue(regexp *regexp.Regexp, message string, expressions ...path.Expression) validator.String {
 	return &stringRegexMatchesPathValueValidator{
 		regexp:      regexp,

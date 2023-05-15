@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -168,8 +169,10 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtMost(imageMaxSize),
-							//stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must include Content-type and Content-encoding prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
-							isbase64EncodedValidator{},
+							// Required until P1Creds follows the standard PingOne image handling capability.
+							// Attempts of other stop-gap mechanisms to detect and update Content-Type yielded inconsistent results.
+							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must indclude Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
+							IsBase64Encoded(),
 							IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${backgroundImage}`),
 								"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.", // move to other description configs
@@ -244,8 +247,11 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						MarkdownDescription: "",
 						Optional:            true,
 						Validators: []validator.String{
-							isbase64EncodedValidator{},
 							stringvalidator.LengthAtMost(imageMaxSize),
+							// Required until P1Creds follows the standard PingOne image handling capability.
+							// Attempts of other stop-gap mechanisms to detect and update Content-Type yielded inconsistent results.
+							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must indclude Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
+							IsBase64Encoded(),
 							IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
 								"The metadata.card_color argument is required because the ${$logoImage} element is defined in the card_design_template.", // move to other description configs
@@ -302,7 +308,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					"version": schema.Int64Attribute{
 						Description:         "",
 						MarkdownDescription: "",
-						Required:            true, // not requried in schema, but credentials will not display in P1 admin console if not provided
+						Required:            true, // not required in schema, but credentials will not display in P1 admin console if not provided
 						Validators: []validator.Int64{
 							int64validator.AtLeast(attrMinVersion),
 						},
@@ -312,6 +318,9 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Description:         "",
 						MarkdownDescription: "",
 						Required:            true,
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(1),
+						},
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{

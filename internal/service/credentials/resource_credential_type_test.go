@@ -163,20 +163,31 @@ func TestAccCredentialType_Full(t *testing.T) {
 		CheckDestroy:             testAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// full
+			// full - new
 			fullStep,
 			{
 				Config:  testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
 				Destroy: true,
 			},
+			// minimal - new
 			minimalStep,
 			{
 				Config:  testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
 				Destroy: true,
 			},
+			// update
 			fullStep,
 			minimalStep,
 			fullStep,
+			// clear
+			{
+				Config:  testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
+				Destroy: true,
+			},
+			{
+				Config:  testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
+				Destroy: true,
+			},
 		},
 	})
 }
@@ -188,10 +199,10 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 	name := acctest.ResourceNameGen()
 
 	data, _ := os.ReadFile("../../acctest/test_assets/image/image-background.jpg") // >90kb
-	backgroundImage := base64.StdEncoding.EncodeToString(data)                     //string(data)
+	backgroundImage := base64.StdEncoding.EncodeToString(data)
 
 	data, _ = os.ReadFile("../../acctest/test_assets/image/image-logo.gif") // >50kb
-	logoImage := base64.StdEncoding.EncodeToString(data)                    //string(data)
+	logoImage := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
@@ -202,34 +213,42 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 			{
 				Config:      testAccCredentialTypeConfig_InvalidTitle(resourceName, ""),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Length"),
+				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_InvalidCardColorHexValue(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_InvalidTextColorHexValue(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_InvalidBackgroundOpacityValue(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_InvalidVersion(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_NoSVGTagCardDesignTemplate(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_EmptyFieldsArray(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Error when calling `CreateCredentialType`: Validation Error : \\[metadata.fields must not be empty\\]"),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_ImageSizeExceeded(resourceName, name, backgroundImage, logoImage),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Length"),
+				Destroy:     true,
 			},
 		},
 	})

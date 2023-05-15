@@ -152,11 +152,15 @@ resource "pingone_digital_wallet_application" "%[2]s-walletappname" {
 	application_id = resource.pingone_application.%[2]s-appname.id
 	name = "%[2]s-name"
 	app_open_url = "https://www.example.com"
+
+	depends_on = [resource.pingone_application.%[2]s-appname]
 }
 
 data "pingone_digital_wallet_application" "%[2]s" {
 	environment_id = data.pingone_environment.credentials_test.id
 	digital_wallet_id = resource.pingone_digital_wallet_application.%[2]s-walletappname.id
+
+	depends_on = [resource.pingone_digital_wallet_application.%[2]s-walletappname]
 
   }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }

@@ -38,6 +38,10 @@ func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "metadata.fields.%", resourceFullName, "metadata.fields.%"),
 				),
 			},
+			{
+				Config:  testAccCredentialTypeDataSource_ByIDFull(resourceName, name),
+				Destroy: true,
+			},
 		},
 	})
 }

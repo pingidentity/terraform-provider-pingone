@@ -178,7 +178,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	// Execute a Create or Update depending on existance of credential issuer profile
+	// Execute a Create or Update depending on existence of credential issuer profile
 	var response interface{}
 	if readIssuerProfileResponse == nil {
 		// create the issuer profile

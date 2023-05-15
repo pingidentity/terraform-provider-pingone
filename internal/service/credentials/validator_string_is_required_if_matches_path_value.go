@@ -10,26 +10,27 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-// Ensure our implementation satisfies the validator.Int64 interface.
-//var _ validator.Int64 = &int64IsGreaterThanValidator{}
-
-// int64IsGreaterThanValidator is the underlying type implementing Int64IsGreaterThan.
+// stringIsRequiredIfMatchesPathValueValidator validates if the provided string value equals
+// the value at the provided path expression(s).  If matched, the current arguemnt is required.
+//
+// If a list of expressions is provided, all expressions are checked until a match is found,
+// or the list of expressions is exhausted.
 type stringIsRequiredIfMatchesPathValueValidator struct {
 	targetValue basetypes.StringValue
 	expressions path.Expressions
 }
 
-// Description returns a plaintext string describing the validator.
+// Description describes the validation in plain text formatting.
 func (v stringIsRequiredIfMatchesPathValueValidator) Description(_ context.Context) string {
-	return fmt.Sprintf("If configured, must be greater than %s attributes", v.expressions)
+	return fmt.Sprintf("The argument is required if the value %s is present at the defined path: %v", v.targetValue.ValueString(), v.expressions)
 }
 
-// MarkdownDescription returns a Markdown formatted string describing the validator.
+// MarkdownDescription describes the validation in Markdown formatting.
 func (v stringIsRequiredIfMatchesPathValueValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-// Validate performs the validation logic for the validator.
+// Validate runs the main validation logic of the validator, reading configuration data out of `req` and updating `resp` with diagnostics.
 func (v stringIsRequiredIfMatchesPathValueValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	// Combine the given path expressions with the current attribute path
 	// expression. This call automatically handles relative and absolute
@@ -67,7 +68,7 @@ func (v stringIsRequiredIfMatchesPathValueValidator) ValidateString(ctx context.
 			}
 
 			// Found a matched path.  Compare the matched path to the provided path.
-			// If a matched path, and the current property has not been set, return an error.
+			// If a matched value, and the current argument has not been set, return an error.
 			if v.targetValue.Equal(matchedPathValue) && (req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown()) {
 
 				resp.Diagnostics.AddAttributeError(
@@ -80,8 +81,11 @@ func (v stringIsRequiredIfMatchesPathValueValidator) ValidateString(ctx context.
 	}
 }
 
-// Int64IsGreaterThan checks that any Int64 values in the paths described by the
-// path.Expression are less than the current attribute value.
+// IsRequiredIfMatchesPathValue validates if the provided string value equals
+// the value at the provided path expression(s).  If matched, the current arguemnt is required.
+//
+// If a list of expressions is provided, all expressions are checked until a match is found,
+// or the list of expressions is exhausted.
 func IsRequiredIfMatchesPathValue(targetValue basetypes.StringValue, expressions ...path.Expression) validator.String {
 	return &stringIsRequiredIfMatchesPathValueValidator{
 		targetValue: targetValue,
