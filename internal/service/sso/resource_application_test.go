@@ -2500,7 +2500,7 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", "SHA224withECDSA"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", "SHA384withECDSA"),
 			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexp),
 		),
 	}
@@ -2870,7 +2870,7 @@ resource "pingone_key" "%[2]s" {
   name                = "%[3]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "ISSUANCE"
   validity_period     = 365
@@ -2904,7 +2904,7 @@ resource "pingone_key" "%[2]s" {
   name                = "%[3]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
@@ -2938,7 +2938,7 @@ resource "pingone_key" "%[2]s" {
   name                = "%[3]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "ISSUANCE"
   validity_period     = 365
@@ -3646,7 +3646,7 @@ resource "pingone_key" "%[2]s" {
   name                = "%[3]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
@@ -3732,7 +3732,7 @@ resource "pingone_key" "%[2]s" {
   name                = "%[3]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
@@ -3761,7 +3761,7 @@ resource "pingone_key" "%[2]s" {
   name                = "%[3]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
@@ -3791,7 +3791,7 @@ resource "pingone_key" "%[2]s" {
   name                = "%[3]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
