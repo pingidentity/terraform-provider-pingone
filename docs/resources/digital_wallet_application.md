@@ -50,10 +50,10 @@ resource "pingone_digital_wallet_application" "my_digital_wallet_app" {
 
 ### Required
 
-- `app_open_url` (String) The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/appopenurl`.  The `https://` schema is recommended, but not required.
-- `application_id` (String) The ID of the application to associate with the digital wallet application.
+- `app_open_url` (String) The URL sent in notifications to the user to communicate with the service.
+- `application_id` (String) The identifier (UUID) of the PingOne application associated with the digital wallet application.
 - `environment_id` (String) The ID of the environment to create the digital wallet application in.
-- `name` (String) The name of the digital wallet application.
+- `name` (String) The name associated with the digital wallet application.
 
 ### Read-Only
 

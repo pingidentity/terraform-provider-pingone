@@ -43,7 +43,7 @@ type MetadataDataSourceModel struct {
 	Columns          types.Int64  `tfsdk:"columns"`
 	Description      types.String `tfsdk:"description"`
 	TextColor        types.String `tfsdk:"text_color"`
-	Version          types.Int64  `tfsdk:"version"` // Watch Item - Best practice is to allow service to set, but if version of 5 or higher is not provided, creds do not appear in UI!
+	Version          types.Int64  `tfsdk:"version"`
 	LogoImage        types.String `tfsdk:"logo_image"`
 	Name             types.String `tfsdk:"name"`
 	Fields           types.List   `tfsdk:"fields"`
@@ -101,17 +101,17 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data to retrieve a PingOne Credentials credential type by its Credential Type Id. The credential_type_id is the only parameter to ensure a single credential is retrieved.",
+		Description: "Data to retrieve a PingOne Credentials credential type by its Credential Type Id.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the credential type in."},
+				Description: "PingOne environment identifier (UUID) in which the credential type exists."},
 			),
 
 			"credential_type_id": schema.StringAttribute{
-				Description: "The ID of the credential type.",
+				Description: "Identifier (UUID) associated with the credential type.",
 				Optional:    true,
 				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
@@ -119,115 +119,102 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 			},
 
 			"title": schema.StringAttribute{
-				Description: "A string that specifies the title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the credential title.",
+				Description: "Title of the credential.",
 				Computed:    true,
 			},
 
 			"description": schema.StringAttribute{
-				Description: "",
+				Description: "A description of the credential type.",
 				Computed:    true,
 			},
 
 			"card_type": schema.StringAttribute{
-				Description: "",
+				Description: "A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.",
 				Computed:    true,
 			},
 
 			"card_design_template": schema.StringAttribute{
-				Description: "A string that specifies an SVG formatted image containing placeholders for the credential fields that need to be displayed in the image.",
+				Description: "An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.",
 				Computed:    true,
 			},
 
 			"metadata": schema.SingleNestedAttribute{
-				Description:         "",
-				MarkdownDescription: "",
-				Computed:            true,
+				Description: "An object that contains the names, data types, and other metadata related to the credentia",
+				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"background_image": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						Description: "A base64 encoded image of the background to show in the credential.",
+						Computed:    true,
 					},
 
 					"bg_opacity_percent": schema.Int64Attribute{
-						Description: "A numnber containing the percent opacity of the background image in the credential. High percentage opacity may make displayed text difficult to read.",
+						Description: "Percent opacity of the background image in the credential.",
 						Computed:    true,
 					},
 
 					"card_color": schema.StringAttribute{
-						Description: "A string containing a 6-digit hexadecimal color code specifying the color of the credential.",
+						Description: "Color to show on the credential.",
 						Computed:    true,
 					},
 
 					"columns": schema.Int64Attribute{
-						Description: "",
+						Description: "Number of columns to organize the fields displayed on the credential.",
 						Computed:    true,
 					},
 
 					"description": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						Description: "Description of the credential.",
+						Computed:    true,
 					},
 
 					"logo_image": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						Description: "A base64 encoded image of the logo to show in the credential.",
+						Computed:    true,
 					},
 
 					"name": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						Description: "Name of the credential.",
+						Computed:    true,
 					},
 
 					"text_color": schema.StringAttribute{
-						Description: "A string containing a 6-digit hexadecimal color code specifying the color of the credential text.",
+						Description: "Color of the text to show on the credential.",
 						Computed:    true},
 
 					"version": schema.Int64Attribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						Description: "Version of this credential.",
+						Computed:    true,
 					},
 
 					"fields": schema.ListNestedAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Required:            true,
+						Description: "Array of objects representing the credential fields.",
+						Required:    true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
-									Computed:            true,
+									Description: "Identifier of the field formatted as “<fields.type> -> <fields.title>.",
+									Computed:    true,
 								},
 								"type": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
-									Computed:            true,
+									Description: "Type of data in the field.",
+									Computed:    true,
 								},
 								"title": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
-									Computed:            true,
+									Description: "Descriptive text when showing the field.",
+									Computed:    true,
 								},
 								"attribute": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
-									Computed:            true,
+									Description: "Name of the PingOne Directory attribute. Present if field.type is Directory Attribute.",
+									Computed:    true,
 								},
 								"value": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
-									Computed:            true,
+									Description: "The text to appear on the credential for a field.type of Alphanumeric Text.",
+									Computed:    true,
 								},
 								"is_visible": schema.BoolAttribute{
-									Description:         "",
-									MarkdownDescription: "",
-									Computed:            true,
+									Description: "Specifies whether the field should be visible to viewers of the credential.",
+									Computed:    true,
 								},
 							},
 						},

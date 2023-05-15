@@ -130,7 +130,14 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 			// changes
 			fullStep,
 			updateStep,
-			fullStep,
+			{
+				Config:  testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
+				Destroy: true,
+			},
+			{
+				Config:  testAccDigitalWalletApplication_Full(resourceName, updatedName, updatedAppOpenUrl),
+				Destroy: true,
+			},
 		},
 	})
 }
@@ -195,30 +202,30 @@ func testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl string)
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	name = "%[3]s"
-	enabled = true
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-	oidc_options {
-	  type                        = "NATIVE_APP"
-	  grant_types                 = ["CLIENT_CREDENTIALS"]
-	  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-	  bundle_id        = "com.pingidentity.ios_%[3]s"
-	  package_name     = "com.pingidentity.android_%[3]s"
-  
-	  mobile_app {
-		 bundle_id        = "com.pingidentity.ios_%[3]s"
-		 package_name     = "com.pingidentity.android_%[3]s"
-		 passcode_refresh_seconds = 30
-	  }
-	}
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    bundle_id                   = "com.pingidentity.ios_%[3]s"
+    package_name                = "com.pingidentity.android_%[3]s"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[3]s"
+      package_name             = "com.pingidentity.android_%[3]s"
+      passcode_refresh_seconds = 30
+    }
+  }
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	application_id = resource.pingone_application.%[2]s.id
-	name = "%[3]s"
-	app_open_url = "%[4]s"
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "%[4]s"
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
@@ -226,10 +233,10 @@ func testAccDigitalWalletApplication_NativeAppMissing(resourceName, name, appOpe
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_digital_wallet_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	application_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
-	name = "%[3]s"
-	app_open_url = "%[4]s"
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+  name           = "%[3]s"
+  app_open_url   = "%[4]s"
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
@@ -237,25 +244,25 @@ func testAccDigitalWalletApplication_InvalidAppType(resourceName, name, appOpenU
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	name = "%[3]s"
-	enabled = true
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-	oidc_options {
-		type                        = "SINGLE_PAGE_APP"
-		grant_types                 = ["AUTHORIZATION_CODE"]
-		response_types              = ["CODE"]
-		pkce_enforcement            = "S256_REQUIRED"
-		token_endpoint_authn_method = "NONE"
-		redirect_uris               = ["https://www.pingidentity.com"]
-	  }
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	application_id = resource.pingone_application.%[2]s.id
-	name = "%[3]s"
-	app_open_url = "%[4]s"
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "%[4]s"
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
@@ -263,22 +270,22 @@ func testAccDigitalWalletApplication_NativeAppMobileNotConfigured(resourceName, 
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	name = "%[3]s"
-	enabled = true
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-	oidc_options {
-	  type                        = "NATIVE_APP"
-	  grant_types                 = ["CLIENT_CREDENTIALS"]
-	  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-	}
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	application_id = resource.pingone_application.%[2]s.id
-	name = "%[3]s"
-	app_open_url = "%[4]s"
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "%[4]s"
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
@@ -286,26 +293,26 @@ func testAccDigitalWalletApplication_NativeAppInvalidMobileConfiguration(resourc
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	name = "%[3]s"
-	enabled = true
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-	oidc_options {
-		type                        = "NATIVE_APP"
-		grant_types                 = ["CLIENT_CREDENTIALS"]
-		token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-	
-		mobile_app {
-		   passcode_refresh_seconds = 30
-		}
-	}
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      passcode_refresh_seconds = 30
+    }
+  }
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	application_id = resource.pingone_application.%[2]s.id
-	name = "%[3]s"
-	app_open_url = "%[4]s"
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "%[4]s"
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
@@ -313,29 +320,29 @@ func testAccDigitalWalletApplication_InvalidAppOpenUrl(resourceName, name, appOp
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	name = "%[3]s"
-	enabled = true
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
 
-	oidc_options {
-	  type                        = "NATIVE_APP"
-	  grant_types                 = ["CLIENT_CREDENTIALS"]
-	  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-	  bundle_id        = "com.pingidentity.ios_%[3]s"
-	  package_name     = "com.pingidentity.android_%[3]s"
-  
-	  mobile_app {
-		 bundle_id        = "com.pingidentity.ios_%[3]s"
-		 package_name     = "com.pingidentity.android_%[3]s"
-		 passcode_refresh_seconds = 30
-	  }
-	}
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    bundle_id                   = "com.pingidentity.ios_%[3]s"
+    package_name                = "com.pingidentity.android_%[3]s"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[3]s"
+      package_name             = "com.pingidentity.android_%[3]s"
+      passcode_refresh_seconds = 30
+    }
+  }
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	application_id = resource.pingone_application.%[2]s.id
-	name = "%[3]s"
-	app_open_url = "%[4]s"
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "%[4]s"
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
 }

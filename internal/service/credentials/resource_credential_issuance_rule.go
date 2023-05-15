@@ -104,6 +104,50 @@ func (r *CredentialIssuanceRuleResource) Metadata(ctx context.Context, req resou
 }
 
 func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	statusdDescriptionFmt := "Status of the credential issuance rule. Can be `ACTIVE` or `DISABLED`."
+	statusDescription := framework.SchemaDescription{
+		MarkdownDescription: statusdDescriptionFmt,
+		Description:         strings.ReplaceAll(statusdDescriptionFmt, "`", "\""),
+	}
+
+	filterDescriptionFmt := "Contains one and only one filter (`.groupIds`, `.populationIds`, or `.scim`) that selects the users to which the credential issuance rule applies."
+	filterDescription := framework.SchemaDescription{
+		MarkdownDescription: filterDescriptionFmt,
+		Description:         strings.ReplaceAll(filterDescriptionFmt, "`", "\""),
+	}
+
+	automationOptionPhraseFmt := "Can be `PERIODIC` or `ON_DEMAND`." // I'm following the documentation here.
+	automationIssueDescriptionFmt := fmt.Sprintf("The method the service uses to issue credentials with the credential issuance rule. %s", automationOptionPhraseFmt)
+	automationIssueDescription := framework.SchemaDescription{
+		MarkdownDescription: automationIssueDescriptionFmt,
+		Description:         strings.ReplaceAll(automationIssueDescriptionFmt, "`", "\""),
+	}
+
+	automationRevokeDescriptionFmt := fmt.Sprintf("The method the service uses to revoke credentials with the credential issuance rule. %s", automationOptionPhraseFmt)
+	automationRevokeDescription := framework.SchemaDescription{
+		MarkdownDescription: automationRevokeDescriptionFmt,
+		Description:         strings.ReplaceAll(automationRevokeDescriptionFmt, "`", "\""),
+	}
+
+	automationUpdateDescriptionFmt := fmt.Sprintf("The method the service uses to update credentials with the credential issuance rule. %s", automationOptionPhraseFmt)
+	automationUpdateDescription := framework.SchemaDescription{
+		MarkdownDescription: automationUpdateDescriptionFmt,
+		Description:         strings.ReplaceAll(automationUpdateDescriptionFmt, "`", "\""),
+	}
+
+	notificationMethodsDescriptionFmt := "Array of methods for notifying the user; can be `EMAIL`, `SMS`, or both."
+	notificationMethodsDescription := framework.SchemaDescription{
+		MarkdownDescription: notificationMethodsDescriptionFmt,
+		Description:         strings.ReplaceAll(notificationMethodsDescriptionFmt, "`", "\""),
+	}
+
+	notificationTemplateLocaleDescriptionFmt := "The ISO 2-character language code used for the notification; for example, `en`."
+	notificationTemplateLocaleDescription := framework.SchemaDescription{
+		MarkdownDescription: notificationTemplateLocaleDescriptionFmt,
+		Description:         strings.ReplaceAll(notificationTemplateLocaleDescriptionFmt, "`", "\""),
+	}
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne Credentials credential issuance rules.",
@@ -112,11 +156,11 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the credential type in."},
+				Description: "PingOne environment identifier (UUID) in which the credential issuance rule exists."},
 			),
 
 			"credential_type_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
-				Description: "The ID of the credential type with which this credential issuance rule is associated.",
+				Description: "Identifier (UUID) of the credential type with which this credential issuance rule is associated.",
 			},
 				[]validator.String{
 					verify.P1ResourceIDValidator(),
@@ -124,7 +168,7 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 			),
 
 			"digital_wallet_application_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
-				Description: "The ID of the digital wallet application that will interact with the user's Digital Wallet",
+				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet.",
 			},
 				[]validator.String{
 					verify.P1ResourceIDValidator(),
@@ -132,7 +176,8 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 			),
 
 			"status": schema.StringAttribute{
-				MarkdownDescription: "ACTIVE or DISABLED status of the credential issuance rule.",
+				Description:         statusDescription.Description,
+				MarkdownDescription: statusDescription.MarkdownDescription,
 				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
@@ -142,24 +187,23 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 			},
 
 			"filter": schema.SingleNestedAttribute{
-				MarkdownDescription: "",
+				Description:         filterDescription.Description,
+				MarkdownDescription: filterDescription.MarkdownDescription,
 				Optional:            true,
 				Attributes: map[string]schema.Attribute{
 					"group_ids": schema.SetAttribute{
-						ElementType:         types.StringType,
-						Description:         "",
-						MarkdownDescription: "",
-						Optional:            true,
+						ElementType: types.StringType,
+						Description: "Array of one or more identifiers (UUIDs) of groups, any of which a user must belong for the credential issuance rule to apply.",
+						Optional:    true,
 						Validators: []validator.Set{
 							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
 							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
 						},
 					},
 					"population_ids": schema.SetAttribute{
-						ElementType:         types.StringType,
-						Description:         "",
-						MarkdownDescription: "",
-						Optional:            true,
+						ElementType: types.StringType,
+						Description: "Array of one or more identifiers (UUIDs) of populations, any of which a user must belong for the credential issuance rule to apply. ",
+						Optional:    true,
 						Validators: []validator.Set{
 							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
 							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
@@ -167,9 +211,8 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 					},
 
 					"scim": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Optional:            true,
+						Description: "A SCIM query that selects users to which the credential issuance rule applies.",
+						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
 							stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
@@ -179,35 +222,35 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 			},
 
 			"automation": schema.SingleNestedAttribute{
-				MarkdownDescription: "",
-				Required:            true,
+				Description: "Contains a list of actions, as key names, and the update method for each action.",
+				Required:    true,
 				Attributes: map[string]schema.Attribute{
 					"issue": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
+						Description:         automationIssueDescription.Description,
+						MarkdownDescription: automationIssueDescription.MarkdownDescription,
 						Required:            true,
 					},
 					"revoke": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
+						Description:         automationRevokeDescription.Description,
+						MarkdownDescription: automationRevokeDescription.MarkdownDescription,
 						Required:            true,
 					},
 					"update": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
+						Description:         automationUpdateDescription.Description,
+						MarkdownDescription: automationUpdateDescription.MarkdownDescription,
 						Required:            true,
 					},
 				},
 			},
 
 			"notification": schema.SingleNestedAttribute{
-				MarkdownDescription: "",
-				Optional:            true,
+				Description: "Contains notification information. When this property is supplied, the information within is used to create a custom notification.",
+				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"methods": schema.SetAttribute{
 						ElementType:         types.StringType,
-						Description:         "",
-						MarkdownDescription: "",
+						Description:         notificationMethodsDescription.Description,
+						MarkdownDescription: notificationMethodsDescription.MarkdownDescription,
 						Optional:            true,
 						Validators: []validator.Set{
 							setvalidator.ValueStringsAre(
@@ -219,21 +262,20 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 						},
 					},
 					"template": schema.SingleNestedAttribute{
-						MarkdownDescription: "",
-						Optional:            true,
+						Description: "Contains template parameters.",
+						Optional:    true,
 						Attributes: map[string]schema.Attribute{
 							"locale": schema.StringAttribute{
-								Description:         "",
-								MarkdownDescription: "",
+								Description:         notificationTemplateLocaleDescription.Description,
+								MarkdownDescription: notificationTemplateLocaleDescription.MarkdownDescription,
 								Optional:            true,
 								Validators: []validator.String{
 									stringvalidator.OneOf(verify.FullIsoList()...),
 								},
 							},
 							"variant": schema.StringAttribute{
-								Description:         "",
-								MarkdownDescription: "",
-								Optional:            true,
+								Description: "The unique user-defined name for the content variant that contains the message text used for the notification.",
+								Optional:    true,
 							},
 						},
 					},
@@ -578,6 +620,12 @@ func (p *AutomationModel) expandAutomationModel() (*credentials.CredentialIssuan
 		automation.SetUpdate(credentials.EnumCredentialIssuanceRuleAutomationMethod(p.Update.ValueString()))
 	}
 
+	if automation == nil {
+		diags.AddWarning(
+			"Unexpected Value",
+			"Automation object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+		)
+	}
 	return automation, diags
 
 }

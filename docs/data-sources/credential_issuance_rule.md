@@ -25,17 +25,17 @@ data "pingone_credential_issuance_rule" "example_by_id" {
 
 ### Required
 
-- `credential_issuance_rule_id` (String) The ID of the credential issuance rule assigned to the credential type.
+- `credential_issuance_rule_id` (String) Identifier (UUID) of the credential issuance rule.
 - `credential_type_id` (String) The ID of the credential type with which this credential issuance rule is associated.
-- `environment_id` (String) The ID of the environment to create the credential type in.
+- `environment_id` (String) The ID of the environment to retrieve the credential issuance rule.
 
 ### Read-Only
 
-- `automation` (Attributes) (see [below for nested schema](#nestedatt--automation))
-- `digital_wallet_application_id` (String) The ID of the digital wallet application that will interact with the user's Digital Wallet
-- `filter` (Attributes) (see [below for nested schema](#nestedatt--filter))
+- `automation` (Attributes) Contains a list of actions, as key names, and the update method for each action. (see [below for nested schema](#nestedatt--automation))
+- `digital_wallet_application_id` (String) The ID of the digital wallet application correlated to the credential issuance rule.
+- `filter` (Attributes) Contains one and only one filter (.groupIds, .populationIds, or .scim) that selects the users to which the credential issuance rule applies. (see [below for nested schema](#nestedatt--filter))
 - `id` (String) The ID of this resource.
-- `notification` (Attributes) (see [below for nested schema](#nestedatt--notification))
+- `notification` (Attributes) Contains notification information. When this property is supplied, the information within is used to create a custom notification. (see [below for nested schema](#nestedatt--notification))
 - `status` (String) ACTIVE or DISABLED status of the credential issuance rule.
 
 <a id="nestedatt--automation"></a>
@@ -43,9 +43,9 @@ data "pingone_credential_issuance_rule" "example_by_id" {
 
 Read-Only:
 
-- `issue` (String)
-- `revoke` (String)
-- `update` (String)
+- `issue` (String) The method the service uses to issue credentials with the credential issuance rule. Can be PERIODIC or ON_DEMAND.
+- `revoke` (String) The method the service uses to revoke credentials with the credential issuance rule. Can be PERIODIC or ON_DEMAND.
+- `update` (String) The method the service uses to update credentials with the credential issuance rule. Can be PERIODIC or ON_DEMAND.
 
 
 <a id="nestedatt--filter"></a>
@@ -53,9 +53,9 @@ Read-Only:
 
 Read-Only:
 
-- `group_ids` (Set of String)
-- `population_ids` (Set of String)
-- `scim` (String)
+- `group_ids` (Set of String) Array of one or more identifiers (UUIDs) of groups, any of which a user must belong for the credential issuance rule to apply.
+- `population_ids` (Set of String) Array of one or more identifiers (UUIDs) of populations, any of which a user must belong for the credential issuance rule to apply.
+- `scim` (String) A SCIM query that selects users to which the credential issuance rule applies.
 
 
 <a id="nestedatt--notification"></a>
@@ -63,18 +63,18 @@ Read-Only:
 
 Optional:
 
-- `template` (Attributes) (see [below for nested schema](#nestedatt--notification--template))
+- `template` (Attributes) Contains template parameters. (see [below for nested schema](#nestedatt--notification--template))
 
 Read-Only:
 
-- `methods` (Set of String)
+- `methods` (Set of String) Array of methods for notifying the user; can be EMAIL, SMS, or both.
 
 <a id="nestedatt--notification--template"></a>
 ### Nested Schema for `notification.template`
 
 Read-Only:
 
-- `locale` (String)
-- `variant` (String)
+- `locale` (String) The ISO 2-character language code used for the notification; for example, en.
+- `variant` (String) The unique user-defined name for the content variant that contains the message text used for the notification.
 
 

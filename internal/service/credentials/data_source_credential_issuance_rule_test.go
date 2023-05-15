@@ -61,7 +61,7 @@ func TestAccCredentialIssuanceRuleDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func TestAccCredentialIssuanceRuleDataSourceInvalidConfig(t *testing.T) {
+func TestAccCredentialIssuanceRuleDataSource_InvalidConfig(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -89,61 +89,61 @@ func testAccCredentialIssuanceRuleDataSource_ByIDFull(resourceName, name string)
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
-  title = "%[3]s"
-  description = "%[3]s Example Description"
-  card_type = "%[3]s"
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
 
   metadata = {
-    name = "%[3]s"
-    description = "%[3]s Example Description"
-    version = 5
+    name               = "%[3]s"
+    description        = "%[3]s Example Description"
+    version            = 5
     bg_opacity_percent = 100
-    card_color = "#000000"
-    text_color = "#eff0f1"
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
 
     fields = [
       {
-        type = "Directory Attribute"
-        title = "givenName"
-        attribute = "name.given"
+        type       = "Directory Attribute"
+        title      = "givenName"
+        attribute  = "name.given"
         is_visible = false
       },
       {
-        type = "Directory Attribute"
-        title = "surname"
-        attribute = "name.family"
+        type       = "Directory Attribute"
+        title      = "surname"
+        attribute  = "name.family"
         is_visible = false
       },
       {
-        type = "Directory Attribute"
-        title = "jobTitle"
-        attribute = "title"
+        type       = "Directory Attribute"
+        title      = "jobTitle"
+        attribute  = "title"
         is_visible = false
       },
       {
-        type = "Directory Attribute"
-        title = "displayName"
-        attribute = "name.formatted"
+        type       = "Directory Attribute"
+        title      = "displayName"
+        attribute  = "name.formatted"
         is_visible = false
       },
       {
-        type = "Directory Attribute"
-        title = "mail"
-        attribute = "email"
+        type       = "Directory Attribute"
+        title      = "mail"
+        attribute  = "email"
         is_visible = false
       },
       {
-        type = "Directory Attribute"
-        title = "preferredLanguage"
-        attribute = "preferredLanguage"
-        is_visible = false        
+        type       = "Directory Attribute"
+        title      = "preferredLanguage"
+        attribute  = "preferredLanguage"
+        is_visible = false
       },
       {
-        type = "Directory Attribute"
-        title = "id"
-        attribute = "id"
+        type       = "Directory Attribute"
+        title      = "id"
+        attribute  = "id"
         is_visible = false
       }
     ]
@@ -151,169 +151,169 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	name = "%[2]s"
-	enabled = true
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[2]s"
+  enabled        = true
 
-	oidc_options {
-	  type                        = "NATIVE_APP"
-	  grant_types                 = ["CLIENT_CREDENTIALS"]
-	  token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-	  bundle_id        = "com.pingidentity.ios_wallet_byname"
-	  package_name     = "com.pingidentity.android_wallet_byname"
-  
-	  mobile_app {
-		 bundle_id        = "com.pingidentity.ios_wallet_byname"
-		 package_name     = "com.pingidentity.android_wallet_byname"
-		 passcode_refresh_seconds = 30
-	  }
-	}
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    bundle_id                   = "com.pingidentity.ios_wallet_byname"
+    package_name                = "com.pingidentity.android_wallet_byname"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_wallet_byname"
+      package_name             = "com.pingidentity.android_wallet_byname"
+      passcode_refresh_seconds = 30
+    }
+  }
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	application_id = resource.pingone_application.%[2]s.id
-	name = "%[2]s"
-	app_open_url = "https://www.example.com"	
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[2]s"
+  app_open_url   = "https://www.example.com"
 
-	depends_on = [resource.pingone_application.%[2]s]
+  depends_on = [resource.pingone_application.%[2]s]
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	credential_type_id = resource.pingone_credential_type.%[2]s.id
-	digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
-	status = "ACTIVE"
-	
-	filter = {
-	  scim = "accountId eq \"12345\" or accountId eq \"98765\" or (address.countryCode eq \"US\")"
-	}
-  
-	automation = {
-	  issue = "ON_DEMAND"
-	  revoke = "PERIODIC"
-	  update = "ON_DEMAND"
-	}
-  
-	notification = {
-	  methods = ["EMAIL", "SMS"]
-	  template = {
-		locale = "en"
-		variant = "template_B"
-	  }
-	}
+  environment_id                = data.pingone_environment.credentials_test.id
+  credential_type_id            = resource.pingone_credential_type.%[2]s.id
+  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
+  status                        = "ACTIVE"
+
+  filter = {
+    scim = "accountId eq \"12345\" or accountId eq \"98765\" or (address.countryCode eq \"US\")"
+  }
+
+  automation = {
+    issue  = "ON_DEMAND"
+    revoke = "PERIODIC"
+    update = "ON_DEMAND"
+  }
+
+  notification = {
+    methods = ["EMAIL", "SMS"]
+    template = {
+      locale  = "en"
+      variant = "template_B"
+    }
+  }
 }
 
 data "pingone_credential_issuance_rule" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	credential_type_id = resource.pingone_credential_type.%[2]s.id
-	credential_issuance_rule_id = resource.pingone_credential_issuance_rule.%[2]s.id	
+  environment_id              = data.pingone_environment.credentials_test.id
+  credential_type_id          = resource.pingone_credential_type.%[2]s.id
+  credential_issuance_rule_id = resource.pingone_credential_issuance_rule.%[2]s.id
 
-  }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRuleDataSource_NotFoundByID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	title = "%[2]s"
-	description = "%[2]s Example Description"
-	card_type = "%[2]s"
-	card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-	  
-	metadata = {
-	  name = "%[2]s"
-	  description = "%[2]s Example Description"
-	  version = 5
-	  bg_opacity_percent = 100
-	  card_color = "#000000"
-	  text_color = "#eff0f1"
-  
-	  fields = [
-		{
-		  type = "Directory Attribute"
-		  title = "givenName"
-		  attribute = "name.given"
-		  is_visible = false
-		},
-	  ]
-	}
- }
-data "pingone_credential_issuance_rule" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	credential_type_id = resource.pingone_credential_type.%[2]s.id
-	credential_issuance_rule_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[2]s"
+  description          = "%[2]s Example Description"
+  card_type            = "%[2]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
 
-  }`, acctest.CredentialsSandboxEnvironment(), resourceName)
+  metadata = {
+    name               = "%[2]s"
+    description        = "%[2]s Example Description"
+    version            = 5
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Directory Attribute"
+        title      = "givenName"
+        attribute  = "name.given"
+        is_visible = false
+      },
+    ]
+  }
+}
+data "pingone_credential_issuance_rule" "%[2]s" {
+  environment_id              = data.pingone_environment.credentials_test.id
+  credential_type_id          = resource.pingone_credential_type.%[2]s.id
+  credential_issuance_rule_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+
+}`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }
 
 func testAccCredentialIssuanceRuleDataSource_NoEnvironmentID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	title = "%[2]s"
-	description = "%[2]s Example Description"
-	card_type = "%[2]s"
-	card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-	  
-	metadata = {
-	  name = "%[2]s"
-	  description = "%[2]s Example Description"
-	  version = 5
-	  bg_opacity_percent = 100
-	  card_color = "#000000"
-	  text_color = "#eff0f1"
-  
-	  fields = [
-		{
-		  type = "Directory Attribute"
-		  title = "givenName"
-		  attribute = "name.given"
-		  is_visible = false
-		},
-	  ]
-	}
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[2]s"
+  description          = "%[2]s Example Description"
+  card_type            = "%[2]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[2]s"
+    description        = "%[2]s Example Description"
+    version            = 5
+    bg_opacity_percent = 20
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Directory Attribute"
+        title      = "givenName"
+        attribute  = "name.given"
+        is_visible = false
+      },
+    ]
+  }
 }
 data "pingone_credential_issuance_rule" "%[2]s" {
-	credential_type_id = resource.pingone_credential_type.%[2]s.id
-	credential_issuance_rule_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
+  credential_type_id          = resource.pingone_credential_type.%[2]s.id
+  credential_issuance_rule_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
-  }`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }
 
 func testAccCredentialIssuanceRuleDataSource_NoCredentialIssuanceRuleID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	title = "%[2]s"
-	description = "%[2]s Example Description"
-	card_type = "%[2]s"
-	card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-	  
-	metadata = {
-	  name = "%[2]s"
-	  description = "%[2]s Example Description"
-	  version = 5
-	  bg_opacity_percent = 100
-	  card_color = "#000000"
-	  text_color = "#eff0f1"
-  
-	  fields = [
-		{
-		  type = "Directory Attribute"
-		  title = "givenName"
-		  attribute = "name.given"
-		  is_visible = false
-		},
-	  ]
-	}
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[2]s"
+  description          = "%[2]s Example Description"
+  card_type            = "%[2]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[2]s"
+    description        = "%[2]s Example Description"
+    version            = 5
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Directory Attribute"
+        title      = "givenName"
+        attribute  = "name.given"
+        is_visible = false
+      },
+    ]
+  }
 }
 data "pingone_credential_issuance_rule" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	credential_type_id = resource.pingone_credential_type.%[2]s.id
+  environment_id     = data.pingone_environment.credentials_test.id
+  credential_type_id = resource.pingone_credential_type.%[2]s.id
 
-  }`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }

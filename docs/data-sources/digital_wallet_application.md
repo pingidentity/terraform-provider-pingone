@@ -34,17 +34,17 @@ data "pingone_digital_wallet_application" "example_by_application_id" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the digital wallet application in.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet app exists.
 
 ### Optional
 
-- `application_id` (String) The ID of the application associated with the digital wallet application.
-- `digital_wallet_id` (String) The ID of the digital wallet applicatoin.
-- `name` (String) The name of the digital wallet application.
+- `application_id` (String) The identifier (UUID) of the PingOne application associated with the digital wallet application.
+- `digital_wallet_id` (String) Identifier (UUID) associated with the credential digital wallet application.
+- `name` (String) The name associated with the digital wallet application.
 
 ### Read-Only
 
-- `app_open_url` (String) The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/appopenurl`.  The `https://` schema is recommended, but not required.
+- `app_open_url` (String) The URL sent in notifications to the user to communicate with the service.
 - `id` (String) The ID of this resource.
 
 

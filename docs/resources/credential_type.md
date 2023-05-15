@@ -88,15 +88,15 @@ resource "pingone_credential_type" "verifiedemployee" {
 
 ### Required
 
-- `card_design_template` (String) A string that specifies an SVG formatted image containing placeholders for the credential fields that need to be displayed in the image.
-- `environment_id` (String) The ID of the environment to create the credential type in.
-- `metadata` (Attributes) (see [below for nested schema](#nestedatt--metadata))
-- `title` (String) A string that specifies the title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the credential title.
+- `card_design_template` (String) An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential type exists.
+- `metadata` (Attributes) Contains the names, data types, and other metadata related to the credential. (see [below for nested schema](#nestedatt--metadata))
+- `title` (String) Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.
 
 ### Optional
 
-- `card_type` (String)
-- `description` (String)
+- `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
+- `description` (String) A description of the credential type.
 
 ### Read-Only
 
@@ -107,18 +107,18 @@ resource "pingone_credential_type" "verifiedemployee" {
 
 Required:
 
-- `fields` (Attributes List) (see [below for nested schema](#nestedatt--metadata--fields))
-- `version` (Number)
+- `fields` (Attributes List) Array of objects representing the credential fields. (see [below for nested schema](#nestedatt--metadata--fields))
+- `version` (Number) Number version of this credential.
 
 Optional:
 
-- `background_image` (String)
-- `bg_opacity_percent` (Number) A numnber containing the percent opacity of the background image in the credential. High percentage opacity may make displayed text difficult to read.
+- `background_image` (String) URL to an image of the background to show in the credential.
+- `bg_opacity_percent` (Number) A numnber indicating the percent opacity of the background image in the credential. High percentage opacity may make text on the credential difficult to read.
 - `card_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential.
-- `columns` (Number)
-- `description` (String)
-- `logo_image` (String)
-- `name` (String)
+- `columns` (Number) Indicates a number (between 1-3) of columns to display visible fields on the credential.
+- `description` (String) Description of the credential.
+- `logo_image` (String) A base64 encoded image of the logo to show in the credential.
+- `name` (String) Name of the credential.
 - `text_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential text.
 
 <a id="nestedatt--metadata--fields"></a>
@@ -126,18 +126,18 @@ Optional:
 
 Required:
 
-- `type` (String)
+- `type` (String) Type of data in the credential field. The must contain one of the following types: `Directory Attribute`, `Alphanumeric Text`, or `Issued Timestamp`.
 
 Optional:
 
-- `attribute` (String)
-- `is_visible` (Boolean)
-- `title` (String)
-- `value` (String)
+- `attribute` (String) Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`.
+- `is_visible` (Boolean) Specifies whether the field should be visible to viewers of the credential.
+- `title` (String) Descriptive text when showing the field.
+- `value` (String) The text to appear on the credential for a `field.type` of `Alphanumeric Text`.
 
 Read-Only:
 
-- `id` (String)
+- `id` (String) Identifier of the field formatted as `<fields.type> -> <fields.title>`.
 
 ## Import
 

@@ -128,6 +128,14 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 			initialProfile,
 			updatedProfile,
 			initialProfile,
+			{
+				Config:  testAccCredentialIssuerProfile_Full(resourceName, name),
+				Destroy: true,
+			},
+			{
+				Config:  testAccCredentialIssuerProfile_Full(resourceName, updatedName),
+				Destroy: true,
+			},
 		},
 	})
 }
@@ -163,8 +171,8 @@ func testAccCredentialIssuerProfile_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_issuer_profile" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	name = "%[3]s"
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
@@ -173,8 +181,8 @@ func testAccCredentialIssuerProfileInvalidConfig_InvalidName(resourceName, name 
 	%[1]s
 
 resource "pingone_credential_issuer_profile" "%[3]s" {
-	environment_id = data.pingone_environment.credentials_test.id
-	name = " "
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = " "
 
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
@@ -184,8 +192,8 @@ func testAccCredentialIssuerProfileInvalidConfig_CredentialServuceNotEnabled(env
 	%[1]s
 
 resource "pingone_credential_issuer_profile" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-	name = "%[3]s"
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

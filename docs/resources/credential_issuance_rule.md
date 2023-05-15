@@ -19,23 +19,23 @@ resource "pingone_environment" "my_environment" {
 
 resource "pingone_population" "my_population" {
   environment_id = pingone_environment.my_environment.id
-  #...
+  # ...
 }
 
 resource "pingone_application" "my_awesome_native_app" {
   environment_id = pingone_environment.my_environment.id
-  #...
+  # ...
 }
 
 resource "pingone_digital_wallet_application" "my_digital_wallet_app" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_native_app.id
-  #...
+  # ...
 }
 
 resource "pingone_credential_type" "my_credential" {
   environment_id = pingone_environment.my_environment.id
-  # ...connection {
+  # ...
 
 }
 
@@ -71,16 +71,16 @@ resource "pingone_credential_issuance_rule" "my_credential_issuance_rule" {
 
 ### Required
 
-- `automation` (Attributes) (see [below for nested schema](#nestedatt--automation))
-- `credential_type_id` (String) The ID of the credential type with which this credential issuance rule is associated.
-- `digital_wallet_application_id` (String) The ID of the digital wallet application that will interact with the user's Digital Wallet
-- `environment_id` (String) The ID of the environment to create the credential type in.
-- `status` (String) ACTIVE or DISABLED status of the credential issuance rule.
+- `automation` (Attributes) Contains a list of actions, as key names, and the update method for each action. (see [below for nested schema](#nestedatt--automation))
+- `credential_type_id` (String) Identifier (UUID) of the credential type with which this credential issuance rule is associated.
+- `digital_wallet_application_id` (String) Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential issuance rule exists.
+- `status` (String) Status of the credential issuance rule. Can be `ACTIVE` or `DISABLED`.
 
 ### Optional
 
-- `filter` (Attributes) (see [below for nested schema](#nestedatt--filter))
-- `notification` (Attributes) (see [below for nested schema](#nestedatt--notification))
+- `filter` (Attributes) Contains one and only one filter (`.groupIds`, `.populationIds`, or `.scim`) that selects the users to which the credential issuance rule applies. (see [below for nested schema](#nestedatt--filter))
+- `notification` (Attributes) Contains notification information. When this property is supplied, the information within is used to create a custom notification. (see [below for nested schema](#nestedatt--notification))
 
 ### Read-Only
 
@@ -91,9 +91,9 @@ resource "pingone_credential_issuance_rule" "my_credential_issuance_rule" {
 
 Required:
 
-- `issue` (String)
-- `revoke` (String)
-- `update` (String)
+- `issue` (String) The method the service uses to issue credentials with the credential issuance rule. Can be `PERIODIC` or `ON_DEMAND`.
+- `revoke` (String) The method the service uses to revoke credentials with the credential issuance rule. Can be `PERIODIC` or `ON_DEMAND`.
+- `update` (String) The method the service uses to update credentials with the credential issuance rule. Can be `PERIODIC` or `ON_DEMAND`.
 
 
 <a id="nestedatt--filter"></a>
@@ -101,9 +101,9 @@ Required:
 
 Optional:
 
-- `group_ids` (Set of String)
-- `population_ids` (Set of String)
-- `scim` (String)
+- `group_ids` (Set of String) Array of one or more identifiers (UUIDs) of groups, any of which a user must belong for the credential issuance rule to apply.
+- `population_ids` (Set of String) Array of one or more identifiers (UUIDs) of populations, any of which a user must belong for the credential issuance rule to apply.
+- `scim` (String) A SCIM query that selects users to which the credential issuance rule applies.
 
 
 <a id="nestedatt--notification"></a>
@@ -111,16 +111,16 @@ Optional:
 
 Optional:
 
-- `methods` (Set of String)
-- `template` (Attributes) (see [below for nested schema](#nestedatt--notification--template))
+- `methods` (Set of String) Array of methods for notifying the user; can be `EMAIL`, `SMS`, or both.
+- `template` (Attributes) Contains template parameters. (see [below for nested schema](#nestedatt--notification--template))
 
 <a id="nestedatt--notification--template"></a>
 ### Nested Schema for `notification.template`
 
 Optional:
 
-- `locale` (String)
-- `variant` (String)
+- `locale` (String) The ISO 2-character language code used for the notification; for example, `en`.
+- `variant` (String) The unique user-defined name for the content variant that contains the message text used for the notification.
 
 ## Import
 

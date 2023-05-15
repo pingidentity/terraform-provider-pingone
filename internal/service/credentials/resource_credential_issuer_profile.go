@@ -67,39 +67,31 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the credential issuer in."},
+				Description: "TThe ID of the environment to create the credential issuer in."},
 			),
 
 			"application_instance_id": schema.StringAttribute{
-				Description: "",
+				Description: "Identifier (UUID) of the application instance registered with the PingOne platform service. This enables the client to send messages to the service.",
 				Computed:    true,
 			},
 
 			"created_at": schema.StringAttribute{
-				Description: "",
+				Description: "Date and time the issuer profile was created.",
 				Computed:    true,
 			},
 
 			"updated_at": schema.StringAttribute{
-				Description: "",
+				Description: "Date and time the issuer profile was last updated.",
 				Computed:    true,
 			},
 
 			"name": schema.StringAttribute{
-				Description: "The name of the credential issuer. This will be included in credentials issued.",
+				Description: "The name of the credential issuer, which is included in the credentials issued.",
 				Required:    true,
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.LengthAtMost(attrMaxLength),
+					stringvalidator.LengthBetween(attrMinLength, attrMaxLength),
 				},
 			},
-
-			// omitted logo because it is not used
-			// placeholder just in case it needs to be enabled
-			//"logo": schema.StringAttribute{
-			//	Description: "An image containing the brand logo for the issuer. ",
-			//	Optional:    true,
-			//},
 		},
 	}
 }
@@ -172,7 +164,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 	}
 
 	// Build the model for the Create API call
-	CredentialIssuerProfile, d := plan.expand(ctx)
+	CredentialIssuerProfile, d := plan.expand()
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -291,7 +283,7 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 	}
 
 	// Build the model for the API
-	CredentialIssuerProfile, d := plan.expand(ctx)
+	CredentialIssuerProfile, d := plan.expand()
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -342,13 +334,20 @@ func (r *CredentialIssuerProfileResource) ImportState(ctx context.Context, req r
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *CredentialIssuerProfileResourceModel) expand(ctx context.Context) (*credentials.CredentialIssuerProfile, diag.Diagnostics) {
+func (p *CredentialIssuerProfileResourceModel) expand() (*credentials.CredentialIssuerProfile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := credentials.NewCredentialIssuerProfile(p.Name.ValueString())
 	data.SetApplicationInstance(*credentials.NewCredentialIssuerProfileApplicationInstance(p.ApplicationInstanceId.ValueString()))
 	data.SetCreatedAt(p.CreatedAt.ValueString())
 	data.SetUpdatedAt(p.UpdatedAt.ValueString())
+
+	if data == nil {
+		diags.AddWarning(
+			"Unexpected Value",
+			"Credential Issuer Profile object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+		)
+	}
 
 	return data, diags
 }

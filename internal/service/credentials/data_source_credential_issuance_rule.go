@@ -107,7 +107,7 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the credential type in."},
+				Description: "The ID of the environment to retrieve the credential issuance rule."},
 			),
 
 			"credential_type_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
@@ -119,7 +119,7 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 			),
 
 			"credential_issuance_rule_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
-				Description: "The ID of the credential issuance rule assigned to the credential type.",
+				Description: "Identifier (UUID) of the credential issuance rule.",
 			},
 				[]validator.String{
 					verify.P1ResourceIDValidator(),
@@ -127,84 +127,75 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 			),
 
 			"digital_wallet_application_id": schema.StringAttribute{
-				MarkdownDescription: "The ID of the digital wallet application that will interact with the user's Digital Wallet",
-				Computed:            true,
+				Description: "The ID of the digital wallet application correlated to the credential issuance rule.",
+				Computed:    true,
 			},
 
 			"status": schema.StringAttribute{
-				MarkdownDescription: "ACTIVE or DISABLED status of the credential issuance rule.",
-				Computed:            true,
+				Description: "ACTIVE or DISABLED status of the credential issuance rule.",
+				Computed:    true,
 			},
 
 			"filter": schema.SingleNestedAttribute{
-				MarkdownDescription: "",
-				Computed:            true,
+				Description: "Contains one and only one filter (.groupIds, .populationIds, or .scim) that selects the users to which the credential issuance rule applies.",
+				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"group_ids": schema.SetAttribute{
-						ElementType:         types.StringType,
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						ElementType: types.StringType,
+						Description: "Array of one or more identifiers (UUIDs) of groups, any of which a user must belong for the credential issuance rule to apply.",
+						Computed:    true,
 					},
 					"population_ids": schema.SetAttribute{
-						ElementType:         types.StringType,
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						ElementType: types.StringType,
+						Description: "Array of one or more identifiers (UUIDs) of populations, any of which a user must belong for the credential issuance rule to apply.",
+						Computed:    true,
 					},
 					"scim": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						Description: "A SCIM query that selects users to which the credential issuance rule applies.",
+						Computed:    true,
 					},
 				},
 			},
 
 			"automation": schema.SingleNestedAttribute{
-				MarkdownDescription: "",
-				Computed:            true,
+				Description: "Contains a list of actions, as key names, and the update method for each action.",
+				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"issue": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						Description: "The method the service uses to issue credentials with the credential issuance rule. Can be PERIODIC or ON_DEMAND.",
+						Computed:    true,
 					},
 					"revoke": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						Description: "The method the service uses to revoke credentials with the credential issuance rule. Can be PERIODIC or ON_DEMAND.",
+						Computed:    true,
 					},
 					"update": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						Description: "The method the service uses to update credentials with the credential issuance rule. Can be PERIODIC or ON_DEMAND.",
+						Computed:    true,
 					},
 				},
 			},
 
 			"notification": schema.SingleNestedAttribute{
-				MarkdownDescription: "",
-				Computed:            true,
+				Description: "Contains notification information. When this property is supplied, the information within is used to create a custom notification.",
+				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"methods": schema.SetAttribute{
-						ElementType:         types.StringType,
-						Description:         "",
-						MarkdownDescription: "",
-						Computed:            true,
+						ElementType: types.StringType,
+						Description: "Array of methods for notifying the user; can be EMAIL, SMS, or both.",
+						Computed:    true,
 					},
 					"template": schema.SingleNestedAttribute{
-						MarkdownDescription: "",
-						Optional:            true,
+						Description: "Contains template parameters.",
+						Optional:    true,
 						Attributes: map[string]schema.Attribute{
 							"locale": schema.StringAttribute{
-								Description:         "",
-								MarkdownDescription: "",
-								Computed:            true,
+								Description: "The ISO 2-character language code used for the notification; for example, en.",
+								Computed:    true,
 							},
 							"variant": schema.StringAttribute{
-								Description:         "",
-								MarkdownDescription: "",
-								Computed:            true,
+								Description: "The unique user-defined name for the content variant that contains the message text used for the notification.",
+								Computed:    true,
 							},
 						},
 					},

@@ -31,10 +31,14 @@ func TestAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(t *testing.T) 
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "application_instance_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "name"), // P1Creds is returning the organization name in this value
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "name"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "created_at"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "updated_at"),
 				),
+			},
+			{
+				Config:  testAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(resourceName, name),
+				Destroy: true,
 			},
 		},
 	})
@@ -67,7 +71,7 @@ func testAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(resourceName, 
 	%[1]s
 
 data "pingone_credential_issuer_profile" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.credentials_test.id
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
@@ -76,7 +80,7 @@ func testAccCredentialIssuerProfileDataSource_NotFound(environmentName, licenseI
 	%[1]s
 
 data "pingone_credential_issuer_profile" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

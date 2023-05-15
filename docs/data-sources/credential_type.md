@@ -3,12 +3,12 @@
 page_title: "pingone_credential_type Data Source - terraform-provider-pingone"
 subcategory: ""
 description: |-
-  Data to retrieve a PingOne Credentials credential type by its Credential Type Id. The credentialtypeid is the only parameter to ensure a single credential is retrieved.
+  Data to retrieve a PingOne Credentials credential type by its Credential Type Id.
 ---
 
 # pingone_credential_type (Data Source)
 
-Data to retrieve a PingOne Credentials credential type by its Credential Type Id. The credential_type_id is the only parameter to ensure a single credential is retrieved.
+Data to retrieve a PingOne Credentials credential type by its Credential Type Id.
 
 ## Example Usage
 
@@ -24,50 +24,50 @@ data "pingone_credential_type" "example_by_id" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the credential type in.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential type exists.
 
 ### Optional
 
-- `credential_type_id` (String) The ID of the credential type.
+- `credential_type_id` (String) Identifier (UUID) associated with the credential type.
 
 ### Read-Only
 
-- `card_design_template` (String) A string that specifies an SVG formatted image containing placeholders for the credential fields that need to be displayed in the image.
-- `card_type` (String)
-- `description` (String)
+- `card_design_template` (String) An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.
+- `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
+- `description` (String) A description of the credential type.
 - `id` (String) The ID of this resource.
-- `metadata` (Attributes) (see [below for nested schema](#nestedatt--metadata))
-- `title` (String) A string that specifies the title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the credential title.
+- `metadata` (Attributes) An object that contains the names, data types, and other metadata related to the credentia (see [below for nested schema](#nestedatt--metadata))
+- `title` (String) Title of the credential.
 
 <a id="nestedatt--metadata"></a>
 ### Nested Schema for `metadata`
 
 Required:
 
-- `fields` (Attributes List) (see [below for nested schema](#nestedatt--metadata--fields))
+- `fields` (Attributes List) Array of objects representing the credential fields. (see [below for nested schema](#nestedatt--metadata--fields))
 
 Read-Only:
 
-- `background_image` (String)
-- `bg_opacity_percent` (Number) A numnber containing the percent opacity of the background image in the credential. High percentage opacity may make displayed text difficult to read.
-- `card_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential.
-- `columns` (Number)
-- `description` (String)
-- `logo_image` (String)
-- `name` (String)
-- `text_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential text.
-- `version` (Number)
+- `background_image` (String) A base64 encoded image of the background to show in the credential.
+- `bg_opacity_percent` (Number) Percent opacity of the background image in the credential.
+- `card_color` (String) Color to show on the credential.
+- `columns` (Number) Number of columns to organize the fields displayed on the credential.
+- `description` (String) Description of the credential.
+- `logo_image` (String) A base64 encoded image of the logo to show in the credential.
+- `name` (String) Name of the credential.
+- `text_color` (String) Color of the text to show on the credential.
+- `version` (Number) Version of this credential.
 
 <a id="nestedatt--metadata--fields"></a>
 ### Nested Schema for `metadata.fields`
 
 Read-Only:
 
-- `attribute` (String)
-- `id` (String)
-- `is_visible` (Boolean)
-- `title` (String)
-- `type` (String)
-- `value` (String)
+- `attribute` (String) Name of the PingOne Directory attribute. Present if field.type is Directory Attribute.
+- `id` (String) Identifier of the field formatted as “<fields.type> -> <fields.title>.
+- `is_visible` (Boolean) Specifies whether the field should be visible to viewers of the credential.
+- `title` (String) Descriptive text when showing the field.
+- `type` (String) Type of data in the field.
+- `value` (String) The text to appear on the credential for a field.type of Alphanumeric Text.
 
 

@@ -73,26 +73,26 @@ func testAccCredentialTypesDataSource_NoFilter(resourceName, name string) string
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s-1" {
-  environment_id = data.pingone_environment.credentials_test.id
-  title = "%[3]s"
-  description = "%[3]s Example Description"
-  card_type = "%[3]s"
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
 
   metadata = {
-    name = "%[3]s"
-	columns = 1
-    description = "%[3]s Example Description"
-    version = 5
+    name               = "%[3]s"
+    columns            = 1
+    description        = "%[3]s Example Description"
+    version            = 5
     bg_opacity_percent = 100
-    card_color = "#000000"
-    text_color = "#eff0f1"
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
 
     fields = [
       {
-        type = "Directory Attribute"
-        title = "givenName"
-        attribute = "name.given"
+        type       = "Directory Attribute"
+        title      = "givenName"
+        attribute  = "name.given"
         is_visible = false
       }
     ]
@@ -100,64 +100,64 @@ resource "pingone_credential_type" "%[2]s-1" {
 }
 
 resource "pingone_credential_type" "%[2]s-2" {
-	environment_id = data.pingone_environment.credentials_test.id
-	title = "%[3]s"
-	description = "%[3]s Example Description"
-	card_type = "%[3]s"
-	card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-  
-	metadata = {
-	  name = "%[3]s"
-	  columns = 1
-	  description = "%[3]s Example Description"
-	  version = 5
-	  bg_opacity_percent = 100
-	  card_color = "#000000"
-	  text_color = "#eff0f1"
-  
-	  fields = [
-		{
-		  type = "Directory Attribute"
-		  title = "givenName"
-		  attribute = "name.given"
-		  is_visible = false
-		}
-	  ]
-	}
-  }
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
 
-  resource "pingone_credential_type" "%[2]s-3" {
-	environment_id = data.pingone_environment.credentials_test.id
-	title = "%[3]s"
-	description = "%[3]s Example Description"
-	card_type = "%[3]s"
-	card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-  
-	metadata = {
-	  name = "%[3]s"
-	  columns = 1
-	  description = "%[3]s Example Description"
-	  version = 5
-	  bg_opacity_percent = 100
-	  card_color = "#000000"
-	  text_color = "#eff0f1"
-  
-	  fields = [
-		{
-		  type = "Directory Attribute"
-		  title = "givenName"
-		  attribute = "name.given"
-		  is_visible = false
-		}
-	  ]
-	}
+  metadata = {
+    name               = "%[3]s"
+    columns            = 1
+    description        = "%[3]s Example Description"
+    version            = 5
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Directory Attribute"
+        title      = "givenName"
+        attribute  = "name.given"
+        is_visible = false
+      }
+    ]
   }
+}
+
+resource "pingone_credential_type" "%[2]s-3" {
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[3]s"
+    columns            = 1
+    description        = "%[3]s Example Description"
+    version            = 5
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Directory Attribute"
+        title      = "givenName"
+        attribute  = "name.given"
+        is_visible = false
+      }
+    ]
+  }
+}
 data "pingone_credential_types" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.credentials_test.id
 
-	depends_on = [pingone_credential_type.%[2]s-1, pingone_credential_type.%[2]s-2, pingone_credential_type.%[2]s-3]
+  depends_on = [pingone_credential_type.%[2]s-1, pingone_credential_type.%[2]s-2, pingone_credential_type.%[2]s-3]
 
-  }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypesDataSource_NotFound(resourceName string) string {
@@ -165,7 +165,7 @@ func testAccCredentialTypesDataSource_NotFound(resourceName string) string {
 	%[1]s
 
 data "pingone_credential_types" "%[2]s" {
-	environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.credentials_test.id
 
-  }`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.CredentialsSandboxEnvironment(), resourceName)
 }

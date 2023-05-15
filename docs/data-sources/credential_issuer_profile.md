@@ -27,10 +27,10 @@ data "pingone_credential_issuer_profile" "example_by_id" {
 
 ### Read-Only
 
-- `application_instance_id` (String)
-- `created_at` (String)
+- `application_instance_id` (String) Identifier (UUID) of the application instance registered with the PingOne platform service. This enables the client to send messages to the service.
+- `created_at` (String) Date and time the issuer profile was created.
 - `id` (String) The ID of this resource.
 - `name` (String) The name of the credential issuer.
-- `updated_at` (String)
+- `updated_at` (String) Date and time the issuer profile was last updated.
 
 

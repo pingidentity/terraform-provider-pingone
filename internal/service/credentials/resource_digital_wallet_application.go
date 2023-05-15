@@ -59,18 +59,6 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
-	appOpenUrlDescriptionFmt := "The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/appopenurl`.  The `https://` schema is recommended, but not required."
-	appOpenUrlDescription := framework.SchemaDescription{
-		MarkdownDescription: appOpenUrlDescriptionFmt,
-		Description:         strings.ReplaceAll(appOpenUrlDescriptionFmt, "`", "\""),
-	}
-
-	nameDescriptionFmt := "The name of the digital wallet application."
-	nameDescription := framework.SchemaDescription{
-		MarkdownDescription: nameDescriptionFmt,
-		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
-	}
-
 	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -84,7 +72,7 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 			),
 
 			"application_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
-				Description: "The ID of the application to associate with the digital wallet application.",
+				Description: "The identifier (UUID) of the PingOne application associated with the digital wallet application.",
 			},
 				[]validator.String{
 					verify.P1ResourceIDValidator(),
@@ -92,9 +80,8 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 			),
 
 			"app_open_url": schema.StringAttribute{
-				Description:         appOpenUrlDescription.Description,
-				MarkdownDescription: appOpenUrlDescription.MarkdownDescription,
-				Required:            true,
+				Description: "The URL sent in notifications to the user to communicate with the service.",
+				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
 						regexp.MustCompile(`^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/|\/|\/\/)?[A-z0-9_-]*?[:]?[A-z0-9_-]*?[@]?[A-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$`),
@@ -103,9 +90,8 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 			},
 
 			"name": schema.StringAttribute{
-				Description:         nameDescription.Description,
-				MarkdownDescription: nameDescription.MarkdownDescription,
-				Required:            true,
+				Description: "The name associated with the digital wallet application.",
+				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
@@ -293,7 +279,6 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(d...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -388,7 +373,7 @@ func (p *DigitalWalletApplicationResourceModel) toState(apiObject *credentials.D
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.ApplicationId = framework.StringToTF(*apiObject.GetApplication().Id)
 	p.AppOpenUrl = framework.StringToTF(apiObject.GetAppOpenUrl())
-	p.Name = framework.StringToTF(apiObject.GetName())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	return diags
 }
@@ -469,5 +454,6 @@ func confirmParentAppExistsAndIsNative(ctx context.Context, r *DigitalWalletAppl
 	// checks complete - return app object the wallet want
 	applicationObject := credentials.NewObjectApplication()
 	applicationObject.SetId(applicationId)
+
 	return applicationObject, diags
 }

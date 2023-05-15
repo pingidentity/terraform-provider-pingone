@@ -32,10 +32,11 @@ func (v stringIsBase64EncodedValidator) ValidateString(ctx context.Context, req 
 	s := req.ConfigValue.ValueString()
 
 	// determine if the input value has content type
+	numberOfSubstrings := 2
 	re := regexp.MustCompile(`^(\w+):(\w+)\/(\w+);base64,`)
-	matches := re.Split(s, 2)
+	matches := re.Split(s, numberOfSubstrings)
 
-	if len(matches) == 2 {
+	if len(matches) == numberOfSubstrings {
 		// Content-Type was found; obtain the value that occurs after the prefix.
 		s = matches[1]
 	} else {

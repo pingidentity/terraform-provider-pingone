@@ -30,15 +30,15 @@ resource "pingone_credential_issuer_profile" "my_credential_issuer" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the credential issuer in.
-- `name` (String) The name of the credential issuer. This will be included in credentials issued.
+- `environment_id` (String) TThe ID of the environment to create the credential issuer in.
+- `name` (String) The name of the credential issuer, which is included in the credentials issued.
 
 ### Read-Only
 
-- `application_instance_id` (String)
-- `created_at` (String)
+- `application_instance_id` (String) Identifier (UUID) of the application instance registered with the PingOne platform service. This enables the client to send messages to the service.
+- `created_at` (String) Date and time the issuer profile was created.
 - `id` (String) The ID of this resource.
-- `updated_at` (String)
+- `updated_at` (String) Date and time the issuer profile was last updated.
 
 ## Import
 

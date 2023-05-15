@@ -17,7 +17,7 @@ Datasource to retrieve a list of multiple PingOne Credentials digital wallet app
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the digital wallet application in.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet app exists.
 
 ### Read-Only
 

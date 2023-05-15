@@ -114,6 +114,30 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMaxPercent = 100
 	const imageMaxSize = 50000
 
+	fieldsIdDescriptionFmt := "Identifier of the field formatted as `<fields.type> -> <fields.title>`."
+	fieldsIdDescription := framework.SchemaDescription{
+		MarkdownDescription: fieldsIdDescriptionFmt,
+		Description:         strings.ReplaceAll(fieldsIdDescriptionFmt, "`", "\""),
+	}
+
+	fieldsTypeDescriptionFmt := "Type of data in the credential field. The must contain one of the following types: `Directory Attribute`, `Alphanumeric Text`, or `Issued Timestamp`."
+	fieldsTypeDescription := framework.SchemaDescription{
+		MarkdownDescription: fieldsTypeDescriptionFmt,
+		Description:         strings.ReplaceAll(fieldsTypeDescriptionFmt, "`", "\""),
+	}
+
+	fieldsAttributeDescriptionFmt := "Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`."
+	fieldsAttributeDescription := framework.SchemaDescription{
+		MarkdownDescription: fieldsAttributeDescriptionFmt,
+		Description:         strings.ReplaceAll(fieldsAttributeDescriptionFmt, "`", "\""),
+	}
+
+	fieldsValueDescriptionFmt := "The text to appear on the credential for a `field.type` of `Alphanumeric Text`."
+	fieldsValueDescription := framework.SchemaDescription{
+		MarkdownDescription: fieldsValueDescriptionFmt,
+		Description:         strings.ReplaceAll(fieldsValueDescriptionFmt, "`", "\""),
+	}
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne Credentials credential types.",
@@ -122,11 +146,11 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the credential type in."},
+				Description: "PingOne environment identifier (UUID) in which the credential type exists."},
 			),
 
 			"title": schema.StringAttribute{
-				Description: "A string that specifies the title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the credential title.",
+				Description: "Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.",
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
@@ -134,7 +158,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			},
 
 			"description": schema.StringAttribute{
-				Description: "",
+				Description: "A description of the credential type.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
@@ -142,7 +166,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			},
 
 			"card_type": schema.StringAttribute{
-				Description: "",
+				Description: "A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
@@ -150,7 +174,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			},
 
 			"card_design_template": schema.StringAttribute{
-				Description: "A string that specifies an SVG formatted image containing placeholders for the credential fields that need to be displayed in the image.",
+				Description: "An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.",
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile(`^<svg.*>[\s\S]*<\/svg>\s*$`), "expected value to contain a valid PingOne Credentials SVG card template."),
@@ -158,15 +182,13 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			},
 
 			"metadata": schema.SingleNestedAttribute{
-				Description:         "",
-				MarkdownDescription: "",
-				Required:            true,
+				Description: "Contains the names, data types, and other metadata related to the credential.",
+				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"background_image": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Optional:            true,
+						Description: "URL to an image of the background to show in the credential.",
+						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtMost(imageMaxSize),
 							// Required until P1Creds follows the standard PingOne image handling capability.
@@ -175,19 +197,19 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							IsBase64Encoded(),
 							IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${backgroundImage}`),
-								"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.", // move to other description configs
+								"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							RegexMatchesPathValue(
 								regexp.MustCompile(`\${backgroundImage}`),
-								"The metadata.background_image argument is defined but the card_design_template does not have a ${backgroundImage} element.", // move to other description configs
+								"The metadata.background_image argument is defined but the card_design_template does not have a ${backgroundImage} element.",
 								path.MatchRoot("card_design_template"),
 							),
 						},
 					},
 
 					"bg_opacity_percent": schema.Int64Attribute{
-						Description: "A numnber containing the percent opacity of the background image in the credential. High percentage opacity may make displayed text difficult to read.",
+						Description: "A numnber indicating the percent opacity of the background image in the credential. High percentage opacity may make text on the credential difficult to read.",
 						Optional:    true,
 						Validators: []validator.Int64{
 							int64validator.Between(attrMinPercent, attrMaxPercent),
@@ -203,49 +225,46 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
 							IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${cardColor}`),
-								"The metadata.card_color argument is required because the ${$cardColor} element is defined in the card_design_template.", // move to other description configs
+								"The metadata.card_color argument is required because the ${$cardColor} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							RegexMatchesPathValue(
 								regexp.MustCompile(`\${cardColor}`),
-								"The metadata.card_color argument is defined but the card_design_template does not have a ${cardColor} element.", // move to other description configs
+								"The metadata.card_color argument is defined but the card_design_template does not have a ${cardColor} element.",
 								path.MatchRoot("card_design_template"),
 							),
 						},
 					},
 
 					"columns": schema.Int64Attribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Optional:            true,
+						Description: "Indicates a number (between 1-3) of columns to display visible fields on the credential.",
+						Optional:    true,
 						Validators: []validator.Int64{
 							int64validator.Between(attrMinColumns, attrMaxColumns),
 						},
 					},
 
 					"description": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Optional:            true,
+						Description: "Description of the credential.",
+						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(attrMinLength),
 							IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${cardSubtitle}`),
-								"The metadata.description argument is required because the ${$cardSubtitle} element is defined in the card_design_template.", // move to other description configs
+								"The metadata.description argument is required because the ${$cardSubtitle} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							RegexMatchesPathValue(
 								regexp.MustCompile(`\${cardSubtitle}`),
-								"The metadata.description argument is defined but the card_design_template does not have a ${cardSubtitle} element.", // move to other description configs
+								"The metadata.description argument is defined but the card_design_template does not have a ${cardSubtitle} element.",
 								path.MatchRoot("card_design_template"),
 							),
 						},
 					},
 
 					"logo_image": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Optional:            true,
+						Description: "A base64 encoded image of the logo to show in the credential.",
+						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtMost(imageMaxSize),
 							// Required until P1Creds follows the standard PingOne image handling capability.
@@ -254,31 +273,30 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							IsBase64Encoded(),
 							IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
-								"The metadata.card_color argument is required because the ${$logoImage} element is defined in the card_design_template.", // move to other description configs
+								"The metadata.card_color argument is required because the ${$logoImage} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							RegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
-								"The metadata.logo_image argument is defined but the card_design_template does not have a ${logoImage} element.", // move to other description configs
+								"The metadata.logo_image argument is defined but the card_design_template does not have a ${logoImage} element.",
 								path.MatchRoot("card_design_template"),
 							),
 						},
 					},
 
 					"name": schema.StringAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Optional:            true,
+						Description: "Name of the credential.",
+						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(attrMinLength),
 							IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${cardTitle}`),
-								"The metadata.name argument is required because the ${$cardTitle} element is defined in the card_design_template.", // move to other description configs
+								"The metadata.name argument is required because the ${$cardTitle} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							RegexMatchesPathValue(
 								regexp.MustCompile(`\${cardTitle}`),
-								"The metadata.name argument is defined but the card_design_template does not have a ${cardTitle} element.", // move to other description configs
+								"The metadata.name argument is defined but the card_design_template does not have a ${cardTitle} element.",
 								path.MatchRoot("card_design_template"),
 							),
 						},
@@ -294,43 +312,41 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
 							IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${textColor}`),
-								"The metadata.text_color argument is required because the ${$textColor} element is defined in the card_design_template.", // move to other description configs
+								"The metadata.text_color argument is required because the ${$textColor} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							RegexMatchesPathValue(
 								regexp.MustCompile(`\${textColor}`),
-								"The metadata.text_color argument is defined but the card_design_template does not have a ${textColor} element.", // move to other description configs
+								"The metadata.text_color argument is defined but the card_design_template does not have a ${textColor} element.",
 								path.MatchRoot("card_design_template"),
 							),
 						},
 					},
 
 					"version": schema.Int64Attribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Required:            true, // not required in schema, but credentials will not display in P1 admin console if not provided
+						Description: "Number version of this credential.",
+						Required:    true, // not required in schema, but credentials will not display in P1 admin console if not provided
 						Validators: []validator.Int64{
 							int64validator.AtLeast(attrMinVersion),
 						},
 					},
 
 					"fields": schema.ListNestedAttribute{
-						Description:         "",
-						MarkdownDescription: "",
-						Required:            true,
+						Description: "Array of objects representing the credential fields.",
+						Required:    true,
 						Validators: []validator.List{
 							listvalidator.SizeAtLeast(1),
 						},
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
+									Description:         fieldsIdDescription.Description,
+									MarkdownDescription: fieldsIdDescription.MarkdownDescription,
 									Computed:            true,
 								},
 								"type": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
+									Description:         fieldsTypeDescription.Description,
+									MarkdownDescription: fieldsTypeDescription.MarkdownDescription,
 									Required:            true,
 									Validators: []validator.String{
 										stringvalidator.OneOf(
@@ -340,16 +356,15 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									},
 								},
 								"title": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
-									Optional:            true,
+									Description: "Descriptive text when showing the field.",
+									Optional:    true,
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 									},
 								},
 								"attribute": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
+									Description:         fieldsAttributeDescription.Description,
+									MarkdownDescription: fieldsAttributeDescription.MarkdownDescription,
 									Optional:            true,
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
@@ -358,8 +373,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									},
 								},
 								"value": schema.StringAttribute{
-									Description:         "",
-									MarkdownDescription: "",
+									Description:         fieldsValueDescription.Description,
+									MarkdownDescription: fieldsValueDescription.MarkdownDescription,
 									Optional:            true,
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
@@ -368,9 +383,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									},
 								},
 								"is_visible": schema.BoolAttribute{
-									Description:         "",
-									MarkdownDescription: "",
-									Optional:            true,
+									Description: "Specifies whether the field should be visible to viewers of the credential.",
+									Optional:    true,
 								},
 							},
 						},
@@ -619,7 +633,7 @@ func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.
 
 	credentialTypeMetaData := credentials.NewCredentialTypeMetaData()
 
-	// expand credential type metadata and metadata fields
+	// expand credential type metadata and metadata.fields
 	if !p.Metadata.IsNull() && !p.Metadata.IsUnknown() {
 		var metadata MetadataModel
 		d := p.Metadata.As(ctx, &metadata, basetypes.ObjectAsOptions{
@@ -695,7 +709,7 @@ func (p *MetadataModel) expandMetaDataModel(ctx context.Context) (*credentials.C
 			return nil, diags
 		}
 		for _, v := range innerFields {
-			field, d := v.expandFields(ctx)
+			field, d := v.expandFields()
 			diags.Append(d...)
 			if diags.HasError() {
 				return nil, diags
@@ -710,13 +724,13 @@ func (p *MetadataModel) expandMetaDataModel(ctx context.Context) (*credentials.C
 	return cardMetadata, diags
 }
 
-func (p *FieldsModel) expandFields(ctx context.Context) (*credentials.CredentialTypeMetaDataFieldsInner, diag.Diagnostics) {
+func (p *FieldsModel) expandFields() (*credentials.CredentialTypeMetaDataFieldsInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	innerFields := credentials.NewCredentialTypeMetaDataFieldsInnerWithDefaults()
 
 	attrType := credentials.EnumCredentialTypeMetaDataFieldsType(p.Type.ValueString())
-	attrId := p.Type.ValueString() + " -> " + p.Title.ValueString() // construct id per API requirements
+	attrId := p.Type.ValueString() + " -> " + p.Title.ValueString() // construct id per P1Creds API recommendations
 
 	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT {
 		innerFields.SetValue(p.Value.ValueString())
@@ -730,6 +744,13 @@ func (p *FieldsModel) expandFields(ctx context.Context) (*credentials.Credential
 	innerFields.SetType(attrType)
 	innerFields.SetTitle(p.Title.ValueString())
 	innerFields.SetIsVisible(p.IsVisible.ValueBool())
+
+	if innerFields == nil {
+		diags.AddWarning(
+			"Unexpected Value",
+			"Metadata.Fields object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+		)
+	}
 
 	return innerFields, diags
 }

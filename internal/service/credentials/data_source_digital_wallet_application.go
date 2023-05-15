@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -54,18 +53,6 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
-	appOpenUrlDescriptionFmt := "The URL included in credential service notifications to the user to communicate with the service. For example, `https://www.example.com/appopenurl`.  The `https://` schema is recommended, but not required."
-	appOpenUrlDescription := framework.SchemaDescription{
-		MarkdownDescription: appOpenUrlDescriptionFmt,
-		Description:         strings.ReplaceAll(appOpenUrlDescriptionFmt, "`", "\""),
-	}
-
-	nameDescriptionFmt := "The name of the digital wallet application."
-	nameDescription := framework.SchemaDescription{
-		MarkdownDescription: nameDescriptionFmt,
-		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
-	}
-
 	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -75,11 +62,11 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the digital wallet application in."},
+				Description: "PingOne environment identifier (UUID) in which the credential digital wallet app exists."},
 			),
 
 			"digital_wallet_id": schema.StringAttribute{
-				Description: "The ID of the digital wallet applicatoin.",
+				Description: "Identifier (UUID) associated with the credential digital wallet application.",
 				Optional:    true,
 				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
@@ -87,7 +74,7 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 			},
 
 			"application_id": schema.StringAttribute{
-				Description: "The ID of the application associated with the digital wallet application.",
+				Description: "The identifier (UUID) of the PingOne application associated with the digital wallet application.",
 				Optional:    true,
 				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
@@ -95,18 +82,16 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 			},
 
 			"name": schema.StringAttribute{
-				Description:         nameDescription.Description,
-				MarkdownDescription: nameDescription.MarkdownDescription,
-				Optional:            true,
+				Description: "The name associated with the digital wallet application.",
+				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
 			},
 
 			"app_open_url": schema.StringAttribute{
-				Description:         appOpenUrlDescription.Description,
-				MarkdownDescription: appOpenUrlDescription.MarkdownDescription,
-				Computed:            true,
+				Description: "The URL sent in notifications to the user to communicate with the service.",
+				Computed:    true,
 			},
 		},
 	}
@@ -181,7 +166,6 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 			return
 		}
 
-		// If the ID is invalid, I land here, but unsure why - handling...
 		if response == nil {
 			resp.Diagnostics.AddError(
 				"Cannot find digital wallet application from id",
@@ -194,7 +178,6 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 	} else if !data.ApplicationId.IsNull() {
 
 		// Run the API call
-		// todo: create reusable function
 		response, diags := framework.ParseResponse(
 			ctx,
 
@@ -236,7 +219,6 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 	} else if !data.Name.IsNull() {
 
 		// Run the API call
-		// todo: create reusable function
 		response, diags := framework.ParseResponse(
 			ctx,
 
@@ -305,7 +287,7 @@ func (p *DigitalWalletApplicationDataSourceModel) toState(apiObject *credentials
 	p.DigitalWalletId = framework.StringToTF(apiObject.GetId())
 	p.ApplicationId = framework.StringToTF(*apiObject.GetApplication().Id)
 	p.AppOpenUrl = framework.StringToTF(apiObject.GetAppOpenUrl())
-	p.Name = framework.StringToTF(apiObject.GetName())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	return diags
 }

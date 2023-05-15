@@ -60,17 +60,17 @@ func (r *CredentialIssuerProfileDataSource) Schema(ctx context.Context, req data
 			),
 
 			"application_instance_id": schema.StringAttribute{
-				Description: "",
+				Description: "Identifier (UUID) of the application instance registered with the PingOne platform service. This enables the client to send messages to the service.",
 				Computed:    true,
 			},
 
 			"created_at": schema.StringAttribute{
-				Description: "",
+				Description: "Date and time the issuer profile was created.",
 				Computed:    true,
 			},
 
 			"updated_at": schema.StringAttribute{
-				Description: "",
+				Description: "Date and time the issuer profile was last updated.",
 				Computed:    true,
 			},
 
@@ -178,8 +178,8 @@ func (p *CredentialIssuerProfileDataSourceModel) toState(apiObject *credentials.
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.ApplicationInstanceId = framework.StringToTF(apiObject.GetApplicationInstance().Id)
 	p.CreatedAt = framework.StringToTF(apiObject.GetCreatedAt())
-	p.UpdatedAt = framework.StringToTF(apiObject.GetUpdatedAt())
-	p.Name = framework.StringToTF(apiObject.GetName())
+	p.UpdatedAt = framework.StringOkToTF(apiObject.GetUpdatedAtOk())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	return diags
 }
