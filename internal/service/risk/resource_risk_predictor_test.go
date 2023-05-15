@@ -189,6 +189,7 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 	fullCheck1 := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "composition.condition_json_import", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "composition.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "composition.level", "HIGH"),
 	)
@@ -196,7 +197,8 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 	fullCheck2 := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "composition.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "composition.condition_json_import", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
+		resource.TestCheckResourceAttr(resourceFullName, "composition.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"Low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "composition.level", "LOW"),
 	)
 
@@ -244,7 +246,7 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 			// Error
 			{
 				Config:      testAccRiskPredictorConfig_Composite_InvalidJSON(resourceName, name),
-				ExpectError: regexp.MustCompile(`Invalid "composition.condition" policy JSON.`),
+				ExpectError: regexp.MustCompile(`Cannot parse the condition input JSON`),
 			},
 		},
 	})
@@ -1367,7 +1369,8 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   composition = {
     level = "HIGH"
-    condition = jsonencode({
+
+    condition_json_import = jsonencode({
       "not" : {
         "or" : [{
           "equals" : 0,
@@ -1408,7 +1411,8 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   composition = {
     level = "LOW"
-    condition = jsonencode({
+
+    condition_json_import = jsonencode({
       "and" : [
         {
           "value" : "$${details.counters.predictorLevels.medium}",
@@ -1458,8 +1462,9 @@ resource "pingone_risk_predictor" "%[2]s" {
   type = "COMPOSITE"
 
   composition = {
-    level     = "LOW"
-    condition = jsonencode({})
+    level = "LOW"
+
+    condition_json_import = jsonencode({})
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)

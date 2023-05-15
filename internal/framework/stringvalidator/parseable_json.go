@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 var _ validator.String = StringParseableJSONValidator{}
@@ -15,7 +16,7 @@ type StringParseableJSONValidator struct{}
 
 // Description describes the validation in plain text formatting.
 func (v StringParseableJSONValidator) Description(_ context.Context) string {
-	return "Ensure that the provided string is valid JSON."
+	return "Ensure that the provided string is valid JSON"
 }
 
 // MarkdownDescription describes the validation in Markdown formatting.
@@ -29,26 +30,30 @@ func (v StringParseableJSONValidator) ValidateString(ctx context.Context, req va
 		return
 	}
 
-	value := req.ConfigValue.ValueString()
-
-	jsonBytes, err := json.Marshal(value)
+	var jsonMap map[string]interface{}
+	err := json.Unmarshal([]byte(req.ConfigValue.ValueString()), &jsonMap)
 	if err != nil {
+		tflog.Warn(ctx, "Failed to unmarshal bytes to JSON map", map[string]interface{}{
+			"err": err,
+		})
 		resp.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
 			req.Path,
 			v.Description(ctx),
-			value,
+			req.ConfigValue.ValueString(),
 		))
 
 		return
 	}
 
-	var condition map[string]interface{}
-	err = json.Unmarshal([]byte(jsonBytes), &condition)
+	_, err = json.Marshal(jsonMap)
 	if err != nil {
+		tflog.Warn(ctx, "Failed to marshal JSON map to bytes", map[string]interface{}{
+			"err": err,
+		})
 		resp.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
 			req.Path,
 			v.Description(ctx),
-			string(jsonBytes),
+			req.ConfigValue.ValueString(),
 		))
 
 		return
