@@ -738,7 +738,7 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 
 	// credential attributes
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
+	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.CardType = framework.StringOkToTF(apiObject.GetCardTypeOk())

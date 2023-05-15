@@ -44,6 +44,9 @@ func (v isbase64EncodedValidator) ValidateString(ctx context.Context, req valida
 		s = matches[0]
 	}
 
+	// revamp everything
+	//http.DetectContentType()
+
 	// check encoding
 	_, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {

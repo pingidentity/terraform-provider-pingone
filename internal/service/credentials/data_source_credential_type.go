@@ -340,7 +340,7 @@ func (p *CredentialTypeDataSourceModel) toState(apiObject *credentials.Credentia
 
 	// credential attributes
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
+	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.CredentialTypeId = framework.StringToTF(apiObject.GetId())
 	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())

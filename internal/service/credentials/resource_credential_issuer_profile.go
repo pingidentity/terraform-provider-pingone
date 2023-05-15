@@ -366,7 +366,7 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 	}
 
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
+	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.ApplicationInstanceId = framework.StringToTF(apiObject.GetApplicationInstance().Id)
 	p.CreatedAt = framework.StringOkToTF(apiObject.GetUpdatedAtOk())
 	p.UpdatedAt = framework.StringOkToTF(apiObject.GetUpdatedAtOk())

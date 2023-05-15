@@ -674,7 +674,7 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 
 	// core issuance rule attributes
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(apiObject.GetEnvironment().Id)
+	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
 	p.CredentialTypeId = framework.StringToTF(apiObject.GetCredentialType().Id)
 	p.Status = enumCredentialIssuanceStatusOkToTF(apiObject.GetStatusOk())
