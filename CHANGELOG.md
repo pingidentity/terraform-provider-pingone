@@ -3,6 +3,8 @@
 NOTES:
 
 * Upgraded the provider protocol version from 5 to 6.  Use of the provider requires Terraform CLI 1.0 or later. ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
+* `resource/pingone_application`: **BREAKING CHANGE** Signature algorithms `SHA224withRSA` and `SHA224withECDSA` removed as they are no longer supported by the platform. (P14C-50332) ([#358](https://github.com/pingidentity/terraform-provider-pingone/issues/358))
+* `resource/pingone_key`: **BREAKING CHANGE** Signature algorithms `SHA224withRSA` and `SHA224withECDSA` removed as they are no longer supported by the platform. (P14C-50332) ([#358](https://github.com/pingidentity/terraform-provider-pingone/issues/358))
 * bump `github.com/hashicorp/terraform-plugin-mux` from v0.9.0 => v0.10.0 ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
 
 ## 0.13.1 (02 May 2023)
