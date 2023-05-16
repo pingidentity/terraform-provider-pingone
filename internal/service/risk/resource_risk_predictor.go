@@ -839,13 +839,26 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 func (r *RiskPredictorResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// Destruction plan
 	if req.Plan.Raw.IsNull() {
+
+		// var deletable *bool
+		// resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("deletable"), deletable)...)
+		// if resp.Diagnostics.HasError() {
+		// 	return
+		// }
+
+		// if deletable != nil && !*deletable {
+		// 	resp.Diagnostics.AddWarning(
+		// 		"Risk Predictor plan destruction considerations",
+		// 		fmt.Sprintf("The risk predictor cannot be deleted due to API limitations.  The risk predictor will been left in place but will no longer be managed by the provider."),
+		// 	)
+		// }
+
 		return
 	}
 
 	// Composite "condition_json_import"
 	var compositeConditionJSONValue *string
-	diags := resp.Plan.GetAttribute(ctx, path.Root("composition").AtName("condition_json_import"), &compositeConditionJSONValue)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("composition").AtName("condition_json_import"), &compositeConditionJSONValue)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -922,23 +935,37 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Build the model for the API
-	riskPredictor, d := plan.expand(ctx)
+	riskPredictor, predefinedPredictorId, d := plan.expand(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
-		ctx,
+	var response interface{}
+	if predefinedPredictorId == nil {
+		response, d = framework.ParseResponse(
+			ctx,
 
-		func() (interface{}, *http.Response, error) {
-			return r.client.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
-		},
-		"CreateRiskPredictor",
-		riskPredictorCreateUpdateCustomErrorHandler,
-		sdk.DefaultCreateReadRetryable,
-	)
+			func() (interface{}, *http.Response, error) {
+				return r.client.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
+			},
+			"CreateRiskPredictor",
+			riskPredictorCreateUpdateCustomErrorHandler,
+			sdk.DefaultCreateReadRetryable,
+		)
+	} else {
+		response, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), *predefinedPredictorId).RiskPredictor(*riskPredictor).Execute()
+			},
+			"UpdateRiskPredictor",
+			riskPredictorCreateUpdateCustomErrorHandler,
+			sdk.DefaultCreateReadRetryable,
+		)
+	}
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1020,7 +1047,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Build the model for the API
-	riskPredictor, d := plan.expand(ctx)
+	riskPredictor, _, d := plan.expand(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1070,22 +1097,30 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	// Run the API call
-	_, d := framework.ParseResponse(
-		ctx,
+	if data.Deletable.ValueBool() {
+		// Run the API call
+		_, d := framework.ParseResponse(
+			ctx,
 
-		func() (interface{}, *http.Response, error) {
-			r, err := r.client.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
-		},
-		"DeleteRiskAdvancedPredictor",
-		framework.CustomErrorResourceNotFoundWarning,
-		nil,
-	)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
+			func() (interface{}, *http.Response, error) {
+				r, err := r.client.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+				return nil, r, err
+			},
+			"DeleteRiskAdvancedPredictor",
+			framework.CustomErrorResourceNotFoundWarning,
+			nil,
+		)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	} else {
+		resp.Diagnostics.AddWarning(
+			"Risk Predictor not deletable",
+			fmt.Sprintf("The risk predictor with id \"%s\" cannot be deleted due to API limitation.  The risk predictor has been left in place but is no longer managed by the provider.", data.Id.ValueString()),
+		)
 	}
+	return
 }
 
 func (r *RiskPredictorResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -1122,82 +1157,154 @@ func riskPredictorCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagn
 	return nil
 }
 
-func (p *riskPredictorResourceModel) expand(ctx context.Context) (*risk.RiskPredictor, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk.APIClient) (*risk.RiskPredictor, *string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	riskPredictor := &risk.RiskPredictor{}
+	var overwriteRiskPredictorId *string
 	var d diag.Diagnostics
+	var riskPredictorCommonData *risk.RiskPredictorCommon
 
-	if !p.Type.IsNull() {
+	// Check if this is attempting to overwrite an existing predictor.  We'll only allows overwriting where deletable = false
+	response, diags := framework.ParseResponse(
+		ctx,
 
-		data := risk.NewRiskPredictorCommon(p.Name.ValueString(), p.CompactName.ValueString(), risk.EnumPredictorType(p.Type.ValueString()))
+		func() (interface{}, *http.Response, error) {
+			return apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, p.EnvironmentId.ValueString()).Execute()
+		},
+		"ReadAllRiskPredictors",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	diags.Append(diags...)
+	if diags.HasError() {
+		return nil, nil, diags
+	}
 
-		if !p.Description.IsNull() && !p.Description.IsUnknown() {
-			data.SetDescription(p.Description.ValueString())
+	if predictors, ok := response.(*risk.EntityArray).Embedded.GetRiskPredictorsOk(); ok {
+
+		for _, predictor := range predictors {
+			predictorObject := predictor.GetActualInstance()
+
+			var predictorId string
+			var predictorCompactName string
+			var predictorDeletable bool
+
+			switch t := predictorObject.(type) {
+			case *risk.RiskPredictorAnonymousNetwork:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+
+			case *risk.RiskPredictorComposite:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorCustom:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorDevice:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorGeovelocity:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorIPReputation:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorUserLocationAnomaly:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorUserRiskBehavior:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorVelocity:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			}
+
+			if strings.EqualFold(predictorCompactName, p.CompactName.ValueString()) && !predictorDeletable {
+				overwriteRiskPredictorId = &predictorId
+
+				break
+			}
+		}
+	}
+
+	riskPredictorCommonData = risk.NewRiskPredictorCommon(p.Name.ValueString(), p.CompactName.ValueString(), risk.EnumPredictorType(p.Type.ValueString()))
+
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		riskPredictorCommonData.SetDescription(p.Description.ValueString())
+	}
+
+	if !p.Default.IsNull() && !p.Default.IsUnknown() {
+		var defaultPlan predictorDefault
+		d := p.Default.As(ctx, &defaultPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, nil, diags
 		}
 
-		if !p.Default.IsNull() && !p.Default.IsUnknown() {
-			var defaultPlan predictorDefault
-			d := p.Default.As(ctx, &defaultPlan, basetypes.ObjectAsOptions{
+		dataDefault := risk.NewRiskPredictorCommonDefault(int32(defaultPlan.Weight.ValueInt64()))
+
+		if !defaultPlan.Result.IsNull() && !defaultPlan.Result.IsUnknown() {
+			var defaultResultPlan predictorDefaultResult
+			d := defaultPlan.Result.As(ctx, &defaultResultPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
 			})
 			diags.Append(d...)
 			if diags.HasError() {
-				return nil, diags
+				return nil, nil, diags
 			}
 
-			dataDefault := risk.NewRiskPredictorCommonDefault(int32(defaultPlan.Weight.ValueInt64()))
+			dataDefaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumResultType(defaultResultPlan.ResultType.ValueString()))
+			dataDefaultResult.SetLevel(risk.EnumRiskLevel(defaultResultPlan.Level.ValueString()))
+			dataDefault.SetResult(*dataDefaultResult)
 
-			if !defaultPlan.Result.IsNull() && !defaultPlan.Result.IsUnknown() {
-				var defaultResultPlan predictorDefaultResult
-				d := defaultPlan.Result.As(ctx, &defaultResultPlan, basetypes.ObjectAsOptions{
-					UnhandledNullAsEmpty:    false,
-					UnhandledUnknownAsEmpty: false,
-				})
-				diags.Append(d...)
-				if diags.HasError() {
-					return nil, diags
-				}
-
-				dataDefaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumRiskLevel(defaultResultPlan.Level.ValueString()))
-				dataDefaultResult.SetType(risk.EnumResultType(defaultResultPlan.ResultType.ValueString()))
-				dataDefault.SetResult(*dataDefaultResult)
-
-				data.SetDefault(*dataDefault)
-			}
-
-			data.SetDefault(*dataDefault)
+			riskPredictorCommonData.SetDefault(*dataDefault)
 		}
 
-		switch p.Type.ValueString() {
-		case string(risk.ENUMPREDICTORTYPE_ANONYMOUS_NETWORK):
-			riskPredictor.RiskPredictorAnonymousNetwork, d = p.expandPredictorAnonymousNetwork(ctx, data)
-		case string(risk.ENUMPREDICTORTYPE_COMPOSITE):
-			riskPredictor.RiskPredictorComposite, d = p.expandPredictorComposite(ctx, data)
-		case string(risk.ENUMPREDICTORTYPE_MAP):
-			riskPredictor.RiskPredictorCustom, d = p.expandPredictorCustom(ctx, data)
-		case string(risk.ENUMPREDICTORTYPE_GEO_VELOCITY):
-			riskPredictor.RiskPredictorGeovelocity, d = p.expandPredictorGeovelocity(ctx, data)
-		case string(risk.ENUMPREDICTORTYPE_IP_REPUTATION):
-			riskPredictor.RiskPredictorIPReputation, d = p.expandPredictorIPReputation(ctx, data)
-		case string(risk.ENUMPREDICTORTYPE_DEVICE):
-			riskPredictor.RiskPredictorDevice, d = p.expandPredictorDevice(data)
-		case string(risk.ENUMPREDICTORTYPE_USER_RISK_BEHAVIOR):
-			riskPredictor.RiskPredictorUserRiskBehavior, d = p.expandPredictorUserRiskBehavior(ctx, data)
-		case string(risk.ENUMPREDICTORTYPE_USER_LOCATION_ANOMALY):
-			riskPredictor.RiskPredictorUserLocationAnomaly, d = p.expandPredictorUserLocationAnomaly(ctx, data)
-		case string(risk.ENUMPREDICTORTYPE_VELOCITY):
-			riskPredictor.RiskPredictorVelocity, d = p.expandPredictorVelocity(ctx, data)
-		}
-
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
+		riskPredictorCommonData.SetDefault(*dataDefault)
 	}
 
-	return riskPredictor, diags
+	switch p.Type.ValueString() {
+	case string(risk.ENUMPREDICTORTYPE_ANONYMOUS_NETWORK):
+		riskPredictor.RiskPredictorAnonymousNetwork, d = p.expandPredictorAnonymousNetwork(ctx, riskPredictorCommonData)
+	case string(risk.ENUMPREDICTORTYPE_COMPOSITE):
+		riskPredictor.RiskPredictorComposite, d = p.expandPredictorComposite(ctx, riskPredictorCommonData)
+	case string(risk.ENUMPREDICTORTYPE_MAP):
+		riskPredictor.RiskPredictorCustom, d = p.expandPredictorCustom(ctx, riskPredictorCommonData)
+	case string(risk.ENUMPREDICTORTYPE_GEO_VELOCITY):
+		riskPredictor.RiskPredictorGeovelocity, d = p.expandPredictorGeovelocity(ctx, riskPredictorCommonData)
+	case string(risk.ENUMPREDICTORTYPE_IP_REPUTATION):
+		riskPredictor.RiskPredictorIPReputation, d = p.expandPredictorIPReputation(ctx, riskPredictorCommonData)
+	case string(risk.ENUMPREDICTORTYPE_DEVICE):
+		riskPredictor.RiskPredictorDevice, d = p.expandPredictorDevice(riskPredictorCommonData)
+	case string(risk.ENUMPREDICTORTYPE_USER_RISK_BEHAVIOR):
+		riskPredictor.RiskPredictorUserRiskBehavior, d = p.expandPredictorUserRiskBehavior(ctx, riskPredictorCommonData)
+	case string(risk.ENUMPREDICTORTYPE_USER_LOCATION_ANOMALY):
+		riskPredictor.RiskPredictorUserLocationAnomaly, d = p.expandPredictorUserLocationAnomaly(ctx, riskPredictorCommonData)
+	case string(risk.ENUMPREDICTORTYPE_VELOCITY):
+		riskPredictor.RiskPredictorVelocity, d = p.expandPredictorVelocity(ctx, riskPredictorCommonData)
+	}
+
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, nil, diags
+	}
+
+	return riskPredictor, overwriteRiskPredictorId, diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorAnonymousNetwork, diag.Diagnostics) {
@@ -2894,11 +3001,7 @@ func enumRiskPredictorResultTypeOkToTF(v *risk.EnumResultType, ok bool) basetype
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }
 
@@ -2906,11 +3009,7 @@ func enumRiskPredictorTypeOkToTF(v *risk.EnumPredictorType, ok bool) basetypes.S
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }
 
@@ -2918,11 +3017,7 @@ func enumRiskPredictorUnitOkToTF(v *risk.EnumPredictorUnit, ok bool) basetypes.S
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }
 
@@ -2930,11 +3025,7 @@ func enumRiskPredictorRiskLevelOkToTF(v *risk.EnumRiskLevel, ok bool) basetypes.
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }
 
@@ -2942,11 +3033,7 @@ func enumRiskPredictorNewDeviceDetectOkToTF(v *risk.EnumPredictorNewDeviceDetect
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }
 
@@ -2954,11 +3041,7 @@ func enumRiskPredictorDistanceUnitOkToTF(v *risk.EnumDistanceUnit, ok bool) base
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }
 
@@ -2966,11 +3049,7 @@ func enumRiskPredictorUserRiskBehaviorRiskModelOkToTF(v *risk.EnumUserRiskBehavi
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }
 
@@ -2978,11 +3057,7 @@ func enumRiskPredictorVelocityFallbackStrategyOkToTF(v *risk.EnumPredictorVeloci
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }
 
@@ -2990,11 +3065,7 @@ func enumRiskPredictorVelocityMeasureOkToTF(v *risk.EnumPredictorVelocityMeasure
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }
 
@@ -3002,10 +3073,6 @@ func enumRiskPredictorVelocityUseTypeOkToTF(v *risk.EnumPredictorVelocityUseType
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
-		if sv := string(*v); sv == "" {
-			return types.StringNull()
-		} else {
-			return types.StringValue(sv)
-		}
+		return framework.StringToTF(string(*v))
 	}
 }

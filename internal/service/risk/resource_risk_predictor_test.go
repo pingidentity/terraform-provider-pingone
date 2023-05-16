@@ -77,6 +77,10 @@ func testAccCheckRiskPredictorDestroy(s *terraform.State) error {
 	return nil
 }
 
+func testAccCheckRiskPredictorDestroyUndeletable(s *terraform.State) error {
+	return nil
+}
+
 func TestAccRiskPredictor_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -318,17 +322,17 @@ func TestAccRiskPredictor_Anonymous_Network(t *testing.T) {
 	})
 }
 
-func TestAccRiskPredictor_Anonymous_Network_Override(t *testing.T) {
+func TestAccRiskPredictor_Anonymous_Network_OverwriteUndeletable(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
-	name := "Anonymous Network"
+	name := resourceName
 	compactName := "anonymousNetwork"
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "name", "Anonymous Network Detection"),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "anonymousNetwork"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
@@ -342,12 +346,12 @@ func TestAccRiskPredictor_Anonymous_Network_Override(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccRiskPredictorConfig_Anonymous_Network_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Anonymous_Network_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
 			},
 		},
@@ -420,17 +424,17 @@ func TestAccRiskPredictor_Geovelocity(t *testing.T) {
 	})
 }
 
-func TestAccRiskPredictor_Geovelocity_Override(t *testing.T) {
+func TestAccRiskPredictor_Geovelocity_OverwriteUndeletable(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
-	name := "GeoVelocity"
+	name := resourceName
 	compactName := "geoVelocity"
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "name", "GeoVelocity"),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "geoVelocity"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "GEO_VELOCITY"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
@@ -444,12 +448,12 @@ func TestAccRiskPredictor_Geovelocity_Override(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccRiskPredictorConfig_Geovelocity_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Geovelocity_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
 			},
 		},
@@ -522,17 +526,17 @@ func TestAccRiskPredictor_IP_Reputation(t *testing.T) {
 	})
 }
 
-func TestAccRiskPredictor_IPReputation_Override(t *testing.T) {
+func TestAccRiskPredictor_IP_Reputation_OverwriteUndeletable(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
-	name := "IP Reputation"
+	name := resourceName
 	compactName := "ipRisk"
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "name", "IP Reputation"),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "ipRisk"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "IP_REPUTATION"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
@@ -546,12 +550,12 @@ func TestAccRiskPredictor_IPReputation_Override(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccRiskPredictorConfig_IPReputation_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_IP_Reputation_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
 			},
 		},
@@ -854,17 +858,17 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 	})
 }
 
-func TestAccRiskPredictor_NewDevice_Override(t *testing.T) {
+func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
-	name := "New Device"
+	name := resourceName
 	compactName := "newDevice"
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "name", "New Device"),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "newDevice"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
@@ -876,12 +880,12 @@ func TestAccRiskPredictor_NewDevice_Override(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccRiskPredictorConfig_NewDevice_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_NewDevice_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
 			},
 		},
@@ -955,17 +959,17 @@ func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
 	})
 }
 
-func TestAccRiskPredictor_UserLocationAnomaly_Override(t *testing.T) {
+func TestAccRiskPredictor_UserLocationAnomaly_OverwriteUndeletable(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
-	name := "User Location Anomaly"
+	name := resourceName
 	compactName := "userLocationAnomaly"
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "name", "User Location Anomaly"),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "userLocationAnomaly"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_LOCATION_ANOMALY"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
@@ -978,12 +982,12 @@ func TestAccRiskPredictor_UserLocationAnomaly_Override(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccRiskPredictorConfig_UserLocationAnomaly_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_UserLocationAnomaly_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
 			},
 		},
@@ -1081,13 +1085,13 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 	})
 }
 
-func TestAccRiskPredictor_Velocity_Override(t *testing.T) {
+func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
-	name := "User Location Anomaly"
+	name := resourceName
 	compactName := "userLocationAnomaly"
 
 	byUserCheck := resource.ComposeTestCheckFunc(
@@ -1138,38 +1142,38 @@ func TestAccRiskPredictor_Velocity_Override(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byUserCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName),
+				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Destroy: true,
 			},
 			// By IP
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byIPCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full_Override(resourceName, name, compactName),
+				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Destroy: true,
 			},
 			// Change
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byUserCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byIPCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byUserCheck,
 			},
 		},
@@ -1237,13 +1241,13 @@ func TestAccRiskPredictor_UserRiskBehavior(t *testing.T) {
 	})
 }
 
-func TestAccRiskPredictor_UserRiskBehavior_Override(t *testing.T) {
+func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
-	name := "User Location Anomaly"
+	name := resourceName
 	compactName := "userLocationAnomaly"
 
 	byUserCheck := resource.ComposeTestCheckFunc(
@@ -1265,38 +1269,38 @@ func TestAccRiskPredictor_UserRiskBehavior_Override(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byUserCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName),
+				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Destroy: true,
 			},
 			// By Org
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byIPCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_Override(resourceName, name, compactName),
+				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Destroy: true,
 			},
 			// Change
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byUserCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byIPCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  byUserCheck,
 			},
 		},
@@ -1484,7 +1488,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_Anonymous_Network_Override(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_Anonymous_Network_OverwriteUndeletable(resourceName, name, compactName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -1554,7 +1558,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_Geovelocity_Override(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_Geovelocity_OverwriteUndeletable(resourceName, name, compactName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -1624,7 +1628,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_IPReputation_Override(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_IP_Reputation_OverwriteUndeletable(resourceName, name, compactName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -1911,7 +1915,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_NewDevice_Override(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_NewDevice_OverwriteUndeletable(resourceName, name, compactName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -1981,7 +1985,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_UserLocationAnomaly_Override(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_UserLocationAnomaly_OverwriteUndeletable(resourceName, name, compactName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -2047,7 +2051,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_Velocity_ByUser_Full_Override(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -2069,7 +2073,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
-func testAccRiskPredictorConfig_Velocity_ByIP_Full_Override(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -2134,7 +2138,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_Override(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -2158,7 +2162,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
-func testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_Override(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 

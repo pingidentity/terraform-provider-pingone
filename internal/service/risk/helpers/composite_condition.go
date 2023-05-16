@@ -30,7 +30,7 @@ func CheckCompositeConditionStructure(ctx context.Context, jsonValue string) dia
 
 	jsonBytes, err := json.Marshal(condition)
 	if err != nil {
-		tflog.Warn(ctx, "Failed to marshal condition object to bytes", map[string]interface{}{
+		tflog.Error(ctx, "Failed to marshal condition object to bytes", map[string]interface{}{
 			"err": err,
 		})
 		diags.AddError(
