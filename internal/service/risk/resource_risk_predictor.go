@@ -1115,6 +1115,24 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 			return
 		}
 	} else {
+
+		if v, ok := riskservicehelpers.BootstrapPredictorValues[data.CompactName.ValueString()]; ok {
+
+			// Run the API call
+			_, d := framework.ParseResponse(
+				ctx,
+
+				func() (interface{}, *http.Response, error) {
+					_, r, err := r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).RiskPredictor(v).Execute()
+					return nil, r, err
+				},
+				"UpdateRiskPredictor",
+				framework.CustomErrorResourceNotFoundWarning,
+				nil,
+			)
+			resp.Diagnostics.Append(d...)
+		}
+
 		resp.Diagnostics.AddWarning(
 			"Risk Predictor not deletable",
 			fmt.Sprintf("The risk predictor with id \"%s\" cannot be deleted due to API limitation.  The risk predictor has been left in place but is no longer managed by the provider.", data.Id.ValueString()),
