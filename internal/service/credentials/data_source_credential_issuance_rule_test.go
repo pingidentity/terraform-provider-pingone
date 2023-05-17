@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccCredentialIssuanceRuleDataSource_ByIDFull(t *testing.T) {
@@ -27,14 +28,21 @@ func TestAccCredentialIssuanceRuleDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccCredentialIssuanceRuleDataSource_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "credential_type_id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "credential_issuance_rule_id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "digital_wallet_application_id"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "credential_issuance_rule_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "automation.%", resourceFullName, "automation.%"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "filter.%", resourceFullName, "filter.%"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "filter.scim", "accountId eq \"12345\" or accountId eq \"98765\" or (address.countryCode eq \"US\")"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "automation.issue", "ON_DEMAND"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "automation.revoke", "PERIODIC"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "automation.update", "ON_DEMAND"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "notification.%", resourceFullName, "notification.%"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "notification.methods.#", "2"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "notification.template.locale", "en"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "notification.template.variant", "template_B"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "status", resourceFullName, "status"),
 				),
 			},

@@ -7,11 +7,18 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-// Note: Issuer Profiles aren't deleted once created [No API]. Deleted only via deletion of the environment.  Placeholder if this changes.
+// Note: Issuer Profiles aren't deleted once created [No API]. Deleted only via deletion of the environment.
+// Destroy is a placeholder if this changes. Defined a passthrough for linter purposes.
+func testAccCheckCredentialIssuerProfilePassthrough(s *terraform.State) error {
+
+	return nil
+}
+
 /*func testAccCheckCredentialIssuerProfileDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
@@ -82,46 +89,50 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 	name := acctest.ResourceNameGen()
 	updatedName := acctest.ResourceNameGen()
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	initialProfile := resource.TestStep{
-		Config: testAccCredentialIssuerProfile_Full(resourceName, name),
+		Config: testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "application_instance_id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttrSet(resourceFullName, "created_at"),
-			resource.TestCheckResourceAttrSet(resourceFullName, "updated_at"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
+			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
+			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
 	updatedProfile := resource.TestStep{
-		Config: testAccCredentialIssuerProfile_Full(resourceName, updatedName),
+		Config: testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, updatedName),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "application_instance_id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttrSet(resourceFullName, "created_at"),
-			resource.TestCheckResourceAttrSet(resourceFullName, "updated_at"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
+			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
+			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil, // Note: Issuer Profiles aren't deleted once created. Placeholder if this changes.  testAccCheckCredentialIssuerProfileDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
+		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
+		//CheckDestroy:           testAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
+		ErrorCheck: acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// initial profile
 			initialProfile,
 			{
-				Config:  testAccCredentialIssuerProfile_Full(resourceName, name),
+				Config:  testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
 				Destroy: true,
 			},
 			// update profile
 			updatedProfile,
 			{
-				Config:  testAccCredentialIssuerProfile_Full(resourceName, updatedName),
+				Config:  testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, updatedName),
 				Destroy: true,
 			},
 			// changes
@@ -129,11 +140,11 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 			updatedProfile,
 			initialProfile,
 			{
-				Config:  testAccCredentialIssuerProfile_Full(resourceName, name),
+				Config:  testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
 				Destroy: true,
 			},
 			{
-				Config:  testAccCredentialIssuerProfile_Full(resourceName, updatedName),
+				Config:  testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, updatedName),
 				Destroy: true,
 			},
 		},
@@ -167,13 +178,13 @@ func TestAccCredentialIssuerProfile_InvalidConfig(t *testing.T) {
 	})
 }
 
-func testAccCredentialIssuerProfile_Full(resourceName, name string) string {
+func testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_credential_issuer_profile" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
-  name           = "%[3]s"
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+resource "pingone_credential_issuer_profile" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccCredentialIssuerProfileInvalidConfig_InvalidName(resourceName, name string) string {
@@ -189,11 +200,22 @@ resource "pingone_credential_issuer_profile" "%[3]s" {
 
 func testAccCredentialIssuerProfileInvalidConfig_CredentialServuceNotEnabled(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
-	%[1]s
-
+resource "pingone_environment" "%[3]s" {
+	name = "%[1]s"
+	type = "SANDBOX"
+	license_id = "%[2]s"
+	default_population {
+	}
+	service {
+		type = "SSO"
+	}
+	service {
+		type = "MFA"
+	}		
+}
 resource "pingone_credential_issuer_profile" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id = resource.pingone_environment.%[3]s.id
   name           = "%[4]s"
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, environmentName, licenseID, resourceName, name)
 }

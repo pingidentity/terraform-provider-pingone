@@ -21,6 +21,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	customstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -193,14 +194,14 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							stringvalidator.LengthAtMost(imageMaxSize),
 							// Required until P1Creds follows the standard PingOne image handling capability.
 							// Attempts of other stop-gap mechanisms to detect and update Content-Type yielded inconsistent results.
-							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must indclude Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
-							IsBase64Encoded(),
-							IsRequiredIfRegexMatchesPathValue(
+							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must include Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
+							customstringvalidator.IsBase64Encoded(),
+							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${backgroundImage}`),
 								"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
-							RegexMatchesPathValue(
+							customstringvalidator.RegexMatchesPathValue(
 								regexp.MustCompile(`\${backgroundImage}`),
 								"The metadata.background_image argument is defined but the card_design_template does not have a ${backgroundImage} element.",
 								path.MatchRoot("card_design_template"),
@@ -223,12 +224,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							stringvalidator.RegexMatches(
 								regexp.MustCompile(`^#([A-Fa-f0-9]{6})$`),
 								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
-							IsRequiredIfRegexMatchesPathValue(
+							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${cardColor}`),
 								"The metadata.card_color argument is required because the ${$cardColor} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
-							RegexMatchesPathValue(
+							customstringvalidator.RegexMatchesPathValue(
 								regexp.MustCompile(`\${cardColor}`),
 								"The metadata.card_color argument is defined but the card_design_template does not have a ${cardColor} element.",
 								path.MatchRoot("card_design_template"),
@@ -249,12 +250,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(attrMinLength),
-							IsRequiredIfRegexMatchesPathValue(
+							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${cardSubtitle}`),
 								"The metadata.description argument is required because the ${$cardSubtitle} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
-							RegexMatchesPathValue(
+							customstringvalidator.RegexMatchesPathValue(
 								regexp.MustCompile(`\${cardSubtitle}`),
 								"The metadata.description argument is defined but the card_design_template does not have a ${cardSubtitle} element.",
 								path.MatchRoot("card_design_template"),
@@ -269,14 +270,14 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							stringvalidator.LengthAtMost(imageMaxSize),
 							// Required until P1Creds follows the standard PingOne image handling capability.
 							// Attempts of other stop-gap mechanisms to detect and update Content-Type yielded inconsistent results.
-							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must indclude Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
-							IsBase64Encoded(),
-							IsRequiredIfRegexMatchesPathValue(
+							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must include Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
+							customstringvalidator.IsBase64Encoded(),
+							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
 								"The metadata.card_color argument is required because the ${$logoImage} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
-							RegexMatchesPathValue(
+							customstringvalidator.RegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
 								"The metadata.logo_image argument is defined but the card_design_template does not have a ${logoImage} element.",
 								path.MatchRoot("card_design_template"),
@@ -289,12 +290,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(attrMinLength),
-							IsRequiredIfRegexMatchesPathValue(
+							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${cardTitle}`),
 								"The metadata.name argument is required because the ${$cardTitle} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
-							RegexMatchesPathValue(
+							customstringvalidator.RegexMatchesPathValue(
 								regexp.MustCompile(`\${cardTitle}`),
 								"The metadata.name argument is defined but the card_design_template does not have a ${cardTitle} element.",
 								path.MatchRoot("card_design_template"),
@@ -310,12 +311,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 								regexp.MustCompile(
 									`^#([A-Fa-f0-9]{6})$`),
 								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
-							IsRequiredIfRegexMatchesPathValue(
+							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${textColor}`),
 								"The metadata.text_color argument is required because the ${$textColor} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
-							RegexMatchesPathValue(
+							customstringvalidator.RegexMatchesPathValue(
 								regexp.MustCompile(`\${textColor}`),
 								"The metadata.text_color argument is defined but the card_design_template does not have a ${textColor} element.",
 								path.MatchRoot("card_design_template"),
@@ -369,7 +370,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
-										IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)), path.MatchRelative().AtParent().AtName("type")),
+										customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)), path.MatchRelative().AtParent().AtName("type")),
 									},
 								},
 								"value": schema.StringAttribute{
@@ -379,7 +380,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
-										IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
+										customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
 									},
 								},
 								"is_visible": schema.BoolAttribute{

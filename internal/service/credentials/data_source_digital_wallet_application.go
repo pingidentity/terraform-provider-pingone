@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
@@ -69,6 +70,10 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 				Description: "Identifier (UUID) associated with the credential digital wallet application.",
 				Optional:    true,
 				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("name"),
+						path.MatchRelative().AtParent().AtName("application_id"),
+					),
 					verify.P1ResourceIDValidator(),
 				},
 			},
@@ -77,6 +82,10 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 				Description: "The identifier (UUID) of the PingOne application associated with the digital wallet application.",
 				Optional:    true,
 				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("name"),
+						path.MatchRelative().AtParent().AtName("digital_wallet_id"),
+					),
 					verify.P1ResourceIDValidator(),
 				},
 			},
@@ -85,6 +94,10 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 				Description: "The name associated with the digital wallet application.",
 				Optional:    true,
 				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("application_id"),
+						path.MatchRelative().AtParent().AtName("digital_wallet_id"),
+					),
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
 			},

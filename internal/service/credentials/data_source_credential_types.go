@@ -120,20 +120,11 @@ func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.Rea
 			return r.client.CredentialTypesApi.ReadAllCredentialTypes(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadAllCredentialTypes",
-		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Error if not found
-	if response == nil {
-		resp.Diagnostics.AddError(
-			"Cannot find credential types",
-			fmt.Sprintf("The list of credential types for environment %s cannot be found.", data.EnvironmentId.String()),
-		)
 		return
 	}
 

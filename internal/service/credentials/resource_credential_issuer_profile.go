@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	//"time"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -338,9 +340,13 @@ func (p *CredentialIssuerProfileResourceModel) expand() (*credentials.Credential
 	var diags diag.Diagnostics
 
 	data := credentials.NewCredentialIssuerProfile(p.Name.ValueString())
-	data.SetApplicationInstance(*credentials.NewCredentialIssuerProfileApplicationInstance(p.ApplicationInstanceId.ValueString()))
-	data.SetCreatedAt(p.CreatedAt.ValueString())
-	data.SetUpdatedAt(p.UpdatedAt.ValueString())
+
+	applicationInstanceId := credentials.NewCredentialIssuerProfileApplicationInstance()
+	applicationInstanceId.SetId(p.ApplicationInstanceId.ValueString())
+
+	data.SetApplicationInstance(*applicationInstanceId)
+	//data.SetCreatedAt(time.Time(p.CreatedAt))
+	//data.SetUpdatedAt(time.Time(p.UpdatedAt))
 
 	if data == nil {
 		diags.AddWarning(
@@ -366,9 +372,9 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.ApplicationInstanceId = framework.StringToTF(apiObject.GetApplicationInstance().Id)
-	p.CreatedAt = framework.StringOkToTF(apiObject.GetUpdatedAtOk())
-	p.UpdatedAt = framework.StringOkToTF(apiObject.GetUpdatedAtOk())
+	p.ApplicationInstanceId = framework.StringToTF(*apiObject.GetApplicationInstance().Id)
+	p.CreatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	return diags

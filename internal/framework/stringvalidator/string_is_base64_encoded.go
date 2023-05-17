@@ -1,4 +1,4 @@
-package credentials
+package stringvalidator
 
 import (
 	"context"

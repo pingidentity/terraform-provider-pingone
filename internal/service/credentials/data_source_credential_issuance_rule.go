@@ -9,14 +9,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -110,20 +108,12 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 				Description: "The ID of the environment to retrieve the credential issuance rule."},
 			),
 
-			"credential_type_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
-				Description: "The ID of the credential type with which this credential issuance rule is associated.",
-			},
-				[]validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+			"credential_type_id": framework.Attr_LinkID(framework.SchemaDescription{
+				Description: "The ID of the credential type with which this credential issuance rule is associated."},
 			),
 
-			"credential_issuance_rule_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
-				Description: "Identifier (UUID) of the credential issuance rule.",
-			},
-				[]validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+			"credential_issuance_rule_id": framework.Attr_LinkID(framework.SchemaDescription{
+				Description: "Identifier (UUID) of the credential issuance rule."},
 			),
 
 			"digital_wallet_application_id": schema.StringAttribute{
@@ -137,7 +127,7 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 			},
 
 			"filter": schema.SingleNestedAttribute{
-				Description: "Contains one and only one filter (.groupIds, .populationIds, or .scim) that selects the users to which the credential issuance rule applies.",
+				Description: "Contains one and only one filter (group_ids, population_ids, or scim) that selects the users to which the credential issuance rule applies.",
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"group_ids": schema.SetAttribute{
@@ -263,20 +253,11 @@ func (r *CredentialIssuanceRuleDataSource) Read(ctx context.Context, req datasou
 			return r.client.CredentialIssuanceRulesApi.ReadOneCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.CredentialIssuanceRuleId.ValueString()).Execute()
 		},
 		"ReadOneCredentialIssuanceRule",
-		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Error if not found
-	if response == nil {
-		resp.Diagnostics.AddError(
-			"Cannot find credential issuance rule",
-			fmt.Sprintf("The credential issuance rule %s for credential type id %s for environment %s cannot be found.", data.CredentialIssuanceRuleId.String(), data.CredentialTypeId.String(), data.EnvironmentId.String()),
-		)
 		return
 	}
 
@@ -301,7 +282,7 @@ func (p *CredentialIssuanceRuleDataSourceModel) toState(apiObject *credentials.C
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
-	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.Id)
+	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.GetId())
 	p.CredentialIssuanceRuleId = framework.StringToTF(apiObject.GetId())
 	p.Status = enumCredentialIssuanceStatusDataSourceOkToTF(apiObject.GetStatusOk())
 

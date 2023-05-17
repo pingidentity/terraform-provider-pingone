@@ -1,1 +1,1 @@
-$ terraform import pingone_credential_type.example <environment_id>/<credential_type_id>/<credential_issuance_rule_id>
+$ terraform import pingone_credential_issuance_rule.example <environment_id>/<credential_type_id>/<credential_issuance_rule_id>

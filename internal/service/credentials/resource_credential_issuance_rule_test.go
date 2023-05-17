@@ -111,14 +111,10 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "filter.scim", "address.countryCode eq \"TX\""),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.revoke", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.update", "PERIODIC"),
-			resource.TestCheckResourceAttr(resourceFullName, "filter.scim", "address.countryCode eq \"CA\""),
-			resource.TestCheckNoResourceAttr(resourceFullName, "filter.population_ids.#"),
-			resource.TestCheckResourceAttr(resourceFullName, "notification.methods.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "notification.methods.0", "EMAIL"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "notification.template.%"),
 			resource.TestCheckResourceAttr(resourceFullName, "status", "ACTIVE"),
 		),
 	}
@@ -131,8 +127,14 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttrSet(resourceFullName, "automation.%"),
-			resource.TestCheckResourceAttrSet(resourceFullName, "filter.%"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "notification.%"),
+			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),
+			resource.TestCheckResourceAttr(resourceFullName, "automation.revoke", "PERIODIC"),
+			resource.TestCheckResourceAttr(resourceFullName, "automation.update", "PERIODIC"),
+
+			resource.TestCheckNoResourceAttr(resourceFullName, "notification"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "notification.methods"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "notification.template"),
+
 			resource.TestCheckResourceAttr(resourceFullName, "status", "DISABLED"),
 		),
 	}
@@ -353,7 +355,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
   status                        = "ACTIVE"
 
   filter = {
-    scim = "address.countryCode eq \"CA\""
+    scim = "address.countryCode eq \"TX\""
   }
 
   automation = {
@@ -362,9 +364,6 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
     update = "PERIODIC"
   }
 
-  notification = {
-    methods = ["EMAIL"]
-  }
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
@@ -432,10 +431,6 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "DISABLED"
-
-  filter = {
-    scim = "address.countryCode eq \"CA\""
-  }
 
   automation = {
     issue  = "PERIODIC"

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -19,6 +20,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	customobjectvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -111,7 +113,7 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 		Description:         strings.ReplaceAll(statusdDescriptionFmt, "`", "\""),
 	}
 
-	filterDescriptionFmt := "Contains one and only one filter (`.groupIds`, `.populationIds`, or `.scim`) that selects the users to which the credential issuance rule applies."
+	filterDescriptionFmt := "Contains one and only one filter (`group_ids`, `population_ids`, or `scim`) that selects the users to which the credential issuance rule applies."
 	filterDescription := framework.SchemaDescription{
 		MarkdownDescription: filterDescriptionFmt,
 		Description:         strings.ReplaceAll(filterDescriptionFmt, "`", "\""),
@@ -159,20 +161,12 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 				Description: "PingOne environment identifier (UUID) in which the credential issuance rule exists."},
 			),
 
-			"credential_type_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
-				Description: "Identifier (UUID) of the credential type with which this credential issuance rule is associated.",
-			},
-				[]validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+			"credential_type_id": framework.Attr_LinkID(framework.SchemaDescription{
+				Description: "Identifier (UUID) of the credential type with which this credential issuance rule is associated."},
 			),
 
-			"digital_wallet_application_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
-				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet.",
-			},
-				[]validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+			"digital_wallet_application_id": framework.Attr_LinkID(framework.SchemaDescription{
+				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet."},
 			),
 
 			"status": schema.StringAttribute{
@@ -190,6 +184,12 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 				Description:         filterDescription.Description,
 				MarkdownDescription: filterDescription.MarkdownDescription,
 				Optional:            true,
+				Validators: []validator.Object{
+					customobjectvalidator.IsRequiredIfMatchesPathValue(
+						basetypes.NewStringValue(string(credentials.ENUMCREDENTIALISSUANCERULESTATUS_ACTIVE)),
+						path.MatchRelative().AtParent().AtName("status"),
+					),
+				},
 				Attributes: map[string]schema.Attribute{
 					"group_ids": schema.SetAttribute{
 						ElementType: types.StringType,
@@ -198,6 +198,10 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 						Validators: []validator.Set{
 							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
 							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
+							setvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("population_ids"),
+								path.MatchRelative().AtParent().AtName("scim"),
+							),
 						},
 					},
 					"population_ids": schema.SetAttribute{
@@ -207,6 +211,10 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 						Validators: []validator.Set{
 							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
 							setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("scim")),
+							setvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("group_ids"),
+								path.MatchRelative().AtParent().AtName("scim"),
+							),
 						},
 					},
 
@@ -216,6 +224,10 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 						Validators: []validator.String{
 							stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_ids")),
 							stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("population_ids")),
+							stringvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("group_ids"),
+								path.MatchRelative().AtParent().AtName("population_ids"),
+							),
 						},
 					},
 				},
@@ -246,6 +258,12 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 			"notification": schema.SingleNestedAttribute{
 				Description: "Contains notification information. When this property is supplied, the information within is used to create a custom notification.",
 				Optional:    true,
+				Validators: []validator.Object{
+					objectvalidator.Any(
+						objectvalidator.AlsoRequires(path.MatchRelative().AtName("methods")),
+						objectvalidator.AlsoRequires(path.MatchRelative().AtName("template")),
+					),
+				},
 				Attributes: map[string]schema.Attribute{
 					"methods": schema.SetAttribute{
 						ElementType:         types.StringType,
@@ -264,6 +282,12 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 					"template": schema.SingleNestedAttribute{
 						Description: "Contains template parameters.",
 						Optional:    true,
+						Validators: []validator.Object{
+							objectvalidator.Any(
+								objectvalidator.AlsoRequires(path.MatchRelative().AtName("locale")),
+								objectvalidator.AlsoRequires(path.MatchRelative().AtName("variant")),
+							),
+						},
 						Attributes: map[string]schema.Attribute{
 							"locale": schema.StringAttribute{
 								Description:         notificationTemplateLocaleDescription.Description,
@@ -724,7 +748,7 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
-	p.CredentialTypeId = framework.StringToTF(apiObject.GetCredentialType().Id)
+	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.GetId())
 	p.Status = enumCredentialIssuanceStatusOkToTF(apiObject.GetStatusOk())
 
 	// automation object
@@ -762,11 +786,30 @@ func toStateAutomation(automation *credentials.CredentialIssuanceRuleAutomation,
 func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	filterMap := map[string]attr.Value{
-		"population_ids": framework.StringSetOkToTF(filter.GetPopulationIdsOk()),
-		"group_ids":      framework.StringSetOkToTF(filter.GetGroupIdsOk()),
-		"scim":           framework.StringOkToTF(filter.GetScimOk()),
+	if filter == nil {
+		return types.ObjectNull(filterServiceTFObjectTypes), diags
 	}
+
+	filterMap := map[string]attr.Value{}
+
+	if v, ok := filter.GetPopulationIdsOk(); ok {
+		filterMap["population_ids"] = framework.StringSetOkToTF(v, ok)
+	} else {
+		filterMap["population_ids"] = types.SetNull(types.StringType)
+	}
+
+	if v, ok := filter.GetGroupIdsOk(); ok {
+		filterMap["group_ids"] = framework.StringSetOkToTF(v, ok)
+	} else {
+		filterMap["group_ids"] = types.SetNull(types.StringType)
+	}
+
+	if v, ok := filter.GetScimOk(); ok {
+		filterMap["scim"] = framework.StringOkToTF(v, ok)
+	} else {
+		filterMap["scim"] = types.StringNull()
+	}
+
 	flattenedObj, d := types.ObjectValue(filterServiceTFObjectTypes, filterMap)
 	diags.Append(d...)
 
@@ -775,7 +818,6 @@ func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (t
 
 func toStateNotification(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	//tfObjType := types.ObjectType{AttrTypes: notificationTemplateServiceTFObjectTypes}
 
 	if notification == nil {
 		return types.ObjectNull(notificationServiceTFObjectTypes), diags

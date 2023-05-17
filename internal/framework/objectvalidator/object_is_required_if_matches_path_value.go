@@ -1,42 +1,37 @@
-package credentials
+package objectvalidator
 
 import (
 	"context"
 	"fmt"
-	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-// stringIsRequiredIfRegexMatchesPathValueValidator validates if the provided regex matches
-// the value at the provided path expression(s). If matched, the current argument is required.
+// objectIsRequiredIfMatchesPathValueValidator validates if the provided string value equals
+// the value at the provided path expression(s).  If matched, the current arguemnt is required.
 //
 // If a list of expressions is provided, all expressions are checked until a match is found,
 // or the list of expressions is exhausted.
-type stringIsRequiredIfRegexMatchesPathValueValidator struct {
-	regexp      *regexp.Regexp
-	message     string
+type objectIsRequiredIfMatchesPathValueValidator struct {
+	targetValue basetypes.StringValue
 	expressions path.Expressions
 }
 
 // Description describes the validation in plain text formatting.
-func (v stringIsRequiredIfRegexMatchesPathValueValidator) Description(_ context.Context) string {
-	if v.message != "" {
-		return v.message
-	}
-	return fmt.Sprintf("The argument is required if the regular expression %s is present at the defined path: %v", v.regexp, v.expressions)
+func (v objectIsRequiredIfMatchesPathValueValidator) Description(_ context.Context) string {
+	return fmt.Sprintf("The argument is required if the value %s is present at the defined path: %v", v.targetValue.ValueString(), v.expressions)
 }
 
 // MarkdownDescription describes the validation in Markdown formatting.
-func (v stringIsRequiredIfRegexMatchesPathValueValidator) MarkdownDescription(ctx context.Context) string {
+func (v objectIsRequiredIfMatchesPathValueValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
 // Validate runs the main validation logic of the validator, reading configuration data out of `req` and updating `resp` with diagnostics.
-func (v stringIsRequiredIfRegexMatchesPathValueValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+func (v objectIsRequiredIfMatchesPathValueValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	// Combine the given path expressions with the current attribute path
 	// expression. This call automatically handles relative and absolute
 	// expressions.
@@ -73,27 +68,27 @@ func (v stringIsRequiredIfRegexMatchesPathValueValidator) ValidateString(ctx con
 			}
 
 			// Found a matched path.  Compare the matched path to the provided path.
-			// If a regex match, and the current argument has not been set, return an error.
-			if v.regexp.MatchString(matchedPathValue.String()) && (req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown()) {
-				resp.Diagnostics.Append(validatordiag.InvalidAttributeValueMatchDiagnostic(
-					req.Path,
-					v.Description(ctx),
-					fmt.Sprintf("%s is undefined.", req.PathExpression.String()),
-				))
+			// If a matched value, and the current argument has not been set, return an error.
+			if v.targetValue.Equal(matchedPathValue) && (req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown()) {
+
+				resp.Diagnostics.AddAttributeError(
+					matchedPath,
+					"Missing required argument",
+					fmt.Sprintf("The argument %s is required because %s is configured as: %s.", req.Path, matchedPath, v.targetValue),
+				)
 			}
 		}
 	}
 }
 
-// IsRequiredIfRegexMatchesPathValue validates if the provided regex matches
-// the value at the provided path expression(s). If matched, the current argument is required.
+// IsRequiredIfMatchesPathValue validates if the provided string value equals
+// the value at the provided path expression(s).  If matched, the current arguemnt is required.
 //
 // If a list of expressions is provided, all expressions are checked until a match is found,
 // or the list of expressions is exhausted.
-func IsRequiredIfRegexMatchesPathValue(regexp *regexp.Regexp, message string, expressions ...path.Expression) validator.String {
-	return &stringIsRequiredIfRegexMatchesPathValueValidator{
-		regexp:      regexp,
-		message:     message,
+func IsRequiredIfMatchesPathValue(targetValue basetypes.StringValue, expressions ...path.Expression) validator.Object {
+	return &objectIsRequiredIfMatchesPathValueValidator{
+		targetValue: targetValue,
 		expressions: expressions,
 	}
 }

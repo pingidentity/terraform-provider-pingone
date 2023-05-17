@@ -9,16 +9,25 @@ resource "pingone_application" "my_awesome_native_app" {
 
   oidc_options {
     type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.example.my_ios_app"
-    package_name                = "com.example.my_android_app"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris = [
+      "https://www.example.com/app/callback",
+    ]
 
     mobile_app {
       bundle_id    = "com.example.my_ios_app"
       package_name = "com.example.my_android_app"
       # ...
     }
+
+    # ensure bundle_id and package_name are defined both in 
+    # native app and mobile app config
+    bundle_id        = "com.example.my_ios_app"
+    package_name     = "com.example.my_android_app"    
+
   }
 }
 

@@ -9,14 +9,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -110,13 +108,9 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 				Description: "PingOne environment identifier (UUID) in which the credential type exists."},
 			),
 
-			"credential_type_id": schema.StringAttribute{
-				Description: "Identifier (UUID) associated with the credential type.",
-				Optional:    true,
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
-			},
+			"credential_type_id": framework.Attr_LinkID(framework.SchemaDescription{
+				Description: "Identifier (UUID) associated with the credential type."},
+			),
 
 			"title": schema.StringAttribute{
 				Description: "Title of the credential.",
@@ -189,7 +183,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 
 					"fields": schema.ListNestedAttribute{
 						Description: "Array of objects representing the credential fields.",
-						Required:    true,
+						Computed:    true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
@@ -275,15 +269,6 @@ func (r *CredentialTypeDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	// Error if credential type id wasn't provided
-	if data.CredentialTypeId.IsNull() || data.CredentialTypeId.IsUnknown() {
-		resp.Diagnostics.AddError(
-			"Credential Type ID not provided",
-			fmt.Sprintf("A valid credential type ID for environment %s was not provided.", data.EnvironmentId.String()),
-		)
-		return
-	}
-
 	// Run the API call
 	response, diags := framework.ParseResponse(
 		ctx,
@@ -292,20 +277,11 @@ func (r *CredentialTypeDataSource) Read(ctx context.Context, req datasource.Read
 			return r.client.CredentialTypesApi.ReadOneCredentialType(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString()).Execute()
 		},
 		"ReadOneCredentialType",
-		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Error if not found
-	if response == nil {
-		resp.Diagnostics.AddError(
-			"Cannot find credential type",
-			fmt.Sprintf("The credential type ID %s for environment %s cannot be found.", data.CredentialTypeId.String(), data.EnvironmentId.String()),
-		)
 		return
 	}
 
