@@ -723,8 +723,13 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 			"of": schema.StringAttribute{
 				Optional: true,
+
 				Validators: []validator.String{
 					stringvalidator.OneOf("${event.ip}", "${event.user.id}"),
+				},
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 
@@ -732,10 +737,6 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Description: "",
 				Computed:    true,
 				ElementType: types.StringType,
-
-				// PlanModifiers: []planmodifier.Set{
-				// 	setplanmodifier.RequiresReplace(),
-				// },
 
 				Validators: []validator.Set{
 					setvalidator.ValueStringsAre(
