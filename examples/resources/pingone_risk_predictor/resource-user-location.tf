@@ -3,14 +3,16 @@ resource "pingone_risk_predictor" "my_awesome_user_location_predictor" {
   name           = "My Awesome User Location Predictor"
   compact_name   = "my_awesome_user_location_predictor"
 
-  default_result {
-    weight    = ""
-    score     = ""
-    evaluated = ""
-    result    = ""
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
 
-  predictor_user_location {
-
+  predictor_user_location_anomaly = {
+    radius = {
+      distance = 100
+      unit     = "miles"
+    }
   }
 }

@@ -1,16 +1,31 @@
-resource "pingone_risk_predictor" "my_awesome_velocity_predictor" {
+resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_ip" {
   environment_id = pingone_environment.my_environment.id
-  name           = "My Awesome Velocity Predictor"
-  compact_name   = "my_awesome_velocity_predictor"
+  name           = "My Awesome Velocity Predictor By IP"
+  compact_name   = "my_awesome_velocity_predictor_by_ip"
 
-  default_result {
-    weight    = ""
-    score     = ""
-    evaluated = ""
-    result    = ""
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
   }
 
-  predictor_velocity {
+  predictor_velocity = {
+    of = "$${event.user.id}"
+  }
+}
 
+resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
+  environment_id = pingone_environment.my_environment.id
+  name           = "My Awesome Velocity Predictor By User"
+  compact_name   = "my_awesome_velocity_predictor_by_user"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_velocity = {
+    of = "$${event.ip}"
   }
 }
