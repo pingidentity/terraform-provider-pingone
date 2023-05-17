@@ -1092,11 +1092,12 @@ func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
 	name := resourceName
-	compactName := "userLocationAnomaly"
+	compactNameByUser := "ipVelocityByUser"
+	compactNameByIP := "userVelocityByIp"
 
 	byUserCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactName),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactNameByUser),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "VELOCITY"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.ip}"),
@@ -1119,7 +1120,7 @@ func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 
 	byIPCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactName),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactNameByIP),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "VELOCITY"),
 		resource.TestCheckResourceAttr(resourceFullName, "of", "${event.user.id}"),
 		resource.TestCheckResourceAttr(resourceFullName, "by.#", "1"),
@@ -1147,33 +1148,33 @@ func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 		Steps: []resource.TestStep{
 			// By User
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Destroy: true,
 			},
 			// By IP
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactNameByIP),
 				Check:  byIPCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactNameByIP),
 				Destroy: true,
 			},
 			// Change
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactNameByIP),
 				Check:  byIPCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
 			},
 		},
@@ -1248,19 +1249,20 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
 	name := resourceName
-	compactName := "userLocationAnomaly"
+	compactNameByUser := "userBasedRiskBehavior"
+	compactNameByOrg := "userRiskBehavior"
 
 	byUserCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactName),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactNameByUser),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_RISK_BEHAVIOR"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "prediction_model.name", "points"),
 	)
 
-	byIPCheck := resource.ComposeTestCheckFunc(
+	byOrgCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactName),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactNameByOrg),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "USER_RISK_BEHAVIOR"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "prediction_model.name", "login_anomaly_statistic"),
@@ -1274,33 +1276,33 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 		Steps: []resource.TestStep{
 			// By User
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Destroy: true,
 			},
 			// By Org
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactName),
-				Check:  byIPCheck,
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactNameByOrg),
+				Check:  byOrgCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactNameByOrg),
 				Destroy: true,
 			},
 			// Change
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactName),
-				Check:  byIPCheck,
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactNameByOrg),
+				Check:  byOrgCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
 			},
 		},
