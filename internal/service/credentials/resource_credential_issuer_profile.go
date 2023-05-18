@@ -159,7 +159,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadCredentialIssuerProfile",
-		framework.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(diags...)
