@@ -3,6 +3,7 @@ package framework
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -43,6 +44,8 @@ func (r SchemaDescription) DefaultValue(defaultValue string) SchemaDescription {
 }
 
 func (r SchemaDescription) AllowedValues(allowedValues []string) SchemaDescription {
+	sort.Strings(allowedValues)
+
 	return r.AppendSliceValues("Options are", allowedValues)
 }
 
@@ -51,6 +54,8 @@ func (r SchemaDescription) AllowedValuesComplex(allowedValuesMap map[string]stri
 	for k, v := range allowedValuesMap {
 		allowedValues = append(allowedValues, fmt.Sprintf("`%s` (%s)", k, v))
 	}
+
+	sort.Strings(allowedValues)
 
 	return r.AppendMarkdownString(fmt.Sprintf("Options are %s.", strings.Join(allowedValues, ", ")))
 }

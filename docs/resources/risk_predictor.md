@@ -372,7 +372,7 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 - `deletable` (Boolean) A boolean that indicates the PingOne Risk predictor can be deleted or not.
 - `id` (String) The ID of this resource.
 - `licensed` (Boolean) A boolean that indicates whether PingOne Risk is licensed for the environment.
-- `type` (String) A string that specifies the type of the risk predictor.  Options are `ANONYMOUS_NETWORK`, `COMPOSITE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `DEVICE`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR`, `VELOCITY`.
+- `type` (String) A string that specifies the type of the risk predictor.  Options are `ANONYMOUS_NETWORK`, `COMPOSITE`, `DEVICE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR`, `VELOCITY`.
 
 <a id="nestedatt--default"></a>
 ### Nested Schema for `default`
@@ -387,7 +387,7 @@ Optional:
 
 Optional:
 
-- `level` (String) The default result level.  Options are `LOW`, `MEDIUM`, `HIGH`.
+- `level` (String) The default result level.  Options are `HIGH`, `LOW`, `MEDIUM`.
 
 Read-Only:
 
@@ -416,7 +416,7 @@ Required:
 Required:
 
 - `condition_json` (String) A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.
-- `level` (String) A string that specifies the risk level for the composite risk predictor.  Options are `LOW`, `MEDIUM`, `HIGH`.
+- `level` (String) A string that specifies the risk level for the composite risk predictor.  Options are `HIGH`, `LOW`, `MEDIUM`.
 
 Read-Only:
 
@@ -608,7 +608,7 @@ Required:
 
 Required:
 
-- `name` (String) A string that specifies the name of the prediction model to apply to the predictor evaluation.  Options are `points` (to configure the user-based risk model), `login_anomaly_statistic` (to configure the organisation based risk model).
+- `name` (String) A string that specifies the name of the prediction model to apply to the predictor evaluation.  Options are `login_anomaly_statistic` (to configure the organisation based risk model), `points` (to configure the user-based risk model).
 
 
 
