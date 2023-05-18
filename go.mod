@@ -2,10 +2,6 @@ module github.com/pingidentity/terraform-provider-pingone
 
 go 1.20
 
-replace github.com/patrickcping/pingone-go-sdk-v2/credentials => /Users/mikesimon/dev/src/github.com/pingone-go-sdk-v2/credentials
-
-replace github.com/patrickcping/pingone-go-sdk-v2 => /Users/mikesimon/dev/src/github.com/pingone-go-sdk-v2
-
 require (
 	github.com/bflad/tfproviderlint v0.29.0
 	github.com/golangci/golangci-lint v1.52.2
@@ -28,7 +24,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.9.3
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.46.1
-	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
+	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc
 )
 
 require github.com/rivo/uniseg v0.2.0 // indirect
