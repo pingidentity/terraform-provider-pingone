@@ -336,7 +336,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Description: "Array of objects representing the credential fields.",
 						Required:    true,
 						Validators: []validator.List{
-							listvalidator.SizeAtLeast(1),
+							listvalidator.SizeAtLeast(attrMinLength),
 						},
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{

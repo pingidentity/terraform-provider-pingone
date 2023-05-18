@@ -107,6 +107,9 @@ func (r *CredentialIssuanceRuleResource) Metadata(ctx context.Context, req resou
 
 func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
+	// schema descriptions and validation settings
+	const attrMinLength = 1
+
 	statusdDescriptionFmt := "Status of the credential issuance rule. Can be `ACTIVE` or `DISABLED`."
 	statusDescription := framework.SchemaDescription{
 		MarkdownDescription: statusdDescriptionFmt,
@@ -202,6 +205,7 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 								path.MatchRelative().AtParent().AtName("population_ids"),
 								path.MatchRelative().AtParent().AtName("scim"),
 							),
+							setvalidator.SizeAtLeast(attrMinLength),
 						},
 					},
 					"population_ids": schema.SetAttribute{
@@ -215,6 +219,7 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 								path.MatchRelative().AtParent().AtName("group_ids"),
 								path.MatchRelative().AtParent().AtName("scim"),
 							),
+							setvalidator.SizeAtLeast(attrMinLength),
 						},
 					},
 
@@ -277,6 +282,7 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 									string(credentials.ENUMCREDENTIALISSUANCERULENOTIFICATIONMETHOD_SMS),
 								),
 							),
+							setvalidator.SizeAtLeast(attrMinLength),
 						},
 					},
 					"template": schema.SingleNestedAttribute{
@@ -755,19 +761,29 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	p.Status = enumCredentialIssuanceStatusOkToTF(apiObject.GetStatusOk())
 
 	// automation object
-	automation, d := toStateAutomation(apiObject.GetAutomationOk())
-	diags.Append(d...)
-	p.Automation = automation
+	if v, ok := apiObject.GetAutomationOk(); ok {
+		automation, d := toStateAutomation(v, ok)
+		diags.Append(d...)
+		p.Automation = automation
+	}
 
 	// filter object
-	filter, d := toStateFilter(apiObject.GetFilterOk())
-	diags.Append(d...)
-	p.Filter = filter
+	if v, ok := apiObject.GetFilterOk(); ok {
+		if v.HasGroupIds() || v.HasPopulationIds() || v.HasScim() { // check because values are optional
+			filter, d := toStateFilter(v, ok)
+			diags.Append(d...)
+			p.Filter = filter
+		}
+	}
 
 	// notification object
-	notification, d := toStateNotification(apiObject.GetNotificationOk())
-	diags.Append(d...)
-	p.Notification = notification
+	if v, ok := apiObject.GetNotificationOk(); ok {
+		if v.HasMethods() || v.HasTemplate() { // check because values are optional
+			notification, d := toStateNotification(v, ok)
+			diags.Append(d...)
+			p.Notification = notification
+		}
+	}
 
 	return diags
 }
