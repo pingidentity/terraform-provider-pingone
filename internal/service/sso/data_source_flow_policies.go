@@ -62,9 +62,8 @@ func (r *FlowPoliciesDataSource) Schema(ctx context.Context, req datasource.Sche
 				Description: "The ID of the environment to filter DaVinci flow policies from.",
 			}),
 
-			"scim_filter": framework.Attr_SCIMFilter(framework.SchemaDescription{
-				Description: "A SCIM filter to apply to the DaVinci flow policy selection.  A SCIM filter offers the greatest flexibility in filtering DaVinci flow policies.",
-			},
+			"scim_filter": framework.Attr_SCIMFilter(
+				framework.SchemaDescriptionFromMarkdown("A SCIM filter to apply to the DaVinci flow policy selection.  A SCIM filter offers the greatest flexibility in filtering DaVinci flow policies"),
 				filterableAttributes,
 				[]string{"data_filter"},
 			),
@@ -75,9 +74,8 @@ func (r *FlowPoliciesDataSource) Schema(ctx context.Context, req datasource.Sche
 		},
 
 		Blocks: map[string]schema.Block{
-			"data_filter": framework.Attr_DataFilter(framework.SchemaDescription{
-				Description: "Individual data filters to apply to the DaVinci flow policy selection.",
-			},
+			"data_filter": framework.Attr_DataFilter(
+				framework.SchemaDescriptionFromMarkdown("Individual data filters to apply to the DaVinci flow policy selection"),
 				filterableAttributes,
 				[]string{"scim_filter"},
 			),
