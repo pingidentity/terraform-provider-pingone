@@ -126,12 +126,12 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttrSet(resourceFullName, "automation.%"),
+			resource.TestCheckResourceAttr(resourceFullName, "automation.%", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.revoke", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.update", "PERIODIC"),
-
-			resource.TestCheckNoResourceAttr(resourceFullName, "notification"),
+			//resource.TestCheckResourceAttr(resourceFullName, "filter.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "notification.#", "0"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "notification.methods"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "notification.template"),
 
@@ -358,6 +358,13 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
     scim = "address.countryCode eq \"TX\""
   }
 
+  notification = {
+    methods = ["EMAIL", "SMS"]
+    template = {
+      locale  = "en"
+      variant = "template_B"
+    }
+  }
   automation = {
     issue  = "PERIODIC"
     revoke = "PERIODIC"

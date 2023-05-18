@@ -287,6 +287,9 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 								objectvalidator.AlsoRequires(path.MatchRelative().AtName("locale")),
 								objectvalidator.AlsoRequires(path.MatchRelative().AtName("variant")),
 							),
+							objectvalidator.AlsoRequires(
+								path.MatchRelative().AtParent().AtName("methods"),
+							),
 						},
 						Attributes: map[string]schema.Attribute{
 							"locale": schema.StringAttribute{
@@ -616,7 +619,7 @@ func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*cred
 	}
 
 	// set the notification details
-	if credentialIssuanceRuleNotification.HasMethods() {
+	if credentialIssuanceRuleNotification.HasMethods() || credentialIssuanceRuleNotification.HasTemplate() {
 		data.SetNotification(*credentialIssuanceRuleNotification)
 	}
 
@@ -791,7 +794,6 @@ func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (t
 	}
 
 	filterMap := map[string]attr.Value{}
-
 	if v, ok := filter.GetPopulationIdsOk(); ok {
 		filterMap["population_ids"] = framework.StringSetOkToTF(v, ok)
 	} else {
