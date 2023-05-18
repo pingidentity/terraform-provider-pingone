@@ -121,15 +121,15 @@ resource "pingone_application" "%[3]s-appname2" {
     redirect_uris = [
       "https://www.example.com/app/callback",
     ]
-  
+
     mobile_app {
       bundle_id                = "com.pingidentity.ios_wallet2"
       package_name             = "com.pingidentity.android_wallet2"
       passcode_refresh_seconds = 30
     }
 
-    bundle_id                = "com.pingidentity.ios_wallet2"
-    package_name             = "com.pingidentity.android_wallet2"
+    bundle_id    = "com.pingidentity.ios_wallet2"
+    package_name = "com.pingidentity.android_wallet2"
   }
 }
 

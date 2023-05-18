@@ -201,17 +201,17 @@ resource "pingone_credential_issuer_profile" "%[3]s" {
 func testAccCredentialIssuerProfileInvalidConfig_CredentialServuceNotEnabled(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 resource "pingone_environment" "%[3]s" {
-	name = "%[1]s"
-	type = "SANDBOX"
-	license_id = "%[2]s"
-	default_population {
-	}
-	service {
-		type = "SSO"
-	}
-	service {
-		type = "MFA"
-	}		
+  name       = "%[1]s"
+  type       = "SANDBOX"
+  license_id = "%[2]s"
+  default_population {
+  }
+  service {
+    type = "SSO"
+  }
+  service {
+    type = "MFA"
+  }
 }
 resource "pingone_credential_issuer_profile" "%[3]s" {
   environment_id = resource.pingone_environment.%[3]s.id

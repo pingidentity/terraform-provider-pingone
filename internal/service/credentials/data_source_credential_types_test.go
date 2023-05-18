@@ -76,7 +76,7 @@ func testAccCredentialTypesDataSource_NoFilter(environmentName, licenseID, resou
 	%[1]s
 
 resource "pingone_credential_type" "%[3]s-1" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id       = pingone_environment.%[2]s.id
   title                = "%[4]s"
   description          = "%[4]s Example Description"
   card_type            = "%[4]s"
@@ -103,7 +103,7 @@ resource "pingone_credential_type" "%[3]s-1" {
 }
 
 resource "pingone_credential_type" "%[3]s-2" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id       = pingone_environment.%[2]s.id
   title                = "%[4]s"
   description          = "%[4]s Example Description"
   card_type            = "%[4]s"
@@ -130,7 +130,7 @@ resource "pingone_credential_type" "%[3]s-2" {
 }
 
 resource "pingone_credential_type" "%[3]s-3" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id       = pingone_environment.%[2]s.id
   title                = "%[4]s"
   description          = "%[4]s Example Description"
   card_type            = "%[4]s"

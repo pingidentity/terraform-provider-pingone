@@ -552,9 +552,9 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
-  credential_type_id            = resource.pingone_credential_type.%[2]s.id
-  status                        = "DISABLED"
+  environment_id     = data.pingone_environment.credentials_test.id
+  credential_type_id = resource.pingone_credential_type.%[2]s.id
+  status             = "DISABLED"
 
   filter = {
     scim = "address.countryCode eq \"CA\""
@@ -1171,7 +1171,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
   }
 
   notification = {
-    methods = ["EMAIL", "SMS"]
+    methods  = ["EMAIL", "SMS"]
     template = {}
   }
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)

@@ -232,33 +232,33 @@ func testAccDigitalWalletApplication_NewEnv(environmentName, licenseID, resource
 		%[1]s
 
 resource "pingone_application" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-	name           = "%[4]s"
-	enabled        = true
-	
-	oidc_options {
-		type                        = "NATIVE_APP"
-		grant_types                 = ["AUTHORIZATION_CODE"]
-    	response_types              = ["CODE"]
-		pkce_enforcement            = "S256_REQUIRED"
-		token_endpoint_authn_method = "NONE"
-		redirect_uris               = ["https://www.pingidentity.com"]
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  enabled        = true
 
-		mobile_app {
-			bundle_id                = "com.pingidentity.ios_%[4]s"
-			package_name             = "com.pingidentity.android_%[4]s"
-			passcode_refresh_seconds = 30
-		}		
-		bundle_id                   = "com.pingidentity.ios_%[4]s"
-		package_name                = "com.pingidentity.android_%[4]s"				
-	}
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[4]s"
+      package_name             = "com.pingidentity.android_%[4]s"
+      passcode_refresh_seconds = 30
+    }
+    bundle_id    = "com.pingidentity.ios_%[4]s"
+    package_name = "com.pingidentity.android_%[4]s"
+  }
 }
 
 resource "pingone_digital_wallet_application" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-	application_id = resource.pingone_application.%[3]s.id
-	name           = "%[4]s"
-	app_open_url   = "https://www.example.com/appopen"  
+  environment_id = pingone_environment.%[2]s.id
+  application_id = resource.pingone_application.%[3]s.id
+  name           = "%[4]s"
+  app_open_url   = "https://www.example.com/appopen"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 

@@ -341,14 +341,14 @@ func testAccCredentialTypeConfig_NewEnv(environmentName, licenseID, resourceName
 		%[1]s
 
 resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id       = pingone_environment.%[2]s.id
   title                = "%[4]s"
   description          = "%[4]s"
   card_type            = "DemonstrationCard"
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
 
   metadata = {
-    name               = "%[4]s"
+    name = "%[4]s"
 
     fields = [
       {
@@ -442,7 +442,7 @@ resource "pingone_credential_type" "%[2]s" {
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
 
   metadata = {
-    name               = "%[3]s"
+    name = "%[3]s"
 
     fields = [
       {
@@ -699,10 +699,10 @@ func testAccCredentialTypeConfig_CardDesignTemplate_NoSVG(resourceName, name str
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
+  environment_id = data.pingone_environment.credentials_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
 
   # missing svg tags
   card_design_template = "<rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text>"
@@ -791,11 +791,11 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    description          = "%[3]s Example Description"
+    description        = "%[3]s Example Description"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
-    logo_image = "%[4]s" # {logoImage} is missing from card_design_template
+    logo_image         = "%[4]s" # {logoImage} is missing from card_design_template
 
     fields = [
       {
@@ -822,7 +822,7 @@ resource "pingone_credential_type" "%[2]s" {
     name               = "%[3]s"
     description        = "%[3]s Example Description" # {subTitle} missing from template - description maps to card subtitle value
     bg_opacity_percent = 100
-    card_color         = "#000000" 
+    card_color         = "#000000"
     text_color         = "#000000"
 
     fields = [
@@ -849,7 +849,7 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     bg_opacity_percent = 100
-    card_color         = "#000000" 
+    card_color         = "#000000"
     text_color         = "#000000" # {textColor} is missing from card_design_template
 
     fields = [

@@ -754,7 +754,7 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 
 	// automation object
 	if v, ok := apiObject.GetAutomationOk(); ok {
-		automation, d := toStateAutomation(v, ok)
+		automation, d := toStateAutomation(v)
 		diags.Append(d...)
 		p.Automation = automation
 	}
@@ -762,7 +762,7 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	// filter object
 	if v, ok := apiObject.GetFilterOk(); ok {
 		if v.HasGroupIds() || v.HasPopulationIds() || v.HasScim() { // check because values are optional
-			filter, d := toStateFilter(v, ok)
+			filter, d := toStateFilter(v)
 			diags.Append(d...)
 			p.Filter = filter
 		}
@@ -771,7 +771,7 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	// notification object
 	if v, ok := apiObject.GetNotificationOk(); ok {
 		if v.HasMethods() || v.HasTemplate() { // check because values are optional
-			notification, d := toStateNotification(v, ok)
+			notification, d := toStateNotification(v)
 			diags.Append(d...)
 			p.Notification = notification
 		}
@@ -780,7 +780,7 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	return diags
 }
 
-func toStateAutomation(automation *credentials.CredentialIssuanceRuleAutomation, ok bool) (types.Object, diag.Diagnostics) {
+func toStateAutomation(automation *credentials.CredentialIssuanceRuleAutomation) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	automationMap := map[string]attr.Value{
@@ -794,7 +794,7 @@ func toStateAutomation(automation *credentials.CredentialIssuanceRuleAutomation,
 	return flattenedObj, diags
 }
 
-func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (types.Object, diag.Diagnostics) {
+func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if filter == nil {
@@ -826,7 +826,7 @@ func toStateFilter(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (t
 	return flattenedObj, diags
 }
 
-func toStateNotification(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
+func toStateNotification(notification *credentials.CredentialIssuanceRuleNotification) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if notification == nil {

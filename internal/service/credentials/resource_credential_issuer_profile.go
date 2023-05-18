@@ -65,8 +65,7 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to retrieve or update the credential issuer information.\n\n" +
-			"A credential issuer profile, which enables issuance of credentials, is automatically created when the credential service is added to an environment. " +
-			"This resource is typically only required to update the credential issuer name.",
+			"A credential issuer profile, which enables issuance of credentials, is automatically created when the credential service is added to an environment. This resource is typically only required to update the credential issuer name.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
