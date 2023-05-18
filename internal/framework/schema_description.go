@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 type SchemaDescription struct {
@@ -44,15 +46,28 @@ func (r SchemaDescription) AllowedValues(allowedValues []string) SchemaDescripti
 	return r.AppendSliceValues("Options are", allowedValues)
 }
 
+func (r SchemaDescription) AllowedValuesComplex(allowedValuesMap map[string]string) SchemaDescription {
+	allowedValues := make([]string, 0)
+	for k, v := range allowedValuesMap {
+		allowedValues = append(allowedValues, fmt.Sprintf("`%s` (%s)", k, v))
+	}
+
+	return r.AppendMarkdownString(fmt.Sprintf("Options are %s.", strings.Join(allowedValues, ", ")))
+}
+
+func (r SchemaDescription) AllowedValuesEnum(allowedValuesEnumSlice interface{}) SchemaDescription {
+	return r.AllowedValues(utils.EnumSliceToStringSlice(allowedValuesEnumSlice))
+}
+
 func (r SchemaDescription) ConflictsWith(fieldPaths []string) SchemaDescription {
 	return r.AppendSliceValues("Conflicts with", fieldPaths)
 }
 
 func (r SchemaDescription) ExactlyOneOf(fieldPaths []string) SchemaDescription {
-	return r.AppendSliceValues("Exactly one of the following fields must be set:", fieldPaths)
+	return r.AppendSliceValues("At least one of the following must be defined:", fieldPaths)
 }
 
-func (r SchemaDescription) IsImmutable() SchemaDescription {
+func (r SchemaDescription) RequiresReplace() SchemaDescription {
 	return r.AppendMarkdownString("This field is immutable and will trigger a replace plan if changed.")
 }
 
@@ -87,7 +102,7 @@ func (r SchemaDescription) AppendMarkdownString(text string) SchemaDescription {
 	return r
 }
 
-func SchemaDescriptionMarkdown(description string) SchemaDescription {
+func SchemaDescriptionFromMarkdown(description string) SchemaDescription {
 	return func() SchemaDescription {
 		return SchemaDescription{
 			Description:         schemaDescriptionMarkdownToUnformatted(description),
@@ -98,12 +113,4 @@ func SchemaDescriptionMarkdown(description string) SchemaDescription {
 
 func schemaDescriptionMarkdownToUnformatted(description string) string {
 	return strings.ReplaceAll(description, "`", "\"")
-}
-
-func EnumToString(enum interface{}) []string {
-	var enumString []string
-	for _, v := range enum.([]interface{}) {
-		enumString = append(enumString, fmt.Sprintf("%v", v))
-	}
-	return enumString
 }

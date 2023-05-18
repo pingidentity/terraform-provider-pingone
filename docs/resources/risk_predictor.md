@@ -349,7 +349,7 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 
 ### Required
 
-- `compact_name` (String) A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. This property is immutable; it cannot be modified after initial creation. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).
+- `compact_name` (String) A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).  This field is immutable and will trigger a replace plan if changed.
 - `environment_id` (String) The ID of the environment to configure the risk predictor in.
 - `name` (String) A string that specifies the unique, friendly name for the predictor. This name is displayed in the Risk Policies UI, when the admin is asked to define the overrides and weights in policy configuration and is unique per environment.
 
@@ -357,22 +357,22 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 
 - `default` (Attributes) A single nested object that specifies the default configuration values for the risk predictor. (see [below for nested schema](#nestedatt--default))
 - `description` (String) A string that specifies the description of the risk predictor. Maximum length is 1024 characters.
-- `predictor_anonymous_network` (Attributes) A single nested object that specifies options for the Anonymous Network predictor. (see [below for nested schema](#nestedatt--predictor_anonymous_network))
-- `predictor_composite` (Attributes) A single nested object that specifies options for the Composite predictor. (see [below for nested schema](#nestedatt--predictor_composite))
-- `predictor_custom_map` (Attributes) A single nested object that specifies options for the Custom Map predictor. (see [below for nested schema](#nestedatt--predictor_custom_map))
-- `predictor_device` (Attributes) A single nested object that specifies options for the Device predictor. (see [below for nested schema](#nestedatt--predictor_device))
-- `predictor_geovelocity` (Attributes) A single nested object that specifies options for the Geovelocity predictor. (see [below for nested schema](#nestedatt--predictor_geovelocity))
-- `predictor_ip_reputation` (Attributes) A single nested object that specifies options for the IP reputation predictor. (see [below for nested schema](#nestedatt--predictor_ip_reputation))
-- `predictor_user_location_anomaly` (Attributes) A single nested object that specifies options for the User Location Anomaly predictor. (see [below for nested schema](#nestedatt--predictor_user_location_anomaly))
-- `predictor_user_risk_behavior` (Attributes) A single nested object that specifies options for the User Risk Behavior predictor. (see [below for nested schema](#nestedatt--predictor_user_risk_behavior))
-- `predictor_velocity` (Attributes) A single nested object that specifies options for the Velocity predictor. (see [below for nested schema](#nestedatt--predictor_velocity))
+- `predictor_anonymous_network` (Attributes) A single nested object that specifies options for the Anonymous Network predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_anonymous_network))
+- `predictor_composite` (Attributes) A single nested object that specifies options for the Composite predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_composite))
+- `predictor_custom_map` (Attributes) A single nested object that specifies options for the Custom Map predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_custom_map))
+- `predictor_device` (Attributes) A single nested object that specifies options for the Device predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_device))
+- `predictor_geovelocity` (Attributes) A single nested object that specifies options for the Geovelocity predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_geovelocity))
+- `predictor_ip_reputation` (Attributes) A single nested object that specifies options for the IP reputation predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_ip_reputation))
+- `predictor_user_location_anomaly` (Attributes) A single nested object that specifies options for the User Location Anomaly predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_user_location_anomaly))
+- `predictor_user_risk_behavior` (Attributes) A single nested object that specifies options for the User Risk Behavior predictor.  At least one of the following must be defined: "predictor_anonymous_network", "predictor_composite", "predictor_custom_map", "predictor_geovelocity", "predictor_ip_reputation", "predictor_device", "predictor_user_location_anomaly", "predictor_user_risk_behavior", "predictor_velocity". (see [below for nested schema](#nestedatt--predictor_user_risk_behavior))
+- `predictor_velocity` (Attributes) A single nested object that specifies options for the Velocity predictor.  At least one of the following must be defined: "predictor_anonymous_network", "predictor_composite", "predictor_custom_map", "predictor_geovelocity", "predictor_ip_reputation", "predictor_device", "predictor_user_location_anomaly", "predictor_user_risk_behavior", "predictor_velocity". (see [below for nested schema](#nestedatt--predictor_velocity))
 
 ### Read-Only
 
 - `deletable` (Boolean) A boolean that indicates the PingOne Risk predictor can be deleted or not.
 - `id` (String) The ID of this resource.
 - `licensed` (Boolean) A boolean that indicates whether PingOne Risk is licensed for the environment.
-- `type` (String) A string that specifies the type of the risk predictor.  This can be either `ANONYMOUS_NETWORK`, `COMPOSITE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `DEVICE`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR` or `VELOCITY`.
+- `type` (String) A string that specifies the type of the risk predictor.  Options are `ANONYMOUS_NETWORK`, `COMPOSITE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `DEVICE`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR`, `VELOCITY`.
 
 <a id="nestedatt--default"></a>
 ### Nested Schema for `default`
@@ -387,11 +387,11 @@ Optional:
 
 Optional:
 
-- `level` (String) The default result level. Options are `HIGH`, `MEDIUM`, and `LOW`.
+- `level` (String) The default result level.  Options are `LOW`, `MEDIUM`, `HIGH`.
 
 Read-Only:
 
-- `type` (String) The default result type. Options are `VALUE`, indicating any custom attribute that's defined.
+- `type` (String) The default result type.  Options are `VALUE` (any custom attribute value that's defined).
 
 
 
@@ -416,7 +416,7 @@ Required:
 Required:
 
 - `condition_json` (String) A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.
-- `level` (String) A string that specifies the risk level for the composite risk predictor. The value must be one of the following: `LOW`, `MEDIUM`, `HIGH`.
+- `level` (String) A string that specifies the risk level for the composite risk predictor.  Options are `LOW`, `MEDIUM`, `HIGH`.
 
 Read-Only:
 
@@ -553,7 +553,7 @@ Optional:
 Optional:
 
 - `activation_at` (String) A string that represents a date on which the learning process for the device predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.
-- `detect` (String) A string that represents the type of device detection to use. The default value is `NEW_DEVICE`.
+- `detect` (String) A string that represents the type of device detection to use.  Defaults to `NEW_DEVICE`.
 
 
 <a id="nestedatt--predictor_geovelocity"></a>
@@ -592,7 +592,7 @@ Required:
 
 Optional:
 
-- `unit` (String) A string that specifies the unit of distance to apply to the predictor distance.  Possible values are `kilometers`, `miles`.  Defaults to `kilometers`.
+- `unit` (String) A string that specifies the unit of distance to apply to the predictor distance.  Options are `kilometers`, `miles`.  Defaults to `kilometers`.
 
 
 
@@ -608,7 +608,7 @@ Required:
 
 Required:
 
-- `name` (String) A string that specifies the name of the prediction model to apply to the predictor evaluation.  Possible values are `kilometers`, `miles`.  `points` is used when applying the user-based risk model and `login_anomaly_statistic` is used when applying the organisation-based risk model.
+- `name` (String) A string that specifies the name of the prediction model to apply to the predictor evaluation.  Options are `points` (to configure the user-based risk model), `login_anomaly_statistic` (to configure the organisation based risk model).
 
 
 
