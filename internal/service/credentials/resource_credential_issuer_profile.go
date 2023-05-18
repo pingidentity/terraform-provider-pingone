@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	//"time"
 
@@ -63,7 +64,9 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a credential issuer profile (enabling the issuance of credentials) in PingOne.",
+		Description: "Resource to retrieve or update the credential issuer information.\n\n" +
+			"A credential issuer profile, which enables issuance of credentials, is automatically created when the credential service is added to an environment. " +
+			"This resource is typically only required to update the credential issuer name.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -88,7 +91,7 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			},
 
 			"name": schema.StringAttribute{
-				Description: "The name of the credential issuer, which is included in the credentials issued.",
+				Description: "The name of the credential issuer. The name is included in the metadata of an issued verifiable credential.",
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(attrMinLength, attrMaxLength),
@@ -345,14 +348,34 @@ func (p *CredentialIssuerProfileResourceModel) expand() (*credentials.Credential
 	applicationInstanceId.SetId(p.ApplicationInstanceId.ValueString())
 
 	data.SetApplicationInstance(*applicationInstanceId)
-	//data.SetCreatedAt(time.Time(p.CreatedAt))
-	//data.SetUpdatedAt(time.Time(p.UpdatedAt))
 
-	if data == nil {
-		diags.AddWarning(
-			"Unexpected Value",
-			"Credential Issuer Profile object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
-		)
+	if !p.CreatedAt.IsNull() && !p.CreatedAt.IsUnknown() {
+		createdAt, err := time.Parse(time.RFC3339, p.CreatedAt.ValueString())
+		if err != nil {
+			diags.AddWarning(
+				"Unexpected Value",
+				fmt.Sprintf("Unexpected createdAt value: %s.  Please report this to the provider maintainers.", err.Error()),
+			)
+		}
+		data.SetCreatedAt(createdAt)
+	}
+
+	if !p.UpdatedAt.IsNull() && !p.UpdatedAt.IsUnknown() {
+		updatedAt, err := time.Parse(time.RFC3339, p.UpdatedAt.ValueString())
+		if err != nil {
+			diags.AddWarning(
+				"Unexpected Value",
+				fmt.Sprintf("Unexpected updatedAt value: %s.  Please report this to the provider maintainers.", err.Error()),
+			)
+		}
+		data.SetUpdatedAt(updatedAt)
+
+		if data == nil {
+			diags.AddWarning(
+				"Unexpected Value",
+				"Credential Issuer Profile object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+			)
+		}
 	}
 
 	return data, diags

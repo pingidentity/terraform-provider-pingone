@@ -63,7 +63,7 @@ func TestAccCredentialIssuanceRuleDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCredentialIssuanceRuleDataSource_NotFoundByID(resourceName),
-				ExpectError: regexp.MustCompile("Error: Cannot find credential issuance rule"),
+				ExpectError: regexp.MustCompile("Error: Error when calling `ReadOneCredentialIssuanceRule`: The request could not be completed. The requested resource was not found."),
 			},
 		},
 	})
@@ -106,7 +106,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -233,7 +232,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[2]s"
     description        = "%[2]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -269,7 +267,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[2]s"
     description        = "%[2]s Example Description"
-    version            = 5
     bg_opacity_percent = 20
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -304,7 +301,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[2]s"
     description        = "%[2]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"

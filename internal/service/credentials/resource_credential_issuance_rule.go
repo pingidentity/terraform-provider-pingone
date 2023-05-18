@@ -116,7 +116,7 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 		Description:         strings.ReplaceAll(statusdDescriptionFmt, "`", "\""),
 	}
 
-	filterDescriptionFmt := "Contains one and only one filter (`group_ids`, `population_ids`, or `scim`) that selects the users to which the credential issuance rule applies."
+	filterDescriptionFmt := "Contains one and only one filter (`group_ids`, `population_ids`, or `scim`) that selects the users to which the credential issuance rule applies. A filter must be defined if the issuance rule `status` is `ACTIVE`."
 	filterDescription := framework.SchemaDescription{
 		MarkdownDescription: filterDescriptionFmt,
 		Description:         strings.ReplaceAll(filterDescriptionFmt, "`", "\""),
@@ -155,7 +155,8 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne Credentials credential issuance rules.",
+		Description: "Resource to create, read, and update rules for issuing, updating, and revoking credentials by credential type.\n\n" +
+			"An issuance rule is defined for a specific `credential_type` and `digital_wallet_application`, and the `filter` determines the targeted list of users allowed to receive the specific credential type.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -263,18 +264,13 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 			"notification": schema.SingleNestedAttribute{
 				Description: "Contains notification information. When this property is supplied, the information within is used to create a custom notification.",
 				Optional:    true,
-				Validators: []validator.Object{
-					objectvalidator.Any(
-						objectvalidator.AlsoRequires(path.MatchRelative().AtName("methods")),
-						objectvalidator.AlsoRequires(path.MatchRelative().AtName("template")),
-					),
-				},
+				Validators:  []validator.Object{},
 				Attributes: map[string]schema.Attribute{
 					"methods": schema.SetAttribute{
 						ElementType:         types.StringType,
 						Description:         notificationMethodsDescription.Description,
 						MarkdownDescription: notificationMethodsDescription.MarkdownDescription,
-						Optional:            true,
+						Required:            true,
 						Validators: []validator.Set{
 							setvalidator.ValueStringsAre(
 								stringvalidator.OneOf(
@@ -289,10 +285,6 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 						Description: "Contains template parameters.",
 						Optional:    true,
 						Validators: []validator.Object{
-							objectvalidator.Any(
-								objectvalidator.AlsoRequires(path.MatchRelative().AtName("locale")),
-								objectvalidator.AlsoRequires(path.MatchRelative().AtName("variant")),
-							),
 							objectvalidator.AlsoRequires(
 								path.MatchRelative().AtParent().AtName("methods"),
 							),
@@ -301,14 +293,14 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 							"locale": schema.StringAttribute{
 								Description:         notificationTemplateLocaleDescription.Description,
 								MarkdownDescription: notificationTemplateLocaleDescription.MarkdownDescription,
-								Optional:            true,
+								Required:            true,
 								Validators: []validator.String{
 									stringvalidator.OneOf(verify.FullIsoList()...),
 								},
 							},
 							"variant": schema.StringAttribute{
 								Description: "The unique user-defined name for the content variant that contains the message text used for the notification.",
-								Optional:    true,
+								Required:    true,
 							},
 						},
 					},

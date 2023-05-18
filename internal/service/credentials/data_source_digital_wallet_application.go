@@ -57,7 +57,8 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 	// schema definition
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Datasource to retrieve a PingOne Credentials digital wallet application. The service controls the relationship between the customer's digital wallet app, which communicates with users' digital wallets, and a customer's PingOne application.",
+		Description: "Datasource to retrieve a PingOne Credentials digital wallet application.\n\n" +
+			"The service controls the relationship between the customer's digital wallet application, which communicates with users' digital wallets, and a customer's PingOne application.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -171,7 +172,7 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 				return r.client.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.DigitalWalletId.ValueString()).Execute()
 			},
 			"ReadOneDigitalWalletApplication",
-			framework.CustomErrorResourceNotFoundWarning,
+			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 		)
 		resp.Diagnostics.Append(diags...)
@@ -179,13 +180,6 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 			return
 		}
 
-		if response == nil {
-			resp.Diagnostics.AddError(
-				"Cannot find digital wallet application from id",
-				fmt.Sprintf("The id %s for environment %s cannot be found", data.DigitalWalletId.String(), data.EnvironmentId.String()),
-			)
-			return
-		}
 		digitalWalletApp = *response.(*credentials.DigitalWalletApplication)
 
 	} else if !data.ApplicationId.IsNull() {
@@ -198,7 +192,7 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 				return r.client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllDigitalWalletApplication",
-			framework.CustomErrorResourceNotFoundWarning,
+			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 		)
 		resp.Diagnostics.Append(diags...)
@@ -239,7 +233,7 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 				return r.client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllDigitalWalletApplication",
-			framework.CustomErrorResourceNotFoundWarning,
+			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 		)
 		resp.Diagnostics.Append(diags...)

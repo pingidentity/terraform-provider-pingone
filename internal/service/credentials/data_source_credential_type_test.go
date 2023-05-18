@@ -59,7 +59,7 @@ func TestAccCredentialTypeDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCredentialTypeDataSource_NotFoundByID(resourceName),
-				ExpectError: regexp.MustCompile("Error: Cannot find credential type"),
+				ExpectError: regexp.MustCompile("Error: Error when calling `ReadOneCredentialType`: The request could not be completed. The requested resource was not found."),
 			},
 		},
 	})
@@ -82,7 +82,7 @@ func TestAccCredentialTypeDataSource_InvalidConfig(t *testing.T) {
 			},
 			{
 				Config:      testAccCredentialTypeDataSource_NoCredentialTypeID(resourceName),
-				ExpectError: regexp.MustCompile("Error: Credential Type ID not provided"),
+				ExpectError: regexp.MustCompile("Error: Missing required argument"),
 			},
 		},
 	})
@@ -103,7 +103,6 @@ resource "pingone_credential_type" "%[2]s" {
     name               = "%[3]s"
     columns            = 2
     description        = "%[3]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"

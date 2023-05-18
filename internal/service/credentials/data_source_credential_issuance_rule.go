@@ -177,7 +177,7 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 					},
 					"template": schema.SingleNestedAttribute{
 						Description: "Contains template parameters.",
-						Optional:    true,
+						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"locale": schema.StringAttribute{
 								Description: "The ISO 2-character language code used for the notification; for example, en.",

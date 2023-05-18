@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -48,7 +49,7 @@ type MetadataModel struct {
 	Columns          types.Int64  `tfsdk:"columns"`
 	Description      types.String `tfsdk:"description"`
 	TextColor        types.String `tfsdk:"text_color"`
-	Version          types.Int64  `tfsdk:"version"` // Watch Item - Best practice is to allow service to set, but if version of 5 or higher is not provided, creds do not appear in UI!
+	Version          types.Int64  `tfsdk:"version"`
 	LogoImage        types.String `tfsdk:"logo_image"`
 	Name             types.String `tfsdk:"name"`
 	Fields           types.List   `tfsdk:"fields"`
@@ -110,10 +111,16 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMinLength = 1
 	const attrMinColumns = 1
 	const attrMaxColumns = 3
-	const attrMinVersion = 5
+	const attrDefaultVersion = 5
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
 	const imageMaxSize = 50000
+
+	fieldsDescriptionFmt := "In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`."
+	fieldsDescription := framework.SchemaDescription{
+		MarkdownDescription: fieldsDescriptionFmt,
+		Description:         strings.ReplaceAll(fieldsDescriptionFmt, "`", "\""),
+	}
 
 	fieldsIdDescriptionFmt := "Identifier of the field formatted as `<fields.type> -> <fields.title>`."
 	fieldsIdDescription := framework.SchemaDescription{
@@ -141,7 +148,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne Credentials credential types.",
+		Description: "Resource to create, read, and update the credential types used by compatible wallet applications.\n\n" +
+			"~> You must ensure that any fields used in the cardDesignTemplate are defined appropriately in metadata.fields or errors occur when you attempt to create a credential of that type.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -188,7 +196,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 				Attributes: map[string]schema.Attribute{
 					"background_image": schema.StringAttribute{
-						Description: "URL to an image of the background to show in the credential.",
+						Description: "A base64 encoded image of the background to show in the credential. The value must include a Content-type prefix, such as data:image/png;base64.",
 						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtMost(imageMaxSize),
@@ -264,7 +272,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					},
 
 					"logo_image": schema.StringAttribute{
-						Description: "A base64 encoded image of the logo to show in the credential.",
+						Description: "A base64 encoded image of the logo to show in the credential. The value must include a Content-type prefix, such as data:image/png;base64.",
 						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtMost(imageMaxSize),
@@ -323,18 +331,25 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							),
 						},
 					},
-
+					//fix
 					"version": schema.Int64Attribute{
 						Description: "Number version of this credential.",
-						Required:    true, // not required in schema, but credentials will not display in P1 admin console if not provided
-						Validators: []validator.Int64{
-							int64validator.AtLeast(attrMinVersion),
-						},
+						Computed:    true,
+						Default:     int64default.StaticInt64(attrDefaultVersion),
+						// P1Creds has a limitation within the EarlyRelease.
+						// To resolve, we will compute the "version" argument with a value of "5";
+						// the same value set by the P1 admin console until resolved.
+						// Below are the actual settings to use once fixed.
+						// Optional: true,
+						// Validators: []validator.Int64{
+						// int64validator.AtLeast(attrMinVersion),
+						//},
 					},
 
 					"fields": schema.ListNestedAttribute{
-						Description: "Array of objects representing the credential fields.",
-						Required:    true,
+						Description:         fieldsDescription.Description,
+						MarkdownDescription: fieldsDescription.MarkdownDescription,
+						Required:            true,
 						Validators: []validator.List{
 							listvalidator.SizeAtLeast(attrMinLength),
 						},

@@ -110,7 +110,7 @@ func TestAccDigitalWalletApplicationDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDigitalWalletApplicationDataSource_NotFoundByID(resourceName),
-				ExpectError: regexp.MustCompile("Error: Cannot find digital wallet application from id"),
+				ExpectError: regexp.MustCompile("Error: Error when calling `ReadOneDigitalWalletApplication`: The request could not be completed. The requested resource was not found."),
 			},
 			{
 				Config:      testAccDigitalWalletApplicationDataSource_NotFoundByApplicationID(resourceName),

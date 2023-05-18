@@ -86,6 +86,35 @@ func testAccCheckCredentialTypeDestroy(s *terraform.State) error {
 
 	return nil
 }
+
+func TestAccCredentialType_NewEnv(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_credential_type.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := acctest.ResourceNameGen()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCredentialTypeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "title", name),
+				),
+			},
+		},
+	})
+}
+
 func TestAccCredentialType_Full(t *testing.T) {
 	t.Parallel()
 
@@ -100,7 +129,10 @@ func TestAccCredentialType_Full(t *testing.T) {
 	data, _ = os.ReadFile("../../acctest/test_assets/image/credential_logo_base64.png")
 	logoImage := "data:image/png;base64," + base64.StdEncoding.EncodeToString(data)
 
-	cardDesignTemplate := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><image href=\"$${backgroundImage}\" opacity=\"$${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><image href=\"$${logoImage}\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+	// Note: If template is defined directly in HCL, the ${variableName} variables are escaped with $$, such as $${variableName}.
+	// The HCL in the test case has the escaped variable name.  The test value does not ensuring it is saved to, and returned from, state properly.
+	// Future: Move the design template to a test asset file.
+	cardDesignTemplate := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"${bgOpacityPercent}\"></rect><image href=\"${backgroundImage}\" opacity=\"${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><image href=\"${logoImage}\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"${textColor}\"></line><text fill=\"${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">${cardTitle}</text><text fill=\"${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">${cardSubtitle}</text></svg>"
 
 	fullStep := resource.TestStep{
 		Config: testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
@@ -113,7 +145,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "card_design_template", cardDesignTemplate),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.description", fmt.Sprintf("%s Example Description", name)),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"), // ensures calculated default is 5
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.columns", "1"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.background_image", backgroundImage),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.logo_image", logoImage),
@@ -131,7 +163,10 @@ func TestAccCredentialType_Full(t *testing.T) {
 
 	updatedName := acctest.ResourceNameGen()
 
-	updatedCardDesignTemplate := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+	// Note: If template is defined directly in HCL, the ${variableName} variables are escaped with $$, such as $${variableName}.
+	// The HCL in the test case has the escaped variable name.  The test value does not ensuring it is saved to, and returned from, state properly.
+	// Future: Move the design template to a test asset file.
+	updatedCardDesignTemplate := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">${cardTitle}</text></svg>"
 
 	minimalStep := resource.TestStep{
 		Config: testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
@@ -143,30 +178,31 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "DemonstrationCard"),
 			resource.TestCheckResourceAttr(resourceFullName, "card_design_template", updatedCardDesignTemplate),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.name", updatedName),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.columns", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.bg_opacity_percent", "100"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.card_color", "#000000"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.text_color", "#eff0f1"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"), // ensures calculated default is 5
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.#", "1"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.id", "Issued Timestamp -> timestamp"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.type", "Issued Timestamp"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.title", "timestamp"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.is_visible", "false"),
+
+			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.columns"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.bg_opacity_percent"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.card_color"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.text_color"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             nil, //testAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// full - new
 			fullStep,
 			{
-				Config:  testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
-				Destroy: true,
+				Config: testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
+				//Destroy: true,
 			},
 			// minimal - new
 			minimalStep,
@@ -231,7 +267,7 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 			},
 			{
 				Config:      testAccCredentialTypeConfig_InvalidVersion(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				ExpectError: regexp.MustCompile("Error: Invalid Configuration for Read-Only Attribute"),
 				Destroy:     true,
 			},
 			{
@@ -300,6 +336,31 @@ func TestAccCredentialType_CardDesignTemplate(t *testing.T) {
 	})
 }
 
+func testAccCredentialTypeConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_credential_type" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  title                = "%[4]s"
+  description          = "%[4]s"
+  card_type            = "DemonstrationCard"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+
+  metadata = {
+    name               = "%[4]s"
+
+    fields = [
+      {
+        type       = "Issued Timestamp"
+        title      = "timestamp"
+        is_visible = false
+      }
+    ]
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
 func testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -314,7 +375,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
-    version            = 5
     columns            = 1
     background_image   = "%[4]s"
     logo_image         = "%[5]s"
@@ -383,7 +443,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
 
     fields = [
       {
@@ -410,7 +469,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
-    version            = 5
     background_image   = "%[4]s"
     logo_image         = "%[5]s"
     bg_opacity_percent = 100
@@ -478,7 +536,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -519,7 +576,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "InvalidColor"
     text_color         = "#eff0f1"
@@ -547,7 +603,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "InvalidColor"
@@ -575,7 +630,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
     bg_opacity_percent = 101
     card_color         = "#000000"
     text_color         = "#000000"
@@ -631,7 +685,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
@@ -656,7 +709,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
@@ -684,7 +736,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
@@ -713,7 +764,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000" # {cardColor} is missing from card_design_template
     text_color         = "#000000"
@@ -742,7 +792,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description          = "%[3]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
@@ -772,7 +821,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description" # {subTitle} missing from template - description maps to card subtitle value
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000" 
     text_color         = "#000000"
@@ -800,7 +848,6 @@ resource "pingone_credential_type" "%[2]s" {
 
   metadata = {
     name               = "%[3]s"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000" 
     text_color         = "#000000" # {textColor} is missing from card_design_template

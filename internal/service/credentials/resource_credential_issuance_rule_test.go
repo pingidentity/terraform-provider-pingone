@@ -111,7 +111,7 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttr(resourceFullName, "filter.scim", "address.countryCode eq \"TX\""),
+			resource.TestCheckResourceAttr(resourceFullName, "filter.scim", "address.countryCode eq \"NG\""),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.revoke", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.update", "PERIODIC"),
@@ -184,15 +184,48 @@ func TestAccCredentialIssuanceRule_InvalidConfigs(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCredentialIssuanceRule_InvalidCredentialTypeID(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Error when calling `CreateCredentialIssuanceRule`: The request could not be completed. One or more validation errors were in the request."),
+				ExpectError: regexp.MustCompile("Error: Missing required argument"),
+				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialIssuanceRule_InvalidDigitalWalletID(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Error when calling `CreateCredentialIssuanceRule`: The request could not be completed. One or more validation errors were in the request."),
+				ExpectError: regexp.MustCompile("Error: Missing required argument"),
+				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialIssuanceRule_InvalidScimFilterAttribute(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Error when calling `CreateCredentialIssuanceRule`: The request could not be completed. One or more validation errors were in the request."),
+				Config:      testAccCredentialIssuanceRule_InvalidGroupIdFilterAttribute(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccCredentialIssuanceRule_InvalidPopulationIdFilterAttribute(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccCredentialIssuanceRule_InvalidFilterAttribute(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccCredentialIssuanceRule_InvalidAutomationAttribute(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccCredentialIssuanceRule_InvalidNotificationAttribute(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccCredentialIssuanceRule_InvalidNotificationMethodsAttribute(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccCredentialIssuanceRule_InvalidNotificationTemplateAttribute(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
+				Destroy:     true,
 			},
 		},
 	})
@@ -217,7 +250,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -302,7 +334,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -354,7 +385,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
   status                        = "ACTIVE"
 
   filter = {
-    scim = "address.countryCode eq \"TX\""
+    scim = "address.countryCode eq \"NG\""
   }
 
   automation = {
@@ -380,7 +411,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -476,7 +506,6 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
   environment_id                = data.pingone_environment.credentials_test.id
-  credential_type_id            = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "DISABLED"
 
@@ -507,7 +536,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -523,39 +551,9 @@ resource "pingone_credential_type" "%[2]s" {
   }
 }
 
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
-  name           = "%[3]s"
-  enabled        = true
-
-  oidc_options {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
-
-    mobile_app {
-      bundle_id                = "com.pingidentity.ios_%[3]s"
-      package_name             = "com.pingidentity.android_%[3]s"
-      passcode_refresh_seconds = 30
-    }
-  }
-}
-
-resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
-  application_id = resource.pingone_application.%[2]s.id
-  name           = "%[3]s"
-  app_open_url   = "https://www.example.com"
-
-  depends_on = [resource.pingone_application.%[2]s]
-}
-
 resource "pingone_credential_issuance_rule" "%[2]s" {
   environment_id                = data.pingone_environment.credentials_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
-  digital_wallet_application_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
   status                        = "DISABLED"
 
   filter = {
@@ -571,7 +569,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_InvalidScimFilterAttribute(resourceName, name string) string {
+func testAccCredentialIssuanceRule_InvalidGroupIdFilterAttribute(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -590,7 +588,6 @@ resource "pingone_credential_type" "%[2]s" {
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -642,7 +639,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
   status                        = "ACTIVE"
 
   filter = {
-    scim = "invalidAttribute eq \"Users\""
+    group_ids = []
   }
 
   automation = {
@@ -651,5 +648,531 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
     update = "ON_DEMAND"
   }
 
+  notification = {
+    methods = ["EMAIL", "SMS"]
+    template = {
+      locale  = "en"
+      variant = "template_B"
+    }
+  }
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}
+
+func testAccCredentialIssuanceRule_InvalidPopulationIdFilterAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_credential_type" "%[2]s" {
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[3]s"
+    description        = "%[3]s Example Description"
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Alphanumeric Text"
+        title      = "Example Field"
+        value      = "Demo"
+        is_visible = false
+      },
+    ]
+  }
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    bundle_id                   = "com.pingidentity.ios_%[3]s"
+    package_name                = "com.pingidentity.android_%[3]s"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[3]s"
+      package_name             = "com.pingidentity.android_%[3]s"
+      passcode_refresh_seconds = 30
+    }
+  }
+}
+
+resource "pingone_digital_wallet_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "https://www.example.com"
+
+  depends_on = [resource.pingone_application.%[2]s]
+}
+
+resource "pingone_credential_issuance_rule" "%[2]s" {
+  environment_id                = data.pingone_environment.credentials_test.id
+  credential_type_id            = resource.pingone_credential_type.%[2]s.id
+  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
+  status                        = "ACTIVE"
+
+  filter = {
+    population_ids = []
+  }
+
+  automation = {
+    issue  = "ON_DEMAND"
+    revoke = "PERIODIC"
+    update = "ON_DEMAND"
+  }
+
+  notification = {
+    methods = ["EMAIL", "SMS"]
+    template = {
+      locale  = "en"
+      variant = "template_B"
+    }
+  }
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}
+
+func testAccCredentialIssuanceRule_InvalidFilterAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_credential_type" "%[2]s" {
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[3]s"
+    description        = "%[3]s Example Description"
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Alphanumeric Text"
+        title      = "Example Field"
+        value      = "Demo"
+        is_visible = false
+      },
+    ]
+  }
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    bundle_id                   = "com.pingidentity.ios_%[3]s"
+    package_name                = "com.pingidentity.android_%[3]s"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[3]s"
+      package_name             = "com.pingidentity.android_%[3]s"
+      passcode_refresh_seconds = 30
+    }
+  }
+}
+
+resource "pingone_digital_wallet_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "https://www.example.com"
+
+  depends_on = [resource.pingone_application.%[2]s]
+}
+
+resource "pingone_credential_issuance_rule" "%[2]s" {
+  environment_id                = data.pingone_environment.credentials_test.id
+  credential_type_id            = resource.pingone_credential_type.%[2]s.id
+  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
+  status                        = "ACTIVE"
+
+  filter = {}
+
+  automation = {
+    issue  = "ON_DEMAND"
+    revoke = "PERIODIC"
+    update = "ON_DEMAND"
+  }
+
+  notification = {
+    methods = ["EMAIL", "SMS"]
+    template = {
+      locale  = "en"
+      variant = "template_B"
+    }
+  }
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}
+
+func testAccCredentialIssuanceRule_InvalidAutomationAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_credential_type" "%[2]s" {
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[3]s"
+    description        = "%[3]s Example Description"
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Alphanumeric Text"
+        title      = "Example Field"
+        value      = "Demo"
+        is_visible = false
+      },
+    ]
+  }
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    bundle_id                   = "com.pingidentity.ios_%[3]s"
+    package_name                = "com.pingidentity.android_%[3]s"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[3]s"
+      package_name             = "com.pingidentity.android_%[3]s"
+      passcode_refresh_seconds = 30
+    }
+  }
+}
+
+resource "pingone_digital_wallet_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "https://www.example.com"
+
+  depends_on = [resource.pingone_application.%[2]s]
+}
+
+resource "pingone_credential_issuance_rule" "%[2]s" {
+  environment_id                = data.pingone_environment.credentials_test.id
+  credential_type_id            = resource.pingone_credential_type.%[2]s.id
+  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
+  status                        = "ACTIVE"
+
+  filter = {
+    scim = "address.countryCode eq \"NG\""
+  }
+
+  automation = {}
+
+  notification = {
+    methods = ["EMAIL", "SMS"]
+    template = {
+      locale  = "en"
+      variant = "template_B"
+    }
+  }
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}
+
+func testAccCredentialIssuanceRule_InvalidNotificationAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_credential_type" "%[2]s" {
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[3]s"
+    description        = "%[3]s Example Description"
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Alphanumeric Text"
+        title      = "Example Field"
+        value      = "Demo"
+        is_visible = false
+      },
+    ]
+  }
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    bundle_id                   = "com.pingidentity.ios_%[3]s"
+    package_name                = "com.pingidentity.android_%[3]s"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[3]s"
+      package_name             = "com.pingidentity.android_%[3]s"
+      passcode_refresh_seconds = 30
+    }
+  }
+}
+
+resource "pingone_digital_wallet_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "https://www.example.com"
+
+  depends_on = [resource.pingone_application.%[2]s]
+}
+
+resource "pingone_credential_issuance_rule" "%[2]s" {
+  environment_id                = data.pingone_environment.credentials_test.id
+  credential_type_id            = resource.pingone_credential_type.%[2]s.id
+  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
+  status                        = "ACTIVE"
+
+  filter = {
+    scim = "address.countryCode eq \"NG\""
+  }
+
+  automation = {
+    issue  = "ON_DEMAND"
+    revoke = "PERIODIC"
+    update = "ON_DEMAND"
+  }
+
+  notification = {}
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}
+
+func testAccCredentialIssuanceRule_InvalidNotificationMethodsAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_credential_type" "%[2]s" {
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[3]s"
+    description        = "%[3]s Example Description"
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Alphanumeric Text"
+        title      = "Example Field"
+        value      = "Demo"
+        is_visible = false
+      },
+    ]
+  }
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    bundle_id                   = "com.pingidentity.ios_%[3]s"
+    package_name                = "com.pingidentity.android_%[3]s"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[3]s"
+      package_name             = "com.pingidentity.android_%[3]s"
+      passcode_refresh_seconds = 30
+    }
+  }
+}
+
+resource "pingone_digital_wallet_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "https://www.example.com"
+
+  depends_on = [resource.pingone_application.%[2]s]
+}
+
+resource "pingone_credential_issuance_rule" "%[2]s" {
+  environment_id                = data.pingone_environment.credentials_test.id
+  credential_type_id            = resource.pingone_credential_type.%[2]s.id
+  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
+  status                        = "ACTIVE"
+
+  filter = {
+    scim = "address.countryCode eq \"NG\""
+  }
+
+  automation = {
+    issue  = "ON_DEMAND"
+    revoke = "PERIODIC"
+    update = "ON_DEMAND"
+  }
+
+  notification = {
+    methods = []
+    template = {
+      locale  = "en"
+      variant = "template_B"
+    }
+  }
+}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}
+
+func testAccCredentialIssuanceRule_InvalidNotificationTemplateAttribute(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_credential_type" "%[2]s" {
+  environment_id       = data.pingone_environment.credentials_test.id
+  title                = "%[3]s"
+  description          = "%[3]s Example Description"
+  card_type            = "%[3]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[3]s"
+    description        = "%[3]s Example Description"
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Alphanumeric Text"
+        title      = "Example Field"
+        value      = "Demo"
+        is_visible = false
+      },
+    ]
+  }
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    bundle_id                   = "com.pingidentity.ios_%[3]s"
+    package_name                = "com.pingidentity.android_%[3]s"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[3]s"
+      package_name             = "com.pingidentity.android_%[3]s"
+      passcode_refresh_seconds = 30
+    }
+  }
+}
+
+resource "pingone_digital_wallet_application" "%[2]s" {
+  environment_id = data.pingone_environment.credentials_test.id
+  application_id = resource.pingone_application.%[2]s.id
+  name           = "%[3]s"
+  app_open_url   = "https://www.example.com"
+
+  depends_on = [resource.pingone_application.%[2]s]
+}
+
+resource "pingone_credential_issuance_rule" "%[2]s" {
+  environment_id                = data.pingone_environment.credentials_test.id
+  credential_type_id            = resource.pingone_credential_type.%[2]s.id
+  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
+  status                        = "ACTIVE"
+
+  filter = {
+    scim = "address.countryCode eq \"NG\""
+  }
+
+  automation = {
+    issue  = "ON_DEMAND"
+    revoke = "PERIODIC"
+    update = "ON_DEMAND"
+  }
+
+  notification = {
+    methods = ["EMAIL", "SMS"]
+    template = {}
+  }
 }`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
 }

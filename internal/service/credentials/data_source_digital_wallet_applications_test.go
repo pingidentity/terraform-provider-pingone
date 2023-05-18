@@ -53,14 +53,20 @@ func TestAccDigitalWalletApplicationsDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_digital_wallet_applications.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := acctest.ResourceNameGen()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDigitalWalletApplicationsDataSource_NotFound(resourceName),
+				Config: testAccDigitalWalletApplicationsDataSource_NotFound(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
@@ -168,12 +174,12 @@ data "pingone_digital_wallet_applications" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccDigitalWalletApplicationsDataSource_NotFound(resourceName string) string {
+func testAccDigitalWalletApplicationsDataSource_NotFound(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-data "pingone_digital_wallet_applications" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+data "pingone_digital_wallet_applications" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

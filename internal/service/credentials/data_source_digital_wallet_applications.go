@@ -121,20 +121,11 @@ func (r *DigitalWalletApplicationsDataSource) Read(ctx context.Context, req data
 			return r.client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadAllDigitalWalletApplications",
-		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Error if not found
-	if response == nil {
-		resp.Diagnostics.AddError(
-			"Cannot find digital wallet applications",
-			fmt.Sprintf("The list of digital wallet ids for environment %s cannot be found.", data.EnvironmentId.String()),
-		)
 		return
 	}
 

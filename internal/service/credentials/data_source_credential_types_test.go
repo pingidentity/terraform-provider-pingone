@@ -86,7 +86,6 @@ resource "pingone_credential_type" "%[3]s-1" {
     name               = "%[4]s"
     columns            = 1
     description        = "%[4]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -100,6 +99,7 @@ resource "pingone_credential_type" "%[3]s-1" {
       }
     ]
   }
+  depends_on = [pingone_environment.%[2]s]
 }
 
 resource "pingone_credential_type" "%[3]s-2" {
@@ -113,7 +113,6 @@ resource "pingone_credential_type" "%[3]s-2" {
     name               = "%[4]s"
     columns            = 1
     description        = "%[4]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -127,6 +126,7 @@ resource "pingone_credential_type" "%[3]s-2" {
       }
     ]
   }
+  depends_on = [pingone_environment.%[2]s]
 }
 
 resource "pingone_credential_type" "%[3]s-3" {
@@ -140,7 +140,6 @@ resource "pingone_credential_type" "%[3]s-3" {
     name               = "%[4]s"
     columns            = 1
     description        = "%[4]s Example Description"
-    version            = 5
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -154,6 +153,7 @@ resource "pingone_credential_type" "%[3]s-3" {
       }
     ]
   }
+  depends_on = [pingone_environment.%[2]s]
 }
 data "pingone_credential_types" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id

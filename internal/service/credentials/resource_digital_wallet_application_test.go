@@ -3,6 +3,7 @@ package credentials_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -74,6 +75,34 @@ func testAccCheckDigitalWalletApplicationDestroy(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func TestAccDigitalWalletApplication_NewEnv(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_digital_wallet_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := acctest.ResourceNameGen()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDigitalWalletApplication_NewEnv(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+				),
+			},
+		},
+	})
 }
 
 func TestAccDigitalWalletApplication_Full(t *testing.T) {
@@ -196,6 +225,41 @@ func TestAccDigitalWalletApplication_InvalidAppOpenUrl(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccDigitalWalletApplication_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+	name           = "%[4]s"
+	enabled        = true
+	
+	oidc_options {
+		type                        = "NATIVE_APP"
+		grant_types                 = ["AUTHORIZATION_CODE"]
+    	response_types              = ["CODE"]
+		pkce_enforcement            = "S256_REQUIRED"
+		token_endpoint_authn_method = "NONE"
+		redirect_uris               = ["https://www.pingidentity.com"]
+
+		mobile_app {
+			bundle_id                = "com.pingidentity.ios_%[4]s"
+			package_name             = "com.pingidentity.android_%[4]s"
+			passcode_refresh_seconds = 30
+		}		
+		bundle_id                   = "com.pingidentity.ios_%[4]s"
+		package_name                = "com.pingidentity.android_%[4]s"				
+	}
+}
+
+resource "pingone_digital_wallet_application" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+	application_id = resource.pingone_application.%[3]s.id
+	name           = "%[4]s"
+	app_open_url   = "https://www.example.com/appopen"  
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl string) string {

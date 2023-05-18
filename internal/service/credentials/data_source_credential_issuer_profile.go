@@ -75,7 +75,7 @@ func (r *CredentialIssuerProfileDataSource) Schema(ctx context.Context, req data
 			},
 
 			"name": schema.StringAttribute{
-				Description: "The name of the credential issuer.",
+				Description: "The name of the credential issuer. The name is included in the metadata of an issued verifiable credential.",
 				Computed:    true,
 			},
 		},
@@ -145,15 +145,6 @@ func (r *CredentialIssuerProfileDataSource) Read(ctx context.Context, req dataso
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Error if not found
-	if response == nil {
-		resp.Diagnostics.AddError(
-			"Cannot find credential issuer profile",
-			fmt.Sprintf("The credential issuer profile for environment %s cannot be found.", data.EnvironmentId.String()),
-		)
 		return
 	}
 
