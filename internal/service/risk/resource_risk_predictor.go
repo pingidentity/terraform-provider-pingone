@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -94,8 +95,8 @@ type predictorCustomMapHML struct {
 }
 
 type predictorCustomMapHMLBetweenRanges struct {
-	MinScore types.Float64 `tfsdk:"min_score"`
-	MaxScore types.Float64 `tfsdk:"max_score"`
+	MinScore types.Float64 `tfsdk:"min_value"`
+	MaxScore types.Float64 `tfsdk:"max_value"`
 }
 
 type predictorCustomMapHMLList struct {
@@ -240,8 +241,8 @@ var (
 	}
 
 	predictorCustomMapHMLBetweenRangesTFObjectTypes = map[string]attr.Type{
-		"min_score": types.Float64Type,
-		"max_score": types.Float64Type,
+		"min_value": types.Float64Type,
+		"max_value": types.Float64Type,
 	}
 
 	predictorCustomMapHMLListTFObjectTypes = map[string]attr.Type{
@@ -347,21 +348,93 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	const emailAddressMaxLength = 5
 	const attrDescriptionMaxLength = 1024
 
-	typeDescriptionFmt := "A string that specifies the type of the risk predictor.  This can be either `ANONYMOUS_NETWORK`, `COMPOSITE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `DEVICE`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR` or `VELOCITY`."
-	typeDescription := framework.SchemaDescription{
-		MarkdownDescription: typeDescriptionFmt,
-		Description:         strings.ReplaceAll(typeDescriptionFmt, "`", "\""),
+	compactNameDescription := framework.SchemaDescriptionMarkdown(
+		"A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).",
+	).IsImmutable()
+
+	typeDescription := framework.SchemaDescriptionMarkdown(
+		"A string that specifies the type of the risk predictor.",
+	).AllowedValues(
+		framework.EnumToString(risk.AllowedEnumPredictorTypeEnumValues),
+	)
+
+	defaultResultTypeDescription := framework.SchemaDescriptionMarkdown(
+		"The default result type. Options are `VALUE`, indicating any custom attribute that's defined.",
+	)
+
+	defaultResultLevelDescription := framework.SchemaDescriptionMarkdown(
+		"The default result level.",
+	).AllowedValues(
+		framework.EnumToString(risk.AllowedEnumRiskLevelEnumValues),
+	)
+
+	predictorCompositeCompositionLevelDescriptionFmt := "A string that specifies the risk level for the composite risk predictor. The value must be one of the following: `LOW`, `MEDIUM`, `HIGH`."
+	predictorCompositeCompositionLevelDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorCompositeCompositionLevelDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorCompositeCompositionLevelDescriptionFmt, "`", "\""),
 	}
 
-	// resultLevelDescriptionFmt := "A string that identifies the risk level. Options are `HIGH`, `MEDIUM`, and `LOW`."
-	// resultLevelDescription := framework.SchemaDescription{
-	// 	MarkdownDescription: resultLevelDescriptionFmt,
-	// 	Description:         strings.ReplaceAll(resultLevelDescriptionFmt, "`", "\""),
-	// }
+	predictorCustomMapContainsDescriptionFmt := "A string that specifies the attribute reference that contains the value to match in the custom map.  The attribute reference should come from either the incoming event (`${event.*}`) or the evaluation details (`${details.*}`).  When defining attribute references in Terraform, the leading `$` needs to be escaped with an additional `$` character, e.g. `contains = \"$${event.myattribute}\"`."
+	predictorCustomMapContainsDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorCustomMapContainsDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorCustomMapContainsDescriptionFmt, "`", "\""),
+	}
+
+	predictorCustomMapBetweenRangesDescriptionFmt := "A single nested object that describes the upper and lower bounds of ranges of values that apply to the attribute reference in `predictor_custom_map.contains`, that map to high, medium or low risk results."
+	predictorCustomMapBetweenRangesDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorCustomMapBetweenRangesDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorCustomMapBetweenRangesDescriptionFmt, "`", "\""),
+	}
+
+	predictorCustomMapIPRangesDescriptionFmt := "A single nested object that describes IP CIDR ranges of values that apply to the attribute reference in `predictor_custom_map.contains`, that map to high, medium or low risk results."
+	predictorCustomMapIPRangesDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorCustomMapIPRangesDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorCustomMapIPRangesDescriptionFmt, "`", "\""),
+	}
+
+	predictorCustomMapStringsDescriptionFmt := "A single nested object that describes the string values that apply to the attribute reference in `predictor_custom_map.contains`, that map to high, medium or low risk results."
+	predictorCustomMapStringsDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorCustomMapStringsDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorCustomMapStringsDescriptionFmt, "`", "\""),
+	}
+
+	predictorDeviceDetectDescriptionFmt := fmt.Sprintf("A string that represents the type of device detection to use. The default value is `%s`.", string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE))
+	predictorDeviceDetectDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorDeviceDetectDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorDeviceDetectDescriptionFmt, "`", "\""),
+	}
+
+	predictorDeviceActivationAtDescriptionFmt := "A string that represents a date on which the learning process for the device predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time."
+	predictorDeviceActivationAtDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorDeviceActivationAtDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorDeviceActivationAtDescriptionFmt, "`", "\""),
+	}
+
+	validUserLocationAnomalyRadiusUnitValues := make([]string, 0)
+	for _, v := range risk.AllowedEnumDistanceUnitEnumValues {
+		validUserLocationAnomalyRadiusUnitValues = append(validUserLocationAnomalyRadiusUnitValues, string(v))
+	}
+
+	predictorUserLocationAnomalyDescriptionFmt := fmt.Sprintf("A string that specifies the unit of distance to apply to the predictor distance.  Possible values are `%s`.  Defaults to `%s`.", strings.Join(validUserLocationAnomalyRadiusUnitValues, "`, `"), string(risk.ENUMDISTANCEUNIT_KILOMETERS))
+	predictorUserLocationAnomalyDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorUserLocationAnomalyDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorUserLocationAnomalyDescriptionFmt, "`", "\""),
+	}
+
+	validUserRiskBehaviorPredictionModelNameValues := make([]string, 0)
+	for _, v := range risk.AllowedEnumUserRiskBehaviorRiskModelEnumValues {
+		validUserRiskBehaviorPredictionModelNameValues = append(validUserRiskBehaviorPredictionModelNameValues, string(v))
+	}
+
+	predictorUserRiskBehaviorPredictionModelNameDescriptionFmt := fmt.Sprintf("A string that specifies the name of the prediction model to apply to the predictor evaluation.  Possible values are `%s`.  `%s` is used when applying the user-based risk model and `%s` is used when applying the organisation-based risk model.", strings.Join(validUserLocationAnomalyRadiusUnitValues, "`, `"), string(risk.ENUMUSERRISKBEHAVIORRISKMODEL_POINTS), string(risk.ENUMUSERRISKBEHAVIORRISKMODEL_LOGIN_ANOMALY_STATISTIC))
+	predictorUserRiskBehaviorPredictionModelNameDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorUserRiskBehaviorPredictionModelNameDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorUserRiskBehaviorPredictionModelNameDescriptionFmt, "`", "\""),
+	}
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to manage risk predictors in a PingOne environment.",
+		Description: "Resource to manage Risk predictors in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -371,7 +444,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			),
 
 			"name": schema.StringAttribute{
-				Description: "A string that specifies the unique, friendly name for the predictor. This name is displayed in the Risk Policies UI, when the admin is asked to define the overrides and weights in policy configuration.",
+				Description: "A string that specifies the unique, friendly name for the predictor. This name is displayed in the Risk Policies UI, when the admin is asked to define the overrides and weights in policy configuration and is unique per environment.",
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
@@ -379,8 +452,9 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"compact_name": schema.StringAttribute{
-				Description: "A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. This property is immutable; it cannot be modified after initial creation. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under details).",
-				Required:    true,
+				Description:         compactNameDescription.Description,
+				MarkdownDescription: compactNameDescription.MarkdownDescription,
+				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -402,10 +476,14 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
 				Computed:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"default": schema.SingleNestedAttribute{
-				Description: "",
+				Description: "A single nested object that specifies the default configuration values for the risk predictor.",
 				Optional:    true,
 				Computed:    true,
 
@@ -417,30 +495,23 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 
 					"result": schema.SingleNestedAttribute{
-						Description: "",
+						Description: "A single nested object that contains the result assigned to the predictor if the predictor could not be calculated during the risk evaluation. If this field is not provided, and the predictor could not be calculated during risk evaluation, the behavior is: 1) If the predictor is used in an override, the override is skipped; 2) In the weighted policy, the predictor will have a weight of 0.",
 						Optional:    true,
 						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
-								Description:         typeDescription.Description,
-								MarkdownDescription: typeDescription.MarkdownDescription,
-								Optional:            true,
+								Description:         defaultResultTypeDescription.Description,
+								MarkdownDescription: defaultResultTypeDescription.MarkdownDescription,
 								Computed:            true,
 
-								Validators: []validator.String{
-									stringvalidator.OneOf(func() []string {
-										strings := make([]string, 0)
-										for _, v := range risk.AllowedEnumResultTypeEnumValues {
-											strings = append(strings, string(v))
-										}
-										return strings
-									}()...),
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
 								},
 							},
 
 							"level": schema.StringAttribute{
-								Description:         typeDescription.Description,
-								MarkdownDescription: typeDescription.MarkdownDescription,
+								Description:         defaultResultLevelDescription.Description,
+								MarkdownDescription: defaultResultLevelDescription.MarkdownDescription,
 								Optional:            true,
 								Computed:            true,
 
@@ -478,26 +549,14 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_anonymous_network": schema.SingleNestedAttribute{
-				Description: "A single nested attribute that specifies options for the Anonymous Network predictor.",
+				Description: "A single nested object that specifies options for the Anonymous Network predictor.",
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
 				},
 
-				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						path.MatchRelative().AtParent().AtName("predictor_composite"),
-						path.MatchRelative().AtParent().AtName("predictor_custom_map"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-						path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-						path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
-				},
+				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
@@ -505,17 +564,17 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_composite": schema.SingleNestedAttribute{
-				Description: "A single nested attribute that specifies options for the Composite predictor.",
+				Description: "A single nested object that specifies options for the Composite predictor.",
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"composition": schema.SingleNestedAttribute{
-						Description: "",
+						Description: "Contains the composition of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.",
 						Required:    true,
 
 						Attributes: map[string]schema.Attribute{
 							"condition_json": schema.StringAttribute{
-								Description: "A string that specifies the condition for the composite risk predictor. The value must be a valid JSON string.",
+								Description: "A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.",
 								Required:    true,
 
 								Validators: []validator.String{
@@ -524,13 +583,14 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 							},
 
 							"condition": schema.StringAttribute{
-								Description: "A string that specifies the condition for the composite risk predictor. The value must be a valid JSON string.",
+								Description: "A string that specifies the condition logic for the composite risk predictor as applied to the service.",
 								Computed:    true,
 							},
 
 							"level": schema.StringAttribute{
-								Description: "A string that specifies the risk level for the composite risk predictor. The value must be one of the following: LOW, MEDIUM, HIGH.",
-								Required:    true,
+								Description:         predictorCompositeCompositionLevelDescription.Description,
+								MarkdownDescription: predictorCompositeCompositionLevelDescription.MarkdownDescription,
+								Required:            true,
 
 								Validators: []validator.String{
 									stringvalidator.OneOf(func() []string {
@@ -545,187 +605,96 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						},
 					},
 				},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
+				},
 			},
 
 			"predictor_custom_map": schema.SingleNestedAttribute{
-				Description: "A single nested attribute that specifies options for the Composite predictor.",
+				Description: "A single nested object that specifies options for the Custom Map predictor.",
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"contains": schema.StringAttribute{
-						Description: "A string that specifies the value to match in the custom map. Maximum length is 1024 characters.",
-						Required:    true,
+						Description:         predictorCustomMapContainsDescription.Description,
+						MarkdownDescription: predictorCustomMapContainsDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(regexp.MustCompile(`^\$\{(event|details)\.[a-zA-Z0-9.]+\}$`), `Value must match the regex "^\$\{(event|details)\.[a-zA-Z0-9.]+\}$\".`),
+						},
 					},
 
 					"type": schema.StringAttribute{
-						Description: typeDescription.Description,
+						Description: "A string that specifies the type of custom map predictor.",
 						Computed:    true,
 					},
 
 					"between_ranges": schema.SingleNestedAttribute{
-						Description: "",
-						Optional:    true,
+						Description:         predictorCustomMapBetweenRangesDescription.Description,
+						MarkdownDescription: predictorCustomMapBetweenRangesDescription.MarkdownDescription,
+						Optional:            true,
 
 						Attributes: map[string]schema.Attribute{
-							"high": schema.SingleNestedAttribute{
-								Description: "",
-								Optional:    true,
+							"high":   customMapBetweenRangesBoundSchema("high"),
+							"medium": customMapBetweenRangesBoundSchema("medium"),
+							"low":    customMapBetweenRangesBoundSchema("low"),
+						},
 
-								Attributes: map[string]schema.Attribute{
-									"min_score": schema.Float64Attribute{
-										Description: "A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
-										Required:    true,
-									},
-
-									"max_score": schema.Float64Attribute{
-										Description: "A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
-										Required:    true,
-									},
-								},
-							},
-
-							"medium": schema.SingleNestedAttribute{
-								Description: "",
-								Optional:    true,
-
-								Attributes: map[string]schema.Attribute{
-									"min_score": schema.Float64Attribute{
-										Description: "A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
-										Required:    true,
-									},
-
-									"max_score": schema.Float64Attribute{
-										Description: "A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
-										Required:    true,
-									},
-								},
-							},
-
-							"low": schema.SingleNestedAttribute{
-								Description: "",
-								Optional:    true,
-
-								Attributes: map[string]schema.Attribute{
-									"min_score": schema.Float64Attribute{
-										Description: "A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
-										Required:    true,
-									},
-
-									"max_score": schema.Float64Attribute{
-										Description: "A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.",
-										Required:    true,
-									},
-								},
-							},
+						Validators: []validator.Object{
+							objectvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("between_ranges"),
+								path.MatchRelative().AtParent().AtName("ip_ranges"),
+								path.MatchRelative().AtParent().AtName("string_list"),
+							),
 						},
 					},
 
 					"ip_ranges": schema.SingleNestedAttribute{
-						Description: "",
-						Optional:    true,
+						Description:         predictorCustomMapIPRangesDescription.Description,
+						MarkdownDescription: predictorCustomMapIPRangesDescription.MarkdownDescription,
+						Optional:            true,
 
 						Attributes: map[string]schema.Attribute{
-							"high": schema.SingleNestedAttribute{
-								Description: "",
-								Optional:    true,
+							"high":   customMapIpRangesBoundSchema("high"),
+							"medium": customMapIpRangesBoundSchema("medium"),
+							"low":    customMapIpRangesBoundSchema("low"),
+						},
 
-								Attributes: map[string]schema.Attribute{
-									"values": schema.SetAttribute{
-										Description: "",
-										Optional:    true,
-										ElementType: types.StringType,
-									},
-								},
-							},
-
-							"medium": schema.SingleNestedAttribute{
-								Description: "",
-								Optional:    true,
-
-								Attributes: map[string]schema.Attribute{
-									"values": schema.SetAttribute{
-										Description: "",
-										Optional:    true,
-										ElementType: types.StringType,
-									},
-								},
-							},
-
-							"low": schema.SingleNestedAttribute{
-								Description: "",
-								Optional:    true,
-
-								Attributes: map[string]schema.Attribute{
-									"values": schema.SetAttribute{
-										Description: "",
-										Optional:    true,
-										ElementType: types.StringType,
-									},
-								},
-							},
+						Validators: []validator.Object{
+							objectvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("between_ranges"),
+								path.MatchRelative().AtParent().AtName("ip_ranges"),
+								path.MatchRelative().AtParent().AtName("string_list"),
+							),
 						},
 					},
 
 					"string_list": schema.SingleNestedAttribute{
-						Description: "",
-						Optional:    true,
+						Description:         predictorCustomMapStringsDescription.Description,
+						MarkdownDescription: predictorCustomMapStringsDescription.MarkdownDescription,
+						Optional:            true,
 
 						Attributes: map[string]schema.Attribute{
-							"high": schema.SingleNestedAttribute{
-								Description: "",
-								Optional:    true,
+							"high":   customMapStringValuesSchema("high"),
+							"medium": customMapStringValuesSchema("medium"),
+							"low":    customMapStringValuesSchema("low"),
+						},
 
-								Attributes: map[string]schema.Attribute{
-									"values": schema.SetAttribute{
-										Description: "",
-										Optional:    true,
-										ElementType: types.StringType,
-									},
-								},
-							},
-
-							"medium": schema.SingleNestedAttribute{
-								Description: "",
-								Optional:    true,
-
-								Attributes: map[string]schema.Attribute{
-									"values": schema.SetAttribute{
-										Description: "",
-										Optional:    true,
-										ElementType: types.StringType,
-									},
-								},
-							},
-
-							"low": schema.SingleNestedAttribute{
-								Description: "",
-								Optional:    true,
-
-								Attributes: map[string]schema.Attribute{
-									"values": schema.SetAttribute{
-										Description: "",
-										Optional:    true,
-										ElementType: types.StringType,
-									},
-								},
-							},
+						Validators: []validator.Object{
+							objectvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("between_ranges"),
+								path.MatchRelative().AtParent().AtName("ip_ranges"),
+								path.MatchRelative().AtParent().AtName("string_list"),
+							),
 						},
 					},
 				},
 
-				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						path.MatchRelative().AtParent().AtName("predictor_composite"),
-						path.MatchRelative().AtParent().AtName("predictor_custom_map"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-						path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-						path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
-				},
+				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
@@ -733,26 +702,14 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_geovelocity": schema.SingleNestedAttribute{
-				Description: "A single nested attribute that specifies options for the Geovelocity predictor.",
+				Description: "A single nested object that specifies options for the Geovelocity predictor.",
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
 				},
 
-				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						path.MatchRelative().AtParent().AtName("predictor_composite"),
-						path.MatchRelative().AtParent().AtName("predictor_custom_map"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-						path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-						path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
-				},
+				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
@@ -760,26 +717,14 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_ip_reputation": schema.SingleNestedAttribute{
-				Description: "A single nested attribute that specifies options for the IP reputation predictor.",
+				Description: "A single nested object that specifies options for the IP reputation predictor.",
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
 				},
 
-				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						path.MatchRelative().AtParent().AtName("predictor_composite"),
-						path.MatchRelative().AtParent().AtName("predictor_custom_map"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-						path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-						path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
-				},
+				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
@@ -787,13 +732,17 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_device": schema.SingleNestedAttribute{
-				Description: "A single nested attribute that specifies options for the Device predictor.",
+				Description: "A single nested object that specifies options for the Device predictor.",
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"detect": schema.StringAttribute{
-						Optional: true,
-						Computed: true,
+						Description:         predictorDeviceDetectDescription.Description,
+						MarkdownDescription: predictorDeviceDetectDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)),
 
 						Validators: []validator.String{
 							stringvalidator.OneOf(func() []string {
@@ -807,27 +756,16 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 
 					"activation_at": schema.StringAttribute{
-						Description: "You can use the `activation_at` parameter to specify a date on which the learning process for the predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.",
-						Optional:    true,
+						Description:         predictorDeviceActivationAtDescription.Description,
+						MarkdownDescription: predictorDeviceActivationAtDescription.MarkdownDescription,
+						Optional:            true,
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
 						},
 					},
 				},
 
-				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						path.MatchRelative().AtParent().AtName("predictor_composite"),
-						path.MatchRelative().AtParent().AtName("predictor_custom_map"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-						path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-						path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
-				},
+				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
@@ -835,58 +773,42 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_user_location_anomaly": schema.SingleNestedAttribute{
-				Description: "A single nested attribute that specifies options for the User Location Anomaly predictor.",
+				Description: "A single nested object that specifies options for the User Location Anomaly predictor.",
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"radius": schema.SingleNestedAttribute{
-						Description: "",
+						Description: "A single nested object that specifies options for the radius to apply to the predictor evaluation",
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
 							"distance": schema.Int64Attribute{
-								Description: "",
+								Description: "An integer that specifies the distance to apply to the predictor evaluation.",
 								Required:    true,
 							},
 
 							"unit": schema.StringAttribute{
-								Description: "",
-								Optional:    true,
-								Computed:    true,
+								Description:         predictorUserLocationAnomalyDescription.Description,
+								MarkdownDescription: predictorUserLocationAnomalyDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: stringdefault.StaticString(string(risk.ENUMDISTANCEUNIT_KILOMETERS)),
 
 								Validators: []validator.String{
-									stringvalidator.OneOf(func() []string {
-										strings := make([]string, 0)
-										for _, v := range risk.AllowedEnumDistanceUnitEnumValues {
-											strings = append(strings, string(v))
-										}
-										return strings
-									}()...),
+									stringvalidator.OneOf(validUserLocationAnomalyRadiusUnitValues...),
 								},
 							},
 						},
 					},
 
 					"days": schema.Int64Attribute{
-						Description: "",
-						Optional:    true,
+						Description: "An integer that specifies the number of days to apply to the predictor evaluation.",
 						Computed:    true,
 					},
 				},
 
-				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						path.MatchRelative().AtParent().AtName("predictor_composite"),
-						path.MatchRelative().AtParent().AtName("predictor_custom_map"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-						path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-						path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
-				},
+				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
@@ -894,46 +816,29 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_user_risk_behavior": schema.SingleNestedAttribute{
-				Description: "A single nested attribute that specifies options for the User Risk Behavior predictor.",
+				Description: "A single nested object that specifies options for the User Risk Behavior predictor.",
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"prediction_model": schema.SingleNestedAttribute{
-						Description: "",
+						Description: "A single nested object that specifies options for the prediction model to apply to the predictor evaluation.",
 						Required:    true,
 
 						Attributes: map[string]schema.Attribute{
 							"name": schema.StringAttribute{
-								Description: "",
-								Required:    true,
+								Description:         predictorUserRiskBehaviorPredictionModelNameDescription.Description,
+								MarkdownDescription: predictorUserRiskBehaviorPredictionModelNameDescription.MarkdownDescription,
+								Required:            true,
 
 								Validators: []validator.String{
-									stringvalidator.OneOf(func() []string {
-										strings := make([]string, 0)
-										for _, v := range risk.AllowedEnumUserRiskBehaviorRiskModelEnumValues {
-											strings = append(strings, string(v))
-										}
-										return strings
-									}()...),
+									stringvalidator.OneOf(validUserRiskBehaviorPredictionModelNameValues...),
 								},
 							},
 						},
 					},
 				},
 
-				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						path.MatchRelative().AtParent().AtName("predictor_composite"),
-						path.MatchRelative().AtParent().AtName("predictor_custom_map"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-						path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-						path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
-				},
+				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
@@ -941,13 +846,16 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_velocity": schema.SingleNestedAttribute{
-				Description: "A single nested attribute that specifies options for the Velocity predictor.",
+				Description: "A single nested object that specifies options for the Velocity predictor.",
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"measure": schema.StringAttribute{
 						Optional: true,
 						Computed: true,
+
+						Default: stringdefault.StaticString(string(risk.ENUMPREDICTORVELOCITYMEASURE_DISTINCT_COUNT)),
+
 						Validators: []validator.String{
 							stringvalidator.OneOf(func() []string {
 								strings := make([]string, 0)
@@ -960,7 +868,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 
 					"of": schema.StringAttribute{
-						Optional: true,
+						Required: true,
 
 						Validators: []validator.String{
 							stringvalidator.OneOf("${event.ip}", "${event.user.id}"),
@@ -1072,19 +980,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 
-				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
-						path.MatchRelative().AtParent().AtName("predictor_composite"),
-						path.MatchRelative().AtParent().AtName("predictor_custom_map"),
-						path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
-						path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-						path.MatchRelative().AtParent().AtName("predictor_device"),
-						path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
-						path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
-						path.MatchRelative().AtParent().AtName("predictor_velocity"),
-					),
-				},
+				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
@@ -1096,7 +992,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 func allowedCIDRSchemaAttribute() schema.SetAttribute {
 	return schema.SetAttribute{
-		Description: "",
+		Description: "A set of IP addresses (CIDRs) that are ignored for the predictor results. The list can include IPs in IPv4 format and IPs in IPv6 format.",
 		Optional:    true,
 		Computed:    true,
 		ElementType: types.StringType,
@@ -1104,11 +1000,129 @@ func allowedCIDRSchemaAttribute() schema.SetAttribute {
 		Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 
 		Validators: []validator.Set{
-			setvalidator.ConflictsWith(),
 			setvalidator.ValueStringsAre(
-				stringvalidator.RegexMatches(regexp.MustCompile(`^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$`), "Values must be valid CIDR format."),
+				stringvalidator.RegexMatches(verify.IPv4IPv6Regexp, "Values must be valid IPv4 or IPv6 CIDR format."),
 			),
 		},
+	}
+}
+
+var (
+	hmlValidators = []validator.Object{
+		objectvalidator.AtLeastOneOf(
+			path.MatchRelative().AtParent().AtName("high"),
+			path.MatchRelative().AtParent().AtName("medium"),
+			path.MatchRelative().AtParent().AtName("low"),
+		),
+	}
+
+	predictorObjectValidators = []validator.Object{
+		objectvalidator.ExactlyOneOf(
+			path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
+			path.MatchRelative().AtParent().AtName("predictor_composite"),
+			path.MatchRelative().AtParent().AtName("predictor_custom_map"),
+			path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
+			path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
+			path.MatchRelative().AtParent().AtName("predictor_device"),
+			path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
+			path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
+			path.MatchRelative().AtParent().AtName("predictor_velocity"),
+		),
+	}
+)
+
+func customMapBetweenRangesBoundSchema(riskResult string) schema.SingleNestedAttribute {
+	predictorCustomMapBetweenRangesMinValueDescriptionFmt := "A number that specifies the minimum value of the attribute named in `predictor_custom_map.contains`.  This represents the lower bound of this risk result range."
+	predictorCustomMapBetweenRangesMinValueDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorCustomMapBetweenRangesMinValueDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorCustomMapBetweenRangesMinValueDescriptionFmt, "`", "\""),
+	}
+
+	return schema.SingleNestedAttribute{
+		Description: fmt.Sprintf("A single nested object that describes the upper and lower bounds of ranges that map to a %s risk result.", riskResult),
+		Optional:    true,
+
+		Attributes: map[string]schema.Attribute{
+			"min_value": schema.Float64Attribute{
+				Description:         predictorCustomMapBetweenRangesMinValueDescription.Description,
+				MarkdownDescription: predictorCustomMapBetweenRangesMinValueDescription.MarkdownDescription,
+				Required:            true,
+			},
+
+			"max_value": schema.Float64Attribute{
+				Description:         predictorCustomMapBetweenRangesMinValueDescription.Description,
+				MarkdownDescription: predictorCustomMapBetweenRangesMinValueDescription.MarkdownDescription,
+				Required:            true,
+			},
+		},
+
+		Validators: hmlValidators,
+	}
+}
+
+func customMapIpRangesBoundSchema(riskResult string) schema.SingleNestedAttribute {
+
+	attributeDescription := fmt.Sprintf("A single nested object that describes the IP CIDR ranges that map to a %s risk result.", riskResult)
+
+	predictorCustomMapIPRangeValuesDescriptionFmt := "A set of strings, in CIDR format, that describe the CIDR ranges that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result."
+	predictorCustomMapIPRangeValuesDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorCustomMapIPRangeValuesDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorCustomMapIPRangeValuesDescriptionFmt, "`", "\""),
+	}
+
+	return customMapGenericValuesSchema(
+		framework.SchemaDescription{
+			Description:         attributeDescription,
+			MarkdownDescription: attributeDescription,
+		},
+		predictorCustomMapIPRangeValuesDescription,
+		hmlValidators,
+		[]validator.String{
+			stringvalidator.RegexMatches(verify.IPv4IPv6Regexp, "Values must be valid IPv4 or IPv6 CIDR format."),
+		},
+	)
+}
+
+func customMapStringValuesSchema(riskResult string) schema.SingleNestedAttribute {
+
+	attributeDescription := fmt.Sprintf("A single nested object that describes the string values that map to a %s risk result.", riskResult)
+
+	predictorCustomMapStringValuesDescriptionFmt := "A set of strings that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result."
+	predictorCustomMapStringValuesDescription := framework.SchemaDescription{
+		MarkdownDescription: predictorCustomMapStringValuesDescriptionFmt,
+		Description:         strings.ReplaceAll(predictorCustomMapStringValuesDescriptionFmt, "`", "\""),
+	}
+
+	return customMapGenericValuesSchema(
+		framework.SchemaDescription{
+			Description:         attributeDescription,
+			MarkdownDescription: attributeDescription,
+		},
+		predictorCustomMapStringValuesDescription,
+		hmlValidators,
+		[]validator.String{},
+	)
+}
+
+func customMapGenericValuesSchema(attributeDescription framework.SchemaDescription, attributeValuesDescription framework.SchemaDescription, validators []validator.Object, valuesValidators []validator.String) schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Description:         attributeDescription.Description,
+		MarkdownDescription: attributeDescription.MarkdownDescription,
+		Optional:            true,
+
+		Attributes: map[string]schema.Attribute{
+			"values": schema.SetAttribute{
+				Description:         attributeValuesDescription.Description,
+				MarkdownDescription: attributeValuesDescription.MarkdownDescription,
+				Optional:            true,
+				ElementType:         types.StringType,
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(valuesValidators...),
+				},
+			},
+		},
+
+		Validators: validators,
 	}
 }
 
@@ -1415,7 +1429,6 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 			fmt.Sprintf("The risk predictor with id \"%s\" cannot be deleted due to API limitation.  The risk predictor has been left in place but is no longer managed by the provider.", data.Id.ValueString()),
 		)
 	}
-	return
 }
 
 func (r *RiskPredictorResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -2262,7 +2275,8 @@ func (p *riskPredictorResourceModel) expandPredictorUserLocationAnomaly(ctx cont
 		data.SetRadius(*radius)
 	}
 
-	data.SetDays(50)
+	days := 50
+	data.SetDays(int32(days))
 
 	return &data, diags
 }
@@ -2389,8 +2403,10 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 	} else {
 		every := risk.NewRiskPredictorVelocityAllOfEvery()
 		every.SetUnit(risk.ENUMPREDICTORUNIT_HOUR)
-		every.SetQuantity(int32(1))
-		every.SetMinSample(int32(5))
+		quantity := 1
+		every.SetQuantity(int32(quantity))
+		minSample := 5
+		every.SetMinSample(int32(minSample))
 		data.SetEvery(*every)
 	}
 
@@ -2426,13 +2442,17 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		fallback.SetStrategy(risk.ENUMPREDICTORVELOCITYFALLBACKSTRATEGY_ENVIRONMENT_MAX)
 
 		if predictorPlan.Of.Equal(types.StringValue("${event.ip}")) {
-			fallback.SetHigh(float32(30))
-			fallback.SetMedium(float32(20))
+			high := 30
+			fallback.SetHigh(float32(high))
+			medium := 20
+			fallback.SetMedium(float32(medium))
 		}
 
 		if predictorPlan.Of.Equal(types.StringValue("${event.user.id}")) {
-			fallback.SetHigh(float32(3500))
-			fallback.SetMedium(float32(2500))
+			high := 3500
+			fallback.SetHigh(float32(high))
+			medium := 2500
+			fallback.SetMedium(float32(medium))
 		}
 
 		data.SetFallback(*fallback)
@@ -2475,8 +2495,10 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 	} else {
 		slidingWindow := risk.NewRiskPredictorVelocityAllOfSlidingWindow()
 		slidingWindow.SetUnit(risk.ENUMPREDICTORUNIT_DAY)
-		slidingWindow.SetQuantity(int32(7))
-		slidingWindow.SetMinSample(int32(3))
+		quantity := 7
+		slidingWindow.SetQuantity(int32(quantity))
+		minSample := 3
+		slidingWindow.SetMinSample(int32(minSample))
 		data.SetSlidingWindow(*slidingWindow)
 	}
 
@@ -2510,8 +2532,10 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 	} else {
 		use := risk.NewRiskPredictorVelocityAllOfUse()
 		use.SetType(risk.ENUMPREDICTORVELOCITYUSETYPE_POISSON_WITH_MAX)
-		use.SetMedium(float32(2.0))
-		use.SetHigh(float32(4.0))
+		medium := 2
+		use.SetMedium(float32(medium))
+		high := 4
+		use.SetHigh(float32(high))
 		data.SetUse(*use)
 	}
 
@@ -2716,7 +2740,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.PredictorAnonymousNetwork, d = p.toStateRiskPredictorAnonymousNetwork(apiObject.RiskPredictorAnonymousNetwork)
 	diags.Append(d...)
 
-	p.PredictorComposite, d = p.toStateRiskPredictorComposite(ctx, apiObject.RiskPredictorComposite, compositeConditionJSON)
+	p.PredictorComposite, d = p.toStateRiskPredictorComposite(apiObject.RiskPredictorComposite, compositeConditionJSON)
 	diags.Append(d...)
 
 	p.PredictorCustomMap, d = p.toStateRiskPredictorCustom(apiObject.RiskPredictorCustom)
@@ -2758,7 +2782,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorAnonymousNetwork(apiObj
 	return objValue, diags
 }
 
-func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(ctx context.Context, apiObject *risk.RiskPredictorComposite, compositeConditionJSON basetypes.StringValue) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *risk.RiskPredictorComposite, compositeConditionJSON basetypes.StringValue) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -2868,8 +2892,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 				setBetweenRanges = true
 
 				levelObj := map[string]attr.Value{
-					"min_score": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
-					"max_score": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
+					"min_value": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
+					"max_value": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
 				}
 				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLBetweenRangesTFObjectTypes, levelObj)
 				diags.Append(d...)
@@ -2961,8 +2985,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 				setBetweenRanges = true
 
 				levelObj := map[string]attr.Value{
-					"min_score": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
-					"max_score": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
+					"min_value": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
+					"max_value": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
 				}
 				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLBetweenRangesTFObjectTypes, levelObj)
 				diags.Append(d...)
@@ -3054,8 +3078,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 				setBetweenRanges = true
 
 				levelObj := map[string]attr.Value{
-					"min_score": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
-					"max_score": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
+					"min_value": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
+					"max_value": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
 				}
 				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLBetweenRangesTFObjectTypes, levelObj)
 				diags.Append(d...)

@@ -80,11 +80,11 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_list" {
 
     string_list = {
       high = {
-        values = ["HIGH", "HIGH321", "HIGH123"]
+        values = ["HIGH"]
       }
 
       medium = {
-        values = ["MEDIUM", "MED321", "MED123"]
+        values = ["MEDIUM"]
       }
 
       low = {

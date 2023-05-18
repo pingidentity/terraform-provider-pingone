@@ -2,12 +2,12 @@
 page_title: "pingone_risk_predictor Resource - terraform-provider-pingone"
 subcategory: "Risk"
 description: |-
-  Resource to manage risk predictors in a PingOne environment.
+  Resource to manage Risk predictors in a PingOne environment.
 ---
 
 # pingone_risk_predictor (Resource)
 
-Resource to manage risk predictors in a PingOne environment.
+Resource to manage Risk predictors in a PingOne environment.
 
 ## Example Usage - Anonymous Network Predictor
 
@@ -169,11 +169,11 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_list" {
 
     string_list = {
       high = {
-        values = ["HIGH", "HIGH321", "HIGH123"]
+        values = ["HIGH"]
       }
 
       medium = {
-        values = ["MEDIUM", "MED321", "MED123"]
+        values = ["MEDIUM"]
       }
 
       low = {
@@ -349,23 +349,23 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 
 ### Required
 
-- `compact_name` (String) A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. This property is immutable; it cannot be modified after initial creation. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under details).
+- `compact_name` (String) A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. This property is immutable; it cannot be modified after initial creation. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).
 - `environment_id` (String) The ID of the environment to configure the risk predictor in.
-- `name` (String) A string that specifies the unique, friendly name for the predictor. This name is displayed in the Risk Policies UI, when the admin is asked to define the overrides and weights in policy configuration.
+- `name` (String) A string that specifies the unique, friendly name for the predictor. This name is displayed in the Risk Policies UI, when the admin is asked to define the overrides and weights in policy configuration and is unique per environment.
 
 ### Optional
 
-- `default` (Attributes) (see [below for nested schema](#nestedatt--default))
+- `default` (Attributes) A single nested object that specifies the default configuration values for the risk predictor. (see [below for nested schema](#nestedatt--default))
 - `description` (String) A string that specifies the description of the risk predictor. Maximum length is 1024 characters.
-- `predictor_anonymous_network` (Attributes) A single nested attribute that specifies options for the Anonymous Network predictor. (see [below for nested schema](#nestedatt--predictor_anonymous_network))
-- `predictor_composite` (Attributes) A single nested attribute that specifies options for the Composite predictor. (see [below for nested schema](#nestedatt--predictor_composite))
-- `predictor_custom_map` (Attributes) A single nested attribute that specifies options for the Composite predictor. (see [below for nested schema](#nestedatt--predictor_custom_map))
-- `predictor_device` (Attributes) A single nested attribute that specifies options for the Device predictor. (see [below for nested schema](#nestedatt--predictor_device))
-- `predictor_geovelocity` (Attributes) A single nested attribute that specifies options for the Geovelocity predictor. (see [below for nested schema](#nestedatt--predictor_geovelocity))
-- `predictor_ip_reputation` (Attributes) A single nested attribute that specifies options for the IP reputation predictor. (see [below for nested schema](#nestedatt--predictor_ip_reputation))
-- `predictor_user_location_anomaly` (Attributes) A single nested attribute that specifies options for the User Location Anomaly predictor. (see [below for nested schema](#nestedatt--predictor_user_location_anomaly))
-- `predictor_user_risk_behavior` (Attributes) A single nested attribute that specifies options for the User Risk Behavior predictor. (see [below for nested schema](#nestedatt--predictor_user_risk_behavior))
-- `predictor_velocity` (Attributes) A single nested attribute that specifies options for the Velocity predictor. (see [below for nested schema](#nestedatt--predictor_velocity))
+- `predictor_anonymous_network` (Attributes) A single nested object that specifies options for the Anonymous Network predictor. (see [below for nested schema](#nestedatt--predictor_anonymous_network))
+- `predictor_composite` (Attributes) A single nested object that specifies options for the Composite predictor. (see [below for nested schema](#nestedatt--predictor_composite))
+- `predictor_custom_map` (Attributes) A single nested object that specifies options for the Custom Map predictor. (see [below for nested schema](#nestedatt--predictor_custom_map))
+- `predictor_device` (Attributes) A single nested object that specifies options for the Device predictor. (see [below for nested schema](#nestedatt--predictor_device))
+- `predictor_geovelocity` (Attributes) A single nested object that specifies options for the Geovelocity predictor. (see [below for nested schema](#nestedatt--predictor_geovelocity))
+- `predictor_ip_reputation` (Attributes) A single nested object that specifies options for the IP reputation predictor. (see [below for nested schema](#nestedatt--predictor_ip_reputation))
+- `predictor_user_location_anomaly` (Attributes) A single nested object that specifies options for the User Location Anomaly predictor. (see [below for nested schema](#nestedatt--predictor_user_location_anomaly))
+- `predictor_user_risk_behavior` (Attributes) A single nested object that specifies options for the User Risk Behavior predictor. (see [below for nested schema](#nestedatt--predictor_user_risk_behavior))
+- `predictor_velocity` (Attributes) A single nested object that specifies options for the Velocity predictor. (see [below for nested schema](#nestedatt--predictor_velocity))
 
 ### Read-Only
 
@@ -379,7 +379,7 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 
 Optional:
 
-- `result` (Attributes) (see [below for nested schema](#nestedatt--default--result))
+- `result` (Attributes) A single nested object that contains the result assigned to the predictor if the predictor could not be calculated during the risk evaluation. If this field is not provided, and the predictor could not be calculated during risk evaluation, the behavior is: 1) If the predictor is used in an override, the override is skipped; 2) In the weighted policy, the predictor will have a weight of 0. (see [below for nested schema](#nestedatt--default--result))
 - `weight` (Number) A number that specifies the default weight for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.
 
 <a id="nestedatt--default--result"></a>
@@ -387,8 +387,11 @@ Optional:
 
 Optional:
 
-- `level` (String) A string that specifies the type of the risk predictor.  This can be either `ANONYMOUS_NETWORK`, `COMPOSITE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `DEVICE`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR` or `VELOCITY`.
-- `type` (String) A string that specifies the type of the risk predictor.  This can be either `ANONYMOUS_NETWORK`, `COMPOSITE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `DEVICE`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR` or `VELOCITY`.
+- `level` (String) The default result level. Options are `HIGH`, `MEDIUM`, and `LOW`.
+
+Read-Only:
+
+- `type` (String) The default result type. Options are `VALUE`, indicating any custom attribute that's defined.
 
 
 
@@ -397,7 +400,7 @@ Optional:
 
 Optional:
 
-- `allowed_cidr_list` (Set of String)
+- `allowed_cidr_list` (Set of String) A set of IP addresses (CIDRs) that are ignored for the predictor results. The list can include IPs in IPv4 format and IPs in IPv6 format.
 
 
 <a id="nestedatt--predictor_composite"></a>
@@ -405,19 +408,19 @@ Optional:
 
 Required:
 
-- `composition` (Attributes) (see [below for nested schema](#nestedatt--predictor_composite--composition))
+- `composition` (Attributes) Contains the composition of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied. (see [below for nested schema](#nestedatt--predictor_composite--composition))
 
 <a id="nestedatt--predictor_composite--composition"></a>
 ### Nested Schema for `predictor_composite.composition`
 
 Required:
 
-- `condition_json` (String) A string that specifies the condition for the composite risk predictor. The value must be a valid JSON string.
-- `level` (String) A string that specifies the risk level for the composite risk predictor. The value must be one of the following: LOW, MEDIUM, HIGH.
+- `condition_json` (String) A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.
+- `level` (String) A string that specifies the risk level for the composite risk predictor. The value must be one of the following: `LOW`, `MEDIUM`, `HIGH`.
 
 Read-Only:
 
-- `condition` (String) A string that specifies the condition for the composite risk predictor. The value must be a valid JSON string.
+- `condition` (String) A string that specifies the condition logic for the composite risk predictor as applied to the service.
 
 
 
@@ -426,34 +429,34 @@ Read-Only:
 
 Required:
 
-- `contains` (String) A string that specifies the value to match in the custom map. Maximum length is 1024 characters.
+- `contains` (String) A string that specifies the attribute reference that contains the value to match in the custom map.  The attribute reference should come from either the incoming event (`${event.*}`) or the evaluation details (`${details.*}`).  When defining attribute references in Terraform, the leading `$` needs to be escaped with an additional `$` character, e.g. `contains = "$${event.myattribute}"`.
 
 Optional:
 
-- `between_ranges` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--between_ranges))
-- `ip_ranges` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--ip_ranges))
-- `string_list` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--string_list))
+- `between_ranges` (Attributes) A single nested object that describes the upper and lower bounds of ranges of values that apply to the attribute reference in `predictor_custom_map.contains`, that map to high, medium or low risk results. (see [below for nested schema](#nestedatt--predictor_custom_map--between_ranges))
+- `ip_ranges` (Attributes) A single nested object that describes IP CIDR ranges of values that apply to the attribute reference in `predictor_custom_map.contains`, that map to high, medium or low risk results. (see [below for nested schema](#nestedatt--predictor_custom_map--ip_ranges))
+- `string_list` (Attributes) A single nested object that describes the string values that apply to the attribute reference in `predictor_custom_map.contains`, that map to high, medium or low risk results. (see [below for nested schema](#nestedatt--predictor_custom_map--string_list))
 
 Read-Only:
 
-- `type` (String) A string that specifies the type of the risk predictor.  This can be either "ANONYMOUS_NETWORK", "COMPOSITE", "GEO_VELOCITY", "IP_REPUTATION", "MAP", "DEVICE", "USER_LOCATION_ANOMALY", "USER_RISK_BEHAVIOR" or "VELOCITY".
+- `type` (String) A string that specifies the type of custom map predictor.
 
 <a id="nestedatt--predictor_custom_map--between_ranges"></a>
 ### Nested Schema for `predictor_custom_map.between_ranges`
 
 Optional:
 
-- `high` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--between_ranges--high))
-- `low` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--between_ranges--low))
-- `medium` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--between_ranges--medium))
+- `high` (Attributes) A single nested object that describes the upper and lower bounds of ranges that map to a high risk result. (see [below for nested schema](#nestedatt--predictor_custom_map--between_ranges--high))
+- `low` (Attributes) A single nested object that describes the upper and lower bounds of ranges that map to a low risk result. (see [below for nested schema](#nestedatt--predictor_custom_map--between_ranges--low))
+- `medium` (Attributes) A single nested object that describes the upper and lower bounds of ranges that map to a medium risk result. (see [below for nested schema](#nestedatt--predictor_custom_map--between_ranges--medium))
 
 <a id="nestedatt--predictor_custom_map--between_ranges--high"></a>
 ### Nested Schema for `predictor_custom_map.between_ranges.high`
 
 Required:
 
-- `max_score` (Number) A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.
-- `min_score` (Number) A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.
+- `max_value` (Number) A number that specifies the minimum value of the attribute named in `predictor_custom_map.contains`.  This represents the lower bound of this risk result range.
+- `min_value` (Number) A number that specifies the minimum value of the attribute named in `predictor_custom_map.contains`.  This represents the lower bound of this risk result range.
 
 
 <a id="nestedatt--predictor_custom_map--between_ranges--low"></a>
@@ -461,8 +464,8 @@ Required:
 
 Required:
 
-- `max_score` (Number) A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.
-- `min_score` (Number) A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.
+- `max_value` (Number) A number that specifies the minimum value of the attribute named in `predictor_custom_map.contains`.  This represents the lower bound of this risk result range.
+- `min_value` (Number) A number that specifies the minimum value of the attribute named in `predictor_custom_map.contains`.  This represents the lower bound of this risk result range.
 
 
 <a id="nestedatt--predictor_custom_map--between_ranges--medium"></a>
@@ -470,8 +473,8 @@ Required:
 
 Required:
 
-- `max_score` (Number) A number that specifies the maximum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.
-- `min_score` (Number) A number that specifies the minimum score for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.
+- `max_value` (Number) A number that specifies the minimum value of the attribute named in `predictor_custom_map.contains`.  This represents the lower bound of this risk result range.
+- `min_value` (Number) A number that specifies the minimum value of the attribute named in `predictor_custom_map.contains`.  This represents the lower bound of this risk result range.
 
 
 
@@ -480,16 +483,16 @@ Required:
 
 Optional:
 
-- `high` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--ip_ranges--high))
-- `low` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--ip_ranges--low))
-- `medium` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--ip_ranges--medium))
+- `high` (Attributes) A single nested object that describes the IP CIDR ranges that map to a high risk result. (see [below for nested schema](#nestedatt--predictor_custom_map--ip_ranges--high))
+- `low` (Attributes) A single nested object that describes the IP CIDR ranges that map to a low risk result. (see [below for nested schema](#nestedatt--predictor_custom_map--ip_ranges--low))
+- `medium` (Attributes) A single nested object that describes the IP CIDR ranges that map to a medium risk result. (see [below for nested schema](#nestedatt--predictor_custom_map--ip_ranges--medium))
 
 <a id="nestedatt--predictor_custom_map--ip_ranges--high"></a>
 ### Nested Schema for `predictor_custom_map.ip_ranges.high`
 
 Optional:
 
-- `values` (Set of String)
+- `values` (Set of String) A set of strings, in CIDR format, that describe the CIDR ranges that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.
 
 
 <a id="nestedatt--predictor_custom_map--ip_ranges--low"></a>
@@ -497,7 +500,7 @@ Optional:
 
 Optional:
 
-- `values` (Set of String)
+- `values` (Set of String) A set of strings, in CIDR format, that describe the CIDR ranges that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.
 
 
 <a id="nestedatt--predictor_custom_map--ip_ranges--medium"></a>
@@ -505,7 +508,7 @@ Optional:
 
 Optional:
 
-- `values` (Set of String)
+- `values` (Set of String) A set of strings, in CIDR format, that describe the CIDR ranges that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.
 
 
 
@@ -514,16 +517,16 @@ Optional:
 
 Optional:
 
-- `high` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--string_list--high))
-- `low` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--string_list--low))
-- `medium` (Attributes) (see [below for nested schema](#nestedatt--predictor_custom_map--string_list--medium))
+- `high` (Attributes) A single nested object that describes the string values that map to a high risk result. (see [below for nested schema](#nestedatt--predictor_custom_map--string_list--high))
+- `low` (Attributes) A single nested object that describes the string values that map to a low risk result. (see [below for nested schema](#nestedatt--predictor_custom_map--string_list--low))
+- `medium` (Attributes) A single nested object that describes the string values that map to a medium risk result. (see [below for nested schema](#nestedatt--predictor_custom_map--string_list--medium))
 
 <a id="nestedatt--predictor_custom_map--string_list--high"></a>
 ### Nested Schema for `predictor_custom_map.string_list.high`
 
 Optional:
 
-- `values` (Set of String)
+- `values` (Set of String) A set of strings that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.
 
 
 <a id="nestedatt--predictor_custom_map--string_list--low"></a>
@@ -531,7 +534,7 @@ Optional:
 
 Optional:
 
-- `values` (Set of String)
+- `values` (Set of String) A set of strings that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.
 
 
 <a id="nestedatt--predictor_custom_map--string_list--medium"></a>
@@ -539,7 +542,7 @@ Optional:
 
 Optional:
 
-- `values` (Set of String)
+- `values` (Set of String) A set of strings that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.
 
 
 
@@ -549,8 +552,8 @@ Optional:
 
 Optional:
 
-- `activation_at` (String) You can use the `activation_at` parameter to specify a date on which the learning process for the predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.
-- `detect` (String)
+- `activation_at` (String) A string that represents a date on which the learning process for the device predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.
+- `detect` (String) A string that represents the type of device detection to use. The default value is `NEW_DEVICE`.
 
 
 <a id="nestedatt--predictor_geovelocity"></a>
@@ -558,7 +561,7 @@ Optional:
 
 Optional:
 
-- `allowed_cidr_list` (Set of String)
+- `allowed_cidr_list` (Set of String) A set of IP addresses (CIDRs) that are ignored for the predictor results. The list can include IPs in IPv4 format and IPs in IPv6 format.
 
 
 <a id="nestedatt--predictor_ip_reputation"></a>
@@ -566,7 +569,7 @@ Optional:
 
 Optional:
 
-- `allowed_cidr_list` (Set of String)
+- `allowed_cidr_list` (Set of String) A set of IP addresses (CIDRs) that are ignored for the predictor results. The list can include IPs in IPv4 format and IPs in IPv6 format.
 
 
 <a id="nestedatt--predictor_user_location_anomaly"></a>
@@ -574,19 +577,22 @@ Optional:
 
 Optional:
 
-- `days` (Number)
-- `radius` (Attributes) (see [below for nested schema](#nestedatt--predictor_user_location_anomaly--radius))
+- `radius` (Attributes) A single nested object that specifies options for the radius to apply to the predictor evaluation (see [below for nested schema](#nestedatt--predictor_user_location_anomaly--radius))
+
+Read-Only:
+
+- `days` (Number) An integer that specifies the number of days to apply to the predictor evaluation.
 
 <a id="nestedatt--predictor_user_location_anomaly--radius"></a>
 ### Nested Schema for `predictor_user_location_anomaly.radius`
 
 Required:
 
-- `distance` (Number)
+- `distance` (Number) An integer that specifies the distance to apply to the predictor evaluation.
 
 Optional:
 
-- `unit` (String)
+- `unit` (String) A string that specifies the unit of distance to apply to the predictor distance.  Possible values are `kilometers`, `miles`.  Defaults to `kilometers`.
 
 
 
@@ -595,24 +601,27 @@ Optional:
 
 Required:
 
-- `prediction_model` (Attributes) (see [below for nested schema](#nestedatt--predictor_user_risk_behavior--prediction_model))
+- `prediction_model` (Attributes) A single nested object that specifies options for the prediction model to apply to the predictor evaluation. (see [below for nested schema](#nestedatt--predictor_user_risk_behavior--prediction_model))
 
 <a id="nestedatt--predictor_user_risk_behavior--prediction_model"></a>
 ### Nested Schema for `predictor_user_risk_behavior.prediction_model`
 
 Required:
 
-- `name` (String)
+- `name` (String) A string that specifies the name of the prediction model to apply to the predictor evaluation.  Possible values are `kilometers`, `miles`.  `points` is used when applying the user-based risk model and `login_anomaly_statistic` is used when applying the organisation-based risk model.
 
 
 
 <a id="nestedatt--predictor_velocity"></a>
 ### Nested Schema for `predictor_velocity`
 
+Required:
+
+- `of` (String)
+
 Optional:
 
 - `measure` (String)
-- `of` (String)
 
 Read-Only:
 

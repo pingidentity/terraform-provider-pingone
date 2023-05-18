@@ -576,12 +576,12 @@ func TestAccRiskPredictor_CustomMap_BetweenRanges(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.contains", "${event.myshop}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.type", "RANGE"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.high.max_score", "6"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.high.min_score", "5"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.medium.max_score", "4"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.medium.min_score", "3"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.low.max_score", "2"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.low.min_score", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.high.max_value", "6"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.high.min_value", "5"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.medium.max_value", "4"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.medium.min_value", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.low.max_value", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.low.min_value", "1"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -590,12 +590,12 @@ func TestAccRiskPredictor_CustomMap_BetweenRanges(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.contains", "${event.myshop}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.type", "RANGE"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.high.max_score"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.high.min_score"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.medium.max_score", "4"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.medium.min_score", "3"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.low.max_score"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.low.min_score"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.high.max_value"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.high.min_value"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.medium.max_value", "4"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.medium.min_value", "3"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.low.max_value"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_custom_map.between_ranges.low.min_value"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -1680,18 +1680,18 @@ resource "pingone_risk_predictor" "%[2]s" {
 
     between_ranges = {
       high = {
-        max_score = 6
-        min_score = 5
+        max_value = 6
+        min_value = 5
       }
 
       medium = {
-        max_score = 4
-        min_score = 3
+        max_value = 4
+        min_value = 3
       }
 
       low = {
-        max_score = 2
-        min_score = 1
+        max_value = 2
+        min_value = 1
       }
     }
   }
@@ -1713,8 +1713,8 @@ resource "pingone_risk_predictor" "%[2]s" {
 
     between_ranges = {
       medium = {
-        max_score = 4
-        min_score = 3
+        max_value = 4
+        min_value = 3
       }
     }
   }

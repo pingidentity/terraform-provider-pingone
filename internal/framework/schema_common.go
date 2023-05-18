@@ -2,7 +2,6 @@ package framework
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -15,12 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-// Types
-type SchemaDescription struct {
-	Description         string
-	MarkdownDescription string
-}
 
 // Common models
 type DataFilterModel struct {
@@ -154,29 +147,4 @@ func Attr_DataSourceReturnIDs(description SchemaDescription) schema.ListAttribut
 		Computed:            true,
 		ElementType:         types.StringType,
 	}
-}
-
-// Helpers
-func (description *SchemaDescription) Clean(removeTrailingStop bool) {
-
-	// Trim trailing fullstop
-	if removeTrailingStop {
-		trailingDot := regexp.MustCompile(`(\.\s*)$`)
-		description.Description = trailingDot.ReplaceAllString(description.Description, "")
-		description.MarkdownDescription = trailingDot.ReplaceAllString(description.MarkdownDescription, "")
-	}
-
-	description.Description = strings.TrimSpace(description.Description)
-	description.MarkdownDescription = strings.TrimSpace(description.MarkdownDescription)
-
-	if description.MarkdownDescription == "" && description.Description != "" {
-		// Prefil the blank markdown description with the description value
-		description.MarkdownDescription = description.Description
-	}
-
-	if description.MarkdownDescription != "" && description.Description == "" {
-		// Prefil the blank description with the markdown description value, ignoring MD formatting
-		description.Description = description.MarkdownDescription
-	}
-
 }
