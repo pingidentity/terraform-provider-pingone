@@ -39,11 +39,22 @@ resource "davinci_application" "davinci_app" {
       redirect_uris                 = [var.redirect_uri]
     }
   }
+
   policy {
     name   = "Flow Policy"
     status = "enabled"
     policy_flow {
       flow_id    = var.davinci_flow_id
+      version_id = -1
+      weight     = 100
+    }
+  }
+
+  policy {
+    name   = "Second Flow Policy"
+    status = "enabled"
+    policy_flow {
+      flow_id    = var.second_davinci_flow_id
       version_id = -1
       weight     = 100
     }
@@ -61,7 +72,7 @@ resource "pingone_application_flow_policy_assignment" "foo" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_application.id
 
-  flow_policy_id = davinci_application.davinci_app.policy.*.policy_id[0]
+  flow_policy_id = davinci_application.davinci_app.policy.* [index(davinci_application.davinci_app.policy[*].name, "Flow Policy")].policy_id
 
   priority = 1
 }
