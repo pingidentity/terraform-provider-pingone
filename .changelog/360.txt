@@ -1,0 +1,3 @@
+```release-note:note
+`resource/pingone_flow_policy_assignment`: Update documentation example to select from multiple DaVinci application flow policies.
+```
