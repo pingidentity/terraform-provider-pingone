@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
@@ -141,7 +142,7 @@ func (r *CredentialIssuerProfileDataSource) Read(ctx context.Context, req dataso
 		},
 		"ReadCredentialIssuerProfile",
 		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
+		credentialIssuerDataSourceRetryConditions,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -173,4 +174,26 @@ func (p *CredentialIssuerProfileDataSourceModel) toState(apiObject *credentials.
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	return diags
+}
+
+func credentialIssuerDataSourceRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+	var err error
+
+	if p1error != nil {
+
+		// Credential Issuer Profile's keys may not have propagated after initial environment setup.
+		// Rare, but possible.
+		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			return true
+		}
+		if err != nil {
+			tflog.Warn(ctx, "Cannot match error string for retry")
+			return false
+		}
+
+	}
+
+	return false
 }

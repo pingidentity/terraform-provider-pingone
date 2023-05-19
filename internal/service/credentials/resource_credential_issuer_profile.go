@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -152,7 +154,8 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 
 	// Historical:  Pre-EA and initial-EA environments required creation of the issuer profile. Environments created after 2023.05.01 no longer have this requirement.
 	// On 'create' [adding to state], check to see if the profile exists, and if not, create it.  Otherwise, only update the profile, while still adding to TF state.
-	readIssuerProfileResponse, diags := framework.ParseResponse(
+	timeoutValue := 15
+	readIssuerProfileResponse, diags := framework.ParseResponseWithCustomTimeout(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -160,7 +163,8 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 		},
 		"ReadCredentialIssuerProfile",
 		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
+		credentialIssuerRetryConditions,
+		time.Duration(timeoutValue)*time.Minute, // 15 mins
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -200,7 +204,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			func() (interface{}, *http.Response, error) {
 				return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 			},
-			"CreateCredentialIssuerProfile",
+			"UpdateCredentialIssuerProfile",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 		)
@@ -239,7 +243,8 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	timeoutValue := 15
+	response, diags := framework.ParseResponseWithCustomTimeout(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -248,7 +253,8 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 		},
 		"ReadCredentialIssuerProfile",
 		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
+		credentialIssuerRetryConditions,
+		time.Duration(timeoutValue)*time.Minute, // 15 mins
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -400,4 +406,42 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	return diags
+}
+
+func credentialIssuerRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+	var err error
+
+	if p1error != nil {
+
+		// Credential Issuer Profile's keys may not have propagated after initial environment setup.
+		// A read operation is performed to determine if a create or update is necessary when the profile is added to TF state.
+		// The read may return nil if the profile has not fully propagated, which woiuld trigger a create instead of an update.
+		// Rare, but possible.
+		if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+
+			if m, err := regexp.MatchString("^A resource with the specified name already exists", details[0].GetMessage()); err == nil && m {
+				tflog.Warn(ctx, fmt.Sprintf("IssuerProfile (prerequisite) has not finished provisioning - %s.  Retrying...", details[0].GetMessage()))
+				return true
+			}
+			if err != nil {
+				tflog.Warn(ctx, "Cannot match error string for retry")
+				return false
+			}
+
+		}
+
+		// detected credentials service not fully deployed yet
+		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			return true
+		}
+		if err != nil {
+			tflog.Warn(ctx, "Cannot match error string for retry")
+			return false
+		}
+
+	}
+
+	return false
 }

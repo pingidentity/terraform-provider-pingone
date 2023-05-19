@@ -74,6 +74,8 @@ func testAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(environmentNam
 resource "pingone_credential_issuer_profile" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
+
+  depends_on = [pingone_environment.%[2]s]
 }
 
 data "pingone_credential_issuer_profile" "%[3]s" {

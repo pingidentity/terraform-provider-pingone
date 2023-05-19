@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -19,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -469,7 +471,8 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	timeoutValue := 15
+	response, d := framework.ParseResponseWithCustomTimeout(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -477,7 +480,8 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 		},
 		"CreateCredentialType",
 		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
+		credentialTypeRetryConditions,
+		time.Duration(timeoutValue)*time.Minute, // 15 mins
 	)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
@@ -857,4 +861,38 @@ func enumCredentialTypeMetaDataFieldsOkToTF(v *credentials.EnumCredentialTypeMet
 	} else {
 		return types.StringValue(string(*v))
 	}
+}
+
+func credentialTypeRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+	var err error
+
+	if p1error != nil {
+
+		// Credential Issuer Profile's keys may not have propagated yet. Rare, but possible.
+		if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+
+			// detected issuer profile not fully deployed yet
+			if m, err := regexp.MatchString("^issuerProfile must exist before creating credentialTypes", details[0].GetMessage()); err == nil && m {
+				tflog.Warn(ctx, fmt.Sprintf("IssuerProfile (prerequisite) has not finished provisioning - %s.  Retrying...", details[0].GetMessage()))
+				return true
+			}
+			if err != nil {
+				tflog.Warn(ctx, "Cannot match error string for retry")
+				return false
+			}
+		}
+
+		// detected credentials service not fully deployed yet
+		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			return true
+		}
+		if err != nil {
+			tflog.Warn(ctx, "Cannot match error string for retry")
+			return false
+		}
+	}
+
+	return false
 }

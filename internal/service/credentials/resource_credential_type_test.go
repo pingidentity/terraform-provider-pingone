@@ -358,6 +358,8 @@ resource "pingone_credential_type" "%[3]s" {
       }
     ]
   }
+
+  depends_on = [pingone_environment.%[2]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 

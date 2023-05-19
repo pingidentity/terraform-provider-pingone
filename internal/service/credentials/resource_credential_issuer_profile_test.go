@@ -184,6 +184,9 @@ func testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceNam
 resource "pingone_credential_issuer_profile" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
+
+  depends_on = [pingone_environment.%[2]s]
+
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -194,6 +197,8 @@ func testAccCredentialIssuerProfileInvalidConfig_InvalidName(environmentName, li
 resource "pingone_credential_issuer_profile" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
+
+  depends_on = [pingone_environment.%[2]s]
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
