@@ -14,6 +14,10 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.9.3 => v0.10.0 ([#361](https://github.com/pingidentity/terraform-provider-pingone/issues/361))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.4 => v0.7.0 ([#361](https://github.com/pingidentity/terraform-provider-pingone/issues/361))
 
+FEATURES:
+
+* **New Resource:** `pingone_risk_predictor` ([#350](https://github.com/pingidentity/terraform-provider-pingone/issues/350))
+
 ## 0.13.1 (02 May 2023)
 
 NOTES:
