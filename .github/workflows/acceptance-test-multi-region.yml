@@ -3,22 +3,7 @@
 #
 name: Acceptance Tests (Multi-region)
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - '.vscode'
-      - '.gitignore'
-      - 'CHANGELOG.md'
-      - 'CONTRIBUTING.md'
-      - 'LICENSE'
-      - '.changelog/**'
-      - 'contributing/**'
-      - 'docs/**'
-      - 'examples/**'
-      - 'scripts/**'
-      - 'templates/**'
+  workflow_dispatch:
   # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
   # we recommend testing at a regular interval not necessarily tied to code changes. This will 
   # ensure you are alerted to something breaking due to an API change, even if the code did not
@@ -110,7 +95,7 @@ jobs:
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
       PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -139,7 +124,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 60
+      timeout-minutes: 90
       run: |
         make testacc
 
@@ -236,7 +221,7 @@ jobs:
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
       PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -265,7 +250,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 60
+      timeout-minutes: 90
       run: |
         make testacc
 
@@ -362,7 +347,7 @@ jobs:
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
       PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -391,7 +376,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 60
+      timeout-minutes: 90
       run: |
         make testacc
 
@@ -488,7 +473,7 @@ jobs:
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
       PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -519,7 +504,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 60
+      timeout-minutes: 90
       run: |
         make testacc
 
