@@ -1569,7 +1569,6 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 				predictorId = t.GetId()
 				predictorCompactName = t.GetCompactName()
 				predictorDeletable = t.GetDeletable()
-
 			case *risk.RiskPredictorComposite:
 				predictorId = t.GetId()
 				predictorCompactName = t.GetCompactName()
@@ -2744,7 +2743,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.Name = framework.StringOkToTF(apiObjectCommon.GetNameOk())
 	p.CompactName = framework.StringOkToTF(apiObjectCommon.GetCompactNameOk())
 	p.Description = framework.StringOkToTF(apiObjectCommon.GetDescriptionOk())
-	p.Type = enumRiskPredictorTypeOkToTF(apiObjectCommon.GetTypeOk())
+	p.Type = framework.EnumOkToTF(apiObjectCommon.GetTypeOk())
 	p.Licensed = framework.BoolOkToTF(apiObjectCommon.GetLicensedOk())
 	p.Deletable = framework.BoolOkToTF(apiObjectCommon.GetDeletableOk())
 
@@ -2756,8 +2755,8 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		defaultResultObj := types.ObjectNull(defaultResultTFObjectTypes)
 		if v1, ok := v.GetResultOk(); ok {
 			o := map[string]attr.Value{
-				"type":  enumRiskPredictorResultTypeOkToTF(v1.GetTypeOk()),
-				"level": enumRiskPredictorRiskLevelOkToTF(v1.GetLevelOk()),
+				"type":  framework.EnumOkToTF(v1.GetTypeOk()),
+				"level": framework.EnumOkToTF(v1.GetLevelOk()),
 			}
 
 			defaultResultObj, d = types.ObjectValue(defaultResultTFObjectTypes, o)
@@ -2860,7 +2859,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 	if v, ok := apiObject.GetCompositionOk(); ok {
 
 		o := map[string]attr.Value{
-			"level":          enumRiskPredictorRiskLevelOkToTF(v.GetLevelOk()),
+			"level":          framework.EnumOkToTF(v.GetLevelOk()),
 			"condition_json": compositeConditionJSON,
 		}
 
@@ -3278,7 +3277,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorDevice(apiObject *risk.
 
 	objValue, d := types.ObjectValue(predictorDeviceTFObjectTypes, map[string]attr.Value{
 		"activation_at": framework.TimeOkToTF(apiObject.GetActivationAtOk()),
-		"detect":        enumRiskPredictorNewDeviceDetectOkToTF(apiObject.GetDetectOk()),
+		"detect":        framework.EnumOkToTF(apiObject.GetDetectOk()),
 	})
 	diags.Append(d...)
 
@@ -3298,7 +3297,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorUserRiskBehavior(apiObj
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"name": enumRiskPredictorUserRiskBehaviorRiskModelOkToTF(v.GetNameOk()),
+			"name": framework.EnumOkToTF(v.GetNameOk()),
 		}
 
 		objValue, d := types.ObjectValue(predictorUserRiskBehaviorPredictionModelTFObjectTypes, o)
@@ -3329,7 +3328,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorUserLocationAnomaly(api
 
 		o := map[string]attr.Value{
 			"distance": framework.Int32OkToTF(v.GetDistanceOk()),
-			"unit":     enumRiskPredictorDistanceUnitOkToTF(v.GetUnitOk()),
+			"unit":     framework.EnumOkToTF(v.GetUnitOk()),
 		}
 
 		objValue, d := types.ObjectValue(predictorUserLocationAnomalyRadiusTFObjectTypes, o)
@@ -3361,7 +3360,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"unit":       enumRiskPredictorUnitOkToTF(v.GetUnitOk()),
+			"unit":       framework.EnumOkToTF(v.GetUnitOk()),
 			"quantity":   framework.Int32OkToTF(v.GetQuantityOk()),
 			"min_sample": framework.Int32OkToTF(v.GetMinSampleOk()),
 		}
@@ -3379,7 +3378,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"strategy": enumRiskPredictorVelocityFallbackStrategyOkToTF(v.GetStrategyOk()),
+			"strategy": framework.EnumOkToTF(v.GetStrategyOk()),
 			"high":     framework.Float32OkToTF(v.GetHighOk()),
 			"medium":   framework.Float32OkToTF(v.GetMediumOk()),
 		}
@@ -3397,7 +3396,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"unit":       enumRiskPredictorUnitOkToTF(v.GetUnitOk()),
+			"unit":       framework.EnumOkToTF(v.GetUnitOk()),
 			"quantity":   framework.Int32OkToTF(v.GetQuantityOk()),
 			"min_sample": framework.Int32OkToTF(v.GetMinSampleOk()),
 		}
@@ -3415,7 +3414,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"type":   enumRiskPredictorVelocityUseTypeOkToTF(v.GetTypeOk()),
+			"type":   framework.EnumOkToTF(v.GetTypeOk()),
 			"medium": framework.Float32OkToTF(v.GetMediumOk()),
 			"high":   framework.Float32OkToTF(v.GetHighOk()),
 		}
@@ -3430,7 +3429,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 		"by":             framework.StringSetOkToTF(apiObject.GetByOk()),
 		"every":          modelEvery,
 		"fallback":       modelFallback,
-		"measure":        enumRiskPredictorVelocityMeasureOkToTF(apiObject.GetMeasureOk()),
+		"measure":        framework.EnumOkToTF(apiObject.GetMeasureOk()),
 		"of":             framework.StringOkToTF(apiObject.GetOfOk()),
 		"sliding_window": modelSlidingWindow,
 		"use":            modelUse,
@@ -3438,84 +3437,4 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 	diags.Append(d...)
 
 	return objValue, diags
-}
-
-func enumRiskPredictorResultTypeOkToTF(v *risk.EnumResultType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
-}
-
-func enumRiskPredictorTypeOkToTF(v *risk.EnumPredictorType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
-}
-
-func enumRiskPredictorUnitOkToTF(v *risk.EnumPredictorUnit, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
-}
-
-func enumRiskPredictorRiskLevelOkToTF(v *risk.EnumRiskLevel, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
-}
-
-func enumRiskPredictorNewDeviceDetectOkToTF(v *risk.EnumPredictorNewDeviceDetectType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
-}
-
-func enumRiskPredictorDistanceUnitOkToTF(v *risk.EnumDistanceUnit, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
-}
-
-func enumRiskPredictorUserRiskBehaviorRiskModelOkToTF(v *risk.EnumUserRiskBehaviorRiskModel, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
-}
-
-func enumRiskPredictorVelocityFallbackStrategyOkToTF(v *risk.EnumPredictorVelocityFallbackStrategy, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
-}
-
-func enumRiskPredictorVelocityMeasureOkToTF(v *risk.EnumPredictorVelocityMeasure, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
-}
-
-func enumRiskPredictorVelocityUseTypeOkToTF(v *risk.EnumPredictorVelocityUseType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return framework.StringToTF(string(*v))
-	}
 }
