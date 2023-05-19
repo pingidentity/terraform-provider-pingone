@@ -3,10 +3,16 @@
 NOTES:
 
 * Upgraded the provider protocol version from 5 to 6.  Use of the provider requires Terraform CLI 1.0 or later. ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
-* `resource/pingone_application`: **BREAKING CHANGE** Signature algorithms `SHA224withRSA` and `SHA224withECDSA` removed as they are no longer supported by the platform. (P14C-50332) ([#358](https://github.com/pingidentity/terraform-provider-pingone/issues/358))
+* `pingone_application`: Deprecated `oidc_options.bundle_id` and `oidc_options.package_name` from the schema.  Customers should use `oidc_options.mobile_app.bundle_id` and `oidc_options.mobile_app.package_name` going forward. ([#363](https://github.com/pingidentity/terraform-provider-pingone/issues/363))
 * `resource/pingone_application_flow_policy_assignment`: Update documentation example to select from multiple DaVinci application flow policies. ([#360](https://github.com/pingidentity/terraform-provider-pingone/issues/360))
+* `resource/pingone_application`: **BREAKING CHANGE** Signature algorithms `SHA224withRSA` and `SHA224withECDSA` removed as they are no longer supported by the platform. (P14C-50332) ([#358](https://github.com/pingidentity/terraform-provider-pingone/issues/358))
 * `resource/pingone_key`: **BREAKING CHANGE** Signature algorithms `SHA224withRSA` and `SHA224withECDSA` removed as they are no longer supported by the platform. (P14C-50332) ([#358](https://github.com/pingidentity/terraform-provider-pingone/issues/358))
 * bump `github.com/hashicorp/terraform-plugin-mux` from v0.9.0 => v0.10.0 ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.3 => v0.1.4 ([#361](https://github.com/pingidentity/terraform-provider-pingone/issues/361))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.6 => v0.1.7 ([#361](https://github.com/pingidentity/terraform-provider-pingone/issues/361))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.19.1 => v0.20.0 ([#361](https://github.com/pingidentity/terraform-provider-pingone/issues/361))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.9.3 => v0.10.0 ([#361](https://github.com/pingidentity/terraform-provider-pingone/issues/361))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.6.4 => v0.7.0 ([#361](https://github.com/pingidentity/terraform-provider-pingone/issues/361))
 
 ## 0.13.1 (02 May 2023)
 
