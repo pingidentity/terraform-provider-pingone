@@ -1,4 +1,4 @@
-package stringdefault
+package stringdefaultinternal
 
 import (
 	"context"
