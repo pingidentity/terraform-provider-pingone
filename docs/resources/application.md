@@ -226,12 +226,12 @@ Required:
 Optional:
 
 - `allow_wildcards_in_redirect_uris` (Boolean) A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri). Defaults to `false`.
-- `bundle_id` (String) A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable; any change will force recreation of the applicationr resource.
+- `bundle_id` (String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead. A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.
 - `certificate_based_authentication` (Block List, Max: 1) Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `NATIVE_APP`. (see [below for nested schema](#nestedblock--oidc_options--certificate_based_authentication))
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `mobile_app` (Block List, Max: 1) Mobile application integration settings for `NATIVE_APP` type applications. (see [below for nested schema](#nestedblock--oidc_options--mobile_app))
-- `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.
+- `package_name` (String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead. A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.
 - `pkce_enforcement` (String) A string that specifies how `PKCE` request parameters are handled on the authorize request.  Options are `OPTIONAL`, `REQUIRED` and `S256_REQUIRED`. Defaults to `OPTIONAL`.
 - `post_logout_redirect_uris` (Set of String) A list of strings that specifies the URLs that the browser can be redirected to after logout.  The provided URLs are expected to use the `https://`, `http://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://logout`).
 - `redirect_uris` (Set of String) A list of strings that specifies the allowed callback URIs for the authentication response.    The provided URLs are expected to use the `https://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  The `http` schema is only permitted where the host is `localhost` or `127.0.0.1`.
@@ -335,7 +335,7 @@ Optional:
 
 Required:
 
-- `algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA224withRSA`, `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA224withECDSA`, `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
+- `algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
 - `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
 
 ## Import

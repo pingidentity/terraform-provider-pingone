@@ -58,7 +58,7 @@ resource "pingone_key" "my_tls_key" {
 - `name` (String) The system name of the key.  Cannot be used with `pkcs12_file_base64`.
 - `pkcs12_file_base64` (String, Sensitive) A base64 encoded PKCS12 file.  Cannot be used with `name`, `algorithm`, `issuer_dn`, `key_length`, `serial_number`, `signature_algorithm`, `subject_dn` or `validity_period`.
 - `serial_number` (String) An integer (in string data type) that specifies the serial number of the key or certificate.  Cannot be used with `pkcs12_file_base64`.
-- `signature_algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA224withRSA`, `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA224withECDSA`, `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.  Cannot be used with `pkcs12_file_base64`.
+- `signature_algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.  Cannot be used with `pkcs12_file_base64`.
 - `subject_dn` (String) A string that specifies the distinguished name of the subject being secured.  Cannot be used with `pkcs12_file_base64`.
 - `validity_period` (Number) An integer that specifies the number of days the key is valid.  Cannot be used with `pkcs12_file_base64`.
 

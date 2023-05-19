@@ -173,7 +173,7 @@ func TestAccKey_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "EC"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "256"),
-					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA224withECDSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA384withECDSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SIGNING"),
 					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "365"),
@@ -305,7 +305,7 @@ func TestAccKey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "EC"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "256"),
-					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA224withECDSA"),
+					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA384withECDSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SIGNING"),
 					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "365"),
@@ -429,7 +429,7 @@ resource "pingone_key" "%[3]s" {
   name                = "%[4]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
@@ -446,7 +446,7 @@ resource "pingone_key" "%[3]s" {
   name                = "%[4]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "ISSUANCE"
   validity_period     = 365
@@ -465,7 +465,7 @@ resource "pingone_key" "%[3]s" {
   name                = "%[4]s"
   algorithm           = "EC"
   key_length          = 256
-  signature_algorithm = "SHA224withECDSA"
+  signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
