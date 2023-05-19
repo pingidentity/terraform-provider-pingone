@@ -349,7 +349,7 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 
 ### Required
 
-- `compact_name` (String) A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).  This field is immutable and will trigger a replace plan if changed.
+- `compact_name` (String) A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).  If the value used for `compact_name` relates to a built-in predictor (a predictor that cannot be deleted), then this resource will attempt to overwrite the predictor's configuration.  This field is immutable and will trigger a replace plan if changed.
 - `environment_id` (String) The ID of the environment to configure the risk predictor in.
 - `name` (String) A string that specifies the unique, friendly name for the predictor. This name is displayed in the Risk Policies UI, when the admin is asked to define the overrides and weights in policy configuration and is unique per environment.
 
@@ -364,8 +364,8 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 - `predictor_geovelocity` (Attributes) A single nested object that specifies options for the Geovelocity predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_geovelocity))
 - `predictor_ip_reputation` (Attributes) A single nested object that specifies options for the IP reputation predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_ip_reputation))
 - `predictor_user_location_anomaly` (Attributes) A single nested object that specifies options for the User Location Anomaly predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_user_location_anomaly))
-- `predictor_user_risk_behavior` (Attributes) A single nested object that specifies options for the User Risk Behavior predictor.  At least one of the following must be defined: "predictor_anonymous_network", "predictor_composite", "predictor_custom_map", "predictor_geovelocity", "predictor_ip_reputation", "predictor_device", "predictor_user_location_anomaly", "predictor_user_risk_behavior", "predictor_velocity". (see [below for nested schema](#nestedatt--predictor_user_risk_behavior))
-- `predictor_velocity` (Attributes) A single nested object that specifies options for the Velocity predictor.  At least one of the following must be defined: "predictor_anonymous_network", "predictor_composite", "predictor_custom_map", "predictor_geovelocity", "predictor_ip_reputation", "predictor_device", "predictor_user_location_anomaly", "predictor_user_risk_behavior", "predictor_velocity". (see [below for nested schema](#nestedatt--predictor_velocity))
+- `predictor_user_risk_behavior` (Attributes) A single nested object that specifies options for the User Risk Behavior predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_user_risk_behavior))
+- `predictor_velocity` (Attributes) A single nested object that specifies options for the Velocity predictor.  At least one of the following must be defined: `predictor_anonymous_network`, `predictor_composite`, `predictor_custom_map`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_device`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_velocity))
 
 ### Read-Only
 
@@ -379,7 +379,7 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 
 Optional:
 
-- `result` (Attributes) A single nested object that contains the result assigned to the predictor if the predictor could not be calculated during the risk evaluation. If this field is not provided, and the predictor could not be calculated during risk evaluation, the behavior is: 1) If the predictor is used in an override, the override is skipped; 2) In the weighted policy, the predictor will have a weight of 0. (see [below for nested schema](#nestedatt--default--result))
+- `result` (Attributes) A single nested object that contains the result assigned to the predictor if the predictor could not be calculated during the risk evaluation. If this field is not provided, and the predictor could not be calculated during risk evaluation, the behavior is: 1) If the predictor is used in an override, the override is skipped; 2) In the weighted policy, the predictor will have a `weight` of `0`. (see [below for nested schema](#nestedatt--default--result))
 - `weight` (Number) A number that specifies the default weight for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.
 
 <a id="nestedatt--default--result"></a>
@@ -617,28 +617,28 @@ Required:
 
 Required:
 
-- `of` (String)
+- `of` (String) A string value that specifies the attribute reference for the value to aggregate when calculating velocity metrics.  Options are `${event.ip}` (to configure IP address velocity by user ID), `${event.user.id}` (to configure user velocity by IP address).  When defining attribute references in Terraform, the leading `$` needs to be escaped with an additional `$` character, e.g. `of = "$${event.ip}"`.
 
 Optional:
 
-- `measure` (String)
+- `measure` (String) A string value that specifies the type of measure to use for the predictor.  Options are `DISTINCT_COUNT`.  Defaults to `DISTINCT_COUNT`.
 
 Read-Only:
 
-- `by` (Set of String)
-- `every` (Attributes) An object that contains configuration values for the every risk predictor type. (see [below for nested schema](#nestedatt--predictor_velocity--every))
-- `fallback` (Attributes) An object that contains configuration values for the fallback risk predictor type. (see [below for nested schema](#nestedatt--predictor_velocity--fallback))
-- `sliding_window` (Attributes) An object that contains configuration values for the sliding window risk predictor type. (see [below for nested schema](#nestedatt--predictor_velocity--sliding_window))
-- `use` (Attributes) (see [below for nested schema](#nestedatt--predictor_velocity--use))
+- `by` (Set of String) A set of string values that specifies the attribute references that denote the subject of the velocity metric.  Options are `${event.ip}` (denotes the velocity metric is calculated by IP address), `${event.user.id}` (denotes the velocity metric is calculated by user ID).
+- `every` (Attributes) A single nested object that specifies options for the granularlity of data sampling. (see [below for nested schema](#nestedatt--predictor_velocity--every))
+- `fallback` (Attributes) A single nested object that specifies options for the predictor fallback strategy. (see [below for nested schema](#nestedatt--predictor_velocity--fallback))
+- `sliding_window` (Attributes) A single nested object that specifies options for the distribution of data that is compared against to detect anomaly. (see [below for nested schema](#nestedatt--predictor_velocity--sliding_window))
+- `use` (Attributes) A single nested object that specifies options for the velocity algorithm. (see [below for nested schema](#nestedatt--predictor_velocity--use))
 
 <a id="nestedatt--predictor_velocity--every"></a>
 ### Nested Schema for `predictor_velocity.every`
 
 Read-Only:
 
-- `min_sample` (Number) The minimum number of samples to use for the risk predictor.
-- `quantity` (Number) The number of `unit` intervals to use for the risk predictor.
-- `unit` (String) The unit of measurement for the `interval` parameter.
+- `min_sample` (Number) An integer that denotes the minimum sample of data to use for the velocity algorithm.
+- `quantity` (Number) An integer that denotes the quantity of unit intervals to use for the velocity algorithm.
+- `unit` (String) A string value that specifies the time unit to use when sampling data.  Options are `DAY`, `HOUR`.
 
 
 <a id="nestedatt--predictor_velocity--fallback"></a>
@@ -646,9 +646,9 @@ Read-Only:
 
 Read-Only:
 
-- `high` (Number) The high risk level.
-- `medium` (Number) The medium risk level.
-- `strategy` (String) The strategy to use when the risk predictor is not able to determine a risk level.
+- `high` (Number) A floating point value that specifies a high risk threshold for the fallback strategy.
+- `medium` (Number) A floating point value that specifies a medium risk threshold for the fallback strategy.
+- `strategy` (String) A string value that specifies the type of fallback strategy algorithm to use.  Options are `ENVIRONMENT_MAX`.
 
 
 <a id="nestedatt--predictor_velocity--sliding_window"></a>
@@ -656,9 +656,9 @@ Read-Only:
 
 Read-Only:
 
-- `min_sample` (Number) The minimum number of samples to use for the risk predictor.
-- `quantity` (Number) The number of `unit` intervals to use for the risk predictor.
-- `unit` (String) The unit of measurement for the `interval` parameter.
+- `min_sample` (Number) An integer that denotes the minimum sample of data to use for the velocity algorithm.
+- `quantity` (Number) An integer that denotes the quantity of unit intervals to use for the velocity algorithm.
+- `unit` (String) A string value that specifies the time unit to use when sampling data over time.  Options are `DAY`, `HOUR`.
 
 
 <a id="nestedatt--predictor_velocity--use"></a>
@@ -666,9 +666,9 @@ Read-Only:
 
 Read-Only:
 
-- `high` (Number) The high risk level.
-- `medium` (Number) The medium risk level.
-- `type` (String) The type of the risk predictor.
+- `high` (Number) A floating point value that specifies a high risk threshold for the velocity algorithm.
+- `medium` (Number) A floating point value that specifies a medium risk threshold for the velocity algorithm.
+- `type` (String) A string value that specifies the type of velocity algorithm to use.  Options are `POISSON_WITH_MAX`.
 
 ## Import
 

@@ -351,7 +351,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 	// General attrs
 	compactNameDescription := framework.SchemaDescriptionFromMarkdown(
-		"A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).",
+		"A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).  If the value used for `compact_name` relates to a built-in predictor (a predictor that cannot be deleted), then this resource will attempt to overwrite the predictor's configuration.",
 	).RequiresReplace()
 
 	typeDescription := framework.SchemaDescriptionFromMarkdown(
@@ -359,6 +359,8 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	).AllowedValuesEnum(risk.AllowedEnumPredictorTypeEnumValues)
 
 	// Default nested attr
+	defaultResultDescription := framework.SchemaDescriptionFromMarkdown("A single nested object that contains the result assigned to the predictor if the predictor could not be calculated during the risk evaluation. If this field is not provided, and the predictor could not be calculated during risk evaluation, the behavior is: 1) If the predictor is used in an override, the override is skipped; 2) In the weighted policy, the predictor will have a `weight` of `0`.")
+
 	defaultResultTypeDescription := framework.SchemaDescriptionFromMarkdown(
 		"The default result type.",
 	).AllowedValuesComplex(map[string]string{
@@ -436,6 +438,11 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 		"A string that specifies the unit of distance to apply to the predictor distance.",
 	).AllowedValuesEnum(risk.AllowedEnumDistanceUnitEnumValues).DefaultValue(string(risk.ENUMDISTANCEUNIT_KILOMETERS))
 
+	// User Risk Behavior Predictor
+	predictorUserRiskBehaviorDescription := framework.SchemaDescriptionFromMarkdown(
+		"A single nested object that specifies options for the User Risk Behavior predictor.",
+	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
 	predictorUserRiskBehaviorPredictionModelNameDescription := framework.SchemaDescriptionFromMarkdown(
 		"A string that specifies the name of the prediction model to apply to the predictor evaluation.",
 	).AllowedValuesComplex(map[string]string{
@@ -443,6 +450,46 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 		string(risk.ENUMUSERRISKBEHAVIORRISKMODEL_LOGIN_ANOMALY_STATISTIC): "to configure the organisation based risk model",
 	})
 
+	// Velocity Predictor
+	predictorVelocityDescription := framework.SchemaDescriptionFromMarkdown(
+		"A single nested object that specifies options for the Velocity predictor.",
+	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
+	predictorVelocityMeasureDescription := framework.SchemaDescriptionFromMarkdown(
+		"A string value that specifies the type of measure to use for the predictor.",
+	).AllowedValuesEnum(risk.AllowedEnumPredictorVelocityMeasureEnumValues).DefaultValue(string(risk.ENUMPREDICTORVELOCITYMEASURE_DISTINCT_COUNT))
+
+	predictorVelocityOfDescription := framework.SchemaDescriptionFromMarkdown(
+		"A string value that specifies the attribute reference for the value to aggregate when calculating velocity metrics.",
+	).AllowedValuesComplex(map[string]string{
+		"${event.ip}":      "to configure IP address velocity by user ID",
+		"${event.user.id}": "to configure user velocity by IP address",
+	}).AppendMarkdownString("When defining attribute references in Terraform, the leading `$` needs to be escaped with an additional `$` character, e.g. `of = \"$${event.ip}\"`.")
+
+	predictorVelocityByDescription := framework.SchemaDescriptionFromMarkdown(
+		"A set of string values that specifies the attribute references that denote the subject of the velocity metric.",
+	).AllowedValuesComplex(map[string]string{
+		"${event.ip}":      "denotes the velocity metric is calculated by IP address",
+		"${event.user.id}": "denotes the velocity metric is calculated by user ID",
+	})
+
+	predictorVelocityUseTypeDescription := framework.SchemaDescriptionFromMarkdown(
+		"A string value that specifies the type of velocity algorithm to use.",
+	).AllowedValuesEnum(risk.AllowedEnumPredictorVelocityUseTypeEnumValues)
+
+	predictorVelocityFallbackTypeDescription := framework.SchemaDescriptionFromMarkdown(
+		"A string value that specifies the type of fallback strategy algorithm to use.",
+	).AllowedValuesEnum(risk.AllowedEnumPredictorVelocityFallbackStrategyEnumValues)
+
+	predictorVelocityEveryUnitDescription := framework.SchemaDescriptionFromMarkdown(
+		"A string value that specifies the time unit to use when sampling data.",
+	).AllowedValuesEnum(risk.AllowedEnumPredictorUnitEnumValues)
+
+	predictorVelocitySlidingWindowUnitDescription := framework.SchemaDescriptionFromMarkdown(
+		"A string value that specifies the time unit to use when sampling data over time.",
+	).AllowedValuesEnum(risk.AllowedEnumPredictorUnitEnumValues)
+
+	// Schema
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to manage Risk predictors in a PingOne environment.",
@@ -506,9 +553,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 
 					"result": schema.SingleNestedAttribute{
-						Description: framework.SchemaDescriptionFromMarkdown("A single nested object that contains the result assigned to the predictor if the predictor could not be calculated during the risk evaluation. If this field is not provided, and the predictor could not be calculated during risk evaluation, the behavior is: 1) If the predictor is used in an override, the override is skipped; 2) In the weighted policy, the predictor will have a weight of 0.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         defaultResultDescription.Description,
+						MarkdownDescription: defaultResultDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
@@ -817,8 +865,9 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_user_risk_behavior": schema.SingleNestedAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the User Risk Behavior predictor.").ExactlyOneOf(descriptionPredictorObjectPaths).Description,
-				Optional:    true,
+				Description:         predictorUserRiskBehaviorDescription.Description,
+				MarkdownDescription: predictorUserRiskBehaviorDescription.MarkdownDescription,
+				Optional:            true,
 
 				Attributes: map[string]schema.Attribute{
 					"prediction_model": schema.SingleNestedAttribute{
@@ -847,13 +896,16 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"predictor_velocity": schema.SingleNestedAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the Velocity predictor.").ExactlyOneOf(descriptionPredictorObjectPaths).Description,
-				Optional:    true,
+				Description:         predictorVelocityDescription.Description,
+				MarkdownDescription: predictorVelocityDescription.MarkdownDescription,
+				Optional:            true,
 
 				Attributes: map[string]schema.Attribute{
 					"measure": schema.StringAttribute{
-						Optional: true,
-						Computed: true,
+						Description:         predictorVelocityMeasureDescription.Description,
+						MarkdownDescription: predictorVelocityMeasureDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: stringdefault.StaticString(string(risk.ENUMPREDICTORVELOCITYMEASURE_DISTINCT_COUNT)),
 
@@ -863,7 +915,9 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 
 					"of": schema.StringAttribute{
-						Required: true,
+						Description:         predictorVelocityOfDescription.Description,
+						MarkdownDescription: predictorVelocityOfDescription.MarkdownDescription,
+						Required:            true,
 
 						Validators: []validator.String{
 							stringvalidator.OneOf("${event.ip}", "${event.user.id}"),
@@ -875,9 +929,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 
 					"by": schema.SetAttribute{
-						Description: "",
-						Computed:    true,
-						ElementType: types.StringType,
+						Description:         predictorVelocityByDescription.Description,
+						MarkdownDescription: predictorVelocityByDescription.MarkdownDescription,
+						Computed:            true,
+						ElementType:         types.StringType,
 
 						Validators: []validator.Set{
 							setvalidator.ValueStringsAre(
@@ -887,88 +942,92 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 
 					"use": schema.SingleNestedAttribute{
-						Description: "",
+						Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the velocity algorithm.").Description,
 						Computed:    true,
 
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
-								Description: "The type of the risk predictor.",
+								Description:         predictorVelocityUseTypeDescription.Description,
+								MarkdownDescription: predictorVelocityUseTypeDescription.MarkdownDescription,
+								Computed:            true,
+							},
+
+							"medium": schema.Float64Attribute{
+								Description: framework.SchemaDescriptionFromMarkdown("A floating point value that specifies a medium risk threshold for the velocity algorithm.").Description,
 								Computed:    true,
 							},
 
-							"medium": schema.Int64Attribute{
-								Description: "The medium risk level.",
-								Computed:    true,
-							},
-
-							"high": schema.Int64Attribute{
-								Description: "The high risk level.",
+							"high": schema.Float64Attribute{
+								Description: framework.SchemaDescriptionFromMarkdown("A floating point value that specifies a high risk threshold for the velocity algorithm.").Description,
 								Computed:    true,
 							},
 						},
 					},
 
 					"fallback": schema.SingleNestedAttribute{
-						Description: "An object that contains configuration values for the fallback risk predictor type.",
+						Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the predictor fallback strategy.").Description,
 						Computed:    true,
 
 						Attributes: map[string]schema.Attribute{
 							"strategy": schema.StringAttribute{
-								Description: "The strategy to use when the risk predictor is not able to determine a risk level.",
+								Description:         predictorVelocityFallbackTypeDescription.Description,
+								MarkdownDescription: predictorVelocityFallbackTypeDescription.MarkdownDescription,
+								Computed:            true,
+							},
+
+							"high": schema.Float64Attribute{
+								Description: framework.SchemaDescriptionFromMarkdown("A floating point value that specifies a high risk threshold for the fallback strategy.").Description,
 								Computed:    true,
 							},
 
-							"high": schema.Int64Attribute{
-								Description: "The high risk level.",
-								Computed:    true,
-							},
-
-							"medium": schema.Int64Attribute{
-								Description: "The medium risk level.",
+							"medium": schema.Float64Attribute{
+								Description: framework.SchemaDescriptionFromMarkdown("A floating point value that specifies a medium risk threshold for the fallback strategy.").Description,
 								Computed:    true,
 							},
 						},
 					},
 
 					"every": schema.SingleNestedAttribute{
-						Description: "An object that contains configuration values for the every risk predictor type.",
+						Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the granularlity of data sampling.").Description,
 						Computed:    true,
 
 						Attributes: map[string]schema.Attribute{
 							"unit": schema.StringAttribute{
-								Description: "The unit of measurement for the `interval` parameter.",
-								Computed:    true,
+								Description:         predictorVelocityEveryUnitDescription.Description,
+								MarkdownDescription: predictorVelocityEveryUnitDescription.MarkdownDescription,
+								Computed:            true,
 							},
 
 							"quantity": schema.Int64Attribute{
-								Description: "The number of `unit` intervals to use for the risk predictor.",
+								Description: framework.SchemaDescriptionFromMarkdown("An integer that denotes the quantity of unit intervals to use for the velocity algorithm.").Description,
 								Computed:    true,
 							},
 
 							"min_sample": schema.Int64Attribute{
-								Description: "The minimum number of samples to use for the risk predictor.",
+								Description: framework.SchemaDescriptionFromMarkdown("An integer that denotes the minimum sample of data to use for the velocity algorithm.").Description,
 								Computed:    true,
 							},
 						},
 					},
 
 					"sliding_window": schema.SingleNestedAttribute{
-						Description: "An object that contains configuration values for the sliding window risk predictor type.",
+						Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the distribution of data that is compared against to detect anomaly.").Description,
 						Computed:    true,
 
 						Attributes: map[string]schema.Attribute{
 							"unit": schema.StringAttribute{
-								Description: "The unit of measurement for the `interval` parameter.",
-								Computed:    true,
+								Description:         predictorVelocitySlidingWindowUnitDescription.Description,
+								MarkdownDescription: predictorVelocitySlidingWindowUnitDescription.MarkdownDescription,
+								Computed:            true,
 							},
 
 							"quantity": schema.Int64Attribute{
-								Description: "The number of `unit` intervals to use for the risk predictor.",
+								Description: framework.SchemaDescriptionFromMarkdown("An integer that denotes the quantity of unit intervals to use for the velocity algorithm.").Description,
 								Computed:    true,
 							},
 
 							"min_sample": schema.Int64Attribute{
-								Description: "The minimum number of samples to use for the risk predictor.",
+								Description: framework.SchemaDescriptionFromMarkdown("An integer that denotes the minimum sample of data to use for the velocity algorithm.").Description,
 								Computed:    true,
 							},
 						},
