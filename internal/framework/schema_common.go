@@ -56,7 +56,7 @@ func Attr_LinkIDWithValidators(description SchemaDescription, validators []valid
 func Attr_SCIMFilter(description SchemaDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.StringAttribute {
 	filterMinLength := 1
 
-	description.Clean(true)
+	description = description.Clean(true)
 
 	description.MarkdownDescription = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: `%s`.", description.MarkdownDescription, strings.Join(acceptableAttributes, "`, `"))
 	description.Description = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: \"%s\".", description.Description, strings.Join(acceptableAttributes, "\", \""))
@@ -78,7 +78,7 @@ func Attr_SCIMFilter(description SchemaDescription, acceptableAttributes []strin
 func Attr_DataFilter(description SchemaDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.ListNestedBlock {
 	attrMinLength := 1
 
-	description.Clean(true)
+	description = description.Clean(true)
 
 	description.MarkdownDescription = fmt.Sprintf("%s.  Allowed attributes to filter: `%s`", description.MarkdownDescription, strings.Join(acceptableAttributes, "`, `"))
 	description.Description = fmt.Sprintf("%s.  Allowed attributes to filter: \"%s\"", description.Description, strings.Join(acceptableAttributes, "\", \""))
