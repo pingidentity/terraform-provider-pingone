@@ -39,7 +39,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   test:
     name: Acceptance Test (Multi-version)
-    needs: [prepare, build]
+    needs: [build]
     runs-on: ubuntu-latest
 
     env:
