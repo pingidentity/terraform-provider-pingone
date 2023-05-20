@@ -1,0 +1,7 @@
+```release-note:note
+`pingone_application`: Updated Native mobile example in registry documentation to remove deprecated attributes.
+```
+
+```release-note:bug
+`pingone_application`: Fix unexpected replacement plan when specifying a mobile native application without configuring deprecated attributes `oidc_options.bundle_id` or `oidc_options.package_name`.
+```
