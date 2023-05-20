@@ -1,7 +1,7 @@
 # This GitHub action runs your tests for each commit push and/or PR. Optionally
 # you can turn it on using a cron schedule for regular testing.
 #
-name: Feature Flagged Acceptance Tests (Multi-version)
+name: Multi-version Acceptance Tests (Feature Flagged)
 on:
   workflow_dispatch:
   # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
