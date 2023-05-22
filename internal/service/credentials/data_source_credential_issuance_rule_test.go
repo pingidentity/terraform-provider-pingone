@@ -166,8 +166,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_wallet_byname"
-    package_name                = "com.pingidentity.android_wallet_byname"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_wallet_byname"

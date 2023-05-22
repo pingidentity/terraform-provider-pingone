@@ -274,8 +274,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -358,8 +356,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -435,8 +431,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -484,8 +478,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -612,8 +604,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -701,8 +691,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -790,8 +778,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -877,8 +863,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -962,8 +946,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -1045,8 +1027,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -1134,8 +1114,6 @@ resource "pingone_application" "%[2]s" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_%[3]s"
-    package_name                = "com.pingidentity.android_%[3]s"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_%[3]s"

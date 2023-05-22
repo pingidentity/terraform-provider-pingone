@@ -154,7 +154,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 
 	// Historical:  Pre-EA and initial-EA environments required creation of the issuer profile. Environments created after 2023.05.01 no longer have this requirement.
 	// On 'create' [adding to state], check to see if the profile exists, and if not, create it.  Otherwise, only update the profile, while still adding to TF state.
-	timeoutValue := 15
+	timeoutValue := 5
 	readIssuerProfileResponse, diags := framework.ParseResponseWithCustomTimeout(
 		ctx,
 
@@ -164,7 +164,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 		"ReadCredentialIssuerProfile",
 		framework.CustomErrorResourceNotFoundWarning,
 		credentialIssuerRetryConditions,
-		time.Duration(timeoutValue)*time.Minute, // 15 mins
+		time.Duration(timeoutValue)*time.Minute, // 5 mins
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -243,7 +243,7 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	timeoutValue := 15
+	timeoutValue := 5
 	response, diags := framework.ParseResponseWithCustomTimeout(
 		ctx,
 
@@ -254,7 +254,7 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 		"ReadCredentialIssuerProfile",
 		framework.CustomErrorResourceNotFoundWarning,
 		credentialIssuerRetryConditions,
-		time.Duration(timeoutValue)*time.Minute, // 15 mins
+		time.Duration(timeoutValue)*time.Minute, // 5 mins
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -433,7 +433,17 @@ func credentialIssuerRetryConditions(ctx context.Context, r *http.Response, p1er
 
 		// detected credentials service not fully deployed yet
 		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
-			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			tflog.Warn(ctx, "Insufficient PingOne privileges detected. Retrying...")
+			return true
+		}
+		if err != nil {
+			tflog.Warn(ctx, "Cannot match error string for retry")
+			return false
+		}
+
+		// issuer not found could be the caused by delayed credential issuer
+		if m, _ := regexp.MatchString("^The requested resource object cannot be found.", p1error.GetMessage()); err == nil && m {
+			tflog.Warn(ctx, "Credential Issuer not found. Retrying...")
 			return true
 		}
 		if err != nil {

@@ -39,12 +39,6 @@ resource "pingone_application" "my_awesome_native_app" {
       package_name = "com.example.my_android_app"
       # ...
     }
-
-    # ensure bundle_id and package_name are defined both in 
-    # native app and mobile app config
-    bundle_id    = "com.example.my_ios_app"
-    package_name = "com.example.my_android_app"
-
   }
 }
 

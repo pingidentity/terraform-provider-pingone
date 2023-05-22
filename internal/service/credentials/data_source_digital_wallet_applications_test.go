@@ -89,8 +89,6 @@ resource "pingone_application" "%[3]s-appname1" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_wallet_byid"
-    package_name                = "com.pingidentity.android_wallet_byid"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_wallet_byid"
@@ -127,9 +125,6 @@ resource "pingone_application" "%[3]s-appname2" {
       package_name             = "com.pingidentity.android_wallet2"
       passcode_refresh_seconds = 30
     }
-
-    bundle_id    = "com.pingidentity.ios_wallet2"
-    package_name = "com.pingidentity.android_wallet2"
   }
 }
 
@@ -149,8 +144,6 @@ resource "pingone_application" "%[3]s-appname3" {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    bundle_id                   = "com.pingidentity.ios_wallet3"
-    package_name                = "com.pingidentity.android_wallet3"
 
     mobile_app {
       bundle_id                = "com.pingidentity.ios_wallet3"
