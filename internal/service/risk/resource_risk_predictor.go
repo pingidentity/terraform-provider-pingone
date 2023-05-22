@@ -352,6 +352,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	const attrMinLength = 1
 	const emailAddressMaxLength = 5
 	const attrDescriptionMaxLength = 1024
+	const defaultWeightValue = 5
 
 	// General attrs
 	compactNameDescription := framework.SchemaDescriptionFromMarkdown(
@@ -555,7 +556,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Optional:    true,
 						Computed:    true,
 
-						Default: int64default.StaticInt64(5),
+						Default: int64default.StaticInt64(defaultWeightValue),
 					},
 
 					"result": schema.SingleNestedAttribute{
