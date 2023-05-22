@@ -93,7 +93,7 @@ func testAccCredentialTypeDataSource_ByIDFull(resourceName, name string) string 
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -155,10 +155,10 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 data "pingone_credential_type" "%[2]s" {
-  environment_id     = data.pingone_environment.credentials_test.id
+  environment_id     = data.pingone_environment.general_test.id
   credential_type_id = resource.pingone_credential_type.%[2]s.id
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeDataSource_NotFoundByID(resourceName string) string {
@@ -166,10 +166,10 @@ func testAccCredentialTypeDataSource_NotFoundByID(resourceName string) string {
 	%[1]s
 
 data "pingone_credential_type" "%[2]s" {
-  environment_id     = data.pingone_environment.credentials_test.id
+  environment_id     = data.pingone_environment.general_test.id
   credential_type_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func testAccCredentialTypeDataSource_NoEnvironmentID(resourceName string) string {
@@ -179,7 +179,7 @@ func testAccCredentialTypeDataSource_NoEnvironmentID(resourceName string) string
 data "pingone_credential_type" "%[2]s" {
   credential_type_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func testAccCredentialTypeDataSource_NoCredentialTypeID(resourceName string) string {
@@ -187,7 +187,7 @@ func testAccCredentialTypeDataSource_NoCredentialTypeID(resourceName string) str
 	%[1]s
 
 data "pingone_credential_type" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }

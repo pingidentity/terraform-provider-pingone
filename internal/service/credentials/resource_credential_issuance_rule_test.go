@@ -236,12 +236,12 @@ func testAccCredentialIssuanceRule_Full(resourceName, name string) string {
 	%[1]s
 
 resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -266,7 +266,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -284,7 +284,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -293,7 +293,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -315,7 +315,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
       variant = "template_B"
     }
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_Minimal(resourceName, name string) string {
@@ -323,7 +323,7 @@ func testAccCredentialIssuanceRule_Minimal(resourceName, name string) string {
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -348,7 +348,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -366,7 +366,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -375,7 +375,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -390,7 +390,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
     update = "PERIODIC"
   }
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_Disabled(resourceName, name string) string {
@@ -398,7 +398,7 @@ func testAccCredentialIssuanceRule_Disabled(resourceName, name string) string {
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -423,7 +423,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -441,7 +441,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -450,7 +450,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "DISABLED"
@@ -461,7 +461,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
     update = "PERIODIC"
   }
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_InvalidCredentialTypeID(resourceName, name string) string {
@@ -470,7 +470,7 @@ func testAccCredentialIssuanceRule_InvalidCredentialTypeID(resourceName, name st
 
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -488,7 +488,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -497,7 +497,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "DISABLED"
 
@@ -511,7 +511,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
     update = "PERIODIC"
   }
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_InvalidDigitalWalletID(resourceName, name string) string {
@@ -519,7 +519,7 @@ func testAccCredentialIssuanceRule_InvalidDigitalWalletID(resourceName, name str
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -544,7 +544,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id     = data.pingone_environment.credentials_test.id
+  environment_id     = data.pingone_environment.general_test.id
   credential_type_id = resource.pingone_credential_type.%[2]s.id
   status             = "DISABLED"
 
@@ -558,7 +558,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
     update = "PERIODIC"
   }
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_InvalidGroupIdFilterAttribute(resourceName, name string) string {
@@ -566,12 +566,12 @@ func testAccCredentialIssuanceRule_InvalidGroupIdFilterAttribute(resourceName, n
 	%[1]s
 
 resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -596,7 +596,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -614,7 +614,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -623,7 +623,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -645,7 +645,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
       variant = "template_B"
     }
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_InvalidPopulationIdFilterAttribute(resourceName, name string) string {
@@ -653,12 +653,12 @@ func testAccCredentialIssuanceRule_InvalidPopulationIdFilterAttribute(resourceNa
 	%[1]s
 
 resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -683,7 +683,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -701,7 +701,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -710,7 +710,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -732,7 +732,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
       variant = "template_B"
     }
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_InvalidFilterAttribute(resourceName, name string) string {
@@ -740,12 +740,12 @@ func testAccCredentialIssuanceRule_InvalidFilterAttribute(resourceName, name str
 	%[1]s
 
 resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -770,7 +770,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -788,7 +788,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -797,7 +797,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -817,7 +817,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
       variant = "template_B"
     }
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_InvalidAutomationAttribute(resourceName, name string) string {
@@ -825,12 +825,12 @@ func testAccCredentialIssuanceRule_InvalidAutomationAttribute(resourceName, name
 	%[1]s
 
 resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -855,7 +855,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -873,7 +873,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -882,7 +882,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -900,7 +900,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
       variant = "template_B"
     }
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_InvalidNotificationAttribute(resourceName, name string) string {
@@ -908,12 +908,12 @@ func testAccCredentialIssuanceRule_InvalidNotificationAttribute(resourceName, na
 	%[1]s
 
 resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -938,7 +938,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -956,7 +956,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -965,7 +965,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -981,7 +981,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
   }
 
   notification = {}
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_InvalidNotificationMethodsAttribute(resourceName, name string) string {
@@ -989,12 +989,12 @@ func testAccCredentialIssuanceRule_InvalidNotificationMethodsAttribute(resourceN
 	%[1]s
 
 resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -1019,7 +1019,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -1037,7 +1037,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -1046,7 +1046,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -1068,7 +1068,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
       variant = "template_B"
     }
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRule_InvalidNotificationTemplateAttribute(resourceName, name string) string {
@@ -1076,12 +1076,12 @@ func testAccCredentialIssuanceRule_InvalidNotificationTemplateAttribute(resource
 	%[1]s
 
 resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -1106,7 +1106,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -1124,7 +1124,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com"
@@ -1133,7 +1133,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -1152,5 +1152,5 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
     methods  = ["EMAIL", "SMS"]
     template = {}
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

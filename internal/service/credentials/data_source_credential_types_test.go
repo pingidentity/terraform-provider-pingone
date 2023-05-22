@@ -53,6 +53,10 @@ func TestAccCredentialTypesDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_credential_types.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -60,7 +64,7 @@ func TestAccCredentialTypesDataSource_NotFound(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCredentialTypesDataSource_NotFound(resourceName),
+				Config: testAccCredentialTypesDataSource_NotFound(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
@@ -163,12 +167,12 @@ data "pingone_credential_types" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccCredentialTypesDataSource_NotFound(resourceName string) string {
+func testAccCredentialTypesDataSource_NotFound(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-data "pingone_credential_types" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+data "pingone_credential_types" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-}`, acctest.GenericSandboxEnvironment(), resourceName)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }

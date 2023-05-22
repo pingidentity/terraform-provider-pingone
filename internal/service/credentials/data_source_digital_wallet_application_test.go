@@ -128,7 +128,7 @@ func testAccDigitalWalletApplicationDataSource_ByIDFull(resourceName, name strin
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s-appname" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -146,7 +146,7 @@ resource "pingone_application" "%[2]s-appname" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s-walletappname" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s-appname.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com/%[3]s"
@@ -155,19 +155,19 @@ resource "pingone_digital_wallet_application" "%[2]s-walletappname" {
 }
 
 data "pingone_digital_wallet_application" "%[2]s" {
-  environment_id    = data.pingone_environment.credentials_test.id
+  environment_id    = data.pingone_environment.general_test.id
   digital_wallet_id = resource.pingone_digital_wallet_application.%[2]s-walletappname.id
 
   depends_on = [resource.pingone_digital_wallet_application.%[2]s-walletappname]
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccDigitalWalletApplicationDataSource_ByApplicationIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s-appname" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -185,7 +185,7 @@ resource "pingone_application" "%[2]s-appname" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s-walletappname" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s-appname.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com/%[3]s"
@@ -194,19 +194,19 @@ resource "pingone_digital_wallet_application" "%[2]s-walletappname" {
 }
 
 data "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s-appname.id
 
   depends_on = [resource.pingone_digital_wallet_application.%[2]s-walletappname]
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccDigitalWalletApplicationDataSource_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s-appname" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -224,7 +224,7 @@ resource "pingone_application" "%[2]s-appname" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s-walletappname" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s-appname.id
   name           = "%[3]s"
   app_open_url   = "https://www.example.com/%[3]s"
@@ -233,12 +233,12 @@ resource "pingone_digital_wallet_application" "%[2]s-walletappname" {
 }
 
 data "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
   depends_on = [resource.pingone_digital_wallet_application.%[2]s-walletappname]
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccDigitalWalletApplicationDataSource_NotFoundByID(resourceName string) string {
@@ -246,10 +246,10 @@ func testAccDigitalWalletApplicationDataSource_NotFoundByID(resourceName string)
 	%[1]s
 
 data "pingone_digital_wallet_application" "%[2]s" {
-  environment_id    = data.pingone_environment.credentials_test.id
+  environment_id    = data.pingone_environment.general_test.id
   digital_wallet_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func testAccDigitalWalletApplicationDataSource_NotFoundByApplicationID(resourceName string) string {
@@ -257,10 +257,10 @@ func testAccDigitalWalletApplicationDataSource_NotFoundByApplicationID(resourceN
 	%[1]s
 
 data "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func testAccDigitalWalletApplicationDataSource_NotFoundByName(resourceName string) string {
@@ -268,8 +268,8 @@ func testAccDigitalWalletApplicationDataSource_NotFoundByName(resourceName strin
 	%[1]s
 
 data "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "dummy value"
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }

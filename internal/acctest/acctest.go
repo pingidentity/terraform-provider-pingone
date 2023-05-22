@@ -302,7 +302,7 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 			}
 			service {
 				type = "Credentials"
-			}			
+			}
 		}`, resourceName, licenseID)
 }
 
@@ -338,12 +338,5 @@ func DaVinciFlowPolicySandboxEnvironment() string {
 	return `
 		data "pingone_environment" "davinci_test" {
 			name = "tf-testacc-static-davinci-test"
-		}`
-}
-
-func CredentialsSandboxEnvironment() string {
-	return `
-		data "pingone_environment" "credentials_test" {
-			name = "tf-testacc-static-credentials-test"
 		}`
 }

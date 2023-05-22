@@ -264,7 +264,7 @@ func testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl string)
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -282,29 +282,29 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "%[4]s"
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
 func testAccDigitalWalletApplication_NativeAppMissing(resourceName, name, appOpenUrl string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
   name           = "%[3]s"
   app_open_url   = "%[4]s"
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
 func testAccDigitalWalletApplication_InvalidAppType(resourceName, name, appOpenUrl string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -319,18 +319,18 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "%[4]s"
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
 func testAccDigitalWalletApplication_NativeAppMobileNotConfigured(resourceName, name, appOpenUrl string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -342,18 +342,18 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "%[4]s"
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
 func testAccDigitalWalletApplication_NativeAppInvalidMobileConfiguration(resourceName, name, appOpenUrl string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -369,18 +369,18 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "%[4]s"
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, appOpenUrl)
 }
 
 func testAccDigitalWalletApplication_InvalidAppOpenUrl(resourceName, name, appOpenUrl string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -398,9 +398,9 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[3]s"
   app_open_url   = "%[4]s"
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, appOpenUrl)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, appOpenUrl)
 }

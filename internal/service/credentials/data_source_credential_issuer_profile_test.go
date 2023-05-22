@@ -52,6 +52,10 @@ func TestAccCredentialIssuerProfileDataSource_NotFound(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -60,7 +64,7 @@ func TestAccCredentialIssuerProfileDataSource_NotFound(t *testing.T) {
 		ErrorCheck: acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialIssuerProfileDataSource_NotFound(resourceName),
+				Config:      testAccCredentialIssuerProfileDataSource_NotFound(environmentName, licenseID, resourceName),
 				ExpectError: regexp.MustCompile("Error when calling `ReadCredentialIssuerProfile`: Issuer not found for environment"),
 			},
 		},
@@ -86,11 +90,26 @@ data "pingone_credential_issuer_profile" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccCredentialIssuerProfileDataSource_NotFound(resourceName string) string {
+func testAccCredentialIssuerProfileDataSource_NotFound(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
-	%[1]s
+resource "pingone_environment" "%[3]s" {
+  name       = "%[1]s"
+  type       = "SANDBOX"
+  license_id = "%[2]s"
+  default_population {
+  }
+  service {
+    type = "SSO"
+  }
+  service {
+    type = "MFA"
+  }
+  service {
+    type = "Risk"
+  }
+}
 
-data "pingone_credential_issuer_profile" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-}`, acctest.GenericSandboxEnvironment(), resourceName)
+data "pingone_credential_issuer_profile" "%[3]s" {
+  environment_id = pingone_environment.%[3]s.id
+}`, environmentName, licenseID, resourceName)
 }

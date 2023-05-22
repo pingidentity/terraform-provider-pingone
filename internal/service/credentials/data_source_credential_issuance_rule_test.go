@@ -97,7 +97,7 @@ func testAccCredentialIssuanceRuleDataSource_ByIDFull(resourceName, name string)
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
@@ -158,7 +158,7 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[2]s"
   enabled        = true
 
@@ -176,7 +176,7 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = resource.pingone_application.%[2]s.id
   name           = "%[2]s"
   app_open_url   = "https://www.example.com"
@@ -185,7 +185,7 @@ resource "pingone_digital_wallet_application" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.credentials_test.id
+  environment_id                = data.pingone_environment.general_test.id
   credential_type_id            = resource.pingone_credential_type.%[2]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
   status                        = "ACTIVE"
@@ -210,18 +210,18 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }
 
 data "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id              = data.pingone_environment.credentials_test.id
+  environment_id              = data.pingone_environment.general_test.id
   credential_type_id          = resource.pingone_credential_type.%[2]s.id
   credential_issuance_rule_id = resource.pingone_credential_issuance_rule.%[2]s.id
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialIssuanceRuleDataSource_NotFoundByID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[2]s"
   description          = "%[2]s Example Description"
   card_type            = "%[2]s"
@@ -245,18 +245,18 @@ resource "pingone_credential_type" "%[2]s" {
   }
 }
 data "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id              = data.pingone_environment.credentials_test.id
+  environment_id              = data.pingone_environment.general_test.id
   credential_type_id          = resource.pingone_credential_type.%[2]s.id
   credential_issuance_rule_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func testAccCredentialIssuanceRuleDataSource_NoEnvironmentID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[2]s"
   description          = "%[2]s Example Description"
   card_type            = "%[2]s"
@@ -283,14 +283,14 @@ data "pingone_credential_issuance_rule" "%[2]s" {
   credential_type_id          = resource.pingone_credential_type.%[2]s.id
   credential_issuance_rule_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func testAccCredentialIssuanceRuleDataSource_NoCredentialIssuanceRuleID(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[2]s"
   description          = "%[2]s Example Description"
   card_type            = "%[2]s"
@@ -314,8 +314,8 @@ resource "pingone_credential_type" "%[2]s" {
   }
 }
 data "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id     = data.pingone_environment.credentials_test.id
+  environment_id     = data.pingone_environment.general_test.id
   credential_type_id = resource.pingone_credential_type.%[2]s.id
 
-}`, acctest.CredentialsSandboxEnvironment(), resourceName)
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }

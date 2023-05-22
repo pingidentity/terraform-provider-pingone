@@ -368,7 +368,7 @@ func testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoI
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "VerifiedEmployee"
@@ -429,7 +429,7 @@ resource "pingone_credential_type" "%[2]s" {
       }
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, backgroundImage, logoImage)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, backgroundImage, logoImage)
 }
 
 func testAccCredentialTypeConfig_Minimal(resourceName, name string) string {
@@ -437,7 +437,7 @@ func testAccCredentialTypeConfig_Minimal(resourceName, name string) string {
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -454,7 +454,7 @@ resource "pingone_credential_type" "%[2]s" {
       }
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_ImageSizeExceeded(resourceName, name, backgroundImage, logoImage string) string {
@@ -462,7 +462,7 @@ func testAccCredentialTypeConfig_ImageSizeExceeded(resourceName, name, backgroun
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "VerifiedEmployee"
@@ -522,7 +522,7 @@ resource "pingone_credential_type" "%[2]s" {
       }
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, backgroundImage, logoImage)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, backgroundImage, logoImage)
 }
 
 func testAccCredentialTypeConfig_InvalidTitle(resourceName, name string) string {
@@ -530,7 +530,7 @@ func testAccCredentialTypeConfig_InvalidTitle(resourceName, name string) string 
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -562,7 +562,7 @@ resource "pingone_credential_type" "%[2]s" {
       }
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_InvalidCardColorHexValue(resourceName, name string) string {
@@ -570,7 +570,7 @@ func testAccCredentialTypeConfig_InvalidCardColorHexValue(resourceName, name str
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -590,14 +590,14 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_InvalidTextColorHexValue(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -617,14 +617,14 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_InvalidBackgroundOpacityValue(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -644,14 +644,14 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_InvalidVersion(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -672,14 +672,14 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_EmptyFieldsArray(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -694,14 +694,14 @@ resource "pingone_credential_type" "%[2]s" {
     fields = [
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_CardDesignTemplate_NoSVG(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id = data.pingone_environment.credentials_test.id
+  environment_id = data.pingone_environment.general_test.id
   title          = "%[3]s"
   description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
@@ -723,14 +723,14 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_CardDesignTemplate_NoBackgroundImage(resourceName, name, backgroundImage string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -751,14 +751,14 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, backgroundImage)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, backgroundImage)
 }
 
 func testAccCredentialTypeConfig_CardDesignTemplate_NoCardColor(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -778,14 +778,14 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_CardDesignTemplate_NoLogoImage(resourceName, name, logoImage string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -807,14 +807,14 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name, logoImage)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, logoImage)
 }
 
 func testAccCredentialTypeConfig_CardDesignTemplate_NoSubtitle(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -835,14 +835,14 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCredentialTypeConfig_CardDesignTemplate_NoTextColor(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.credentials_test.id
+  environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
@@ -862,5 +862,5 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
-}`, acctest.CredentialsSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
