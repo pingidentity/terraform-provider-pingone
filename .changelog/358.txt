@@ -1,7 +1,7 @@
-```release-note:note
-`resource/pingone_key`: **BREAKING CHANGE** Signature algorithms `SHA224withRSA` and `SHA224withECDSA` removed as they are no longer supported by the platform. (P14C-50332)
+```release-note:breaking-change
+`resource/pingone_key`: Signature algorithms `SHA224withRSA` and `SHA224withECDSA` removed as they are no longer supported by the platform. (P14C-50332)
 ```
 
-```release-note:note
-`resource/pingone_application`: **BREAKING CHANGE** Signature algorithms `SHA224withRSA` and `SHA224withECDSA` removed as they are no longer supported by the platform. (P14C-50332)
+```release-note:breaking-change
+`resource/pingone_application`: Signature algorithms `SHA224withRSA` and `SHA224withECDSA` removed as they are no longer supported by the platform. (P14C-50332)
 ```
