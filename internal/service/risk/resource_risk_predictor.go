@@ -18,9 +18,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -547,9 +551,11 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 				Attributes: map[string]schema.Attribute{
 					"weight": schema.Int64Attribute{
-						Description: framework.SchemaDescriptionFromMarkdown("A number that specifies the default weight for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.").Description,
+						Description: framework.SchemaDescriptionFromMarkdown("A number that specifies the default weight for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.").DefaultValue("5").Description,
 						Optional:    true,
 						Computed:    true,
+
+						Default: int64default.StaticInt64(5),
 					},
 
 					"result": schema.SingleNestedAttribute{
@@ -682,6 +688,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					"type": schema.StringAttribute{
 						Description: framework.SchemaDescriptionFromMarkdown("A string that specifies the type of custom map predictor.").Description,
 						Computed:    true,
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 
 					"between_ranges": schema.SingleNestedAttribute{
@@ -854,6 +864,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 					"days": schema.Int64Attribute{
 						Description: framework.SchemaDescriptionFromMarkdown("An integer that specifies the number of days to apply to the predictor evaluation.").Description,
 						Computed:    true,
+
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 
@@ -939,27 +953,47 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								stringvalidator.OneOf("${event.user.id}", "${event.ip}"),
 							),
 						},
+
+						PlanModifiers: []planmodifier.Set{
+							setplanmodifier.UseStateForUnknown(),
+						},
 					},
 
 					"use": schema.SingleNestedAttribute{
 						Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the velocity algorithm.").Description,
 						Computed:    true,
 
+						PlanModifiers: []planmodifier.Object{
+							objectplanmodifier.UseStateForUnknown(),
+						},
+
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
 								Description:         predictorVelocityUseTypeDescription.Description,
 								MarkdownDescription: predictorVelocityUseTypeDescription.MarkdownDescription,
 								Computed:            true,
+
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
 							},
 
 							"medium": schema.Float64Attribute{
 								Description: framework.SchemaDescriptionFromMarkdown("A floating point value that specifies a medium risk threshold for the velocity algorithm.").Description,
 								Computed:    true,
+
+								PlanModifiers: []planmodifier.Float64{
+									float64planmodifier.UseStateForUnknown(),
+								},
 							},
 
 							"high": schema.Float64Attribute{
 								Description: framework.SchemaDescriptionFromMarkdown("A floating point value that specifies a high risk threshold for the velocity algorithm.").Description,
 								Computed:    true,
+
+								PlanModifiers: []planmodifier.Float64{
+									float64planmodifier.UseStateForUnknown(),
+								},
 							},
 						},
 					},
@@ -968,21 +1002,37 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the predictor fallback strategy.").Description,
 						Computed:    true,
 
+						PlanModifiers: []planmodifier.Object{
+							objectplanmodifier.UseStateForUnknown(),
+						},
+
 						Attributes: map[string]schema.Attribute{
 							"strategy": schema.StringAttribute{
 								Description:         predictorVelocityFallbackTypeDescription.Description,
 								MarkdownDescription: predictorVelocityFallbackTypeDescription.MarkdownDescription,
 								Computed:            true,
+
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
 							},
 
 							"high": schema.Float64Attribute{
 								Description: framework.SchemaDescriptionFromMarkdown("A floating point value that specifies a high risk threshold for the fallback strategy.").Description,
 								Computed:    true,
+
+								PlanModifiers: []planmodifier.Float64{
+									float64planmodifier.UseStateForUnknown(),
+								},
 							},
 
 							"medium": schema.Float64Attribute{
 								Description: framework.SchemaDescriptionFromMarkdown("A floating point value that specifies a medium risk threshold for the fallback strategy.").Description,
 								Computed:    true,
+
+								PlanModifiers: []planmodifier.Float64{
+									float64planmodifier.UseStateForUnknown(),
+								},
 							},
 						},
 					},
@@ -991,21 +1041,37 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the granularlity of data sampling.").Description,
 						Computed:    true,
 
+						PlanModifiers: []planmodifier.Object{
+							objectplanmodifier.UseStateForUnknown(),
+						},
+
 						Attributes: map[string]schema.Attribute{
 							"unit": schema.StringAttribute{
 								Description:         predictorVelocityEveryUnitDescription.Description,
 								MarkdownDescription: predictorVelocityEveryUnitDescription.MarkdownDescription,
 								Computed:            true,
+
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
 							},
 
 							"quantity": schema.Int64Attribute{
 								Description: framework.SchemaDescriptionFromMarkdown("An integer that denotes the quantity of unit intervals to use for the velocity algorithm.").Description,
 								Computed:    true,
+
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
 							},
 
 							"min_sample": schema.Int64Attribute{
 								Description: framework.SchemaDescriptionFromMarkdown("An integer that denotes the minimum sample of data to use for the velocity algorithm.").Description,
 								Computed:    true,
+
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
 							},
 						},
 					},
@@ -1014,21 +1080,37 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Description: framework.SchemaDescriptionFromMarkdown("A single nested object that specifies options for the distribution of data that is compared against to detect anomaly.").Description,
 						Computed:    true,
 
+						PlanModifiers: []planmodifier.Object{
+							objectplanmodifier.UseStateForUnknown(),
+						},
+
 						Attributes: map[string]schema.Attribute{
 							"unit": schema.StringAttribute{
 								Description:         predictorVelocitySlidingWindowUnitDescription.Description,
 								MarkdownDescription: predictorVelocitySlidingWindowUnitDescription.MarkdownDescription,
 								Computed:            true,
+
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
 							},
 
 							"quantity": schema.Int64Attribute{
 								Description: framework.SchemaDescriptionFromMarkdown("An integer that denotes the quantity of unit intervals to use for the velocity algorithm.").Description,
 								Computed:    true,
+
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
 							},
 
 							"min_sample": schema.Int64Attribute{
 								Description: framework.SchemaDescriptionFromMarkdown("An integer that denotes the minimum sample of data to use for the velocity algorithm.").Description,
 								Computed:    true,
+
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
 							},
 						},
 					},
