@@ -170,10 +170,6 @@ func TestAccCredentialIssuerProfile_InvalidConfig(t *testing.T) {
 				Config:      testAccCredentialIssuerProfileInvalidConfig_InvalidName(environmentName, licenseID, resourceName, ""),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Length"),
 			},
-			//{
-			//	Config:      testAccCredentialIssuerProfileInvalidConfig_CredentialServiceNotEnabled(environmentName, licenseID, resourceName, name),
-			//	ExpectError: regexp.MustCompile("Error: Error when calling `ReadCredentialIssuerProfile`: Issuer not found for environment"),
-			//},
 		},
 	})
 }
@@ -201,25 +197,4 @@ resource "pingone_credential_issuer_profile" "%[3]s" {
   depends_on = [pingone_environment.%[2]s]
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
-
-func testAccCredentialIssuerProfileInvalidConfig_CredentialServiceNotEnabled(environmentName, licenseID, resourceName, name string) string {
-	return fmt.Sprintf(`
-resource "pingone_environment" "%[3]s" {
-  name       = "%[1]s"
-  type       = "SANDBOX"
-  license_id = "%[2]s"
-  default_population {
-  }
-  service {
-    type = "SSO"
-  }
-}
-resource "pingone_credential_issuer_profile" "%[3]s" {
-  environment_id = resource.pingone_environment.%[3]s.id
-  name           = "%[4]s"
-
-  depends_on = [pingone_environment.%[3]s]
-
-}`, environmentName, licenseID, resourceName, name)
 }
