@@ -7,7 +7,7 @@ BREAKING CHANGES:
 
 NOTES:
 
-* Upgraded the provider protocol version from 5 to 6.  Use of the provider requires Terraform CLI 1.0 or later. ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
+* Upgraded the provider protocol version from 5 to 6.  Use of the provider requires Terraform CLI 1.1 or later. ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
 * `pingone_application`: Deprecated `oidc_options.bundle_id` and `oidc_options.package_name` from the schema.  Customers should use `oidc_options.mobile_app.bundle_id` and `oidc_options.mobile_app.package_name` going forward. ([#363](https://github.com/pingidentity/terraform-provider-pingone/issues/363))
 * `pingone_application`: Updated Native mobile example in registry documentation to remove deprecated attributes. ([#365](https://github.com/pingidentity/terraform-provider-pingone/issues/365))
 * `resource/pingone_application_flow_policy_assignment`: Update documentation example to select from multiple DaVinci application flow policies. ([#360](https://github.com/pingidentity/terraform-provider-pingone/issues/360))

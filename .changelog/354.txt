@@ -1,5 +1,5 @@
 ```release-note:note
-Upgraded the provider protocol version from 5 to 6.  Use of the provider requires Terraform CLI 1.0 or later.
+Upgraded the provider protocol version from 5 to 6.  Use of the provider requires Terraform CLI 1.1 or later.
 ```
 
 ```release-note:note
