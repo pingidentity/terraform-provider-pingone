@@ -17,6 +17,16 @@ NOTES:
 
 FEATURES:
 
+* **New Data Source:** `pingone_credential_issuance_rule` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
+* **New Data Source:** `pingone_credential_issuer_profile` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
+* **New Data Source:** `pingone_credential_type` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
+* **New Data Source:** `pingone_credential_types` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
+* **New Data Source:** `pingone_digital_wallet_application` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
+* **New Data Source:** `pingone_digital_wallet_applications` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
+* **New Resource:** `pingone_credential_issuance_rule` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
+* **New Resource:** `pingone_credential_issuer_profile` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
+* **New Resource:** `pingone_credential_type` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
+* **New Resource:** `pingone_digital_wallet_application` ([#359](https://github.com/pingidentity/terraform-provider-pingone/issues/359))
 * **New Resource:** `pingone_risk_predictor` ([#350](https://github.com/pingidentity/terraform-provider-pingone/issues/350))
 
 BUG FIXES:
