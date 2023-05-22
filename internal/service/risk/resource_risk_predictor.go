@@ -364,6 +364,8 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	).AllowedValuesEnum(risk.AllowedEnumPredictorTypeEnumValues)
 
 	// Default nested attr
+	defaultWeightDescription := framework.SchemaDescriptionFromMarkdown("A number that specifies the default weight for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.").DefaultValue(fmt.Sprint(defaultWeightValue))
+
 	defaultResultDescription := framework.SchemaDescriptionFromMarkdown("A single nested object that contains the result assigned to the predictor if the predictor could not be calculated during the risk evaluation. If this field is not provided, and the predictor could not be calculated during risk evaluation, the behavior is: 1) If the predictor is used in an override, the override is skipped; 2) In the weighted policy, the predictor will have a `weight` of `0`.")
 
 	defaultResultTypeDescription := framework.SchemaDescriptionFromMarkdown(
@@ -552,9 +554,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 				Attributes: map[string]schema.Attribute{
 					"weight": schema.Int64Attribute{
-						Description: framework.SchemaDescriptionFromMarkdown("A number that specifies the default weight for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.").DefaultValue("5").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         defaultWeightDescription.Description,
+						MarkdownDescription: defaultWeightDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: int64default.StaticInt64(defaultWeightValue),
 					},

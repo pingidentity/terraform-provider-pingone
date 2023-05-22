@@ -380,7 +380,7 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 Optional:
 
 - `result` (Attributes) A single nested object that contains the result assigned to the predictor if the predictor could not be calculated during the risk evaluation. If this field is not provided, and the predictor could not be calculated during risk evaluation, the behavior is: 1) If the predictor is used in an override, the override is skipped; 2) In the weighted policy, the predictor will have a `weight` of `0`. (see [below for nested schema](#nestedatt--default--result))
-- `weight` (Number) A number that specifies the default weight for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.  Defaults to "5".
+- `weight` (Number) A number that specifies the default weight for the risk predictor. This value is used when the risk predictor is not explicitly configured in a policy.  Defaults to `5`.
 
 <a id="nestedatt--default--result"></a>
 ### Nested Schema for `default.result`
