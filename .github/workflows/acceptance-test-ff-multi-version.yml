@@ -1,0 +1,95 @@
+# This GitHub action runs your tests for each commit push and/or PR. Optionally
+# you can turn it on using a cron schedule for regular testing.
+#
+name: Multi-version Acceptance Tests (Feature Flagged)
+on:
+  workflow_dispatch:
+  # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
+  # we recommend testing at a regular interval not necessarily tied to code changes. This will 
+  # ensure you are alerted to something breaking due to an API change, even if the code did not
+  # change.
+  schedule:
+    - cron: '0 6 14,28 * *'
+jobs:
+  # ensure the code builds...
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Build
+      run: |
+        go build -v .
+
+  # run acceptance tests in a matrix with Terraform core versions
+  test:
+    name: Acceptance Test
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: DAVINCI
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION: "Europe"
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # list whatever Terraform versions here you would like to support
+        terraform: # We test the earliest supported (v1.1), and the latest supported (v1.4)
+          - '1.1.*'
+          - '1.4.*'
+      max-parallel: 1
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ matrix.terraform }}
+        terraform_wrapper: false
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep
+
+    - name: TF acceptance tests
+      timeout-minutes: 45
+      run: |
+        make testacc
+
+    - name: Sweep to clean up
+      run: |
+        make sweep

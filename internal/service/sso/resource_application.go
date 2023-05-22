@@ -298,25 +298,45 @@ func ResourceApplication() *schema.Resource {
 							Type:        schema.TypeList,
 							MaxItems:    1,
 							Optional:    true,
-							Computed:    true,
+							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+								// If we have an app configured, then we need to compute the diff.
+								if _, ok := d.GetOk("oidc_options.0.mobile_app.0.bundle_id"); ok {
+									return false
+								}
+
+								if _, ok := d.GetOk("oidc_options.0.mobile_app.0.package_name"); ok {
+									return false
+								}
+
+								if _, ok := d.GetOk("oidc_options.0.mobile_app.0.huawei_app_id"); ok {
+									return false
+								}
+
+								if _, ok := d.GetOk("oidc_options.0.mobile_app.0.huawei_package_name"); ok {
+									return false
+								}
+
+								// If no app configured, we can suppress the diff.
+								return true
+							},
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"bundle_id": {
-										Description:      "A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `bundle_id` field",
+										Description:      "A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable.  Changing this value will trigger a replacement plan of this resource.",
 										Type:             schema.TypeString,
 										Optional:         true,
 										ForceNew:         true,
 										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 									},
 									"package_name": {
-										Description:      "A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.  this setting overrides the top-level `package_name` field.",
+										Description:      "A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.  Changing this value will trigger a replacement plan of this resource.",
 										Type:             schema.TypeString,
 										Optional:         true,
 										ForceNew:         true,
 										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 									},
 									"huawei_app_id": {
-										Description:      "The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_package_name`.",
+										Description:      "The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_package_name`.  Changing this value will trigger a replacement plan of this resource.",
 										Type:             schema.TypeString,
 										Optional:         true,
 										ForceNew:         true,
@@ -324,7 +344,7 @@ func ResourceApplication() *schema.Resource {
 										ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 									},
 									"huawei_package_name": {
-										Description:      "The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.",
+										Description:      "The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.  Changing this value will trigger a replacement plan of this resource.",
 										Type:             schema.TypeString,
 										Optional:         true,
 										ForceNew:         true,
@@ -444,18 +464,20 @@ func ResourceApplication() *schema.Resource {
 							},
 						},
 						"bundle_id": {
-							Description:      "A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable; any change will force recreation of the applicationr resource.",
+							Description:      "**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead. A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.",
 							Type:             schema.TypeString,
 							Optional:         true,
-							ForceNew:         true,
+							Computed:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+							Deprecated:       "This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead.",
 						},
 						"package_name": {
-							Description:      "A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.",
+							Description:      "**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead. A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.",
 							Type:             schema.TypeString,
 							Optional:         true,
-							ForceNew:         true,
+							Computed:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+							Deprecated:       "This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead.",
 						},
 					},
 				},

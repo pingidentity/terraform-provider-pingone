@@ -39,8 +39,5 @@ resource "pingone_application" "my_awesome_native_app" {
         }
       }
     }
-
-    bundle_id    = var.apple_bundle_id
-    package_name = var.android_package_name
   }
 }

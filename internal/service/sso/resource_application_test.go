@@ -2834,9 +2834,6 @@ resource "pingone_application" "%[2]s" {
         }
       }
     }
-
-    bundle_id    = "com.%[2]s.bundle"
-    package_name = "com.%[2]s.package"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
@@ -3003,9 +3000,6 @@ resource "pingone_application" "%[2]s" {
         }
       }
     }
-
-    bundle_id    = "com.%[2]s.bundle"
-    package_name = "com.%[2]s.package"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -3072,9 +3066,6 @@ resource "pingone_application" "%[2]s" {
         }
       }
     }
-
-    bundle_id    = "com.%[2]s.bundle"
-    package_name = "com.%[2]s.package"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -3117,9 +3108,6 @@ resource "pingone_application" "%[2]s" {
         }
       }
     }
-
-    bundle_id    = "com.%[2]s.bundle"
-    package_name = "com.%[2]s.package"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, googleJsonKey)
@@ -3159,9 +3147,6 @@ resource "pingone_application" "%[2]s" {
         excluded_platforms = ["GOOGLE"]
       }
     }
-
-    bundle_id    = "com.%[2]s.bundle"
-    package_name = "com.%[2]s.package"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -3207,9 +3192,6 @@ resource "pingone_application" "%[2]s" {
         }
       }
     }
-
-    bundle_id    = "com.%[2]s.bundle"
-    package_name = "com.%[2]s.package"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)

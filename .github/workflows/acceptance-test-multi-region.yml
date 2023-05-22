@@ -1,30 +1,15 @@
 # This GitHub action runs your tests for each commit push and/or PR. Optionally
 # you can turn it on using a cron schedule for regular testing.
 #
-name: Acceptance Tests (Multi-region)
+name: Multi-region Acceptance Tests
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - '.vscode'
-      - '.gitignore'
-      - 'CHANGELOG.md'
-      - 'CONTRIBUTING.md'
-      - 'LICENSE'
-      - '.changelog/**'
-      - 'contributing/**'
-      - 'docs/**'
-      - 'examples/**'
-      - 'scripts/**'
-      - 'templates/**'
+  workflow_dispatch:
   # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
   # we recommend testing at a regular interval not necessarily tied to code changes. This will 
   # ensure you are alerted to something breaking due to an API change, even if the code did not
   # change.
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '0 3 * * *'
 jobs:
   # ensure the code builds...
   build:
@@ -110,13 +95,13 @@ jobs:
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
       PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.3.*'
+          - '1.4.*'
     steps:
 
     - name: Check out code into the Go module directory
@@ -139,7 +124,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 60
+      timeout-minutes: 120
       run: |
         make testacc
 
@@ -236,13 +221,13 @@ jobs:
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
       PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.3.*'
+          - '1.4.*'
     steps:
 
     - name: Check out code into the Go module directory
@@ -265,7 +250,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 60
+      timeout-minutes: 120
       run: |
         make testacc
 
@@ -362,13 +347,13 @@ jobs:
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
       PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.3.*'
+          - '1.4.*'
     steps:
 
     - name: Check out code into the Go module directory
@@ -391,7 +376,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 60
+      timeout-minutes: 120
       run: |
         make testacc
 
@@ -488,15 +473,13 @@ jobs:
       PINGONE_VERIFIED_EMAIL_DOMAIN: ${{ secrets.PINGONE_VERIFIED_EMAIL_DOMAIN }}
       PINGONE_GOOGLE_JSON_KEY: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
 
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.1.*'
-          - '1.2.*'
-          - '1.3.*'
+          - '1.4.*'
     steps:
 
     - name: Check out code into the Go module directory
@@ -519,7 +502,7 @@ jobs:
         go mod download
 
     - name: TF acceptance tests
-      timeout-minutes: 60
+      timeout-minutes: 120
       run: |
         make testacc
 

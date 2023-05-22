@@ -1,0 +1,3 @@
+```release-note:note
+`pingone_application`: Deprecated `oidc_options.bundle_id` and `oidc_options.package_name` from the schema.  Customers should use `oidc_options.mobile_app.bundle_id` and `oidc_options.mobile_app.package_name` going forward.
+```
