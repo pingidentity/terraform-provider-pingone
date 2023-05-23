@@ -34,9 +34,6 @@ resource "pingone_application" "my_mobile_application" {
         }
       }
     }
-
-    bundle_id    = "org.bxretail.mobileapp"
-    package_name = "org.bxretail.mobileapp"
   }
 }
 
