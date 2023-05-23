@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_mfa_application_push_credential`: Documentation: Remove deprecated attributes from example HCL.
+```
+
+```release-note:note
+`resource/pingone_mfa_policy`: Documentation: Remove deprecated attributes from example HCL.
+```
