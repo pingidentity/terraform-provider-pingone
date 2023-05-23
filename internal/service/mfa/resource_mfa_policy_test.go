@@ -1579,9 +1579,6 @@ resource "pingone_application" "%[2]s-1" {
         enabled = false
       }
     }
-
-    bundle_id    = "com.%[2]s1.bundle"
-    package_name = "com.%[2]s1.package"
   }
 }
 
@@ -1627,9 +1624,6 @@ resource "pingone_application" "%[2]s-2" {
         }
       }
     }
-
-    bundle_id    = "com.%[2]s2.bundle"
-    package_name = "com.%[2]s2.package"
   }
 }
 
@@ -1666,9 +1660,6 @@ resource "pingone_application" "%[2]s-3" {
         }
       }
     }
-
-    bundle_id    = "com.%[2]s3.bundle"
-    package_name = "com.%[2]s3.package"
   }
 }
 
@@ -1790,9 +1781,6 @@ resource "pingone_application" "%[2]s" {
         enabled = false
       }
     }
-
-    bundle_id    = "com.%[2]s.bundle"
-    package_name = "com.%[2]s.package"
   }
 }
 
@@ -1887,9 +1875,6 @@ resource "pingone_application" "%[2]s" {
         }
       }
     }
-
-    bundle_id    = "com.%[2]s.bundle"
-    package_name = "com.%[2]s.package"
   }
 }
 

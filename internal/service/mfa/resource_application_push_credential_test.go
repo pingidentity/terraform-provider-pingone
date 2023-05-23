@@ -333,8 +333,6 @@ resource "pingone_application" "%[2]s" {
         }
       }
     }
-
-    bundle_id = "com.%[2]s.bundle"
   }
 }
 
