@@ -1,4 +1,4 @@
-## 0.14.0 (Unreleased)
+## 0.14.0 (23 May 2023)
 
 BREAKING CHANGES:
 
@@ -11,6 +11,8 @@ NOTES:
 * `pingone_application`: Deprecated `oidc_options.bundle_id` and `oidc_options.package_name` from the schema.  Customers should use `oidc_options.mobile_app.bundle_id` and `oidc_options.mobile_app.package_name` going forward. ([#363](https://github.com/pingidentity/terraform-provider-pingone/issues/363))
 * `pingone_application`: Updated Native mobile example in registry documentation to remove deprecated attributes. ([#365](https://github.com/pingidentity/terraform-provider-pingone/issues/365))
 * `resource/pingone_application_flow_policy_assignment`: Update documentation example to select from multiple DaVinci application flow policies. ([#360](https://github.com/pingidentity/terraform-provider-pingone/issues/360))
+* `resource/pingone_mfa_application_push_credential`: Documentation: Remove deprecated attributes from example HCL. ([#372](https://github.com/pingidentity/terraform-provider-pingone/issues/372))
+* `resource/pingone_mfa_policy`: Documentation: Remove deprecated attributes from example HCL. ([#372](https://github.com/pingidentity/terraform-provider-pingone/issues/372))
 * bump `github.com/hashicorp/terraform-plugin-mux` from v0.9.0 => v0.10.0 ([#354](https://github.com/pingidentity/terraform-provider-pingone/issues/354))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.3 => v0.1.4 ([#361](https://github.com/pingidentity/terraform-provider-pingone/issues/361))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.6 => v0.1.7 ([#361](https://github.com/pingidentity/terraform-provider-pingone/issues/361))
