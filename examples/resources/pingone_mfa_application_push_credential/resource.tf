@@ -26,9 +26,6 @@ resource "pingone_application" "my_application" {
       huawei_app_id       = "12345679"
       huawei_package_name = "org.bxretail.huaweipackage"
     }
-
-    bundle_id    = "org.bxretail.mybundle"
-    package_name = "org.bxretail.mypackage"
   }
 }
 
