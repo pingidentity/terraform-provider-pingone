@@ -2,7 +2,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.14"
+      version = "~> 0.15"
     }
   }
 }
@@ -16,6 +16,6 @@ provider "pingone" {
   force_delete_production_type = false
 }
 
-resource "pingone_environment" "development" {
+resource "pingone_environment" "my_environment" {
   # ...
 }
