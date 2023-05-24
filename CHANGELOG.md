@@ -1,5 +1,11 @@
 ## 0.15.0 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_branding_settings`: Migrated to plugin framework. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
+* `resource/pingone_branding_theme`: Corrected documentation example syntax. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
+* `resource/pingone_branding_theme`: Migrated to plugin framework. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
+
 ## 0.14.0 (23 May 2023)
 
 BREAKING CHANGES:
