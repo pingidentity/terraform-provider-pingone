@@ -94,8 +94,6 @@ func New(version string) func() *schema.Provider {
 			ResourcesMap: map[string]*schema.Resource{
 				"pingone_authorize_decision_endpoint": authorize.ResourceDecisionEndpoint(),
 
-				"pingone_branding_settings":             base.ResourceBrandingSettings(),
-				"pingone_branding_theme":                base.ResourceBrandingTheme(),
 				"pingone_certificate":                   base.ResourceCertificate(),
 				"pingone_certificate_signing_response":  base.ResourceCertificateSigningResponse(),
 				"pingone_custom_domain":                 base.ResourceCustomDomain(),

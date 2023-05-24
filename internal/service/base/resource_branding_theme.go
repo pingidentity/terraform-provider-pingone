@@ -6,459 +6,647 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceBrandingTheme() *schema.Resource {
-	return &schema.Resource{
+// Types
+type BrandingThemeResource struct {
+	client *management.APIClient
+	region model.RegionMapping
+}
 
+type brandingThemeResourceModel struct {
+	Id                   types.String `tfsdk:"id"`
+	EnvironmentId        types.String `tfsdk:"environment_id"`
+	Name                 types.String `tfsdk:"name"`
+	Template             types.String `tfsdk:"template"`
+	Default              types.Bool   `tfsdk:"default"`
+	Logo                 types.List   `tfsdk:"logo"`
+	BackgroundImage      types.List   `tfsdk:"background_image"`
+	BackgroundColor      types.String `tfsdk:"background_color"`
+	UseDefaultBackground types.Bool   `tfsdk:"use_default_background"`
+	BodyTextColor        types.String `tfsdk:"body_text_color"`
+	ButtonColor          types.String `tfsdk:"button_color"`
+	ButtonTextColor      types.String `tfsdk:"button_text_color"`
+	CardColor            types.String `tfsdk:"card_color"`
+	FooterText           types.String `tfsdk:"footer_text"`
+	HeadingTextColor     types.String `tfsdk:"heading_text_color"`
+	LinkTextColor        types.String `tfsdk:"link_text_color"`
+}
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &BrandingThemeResource{}
+	_ resource.ResourceWithConfigure   = &BrandingThemeResource{}
+	_ resource.ResourceWithImportState = &BrandingThemeResource{}
+)
+
+// New Object
+func NewBrandingThemeResource() resource.Resource {
+	return &BrandingThemeResource{}
+}
+
+// Metadata
+func (r *BrandingThemeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_branding_theme"
+}
+
+// Schema.
+func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	templateDescription := framework.SchemaDescriptionFromMarkdown(
+		"The template name of the branding theme associated with the environment.",
+	).AllowedValuesEnum(management.AllowedEnumBrandingThemeTemplateEnumValues)
+
+	backgroundExactlyOneOfRelativePaths := []string{
+		"background_image",
+		"background_color",
+		"use_default_background",
+	}
+
+	backgroundColorDescription := framework.SchemaDescriptionFromMarkdown(
+		"The background color for the theme. It must be a valid hexadecimal color code.",
+	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
+
+	useDefaultBackgroundDescription := framework.SchemaDescriptionFromMarkdown(
+		"A boolean to specify that the background should be set to the theme template's default.",
+	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
+
+	backgroundImageDescription := framework.SchemaDescriptionFromMarkdown(
+		"The HREF and the ID for the background image.",
+	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
+
+	logoDescription := framework.SchemaDescriptionFromMarkdown(
+		"The HREF and the ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
+	)
+
+	logoHrefDescription := framework.SchemaDescriptionFromMarkdown(
+		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+	)
+
+	backgroundImageHrefDescription := framework.SchemaDescriptionFromMarkdown(
+		"The URL or fully qualified path to the background image file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+	)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne branding themes for an environment.",
 
-		CreateContext: resourceBrandingThemeCreate,
-		ReadContext:   resourceBrandingThemeRead,
-		UpdateContext: resourceBrandingThemeUpdate,
-		DeleteContext: resourceBrandingThemeDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceBrandingThemeImport,
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaDescriptionFromMarkdown("The ID of the environment to set branding settings for."),
+			),
+
+			"name": schema.StringAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("A string that specifies the unique name of the branding theme.").Description,
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
+			},
+
+			"template": schema.StringAttribute{
+				Description:         templateDescription.Description,
+				MarkdownDescription: templateDescription.MarkdownDescription,
+				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumBrandingThemeTemplateEnumValues)...),
+				},
+			},
+
+			"default": schema.BoolAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("Specifies whether this theme is the environment's default branding configuration.").Description,
+				Computed:    true,
+
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+
+			"background_color": schema.StringAttribute{
+				Description:         backgroundColorDescription.Description,
+				MarkdownDescription: backgroundColorDescription.MarkdownDescription,
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("background_color"),
+						path.MatchRelative().AtParent().AtName("use_default_background"),
+						path.MatchRelative().AtParent().AtName("background_image"),
+					),
+				},
+			},
+
+			"use_default_background": schema.BoolAttribute{
+				Description:         useDefaultBackgroundDescription.Description,
+				MarkdownDescription: useDefaultBackgroundDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+
+				Validators: []validator.Bool{
+					boolvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("background_color"),
+						path.MatchRelative().AtParent().AtName("use_default_background"),
+						path.MatchRelative().AtParent().AtName("background_image"),
+					),
+				},
+			},
+
+			"body_text_color": schema.StringAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("The body text color for the theme. It must be a valid hexadecimal color code.").Description,
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
+				},
+			},
+
+			"button_color": schema.StringAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("The button color for the theme. It must be a valid hexadecimal color code.").Description,
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
+				},
+			},
+
+			"button_text_color": schema.StringAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("The button text color for the branding theme. It must be a valid hexadecimal color code.").Description,
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
+				},
+			},
+
+			"card_color": schema.StringAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("The card color for the branding theme. It must be a valid hexadecimal color code.").Description,
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
+				},
+			},
+
+			"footer_text": schema.StringAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("The text to be displayed in the footer of the branding theme.").Description,
+				Optional:    true,
+			},
+
+			"heading_text_color": schema.StringAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("The heading text color for the branding theme. It must be a valid hexadecimal color code.").Description,
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
+				},
+			},
+
+			"link_text_color": schema.StringAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("The hyperlink text color for the branding theme. It must be a valid hexadecimal color code.").Description,
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
+				},
+			},
 		},
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to set branding settings for.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"name": {
-				Description:      "The name of the branding theme.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"template": {
-				Description:      fmt.Sprintf("The template name of the branding theme associated with the environment. Options are `%s`, `%s`, `%s`, `%s`, and `%s`.", string(management.ENUMBRANDINGTHEMETEMPLATE_DEFAULT), string(management.ENUMBRANDINGTHEMETEMPLATE_FOCUS), string(management.ENUMBRANDINGTHEMETEMPLATE_MURAL), string(management.ENUMBRANDINGTHEMETEMPLATE_SLATE), string(management.ENUMBRANDINGTHEMETEMPLATE_SPLIT)),
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMBRANDINGTHEMETEMPLATE_DEFAULT), string(management.ENUMBRANDINGTHEMETEMPLATE_FOCUS), string(management.ENUMBRANDINGTHEMETEMPLATE_MURAL), string(management.ENUMBRANDINGTHEMETEMPLATE_SLATE), string(management.ENUMBRANDINGTHEMETEMPLATE_SPLIT)}, false)),
-			},
-			"default": {
-				Description: "Specifies whether this theme is the environment's default branding configuration.",
-				Type:        schema.TypeBool,
-				Computed:    true,
-			},
-			"logo": {
-				Description: "The HREF and the ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Description:      "The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-						},
-						"href": {
-							Description:      "The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+		Blocks: map[string]schema.Block{
+
+			"logo": schema.ListNestedBlock{
+				Description:         logoDescription.Description,
+				MarkdownDescription: logoDescription.MarkdownDescription,
+
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"id": framework.Attr_LinkID(
+							framework.SchemaDescriptionFromMarkdown("The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
+						),
+
+						"href": schema.StringAttribute{
+							Description:         logoHrefDescription.Description,
+							MarkdownDescription: logoHrefDescription.MarkdownDescription,
+							Required:            true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							},
 						},
 					},
 				},
 			},
-			"background_image": {
-				Description:  "The HREF and the ID for the background image.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ExactlyOneOf: []string{"background_image", "background_color", "use_default_background"},
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Description:      "The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-						},
-						"href": {
-							Description:      "The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+
+			"background_image": schema.ListNestedBlock{
+				Description:         backgroundImageDescription.Description,
+				MarkdownDescription: backgroundImageDescription.MarkdownDescription,
+
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"id": framework.Attr_LinkID(
+							framework.SchemaDescriptionFromMarkdown("The ID of the background image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
+						),
+
+						"href": schema.StringAttribute{
+							Description:         backgroundImageHrefDescription.Description,
+							MarkdownDescription: backgroundImageHrefDescription.MarkdownDescription,
+							Required:            true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							},
 						},
 					},
 				},
-			},
-			"background_color": {
-				Description:  "The background color for the theme. It must be a valid hexadecimal color code.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ExactlyOneOf: []string{"background_image", "background_color", "use_default_background"},
-			},
-			"use_default_background": {
-				Description:  "A boolean to specify that the background should be set to the theme template's default.",
-				Type:         schema.TypeBool,
-				Optional:     true,
-				ExactlyOneOf: []string{"background_image", "background_color", "use_default_background"},
-			},
-			"body_text_color": {
-				Description: "The body text color for the theme. It must be a valid hexadecimal color code.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"button_color": {
-				Description: "The button color for the theme. It must be a valid hexadecimal color code.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"button_text_color": {
-				Description: "The button text color for the branding theme. It must be a valid hexadecimal color code.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"card_color": {
-				Description: "The card color for the branding theme. It must be a valid hexadecimal color code.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"footer_text": {
-				Description: "The text to be displayed in the footer of the branding theme.",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-			"heading_text_color": {
-				Description: "The heading text color for the branding theme. It must be a valid hexadecimal color code.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"link_text_color": {
-				Description: "The hyperlink text color for the branding theme. It must be a valid hexadecimal color code.",
-				Type:        schema.TypeString,
-				Required:    true,
 			},
 		},
 	}
 }
 
-func resourceBrandingThemeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *BrandingThemeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
+	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
+}
+
+func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state brandingThemeResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
 	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
+		"suffix": r.region.URLSuffix,
 	})
-	var diags diag.Diagnostics
 
-	brandingTheme := expandBrandingTheme(d)
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Build the model for the API
+	brandingTheme, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.BrandingThemesApi.CreateBrandingTheme(ctx, d.Get("environment_id").(string)).BrandingTheme(*brandingTheme).Execute()
+			return r.client.BrandingThemesApi.CreateBrandingTheme(ctx, plan.EnvironmentId.ValueString()).BrandingTheme(*brandingTheme).Execute()
 		},
 		"CreateBrandingTheme",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.BrandingTheme)
+	// Create the state to save
+	state = plan
 
-	d.SetId(respObject.GetId())
-
-	return resourceBrandingThemeRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response.(*management.BrandingTheme))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceBrandingThemeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
+func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *brandingThemeResourceModel
 
-	resp, diags := sdk.ParseResponse(
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	response, diags := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.BrandingThemesApi.ReadOneBrandingTheme(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return r.client.BrandingThemesApi.ReadOneBrandingTheme(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneBrandingTheme",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.BrandingTheme)
-
-	d.Set("template", string(respObject.GetTemplate()))
-	d.Set("default", respObject.GetDefault())
-
-	if v, ok := respObject.GetConfigurationOk(); ok {
-		d.Set("name", v.GetName())
-
-		if v1, ok := v.GetLogoOk(); ok {
-			d.Set("logo", flattenBrandingThemeLogo(v1))
-		} else {
-			d.Set("logo", nil)
-		}
-
-		if v1, ok := v.GetBackgroundImageOk(); ok {
-			d.Set("background_image", flattenBrandingThemeBackgroundImage(v1))
-		} else {
-			d.Set("background_image", nil)
-		}
-
-		if v1, ok := v.GetBackgroundColorOk(); ok {
-			d.Set("background_color", v1)
-		} else {
-			d.Set("background_color", nil)
-		}
-
-		if v1, ok := v.GetBackgroundTypeOk(); ok && *v1 == management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_DEFAULT {
-			d.Set("use_default_background", true)
-		} else {
-			d.Set("use_default_background", false)
-		}
-
-		if v1, ok := v.GetBodyTextColorOk(); ok {
-			d.Set("body_text_color", v1)
-		} else {
-			d.Set("body_text_color", nil)
-		}
-
-		if v1, ok := v.GetButtonColorOk(); ok {
-			d.Set("button_color", v1)
-		} else {
-			d.Set("button_color", nil)
-		}
-
-		if v1, ok := v.GetButtonTextColorOk(); ok {
-			d.Set("button_text_color", v1)
-		} else {
-			d.Set("button_text_color", nil)
-		}
-
-		if v1, ok := v.GetCardColorOk(); ok {
-			d.Set("card_color", v1)
-		} else {
-			d.Set("card_color", nil)
-		}
-
-		if v1, ok := v.GetFooterOk(); ok {
-			d.Set("footer_text", v1)
-		} else {
-			d.Set("footer_text", nil)
-		}
-
-		if v1, ok := v.GetHeadingTextColorOk(); ok {
-			d.Set("heading_text_color", v1)
-		} else {
-			d.Set("heading_text_color", nil)
-		}
-
-		if v1, ok := v.GetLinkTextColorOk(); ok {
-			d.Set("link_text_color", v1)
-		} else {
-			d.Set("link_text_color", nil)
-		}
-
-	} else {
-		d.Set("name", nil)
-		d.Set("logo", nil)
-		d.Set("background_image", nil)
-		d.Set("background_color", nil)
-		d.Set("use_default_background", nil)
-		d.Set("body_text_color", nil)
-		d.Set("button_color", nil)
-		d.Set("button_text_color", nil)
-		d.Set("card_color", nil)
-		d.Set("footer_text", nil)
-		d.Set("heading_text_color", nil)
-		d.Set("link_text_color", nil)
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response.(*management.BrandingTheme))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceBrandingThemeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state brandingThemeResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
 	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
+		"suffix": r.region.URLSuffix,
 	})
-	var diags diag.Diagnostics
 
-	brandingTheme := expandBrandingTheme(d)
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	_, diags = sdk.ParseResponse(
+	// Build the model for the API
+	brandingTheme, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.BrandingThemesApi.UpdateBrandingTheme(ctx, d.Get("environment_id").(string), d.Id()).BrandingTheme(*brandingTheme).Execute()
+			return r.client.BrandingThemesApi.UpdateBrandingTheme(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).BrandingTheme(*brandingTheme).Execute()
 		},
 		"UpdateBrandingTheme",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceBrandingThemeRead(ctx, d, meta)
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response.(*management.BrandingTheme))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceBrandingThemeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
+func (r *BrandingThemeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *brandingThemeResourceModel
 
-	_, diags = sdk.ParseResponse(
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	_, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.BrandingThemesApi.DeleteBrandingTheme(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			r, err := r.client.BrandingThemesApi.DeleteBrandingTheme(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteBrandingTheme",
-		sdk.CustomErrorResourceNotFoundWarning,
-		nil,
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	return diags
 }
 
-func resourceBrandingThemeImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *BrandingThemeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
+	attributes := strings.SplitN(req.ID, "/", splitLength)
 
 	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/brandingThemeID\"", d.Id())
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/branding_theme_id\"", req.ID),
+		)
+		return
 	}
 
-	environmentID, brandingThemeID := attributes[0], attributes[1]
-
-	d.Set("environment_id", environmentID)
-	d.SetId(brandingThemeID)
-
-	resourceBrandingThemeRead(ctx, d, meta)
-
-	return []*schema.ResourceData{d}, nil
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func expandBrandingTheme(d *schema.ResourceData) *management.BrandingTheme {
+func (p *brandingThemeResourceModel) expand(ctx context.Context) (*management.BrandingTheme, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	logoType := management.ENUMBRANDINGLOGOTYPE_NONE
-	var logo map[string]interface{}
+	var logo imageResourceModel
 
-	if v, ok := d.GetOk("logo"); ok {
-		if j, okJ := v.([]interface{}); okJ && j != nil && len(j) > 0 {
-			logo = j[0].(map[string]interface{})
-			logoType = management.ENUMBRANDINGLOGOTYPE_IMAGE
+	if !p.Logo.IsNull() && !p.Logo.IsUnknown() {
+
+		var plan []imageResourceModel
+		diags.Append(p.Logo.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
 		}
+
+		logo = plan[0]
+		logoType = management.ENUMBRANDINGLOGOTYPE_IMAGE
+
 	}
 
 	backgroundType := management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_NONE
-	var background map[string]interface{}
-	if v, ok := d.GetOk("background_image"); ok {
-		if j, okJ := v.([]interface{}); okJ && j != nil && len(j) > 0 {
-			background = j[0].(map[string]interface{})
-			backgroundType = management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_IMAGE
+	var background imageResourceModel
+	if !p.BackgroundImage.IsNull() && !p.BackgroundImage.IsUnknown() {
+
+		var plan []imageResourceModel
+		diags.Append(p.BackgroundImage.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
 		}
+
+		background = plan[0]
+		backgroundType = management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_IMAGE
+
 	}
 
 	var backgroundColour string
-	if v, ok := d.GetOk("background_color"); ok {
-		backgroundColour = v.(string)
+	if !p.BackgroundColor.IsNull() && !p.BackgroundColor.IsUnknown() {
+		backgroundColour = p.BackgroundColor.ValueString()
 		backgroundType = management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_COLOR
 	}
 
-	if v, ok := d.GetOk("use_default_background"); ok && v.(bool) {
+	if !p.UseDefaultBackground.IsNull() && !p.UseDefaultBackground.IsUnknown() && p.UseDefaultBackground.Equal(types.BoolValue(true)) {
 		backgroundType = management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_DEFAULT
 	}
 
 	configuration := *management.NewBrandingThemeConfiguration(
 		backgroundType,
-		d.Get("body_text_color").(string),
-		d.Get("button_color").(string),
-		d.Get("button_text_color").(string),
-		d.Get("card_color").(string),
-		d.Get("heading_text_color").(string),
-		d.Get("link_text_color").(string),
+		p.BodyTextColor.ValueString(),
+		p.ButtonColor.ValueString(),
+		p.ButtonTextColor.ValueString(),
+		p.CardColor.ValueString(),
+		p.HeadingTextColor.ValueString(),
+		p.LinkTextColor.ValueString(),
 		logoType,
 	)
 
-	configuration.SetName(d.Get("name").(string))
+	configuration.SetName(p.Name.ValueString())
 
 	if logoType == management.ENUMBRANDINGLOGOTYPE_IMAGE {
-		configuration.SetLogo(*management.NewBrandingThemeConfigurationLogo(logo["href"].(string), logo["id"].(string)))
+		configuration.SetLogo(*management.NewBrandingThemeConfigurationLogo(logo.Href.ValueString(), logo.Id.ValueString()))
 	}
 
 	if backgroundType == management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_IMAGE {
-		configuration.SetBackgroundImage(*management.NewBrandingThemeConfigurationBackgroundImage(background["href"].(string), background["id"].(string)))
+		configuration.SetBackgroundImage(*management.NewBrandingThemeConfigurationBackgroundImage(background.Href.ValueString(), background.Id.ValueString()))
 	}
 
 	if backgroundType == management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_COLOR {
 		configuration.SetBackgroundColor(backgroundColour)
 	}
 
-	if v, ok := d.GetOk("footer_text"); ok {
-		configuration.SetFooter(v.(string))
+	if !p.FooterText.IsNull() && !p.FooterText.IsUnknown() {
+		configuration.SetFooter(p.FooterText.ValueString())
 	}
 
-	brandingTheme := management.NewBrandingTheme(
+	data := management.NewBrandingTheme(
 		configuration,
 		false,
-		management.EnumBrandingThemeTemplate(d.Get("template").(string)),
+		management.EnumBrandingThemeTemplate(p.Template.ValueString()),
 	)
 
-	return brandingTheme
+	return data, diags
 }
 
-func flattenBrandingThemeBackgroundImage(s *management.BrandingThemeConfigurationBackgroundImage) []interface{} {
+func (p *brandingThemeResourceModel) toState(apiObject *management.BrandingTheme) diag.Diagnostics {
+	var diags diag.Diagnostics
 
-	item := map[string]interface{}{
-		"id":   s.GetId(),
-		"href": s.GetHref(),
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
+		return diags
 	}
 
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
+	p.Id = framework.StringToTF(apiObject.GetId())
+	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Template = framework.EnumOkToTF(apiObject.GetTemplateOk())
+	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
-func flattenBrandingThemeLogo(s *management.BrandingThemeConfigurationLogo) []interface{} {
+	if v, ok := apiObject.GetConfigurationOk(); ok {
+		p.Name = framework.StringOkToTF(v.GetNameOk())
+		p.BackgroundColor = framework.StringOkToTF(v.GetBackgroundColorOk())
 
-	item := map[string]interface{}{
-		"id":   s.GetId(),
-		"href": s.GetHref(),
+		if v1, ok := v.GetBackgroundTypeOk(); ok && *v1 == management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_DEFAULT {
+			p.UseDefaultBackground = types.BoolValue(true)
+		} else {
+			p.UseDefaultBackground = types.BoolValue(false)
+		}
+
+		logo, d := toStateImageRef(v.GetLogoOk())
+		diags.Append(d...)
+		p.Logo = logo
+
+		backgroundImage, d := toStateImageRef(v.GetBackgroundImageOk())
+		diags.Append(d...)
+		p.BackgroundImage = backgroundImage
+
+		p.BodyTextColor = framework.StringOkToTF(v.GetBodyTextColorOk())
+		p.ButtonColor = framework.StringOkToTF(v.GetButtonColorOk())
+		p.ButtonTextColor = framework.StringOkToTF(v.GetButtonTextColorOk())
+		p.CardColor = framework.StringOkToTF(v.GetCardColorOk())
+		p.FooterText = framework.StringOkToTF(v.GetFooterOk())
+		p.HeadingTextColor = framework.StringOkToTF(v.GetHeadingTextColorOk())
+		p.LinkTextColor = framework.StringOkToTF(v.GetLinkTextColorOk())
+	} else {
+		p.Name = types.StringNull()
+		p.BackgroundColor = types.StringNull()
+		p.UseDefaultBackground = types.BoolNull()
+		p.BodyTextColor = types.StringNull()
+		p.ButtonColor = types.StringNull()
+		p.ButtonTextColor = types.StringNull()
+		p.CardColor = types.StringNull()
+		p.FooterText = types.StringNull()
+		p.HeadingTextColor = types.StringNull()
+		p.LinkTextColor = types.StringNull()
 	}
 
-	items := make([]interface{}, 0)
-	return append(items, item)
+	return diags
 }

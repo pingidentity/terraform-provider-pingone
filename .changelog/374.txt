@@ -1,0 +1,11 @@
+```release-note:note
+`resource/pingone_branding_theme`: Migrated to plugin framework.
+```
+
+```release-note:note
+`resource/pingone_branding_theme`: Corrected documentation example syntax.
+```
+
+```release-note:note
+`resource/pingone_branding_settings`: Migrated to plugin framework.
+```
