@@ -14,8 +14,8 @@ resource "pingone_image" "theme_background" {
   image_file_base64 = filebase64("../path/to/background-image.jpg")
 }
 
-resource "pingone_branding_theme" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_branding_theme" "my_awesome_theme" {
+  environment_id = pingone_environment.my_environment.id
 
   name     = "My Awesome Theme"
   template = "split"
@@ -36,5 +36,4 @@ resource "pingone_branding_theme" {
   body_text_color    = "#263956"
   link_text_color    = "#263956"
   button_color       = "#263956"
-
 }

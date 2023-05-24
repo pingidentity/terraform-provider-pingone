@@ -12,6 +12,8 @@ var P1ResourceIDRegexp = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4
 var P1DVResourceIDRegexp = regexp.MustCompile(`^[a-f0-9]{32}`)
 var RFC3339Regexp = regexp.MustCompile(`^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[\+-]\d{2}:\d{2})?)$`)
 var IPv4IPv6Regexp = regexp.MustCompile(`^(?:\d{1,3}\.){3}\d{1,3}(?:/\d{1,2})?$|^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}(?:/\d{1,3})?$`)
+var HexColorCode = regexp.MustCompile(`^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`)
+var IsURLWithHTTPS = regexp.MustCompile(`^https:\/\/(?:[\w-]+\.)+[a-z]{2,}(?:\/[\w-]+)*(?:\/[\w.-]+)?\/?(?:\?.*)?$`)
 
 // SDKv2
 func ValidP1ResourceID(v interface{}, k string) (ws []string, errors []error) {

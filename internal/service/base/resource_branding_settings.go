@@ -2,66 +2,117 @@ package base
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceBrandingSettings() *schema.Resource {
-	return &schema.Resource{
+// Types
+type BrandingSettingsResource struct {
+	client *management.APIClient
+	region model.RegionMapping
+}
 
+type brandingSettingsResourceModel struct {
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	CompanyName   types.String `tfsdk:"company_name"`
+	LogoImage     types.List   `tfsdk:"logo_image"`
+}
+
+type imageResourceModel struct {
+	Id   types.String `tfsdk:"id"`
+	Href types.String `tfsdk:"href"`
+}
+
+var (
+	logoTFObjectTypes = map[string]attr.Type{
+		"id":   types.StringType,
+		"href": types.StringType,
+	}
+)
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &BrandingSettingsResource{}
+	_ resource.ResourceWithConfigure   = &BrandingSettingsResource{}
+	_ resource.ResourceWithImportState = &BrandingSettingsResource{}
+)
+
+// New Object
+func NewBrandingSettingsResource() resource.Resource {
+	return &BrandingSettingsResource{}
+}
+
+// Metadata
+func (r *BrandingSettingsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_branding_settings"
+}
+
+// Schema.
+func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	logoHrefDescription := framework.SchemaDescriptionFromMarkdown(
+		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+	)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage the PingOne branding settings for an environment.",
 
-		CreateContext: resourceBrandingSettingsCreate,
-		ReadContext:   resourceBrandingSettingsRead,
-		UpdateContext: resourceBrandingSettingsUpdate,
-		DeleteContext: resourceBrandingSettingsDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceBrandingSettingsImport,
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaDescriptionFromMarkdown("The ID of the environment to set branding settings for."),
+			),
+
+			"company_name": schema.StringAttribute{
+				Description: framework.SchemaDescriptionFromMarkdown("The company name associated with the specified environment.").Description,
+				Optional:    true,
+				Computed:    true,
+
+				Default: stringdefault.StaticString(""),
+			},
 		},
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to set branding settings for.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"company_name": {
-				Description:      "The company name associated with the specified environment.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"logo_image": {
-				Description: "The HREF and the ID for the company logo.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Description:      "The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-						},
-						"href": {
-							Description:      "The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+		Blocks: map[string]schema.Block{
+
+			"logo_image": schema.ListNestedBlock{
+				Description: framework.SchemaDescriptionFromMarkdown("The HREF and the ID for the company logo.").Description,
+
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"id": framework.Attr_LinkID(
+							framework.SchemaDescriptionFromMarkdown("The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
+						),
+
+						"href": schema.StringAttribute{
+							Description:         logoHrefDescription.Description,
+							MarkdownDescription: logoHrefDescription.MarkdownDescription,
+							Required:            true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							},
 						},
 					},
 				},
@@ -70,187 +121,335 @@ func ResourceBrandingSettings() *schema.Resource {
 	}
 }
 
-func resourceBrandingSettingsCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
-
-	brandingSettings := *management.NewBrandingSettings()
-
-	if v, ok := d.GetOk("company_name"); ok {
-		brandingSettings.SetCompanyName(v.(string))
-	} else {
-		brandingSettings.SetCompanyName("")
+func (r *BrandingSettingsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
 
-	if v, ok := d.GetOk("logo_image"); ok {
-		if j, okJ := v.([]interface{}); okJ && j != nil && len(j) > 0 {
-			attrs := j[0].(map[string]interface{})
-			brandingSettings.SetLogo(*management.NewBrandingSettingsLogo(attrs["href"].(string), attrs["id"].(string)))
-		}
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
-		ctx,
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
 
-		func() (interface{}, *http.Response, error) {
-			return apiClient.BrandingSettingsApi.UpdateBrandingSettings(ctx, d.Get("environment_id").(string)).BrandingSettings(brandingSettings).Execute()
-		},
-		"UpdateBrandingSettings-Create",
-		sdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		return
 	}
 
-	respObject := resp.(*management.BrandingSettings)
-
-	d.SetId(respObject.GetId())
-
-	return resourceBrandingSettingsRead(ctx, d, meta)
+	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
 }
 
-func resourceBrandingSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
+func (r *BrandingSettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state brandingSettingsResourceModel
 
-	resp, diags := sdk.ParseResponse(
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	brandingSettings, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.BrandingSettingsApi.ReadBrandingSettings(ctx, d.Get("environment_id").(string)).Execute()
+			return r.client.BrandingSettingsApi.UpdateBrandingSettings(ctx, plan.EnvironmentId.ValueString()).BrandingSettings(*brandingSettings).Execute()
+		},
+		"Create::UpdateBrandingSettings",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response.(*management.BrandingSettings))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+}
+
+func (r *BrandingSettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *brandingSettingsResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	response, diags := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.client.BrandingSettingsApi.ReadBrandingSettings(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadBrandingSettings",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.BrandingSettings)
-
-	if v, ok := respObject.GetCompanyNameOk(); ok {
-		d.Set("company_name", v)
-	} else {
-		d.Set("company_name", nil)
-	}
-
-	if v, ok := respObject.GetLogoOk(); ok {
-		d.Set("logo_image", flattenBrandingSettingsLogo(v))
-	} else {
-		d.Set("logo_image", nil)
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response.(*management.BrandingSettings))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceBrandingSettingsUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *BrandingSettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state brandingSettingsResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
 	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
+		"suffix": r.region.URLSuffix,
 	})
-	var diags diag.Diagnostics
 
-	brandingSettings := *management.NewBrandingSettings()
-
-	if v, ok := d.GetOk("company_name"); ok {
-		brandingSettings.SetCompanyName(v.(string))
-	} else {
-		brandingSettings.SetCompanyName("")
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if v, ok := d.GetOk("logo_image"); ok {
-		if j, okJ := v.([]interface{}); okJ && j != nil && len(j) > 0 {
-			attrs := j[0].(map[string]interface{})
-			brandingSettings.SetLogo(*management.NewBrandingSettingsLogo(attrs["href"].(string), attrs["id"].(string)))
-		}
+	// Build the model for the API
+	brandingSettings, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	// Run the API call
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.BrandingSettingsApi.UpdateBrandingSettings(ctx, d.Get("environment_id").(string)).BrandingSettings(brandingSettings).Execute()
+			return r.client.BrandingSettingsApi.UpdateBrandingSettings(ctx, plan.EnvironmentId.ValueString()).BrandingSettings(*brandingSettings).Execute()
 		},
-		"UpdateBrandingSettings-Update",
-		sdk.DefaultCustomError,
+		"Update::UpdateBrandingSettings",
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceBrandingSettingsRead(ctx, d, meta)
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response.(*management.BrandingSettings))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceBrandingSettingsDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
+func (r *BrandingSettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *brandingSettingsResourceModel
 
-	brandingSettings := *management.NewBrandingSettings()
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
+		"suffix": r.region.URLSuffix,
+	})
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	brandingSettings := management.NewBrandingSettings()
 	brandingSettings.SetCompanyName("")
 
-	_, diags = sdk.ParseResponse(
+	// Run the API call
+	_, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.BrandingSettingsApi.UpdateBrandingSettings(ctx, d.Get("environment_id").(string)).BrandingSettings(brandingSettings).Execute()
+			return r.client.BrandingSettingsApi.UpdateBrandingSettings(ctx, data.EnvironmentId.ValueString()).BrandingSettings(*brandingSettings).Execute()
 		},
-		"UpdateBrandingSettings-Delete",
-		sdk.DefaultCustomError,
-		nil,
+		"Update::UpdateBrandingSettings",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func (r *BrandingSettingsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	splitLength := 1
+	attributes := strings.SplitN(req.ID, "/", splitLength)
+
+	if len(attributes) != splitLength {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id\"", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[0])...)
+}
+
+func (p *brandingSettingsResourceModel) expand(ctx context.Context) (*management.BrandingSettings, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewBrandingSettings()
+
+	if !p.CompanyName.IsNull() && !p.CompanyName.IsUnknown() {
+		data.SetCompanyName(p.CompanyName.ValueString())
+	} else {
+		data.SetCompanyName("")
+	}
+
+	if !p.LogoImage.IsNull() && !p.LogoImage.IsUnknown() {
+
+		var plan []imageResourceModel
+		diags.Append(p.LogoImage.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetLogo(*management.NewBrandingSettingsLogo(plan[0].Href.ValueString(), plan[0].Id.ValueString()))
+	}
+
+	return data, diags
+}
+
+func (p *brandingSettingsResourceModel) toState(apiObject *management.BrandingSettings) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
 		return diags
 	}
+
+	p.Id = framework.StringToTF(apiObject.GetId())
+	p.CompanyName = framework.EnumOkToTF(apiObject.GetCompanyNameOk())
+
+	logoImage, d := toStateImageRef(apiObject.GetLogoOk())
+	diags.Append(d...)
+	p.LogoImage = logoImage
 
 	return diags
 }
 
-func resourceBrandingSettingsImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 1
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
+func toStateImageRef(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID\"", d.Id())
+	tfObjType := types.ObjectType{AttrTypes: logoTFObjectTypes}
+
+	if !ok || logo == nil {
+		return types.ListNull(tfObjType), diags
 	}
 
-	environmentID := attributes[0]
-
-	d.Set("environment_id", environmentID)
-	d.SetId(environmentID)
-
-	resourceBrandingSettingsRead(ctx, d, meta)
-
-	return []*schema.ResourceData{d}, nil
-}
-
-func flattenBrandingSettingsLogo(s *management.BrandingSettingsLogo) []interface{} {
-
-	item := map[string]interface{}{
-		"id":   s.GetId(),
-		"href": s.GetHref(),
+	b, e := json.Marshal(logo)
+	if e != nil {
+		diags.AddError(
+			"Invalid data object",
+			fmt.Sprintf("Cannot remap the data object to JSON: %s.  Please report this to the provider maintainers.", e),
+		)
+		return types.ListNull(tfObjType), diags
 	}
 
-	items := make([]interface{}, 0)
-	return append(items, item)
+	var s map[string]string
+	e = json.Unmarshal(b, &s)
+	if e != nil {
+		diags.AddError(
+			"Invalid data object",
+			fmt.Sprintf("Cannot remap the data object to map: %s.  Please report this to the provider maintainers.", e),
+		)
+		return types.ListNull(tfObjType), diags
+	}
+
+	logoMap := map[string]attr.Value{}
+
+	if s["href"] != "" {
+		logoMap["href"] = framework.StringToTF(s["href"])
+	} else {
+		logoMap["href"] = types.StringNull()
+	}
+
+	if s["id"] != "" {
+		logoMap["id"] = framework.StringToTF(s["id"])
+	} else {
+		logoMap["id"] = types.StringNull()
+	}
+
+	flattenedObj, d := types.ObjectValue(logoTFObjectTypes, logoMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
 }
