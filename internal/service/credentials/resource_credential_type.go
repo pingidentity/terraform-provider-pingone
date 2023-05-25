@@ -118,6 +118,18 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMaxPercent = 100
 	const imageMaxSize = 50000
 
+	titleDescriptionFmt := "Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTItle}` in the `card_design_template`."
+	titleDescription := framework.SchemaDescription{
+		MarkdownDescription: titleDescriptionFmt,
+		Description:         strings.ReplaceAll(titleDescriptionFmt, "`", "\""),
+	}
+
+	credentialDescriptionFmt := "A description of the credential type. This value aligns to `${cardSubtitle}` in the `card_design_template`."
+	credentialDescription := framework.SchemaDescription{
+		MarkdownDescription: credentialDescriptionFmt,
+		Description:         strings.ReplaceAll(credentialDescriptionFmt, "`", "\""),
+	}
+
 	fieldsDescriptionFmt := "In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`."
 	fieldsDescription := framework.SchemaDescription{
 		MarkdownDescription: fieldsDescriptionFmt,
@@ -150,8 +162,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create, read, and update the credential types used by compatible wallet applications.\n\n" +
-			"~> You must ensure that any fields used in the cardDesignTemplate are defined appropriately in metadata.fields or errors occur when you attempt to create a credential of that type.",
+		Description: "Resource to create and manage the credential types used by compatible wallet applications.\n\n" +
+			"~> You must ensure that any fields used in the card_design_template are defined appropriately in metadata.fields or errors occur when you attempt to create a credential of that type.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -161,18 +173,40 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			),
 
 			"title": schema.StringAttribute{
-				Description: "Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.",
-				Required:    true,
+				Description:         titleDescription.Description,
+				MarkdownDescription: titleDescription.MarkdownDescription,
+				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
+					customstringvalidator.IsRequiredIfRegexMatchesPathValue(
+						regexp.MustCompile(`\${cardTitle}`),
+						"The title argument is required because the ${$cardTitle} element is defined in the card_design_template.",
+						path.MatchRoot("card_design_template"),
+					),
+					customstringvalidator.RegexMatchesPathValue(
+						regexp.MustCompile(`\${cardTitle}`),
+						"The title argument is defined but the card_design_template does not have a ${cardTitle} element.",
+						path.MatchRoot("card_design_template"),
+					),
 				},
 			},
 
 			"description": schema.StringAttribute{
-				Description: "A description of the credential type.",
-				Optional:    true,
+				Description:         credentialDescription.Description,
+				MarkdownDescription: credentialDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
+					customstringvalidator.IsRequiredIfRegexMatchesPathValue(
+						regexp.MustCompile(`\${cardSubtitle}`),
+						"The description argument is required because the ${$cardSubtitle} element is defined in the card_design_template.",
+						path.MatchRoot("card_design_template"),
+					),
+					customstringvalidator.RegexMatchesPathValue(
+						regexp.MustCompile(`\${cardSubtitle}`),
+						"The description argument is defined but the card_design_template does not have a ${cardSubtitle} element.",
+						path.MatchRoot("card_design_template"),
+					),
 				},
 			},
 
@@ -260,16 +294,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(attrMinLength),
-							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
-								regexp.MustCompile(`\${cardSubtitle}`),
-								"The metadata.description argument is required because the ${$cardSubtitle} element is defined in the card_design_template.",
-								path.MatchRoot("card_design_template"),
-							),
-							customstringvalidator.RegexMatchesPathValue(
-								regexp.MustCompile(`\${cardSubtitle}`),
-								"The metadata.description argument is defined but the card_design_template does not have a ${cardSubtitle} element.",
-								path.MatchRoot("card_design_template"),
-							),
 						},
 					},
 
@@ -300,16 +324,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(attrMinLength),
-							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
-								regexp.MustCompile(`\${cardTitle}`),
-								"The metadata.name argument is required because the ${$cardTitle} element is defined in the card_design_template.",
-								path.MatchRoot("card_design_template"),
-							),
-							customstringvalidator.RegexMatchesPathValue(
-								regexp.MustCompile(`\${cardTitle}`),
-								"The metadata.name argument is defined but the card_design_template does not have a ${cardTitle} element.",
-								path.MatchRoot("card_design_template"),
-							),
 						},
 					},
 
