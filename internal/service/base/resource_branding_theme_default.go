@@ -129,7 +129,7 @@ func (r *BrandingThemeDefaultResource) Create(ctx context.Context, req resource.
 	}
 
 	// Build the model for the API
-	brandingThemeDefault := plan.expand(ctx)
+	brandingThemeDefault := plan.expand()
 
 	// Run the API call
 	response, d := framework.ParseResponse(
@@ -340,7 +340,7 @@ func (r *BrandingThemeDefaultResource) fetchBootstapDefaultThemeId(ctx context.C
 	return nil, diags
 }
 
-func (p *brandingThemeDefaultResourceModel) expand(ctx context.Context) *management.BrandingThemeDefault {
+func (p *brandingThemeDefaultResourceModel) expand() *management.BrandingThemeDefault {
 	return management.NewBrandingThemeDefault(true)
 }
 
