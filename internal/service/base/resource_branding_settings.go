@@ -70,7 +70,7 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 
 	const attrMinLength = 1
 
-	logoHrefDescription := framework.SchemaDescriptionFromMarkdown(
+	logoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
 	)
 
@@ -82,11 +82,11 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaDescriptionFromMarkdown("The ID of the environment to set branding settings for."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to set branding settings for."),
 			),
 
 			"company_name": schema.StringAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("The company name associated with the specified environment.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The company name associated with the specified environment.").Description,
 				Optional:    true,
 				Computed:    true,
 
@@ -97,13 +97,13 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 		Blocks: map[string]schema.Block{
 
 			"logo_image": schema.ListNestedBlock{
-				Description: framework.SchemaDescriptionFromMarkdown("The HREF and the ID for the company logo.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The HREF and the ID for the company logo.").Description,
 
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
 						"id": framework.Attr_LinkID(
-							framework.SchemaDescriptionFromMarkdown("The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
+							framework.SchemaAttributeDescriptionFromMarkdown("The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
 						),
 
 						"href": schema.StringAttribute{

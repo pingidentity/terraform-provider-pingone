@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -59,17 +58,13 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 
 	nameLength := 1
 
-	totalUserCountDescriptionFmt := "The total number of users who have consented to the agreement. This value is last calculated at the `consent_counts_updated_at` time."
-	totalUserCountDescription := framework.SchemaDescription{
-		MarkdownDescription: totalUserCountDescriptionFmt,
-		Description:         strings.ReplaceAll(totalUserCountDescriptionFmt, "`", "\""),
-	}
+	totalUserCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The total number of users who have consented to the agreement. This value is last calculated at the `consent_counts_updated_at` time.",
+	)
 
-	expiredUserCountDescriptionFmt := "The number of users who have consented to the agreement, but their consent has expired. This value is last calculated at the `consent_counts_updated_at` time."
-	expiredUserCountDescription := framework.SchemaDescription{
-		MarkdownDescription: expiredUserCountDescriptionFmt,
-		Description:         strings.ReplaceAll(expiredUserCountDescriptionFmt, "`", "\""),
-	}
+	expiredUserCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The number of users who have consented to the agreement, but their consent has expired. This value is last calculated at the `consent_counts_updated_at` time.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -78,8 +73,8 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment that is configured with the agreement."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that is configured with the agreement."),
 			),
 
 			"agreement_id": schema.StringAttribute{

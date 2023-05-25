@@ -104,16 +104,16 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to retrieve the credential issuance rule."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to retrieve the credential issuance rule."),
 			),
 
-			"credential_type_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the credential type with which this credential issuance rule is associated."},
+			"credential_type_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the credential type with which this credential issuance rule is associated."),
 			),
 
-			"credential_issuance_rule_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "Identifier (UUID) of the credential issuance rule."},
+			"credential_issuance_rule_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("Identifier (UUID) of the credential issuance rule."),
 			),
 
 			"digital_wallet_application_id": schema.StringAttribute{

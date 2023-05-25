@@ -104,12 +104,12 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "PingOne environment identifier (UUID) in which the credential type exists."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential type exists."),
 			),
 
-			"credential_type_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "Identifier (UUID) associated with the credential type."},
+			"credential_type_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("Identifier (UUID) associated with the credential type."),
 			),
 
 			"title": schema.StringAttribute{

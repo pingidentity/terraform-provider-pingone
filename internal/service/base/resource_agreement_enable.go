@@ -60,12 +60,12 @@ func (r *AgreementEnableResource) Schema(ctx context.Context, req resource.Schem
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment configured with an agreement to enable/disable."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment configured with an agreement to enable/disable."),
 			),
 
-			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the agreement to set the enabled status for."},
+			"agreement_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the agreement to set the enabled status for."),
 			),
 
 			"enabled": schema.BoolAttribute{

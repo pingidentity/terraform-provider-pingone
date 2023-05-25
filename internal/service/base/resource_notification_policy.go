@@ -81,45 +81,39 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 	const attrMinLength = 1
 	const emailAddressMaxLength = 5
 
-	quotaDescriptionFmt := "A single object block that define the SMS/Voice limits."
-	quotaDescription := framework.SchemaDescription{
-		MarkdownDescription: quotaDescriptionFmt,
-		Description:         strings.ReplaceAll(quotaDescriptionFmt, "`", "\""),
-	}
+	quotaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object block that define the SMS/Voice limits.",
+	)
 
-	defaultDescriptionFmt := "A boolean to provide an indication of whether this policy is the default notification policy for the environment. If the parameter is not provided, the value used is `false`."
-	defaultDescription := framework.SchemaDescription{
-		MarkdownDescription: defaultDescriptionFmt,
-		Description:         strings.ReplaceAll(defaultDescriptionFmt, "`", "\""),
-	}
+	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean to provide an indication of whether this policy is the default notification policy for the environment. If the parameter is not provided, the value used is `false`.",
+	)
 
 	quotaTypeAllowedValues := make([]string, 0)
 	for _, v := range management.AllowedEnumNotificationsPolicyQuotaItemTypeEnumValues {
 		quotaTypeAllowedValues = append(quotaTypeAllowedValues, string(v))
 	}
 
-	quotaTypeDescriptionFmt := fmt.Sprintf("A string to specify whether the limit defined is per-user or per environment. Allowed values: `%s`.", strings.Join(quotaTypeAllowedValues, "`, `"))
-	quotaTypeDescription := framework.SchemaDescription{
-		MarkdownDescription: quotaTypeDescriptionFmt,
-		Description:         strings.ReplaceAll(quotaTypeDescriptionFmt, "`", "\""),
-	}
+	quotaTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string to specify whether the limit defined is per-user or per environment. Allowed values: `%s`.", strings.Join(quotaTypeAllowedValues, "`, `")),
+	)
 
 	quotaTotalDescriptionFmt := "The maximum number of notifications allowed per day.  Cannot be set with `used` and `unused`."
-	quotaTotalDescription := framework.SchemaDescription{
+	quotaTotalDescription := framework.SchemaAttributeDescription{
 
 		MarkdownDescription: quotaTotalDescriptionFmt,
 		Description:         strings.ReplaceAll(quotaTotalDescriptionFmt, "`", "\""),
 	}
 
 	quotaUsedDescriptionFmt := "The maximum number of notifications that can be received and responded to each day. Must be configured with `unused` and cannot be configured with `total`."
-	quotaUsedDescription := framework.SchemaDescription{
+	quotaUsedDescription := framework.SchemaAttributeDescription{
 
 		MarkdownDescription: quotaUsedDescriptionFmt,
 		Description:         strings.ReplaceAll(quotaUsedDescriptionFmt, "`", "\""),
 	}
 
 	quotaUnusedDescriptionFmt := "The maximum number of notifications that can be received and not responded to each day. Must be configured with `used` and cannot be configured with `total`."
-	quotaUnusedDescription := framework.SchemaDescription{
+	quotaUnusedDescription := framework.SchemaAttributeDescription{
 
 		MarkdownDescription: quotaUnusedDescriptionFmt,
 		Description:         strings.ReplaceAll(quotaUnusedDescriptionFmt, "`", "\""),
@@ -132,8 +126,8 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to associate the notification policy with."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to associate the notification policy with."),
 			),
 
 			"name": schema.StringAttribute{

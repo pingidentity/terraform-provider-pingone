@@ -72,7 +72,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 
 	const attrMinLength = 1
 
-	templateDescription := framework.SchemaDescriptionFromMarkdown(
+	templateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The template name of the branding theme associated with the environment.",
 	).AllowedValuesEnum(management.AllowedEnumBrandingThemeTemplateEnumValues)
 
@@ -82,27 +82,27 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 		"use_default_background",
 	}
 
-	backgroundColorDescription := framework.SchemaDescriptionFromMarkdown(
+	backgroundColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The background color for the theme. It must be a valid hexadecimal color code.",
 	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
 
-	useDefaultBackgroundDescription := framework.SchemaDescriptionFromMarkdown(
+	useDefaultBackgroundDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean to specify that the background should be set to the theme template's default.",
 	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
 
-	backgroundImageDescription := framework.SchemaDescriptionFromMarkdown(
+	backgroundImageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The HREF and the ID for the background image.",
 	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
 
-	logoDescription := framework.SchemaDescriptionFromMarkdown(
+	logoDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The HREF and the ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
 	)
 
-	logoHrefDescription := framework.SchemaDescriptionFromMarkdown(
+	logoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
 	)
 
-	backgroundImageHrefDescription := framework.SchemaDescriptionFromMarkdown(
+	backgroundImageHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The URL or fully qualified path to the background image file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
 	)
 
@@ -114,11 +114,11 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaDescriptionFromMarkdown("The ID of the environment to set branding settings for."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to set branding settings for."),
 			),
 
 			"name": schema.StringAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("A string that specifies the unique name of the branding theme.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the unique name of the branding theme.").Description,
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
@@ -135,7 +135,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"default": schema.BoolAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("Specifies whether this theme is the environment's default branding configuration.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("Specifies whether this theme is the environment's default branding configuration.").Description,
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.Bool{
@@ -174,7 +174,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"body_text_color": schema.StringAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("The body text color for the theme. It must be a valid hexadecimal color code.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The body text color for the theme. It must be a valid hexadecimal color code.").Description,
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
@@ -182,7 +182,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"button_color": schema.StringAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("The button color for the theme. It must be a valid hexadecimal color code.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The button color for the theme. It must be a valid hexadecimal color code.").Description,
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
@@ -190,7 +190,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"button_text_color": schema.StringAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("The button text color for the branding theme. It must be a valid hexadecimal color code.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The button text color for the branding theme. It must be a valid hexadecimal color code.").Description,
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
@@ -198,7 +198,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"card_color": schema.StringAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("The card color for the branding theme. It must be a valid hexadecimal color code.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The card color for the branding theme. It must be a valid hexadecimal color code.").Description,
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
@@ -206,12 +206,12 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"footer_text": schema.StringAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("The text to be displayed in the footer of the branding theme.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The text to be displayed in the footer of the branding theme.").Description,
 				Optional:    true,
 			},
 
 			"heading_text_color": schema.StringAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("The heading text color for the branding theme. It must be a valid hexadecimal color code.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The heading text color for the branding theme. It must be a valid hexadecimal color code.").Description,
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
@@ -219,7 +219,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"link_text_color": schema.StringAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("The hyperlink text color for the branding theme. It must be a valid hexadecimal color code.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The hyperlink text color for the branding theme. It must be a valid hexadecimal color code.").Description,
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
@@ -237,7 +237,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 
 					Attributes: map[string]schema.Attribute{
 						"id": framework.Attr_LinkID(
-							framework.SchemaDescriptionFromMarkdown("The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
+							framework.SchemaAttributeDescriptionFromMarkdown("The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
 						),
 
 						"href": schema.StringAttribute{
@@ -260,7 +260,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 
 					Attributes: map[string]schema.Attribute{
 						"id": framework.Attr_LinkID(
-							framework.SchemaDescriptionFromMarkdown("The ID of the background image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
+							framework.SchemaAttributeDescriptionFromMarkdown("The ID of the background image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
 						),
 
 						"href": schema.StringAttribute{
