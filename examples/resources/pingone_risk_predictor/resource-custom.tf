@@ -14,18 +14,18 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_between_ranges" {
 
     between_ranges = {
       high = {
-        max_score = 6
-        min_score = 5
+        max_value = 6
+        min_value = 5
       }
 
       medium = {
-        max_score = 4
-        min_score = 3
+        max_value = 4
+        min_value = 3
       }
 
       low = {
-        max_score = 2
-        min_score = 1
+        max_value = 2
+        min_value = 1
       }
     }
   }
