@@ -124,9 +124,25 @@ Read-Only:
 
 Required:
 
+- `predictors` (Attributes Set) An object that describes a predictor to apply to the risk policy and its associated high risk / true outcome score to apply to the risk calculation. (see [below for nested schema](#nestedatt--policy_scores--predictors))
+
+Optional:
+
 - `policy_threshold_high` (Attributes) An object that specifies the lower and upper bound threshold values that define the high risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_scores--policy_threshold_high))
 - `policy_threshold_medium` (Attributes) An object that specifies the lower and upper bound threshold values that define the medium risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_scores--policy_threshold_medium))
-- `predictors` (Attributes Set) An object that describes a predictor to apply to the risk policy and its associated high risk / true outcome score to apply to the risk calculation. (see [below for nested schema](#nestedatt--policy_scores--predictors))
+
+<a id="nestedatt--policy_scores--predictors"></a>
+### Nested Schema for `policy_scores.predictors`
+
+Required:
+
+- `compact_name` (String) A string that specifies the compact name of the predictor to apply to the risk policy.
+- `score` (Number) An integer that specifies the score to apply to the High risk / true outcome of the predictor, to apply to the overall risk calculation.
+
+Read-Only:
+
+- `predictor_reference_value` (String) A string that specifies the attribute reference of the level to evaluate.
+
 
 <a id="nestedatt--policy_scores--policy_threshold_high"></a>
 ### Nested Schema for `policy_scores.policy_threshold_high`
@@ -152,28 +168,31 @@ Read-Only:
 - `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
 
 
-<a id="nestedatt--policy_scores--predictors"></a>
-### Nested Schema for `policy_scores.predictors`
-
-Required:
-
-- `compact_name` (String) A string that specifies the compact name of the predictor to apply to the risk policy.
-- `score` (Number) An integer that specifies the score to apply to the High risk / true outcome of the predictor, to apply to the overall risk calculation.
-
-Read-Only:
-
-- `predictor_reference` (String) A string that specifies the attribute reference of the level to evaluate.
-
-
 
 <a id="nestedatt--policy_weights"></a>
 ### Nested Schema for `policy_weights`
 
 Required:
 
+- `predictors` (Attributes Set) An object that describes a predictor to apply to the risk policy and its associated weight value for the overall weighted average risk calculation. (see [below for nested schema](#nestedatt--policy_weights--predictors))
+
+Optional:
+
 - `policy_threshold_high` (Attributes) An object that specifies the lower and upper bound threshold values that define the high risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_weights--policy_threshold_high))
 - `policy_threshold_medium` (Attributes) An object that specifies the lower and upper bound threshold values that define the medium risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_weights--policy_threshold_medium))
-- `predictor` (Attributes Set) An object that describes a predictor to apply to the risk policy and its associated weight value for the overall weighted average risk calculation. (see [below for nested schema](#nestedatt--policy_weights--predictor))
+
+<a id="nestedatt--policy_weights--predictors"></a>
+### Nested Schema for `policy_weights.predictors`
+
+Required:
+
+- `compact_name` (String) A string that specifies the compact name of the predictor to apply to the risk policy.
+- `weight` (Number) An integer that specifies the weight to apply to the predictor when calculating the overall risk score.
+
+Read-Only:
+
+- `predictor_reference_value` (String) A string that specifies the attribute reference of the level to evaluate.
+
 
 <a id="nestedatt--policy_weights--policy_threshold_high"></a>
 ### Nested Schema for `policy_weights.policy_threshold_high`
@@ -197,19 +216,6 @@ Optional:
 Read-Only:
 
 - `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
-
-
-<a id="nestedatt--policy_weights--predictor"></a>
-### Nested Schema for `policy_weights.predictor`
-
-Required:
-
-- `compact_name` (String) A string that specifies the compact name of the predictor to apply to the risk policy.
-- `weight` (Number) An integer that specifies the weight to apply to the predictor when calculating the overall risk score.
-
-Read-Only:
-
-- `predictor_reference` (String) A string that specifies the attribute reference of the level to evaluate.
 
 ## Import
 

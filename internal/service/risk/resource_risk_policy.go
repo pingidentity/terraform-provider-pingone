@@ -19,10 +19,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -54,13 +56,9 @@ type riskPolicyResourceDefaultResultModel struct {
 }
 
 type riskPolicyResourcePolicyModel struct {
-	PolicyThresholds types.Object `tfsdk:"policy_thresholds"`
-	Predictors       types.Set    `tfsdk:"predictor"`
-}
-
-type riskPolicyResourcePolicyThresholdModel struct {
-	MediumBetween types.Object `tfsdk:"medium_between"`
-	HighBetween   types.Object `tfsdk:"high_between"`
+	PolicyThresholdMedium types.Object `tfsdk:"policy_threshold_medium"`
+	PolicyThresholdHigh   types.Object `tfsdk:"policy_threshold_high"`
+	Predictors            types.Set    `tfsdk:"predictors"`
 }
 
 type riskPolicyResourcePolicyThresholdScoreBetweenModel struct {
@@ -69,15 +67,15 @@ type riskPolicyResourcePolicyThresholdScoreBetweenModel struct {
 }
 
 type riskPolicyResourcePolicyWeightsPredictorModel struct {
-	CompactName        types.String `tfsdk:"compact_name"`
-	PredictorReference types.String `tfsdk:"predictor_reference"`
-	Weight             types.Int64  `tfsdk:"weight"`
+	CompactName             types.String `tfsdk:"compact_name"`
+	PredictorReferenceValue types.String `tfsdk:"predictor_reference_value"`
+	Weight                  types.Int64  `tfsdk:"weight"`
 }
 
 type riskPolicyResourcePolicyScoresPredictorModel struct {
-	CompactName        types.String `tfsdk:"compact_name"`
-	PredictorReference types.String `tfsdk:"predictor_reference"`
-	Score              types.Int64  `tfsdk:"score"`
+	CompactName             types.String `tfsdk:"compact_name"`
+	PredictorReferenceValue types.String `tfsdk:"predictor_reference_value"`
+	Score                   types.Int64  `tfsdk:"score"`
 }
 
 type riskPolicyResourceThresholdScoresModel struct {
@@ -86,7 +84,7 @@ type riskPolicyResourceThresholdScoresModel struct {
 }
 
 type riskPolicyResourcePredictorScoreModel struct {
-	PredictorReference types.String `tfsdk:"predictor_reference"`
+	PredictorReference types.String `tfsdk:"predictor_reference_value"`
 	Score              types.Int64  `tfsdk:"score"`
 }
 
@@ -95,40 +93,46 @@ type riskPolicyResourceOverrideModel struct {
 
 var (
 	policyThresholdsTFObjectTypes = map[string]attr.Type{
-		"medium_score": types.Int64Type,
-		"high_score":   types.Int64Type,
+		"min_score": types.Int64Type,
+		"max_score": types.Int64Type,
 	}
 
 	// Weights
 	policyWeightsTFObjectTypes = map[string]attr.Type{
-		"policy_thresholds": types.ObjectType{
+		"policy_threshold_medium": types.ObjectType{
 			AttrTypes: policyThresholdsTFObjectTypes,
 		},
-		"predictor": types.SetType{
+		"policy_threshold_high": types.ObjectType{
+			AttrTypes: policyThresholdsTFObjectTypes,
+		},
+		"predictors": types.SetType{
 			ElemType: types.ObjectType{AttrTypes: policyWeightsPredictorTFObjectTypes},
 		},
 	}
 
 	policyWeightsPredictorTFObjectTypes = map[string]attr.Type{
-		"compact_name":        types.StringType,
-		"predictor_reference": types.StringType,
-		"weight":              types.Int64Type,
+		"compact_name":              types.StringType,
+		"predictor_reference_value": types.StringType,
+		"weight":                    types.Int64Type,
 	}
 
 	// Scores
 	policyScoresTFObjectTypes = map[string]attr.Type{
-		"policy_thresholds": types.ObjectType{
+		"policy_threshold_medium": types.ObjectType{
 			AttrTypes: policyThresholdsTFObjectTypes,
 		},
-		"predictor": types.SetType{
+		"policy_threshold_high": types.ObjectType{
+			AttrTypes: policyThresholdsTFObjectTypes,
+		},
+		"predictors": types.SetType{
 			ElemType: types.ObjectType{AttrTypes: policyScoresPredictorTFObjectTypes},
 		},
 	}
 
 	policyScoresPredictorTFObjectTypes = map[string]attr.Type{
-		"compact_name":        types.StringType,
-		"predictor_reference": types.StringType,
-		"score":               types.Int64Type,
+		"compact_name":              types.StringType,
+		"predictor_reference_value": types.StringType,
+		"score":                     types.Int64Type,
 	}
 )
 
@@ -233,6 +237,8 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						Optional:            true,
 						Computed:            true,
 
+						Default: stringdefault.StaticString(string(risk.ENUMRISKLEVEL_LOW)),
+
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskLevelEnumValues)...),
 						},
@@ -279,7 +285,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						),
 					),
 
-					"predictor": schema.SetNestedAttribute{
+					"predictors": schema.SetNestedAttribute{
 						Description:         policyWeightedAveragePredictor.Description,
 						MarkdownDescription: policyWeightedAveragePredictor.MarkdownDescription,
 
@@ -292,7 +298,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 									Required:    true,
 								},
 
-								"predictor_reference": schema.StringAttribute{
+								"predictor_reference_value": schema.StringAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the attribute reference of the level to evaluate.").Description,
 									Computed:    true,
 								},
@@ -358,7 +364,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 									Required:    true,
 								},
 
-								"predictor_reference": schema.StringAttribute{
+								"predictor_reference_value": schema.StringAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the attribute reference of the level to evaluate.").Description,
 									Computed:    true,
 								},
@@ -414,7 +420,8 @@ func riskPolicyThresholdSchema(useScores bool, defaultPolicyThresholdMinScore in
 	return schema.SingleNestedAttribute{
 		Description:         policyThresholdsDescription.Description,
 		MarkdownDescription: policyThresholdsDescription.MarkdownDescription,
-		Required:            true,
+		Optional:            true,
+		Computed:            true,
 
 		Attributes: map[string]schema.Attribute{
 			"min_score": schema.Int64Attribute{
@@ -444,6 +451,60 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		return
 	}
 
+	var plan riskPolicyResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Set the max threshold score
+	var rootPath, referenceValueFmt string
+	var maxScore int
+
+	if !plan.PolicyWeights.IsNull() && !plan.PolicyWeights.IsUnknown() {
+		rootPath = "policy_weights"
+		maxScore = 10
+		referenceValueFmt = "${details.aggregatedWeights.%s}"
+
+		var predictorsPlan []riskPolicyResourcePolicyWeightsPredictorModel
+		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("predictors"), &predictorsPlan)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		for _, predictor := range predictorsPlan {
+			tflog.Debug(ctx, "HERE!!!", map[string]interface{}{
+				"predictor": fmt.Sprintf(referenceValueFmt, predictor.CompactName.ValueString()),
+			})
+		}
+	}
+
+	if !plan.PolicyScores.IsNull() && !plan.PolicyScores.IsUnknown() {
+		rootPath = "policy_scores"
+		maxScore = 1000
+		referenceValueFmt = "${details.%s.level}"
+
+		var predictorsPlan []riskPolicyResourcePolicyScoresPredictorModel
+		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("predictors"), &predictorsPlan)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		for _, predictor := range predictorsPlan {
+			tflog.Debug(ctx, "HERE!!!", map[string]interface{}{
+				"predictor": fmt.Sprintf(referenceValueFmt, predictor.CompactName.ValueString()),
+			})
+		}
+	}
+
+	var policyThresholdHighMinValue *int64
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("min_score"), &policyThresholdHighMinValue)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_medium").AtName("max_score"), types.Int64Value(*policyThresholdHighMinValue))
+	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("max_score"), int64(maxScore))
 }
 
 func (r *RiskPolicyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -719,8 +780,8 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context) (*risk.RiskPolicyS
 		}
 	}
 
-	var highPolicyCondition *risk.RiskPolicyCondition
-	var mediumPolicyCondition *risk.RiskPolicyCondition
+	highPolicyCondition := risk.NewRiskPolicyCondition()
+	mediumPolicyCondition := risk.NewRiskPolicyCondition()
 
 	if !p.PolicyWeights.IsNull() && !p.PolicyWeights.IsUnknown() {
 		highPolicyCondition.SetType(risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS)
@@ -735,7 +796,7 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context) (*risk.RiskPolicyS
 			return nil, diags
 		}
 
-		highPolicyCondition, mediumPolicyCondition, d = plan.expand(ctx, false)
+		highPolicyCondition, mediumPolicyCondition, d = plan.expand(ctx, false, highPolicyCondition, mediumPolicyCondition)
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
@@ -746,7 +807,7 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context) (*risk.RiskPolicyS
 		highPolicyCondition.SetType(risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES)
 
 		var plan riskPolicyResourcePolicyModel
-		d := p.PolicyWeights.As(ctx, &plan, basetypes.ObjectAsOptions{
+		d := p.PolicyScores.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
 		})
@@ -755,7 +816,7 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context) (*risk.RiskPolicyS
 			return nil, diags
 		}
 
-		highPolicyCondition, mediumPolicyCondition, d = plan.expand(ctx, true)
+		highPolicyCondition, mediumPolicyCondition, d = plan.expand(ctx, true, highPolicyCondition, mediumPolicyCondition)
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
@@ -785,15 +846,12 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context) (*risk.RiskPolicyS
 	return data, diags
 }
 
-func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bool) (*risk.RiskPolicyCondition, *risk.RiskPolicyCondition, diag.Diagnostics) {
+func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bool, highPolicyCondition, mediumPolicyCondition *risk.RiskPolicyCondition) (*risk.RiskPolicyCondition, *risk.RiskPolicyCondition, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	mediumPolicyCondition := risk.NewRiskPolicyCondition()
-	highPolicyCondition := risk.NewRiskPolicyCondition()
-
-	if !p.PolicyThresholds.IsNull() && !p.PolicyThresholds.IsUnknown() {
-		var thresholdsPlan riskPolicyResourcePolicyThresholdModel
-		d := p.PolicyThresholds.As(ctx, &thresholdsPlan, basetypes.ObjectAsOptions{
+	if !p.PolicyThresholdMedium.IsNull() && !p.PolicyThresholdMedium.IsUnknown() {
+		var plan riskPolicyResourcePolicyThresholdScoreBetweenModel
+		d := p.PolicyThresholdMedium.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
 		})
@@ -802,43 +860,31 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 			return nil, nil, diags
 		}
 
-		if !thresholdsPlan.MediumBetween.IsNull() && !thresholdsPlan.MediumBetween.IsUnknown() {
-			var thresholdsBetweenPlan riskPolicyResourcePolicyThresholdScoreBetweenModel
-			d := thresholdsPlan.MediumBetween.As(ctx, &thresholdsBetweenPlan, basetypes.ObjectAsOptions{
-				UnhandledNullAsEmpty:    false,
-				UnhandledUnknownAsEmpty: false,
-			})
-			diags.Append(d...)
-			if diags.HasError() {
-				return nil, nil, diags
-			}
+		mediumPolicyCondition.SetBetween(
+			*risk.NewRiskPolicyConditionBetween(
+				int32(plan.MinScore.ValueInt64()),
+				int32(plan.MaxScore.ValueInt64()),
+			),
+		)
+	}
 
-			mediumPolicyCondition.SetBetween(
-				*risk.NewRiskPolicyConditionBetween(
-					int32(thresholdsBetweenPlan.MinScore.ValueInt64()),
-					int32(thresholdsBetweenPlan.MaxScore.ValueInt64()),
-				),
-			)
+	if !p.PolicyThresholdHigh.IsNull() && !p.PolicyThresholdHigh.IsUnknown() {
+		var plan riskPolicyResourcePolicyThresholdScoreBetweenModel
+		d := p.PolicyThresholdHigh.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, nil, diags
 		}
 
-		if !thresholdsPlan.HighBetween.IsNull() && !thresholdsPlan.HighBetween.IsUnknown() {
-			var thresholdsBetweenPlan riskPolicyResourcePolicyThresholdScoreBetweenModel
-			d := thresholdsPlan.HighBetween.As(ctx, &thresholdsBetweenPlan, basetypes.ObjectAsOptions{
-				UnhandledNullAsEmpty:    false,
-				UnhandledUnknownAsEmpty: false,
-			})
-			diags.Append(d...)
-			if diags.HasError() {
-				return nil, nil, diags
-			}
-
-			highPolicyCondition.SetBetween(
-				*risk.NewRiskPolicyConditionBetween(
-					int32(thresholdsBetweenPlan.MinScore.ValueInt64()),
-					int32(thresholdsBetweenPlan.MaxScore.ValueInt64()),
-				),
-			)
-		}
+		highPolicyCondition.SetBetween(
+			*risk.NewRiskPolicyConditionBetween(
+				int32(plan.MinScore.ValueInt64()),
+				int32(plan.MaxScore.ValueInt64()),
+			),
+		)
 	}
 
 	if !p.Predictors.IsNull() && !p.Predictors.IsUnknown() {
@@ -856,7 +902,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 				aggregatedScores = append(
 					aggregatedScores,
 					*risk.NewRiskPolicyConditionAggregatedScoresInner(
-						predictor.PredictorReference.ValueString(),
+						predictor.PredictorReferenceValue.ValueString(),
 						int32(predictor.Score.ValueInt64()),
 					),
 				)
@@ -879,7 +925,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 				aggregatedWeights = append(
 					aggregatedWeights,
 					*risk.NewRiskPolicyConditionAggregatedWeightsInner(
-						predictor.PredictorReference.ValueString(),
+						predictor.PredictorReferenceValue.ValueString(),
 						int32(predictor.Weight.ValueInt64()),
 					),
 				)
