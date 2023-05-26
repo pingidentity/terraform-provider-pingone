@@ -119,7 +119,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const imageMaxSize = 50000
 
 	titleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTItle}` in the `card_design_template`.",
+		"Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTitle}` in the `card_design_template`.",
 	)
 
 	credentialDescription := framework.SchemaAttributeDescriptionFromMarkdown(
