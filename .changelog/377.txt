@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_credential_type`: Improved the documentation for the `title` and `description` attributes and explained their correlation to fields in the `card_design_template`.
+```
+
+```release-note:bug
+`resource/pingone_credential_type`: Fix the validation rules for `title` and `description`. The rules incorrectly compared the `metadata.name` and `metadata.description` attributes to the ${cardTitle} and ${cardSubTitle} fields in the `card_design_template`. The rules are now correctly applied to `title` and `description`.
+```

@@ -2,15 +2,15 @@
 page_title: "pingone_credential_type Resource - terraform-provider-pingone"
 subcategory: "Neo (Verifiable Credentials)"
 description: |-
-  Resource to create, read, and update the credential types used by compatible wallet applications.
-  ~> You must ensure that any fields used in the cardDesignTemplate are defined appropriately in metadata.fields or errors occur when you attempt to create a credential of that type.
+  Resource to create and manage the credential types used by compatible wallet applications.
+  ~> You must ensure that any fields used in the card_design_template are defined appropriately in metadata.fields or errors occur when you attempt to create a credential of that type.
 ---
 
 # pingone_credential_type (Resource)
 
-Resource to create, read, and update the credential types used by compatible wallet applications.
+Resource to create and manage the credential types used by compatible wallet applications.
 
-~> You must ensure that any fields used in the cardDesignTemplate are defined appropriately in metadata.fields or errors occur when you attempt to create a credential of that type.
+~> You must ensure that any fields used in the `card_design_template` are defined appropriately in `metadata.fields` or errors occur when you attempt to create a credential of that type.
 
 ## Example Usage
 
@@ -93,12 +93,12 @@ resource "pingone_credential_type" "verifiedemployee" {
 - `card_design_template` (String) An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.
 - `environment_id` (String) PingOne environment identifier (UUID) in which the credential type exists.
 - `metadata` (Attributes) Contains the names, data types, and other metadata related to the credential. (see [below for nested schema](#nestedatt--metadata))
-- `title` (String) Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.
+- `title` (String) Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTitle}` in the `card_design_template`.
 
 ### Optional
 
 - `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
-- `description` (String) A description of the credential type.
+- `description` (String) A description of the credential type. This value aligns to `${cardSubtitle}` in the `card_design_template`.
 
 ### Read-Only
 
