@@ -58,35 +58,25 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	nameLength := 1
 
-	typeDescriptionFmt := fmt.Sprintf("The type of the environment.  Options are `%s` for a development/testing environment and `%s` for environments that require protection from deletion.", management.ENUMENVIRONMENTTYPE_SANDBOX, management.ENUMENVIRONMENTTYPE_PRODUCTION)
-	typeDescription := framework.SchemaDescription{
-		MarkdownDescription: typeDescriptionFmt,
-		Description:         strings.ReplaceAll(typeDescriptionFmt, "`", "\""),
-	}
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The type of the environment.  Options are `%s` for a development/testing environment and `%s` for environments that require protection from deletion.", management.ENUMENVIRONMENTTYPE_SANDBOX, management.ENUMENVIRONMENTTYPE_PRODUCTION),
+	)
 
-	regionDescriptionFmt := "The region the environment is created in.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`."
-	regionDescription := framework.SchemaDescription{
-		MarkdownDescription: regionDescriptionFmt,
-		Description:         strings.ReplaceAll(regionDescriptionFmt, "`", "\""),
-	}
+	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The region the environment is created in.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.",
+	)
 
-	solutionDescriptionFmt := fmt.Sprintf("The solution context of the environment.  Blank or null values indicate a custom, non-workforce solution context.  Valid options are `%s`, `%s` or no value for custom solution context.", string(management.ENUMSOLUTIONTYPE_CUSTOMER), string(management.ENUMSOLUTIONTYPE_WORKFORCE))
-	solutionDescription := framework.SchemaDescription{
-		MarkdownDescription: solutionDescriptionFmt,
-		Description:         strings.ReplaceAll(solutionDescriptionFmt, "`", "\""),
-	}
+	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The solution context of the environment.  Blank or null values indicate a custom, non-workforce solution context.  Valid options are `%s`, `%s` or no value for custom solution context.", string(management.ENUMSOLUTIONTYPE_CUSTOMER), string(management.ENUMSOLUTIONTYPE_WORKFORCE)),
+	)
 
-	serviceTypeDescriptionFmt := fmt.Sprintf("The service type applied to the environment.  Valid options are `%s`.", strings.Join(model.ProductsSelectableList(), "`, `"))
-	serviceTypeDescription := framework.SchemaDescription{
-		MarkdownDescription: serviceTypeDescriptionFmt,
-		Description:         strings.ReplaceAll(serviceTypeDescriptionFmt, "`", "\""),
-	}
+	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The service type applied to the environment.  Valid options are `%s`.", strings.Join(model.ProductsSelectableList(), "`, `")),
+	)
 
-	serviceConsoleUrlDescriptionFmt := "A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`."
-	serviceConsoleUrlDescription := framework.SchemaDescription{
-		MarkdownDescription: serviceConsoleUrlDescriptionFmt,
-		Description:         strings.ReplaceAll(serviceConsoleUrlDescriptionFmt, "`", "\""),
-	}
+	serviceConsoleUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

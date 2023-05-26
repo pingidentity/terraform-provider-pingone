@@ -118,58 +118,44 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMaxPercent = 100
 	const imageMaxSize = 50000
 
-	titleDescriptionFmt := "Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTItle}` in the `card_design_template`."
-	titleDescription := framework.SchemaDescription{
-		MarkdownDescription: titleDescriptionFmt,
-		Description:         strings.ReplaceAll(titleDescriptionFmt, "`", "\""),
-	}
+	titleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTItle}` in the `card_design_template`.",
+	)
 
-	credentialDescriptionFmt := "A description of the credential type. This value aligns to `${cardSubtitle}` in the `card_design_template`."
-	credentialDescription := framework.SchemaDescription{
-		MarkdownDescription: credentialDescriptionFmt,
-		Description:         strings.ReplaceAll(credentialDescriptionFmt, "`", "\""),
-	}
+	credentialDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A description of the credential type. This value aligns to `${cardSubtitle}` in the `card_design_template`.",
+	)
 
-	fieldsDescriptionFmt := "In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`."
-	fieldsDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsDescriptionFmt, "`", "\""),
-	}
+	fieldsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`.",
+	)
 
-	fieldsIdDescriptionFmt := "Identifier of the field formatted as `<fields.type> -> <fields.title>`."
-	fieldsIdDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsIdDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsIdDescriptionFmt, "`", "\""),
-	}
+	fieldsIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Identifier of the field formatted as `<fields.type> -> <fields.title>`.",
+	)
 
-	fieldsTypeDescriptionFmt := "Type of data in the credential field. The must contain one of the following types: `Directory Attribute`, `Alphanumeric Text`, or `Issued Timestamp`."
-	fieldsTypeDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsTypeDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsTypeDescriptionFmt, "`", "\""),
-	}
+	fieldsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Type of data in the credential field. The must contain one of the following types: `Directory Attribute`, `Alphanumeric Text`, or `Issued Timestamp`.",
+	)
 
-	fieldsAttributeDescriptionFmt := "Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`."
-	fieldsAttributeDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsAttributeDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsAttributeDescriptionFmt, "`", "\""),
-	}
+	fieldsAttributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`.",
+	)
 
-	fieldsValueDescriptionFmt := "The text to appear on the credential for a `field.type` of `Alphanumeric Text`."
-	fieldsValueDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsValueDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsValueDescriptionFmt, "`", "\""),
-	}
+	fieldsValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The text to appear on the credential for a `field.type` of `Alphanumeric Text`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage the credential types used by compatible wallet applications.\n\n" +
-			"~> You must ensure that any fields used in the card_design_template are defined appropriately in metadata.fields or errors occur when you attempt to create a credential of that type.",
+			framework.SchemaAttributeDescriptionFromMarkdown("~> You must ensure that any fields used in the `card_design_template` are defined appropriately in `metadata.fields` or errors occur when you attempt to create a credential of that type.").MarkdownDescription,
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "PingOne environment identifier (UUID) in which the credential type exists."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential type exists."),
 			),
 
 			"title": schema.StringAttribute{
@@ -180,7 +166,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					stringvalidator.LengthAtLeast(attrMinLength),
 					customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 						regexp.MustCompile(`\${cardTitle}`),
-						"The title argument is required because the ${$cardTitle} element is defined in the card_design_template.",
+						framework.SchemaAttributeDescriptionFromMarkdown("The title argument is required because the ${cardTitle} element is defined in the `card_design_template`.").MarkdownDescription,
 						path.MatchRoot("card_design_template"),
 					),
 					customstringvalidator.RegexMatchesPathValue(
@@ -199,7 +185,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					stringvalidator.LengthAtLeast(attrMinLength),
 					customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 						regexp.MustCompile(`\${cardSubtitle}`),
-						"The description argument is required because the ${$cardSubtitle} element is defined in the card_design_template.",
+						framework.SchemaAttributeDescriptionFromMarkdown("The description argument is required because the ${cardSubtitle} element is defined in the `card_design_template`.").MarkdownDescription,
 						path.MatchRoot("card_design_template"),
 					),
 					customstringvalidator.RegexMatchesPathValue(
@@ -270,7 +256,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
 							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${cardColor}`),
-								"The metadata.card_color argument is required because the ${$cardColor} element is defined in the card_design_template.",
+								"The metadata.card_color argument is required because the ${cardColor} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							customstringvalidator.RegexMatchesPathValue(
@@ -308,7 +294,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							customstringvalidator.IsBase64Encoded(),
 							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
-								"The metadata.card_color argument is required because the ${$logoImage} element is defined in the card_design_template.",
+								"The metadata.card_color argument is required because the ${logoImage} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							customstringvalidator.RegexMatchesPathValue(
@@ -337,7 +323,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 								"expected value to contain a valid 6-digit hexadecimal color code, prefixed with a hash (#) symbol."),
 							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${textColor}`),
-								"The metadata.text_color argument is required because the ${$textColor} element is defined in the card_design_template.",
+								"The metadata.text_color argument is required because the ${textColor} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							customstringvalidator.RegexMatchesPathValue(

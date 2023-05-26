@@ -124,35 +124,25 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	const maximumServices = 13
 	const minimumServices = 1
 
-	typeDescriptionFmt := fmt.Sprintf("The type of the environment to create.  Options are `%s` for a development/testing environment and `%s` for environments that require protection from deletion. Defaults to `%s`.", management.ENUMENVIRONMENTTYPE_SANDBOX, management.ENUMENVIRONMENTTYPE_PRODUCTION, management.ENUMENVIRONMENTTYPE_SANDBOX)
-	typeDescription := framework.SchemaDescription{
-		MarkdownDescription: typeDescriptionFmt,
-		Description:         strings.ReplaceAll(typeDescriptionFmt, "`", "\""),
-	}
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The type of the environment to create.  Options are `%s` for a development/testing environment and `%s` for environments that require protection from deletion. Defaults to `%s`.", management.ENUMENVIRONMENTTYPE_SANDBOX, management.ENUMENVIRONMENTTYPE_PRODUCTION, management.ENUMENVIRONMENTTYPE_SANDBOX),
+	)
 
-	regionDescriptionFmt := "The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default can be set with the `PINGONE_REGION` environment variable."
-	regionDescription := framework.SchemaDescription{
-		MarkdownDescription: regionDescriptionFmt,
-		Description:         strings.ReplaceAll(regionDescriptionFmt, "`", "\""),
-	}
+	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default can be set with the `PINGONE_REGION` environment variable.",
+	)
 
-	solutionDescriptionFmt := fmt.Sprintf("The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER))
-	solutionDescription := framework.SchemaDescription{
-		MarkdownDescription: solutionDescriptionFmt,
-		Description:         strings.ReplaceAll(solutionDescriptionFmt, "`", "\""),
-	}
+	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
+	)
 
-	serviceTypeDescriptionFmt := fmt.Sprintf("The service type to enable in the environment.  Valid options are `%s`.  Defaults to `SSO`.", strings.Join(model.ProductsSelectableList(), "`, `"))
-	serviceTypeDescription := framework.SchemaDescription{
-		MarkdownDescription: serviceTypeDescriptionFmt,
-		Description:         strings.ReplaceAll(serviceTypeDescriptionFmt, "`", "\""),
-	}
+	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The service type to enable in the environment.  Valid options are `%s`.  Defaults to `SSO`.", strings.Join(model.ProductsSelectableList(), "`, `")),
+	)
 
-	serviceConsoleUrlDescriptionFmt := "A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`."
-	serviceConsoleUrlDescription := framework.SchemaDescription{
-		MarkdownDescription: serviceConsoleUrlDescriptionFmt,
-		Description:         strings.ReplaceAll(serviceConsoleUrlDescriptionFmt, "`", "\""),
-	}
+	serviceConsoleUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

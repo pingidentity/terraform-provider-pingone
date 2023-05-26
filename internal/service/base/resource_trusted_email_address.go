@@ -57,19 +57,19 @@ func (r *TrustedEmailAddressResource) Metadata(ctx context.Context, req resource
 func (r *TrustedEmailAddressResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	resourceDescriptionFmt := "Resource to create and manage trusted email addresses in PingOne.  PingOne supports the ability to configure up to 10 trusted email addresses for an existing trusted email domain. See %s.  Once configured and if the email address has not been previously verified, a verification email is sent."
-	providerDescription := framework.SchemaDescription{
+	providerDescription := framework.SchemaAttributeDescription{
 		MarkdownDescription: fmt.Sprintf(resourceDescriptionFmt, "[Trusted email domains](https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains)"),
 		Description:         fmt.Sprintf(resourceDescriptionFmt, "Trusted email domains (https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains)"),
 	}
 
 	emailAddressDescriptionFmt := "The trusted email address, for example %s."
-	emailAddressDescription := framework.SchemaDescription{
+	emailAddressDescription := framework.SchemaAttributeDescription{
 		MarkdownDescription: fmt.Sprintf(emailAddressDescriptionFmt, "`john.smith@bxretail.org`"),
 		Description:         fmt.Sprintf(emailAddressDescriptionFmt, "\"john.smith@bxretail.org\""),
 	}
 
 	statusDescriptionFmt := "The status of the trusted email address.  Possible values are %s."
-	statusDescription := framework.SchemaDescription{
+	statusDescription := framework.SchemaAttributeDescription{
 		MarkdownDescription: fmt.Sprintf(statusDescriptionFmt, "`ACTIVE` and `VERIFICATION_REQUIRED`"),
 		Description:         fmt.Sprintf(statusDescriptionFmt, "\"ACTIVE\" and \"VERIFICATION_REQUIRED\""),
 	}
@@ -84,8 +84,8 @@ func (r *TrustedEmailAddressResource) Schema(ctx context.Context, req resource.S
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to associate the trusted email address with."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to associate the trusted email address with."),
 			),
 
 			"email_domain_id": schema.StringAttribute{

@@ -58,24 +58,24 @@ func (r *PopulationsDataSource) Schema(ctx context.Context, req datasource.Schem
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
+			"environment_id": framework.Attr_LinkID(framework.SchemaAttributeDescription{
 				Description: "The ID of the environment to filter populations from.",
 			}),
 
-			"scim_filter": framework.Attr_SCIMFilter(framework.SchemaDescription{
+			"scim_filter": framework.Attr_SCIMFilter(framework.SchemaAttributeDescription{
 				Description: "A SCIM filter to apply to the population selection.  A SCIM filter offers the greatest flexibility in filtering populations.",
 			},
 				filterableAttributes,
 				[]string{"data_filter"},
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaDescription{
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
 				Description: "The list of resulting IDs of populations that have been successfully retrieved and filtered.",
 			}),
 		},
 
 		Blocks: map[string]schema.Block{
-			"data_filter": framework.Attr_DataFilter(framework.SchemaDescription{
+			"data_filter": framework.Attr_DataFilter(framework.SchemaAttributeDescription{
 				Description: "Individual data filters to apply to the population selection.",
 			},
 				filterableAttributes,

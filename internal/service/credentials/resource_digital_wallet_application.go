@@ -67,12 +67,12 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "PingOne environment identifier (UUID) in which the credential digital wallet application is created and managed."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential digital wallet application is created and managed."),
 			),
 
-			"application_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The identifier (UUID) of the PingOne mobile application associated with the digital wallet application."},
+			"application_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The identifier (UUID) of the PingOne mobile application associated with the digital wallet application."),
 			),
 
 			"app_open_url": schema.StringAttribute{

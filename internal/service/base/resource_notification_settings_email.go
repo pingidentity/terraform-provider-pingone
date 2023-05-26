@@ -75,11 +75,9 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 	const attrMinLength = 1
 	const emailAddressMaxLength = 5
 
-	portDescriptionFmt := "An integer that specifies the port used by the organization's SMTP server to send emails (default: `465`). Note that the protocol used depends upon the port specified. If you specify port `25`, `587`, or `2525`, SMTP with `STARTTLS` is used. Otherwise, `SMTPS` is used."
-	portDescription := framework.SchemaDescription{
-		MarkdownDescription: portDescriptionFmt,
-		Description:         strings.ReplaceAll(portDescriptionFmt, "`", "\""),
-	}
+	portDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the port used by the organization's SMTP server to send emails (default: `465`). Note that the protocol used depends upon the port specified. If you specify port `25`, `587`, or `2525`, SMTP with `STARTTLS` is used. Otherwise, `SMTPS` is used.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -88,8 +86,8 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to configure email settings in."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to configure email settings in."),
 			),
 
 			"host": schema.StringAttribute{

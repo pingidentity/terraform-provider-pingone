@@ -59,15 +59,15 @@ func (r *BrandingThemeDefaultResource) Schema(ctx context.Context, req resource.
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaDescriptionFromMarkdown("The ID of the environment to set branding settings for."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to set branding settings for."),
 			),
 
 			"branding_theme_id": framework.Attr_LinkID(
-				framework.SchemaDescriptionFromMarkdown("The ID of the branding theme to activate as the environment default."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the branding theme to activate as the environment default."),
 			),
 
 			"default": schema.BoolAttribute{
-				Description: framework.SchemaDescriptionFromMarkdown("Confirms whether this theme is the environment's default branding configuration.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("Confirms whether this theme is the environment's default branding configuration.").Description,
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.Bool{

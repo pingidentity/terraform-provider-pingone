@@ -86,29 +86,21 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 	const attrMinLength = 1
 
 	reservedNames := []string{"account", "id", "created", "updated", "lifecycle", "mfaEnabled", "enabled"}
-	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of the PingOne directory attribute to map the Identity Provider attribute value to. The attribute must not be defined as read only from the user schema or of type `COMPLEX` based on the user schema. Examples are `email`, `name.given`.  The following attributes may not be used: `%s`.", strings.Join(reservedNames, "`, `"))
-	nameDescription := framework.SchemaDescription{
-		MarkdownDescription: nameDescriptionFmt,
-		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
-	}
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the name of the PingOne directory attribute to map the Identity Provider attribute value to. The attribute must not be defined as read only from the user schema or of type `COMPLEX` based on the user schema. Examples are `email`, `name.given`.  The following attributes may not be used: `%s`.", strings.Join(reservedNames, "`, `")),
+	)
 
-	updateDescriptionFmt := fmt.Sprintf("Indicates whether to update the user attribute in the directory with the non-empty mapped value from the IdP. Options are `%s` (only update the user attribute if it has an empty value); `%s` (always update the user attribute value). Defaults to `%s`.", string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGUPDATE_EMPTY_ONLY), string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGUPDATE_ALWAYS), string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGUPDATE_EMPTY_ONLY))
-	updateDescription := framework.SchemaDescription{
-		MarkdownDescription: updateDescriptionFmt,
-		Description:         strings.ReplaceAll(updateDescriptionFmt, "`", "\""),
-	}
+	updateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Indicates whether to update the user attribute in the directory with the non-empty mapped value from the IdP. Options are `%s` (only update the user attribute if it has an empty value); `%s` (always update the user attribute value). Defaults to `%s`.", string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGUPDATE_EMPTY_ONLY), string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGUPDATE_ALWAYS), string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGUPDATE_EMPTY_ONLY)),
+	)
 
-	valueDescriptionFmt := "A placeholder referring to the attribute (or attributes) from the provider. Placeholders must be valid for the attributes returned by the IdP type and use the `${}` syntax (for example, `${email}`). For SAML, any placeholder is acceptable, and it is mapped against the attributes available in the SAML assertion after authentication. The `${samlAssertion.subject}` placeholder is a special reserved placeholder used to refer to the subject name ID in the SAML assertion response.\n\nFor a full list of social providers and their configurable attribute mappings, see the [Social Provider and External Identity Provider Attribute Reference](#social-provider-and-external-identity-provider-attribute-reference) below."
-	valueDescription := framework.SchemaDescription{
-		MarkdownDescription: valueDescriptionFmt,
-		Description:         strings.ReplaceAll(valueDescriptionFmt, "`", "\""),
-	}
+	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A placeholder referring to the attribute (or attributes) from the provider. Placeholders must be valid for the attributes returned by the IdP type and use the `${}` syntax (for example, `${email}`). For SAML, any placeholder is acceptable, and it is mapped against the attributes available in the SAML assertion after authentication. The `${samlAssertion.subject}` placeholder is a special reserved placeholder used to refer to the subject name ID in the SAML assertion response.\n\nFor a full list of social providers and their configurable attribute mappings, see the [Social Provider and External Identity Provider Attribute Reference](#social-provider-and-external-identity-provider-attribute-reference) below.",
+	)
 
-	mappingTypeDescriptionFmt := fmt.Sprintf("The mapping type. Options are `%s` (This attribute is required by the schema and cannot be removed. The name and update properties cannot be changed.) or `%s` (All user-created attributes are of this type.)", string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGTYPE_CORE), string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGTYPE_CUSTOM))
-	mappingTypeDescription := framework.SchemaDescription{
-		MarkdownDescription: mappingTypeDescriptionFmt,
-		Description:         strings.ReplaceAll(mappingTypeDescriptionFmt, "`", "\""),
-	}
+	mappingTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The mapping type. Options are `%s` (This attribute is required by the schema and cannot be removed. The name and update properties cannot be changed.) or `%s` (All user-created attributes are of this type.)", string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGTYPE_CORE), string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGTYPE_CUSTOM)),
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -117,12 +109,12 @@ func (r *IdentityProviderAttributeResource) Schema(ctx context.Context, req reso
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the identity provider attribute in."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the identity provider attribute in."),
 			),
 
-			"identity_provider_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the identity provider to create the attribute mapping for."},
+			"identity_provider_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the identity provider to create the attribute mapping for."),
 			),
 
 			"name": schema.StringAttribute{
