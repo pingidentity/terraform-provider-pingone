@@ -31,13 +31,13 @@ func Attr_ID() schema.StringAttribute {
 	}
 }
 
-func Attr_LinkID(description SchemaDescription) schema.StringAttribute {
+func Attr_LinkID(description SchemaAttributeDescription) schema.StringAttribute {
 	return Attr_LinkIDWithValidators(description, []validator.String{
 		verify.P1ResourceIDValidator(),
 	})
 }
 
-func Attr_LinkIDWithValidators(description SchemaDescription, validators []validator.String) schema.StringAttribute {
+func Attr_LinkIDWithValidators(description SchemaAttributeDescription, validators []validator.String) schema.StringAttribute {
 	if description.MarkdownDescription == "" {
 		description.MarkdownDescription = description.Description
 	}
@@ -53,7 +53,7 @@ func Attr_LinkIDWithValidators(description SchemaDescription, validators []valid
 	}
 }
 
-func Attr_SCIMFilter(description SchemaDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.StringAttribute {
+func Attr_SCIMFilter(description SchemaAttributeDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.StringAttribute {
 	filterMinLength := 1
 
 	description = description.Clean(true)
@@ -75,7 +75,7 @@ func Attr_SCIMFilter(description SchemaDescription, acceptableAttributes []strin
 	}
 }
 
-func Attr_DataFilter(description SchemaDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.ListNestedBlock {
+func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.ListNestedBlock {
 	attrMinLength := 1
 
 	description = description.Clean(true)
@@ -84,13 +84,13 @@ func Attr_DataFilter(description SchemaDescription, acceptableAttributes []strin
 	description.Description = fmt.Sprintf("%s.  Allowed attributes to filter: \"%s\"", description.Description, strings.Join(acceptableAttributes, "\", \""))
 
 	childNameAttrDescriptionFmt := fmt.Sprintf("The attribute name to filter on.  Must be one of the following values: `%s`.", strings.Join(acceptableAttributes, "`, `"))
-	childNameDescription := SchemaDescription{
+	childNameDescription := SchemaAttributeDescription{
 		MarkdownDescription: childNameAttrDescriptionFmt,
 		Description:         strings.Replace(childNameAttrDescriptionFmt, "`", "\"", -1),
 	}
 
 	childValueAttrDescriptionFmt := "The possible values (case sensitive) of the attribute defined in the `name` parameter to filter."
-	childValueDescription := SchemaDescription{
+	childValueDescription := SchemaAttributeDescription{
 		MarkdownDescription: childValueAttrDescriptionFmt,
 		Description:         strings.Replace(childValueAttrDescriptionFmt, "`", "\"", -1),
 	}
@@ -136,7 +136,7 @@ func Attr_DataFilter(description SchemaDescription, acceptableAttributes []strin
 	}
 }
 
-func Attr_DataSourceReturnIDs(description SchemaDescription) schema.ListAttribute {
+func Attr_DataSourceReturnIDs(description SchemaAttributeDescription) schema.ListAttribute {
 	if description.MarkdownDescription == "" {
 		description.MarkdownDescription = description.Description
 	}

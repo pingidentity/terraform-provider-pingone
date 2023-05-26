@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -60,11 +59,9 @@ func (r *OrganizationDataSource) Metadata(ctx context.Context, req datasource.Me
 // Schema
 func (r *OrganizationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
-	typeDescriptionFmt := "The organization type. If the organization has any paid licenses, the type property value is set to `PAID`. Otherwise, the property value is set to `TRIAL`.  Internal organizations have a property value of `INTERNAL`."
-	typeDescripton := framework.SchemaDescription{
-		MarkdownDescription: typeDescriptionFmt,
-		Description:         strings.ReplaceAll(typeDescriptionFmt, "`", "\""),
-	}
+	typeDescripton := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The organization type. If the organization has any paid licenses, the type property value is set to `PAID`. Otherwise, the property value is set to `TRIAL`.  Internal organizations have a property value of `INTERNAL`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

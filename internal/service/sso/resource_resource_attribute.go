@@ -80,35 +80,25 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 
 	const attrMinLength = 1
 
-	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of the resource attribute to map a value for. When the resource's type property is `OPENID_CONNECT`, the following are reserved names and cannot be used: %s.  The resource will also override the default configured values for a resource, rather than creating new attributes.  For resources of type `CUSTOM`, the `sub` name is overridden.  For resources of type `OPENID_CONNECT`, the following names are overridden: %s.", verify.IllegalOIDCAttributeNameString(), verify.OverrideOIDCAttributeNameString())
-	nameDescription := framework.SchemaDescription{
-		MarkdownDescription: nameDescriptionFmt,
-		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
-	}
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the name of the resource attribute to map a value for. When the resource's type property is `OPENID_CONNECT`, the following are reserved names and cannot be used: %s.  The resource will also override the default configured values for a resource, rather than creating new attributes.  For resources of type `CUSTOM`, the `sub` name is overridden.  For resources of type `OPENID_CONNECT`, the following names are overridden: %s.", verify.IllegalOIDCAttributeNameString(), verify.OverrideOIDCAttributeNameString()),
+	)
 
-	valueDescriptionFmt := "A string that specifies the value of the custom resource attribute. This value can be a placeholder that references an attribute in the user schema, expressed as `${user.path.to.value}`, or it can be an expression, or a static string. Placeholders must be valid, enabled attributes in the environment’s user schema. Examples of valid values are: `${user.email}`, `${user.name.family}`, and `myClaimValueString`.  Note that definition in HCL requires escaping with the `$` character when defining attribute paths, for example `value = \"$${user.email}\"`."
-	valueDescription := framework.SchemaDescription{
-		MarkdownDescription: valueDescriptionFmt,
-		Description:         strings.ReplaceAll(valueDescriptionFmt, "`", "\""),
-	}
+	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the value of the custom resource attribute. This value can be a placeholder that references an attribute in the user schema, expressed as `${user.path.to.value}`, or it can be an expression, or a static string. Placeholders must be valid, enabled attributes in the environment’s user schema. Examples of valid values are: `${user.email}`, `${user.name.family}`, and `myClaimValueString`.  Note that definition in HCL requires escaping with the `$` character when defining attribute paths, for example `value = \"$${user.email}\"`.",
+	)
 
-	typeDescriptionFmt := "A string that specifies the type of resource attribute. Options are: `CORE` (The claim is required and cannot not be removed), `CUSTOM` (The claim is not a CORE attribute. All created attributes are of this type), `PREDEFINED` (A designation for predefined OIDC resource attributes such as given_name. These attributes cannot be removed; however, they can be modified)."
-	typeDescription := framework.SchemaDescription{
-		MarkdownDescription: typeDescriptionFmt,
-		Description:         strings.ReplaceAll(typeDescriptionFmt, "`", "\""),
-	}
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of resource attribute. Options are: `CORE` (The claim is required and cannot not be removed), `CUSTOM` (The claim is not a CORE attribute. All created attributes are of this type), `PREDEFINED` (A designation for predefined OIDC resource attributes such as given_name. These attributes cannot be removed; however, they can be modified).",
+	)
 
-	idTokenEnabledDescriptionFmt := "A boolean that specifies whether the attribute mapping should be available in the ID Token.  Only applies to resources that are of type `OPENID_CONNECT` and the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to false. Defaults to `true`."
-	idTokenEnabledDescription := framework.SchemaDescription{
-		MarkdownDescription: idTokenEnabledDescriptionFmt,
-		Description:         strings.ReplaceAll(idTokenEnabledDescriptionFmt, "`", "\""),
-	}
+	idTokenEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the attribute mapping should be available in the ID Token.  Only applies to resources that are of type `OPENID_CONNECT` and the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to false. Defaults to `true`.",
+	)
 
-	userinfoEnabledDescriptionFmt := "A boolean that specifies whether the attribute mapping should be available through the /as/userinfo endpoint.  Only applies to resources that are of type `OPENID_CONNECT` and the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to false. Defaults to `true`."
-	userinfoEnabledDescription := framework.SchemaDescription{
-		MarkdownDescription: userinfoEnabledDescriptionFmt,
-		Description:         strings.ReplaceAll(userinfoEnabledDescriptionFmt, "`", "\""),
-	}
+	userinfoEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the attribute mapping should be available through the /as/userinfo endpoint.  Only applies to resources that are of type `OPENID_CONNECT` and the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to false. Defaults to `true`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -117,12 +107,12 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the resource attribute in."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the resource attribute in."),
 			),
 
-			"resource_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the resource to assign the resource attribute to."},
+			"resource_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the resource to assign the resource attribute to."),
 			),
 
 			"name": schema.StringAttribute{

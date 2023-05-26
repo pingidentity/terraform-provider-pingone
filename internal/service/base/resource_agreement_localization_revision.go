@@ -69,7 +69,7 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 	const attrMinLength = 1
 
 	contentTypeFmt := "The content type to apply to the revision text configured in the `text` parameter. Options are `text/html` and `text/plain`, as defined by %s."
-	contentTypeDescription := framework.SchemaDescription{
+	contentTypeDescription := framework.SchemaAttributeDescription{
 		MarkdownDescription: fmt.Sprintf(contentTypeFmt, "[rfc-6838](https://datatracker.ietf.org/doc/html/rfc6838#section-4.2.1) and [Media Types/text](https://www.iana.org/assignments/media-types/media-types.xhtml#text)"),
 		Description:         fmt.Sprintf(strings.ReplaceAll(contentTypeFmt, "`", "\""), "rfc-6838 (https://datatracker.ietf.org/doc/html/rfc6838#section-4.2.1) and  Media Types/text (https://www.iana.org/assignments/media-types/media-types.xhtml#text)"),
 	}
@@ -78,7 +78,7 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 	// "Text or HTML for the revision. HTML support includes **tags** (italicize, bold, links, headers, paragraph, line breaks), **link (a) tags** (allow href, style, target attributes), **block tags (p, b, h)** (allow style and align attributes).",
 
 	textDescriptionFmt := "Text or HTML for the revision. HTML support includes **tags** (italicize, bold, links, headers, paragraph, line breaks), **link (a) tags** (allow href, style, target attributes), **block tags (p, b, h)** (allow style and align attributes)."
-	textDescription := framework.SchemaDescription{
+	textDescription := framework.SchemaAttributeDescription{
 		MarkdownDescription: textDescriptionFmt,
 		Description:         strings.ReplaceAll(textDescriptionFmt, "**", "\""),
 	}
@@ -90,16 +90,16 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to associate the agreement localization revision with."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to associate the agreement localization revision with."),
 			),
 
-			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the agreement to associate the agreement localization revision with."},
+			"agreement_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the agreement to associate the agreement localization revision with."),
 			),
 
-			"agreement_localization_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the agreement localization to associate the revision with."},
+			"agreement_localization_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the agreement localization to associate the revision with."),
 			),
 
 			"content_type": schema.StringAttribute{

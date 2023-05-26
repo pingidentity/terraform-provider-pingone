@@ -68,16 +68,16 @@ func (r *AgreementLocalizationResource) Schema(ctx context.Context, req resource
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to associate the agreement localization with."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to associate the agreement localization with."),
 			),
 
-			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the agreement to associate the agreement localization with."},
+			"agreement_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the agreement to associate the agreement localization with."),
 			),
 
-			"language_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the language in the PingOne environment that the localization applies to."},
+			"language_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the language in the PingOne environment that the localization applies to."),
 			),
 
 			"display_name": schema.StringAttribute{

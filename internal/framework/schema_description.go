@@ -3,16 +3,10 @@ package framework
 import (
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
-
-	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
-type SchemaDescription struct {
-	Description         string
-	MarkdownDescription string
-}
+type SchemaDescription SchemaDescriptionModel
 
 func (r SchemaDescription) Clean(removeTrailingStop bool) SchemaDescription {
 
@@ -39,41 +33,8 @@ func (r SchemaDescription) Clean(removeTrailingStop bool) SchemaDescription {
 	return r
 }
 
-func (r SchemaDescription) DefaultValue(defaultValue string) SchemaDescription {
-	return r.AppendStringValue("Defaults to", defaultValue)
-}
-
-func (r SchemaDescription) AllowedValues(allowedValues []string) SchemaDescription {
-	sort.Strings(allowedValues)
-
-	return r.AppendSliceValues("Options are", allowedValues)
-}
-
-func (r SchemaDescription) AllowedValuesComplex(allowedValuesMap map[string]string) SchemaDescription {
-	allowedValues := make([]string, 0)
-	for k, v := range allowedValuesMap {
-		allowedValues = append(allowedValues, fmt.Sprintf("`%s` (%s)", k, v))
-	}
-
-	sort.Strings(allowedValues)
-
-	return r.AppendMarkdownString(fmt.Sprintf("Options are %s.", strings.Join(allowedValues, ", ")))
-}
-
-func (r SchemaDescription) AllowedValuesEnum(allowedValuesEnumSlice interface{}) SchemaDescription {
-	return r.AllowedValues(utils.EnumSliceToStringSlice(allowedValuesEnumSlice))
-}
-
-func (r SchemaDescription) ConflictsWith(fieldPaths []string) SchemaDescription {
-	return r.AppendSliceValues("Conflicts with", fieldPaths)
-}
-
-func (r SchemaDescription) ExactlyOneOf(fieldPaths []string) SchemaDescription {
-	return r.AppendSliceValues("At least one of the following must be defined:", fieldPaths)
-}
-
-func (r SchemaDescription) RequiresReplace() SchemaDescription {
-	return r.AppendMarkdownString("This field is immutable and will trigger a replace plan if changed.")
+func (r SchemaDescription) OnlyOneDefinitionPerEnvironment(resourceName string) SchemaDescription {
+	return r.AppendMarkdownString(fmt.Sprintf("\n\n~> Only one `%s` resource should be configured for an environment.  If multiple `%s` resource definition for an environment have been defined, these are likely to conflict with each other on apply.", resourceName, resourceName))
 }
 
 func (r SchemaDescription) AppendSliceValues(pretext string, values []string) SchemaDescription {

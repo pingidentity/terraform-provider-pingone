@@ -50,7 +50,7 @@ func (r *TrustedEmailDomainDataSource) Metadata(ctx context.Context, req datasou
 func (r *TrustedEmailDomainDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
 	domainDescriptionFmt := "A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, %s)."
-	domainDescription := framework.SchemaDescription{
+	domainDescription := framework.SchemaAttributeDescription{
 		MarkdownDescription: fmt.Sprintf(domainDescriptionFmt, "`demo.bxretail.org`"),
 		Description:         fmt.Sprintf(domainDescriptionFmt, "\"demo.bxretail.org\""),
 	}
@@ -64,8 +64,8 @@ func (r *TrustedEmailDomainDataSource) Schema(ctx context.Context, req datasourc
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment that is configured with the trusted email domain."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that is configured with the trusted email domain."),
 			),
 
 			"trusted_email_domain_id": schema.StringAttribute{

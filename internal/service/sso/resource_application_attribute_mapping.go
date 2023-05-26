@@ -89,55 +89,39 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 	const attrMinLength = 1
 
 	reservedNames := []string{"acr", "amr", "at_hash", "aud", "auth_time", "azp", "client_id", "exp", "iat", "iss", "jti", "nbf", "nonce", "org", "scope", "sid"}
-	nameDescriptionFmt := fmt.Sprintf("A string that specifies the name of attribute and must be unique within an application. For SAML applications, the `saml_subject` name is a case-insensitive name which indicates the mapping to be used for the subject in an assertion and can be overridden. For OpenID Connect applications, the `sub` name indicates the mapping to be used for the subject in the token and can be overridden.  The following OpenID Connect names are reserved and cannot be used: `%s`.", strings.Join(reservedNames, "`, `"))
-	nameDescription := framework.SchemaDescription{
-		MarkdownDescription: nameDescriptionFmt,
-		Description:         strings.ReplaceAll(nameDescriptionFmt, "`", "\""),
-	}
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the name of attribute and must be unique within an application. For SAML applications, the `saml_subject` name is a case-insensitive name which indicates the mapping to be used for the subject in an assertion and can be overridden. For OpenID Connect applications, the `sub` name indicates the mapping to be used for the subject in the token and can be overridden.  The following OpenID Connect names are reserved and cannot be used: `%s`.", strings.Join(reservedNames, "`, `")),
+	)
 
-	requiredDescriptionFmt := "A boolean to specify whether a mapping value is required for this attribute. If `true`, a value must be set and a non-empty value must be available in the SAML assertion or ID token. If overriding a core attribute mapping (`saml_subject` for SAML applications and `sub` for OpenID Connect applications), then this value must be set to `true`.  Defaults to `false`."
-	requiredDescription := framework.SchemaDescription{
-		MarkdownDescription: requiredDescriptionFmt,
-		Description:         strings.ReplaceAll(requiredDescriptionFmt, "`", "\""),
-	}
+	requiredDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean to specify whether a mapping value is required for this attribute. If `true`, a value must be set and a non-empty value must be available in the SAML assertion or ID token. If overriding a core attribute mapping (`saml_subject` for SAML applications and `sub` for OpenID Connect applications), then this value must be set to `true`.  Defaults to `false`.",
+	)
 
-	valueDescriptionFmt := "A string that specifies the string constants or expression for mapping the attribute path against a specific source. The expression format is `${<source>.<attribute_path>}`. The only supported source is user (for example, `${user.id}`).  When defining attribute mapping values in Terraform, the expression must be escaped (for example `value = \"$${user.id}}\"`)"
-	valueDescription := framework.SchemaDescription{
-		MarkdownDescription: valueDescriptionFmt,
-		Description:         strings.ReplaceAll(valueDescriptionFmt, "`", "\""),
-	}
+	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the string constants or expression for mapping the attribute path against a specific source. The expression format is `${<source>.<attribute_path>}`. The only supported source is user (for example, `${user.id}`).  When defining attribute mapping values in Terraform, the expression must be escaped (for example `value = \"$${user.id}}\"`)",
+	)
 
-	mappingTypeDescriptionFmt := "A string that specifies the mapping type of the attribute. Options are `CORE`, `SCOPE`, and `CUSTOM`."
-	mappingTypeDescription := framework.SchemaDescription{
-		MarkdownDescription: mappingTypeDescriptionFmt,
-		Description:         strings.ReplaceAll(mappingTypeDescriptionFmt, "`", "\""),
-	}
+	mappingTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the mapping type of the attribute. Options are `CORE`, `SCOPE`, and `CUSTOM`.",
+	)
 
 	//oidc block
-	oidcScopesDescriptionFmt := "OIDC resource scope IDs that this attribute mapping is available for exclusively. This setting overrides any global OIDC resource scopes that contain an attribute mapping with the same name. The list can contain only scope IDs that have been granted for the application through the `/grants` endpoint. At least one scope ID is expected."
-	oidcScopesDescription := framework.SchemaDescription{
-		MarkdownDescription: oidcScopesDescriptionFmt,
-		Description:         strings.ReplaceAll(oidcScopesDescriptionFmt, "`", "\""),
-	}
+	oidcScopesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"OIDC resource scope IDs that this attribute mapping is available for exclusively. This setting overrides any global OIDC resource scopes that contain an attribute mapping with the same name. The list can contain only scope IDs that have been granted for the application through the `/grants` endpoint. At least one scope ID is expected.",
+	)
 
-	oidcIdTokenEnabledDescriptionFmt := "Whether the attribute mapping should be available in the ID Token. This property is applicable only when the application's `protocol` property is `OPENID_CONNECT`. If omitted, the default is `true`. Note that the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to `false`. At least one of these properties must have a value of `true`."
-	oidcIdTokenEnabledDescription := framework.SchemaDescription{
-		MarkdownDescription: oidcIdTokenEnabledDescriptionFmt,
-		Description:         strings.ReplaceAll(oidcIdTokenEnabledDescriptionFmt, "`", "\""),
-	}
+	oidcIdTokenEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Whether the attribute mapping should be available in the ID Token. This property is applicable only when the application's `protocol` property is `OPENID_CONNECT`. If omitted, the default is `true`. Note that the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to `false`. At least one of these properties must have a value of `true`.",
+	)
 
-	oidcuserinfoEnabledDescriptionFmt := "Whether the attribute mapping should be available through the `/as/userinfo` endpoint. This property is applicable only when the application's protocol property is `OPENID_CONNECT`. If omitted, the default is `true`. Note that the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to `false`. At least one of these properties must have a value of `true`."
-	oidcUserinfoEnabledDescription := framework.SchemaDescription{
-		MarkdownDescription: oidcuserinfoEnabledDescriptionFmt,
-		Description:         strings.ReplaceAll(oidcuserinfoEnabledDescriptionFmt, "`", "\""),
-	}
+	oidcUserinfoEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Whether the attribute mapping should be available through the `/as/userinfo` endpoint. This property is applicable only when the application's protocol property is `OPENID_CONNECT`. If omitted, the default is `true`. Note that the `id_token_enabled` and `userinfo_enabled` properties cannot both be set to `false`. At least one of these properties must have a value of `true`.",
+	)
 
 	//saml
-	samlsubjectNameformatDescriptionFmt := "A URI reference representing the classification of the attribute, which helps the service provider interpret the attribute format.  This property is applicable only when the application's protocol property is `SAML` and the name is the `saml_subject` core attribute.  Examples include `urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified`, `urn:oasis:names:tc:SAML:2.0:attrname-format:uri`, `urn:oasis:names:tc:SAML:2.0:attrname-format:basic`."
-	samlsubjectNameformatDescription := framework.SchemaDescription{
-		MarkdownDescription: samlsubjectNameformatDescriptionFmt,
-		Description:         strings.ReplaceAll(samlsubjectNameformatDescriptionFmt, "`", "\""),
-	}
+	samlsubjectNameformatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A URI reference representing the classification of the attribute, which helps the service provider interpret the attribute format.  This property is applicable only when the application's protocol property is `SAML` and the name is the `saml_subject` core attribute.  Examples include `urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified`, `urn:oasis:names:tc:SAML:2.0:attrname-format:uri`, `urn:oasis:names:tc:SAML:2.0:attrname-format:basic`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -146,12 +130,12 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the application attribute mapping in."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the application attribute mapping in."),
 			),
 
-			"application_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the application to create the attribute mapping for."},
+			"application_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to create the attribute mapping for."),
 			),
 
 			"name": schema.StringAttribute{

@@ -118,35 +118,25 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMaxPercent = 100
 	const imageMaxSize = 50000
 
-	fieldsDescriptionFmt := "In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`."
-	fieldsDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsDescriptionFmt, "`", "\""),
-	}
+	fieldsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`.",
+	)
 
-	fieldsIdDescriptionFmt := "Identifier of the field formatted as `<fields.type> -> <fields.title>`."
-	fieldsIdDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsIdDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsIdDescriptionFmt, "`", "\""),
-	}
+	fieldsIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Identifier of the field formatted as `<fields.type> -> <fields.title>`.",
+	)
 
-	fieldsTypeDescriptionFmt := "Type of data in the credential field. The must contain one of the following types: `Directory Attribute`, `Alphanumeric Text`, or `Issued Timestamp`."
-	fieldsTypeDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsTypeDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsTypeDescriptionFmt, "`", "\""),
-	}
+	fieldsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Type of data in the credential field. The must contain one of the following types: `Directory Attribute`, `Alphanumeric Text`, or `Issued Timestamp`.",
+	)
 
-	fieldsAttributeDescriptionFmt := "Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`."
-	fieldsAttributeDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsAttributeDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsAttributeDescriptionFmt, "`", "\""),
-	}
+	fieldsAttributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`.",
+	)
 
-	fieldsValueDescriptionFmt := "The text to appear on the credential for a `field.type` of `Alphanumeric Text`."
-	fieldsValueDescription := framework.SchemaDescription{
-		MarkdownDescription: fieldsValueDescriptionFmt,
-		Description:         strings.ReplaceAll(fieldsValueDescriptionFmt, "`", "\""),
-	}
+	fieldsValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The text to appear on the credential for a `field.type` of `Alphanumeric Text`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -156,8 +146,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "PingOne environment identifier (UUID) in which the credential type exists."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential type exists."),
 			),
 
 			"title": schema.StringAttribute{

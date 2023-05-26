@@ -60,16 +60,16 @@ func (r *AgreementLocalizationEnableResource) Schema(ctx context.Context, req re
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment configured with an agreement localization to enable/disable."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment configured with an agreement localization to enable/disable."),
 			),
 
-			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the agreement configured with an agreement localization to enable/disable."},
+			"agreement_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the agreement configured with an agreement localization to enable/disable."),
 			),
 
-			"agreement_localization_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the agreement localization to enable/disable."},
+			"agreement_localization_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the agreement localization to enable/disable."),
 			),
 
 			"enabled": schema.BoolAttribute{

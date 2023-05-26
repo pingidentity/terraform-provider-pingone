@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -46,11 +45,9 @@ func (r *EnvironmentsDataSource) Metadata(ctx context.Context, req datasource.Me
 // Schema
 func (r *EnvironmentsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
-	scimFilterDescriptionFmt := "A SCIM filter to apply to the environment selection.  A SCIM filter offers the greatest flexibility in filtering environments.  SCIM operators can be used in the following ways: `sw` (starts with) supports the `name` attribute; `eq` (equal to) supports the `id`, `organization.id`, `license.id` attributes; `and` (logical AND) can be used to aggregate conditions.  For example, `(name sw \"TEST-\") AND (license.id eq \"${var.license_id}\")`"
-	scimFilterDescription := framework.SchemaDescription{
-		MarkdownDescription: scimFilterDescriptionFmt,
-		Description:         strings.ReplaceAll(scimFilterDescriptionFmt, "`", "\""),
-	}
+	scimFilterDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A SCIM filter to apply to the environment selection.  A SCIM filter offers the greatest flexibility in filtering environments.  SCIM operators can be used in the following ways: `sw` (starts with) supports the `name` attribute; `eq` (equal to) supports the `id`, `organization.id`, `license.id` attributes; `and` (logical AND) can be used to aggregate conditions.  For example, `(name sw \"TEST-\") AND (license.id eq \"${var.license_id}\")`",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -65,7 +62,7 @@ func (r *EnvironmentsDataSource) Schema(ctx context.Context, req datasource.Sche
 				Required:            true,
 			},
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaDescription{
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
 				Description: "The list of resulting IDs of environments that have been successfully retrieved and filtered.",
 			}),
 		},

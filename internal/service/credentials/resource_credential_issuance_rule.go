@@ -110,48 +110,34 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
-	statusdDescriptionFmt := "Status of the credential issuance rule. Can be `ACTIVE` or `DISABLED`."
-	statusDescription := framework.SchemaDescription{
-		MarkdownDescription: statusdDescriptionFmt,
-		Description:         strings.ReplaceAll(statusdDescriptionFmt, "`", "\""),
-	}
+	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Status of the credential issuance rule. Can be `ACTIVE` or `DISABLED`.",
+	)
 
-	filterDescriptionFmt := "Contains one and only one filter (`group_ids`, `population_ids`, or `scim`) that selects the users to which the credential issuance rule applies. A filter must be defined if the issuance rule `status` is `ACTIVE`."
-	filterDescription := framework.SchemaDescription{
-		MarkdownDescription: filterDescriptionFmt,
-		Description:         strings.ReplaceAll(filterDescriptionFmt, "`", "\""),
-	}
+	filterDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Contains one and only one filter (`group_ids`, `population_ids`, or `scim`) that selects the users to which the credential issuance rule applies. A filter must be defined if the issuance rule `status` is `ACTIVE`.",
+	)
 
 	automationOptionPhraseFmt := "Can be `PERIODIC` or `ON_DEMAND`." // I'm following the documentation here.
-	automationIssueDescriptionFmt := fmt.Sprintf("The method the service uses to issue credentials with the credential issuance rule. %s", automationOptionPhraseFmt)
-	automationIssueDescription := framework.SchemaDescription{
-		MarkdownDescription: automationIssueDescriptionFmt,
-		Description:         strings.ReplaceAll(automationIssueDescriptionFmt, "`", "\""),
-	}
+	automationIssueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The method the service uses to issue credentials with the credential issuance rule. %s", automationOptionPhraseFmt),
+	)
 
-	automationRevokeDescriptionFmt := fmt.Sprintf("The method the service uses to revoke credentials with the credential issuance rule. %s", automationOptionPhraseFmt)
-	automationRevokeDescription := framework.SchemaDescription{
-		MarkdownDescription: automationRevokeDescriptionFmt,
-		Description:         strings.ReplaceAll(automationRevokeDescriptionFmt, "`", "\""),
-	}
+	automationRevokeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The method the service uses to revoke credentials with the credential issuance rule. %s", automationOptionPhraseFmt),
+	)
 
-	automationUpdateDescriptionFmt := fmt.Sprintf("The method the service uses to update credentials with the credential issuance rule. %s", automationOptionPhraseFmt)
-	automationUpdateDescription := framework.SchemaDescription{
-		MarkdownDescription: automationUpdateDescriptionFmt,
-		Description:         strings.ReplaceAll(automationUpdateDescriptionFmt, "`", "\""),
-	}
+	automationUpdateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The method the service uses to update credentials with the credential issuance rule. %s", automationOptionPhraseFmt),
+	)
 
-	notificationMethodsDescriptionFmt := "Array of methods for notifying the user; can be `EMAIL`, `SMS`, or both."
-	notificationMethodsDescription := framework.SchemaDescription{
-		MarkdownDescription: notificationMethodsDescriptionFmt,
-		Description:         strings.ReplaceAll(notificationMethodsDescriptionFmt, "`", "\""),
-	}
+	notificationMethodsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Array of methods for notifying the user; can be `EMAIL`, `SMS`, or both.",
+	)
 
-	notificationTemplateLocaleDescriptionFmt := "The ISO 2-character language code used for the notification; for example, `en`."
-	notificationTemplateLocaleDescription := framework.SchemaDescription{
-		MarkdownDescription: notificationTemplateLocaleDescriptionFmt,
-		Description:         strings.ReplaceAll(notificationTemplateLocaleDescriptionFmt, "`", "\""),
-	}
+	notificationTemplateLocaleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ISO 2-character language code used for the notification; for example, `en`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -161,16 +147,16 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "PingOne environment identifier (UUID) in which the credential issuance rule exists."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential issuance rule exists."),
 			),
 
-			"credential_type_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "Identifier (UUID) of the credential type with which this credential issuance rule is associated."},
+			"credential_type_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("Identifier (UUID) of the credential type with which this credential issuance rule is associated."),
 			),
 
-			"digital_wallet_application_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet."},
+			"digital_wallet_application_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet."),
 			),
 
 			"status": schema.StringAttribute{

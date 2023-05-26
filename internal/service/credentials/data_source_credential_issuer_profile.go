@@ -56,8 +56,8 @@ func (r *CredentialIssuerProfileDataSource) Schema(ctx context.Context, req data
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "TThe ID of the environment that contains the credential issuer."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("TThe ID of the environment that contains the credential issuer."),
 			),
 
 			"application_instance_id": schema.StringAttribute{

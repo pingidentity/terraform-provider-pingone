@@ -67,12 +67,12 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment that is configured with the agreement localization."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that is configured with the agreement localization."),
 			),
 
-			"agreement_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The UUID that identifies the agreement ID that the localization is applied to."},
+			"agreement_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The UUID that identifies the agreement ID that the localization is applied to."),
 			),
 
 			"agreement_localization_id": schema.StringAttribute{

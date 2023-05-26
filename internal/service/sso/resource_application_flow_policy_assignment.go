@@ -60,15 +60,15 @@ func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, re
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the application flow policy assignment in."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the application flow policy assignment in."),
 			),
 
-			"application_id": framework.Attr_LinkID(framework.SchemaDescription{
+			"application_id": framework.Attr_LinkID(framework.SchemaAttributeDescription{
 				Description: "The ID of the application to create the flow policy assignment for.",
 			}),
 
-			"flow_policy_id": framework.Attr_LinkIDWithValidators(framework.SchemaDescription{
+			"flow_policy_id": framework.Attr_LinkIDWithValidators(framework.SchemaAttributeDescription{
 				Description: "The ID of the DaVinci flow policy to associate.",
 			},
 				[]validator.String{

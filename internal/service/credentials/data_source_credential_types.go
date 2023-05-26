@@ -51,11 +51,11 @@ func (r *CredentialTypesDataSource) Schema(ctx context.Context, req datasource.S
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaDescription{
-				Description: "The ID of the environment to create the credential type in."},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the credential type in."),
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaDescription{
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
 				Description: "The list of resulting IDs of credential types that have been successfully retrieved.",
 			}),
 		},
