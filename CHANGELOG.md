@@ -5,11 +5,16 @@ NOTES:
 * `resource/pingone_branding_settings`: Migrated to plugin framework. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
 * `resource/pingone_branding_theme`: Corrected documentation example syntax. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
 * `resource/pingone_branding_theme`: Migrated to plugin framework. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
+* `resource/pingone_credential_type`: Improved the documentation for the `title` and `description` attributes and explained their correlation to fields in the `card_design_template`. ([#377](https://github.com/pingidentity/terraform-provider-pingone/issues/377))
 * `resource/pingone_risk_predictor`: Corrected custom map type documentation example. ([#378](https://github.com/pingidentity/terraform-provider-pingone/issues/378))
 
 FEATURES:
 
 * **New Resource:** `pingone_branding_theme_default` ([#375](https://github.com/pingidentity/terraform-provider-pingone/issues/375))
+
+BUG FIXES:
+
+* `resource/pingone_credential_type`: Fix the validation rules for `title` and `description`. The rules incorrectly compared the `metadata.name` and `metadata.description` attributes to the ${cardTitle} and ${cardSubTitle} fields in the `card_design_template`. The rules are now correctly applied to `title` and `description`. ([#377](https://github.com/pingidentity/terraform-provider-pingone/issues/377))
 
 ## 0.14.0 (23 May 2023)
 
