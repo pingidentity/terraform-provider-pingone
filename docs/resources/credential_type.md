@@ -93,7 +93,7 @@ resource "pingone_credential_type" "verifiedemployee" {
 - `card_design_template` (String) An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.
 - `environment_id` (String) PingOne environment identifier (UUID) in which the credential type exists.
 - `metadata` (Attributes) Contains the names, data types, and other metadata related to the credential. (see [below for nested schema](#nestedatt--metadata))
-- `title` (String) Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTItle}` in the `card_design_template`.
+- `title` (String) Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTitle}` in the `card_design_template`.
 
 ### Optional
 
