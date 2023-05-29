@@ -20,12 +20,12 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.1.4
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.1.7
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.1.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.20.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.21.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.10.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.6.0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.46.1
-	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc
+	golang.org/x/exp v0.0.0-20230519143937-03e91628a987
 )
 
 require github.com/rivo/uniseg v0.2.0 // indirect
