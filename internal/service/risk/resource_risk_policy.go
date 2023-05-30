@@ -983,9 +983,139 @@ func (p *riskPolicyResourceModel) toState(ctx context.Context, apiObject *risk.R
 		diags.Append(d...)
 	}
 
-	p.PolicyWeights = types.ObjectNull(policyWeightsTFObjectTypes)
+	var d diag.Diagnostics
 
-	p.PolicyScores = types.ObjectNull(policyScoresTFObjectTypes)
+	p.PolicyWeights, p.PolicyScores, d = p.toStatePolicy(apiObject.GetRiskPoliciesOk())
+	diags.Append(d...)
 
 	return diags
+}
+
+func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	objPolicyWeightsValue := types.ObjectNull(policyWeightsTFObjectTypes)
+	objPolicyScoresValue := types.ObjectNull(policyScoresTFObjectTypes)
+
+	if !ok || riskPolicies == nil || len(riskPolicies) < 1 {
+		return objPolicyWeightsValue, objPolicyScoresValue, diags
+	}
+
+	o := map[string]attr.Value{}
+
+	for _, policy := range riskPolicies {
+		// First build the high and medium outcome policies
+
+		if condition, ok := policy.GetConditionOk(); ok {
+
+			if v, ok := condition.GetTypeOk(); ok && (v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES.Ptr() || v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS.Ptr()) {
+
+				// Policy thresholds medium and high
+				if between, ok := condition.GetBetweenOk(); ok {
+					betweenObj := map[string]attr.Value{
+						"min_score": framework.Int32OkToTF(between.GetMinScoreOk()),
+						"max_score": framework.Int32OkToTF(between.GetMaxScoreOk()),
+					}
+
+					thresholdObj, d := types.ObjectValue(policyThresholdsTFObjectTypes, betweenObj)
+					diags.Append(d...)
+
+					if policy.Result.GetLevel() == risk.ENUMRISKLEVEL_MEDIUM {
+						o["policy_threshold_medium"] = thresholdObj
+					}
+
+					if policy.Result.GetLevel() == risk.ENUMRISKLEVEL_HIGH {
+						o["policy_threshold_high"] = thresholdObj
+					}
+
+				}
+
+				var d diag.Diagnostics
+				// Predictors
+				if scores, ok := condition.GetAggregatedScoresOk(); ok && v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES.Ptr() {
+
+					tfObjType := types.ObjectType{AttrTypes: policyScoresPredictorTFObjectTypes}
+
+					if len(scores) == 0 {
+						o["predictors"] = types.SetValueMust(tfObjType, []attr.Value{})
+					}
+
+					flattenedList := []attr.Value{}
+					for _, score := range scores {
+
+						predictor := map[string]attr.Value{
+							"predictor_reference_value": framework.StringOkToTF(score.GetValueOk()),
+							"compact_name":              riskPolicyScoresCompactNameFromReferenceOk(score.GetValueOk()),
+							"score":                     framework.Int32OkToTF(score.GetScoreOk()),
+						}
+
+						flattenedObj, d := types.ObjectValue(policyScoresPredictorTFObjectTypes, predictor)
+						diags.Append(d...)
+
+						flattenedList = append(flattenedList, flattenedObj)
+					}
+
+					o["predictors"], d = types.SetValue(tfObjType, flattenedList)
+					diags.Append(d...)
+
+					objPolicyScoresValue, d = types.ObjectValue(policyScoresTFObjectTypes, o)
+					diags.Append(d...)
+				}
+
+				if weights, ok := condition.GetAggregatedWeightsOk(); ok && v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS.Ptr() {
+
+					tfObjType := types.ObjectType{AttrTypes: policyWeightsPredictorTFObjectTypes}
+
+					if len(weights) == 0 {
+						o["predictors"] = types.SetValueMust(tfObjType, []attr.Value{})
+					}
+
+					flattenedList := []attr.Value{}
+					for _, weight := range weights {
+
+						predictor := map[string]attr.Value{
+							"predictor_reference_value": framework.StringOkToTF(weight.GetValueOk()),
+							"compact_name":              riskPolicyWeightsCompactNameFromReferenceOk(weight.GetValueOk()),
+							"weight":                    framework.Int32OkToTF(weight.GetWeightOk()),
+						}
+
+						flattenedObj, d := types.ObjectValue(policyWeightsPredictorTFObjectTypes, predictor)
+						diags.Append(d...)
+
+						flattenedList = append(flattenedList, flattenedObj)
+					}
+
+					o["predictors"], d = types.SetValue(tfObjType, flattenedList)
+					diags.Append(d...)
+
+					objPolicyWeightsValue, d = types.ObjectValue(policyWeightsTFObjectTypes, o)
+					diags.Append(d...)
+				}
+
+			}
+
+		}
+	}
+
+	return objPolicyWeightsValue, objPolicyScoresValue, diags
+}
+
+func riskPolicyScoresCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
+	return riskPolicyCompactNameFromReferenceOk(v, ok, true)
+}
+
+func riskPolicyWeightsCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
+	return riskPolicyCompactNameFromReferenceOk(v, ok, false)
+}
+
+func riskPolicyCompactNameFromReferenceOk(v *string, ok, useScores bool) basetypes.StringValue {
+	if !ok || v == nil {
+		return types.StringNull()
+	}
+
+	if useScores {
+		return types.StringValue(strings.Replace(strings.Replace(*v, "${details.", "", -1), ".level}", "", -1))
+	} else {
+		return types.StringValue(strings.Replace(strings.Replace(*v, "${details.aggregatedWeights.", "", -1), "}", "", -1))
+	}
 }
