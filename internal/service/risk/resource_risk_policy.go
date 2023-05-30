@@ -178,7 +178,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	// Weighted Average Policy
 	policyWeightedAverageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes settings for a risk policy using a weighted average calculation, with a final result being a risk score between `0` and `10`.",
-	)
+	).ExactlyOneOf([]string{"policy_weights", "policy_scores"})
 
 	policyWeightedAveragePredictor := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes a predictor to apply to the risk policy and its associated weight value for the overall weighted average risk calculation.",
@@ -187,7 +187,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	// Scores policy
 	policyScoresDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors.",
-	)
+	).ExactlyOneOf([]string{"policy_weights", "policy_scores"})
 
 	policyScoresPredictor := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes a predictor to apply to the risk policy and its associated high risk / true outcome score to apply to the risk calculation.",

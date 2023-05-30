@@ -98,8 +98,8 @@ resource "pingone_risk_policy" "my_awesome_weights_risk_policy" {
 ### Optional
 
 - `default_result` (Attributes) A single nested object that specifies the default result value for the risk policy. (see [below for nested schema](#nestedatt--default_result))
-- `policy_scores` (Attributes) An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors. (see [below for nested schema](#nestedatt--policy_scores))
-- `policy_weights` (Attributes) An object that describes settings for a risk policy using a weighted average calculation, with a final result being a risk score between `0` and `10`. (see [below for nested schema](#nestedatt--policy_weights))
+- `policy_scores` (Attributes) An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors.  At least one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_scores))
+- `policy_weights` (Attributes) An object that describes settings for a risk policy using a weighted average calculation, with a final result being a risk score between `0` and `10`.  At least one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_weights))
 
 ### Read-Only
 
