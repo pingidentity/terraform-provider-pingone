@@ -17,14 +17,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -220,6 +219,18 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Optional:    true,
 				Computed:    true,
 
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"level": framework.StringToTF(string(risk.ENUMRISKLEVEL_LOW)),
+						"type":  types.StringUnknown(),
+					}
+
+					objValue, d := types.ObjectValue(defaultResultTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
+
 				Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
 						Description:         defaultResultTypeDescription.Description,
@@ -234,10 +245,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 					"level": schema.StringAttribute{
 						Description:         defaultResultLevelDescription.Description,
 						MarkdownDescription: defaultResultLevelDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: stringdefault.StaticString(string(risk.ENUMRISKLEVEL_LOW)),
+						Required:            true,
 
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskLevelEnumValues)...),
@@ -258,9 +266,14 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 			"evaluated_predictors": schema.SetAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of IDs for the predictors to evaluate in this policy set.  If omitted, if this property is null, all of the licensed predictors are used.").Description,
+				Optional:    true,
 				Computed:    true,
 
 				ElementType: types.StringType,
+
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"policy_weights": schema.SingleNestedAttribute{
@@ -420,17 +433,15 @@ func riskPolicyThresholdSchema(useScores bool, defaultPolicyThresholdMinScore in
 	return schema.SingleNestedAttribute{
 		Description:         policyThresholdsDescription.Description,
 		MarkdownDescription: policyThresholdsDescription.MarkdownDescription,
-		Optional:            true,
-		Computed:            true,
+		Required:            true,
 
 		Attributes: map[string]schema.Attribute{
 			"min_score": schema.Int64Attribute{
 				Description:         policyThresholdScoresMediumScoreDescription.Description,
 				MarkdownDescription: policyThresholdScoresMediumScoreDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 
-				Default: int64default.StaticInt64(defaultPolicyThresholdMinScore),
+				//Default: int64default.StaticInt64(defaultPolicyThresholdMinScore),
 
 				Validators: validators,
 			},
@@ -460,11 +471,14 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 	// Set the max threshold score
 	var rootPath, referenceValueFmt string
 	var maxScore int
+	flattenedList := []attr.Value{}
+	var predictorAttrType map[string]attr.Type
 
 	if !plan.PolicyWeights.IsNull() && !plan.PolicyWeights.IsUnknown() {
 		rootPath = "policy_weights"
 		maxScore = 10
 		referenceValueFmt = "${details.aggregatedWeights.%s}"
+		predictorAttrType = policyWeightsPredictorTFObjectTypes
 
 		var predictorsPlan []riskPolicyResourcePolicyWeightsPredictorModel
 		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("predictors"), &predictorsPlan)...)
@@ -473,9 +487,16 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		}
 
 		for _, predictor := range predictorsPlan {
-			tflog.Debug(ctx, "HERE!!!", map[string]interface{}{
-				"predictor": fmt.Sprintf(referenceValueFmt, predictor.CompactName.ValueString()),
-			})
+			predictorObj := map[string]attr.Value{
+				"predictor_reference_value": framework.StringToTF(fmt.Sprintf(referenceValueFmt, predictor.CompactName.ValueString())),
+				"compact_name":              predictor.CompactName,
+				"weight":                    predictor.Weight,
+			}
+
+			flattenedObj, d := types.ObjectValue(policyWeightsPredictorTFObjectTypes, predictorObj)
+			resp.Diagnostics.Append(d...)
+
+			flattenedList = append(flattenedList, flattenedObj)
 		}
 	}
 
@@ -483,6 +504,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		rootPath = "policy_scores"
 		maxScore = 1000
 		referenceValueFmt = "${details.%s.level}"
+		predictorAttrType = policyScoresPredictorTFObjectTypes
 
 		var predictorsPlan []riskPolicyResourcePolicyScoresPredictorModel
 		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("predictors"), &predictorsPlan)...)
@@ -491,12 +513,20 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		}
 
 		for _, predictor := range predictorsPlan {
-			tflog.Debug(ctx, "HERE!!!", map[string]interface{}{
-				"predictor": fmt.Sprintf(referenceValueFmt, predictor.CompactName.ValueString()),
-			})
+			predictorObj := map[string]attr.Value{
+				"predictor_reference_value": framework.StringToTF(fmt.Sprintf(referenceValueFmt, predictor.CompactName.ValueString())),
+				"compact_name":              predictor.CompactName,
+				"score":                     predictor.Score,
+			}
+
+			flattenedObj, d := types.ObjectValue(policyScoresPredictorTFObjectTypes, predictorObj)
+			resp.Diagnostics.Append(d...)
+
+			flattenedList = append(flattenedList, flattenedObj)
 		}
 	}
 
+	// Set the min-max threshold scores/weights
 	var policyThresholdHighMinValue *int64
 	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("min_score"), &policyThresholdHighMinValue)...)
 	if resp.Diagnostics.HasError() {
@@ -504,7 +534,12 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 	}
 
 	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_medium").AtName("max_score"), types.Int64Value(*policyThresholdHighMinValue))
-	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("max_score"), int64(maxScore))
+	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("max_score"), types.Int64Value(int64(maxScore)))
+
+	// Set the predictors
+	plannedPredictors, d := types.SetValue(types.ObjectType{AttrTypes: predictorAttrType}, flattenedList)
+	resp.Diagnostics.Append(d...)
+	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("predictors"), plannedPredictors)
 }
 
 func (r *RiskPolicyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -558,7 +593,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Build the model for the API
-	riskPolicy, d := plan.expand(ctx)
+	riskPolicy, d := plan.expand(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -656,7 +691,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Build the model for the API
-	riskPolicy, d := plan.expand(ctx)
+	riskPolicy, d := plan.expand(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -758,7 +793,7 @@ func riskPolicyCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnost
 	return nil
 }
 
-func (p *riskPolicyResourceModel) expand(ctx context.Context) (*risk.RiskPolicySet, diag.Diagnostics) {
+func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.APIClient) (*risk.RiskPolicySet, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := risk.NewRiskPolicySet(p.Name.ValueString())
@@ -776,51 +811,52 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context) (*risk.RiskPolicyS
 		}
 
 		if !plan.Level.IsNull() && !plan.Level.IsUnknown() {
-			data.SetDefaultResult(*risk.NewRiskPolicyResult(risk.EnumRiskLevel(plan.Level.ValueString())))
+			data.SetDefaultResult(*risk.NewRiskPolicySetDefaultResult(risk.EnumRiskPolicyResultLevel(plan.Level.ValueString())))
 		}
 	}
 
 	highPolicyCondition := risk.NewRiskPolicyCondition()
 	mediumPolicyCondition := risk.NewRiskPolicyCondition()
 
+	var plan riskPolicyResourcePolicyModel
+	var d diag.Diagnostics
+
+	var useScores bool
+
 	if !p.PolicyWeights.IsNull() && !p.PolicyWeights.IsUnknown() {
 		highPolicyCondition.SetType(risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS)
+		mediumPolicyCondition.SetType(risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS)
+		useScores = false
 
 		var plan riskPolicyResourcePolicyModel
-		d := p.PolicyWeights.As(ctx, &plan, basetypes.ObjectAsOptions{
+		d = p.PolicyWeights.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
 		})
 		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		highPolicyCondition, mediumPolicyCondition, d = plan.expand(ctx, false, highPolicyCondition, mediumPolicyCondition)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
 	}
 
 	if !p.PolicyScores.IsNull() && !p.PolicyScores.IsUnknown() {
 		highPolicyCondition.SetType(risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES)
+		mediumPolicyCondition.SetType(risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES)
+		useScores = true
 
-		var plan riskPolicyResourcePolicyModel
-		d := p.PolicyScores.As(ctx, &plan, basetypes.ObjectAsOptions{
+		d = p.PolicyScores.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
 		})
 		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
+	}
 
-		highPolicyCondition, mediumPolicyCondition, d = plan.expand(ctx, true, highPolicyCondition, mediumPolicyCondition)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	var predictorCompactNames []string
+	highPolicyCondition, mediumPolicyCondition, predictorCompactNames, d = plan.expand(ctx, useScores, highPolicyCondition, mediumPolicyCondition)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
 	}
 
 	riskPolicies := make([]risk.RiskPolicy, 0)
@@ -839,6 +875,19 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context) (*risk.RiskPolicyS
 		*risk.NewRiskPolicyResult(risk.ENUMRISKLEVEL_MEDIUM),
 	))
 
+	foundPredictors, d := riskPredictorFetchIDsFromCompactNames(ctx, apiClient, p.EnvironmentId.ValueString(), predictorCompactNames)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	evaluatedPredictors := make([]risk.RiskPolicySetEvaluatedPredictorsInner, 0)
+	for _, predictor := range foundPredictors {
+		evaluatedPredictors = append(evaluatedPredictors, *risk.NewRiskPolicySetEvaluatedPredictorsInner(predictor))
+	}
+
+	data.SetEvaluatedPredictors(evaluatedPredictors)
+
 	// TODO: Overrides
 
 	data.SetRiskPolicies(riskPolicies)
@@ -846,7 +895,7 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context) (*risk.RiskPolicyS
 	return data, diags
 }
 
-func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bool, highPolicyCondition, mediumPolicyCondition *risk.RiskPolicyCondition) (*risk.RiskPolicyCondition, *risk.RiskPolicyCondition, diag.Diagnostics) {
+func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bool, highPolicyCondition, mediumPolicyCondition *risk.RiskPolicyCondition) (*risk.RiskPolicyCondition, *risk.RiskPolicyCondition, []string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !p.PolicyThresholdMedium.IsNull() && !p.PolicyThresholdMedium.IsUnknown() {
@@ -857,7 +906,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 		})
 		diags.Append(d...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, nil, nil, diags
 		}
 
 		mediumPolicyCondition.SetBetween(
@@ -868,6 +917,8 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 		)
 	}
 
+	predictorCompactNames := make([]string, 0)
+
 	if !p.PolicyThresholdHigh.IsNull() && !p.PolicyThresholdHigh.IsUnknown() {
 		var plan riskPolicyResourcePolicyThresholdScoreBetweenModel
 		d := p.PolicyThresholdHigh.As(ctx, &plan, basetypes.ObjectAsOptions{
@@ -876,7 +927,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 		})
 		diags.Append(d...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, nil, nil, diags
 		}
 
 		highPolicyCondition.SetBetween(
@@ -895,7 +946,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 			d := p.Predictors.ElementsAs(ctx, &predictorsPlan, false)
 			diags.Append(d...)
 			if diags.HasError() {
-				return nil, nil, diags
+				return nil, nil, nil, diags
 			}
 
 			for _, predictor := range predictorsPlan {
@@ -906,6 +957,8 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 						int32(predictor.Score.ValueInt64()),
 					),
 				)
+
+				predictorCompactNames = append(predictorCompactNames, predictor.CompactName.ValueString())
 			}
 
 			mediumPolicyCondition.SetAggregatedScores(aggregatedScores)
@@ -918,7 +971,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 			d := p.Predictors.ElementsAs(ctx, &predictorsPlan, false)
 			diags.Append(d...)
 			if diags.HasError() {
-				return nil, nil, diags
+				return nil, nil, nil, diags
 			}
 
 			for _, predictor := range predictorsPlan {
@@ -929,6 +982,8 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 						int32(predictor.Weight.ValueInt64()),
 					),
 				)
+
+				predictorCompactNames = append(predictorCompactNames, predictor.CompactName.ValueString())
 			}
 
 			mediumPolicyCondition.SetAggregatedWeights(aggregatedWeights)
@@ -936,7 +991,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 		}
 	}
 
-	return highPolicyCondition, mediumPolicyCondition, diags
+	return highPolicyCondition, mediumPolicyCondition, predictorCompactNames, diags
 }
 
 func (p *riskPolicyResourceModel) toState(ctx context.Context, apiObject *risk.RiskPolicySet) diag.Diagnostics {
@@ -985,17 +1040,22 @@ func (p *riskPolicyResourceModel) toState(ctx context.Context, apiObject *risk.R
 
 	var d diag.Diagnostics
 
-	p.PolicyWeights, p.PolicyScores, d = p.toStatePolicy(apiObject.GetRiskPoliciesOk())
+	r, ok := apiObject.GetRiskPoliciesOk()
+
+	p.PolicyWeights, p.PolicyScores, d = p.toStatePolicy(ctx, r, ok)
 	diags.Append(d...)
 
 	return diags
 }
 
-func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, diag.Diagnostics) {
+func (p *riskPolicyResourceModel) toStatePolicy(ctx context.Context, riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	objPolicyWeightsValue := types.ObjectNull(policyWeightsTFObjectTypes)
 	objPolicyScoresValue := types.ObjectNull(policyScoresTFObjectTypes)
+
+	useScores := false
+	useWeights := false
 
 	if !ok || riskPolicies == nil || len(riskPolicies) < 1 {
 		return objPolicyWeightsValue, objPolicyScoresValue, diags
@@ -1007,8 +1067,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 		// First build the high and medium outcome policies
 
 		if condition, ok := policy.GetConditionOk(); ok {
-
-			if v, ok := condition.GetTypeOk(); ok && (v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES.Ptr() || v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS.Ptr()) {
+			if v, ok := condition.GetTypeOk(); ok && (*v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES || *v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS) {
 
 				// Policy thresholds medium and high
 				if between, ok := condition.GetBetweenOk(); ok {
@@ -1032,7 +1091,8 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 
 				var d diag.Diagnostics
 				// Predictors
-				if scores, ok := condition.GetAggregatedScoresOk(); ok && v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES.Ptr() {
+				if scores, ok := condition.GetAggregatedScoresOk(); ok && *v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES {
+					useScores = true
 
 					tfObjType := types.ObjectType{AttrTypes: policyScoresPredictorTFObjectTypes}
 
@@ -1057,12 +1117,10 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 
 					o["predictors"], d = types.SetValue(tfObjType, flattenedList)
 					diags.Append(d...)
-
-					objPolicyScoresValue, d = types.ObjectValue(policyScoresTFObjectTypes, o)
-					diags.Append(d...)
 				}
 
-				if weights, ok := condition.GetAggregatedWeightsOk(); ok && v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS.Ptr() {
+				if weights, ok := condition.GetAggregatedWeightsOk(); ok && *v == risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS {
+					useWeights = true
 
 					tfObjType := types.ObjectType{AttrTypes: policyWeightsPredictorTFObjectTypes}
 
@@ -1087,14 +1145,20 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 
 					o["predictors"], d = types.SetValue(tfObjType, flattenedList)
 					diags.Append(d...)
-
-					objPolicyWeightsValue, d = types.ObjectValue(policyWeightsTFObjectTypes, o)
-					diags.Append(d...)
 				}
-
 			}
-
 		}
+	}
+
+	var d diag.Diagnostics
+	if useScores {
+		objPolicyScoresValue, d = types.ObjectValue(policyScoresTFObjectTypes, o)
+		diags.Append(d...)
+	}
+
+	if useWeights {
+		objPolicyWeightsValue, d = types.ObjectValue(policyWeightsTFObjectTypes, o)
+		diags.Append(d...)
 	}
 
 	return objPolicyWeightsValue, objPolicyScoresValue, diags

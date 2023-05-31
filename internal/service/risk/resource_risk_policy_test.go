@@ -325,6 +325,14 @@ resource "pingone_risk_policy" "%[3]s" {
   name         = "%[4]s"
 
   policy_scores = {
+	policy_threshold_medium = {
+		min_score = 40
+	  }
+  
+	  policy_threshold_high = {
+		min_score = 75
+	  }
+	  
     predictors = [
       {
         compact_name = "ipRisk"
