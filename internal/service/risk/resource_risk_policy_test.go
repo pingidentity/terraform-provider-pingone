@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -116,24 +117,23 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "compact_name", fmt.Sprintf("%s1", name)),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."),
-		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
-		resource.TestCheckResourceAttr(resourceFullName, "licensed", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_result.type", "VALUE"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_result.level", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "evaluated_predictors.#", "3"),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.1", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.2", verify.P1ResourceIDRegexp),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "compact_name", fmt.Sprintf("%s1", name)),
-		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-		resource.TestCheckResourceAttr(resourceFullName, "type", "ANONYMOUS_NETWORK"),
-		resource.TestCheckResourceAttr(resourceFullName, "licensed", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_result.type", "VALUE"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_result.level", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.#", regexp.MustCompile(`^(?:[2-9]|[12]\d)\d*$`)),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -186,19 +186,34 @@ func TestAccRiskPolicy_Scores(t *testing.T) {
 	name := resourceName
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
-		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.policyLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.policyLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.level", "HIGH"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_medium.min_score", "45"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_medium.max_score", "80"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_high.min_score", "80"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_high.max_score", "1000"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.predictors.#", "2"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_scores.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s1", name),
+			"predictor_reference_value": fmt.Sprintf("${details.%s1.level}", name),
+			"score":                     "55",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_scores.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s3", name),
+			"predictor_reference_value": fmt.Sprintf("${details.%s3.level}", name),
+			"score":                     "45",
+		}),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
-		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.policyLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.policyLevels.medium}\"},{\"equals\":\"Low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.level", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_medium.min_score", "35"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_medium.max_score", "70"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_high.min_score", "70"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_high.max_score", "1000"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.predictors.#", "1"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_scores.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s2", name),
+			"predictor_reference_value": fmt.Sprintf("${details.%s2.level}", name),
+			"score":                     "45",
+		}),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -242,6 +257,15 @@ func TestAccRiskPolicy_Scores(t *testing.T) {
 				Config:  testAccRiskPolicyConfig_Scores_Full(resourceName, name),
 				Destroy: true,
 			},
+			// Errors
+			{
+				Config:      testAccRiskPolicyConfig_Scores_MediumScoreAboveMaxScore(resourceName, name),
+				ExpectError: regexp.MustCompile(`Provided value is not valid`),
+			},
+			{
+				Config:      testAccRiskPolicyConfig_Scores_DefinedPolicyPredictorNotInEvaluated(resourceName, name),
+				ExpectError: regexp.MustCompile(`A predictor in the policy set is not listed in "evaluated_predictors".`),
+			},
 		},
 	})
 }
@@ -255,19 +279,34 @@ func TestAccRiskPolicy_Weights(t *testing.T) {
 	name := resourceName
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
-		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.policyLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.policyLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.level", "HIGH"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.min_score", "30"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.max_score", "80"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_high.min_score", "80"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_high.max_score", "100"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.predictors.#", "2"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_weights.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s1", name),
+			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s1}", name),
+			"weight":                    "4",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_weights.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s3", name),
+			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s3}", name),
+			"weight":                    "6",
+		}),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
-		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.policyLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.policyLevels.medium}\"},{\"equals\":\"Low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_composite.composition.level", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.min_score", "40"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.max_score", "70"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_high.min_score", "70"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_high.max_score", "100"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.predictors.#", "1"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_weights.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s2", name),
+			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s2}", name),
+			"weight":                    "3",
+		}),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -311,9 +350,86 @@ func TestAccRiskPolicy_Weights(t *testing.T) {
 				Config:  testAccRiskPolicyConfig_Weights_Full(resourceName, name),
 				Destroy: true,
 			},
+			// Errors
+			{
+				Config:      testAccRiskPolicyConfig_Weights_MediumScoreAboveMaxScore(resourceName, name),
+				ExpectError: regexp.MustCompile(`Provided value is not valid`),
+			},
+			{
+				Config:      testAccRiskPolicyConfig_Weights_DefinedPolicyPredictorNotInEvaluated(resourceName, name),
+				ExpectError: regexp.MustCompile(`A predictor in the policy set is not listed in "evaluated_predictors".`),
+			},
 		},
 	})
 }
+
+func TestAccRiskPolicy_ChangeType(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_policy.%s", resourceName)
+
+	name := resourceName
+
+	scoresCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_medium.min_score", "45"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_medium.max_score", "80"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_high.min_score", "80"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.policy_threshold_high.max_score", "1000"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_scores.predictors.#", "2"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_scores.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s1", name),
+			"predictor_reference_value": fmt.Sprintf("${details.%s1.level}", name),
+			"score":                     "55",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_scores.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s3", name),
+			"predictor_reference_value": fmt.Sprintf("${details.%s3.level}", name),
+			"score":                     "45",
+		}),
+	)
+
+	weightsCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.min_score", "30"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.max_score", "80"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_high.min_score", "80"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_high.max_score", "100"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.predictors.#", "2"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_weights.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s1", name),
+			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s1}", name),
+			"weight":                    "4",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_weights.predictors.*", map[string]string{
+			"compact_name":              fmt.Sprintf("%s3", name),
+			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s3}", name),
+			"weight":                    "6",
+		}),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRiskPolicyConfig_Scores_Full(resourceName, name),
+				Check:  scoresCheck,
+			},
+			{
+				Config: testAccRiskPolicyConfig_Weights_Full(resourceName, name),
+				Check:  weightsCheck,
+			},
+			{
+				Config: testAccRiskPolicyConfig_Scores_Full(resourceName, name),
+				Check:  scoresCheck,
+			},
+		},
+	})
+}
+
+// TODO: test policy_threshold_medium min value above policy_threshold_high min value
 
 func testAccRiskPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
@@ -322,17 +438,17 @@ func testAccRiskPolicyConfig_NewEnv(environmentName, licenseID, resourceName, na
 resource "pingone_risk_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  name         = "%[4]s"
+  name = "%[4]s"
 
   policy_scores = {
-	policy_threshold_medium = {
-		min_score = 40
-	  }
-  
-	  policy_threshold_high = {
-		min_score = 75
-	  }
-	  
+    policy_threshold_medium = {
+      min_score = 40
+    }
+
+    policy_threshold_high = {
+      min_score = 75
+    }
+
     predictors = [
       {
         compact_name = "ipRisk"
@@ -344,7 +460,6 @@ resource "pingone_risk_policy" "%[3]s" {
       }
     ]
   }
-
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -360,27 +475,68 @@ func testAccRiskPolicyConfig_Scores_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_risk_predictor" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-1"
+  compact_name = "%[3]s1"
+
+  predictor_geovelocity = {}
+}
+
+resource "pingone_risk_predictor" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-2"
+  compact_name = "%[3]s2"
+
+  predictor_ip_reputation = {}
+}
+
+resource "pingone_risk_predictor" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-3"
+  compact_name = "%[3]s3"
+
+  predictor_device = {}
+}
+
 resource "pingone_risk_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name         = "%[3]s"
-  compact_name = "%[3]s1"
-  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
+  name = "%[3]s"
 
-  default = {
-    result = {
-      level = "MEDIUM"
-    }
+  default_result = {
+    level = "LOW"
   }
 
-  policy_anonymous_network = {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
+  evaluated_predictors = [
+    pingone_risk_predictor.%[2]s-1.id,
+    pingone_risk_predictor.%[2]s-2.id,
+    pingone_risk_predictor.%[2]s-3.id,
+  ]
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 45
+    }
+
+    policy_threshold_high = {
+      min_score = 80
+    }
+
+    predictors = [
+      {
+        compact_name = pingone_risk_predictor.%[2]s-1.compact_name
+        score        = 55
+      },
+      {
+        compact_name = pingone_risk_predictor.%[2]s-3.compact_name
+        score        = 45
+      }
     ]
   }
-
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -388,13 +544,132 @@ func testAccRiskPolicyConfig_Scores_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_risk_predictor" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-1"
+  compact_name = "%[3]s1"
+
+  predictor_geovelocity = {}
+}
+
+resource "pingone_risk_predictor" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-2"
+  compact_name = "%[3]s2"
+
+  predictor_ip_reputation = {}
+}
+
+resource "pingone_risk_predictor" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-3"
+  compact_name = "%[3]s3"
+
+  predictor_device = {}
+}
+
 resource "pingone_risk_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name         = "%[3]s"
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = pingone_risk_predictor.%[2]s-2.compact_name
+        score        = 45
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Scores_DefinedPolicyPredictorNotInEvaluated(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-1"
   compact_name = "%[3]s1"
 
-  policy_anonymous_network = {}
+  predictor_geovelocity = {}
+}
+
+resource "pingone_risk_predictor" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-2"
+  compact_name = "%[3]s2"
+
+  predictor_ip_reputation = {}
+}
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  evaluated_predictors = [
+    pingone_risk_predictor.%[2]s-1.id,
+  ]
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = pingone_risk_predictor.%[2]s-2.compact_name
+        score        = 45
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Scores_MediumScoreAboveMaxScore(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 80
+    }
+
+    policy_threshold_high = {
+      min_score = 50
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      }
+    ]
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -402,27 +677,70 @@ func testAccRiskPolicyConfig_Weights_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_risk_predictor" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-1"
+  compact_name = "%[3]s1"
+
+  predictor_geovelocity = {}
+
+}
+
+resource "pingone_risk_predictor" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-2"
+  compact_name = "%[3]s2"
+
+  predictor_ip_reputation = {}
+
+}
+
+resource "pingone_risk_predictor" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-3"
+  compact_name = "%[3]s3"
+
+  predictor_device = {}
+}
+
 resource "pingone_risk_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name         = "%[3]s"
-  compact_name = "%[3]s1"
-  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
+  name = "%[3]s"
 
-  default = {
-    result = {
-      level = "MEDIUM"
-    }
+  default_result = {
+    level = "LOW"
   }
 
-  policy_anonymous_network = {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
+  evaluated_predictors = [
+    pingone_risk_predictor.%[2]s-1.id,
+    pingone_risk_predictor.%[2]s-2.id,
+    pingone_risk_predictor.%[2]s-3.id,
+  ]
+
+  policy_weights = {
+    policy_threshold_medium = {
+      min_score = 30
+    }
+
+    policy_threshold_high = {
+      min_score = 80
+    }
+
+    predictors = [
+      {
+        compact_name = pingone_risk_predictor.%[2]s-1.compact_name
+        weight       = 4
+      },
+      {
+        compact_name = pingone_risk_predictor.%[2]s-3.compact_name
+        weight       = 6
+      }
     ]
   }
-
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -430,12 +748,135 @@ func testAccRiskPolicyConfig_Weights_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_risk_predictor" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-1"
+  compact_name = "%[3]s1"
+
+  predictor_geovelocity = {}
+
+}
+
+resource "pingone_risk_predictor" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-2"
+  compact_name = "%[3]s2"
+
+  predictor_ip_reputation = {}
+
+}
+
+resource "pingone_risk_predictor" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-3"
+  compact_name = "%[3]s3"
+
+  predictor_device = {}
+}
+
 resource "pingone_risk_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name         = "%[3]s"
+  name = "%[3]s"
+
+  policy_weights = {
+    policy_threshold_medium = {
+      min_score = 40
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = pingone_risk_predictor.%[2]s-2.compact_name
+        weight       = 3
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Weights_DefinedPolicyPredictorNotInEvaluated(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-1"
   compact_name = "%[3]s1"
 
-  policy_anonymous_network = {}
+  predictor_geovelocity = {}
+
+}
+
+resource "pingone_risk_predictor" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s-2"
+  compact_name = "%[3]s2"
+
+  predictor_ip_reputation = {}
+
+}
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  evaluated_predictors = [
+    pingone_risk_predictor.%[2]s-1.id,
+  ]
+
+  policy_weights = {
+    policy_threshold_medium = {
+      min_score = 40
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = pingone_risk_predictor.%[2]s-2.compact_name
+        weight       = 3
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Weights_MediumScoreAboveMaxScore(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_weights = {
+    policy_threshold_medium = {
+      min_score = 80
+    }
+
+    policy_threshold_high = {
+      min_score = 50
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        weight       = 4
+      }
+    ]
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

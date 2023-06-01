@@ -27,6 +27,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
@@ -75,19 +76,6 @@ type riskPolicyResourcePolicyScoresPredictorModel struct {
 	CompactName             types.String `tfsdk:"compact_name"`
 	PredictorReferenceValue types.String `tfsdk:"predictor_reference_value"`
 	Score                   types.Int64  `tfsdk:"score"`
-}
-
-type riskPolicyResourceThresholdScoresModel struct {
-	High   types.Int64 `tfsdk:"high"`
-	Medium types.Int64 `tfsdk:"medium"`
-}
-
-type riskPolicyResourcePredictorScoreModel struct {
-	PredictorReference types.String `tfsdk:"predictor_reference_value"`
-	Score              types.Int64  `tfsdk:"score"`
-}
-
-type riskPolicyResourceOverrideModel struct {
 }
 
 var (
@@ -162,6 +150,12 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	const attrDescriptionMaxLength = 1024
 	const defaultWeightValue = 5
 
+	const weightMinimumDefault = 1
+	const weightMaximumDefault = 10
+
+	const scoreMinimumDefault = 0
+	const scoreMaximumDefault = 100
+
 	defaultResultTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The default result type.",
 	).AllowedValuesEnum(risk.AllowedEnumResultTypeEnumValues)
@@ -232,16 +226,6 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 				}()),
 
 				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Description:         defaultResultTypeDescription.Description,
-						MarkdownDescription: defaultResultTypeDescription.MarkdownDescription,
-						Computed:            true,
-
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
-					},
-
 					"level": schema.StringAttribute{
 						Description:         defaultResultLevelDescription.Description,
 						MarkdownDescription: defaultResultLevelDescription.MarkdownDescription,
@@ -249,6 +233,16 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskLevelEnumValues)...),
+						},
+					},
+
+					"type": schema.StringAttribute{
+						Description:         defaultResultTypeDescription.Description,
+						MarkdownDescription: defaultResultTypeDescription.MarkdownDescription,
+						Computed:            true,
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
 				},
@@ -284,18 +278,26 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Attributes: map[string]schema.Attribute{
 					"policy_threshold_medium": riskPolicyThresholdSchema(
 						false,
-						1,
 						framework.SchemaAttributeDescriptionFromMarkdown(
-							"An object that specifies the lower and upper bound threshold values that define the medium risk outcome as a result of the policy evaluation.",
+							"An object that specifies the lower and upper bound threshold score values that define the medium risk outcome as a result of the policy evaluation.",
 						),
+						[]validator.Int64{
+							int64validatorinternal.IsLessThanPathValue(
+								path.MatchRoot("policy_weights").AtName("policy_threshold_high").AtName("min_score"),
+							),
+						},
 					),
 
 					"policy_threshold_high": riskPolicyThresholdSchema(
 						false,
-						2,
 						framework.SchemaAttributeDescriptionFromMarkdown(
-							"An object that specifies the lower and upper bound threshold values that define the high risk outcome as a result of the policy evaluation.",
+							"An object that specifies the lower and upper bound threshold score values that define the high risk outcome as a result of the policy evaluation.",
 						),
+						[]validator.Int64{
+							int64validatorinternal.IsGreaterThanPathValue(
+								path.MatchRoot("policy_weights").AtName("policy_threshold_medium").AtName("min_score"),
+							),
+						},
 					),
 
 					"predictors": schema.SetNestedAttribute{
@@ -321,8 +323,8 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 									Required:    true,
 
 									Validators: []validator.Int64{
-										int64validator.AtLeast(1),
-										int64validator.AtMost(10),
+										int64validator.AtLeast(weightMinimumDefault),
+										int64validator.AtMost(weightMaximumDefault),
 									},
 								},
 							},
@@ -350,18 +352,26 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Attributes: map[string]schema.Attribute{
 					"policy_threshold_medium": riskPolicyThresholdSchema(
 						true,
-						40,
 						framework.SchemaAttributeDescriptionFromMarkdown(
 							"An object that specifies the lower and upper bound threshold values that define the medium risk outcome as a result of the policy evaluation.",
 						),
+						[]validator.Int64{
+							int64validatorinternal.IsLessThanPathValue(
+								path.MatchRoot("policy_scores").AtName("policy_threshold_high").AtName("min_score"),
+							),
+						},
 					),
 
 					"policy_threshold_high": riskPolicyThresholdSchema(
 						true,
-						75,
 						framework.SchemaAttributeDescriptionFromMarkdown(
 							"An object that specifies the lower and upper bound threshold values that define the high risk outcome as a result of the policy evaluation.",
 						),
+						[]validator.Int64{
+							int64validatorinternal.IsGreaterThanPathValue(
+								path.MatchRoot("policy_scores").AtName("policy_threshold_medium").AtName("min_score"),
+							),
+						},
 					),
 
 					"predictors": schema.SetNestedAttribute{
@@ -387,15 +397,15 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 									Required:    true,
 
 									Validators: []validator.Int64{
-										int64validator.AtLeast(1),
-										int64validator.AtMost(100),
+										int64validator.AtLeast(scoreMinimumDefault),
+										int64validator.AtMost(scoreMaximumDefault),
 									},
 								},
 							},
 						},
 
 						Validators: []validator.Set{
-							setvalidator.SizeAtLeast(1),
+							setvalidator.SizeAtLeast(attrMinLength),
 						},
 					},
 				},
@@ -411,24 +421,30 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	}
 }
 
-func riskPolicyThresholdSchema(useScores bool, defaultPolicyThresholdMinScore int64, policyThresholdsDescription framework.SchemaAttributeDescription) schema.SingleNestedAttribute {
+func riskPolicyThresholdSchema(useScores bool, policyThresholdsDescription framework.SchemaAttributeDescription, validators []validator.Int64) schema.SingleNestedAttribute {
 
-	validators := []validator.Int64{
-		int64validator.AtLeast(1),
-		// TODO medium must be less than high rule
-	}
-
-	if !useScores {
-		validators = append(validators, int64validator.AtMost(10))
-	}
+	validators = append(validators, int64validator.AtLeast(1))
 
 	policyThresholdScoresMediumScoreDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the minimum score to use as the lower bound value of the policy threshold.",
-	).DefaultValue(fmt.Sprint(defaultPolicyThresholdMinScore))
+	)
 
 	policyThresholdScoresHighScoreDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.",
 	)
+
+	if !useScores {
+		maxAllowedValue := 100
+		denominator := 10
+		validators = append(validators, int64validator.AtMost(int64(maxAllowedValue)))
+		validators = append(validators, int64validatorinternal.IsDivisibleBy(int64(denominator)))
+
+		policyThresholdScoresMediumScoreDescription = policyThresholdScoresMediumScoreDescription.AppendMarkdownString(fmt.Sprintf("For weights policies, the score values should be 10x the desired risk value in the console. For example, a risk score of `5` in the console should be entered as `50`.  The provided score must be exactly divisible by 10.  Maximum value allowed is `%d`", maxAllowedValue))
+	} else {
+		maxAllowedValue := 1000
+		validators = append(validators, int64validator.AtMost(int64(maxAllowedValue)))
+		policyThresholdScoresMediumScoreDescription = policyThresholdScoresMediumScoreDescription.AppendMarkdownString(fmt.Sprintf("Maximum value allowed is `%d`", maxAllowedValue))
+	}
 
 	return schema.SingleNestedAttribute{
 		Description:         policyThresholdsDescription.Description,
@@ -440,8 +456,6 @@ func riskPolicyThresholdSchema(useScores bool, defaultPolicyThresholdMinScore in
 				Description:         policyThresholdScoresMediumScoreDescription.Description,
 				MarkdownDescription: policyThresholdScoresMediumScoreDescription.MarkdownDescription,
 				Required:            true,
-
-				//Default: int64default.StaticInt64(defaultPolicyThresholdMinScore),
 
 				Validators: validators,
 			},
@@ -476,7 +490,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 
 	if !plan.PolicyWeights.IsNull() && !plan.PolicyWeights.IsUnknown() {
 		rootPath = "policy_weights"
-		maxScore = 10
+		maxScore = 100
 		referenceValueFmt = "${details.aggregatedWeights.%s}"
 		predictorAttrType = policyWeightsPredictorTFObjectTypes
 
@@ -600,7 +614,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	createResponse, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -615,11 +629,27 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	// We have to read it back because the API does not return the full state object on create
+	response, d := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), createResponse.(*risk.RiskPolicySet).GetId()).Execute()
+		},
+		"ReadOneRiskPolicySet",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response.(*risk.RiskPolicySet))...)
+	resp.Diagnostics.Append(state.toState(response.(*risk.RiskPolicySet))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -666,7 +696,7 @@ func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(ctx, response.(*risk.RiskPolicySet))...)
+	resp.Diagnostics.Append(data.toState(response.(*risk.RiskPolicySet))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -717,7 +747,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response.(*risk.RiskPolicySet))...)
+	resp.Diagnostics.Append(state.toState(response.(*risk.RiskPolicySet))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -828,7 +858,6 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 		mediumPolicyCondition.SetType(risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS)
 		useScores = false
 
-		var plan riskPolicyResourcePolicyModel
 		d = p.PolicyWeights.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -875,18 +904,44 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 		*risk.NewRiskPolicyResult(risk.ENUMRISKLEVEL_MEDIUM),
 	))
 
-	foundPredictors, d := riskPredictorFetchIDsFromCompactNames(ctx, apiClient, p.EnvironmentId.ValueString(), predictorCompactNames)
+	riskPolicyPredictorsIDs, d := riskPredictorFetchIDsFromCompactNames(ctx, apiClient, p.EnvironmentId.ValueString(), predictorCompactNames)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	evaluatedPredictors := make([]risk.RiskPolicySetEvaluatedPredictorsInner, 0)
-	for _, predictor := range foundPredictors {
-		evaluatedPredictors = append(evaluatedPredictors, *risk.NewRiskPolicySetEvaluatedPredictorsInner(predictor))
-	}
 
-	data.SetEvaluatedPredictors(evaluatedPredictors)
+	if !p.EvaluatedPredictors.IsNull() && !p.EvaluatedPredictors.IsUnknown() {
+		var plan []string
+		d := p.EvaluatedPredictors.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		configuredEvaluatedPredictorIDs := make(map[string]bool)
+
+		for _, predictorID := range plan {
+			evaluatedPredictors = append(evaluatedPredictors, *risk.NewRiskPolicySetEvaluatedPredictorsInner(predictorID))
+			configuredEvaluatedPredictorIDs[predictorID] = true
+		}
+
+		for _, riskPolicyPredictorID := range riskPolicyPredictorsIDs {
+			if !configuredEvaluatedPredictorIDs[riskPolicyPredictorID] {
+				diags.AddError(
+					"A predictor in the policy set is not listed in \"evaluated_predictors\".",
+					"When \"evaluated_predictors\" is defined, the IDs for predictors in the policy set must be listed in \"evaluated_predictors\".",
+				)
+			}
+		}
+
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetEvaluatedPredictors(evaluatedPredictors)
+	}
 
 	// TODO: Overrides
 
@@ -994,7 +1049,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 	return highPolicyCondition, mediumPolicyCondition, predictorCompactNames, diags
 }
 
-func (p *riskPolicyResourceModel) toState(ctx context.Context, apiObject *risk.RiskPolicySet) diag.Diagnostics {
+func (p *riskPolicyResourceModel) toState(apiObject *risk.RiskPolicySet) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -1042,13 +1097,13 @@ func (p *riskPolicyResourceModel) toState(ctx context.Context, apiObject *risk.R
 
 	r, ok := apiObject.GetRiskPoliciesOk()
 
-	p.PolicyWeights, p.PolicyScores, d = p.toStatePolicy(ctx, r, ok)
+	p.PolicyWeights, p.PolicyScores, d = p.toStatePolicy(r, ok)
 	diags.Append(d...)
 
 	return diags
 }
 
-func (p *riskPolicyResourceModel) toStatePolicy(ctx context.Context, riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, diag.Diagnostics) {
+func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	objPolicyWeightsValue := types.ObjectNull(policyWeightsTFObjectTypes)
