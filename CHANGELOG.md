@@ -7,6 +7,7 @@ NOTES:
 * `resource/pingone_branding_theme`: Migrated to plugin framework. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
 * `resource/pingone_credential_type`: Improved the documentation for the `title` and `description` attributes and explained their correlation to fields in the `card_design_template`. ([#377](https://github.com/pingidentity/terraform-provider-pingone/issues/377))
 * `resource/pingone_risk_predictor`: Corrected custom map type documentation example. ([#378](https://github.com/pingidentity/terraform-provider-pingone/issues/378))
+* `resource/pingone_risk_predictor`: Corrected documentation examples. ([#387](https://github.com/pingidentity/terraform-provider-pingone/issues/387))
 
 FEATURES:
 
