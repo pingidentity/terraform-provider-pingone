@@ -23,7 +23,7 @@ resource "pingone_risk_predictor" "my_awesome_geovelocity_anomaly_predictor" {
 resource "pingone_risk_policy" "my_awesome_scores_risk_policy" {
   environment_id = pingone_environment.my_environment.id
 
-  name = "My Awesome Score-based Risk Policy"
+  name = "My Awesome Scores-based Risk Policy"
 
   policy_scores = {
     policy_threshold_medium = {
@@ -66,11 +66,11 @@ resource "pingone_risk_policy" "my_awesome_weights_risk_policy" {
 
   policy_weights = {
     policy_threshold_medium = {
-      min_score = 2
+      min_score = 50
     }
 
     policy_threshold_high = {
-      min_score = 5
+      min_score = 60
     }
 
     predictors = [
@@ -98,19 +98,19 @@ resource "pingone_risk_policy" "my_awesome_weights_risk_policy" {
 ### Optional
 
 - `default_result` (Attributes) A single nested object that specifies the default result value for the risk policy. (see [below for nested schema](#nestedatt--default_result))
+- `evaluated_predictors` (Set of String) A set of IDs for the predictors to evaluate in this policy set.  If omitted, if this property is null, all of the licensed predictors are used.
 - `policy_scores` (Attributes) An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors.  At least one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_scores))
 - `policy_weights` (Attributes) An object that describes settings for a risk policy using a weighted average calculation, with a final result being a risk score between `0` and `10`.  At least one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_weights))
 
 ### Read-Only
 
 - `default` (Boolean) A boolean that indicates whether this risk policy set is the environment's default risk policy set. This is used whenever an explicit policy set ID is not specified in a risk evaluation request.
-- `evaluated_predictors` (Set of String) A set of IDs for the predictors to evaluate in this policy set.  If omitted, if this property is null, all of the licensed predictors are used.
 - `id` (String) The ID of this resource.
 
 <a id="nestedatt--default_result"></a>
 ### Nested Schema for `default_result`
 
-Optional:
+Required:
 
 - `level` (String) The default result level.  Options are `LOW`.
 
@@ -124,12 +124,33 @@ Read-Only:
 
 Required:
 
-- `predictors` (Attributes Set) An object that describes a predictor to apply to the risk policy and its associated high risk / true outcome score to apply to the risk calculation. (see [below for nested schema](#nestedatt--policy_scores--predictors))
-
-Optional:
-
 - `policy_threshold_high` (Attributes) An object that specifies the lower and upper bound threshold values that define the high risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_scores--policy_threshold_high))
 - `policy_threshold_medium` (Attributes) An object that specifies the lower and upper bound threshold values that define the medium risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_scores--policy_threshold_medium))
+- `predictors` (Attributes Set) An object that describes a predictor to apply to the risk policy and its associated high risk / true outcome score to apply to the risk calculation. (see [below for nested schema](#nestedatt--policy_scores--predictors))
+
+<a id="nestedatt--policy_scores--policy_threshold_high"></a>
+### Nested Schema for `policy_scores.policy_threshold_high`
+
+Required:
+
+- `min_score` (Number) An integer that specifies the minimum score to use as the lower bound value of the policy threshold.  Maximum value allowed is `1000`
+
+Read-Only:
+
+- `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
+
+
+<a id="nestedatt--policy_scores--policy_threshold_medium"></a>
+### Nested Schema for `policy_scores.policy_threshold_medium`
+
+Required:
+
+- `min_score` (Number) An integer that specifies the minimum score to use as the lower bound value of the policy threshold.  Maximum value allowed is `1000`
+
+Read-Only:
+
+- `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
+
 
 <a id="nestedatt--policy_scores--predictors"></a>
 ### Nested Schema for `policy_scores.predictors`
@@ -144,42 +165,39 @@ Read-Only:
 - `predictor_reference_value` (String) A string that specifies the attribute reference of the level to evaluate.
 
 
-<a id="nestedatt--policy_scores--policy_threshold_high"></a>
-### Nested Schema for `policy_scores.policy_threshold_high`
-
-Optional:
-
-- `min_score` (Number) An integer that specifies the minimum score to use as the lower bound value of the policy threshold.  Defaults to `75`.
-
-Read-Only:
-
-- `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
-
-
-<a id="nestedatt--policy_scores--policy_threshold_medium"></a>
-### Nested Schema for `policy_scores.policy_threshold_medium`
-
-Optional:
-
-- `min_score` (Number) An integer that specifies the minimum score to use as the lower bound value of the policy threshold.  Defaults to `40`.
-
-Read-Only:
-
-- `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
-
-
 
 <a id="nestedatt--policy_weights"></a>
 ### Nested Schema for `policy_weights`
 
 Required:
 
+- `policy_threshold_high` (Attributes) An object that specifies the lower and upper bound threshold score values that define the high risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_weights--policy_threshold_high))
+- `policy_threshold_medium` (Attributes) An object that specifies the lower and upper bound threshold score values that define the medium risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_weights--policy_threshold_medium))
 - `predictors` (Attributes Set) An object that describes a predictor to apply to the risk policy and its associated weight value for the overall weighted average risk calculation. (see [below for nested schema](#nestedatt--policy_weights--predictors))
 
-Optional:
+<a id="nestedatt--policy_weights--policy_threshold_high"></a>
+### Nested Schema for `policy_weights.policy_threshold_high`
 
-- `policy_threshold_high` (Attributes) An object that specifies the lower and upper bound threshold values that define the high risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_weights--policy_threshold_high))
-- `policy_threshold_medium` (Attributes) An object that specifies the lower and upper bound threshold values that define the medium risk outcome as a result of the policy evaluation. (see [below for nested schema](#nestedatt--policy_weights--policy_threshold_medium))
+Required:
+
+- `min_score` (Number) An integer that specifies the minimum score to use as the lower bound value of the policy threshold.  For weights policies, the score values should be 10x the desired risk value in the console. For example, a risk score of `5` in the console should be entered as `50`.  The provided score must be exactly divisible by 10.  Maximum value allowed is `100`
+
+Read-Only:
+
+- `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
+
+
+<a id="nestedatt--policy_weights--policy_threshold_medium"></a>
+### Nested Schema for `policy_weights.policy_threshold_medium`
+
+Required:
+
+- `min_score` (Number) An integer that specifies the minimum score to use as the lower bound value of the policy threshold.  For weights policies, the score values should be 10x the desired risk value in the console. For example, a risk score of `5` in the console should be entered as `50`.  The provided score must be exactly divisible by 10.  Maximum value allowed is `100`
+
+Read-Only:
+
+- `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
+
 
 <a id="nestedatt--policy_weights--predictors"></a>
 ### Nested Schema for `policy_weights.predictors`
@@ -192,30 +210,6 @@ Required:
 Read-Only:
 
 - `predictor_reference_value` (String) A string that specifies the attribute reference of the level to evaluate.
-
-
-<a id="nestedatt--policy_weights--policy_threshold_high"></a>
-### Nested Schema for `policy_weights.policy_threshold_high`
-
-Optional:
-
-- `min_score` (Number) An integer that specifies the minimum score to use as the lower bound value of the policy threshold.  Defaults to `2`.
-
-Read-Only:
-
-- `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
-
-
-<a id="nestedatt--policy_weights--policy_threshold_medium"></a>
-### Nested Schema for `policy_weights.policy_threshold_medium`
-
-Optional:
-
-- `min_score` (Number) An integer that specifies the minimum score to use as the lower bound value of the policy threshold.  Defaults to `1`.
-
-Read-Only:
-
-- `max_score` (Number) An integer that specifies the maxiumum score to use as the lower bound value of the policy threshold.
 
 ## Import
 

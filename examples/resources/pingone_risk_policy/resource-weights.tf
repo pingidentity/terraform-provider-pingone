@@ -13,11 +13,11 @@ resource "pingone_risk_policy" "my_awesome_weights_risk_policy" {
 
   policy_weights = {
     policy_threshold_medium = {
-      min_score = 2
+      min_score = 50
     }
 
     policy_threshold_high = {
-      min_score = 5
+      min_score = 60
     }
 
     predictors = [

@@ -9,7 +9,7 @@ resource "pingone_risk_predictor" "my_awesome_geovelocity_anomaly_predictor" {
 resource "pingone_risk_policy" "my_awesome_scores_risk_policy" {
   environment_id = pingone_environment.my_environment.id
 
-  name = "My Awesome Score-based Risk Policy"
+  name = "My Awesome Scores-based Risk Policy"
 
   policy_scores = {
     policy_threshold_medium = {
