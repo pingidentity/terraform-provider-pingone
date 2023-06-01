@@ -449,7 +449,7 @@ jobs:
 
   # run acceptance tests in a matrix with Terraform core versions
   test-na:
-    name: Acceptance Test NA (Multi-version)
+    name: Acceptance Test NA
     needs: [prepare-na, build]
     runs-on: ubuntu-latest
 
