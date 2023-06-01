@@ -1,7 +1,7 @@
 resource "pingone_risk_predictor" "my_awesome_custom_predictor_between_ranges" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Custom Predictor Between Ranges"
-  compact_name   = "my_awesome_custom_predictor_between_ranges"
+  compact_name   = "myAwesomeCustomPredictorBetweenRanges"
 
   default = {
     result = {
@@ -10,7 +10,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_between_ranges" {
   }
 
   predictor_custom_map = {
-    contains = "$${event.my_custom_field}"
+    contains = "$${event.myCustomField}"
 
     between_ranges = {
       high = {
@@ -34,7 +34,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_between_ranges" {
 resource "pingone_risk_predictor" "my_awesome_custom_predictor_ip_ranges" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Custom Predictor IP Ranges"
-  compact_name   = "my_awesome_custom_predictor_ip_ranges"
+  compact_name   = "myAwesomeCustomPredictorIpRanges"
 
   default = {
     result = {
@@ -43,7 +43,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_ip_ranges" {
   }
 
   predictor_custom_map = {
-    contains = "$${event.my_custom_field}"
+    contains = "$${event.myCustomField}"
 
     ip_ranges = {
       high = {
@@ -67,7 +67,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_ip_ranges" {
 resource "pingone_risk_predictor" "my_awesome_custom_predictor_list" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Custom Predictor List"
-  compact_name   = "my_awesome_custom_predictor_list"
+  compact_name   = "myAwesomeCustomPredictorList"
 
   default = {
     result = {
@@ -76,7 +76,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_list" {
   }
 
   predictor_custom_map = {
-    contains = "$${event.my_custom_field}"
+    contains = "$${event.myCustomField}"
 
     string_list = {
       high = {

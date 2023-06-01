@@ -1,7 +1,7 @@
 resource "pingone_risk_predictor" "my_awesome_user_risk_behavior_predictor_by_user" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome User Risk Behavior Predictor By User"
-  compact_name   = "my_awesome_user_risk_behavior_predictor_by_user"
+  compact_name   = "myAwesomeUserRiskBehaviorPredictorByUser"
 
   default = {
     result = {
@@ -19,7 +19,7 @@ resource "pingone_risk_predictor" "my_awesome_user_risk_behavior_predictor_by_us
 resource "pingone_risk_predictor" "my_awesome_user_risk_behavior_predictor_by_organization" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome User Risk Behavior Predictor By Organization"
-  compact_name   = "my_awesome_user_risk_behavior_predictor_by_organization"
+  compact_name   = "myAwesomeUserRiskBehaviorPredictorByOrganization"
 
   default = {
     result = {
