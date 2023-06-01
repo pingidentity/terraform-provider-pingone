@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -47,7 +48,7 @@ type riskPolicyResourceModel struct {
 	EvaluatedPredictors types.Set    `tfsdk:"evaluated_predictors"`
 	PolicyWeights       types.Object `tfsdk:"policy_weights"`
 	PolicyScores        types.Object `tfsdk:"policy_scores"`
-	//Overrides             types.Set    `tfsdk:"override"`
+	Overrides           types.List   `tfsdk:"overrides"`
 }
 
 type riskPolicyResourceDefaultResultModel struct {
@@ -76,6 +77,26 @@ type riskPolicyResourcePolicyScoresPredictorModel struct {
 	CompactName             types.String `tfsdk:"compact_name"`
 	PredictorReferenceValue types.String `tfsdk:"predictor_reference_value"`
 	Score                   types.Int64  `tfsdk:"score"`
+}
+
+type riskPolicyResourcePolicyOverrideModel struct {
+	CompactName types.String `tfsdk:"compact_name"`
+	Name        types.String `tfsdk:"name"`
+	Result      types.Object `tfsdk:"result"`
+	Condition   types.Object `tfsdk:"condition"`
+	Priority    types.Int64  `tfsdk:"priority"`
+}
+
+type riskPolicyResourcePolicyOverrideResultModel struct {
+	Level types.String `tfsdk:"level"`
+	Value types.String `tfsdk:"value"`
+}
+
+type riskPolicyResourcePolicyOverrideConditionModel struct {
+	Equals                  types.String `tfsdk:"equals"`
+	IPRange                 types.String `tfsdk:"ip_range"`
+	PredictorReferenceValue types.String `tfsdk:"predictor_reference_value"`
+	Type                    types.String `tfsdk:"type"`
 }
 
 var (
@@ -120,6 +141,29 @@ var (
 		"compact_name":              types.StringType,
 		"predictor_reference_value": types.StringType,
 		"score":                     types.Int64Type,
+	}
+
+	overridesTFObjectTypes = map[string]attr.Type{
+		"compact_name": types.StringType,
+		"name":         types.StringType,
+		"result": types.ObjectType{
+			AttrTypes: overridesResultTFObjectTypes,
+		},
+		"condition": types.ObjectType{
+			AttrTypes: overridesConditionTFObjectTypes,
+		},
+	}
+
+	overridesResultTFObjectTypes = map[string]attr.Type{
+		"level": types.StringType,
+		"value": types.StringType,
+	}
+
+	overridesConditionTFObjectTypes = map[string]attr.Type{
+		"equals":                    types.StringType,
+		"ip_range":                  types.SetType{ElemType: types.StringType},
+		"predictor_reference_value": types.StringType,
+		"type":                      types.StringType,
 	}
 )
 
@@ -184,6 +228,10 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 	policyScoresPredictor := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes a predictor to apply to the risk policy and its associated high risk / true outcome score to apply to the risk calculation.",
+	)
+
+	policyOverrideDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An ordered list of policy overrides to apply to the policy.  The ordering of the overrides is important as it determines the priority of the policy override during policy evaluation.",
 	)
 
 	// Schema
@@ -415,6 +463,36 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						path.MatchRelative().AtParent().AtName("policy_weights"),
 						path.MatchRelative().AtParent().AtName("policy_scores"),
 					),
+				},
+			},
+
+			"overrides": schema.ListNestedAttribute{
+				Description:         policyOverrideDescription.Description,
+				MarkdownDescription: policyOverrideDescription.MarkdownDescription,
+
+				Optional: true,
+
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"compact_name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the compact name of the predictor to apply as an override to the risk policy.").Description,
+							Required:    true,
+						},
+
+						"name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The name of the overriding risk policy in the set.").Description,
+							Computed:    true,
+						},
+
+						// TODO
+						"result": schema.SingleNestedAttribute{},
+
+						"condition": schema.SingleNestedAttribute{},
+					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(attrMinLength),
 				},
 			},
 		},
@@ -890,19 +968,50 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 
 	riskPolicies := make([]risk.RiskPolicy, 0)
 
-	// High Weighted Policy
-	riskPolicies = append(riskPolicies, *risk.NewRiskPolicy(
-		*highPolicyCondition,
-		"HIGH_WEIGHTED_POLICY",
-		*risk.NewRiskPolicyResult(risk.ENUMRISKLEVEL_HIGH),
-	))
+	// Overrides
+	if !p.Overrides.IsNull() && !p.Overrides.IsUnknown() {
+		var plan []riskPolicyResourcePolicyOverrideModel
+		d := p.Overrides.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		for _, override := range plan {
+
+			// TODO
+			condition := risk.NewRiskPolicyCondition()
+
+			result := risk.NewRiskPolicyResult(risk.ENUMRISKLEVEL_MEDIUM)
+
+			riskPolicies = append(riskPolicies, *risk.NewRiskPolicy(
+				*condition,
+				override.Name.ValueString(),
+				*result,
+			))
+		}
+	}
 
 	// Medium Weighted Policy
-	riskPolicies = append(riskPolicies, *risk.NewRiskPolicy(
+	mwp := *risk.NewRiskPolicy(
 		*mediumPolicyCondition,
 		"MEDIUM_WEIGHTED_POLICY",
 		*risk.NewRiskPolicyResult(risk.ENUMRISKLEVEL_MEDIUM),
-	))
+	)
+	mwp.SetPriority(int32(len(riskPolicies)) + 1)
+	riskPolicies = append(riskPolicies, mwp)
+
+	// High Weighted Policy
+	hwp := *risk.NewRiskPolicy(
+		*highPolicyCondition,
+		"HIGH_WEIGHTED_POLICY",
+		*risk.NewRiskPolicyResult(risk.ENUMRISKLEVEL_HIGH),
+	)
+	hwp.SetPriority(int32(len(riskPolicies)) + 1)
+	riskPolicies = append(riskPolicies, hwp)
+
+	// Set the risk policies
+	data.SetRiskPolicies(riskPolicies)
 
 	riskPolicyPredictorsIDs, d := riskPredictorFetchIDsFromCompactNames(ctx, apiClient, p.EnvironmentId.ValueString(), predictorCompactNames)
 	diags.Append(d...)
@@ -942,10 +1051,6 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 
 		data.SetEvaluatedPredictors(evaluatedPredictors)
 	}
-
-	// TODO: Overrides
-
-	data.SetRiskPolicies(riskPolicies)
 
 	return data, diags
 }
@@ -1097,23 +1202,24 @@ func (p *riskPolicyResourceModel) toState(apiObject *risk.RiskPolicySet) diag.Di
 
 	r, ok := apiObject.GetRiskPoliciesOk()
 
-	p.PolicyWeights, p.PolicyScores, d = p.toStatePolicy(r, ok)
+	p.PolicyWeights, p.PolicyScores, p.Overrides, d = p.toStatePolicy(r, ok)
 	diags.Append(d...)
 
 	return diags
 }
 
-func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, diag.Diagnostics) {
+func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	objPolicyWeightsValue := types.ObjectNull(policyWeightsTFObjectTypes)
 	objPolicyScoresValue := types.ObjectNull(policyScoresTFObjectTypes)
+	objOverridesValue := types.ListNull(types.ObjectType{AttrTypes: overridesTFObjectTypes})
 
 	useScores := false
 	useWeights := false
 
 	if !ok || riskPolicies == nil || len(riskPolicies) < 1 {
-		return objPolicyWeightsValue, objPolicyScoresValue, diags
+		return objPolicyWeightsValue, objPolicyScoresValue, objOverridesValue, diags
 	}
 
 	o := map[string]attr.Value{}
@@ -1202,6 +1308,10 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 					diags.Append(d...)
 				}
 			}
+
+			if v, ok := condition.GetTypeOk(); ok && (*v == risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON || *v == risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE) {
+				// TODO
+			}
 		}
 	}
 
@@ -1216,7 +1326,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 		diags.Append(d...)
 	}
 
-	return objPolicyWeightsValue, objPolicyScoresValue, diags
+	return objPolicyWeightsValue, objPolicyScoresValue, objOverridesValue, diags
 }
 
 func riskPolicyScoresCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {

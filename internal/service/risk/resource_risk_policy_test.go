@@ -124,6 +124,7 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.1", verify.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.2", verify.P1ResourceIDRegexp),
+		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "0"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -134,6 +135,7 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default_result.level", "LOW"),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.#", regexp.MustCompile(`^(?:[2-9]|[12]\d)\d*$`)),
+		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "0"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -429,7 +431,94 @@ func TestAccRiskPolicy_ChangeType(t *testing.T) {
 	})
 }
 
-// TODO: test policy_threshold_medium min value above policy_threshold_high min value
+func TestAccRiskPolicy_PolicyOverrides(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_policy.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "3"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "overrides.*", map[string]string{
+			"compact_name":                        "anonymousNetwork",
+			"name":                                "ANONYMOUS_NETWORK",
+			"result.level":                        "HIGH",
+			"result.value":                        "starling",
+			"condition.equals":                    "HIGH",
+			"condition.predictor_reference_value": "${details.anonymousNetwork.level}",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "overrides.*", map[string]string{
+			"compact_name":                        "ipVelocityByUser",
+			"name":                                "VELOCITY",
+			"result.level":                        "MEDIUM",
+			"result.value":                        "crow",
+			"condition.equals":                    "MEDIUM",
+			"condition.predictor_reference_value": "${details.ipVelocityByUser.level}",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "overrides.*", map[string]string{
+			"compact_name":                        "newDevice",
+			"name":                                "NEW_DEVICE",
+			"result.level":                        "LOW",
+			"result.value":                        "sparrow",
+			"condition.equals":                    "HIGH",
+			"condition.predictor_reference_value": "${details.newDevice.level}",
+		}),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "1"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "overrides.*", map[string]string{
+			"compact_name":                        "anonymousNetwork",
+			"name":                                "ANONYMOUS_NETWORK",
+			"result.level":                        "MEDIUM",
+			"result.value":                        "",
+			"condition.equals":                    "HIGH",
+			"condition.predictor_reference_value": "${details.anonymousNetwork.level}",
+		}),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPolicyConfig_Overrides_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPolicyConfig_Overrides_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPolicyConfig_Overrides_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPolicyConfig_Overrides_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPolicyConfig_Overrides_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPolicyConfig_Overrides_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPolicyConfig_Overrides_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+		},
+	})
+}
 
 func testAccRiskPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
@@ -878,5 +967,124 @@ resource "pingone_risk_policy" "%[2]s" {
       }
     ]
   }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Overrides_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      },
+      {
+        compact_name = "geoVelocity"
+        score        = 45
+      }
+    ]
+  }
+
+  overrides = [
+    {
+      compact_name = "anonymousNetwork"
+
+      result = {
+        level = "HIGH"
+		value = "starling"
+      }
+
+      condition = {
+        equals = "HIGH"
+      }
+    },
+
+    {
+      compact_name = "ipVelocityByUser"
+
+      result = {
+        level = "MEDIUM"
+		value = "crow"
+      }
+
+      condition = {
+        equals = "MEDIUM"
+      }
+    },
+
+    {
+      compact_name = "newDevice"
+
+      result = {
+        level = "LOW"
+		value = "sparrow"
+      }
+
+      condition = {
+        equals = "HIGH"
+      }
+    },
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Overrides_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      },
+      {
+        compact_name = "geoVelocity"
+        score        = 45
+      }
+    ]
+  }
+
+  overrides = [
+    {
+      compact_name = "anonymousNetwork"
+
+      result = {
+        level = "MEDIUM"
+      }
+
+      condition = {
+        equals = "HIGH"
+      }
+    }
+  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
