@@ -16,6 +16,10 @@ resource "pingone_risk_predictor" "my_awesome_anonymous_network_predictor" {
   # ...
 }
 
+resource "pingone_risk_predictor" "my_awesome_user_location_predictor" {
+  # ...
+}
+
 resource "pingone_risk_predictor" "my_awesome_geovelocity_anomaly_predictor" {
   # ...
 }
@@ -40,11 +44,38 @@ resource "pingone_risk_policy" "my_awesome_scores_risk_policy" {
         score        = 50
       },
       {
-        compact_name = pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name
+        compact_name = pingone_risk_predictor.my_awesome_user_location_predictor.compact_name
         score        = 50
       }
     ]
   }
+
+  overrides = [
+    {
+      result = {
+        level = "LOW"
+      }
+
+      condition = {
+        type = "IP_RANGE"
+        ip_range = [
+          "10.0.0.0/8",
+        ]
+      }
+    },
+
+    {
+      result = {
+        level = "HIGH"
+      }
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name
+        equals       = "HIGH"
+      }
+    }
+  ]
 }
 ```
 
@@ -52,6 +83,10 @@ resource "pingone_risk_policy" "my_awesome_scores_risk_policy" {
 
 ```terraform
 resource "pingone_risk_predictor" "my_awesome_anonymous_network_predictor" {
+  # ...
+}
+
+resource "pingone_risk_predictor" "my_awesome_user_location_predictor" {
   # ...
 }
 
@@ -79,11 +114,38 @@ resource "pingone_risk_policy" "my_awesome_weights_risk_policy" {
         weight       = 5
       },
       {
-        compact_name = pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name
+        compact_name = pingone_risk_predictor.my_awesome_user_location_predictor.compact_name
         weight       = 5
       }
     ]
   }
+
+  overrides = [
+    {
+      result = {
+        level = "LOW"
+      }
+
+      condition = {
+        type = "IP_RANGE"
+        ip_range = [
+          "10.0.0.0/8",
+        ]
+      }
+    },
+
+    {
+      result = {
+        level = "HIGH"
+      }
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name
+        equals       = "HIGH"
+      }
+    }
+  ]
 }
 ```
 
@@ -99,6 +161,7 @@ resource "pingone_risk_policy" "my_awesome_weights_risk_policy" {
 
 - `default_result` (Attributes) A single nested object that specifies the default result value for the risk policy. (see [below for nested schema](#nestedatt--default_result))
 - `evaluated_predictors` (Set of String) A set of IDs for the predictors to evaluate in this policy set.  If omitted, if this property is null, all of the licensed predictors are used.
+- `overrides` (Attributes List) An ordered list of policy overrides to apply to the policy.  The ordering of the overrides is important as it determines the priority of the policy override during policy evaluation. (see [below for nested schema](#nestedatt--overrides))
 - `policy_scores` (Attributes) An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors.  At least one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_scores))
 - `policy_weights` (Attributes) An object that describes settings for a risk policy using a weighted average calculation, with a final result being a risk score between `0` and `10`.  At least one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_weights))
 
@@ -117,6 +180,55 @@ Required:
 Read-Only:
 
 - `type` (String) The default result type.  Options are `VALUE`.
+
+
+<a id="nestedatt--overrides"></a>
+### Nested Schema for `overrides`
+
+Required:
+
+- `condition` (Attributes) A single object that contains the conditions to evaluate that determine whether the override result will be applied to the risk policy evaluation. (see [below for nested schema](#nestedatt--overrides--condition))
+- `result` (Attributes) A single object that contains the risk result that should be applied to the policy evaluation result when the override condition is met. (see [below for nested schema](#nestedatt--overrides--result))
+
+Optional:
+
+- `name` (String) A string that represents the name of the overriding risk policy in the set.
+
+Read-Only:
+
+- `priority` (Number) An integer that indicates the order in which the override is applied during risk policy evaluation.  The lower the value, the higher the priority.  The priority is determined by the order in which the overrides are defined in HCL.
+
+<a id="nestedatt--overrides--condition"></a>
+### Nested Schema for `overrides.condition`
+
+Required:
+
+- `type` (String) A string that specifies the type of the override condition to evaluate.  Options are `IP_RANGE`, `VALUE_COMPARISON`.
+
+Optional:
+
+- `compact_name` (String) Required when `equals` is set to `VALUE_COMPARISON`.  A string that specifies the compact name of the predictor to apply to the override condition.
+- `equals` (String) Required when `equals` is set to `VALUE_COMPARISON`.  A string that specifies the value of the `predictor_reference_value` that must be matched for the override result to be applied to the policy evaluation.
+- `ip_range` (Set of String) Required when `equals` is set to `IP_RANGE`.  A set of strings that specifies the CIDR ranges that should be evaluated against the value of the `predictor_reference_contains` attribute, that must be matched for the override result to be applied to the policy evaluation.  Values must be valid IPv4 or IPv6 CIDR ranges.
+
+Read-Only:
+
+- `predictor_reference_contains` (String) A string that specifies the attribute reference of the collection to evaluate.
+- `predictor_reference_value` (String) A string that specifies the attribute reference of the value to evaluate.
+
+
+<a id="nestedatt--overrides--result"></a>
+### Nested Schema for `overrides.result`
+
+Required:
+
+- `level` (String) A string that specifies the risk level that should be applied to the policy evalution result when the override condition is met.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+Optional:
+
+- `type` (String) A string that specifies the type of the risk result should be applied to the policy evalution result when the override condition is met.  Options are `VALUE`.  Defaults to `VALUE`.
+- `value` (String) An administrator defined string value that is applied to the policy evaluation result when the override condition is met.
+
 
 
 <a id="nestedatt--policy_scores"></a>

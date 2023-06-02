@@ -442,40 +442,50 @@ func TestAccRiskPolicy_PolicyOverrides(t *testing.T) {
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "3"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "overrides.*", map[string]string{
-			"compact_name":                        "anonymousNetwork",
-			"name":                                "ANONYMOUS_NETWORK",
+			"name":                                "my_anon_check",
+			"priority":                            "1",
 			"result.level":                        "HIGH",
 			"result.value":                        "starling",
+			"result.type":                         "VALUE",
+			"condition.type":                      "VALUE_COMPARISON",
 			"condition.equals":                    "HIGH",
+			"condition.compact_name":              "anonymousNetwork",
 			"condition.predictor_reference_value": "${details.anonymousNetwork.level}",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "overrides.*", map[string]string{
-			"compact_name":                        "ipVelocityByUser",
-			"name":                                "VELOCITY",
+			"name":                                "my_ip_vel_check",
+			"priority":                            "2",
 			"result.level":                        "MEDIUM",
 			"result.value":                        "crow",
+			"result.type":                         "VALUE",
+			"condition.type":                      "VALUE_COMPARISON",
 			"condition.equals":                    "MEDIUM",
+			"condition.compact_name":              "ipVelocityByUser",
 			"condition.predictor_reference_value": "${details.ipVelocityByUser.level}",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "overrides.*", map[string]string{
-			"compact_name":                        "newDevice",
-			"name":                                "NEW_DEVICE",
-			"result.level":                        "LOW",
-			"result.value":                        "sparrow",
-			"condition.equals":                    "HIGH",
-			"condition.predictor_reference_value": "${details.newDevice.level}",
+			"name":                                   "allowed_list",
+			"priority":                               "3",
+			"result.level":                           "LOW",
+			"result.value":                           "sparrow",
+			"result.type":                            "VALUE",
+			"condition.type":                         "IP_RANGE",
+			"condition.ip_range.#":                   "3",
+			"condition.predictor_reference_contains": "${transaction.ip}",
 		}),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "1"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "overrides.*", map[string]string{
-			"compact_name":                        "anonymousNetwork",
-			"name":                                "ANONYMOUS_NETWORK",
+			"name":                                "geoVelocity",
+			"priority":                            "1",
 			"result.level":                        "MEDIUM",
-			"result.value":                        "",
+			"result.type":                         "VALUE",
+			"condition.type":                      "VALUE_COMPARISON",
 			"condition.equals":                    "HIGH",
-			"condition.predictor_reference_value": "${details.anonymousNetwork.level}",
+			"condition.compact_name":              "geoVelocity",
+			"condition.predictor_reference_value": "${details.geoVelocity.level}",
 		}),
 	)
 
@@ -1002,43 +1012,52 @@ resource "pingone_risk_policy" "%[2]s" {
 
   overrides = [
     {
-      compact_name = "anonymousNetwork"
+      name = "my_anon_check"
 
       result = {
         level = "HIGH"
-		value = "starling"
+        value = "starling"
       }
 
       condition = {
-        equals = "HIGH"
+        type         = "VALUE_COMPARISON"
+        compact_name = "anonymousNetwork"
+        equals       = "HIGH"
       }
     },
 
     {
-      compact_name = "ipVelocityByUser"
+      name = "my_ip_vel_check"
 
       result = {
         level = "MEDIUM"
-		value = "crow"
+        value = "crow"
       }
 
       condition = {
-        equals = "MEDIUM"
+        type         = "VALUE_COMPARISON"
+        compact_name = "ipVelocityByUser"
+        equals       = "MEDIUM"
       }
     },
 
     {
-      compact_name = "newDevice"
+      name = "allowed_list"
 
       result = {
         level = "LOW"
-		value = "sparrow"
+        value = "sparrow"
       }
 
       condition = {
-        equals = "HIGH"
+        type = "IP_RANGE"
+        ip_range = [
+          "10.0.0.0/8",
+          "172.16.0.0/12",
+          "192.168.0.0/24"
+        ]
       }
-    },
+    }
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -1075,14 +1094,14 @@ resource "pingone_risk_policy" "%[2]s" {
 
   overrides = [
     {
-      compact_name = "anonymousNetwork"
-
       result = {
         level = "MEDIUM"
       }
 
       condition = {
-        equals = "HIGH"
+        type         = "VALUE_COMPARISON"
+        compact_name = "geoVelocity"
+        equals       = "HIGH"
       }
     }
   ]

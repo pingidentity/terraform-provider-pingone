@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -29,8 +30,11 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -80,23 +84,25 @@ type riskPolicyResourcePolicyScoresPredictorModel struct {
 }
 
 type riskPolicyResourcePolicyOverrideModel struct {
-	CompactName types.String `tfsdk:"compact_name"`
-	Name        types.String `tfsdk:"name"`
-	Result      types.Object `tfsdk:"result"`
-	Condition   types.Object `tfsdk:"condition"`
-	Priority    types.Int64  `tfsdk:"priority"`
+	Name      types.String `tfsdk:"name"`
+	Priority  types.Int64  `tfsdk:"priority"`
+	Result    types.Object `tfsdk:"result"`
+	Condition types.Object `tfsdk:"condition"`
 }
 
 type riskPolicyResourcePolicyOverrideResultModel struct {
-	Level types.String `tfsdk:"level"`
 	Value types.String `tfsdk:"value"`
+	Level types.String `tfsdk:"level"`
+	Type  types.String `tfsdk:"type"`
 }
 
 type riskPolicyResourcePolicyOverrideConditionModel struct {
-	Equals                  types.String `tfsdk:"equals"`
-	IPRange                 types.String `tfsdk:"ip_range"`
-	PredictorReferenceValue types.String `tfsdk:"predictor_reference_value"`
-	Type                    types.String `tfsdk:"type"`
+	Type                       types.String `tfsdk:"type"`
+	Equals                     types.String `tfsdk:"equals"`
+	CompactName                types.String `tfsdk:"compact_name"`
+	PredictorReferenceValue    types.String `tfsdk:"predictor_reference_value"`
+	IPRange                    types.Set    `tfsdk:"ip_range"`
+	PredictorReferenceContains types.String `tfsdk:"predictor_reference_contains"`
 }
 
 var (
@@ -144,8 +150,8 @@ var (
 	}
 
 	overridesTFObjectTypes = map[string]attr.Type{
-		"compact_name": types.StringType,
-		"name":         types.StringType,
+		"name":     types.StringType,
+		"priority": types.Int64Type,
 		"result": types.ObjectType{
 			AttrTypes: overridesResultTFObjectTypes,
 		},
@@ -155,15 +161,18 @@ var (
 	}
 
 	overridesResultTFObjectTypes = map[string]attr.Type{
-		"level": types.StringType,
 		"value": types.StringType,
+		"level": types.StringType,
+		"type":  types.StringType,
 	}
 
 	overridesConditionTFObjectTypes = map[string]attr.Type{
-		"equals":                    types.StringType,
-		"ip_range":                  types.SetType{ElemType: types.StringType},
-		"predictor_reference_value": types.StringType,
-		"type":                      types.StringType,
+		"type":                         types.StringType,
+		"equals":                       types.StringType,
+		"compact_name":                 types.StringType,
+		"predictor_reference_value":    types.StringType,
+		"ip_range":                     types.SetType{ElemType: types.StringType},
+		"predictor_reference_contains": types.StringType,
 	}
 )
 
@@ -232,6 +241,35 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 	policyOverrideDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An ordered list of policy overrides to apply to the policy.  The ordering of the overrides is important as it determines the priority of the policy override during policy evaluation.",
+	)
+
+	policyOverrideResultLevelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the risk level that should be applied to the policy evalution result when the override condition is met.",
+	).AllowedValuesEnum(risk.AllowedEnumRiskLevelEnumValues)
+
+	policyOverrideResultTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of the risk result should be applied to the policy evalution result when the override condition is met.",
+	).AllowedValuesEnum(risk.AllowedEnumResultTypeEnumValues).DefaultValue(string(risk.ENUMRESULTTYPE_VALUE))
+
+	policyOverrideConditionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of the override condition to evaluate.",
+	).AllowedValues(
+		[]string{
+			string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON),
+			string(risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE),
+		},
+	)
+
+	policyOverrideConditionEqualsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Required when `equals` is set to `VALUE_COMPARISON`.  A string that specifies the value of the `predictor_reference_value` that must be matched for the override result to be applied to the policy evaluation.",
+	)
+
+	policyOverrideConditionCompactNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Required when `equals` is set to `VALUE_COMPARISON`.  A string that specifies the compact name of the predictor to apply to the override condition.",
+	)
+
+	policyOverrideConditionIPRangeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Required when `equals` is set to `IP_RANGE`.  A set of strings that specifies the CIDR ranges that should be evaluated against the value of the `predictor_reference_contains` attribute, that must be matched for the override result to be applied to the policy evaluation.  Values must be valid IPv4 or IPv6 CIDR ranges.",
 	)
 
 	// Schema
@@ -474,20 +512,131 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"compact_name": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the compact name of the predictor to apply as an override to the risk policy.").Description,
-							Required:    true,
-						},
-
 						"name": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("The name of the overriding risk policy in the set.").Description,
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the name of the overriding risk policy in the set.").Description,
+							Optional:    true,
 							Computed:    true,
 						},
 
-						// TODO
-						"result": schema.SingleNestedAttribute{},
+						"priority": schema.Int64Attribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that indicates the order in which the override is applied during risk policy evaluation.  The lower the value, the higher the priority.  The priority is determined by the order in which the overrides are defined in HCL.").Description,
+							Computed:    true,
+						},
 
-						"condition": schema.SingleNestedAttribute{},
+						"result": schema.SingleNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains the risk result that should be applied to the policy evaluation result when the override condition is met.").Description,
+							Required:    true,
+
+							Attributes: map[string]schema.Attribute{
+								"value": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("An administrator defined string value that is applied to the policy evaluation result when the override condition is met.").Description,
+									Optional:    true,
+								},
+
+								"level": schema.StringAttribute{
+									Description:         policyOverrideResultLevelDescription.Description,
+									MarkdownDescription: policyOverrideResultLevelDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskLevelEnumValues)...),
+									},
+								},
+
+								"type": schema.StringAttribute{
+									Description:         policyOverrideResultTypeDescription.Description,
+									MarkdownDescription: policyOverrideResultTypeDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+
+									Default: stringdefault.StaticString(string(risk.ENUMRESULTTYPE_VALUE)),
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumResultTypeEnumValues)...),
+									},
+
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
+								},
+							},
+						},
+
+						"condition": schema.SingleNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains the conditions to evaluate that determine whether the override result will be applied to the risk policy evaluation.").Description,
+							Required:    true,
+
+							Attributes: map[string]schema.Attribute{
+								"type": schema.StringAttribute{
+									Description:         policyOverrideConditionTypeDescription.Description,
+									MarkdownDescription: policyOverrideConditionTypeDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(
+											string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON),
+											string(risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE),
+										),
+									},
+								},
+
+								// Value comparison
+								"equals": schema.StringAttribute{
+									Description:         policyOverrideConditionEqualsDescription.Description,
+									MarkdownDescription: policyOverrideConditionEqualsDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											basetypes.NewStringValue(string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON)),
+											path.MatchRelative().AtParent().AtName("type"),
+										),
+									},
+								},
+
+								"compact_name": schema.StringAttribute{
+									Description:         policyOverrideConditionCompactNameDescription.Description,
+									MarkdownDescription: policyOverrideConditionCompactNameDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											basetypes.NewStringValue(string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON)),
+											path.MatchRelative().AtParent().AtName("type"),
+										),
+									},
+								},
+
+								"predictor_reference_value": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the attribute reference of the value to evaluate.").Description,
+									Computed:    true,
+								},
+
+								// IP range
+								"ip_range": schema.SetAttribute{
+									Description:         policyOverrideConditionIPRangeDescription.Description,
+									MarkdownDescription: policyOverrideConditionIPRangeDescription.MarkdownDescription,
+									Optional:            true,
+
+									ElementType: types.StringType,
+
+									Validators: []validator.Set{
+										setvalidator.ValueStringsAre(
+											stringvalidator.RegexMatches(verify.IPv4IPv6Regexp, "Values must be valid IPv4 or IPv6 CIDR format."),
+										),
+										setvalidatorinternal.IsRequiredIfMatchesPathValue(
+											basetypes.NewStringValue(string(risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE)),
+											path.MatchRelative().AtParent().AtName("type"),
+										),
+									},
+								},
+
+								"predictor_reference_contains": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the attribute reference of the collection to evaluate.").Description,
+									Computed:    true,
+								},
+							},
+						},
 					},
 				},
 
@@ -563,7 +712,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 	// Set the max threshold score
 	var rootPath, referenceValueFmt string
 	var maxScore int
-	flattenedList := []attr.Value{}
+	flattenedPolicyList := []attr.Value{}
 	var predictorAttrType map[string]attr.Type
 
 	if !plan.PolicyWeights.IsNull() && !plan.PolicyWeights.IsUnknown() {
@@ -588,7 +737,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 			flattenedObj, d := types.ObjectValue(policyWeightsPredictorTFObjectTypes, predictorObj)
 			resp.Diagnostics.Append(d...)
 
-			flattenedList = append(flattenedList, flattenedObj)
+			flattenedPolicyList = append(flattenedPolicyList, flattenedObj)
 		}
 	}
 
@@ -614,7 +763,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 			flattenedObj, d := types.ObjectValue(policyScoresPredictorTFObjectTypes, predictorObj)
 			resp.Diagnostics.Append(d...)
 
-			flattenedList = append(flattenedList, flattenedObj)
+			flattenedPolicyList = append(flattenedPolicyList, flattenedObj)
 		}
 	}
 
@@ -629,9 +778,94 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("max_score"), types.Int64Value(int64(maxScore)))
 
 	// Set the predictors
-	plannedPredictors, d := types.SetValue(types.ObjectType{AttrTypes: predictorAttrType}, flattenedList)
+	plannedPredictors, d := types.SetValue(types.ObjectType{AttrTypes: predictorAttrType}, flattenedPolicyList)
 	resp.Diagnostics.Append(d...)
 	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("predictors"), plannedPredictors)
+
+	// Overrides
+	flattenedOverrideList := []attr.Value{}
+
+	if !plan.Overrides.IsNull() && !plan.Overrides.IsUnknown() {
+		var overridesPlan []riskPolicyResourcePolicyOverrideModel
+		resp.Diagnostics.Append(plan.Overrides.ElementsAs(ctx, &overridesPlan, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		referenceValueFmt = "${details.%s.level}"
+		priorityCount := 0
+
+		for _, overridePlan := range overridesPlan {
+
+			priorityCount++
+
+			// The Condition
+			var conditionPlan riskPolicyResourcePolicyOverrideConditionModel
+			resp.Diagnostics.Append(overridePlan.Condition.As(ctx, &conditionPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			var predictorReferenceValue attr.Value
+			var predictorReferenceContains attr.Value
+
+			var overrideName string
+			setOverrideName := true
+			if !overridePlan.Name.IsNull() && !overridePlan.Name.IsUnknown() {
+				overrideName = overridePlan.Name.ValueString()
+				setOverrideName = false
+			}
+
+			if !conditionPlan.CompactName.IsNull() && !conditionPlan.CompactName.IsUnknown() {
+				predictorReferenceValue = types.StringValue(fmt.Sprintf(referenceValueFmt, conditionPlan.CompactName.ValueString()))
+				predictorReferenceContains = types.StringNull()
+
+				if setOverrideName {
+					overrideName = conditionPlan.CompactName.ValueString()
+				}
+			}
+
+			if !conditionPlan.IPRange.IsNull() && !conditionPlan.IPRange.IsUnknown() {
+				predictorReferenceContains = types.StringValue("${transaction.ip}")
+				predictorReferenceValue = types.StringNull()
+
+				if setOverrideName {
+					overrideName = "WHITELIST"
+				}
+			}
+
+			conditionMap := map[string]attr.Value{
+				"type":                         conditionPlan.Type,
+				"equals":                       conditionPlan.Equals,
+				"compact_name":                 conditionPlan.CompactName,
+				"predictor_reference_value":    predictorReferenceValue,
+				"ip_range":                     conditionPlan.IPRange,
+				"predictor_reference_contains": predictorReferenceContains,
+			}
+
+			conditionObj, d := types.ObjectValue(overridesConditionTFObjectTypes, conditionMap)
+			resp.Diagnostics.Append(d...)
+
+			overrideMap := map[string]attr.Value{
+				"name":      types.StringValue(overrideName),
+				"priority":  types.Int64Value(int64(priorityCount)),
+				"result":    overridePlan.Result,
+				"condition": conditionObj,
+			}
+
+			overrideObj, d := types.ObjectValue(overridesTFObjectTypes, overrideMap)
+			resp.Diagnostics.Append(d...)
+
+			flattenedOverrideList = append(flattenedOverrideList, overrideObj)
+		}
+
+		plannedOverrides, d := types.ListValue(types.ObjectType{AttrTypes: overridesTFObjectTypes}, flattenedOverrideList)
+		resp.Diagnostics.Append(d...)
+		resp.Plan.SetAttribute(ctx, path.Root("overrides"), plannedOverrides)
+	}
 }
 
 func (r *RiskPolicyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -909,11 +1143,10 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 
 	if !p.DefaultResult.IsNull() && !p.DefaultResult.IsUnknown() {
 		var plan riskPolicyResourceDefaultResultModel
-		d := p.DefaultResult.As(ctx, &plan, basetypes.ObjectAsOptions{
+		diags.Append(p.DefaultResult.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -936,11 +1169,10 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 		mediumPolicyCondition.SetType(risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_WEIGHTS)
 		useScores = false
 
-		d = p.PolicyWeights.As(ctx, &plan, basetypes.ObjectAsOptions{
+		diags.Append(p.PolicyWeights.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
+		})...)
 	}
 
 	if !p.PolicyScores.IsNull() && !p.PolicyScores.IsUnknown() {
@@ -948,11 +1180,10 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 		mediumPolicyCondition.SetType(risk.ENUMRISKPOLICYCONDITIONTYPE_AGGREGATED_SCORES)
 		useScores = true
 
-		d = p.PolicyScores.As(ctx, &plan, basetypes.ObjectAsOptions{
+		diags.Append(p.PolicyScores.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
+		})...)
 	}
 
 	if diags.HasError() {
@@ -970,25 +1201,80 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 
 	// Overrides
 	if !p.Overrides.IsNull() && !p.Overrides.IsUnknown() {
-		var plan []riskPolicyResourcePolicyOverrideModel
-		d := p.Overrides.ElementsAs(ctx, &plan, false)
-		diags.Append(d...)
+		var overridesPlan []riskPolicyResourcePolicyOverrideModel
+		diags.Append(p.Overrides.ElementsAs(ctx, &overridesPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		for _, override := range plan {
+		for _, overridePlan := range overridesPlan {
 
-			// TODO
+			// The Condition
+			var conditionPlan riskPolicyResourcePolicyOverrideConditionModel
+			diags.Append(overridePlan.Condition.As(ctx, &conditionPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
 			condition := risk.NewRiskPolicyCondition()
 
-			result := risk.NewRiskPolicyResult(risk.ENUMRISKLEVEL_MEDIUM)
+			condition.SetType(risk.EnumRiskPolicyConditionType(conditionPlan.Type.ValueString()))
 
-			riskPolicies = append(riskPolicies, *risk.NewRiskPolicy(
+			if !conditionPlan.Equals.IsNull() && !conditionPlan.Equals.IsUnknown() {
+				v := conditionPlan.Equals.ValueString()
+				condition.SetEquals(risk.StringAsRiskPolicyConditionEquals(&v))
+			}
+
+			if !conditionPlan.PredictorReferenceValue.IsNull() && !conditionPlan.PredictorReferenceValue.IsUnknown() {
+				condition.SetValue(conditionPlan.PredictorReferenceValue.ValueString())
+			}
+
+			if !conditionPlan.PredictorReferenceContains.IsNull() && !conditionPlan.PredictorReferenceContains.IsUnknown() {
+				condition.SetContains(conditionPlan.PredictorReferenceContains.ValueString())
+			}
+
+			if !conditionPlan.IPRange.IsNull() && !conditionPlan.IPRange.IsUnknown() {
+				var conditionIPRangePlan []string
+				diags.Append(conditionPlan.IPRange.ElementsAs(ctx, &conditionIPRangePlan, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				condition.SetIpRange(conditionIPRangePlan)
+			}
+
+			// The Result
+			var resultPlan riskPolicyResourcePolicyOverrideResultModel
+			diags.Append(overridePlan.Result.As(ctx, &resultPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			result := risk.NewRiskPolicyResult(risk.EnumRiskLevel(resultPlan.Level.ValueString()))
+
+			if !resultPlan.Value.IsNull() && !resultPlan.Value.IsUnknown() {
+				result.SetValue(resultPlan.Value.ValueString())
+			}
+
+			if !resultPlan.Type.IsNull() && !resultPlan.Type.IsUnknown() {
+				result.SetType(risk.EnumResultType(resultPlan.Type.ValueString()))
+			}
+
+			op := *risk.NewRiskPolicy(
 				*condition,
-				override.Name.ValueString(),
+				overridePlan.Name.ValueString(),
 				*result,
-			))
+			)
+
+			op.SetPriority(int32(overridePlan.Priority.ValueInt64()))
+
+			riskPolicies = append(riskPolicies, op)
 		}
 	}
 
@@ -1023,8 +1309,7 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 
 	if !p.EvaluatedPredictors.IsNull() && !p.EvaluatedPredictors.IsUnknown() {
 		var plan []string
-		d := p.EvaluatedPredictors.ElementsAs(ctx, &plan, false)
-		diags.Append(d...)
+		diags.Append(p.EvaluatedPredictors.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -1060,11 +1345,10 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 
 	if !p.PolicyThresholdMedium.IsNull() && !p.PolicyThresholdMedium.IsUnknown() {
 		var plan riskPolicyResourcePolicyThresholdScoreBetweenModel
-		d := p.PolicyThresholdMedium.As(ctx, &plan, basetypes.ObjectAsOptions{
+		diags.Append(p.PolicyThresholdMedium.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
+		})...)
 		if diags.HasError() {
 			return nil, nil, nil, diags
 		}
@@ -1081,11 +1365,10 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 
 	if !p.PolicyThresholdHigh.IsNull() && !p.PolicyThresholdHigh.IsUnknown() {
 		var plan riskPolicyResourcePolicyThresholdScoreBetweenModel
-		d := p.PolicyThresholdHigh.As(ctx, &plan, basetypes.ObjectAsOptions{
+		diags.Append(p.PolicyThresholdHigh.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
+		})...)
 		if diags.HasError() {
 			return nil, nil, nil, diags
 		}
@@ -1103,8 +1386,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 			aggregatedScores := make([]risk.RiskPolicyConditionAggregatedScoresInner, 0)
 
 			var predictorsPlan []riskPolicyResourcePolicyScoresPredictorModel
-			d := p.Predictors.ElementsAs(ctx, &predictorsPlan, false)
-			diags.Append(d...)
+			diags.Append(p.Predictors.ElementsAs(ctx, &predictorsPlan, false)...)
 			if diags.HasError() {
 				return nil, nil, nil, diags
 			}
@@ -1128,8 +1410,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 			aggregatedWeights := make([]risk.RiskPolicyConditionAggregatedWeightsInner, 0)
 
 			var predictorsPlan []riskPolicyResourcePolicyWeightsPredictorModel
-			d := p.Predictors.ElementsAs(ctx, &predictorsPlan, false)
-			diags.Append(d...)
+			diags.Append(p.Predictors.ElementsAs(ctx, &predictorsPlan, false)...)
 			if diags.HasError() {
 				return nil, nil, nil, diags
 			}
@@ -1211,9 +1492,9 @@ func (p *riskPolicyResourceModel) toState(apiObject *risk.RiskPolicySet) diag.Di
 func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	objPolicyWeightsValue := types.ObjectNull(policyWeightsTFObjectTypes)
-	objPolicyScoresValue := types.ObjectNull(policyScoresTFObjectTypes)
-	objOverridesValue := types.ListNull(types.ObjectType{AttrTypes: overridesTFObjectTypes})
+	objPolicyWeightsValue := types.ObjectUnknown(policyWeightsTFObjectTypes)
+	objPolicyScoresValue := types.ObjectUnknown(policyScoresTFObjectTypes)
+	objOverridesValue := types.ListUnknown(types.ObjectType{AttrTypes: overridesTFObjectTypes})
 
 	useScores := false
 	useWeights := false
@@ -1222,7 +1503,10 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 		return objPolicyWeightsValue, objPolicyScoresValue, objOverridesValue, diags
 	}
 
-	o := map[string]attr.Value{}
+	highMediumPolicy := map[string]attr.Value{}
+	overrides := []attr.Value{}
+
+	setOverride := false
 
 	for _, policy := range riskPolicies {
 		// First build the high and medium outcome policies
@@ -1241,11 +1525,11 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 					diags.Append(d...)
 
 					if policy.Result.GetLevel() == risk.ENUMRISKLEVEL_MEDIUM {
-						o["policy_threshold_medium"] = thresholdObj
+						highMediumPolicy["policy_threshold_medium"] = thresholdObj
 					}
 
 					if policy.Result.GetLevel() == risk.ENUMRISKLEVEL_HIGH {
-						o["policy_threshold_high"] = thresholdObj
+						highMediumPolicy["policy_threshold_high"] = thresholdObj
 					}
 
 				}
@@ -1258,7 +1542,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 					tfObjType := types.ObjectType{AttrTypes: policyScoresPredictorTFObjectTypes}
 
 					if len(scores) == 0 {
-						o["predictors"] = types.SetValueMust(tfObjType, []attr.Value{})
+						highMediumPolicy["predictors"] = types.SetValueMust(tfObjType, []attr.Value{})
 					}
 
 					flattenedList := []attr.Value{}
@@ -1276,7 +1560,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 						flattenedList = append(flattenedList, flattenedObj)
 					}
 
-					o["predictors"], d = types.SetValue(tfObjType, flattenedList)
+					highMediumPolicy["predictors"], d = types.SetValue(tfObjType, flattenedList)
 					diags.Append(d...)
 				}
 
@@ -1286,7 +1570,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 					tfObjType := types.ObjectType{AttrTypes: policyWeightsPredictorTFObjectTypes}
 
 					if len(weights) == 0 {
-						o["predictors"] = types.SetValueMust(tfObjType, []attr.Value{})
+						highMediumPolicy["predictors"] = types.SetValueMust(tfObjType, []attr.Value{})
 					}
 
 					flattenedList := []attr.Value{}
@@ -1304,26 +1588,82 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 						flattenedList = append(flattenedList, flattenedObj)
 					}
 
-					o["predictors"], d = types.SetValue(tfObjType, flattenedList)
+					highMediumPolicy["predictors"], d = types.SetValue(tfObjType, flattenedList)
 					diags.Append(d...)
 				}
 			}
 
 			if v, ok := condition.GetTypeOk(); ok && (*v == risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON || *v == risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE) {
-				// TODO
+				setOverride = true
+
+				resultObj := types.ObjectUnknown(overridesResultTFObjectTypes)
+				if policyResult, ok := policy.GetResultOk(); ok {
+
+					resultMap := map[string]attr.Value{
+						"value": framework.StringOkToTF(policyResult.GetValueOk()),
+						"level": framework.EnumOkToTF(policyResult.GetLevelOk()),
+						"type":  framework.EnumOkToTF(policyResult.GetTypeOk()),
+					}
+
+					var d diag.Diagnostics
+					resultObj, d = types.ObjectValue(overridesResultTFObjectTypes, resultMap)
+					diags.Append(d...)
+				}
+
+				var equalsString basetypes.StringValue
+				if s := condition.GetEquals().String; s != nil {
+					equalsString = types.StringValue(*s)
+				} else {
+					equalsString = types.StringNull()
+				}
+
+				conditionMap := map[string]attr.Value{
+					"type":                         framework.EnumOkToTF(condition.GetTypeOk()),
+					"equals":                       equalsString,
+					"compact_name":                 riskPolicyOverrideCompactNameFromReferenceOk(condition.GetValueOk()),
+					"predictor_reference_value":    framework.StringOkToTF(condition.GetValueOk()),
+					"ip_range":                     framework.StringSetOkToTF(condition.GetIpRangeOk()),
+					"predictor_reference_contains": framework.StringOkToTF(condition.GetContainsOk()),
+				}
+
+				conditionObj, d := types.ObjectValue(overridesConditionTFObjectTypes, conditionMap)
+				diags.Append(d...)
+
+				overrideMap := map[string]attr.Value{
+					"name":      framework.StringOkToTF(policy.GetNameOk()),
+					"priority":  framework.Int32OkToTF(policy.GetPriorityOk()),
+					"result":    resultObj,
+					"condition": conditionObj,
+				}
+
+				overrideObj, d := types.ObjectValue(overridesTFObjectTypes, overrideMap)
+				diags.Append(d...)
+
+				overrides = append(overrides, overrideObj)
 			}
 		}
 	}
 
 	var d diag.Diagnostics
 	if useScores {
-		objPolicyScoresValue, d = types.ObjectValue(policyScoresTFObjectTypes, o)
+		objPolicyScoresValue, d = types.ObjectValue(policyScoresTFObjectTypes, highMediumPolicy)
 		diags.Append(d...)
+	} else {
+		objPolicyScoresValue = types.ObjectNull(policyScoresTFObjectTypes)
 	}
 
 	if useWeights {
-		objPolicyWeightsValue, d = types.ObjectValue(policyWeightsTFObjectTypes, o)
+		objPolicyWeightsValue, d = types.ObjectValue(policyWeightsTFObjectTypes, highMediumPolicy)
 		diags.Append(d...)
+	} else {
+		objPolicyWeightsValue = types.ObjectNull(policyWeightsTFObjectTypes)
+	}
+
+	if setOverride {
+		objOverridesValue, d = types.ListValue(types.ObjectType{AttrTypes: overridesTFObjectTypes}, overrides)
+		diags.Append(d...)
+	} else {
+		objOverridesValue = types.ListNull(types.ObjectType{AttrTypes: overridesTFObjectTypes})
 	}
 
 	return objPolicyWeightsValue, objPolicyScoresValue, objOverridesValue, diags
@@ -1335,6 +1675,10 @@ func riskPolicyScoresCompactNameFromReferenceOk(v *string, ok bool) basetypes.St
 
 func riskPolicyWeightsCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
 	return riskPolicyCompactNameFromReferenceOk(v, ok, false)
+}
+
+func riskPolicyOverrideCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
+	return riskPolicyCompactNameFromReferenceOk(v, ok, true)
 }
 
 func riskPolicyCompactNameFromReferenceOk(v *string, ok, useScores bool) basetypes.StringValue {
