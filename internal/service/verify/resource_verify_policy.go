@@ -1,4 +1,4 @@
-package credentials
+package verify
 
 import (
 	"context"
@@ -15,11 +15,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 // Types
@@ -28,7 +29,7 @@ type VerifyPolicyResource struct {
 	region model.RegionMapping
 }
 
-type VerifyPolicyResourceModel struct {
+type verifyPolicyResourceModel struct {
 	Id               types.String `tfsdk:"id"`
 	EnvironmentId    types.String `tfsdk:"environment_id"`
 	Name             types.String `tfsdk:"name"`
@@ -44,104 +45,95 @@ type VerifyPolicyResourceModel struct {
 	UpdatedAt        types.String `tfsdk:"updated_at"`
 }
 
-type GovernmentIdModel struct {
+type governmentIdModel struct {
 	Verify types.String `tfsdk:"verify"`
 }
 
-type FacialComparisonModel struct {
+type facialComparisonModel struct {
 	Verify    types.String `tfsdk:"verify"`
 	Threshold types.String `tfsdk:"threshold"`
 }
 
-type LivenessnModel struct {
+type livenessnModel struct {
 	Verify    types.String `tfsdk:"verify"`
 	Threshold types.String `tfsdk:"threshold"`
 }
 
-type EmailModel struct {
+type genericTimeoutModel struct {
+	Duration types.Int64  `tfsdk:"duration"`
+	TimeUnit types.String `tfsdk:"time_unit"`
+}
+
+type deviceModel struct {
 	CreateMfaDevice types.Bool   `tfsdk:"create_mfa_device"`
 	OTP             types.Object `tfsdk:"otp"`
 	Verify          types.String `tfsdk:"verify"`
 }
 
-type PhoneModel struct {
-	CreateMfaDevice types.Bool   `tfsdk:"create_mfa_device"`
-	OTP             types.Object `tfsdk:"otp"`
-	Verify          types.String `tfsdk:"verify"`
-}
-
-type OTPConfigurationModel struct {
+type otpConfigurationModel struct {
 	Attempts     types.Object `tfsdk:"attempts"`
 	Deliveries   types.Object `tfsdk:"deliveries"`
 	LifeTime     types.Object `tfsdk:"lifetime"`
 	Notification types.Object `tfsdk:"notification"`
 }
 
-type OTPAttemptsModel struct {
+type otpAttemptsModel struct {
 	Count types.Int64 `tfsdk:"count"`
 }
 
-type OTPDeliveriessModel struct {
+type otpDeliveriessModel struct {
 	Count    types.Int64  `tfsdk:"count"`
 	Cooldown types.Object `tfsdk:"cooldown"`
 }
 
-type OTPDeliveriessCooldownModel struct {
+type otpDeliveriessCooldownModel struct {
 	Duration types.Int64  `tfsdk:"duration"`
 	TimeUnit types.String `tfsdk:"time_unit"`
 }
 
-type OTPLifeTmeModel struct {
-	Duration types.Int64  `tfsdk:"duration"`
-	TimeUnit types.String `tfsdk:"time_unit"`
-}
-
-type OTPNotificationModel struct {
+type otpNotificationModel struct {
 	TemplateName types.String `tfsdk:"template_name"`
 	VariantName  types.String `tfsdk:"variant_name"`
 }
 
-type TransactionModel struct {
+type transactionModel struct {
 	Timeout            types.Object `tfsdk:"timeout"`
 	DataCollection     types.Object `tfsdk:"data_collection"`
 	DataCollectionOnly types.Bool   `tfsdk:"data_collection_only"`
 }
 
-type TransactionTimeoutModel struct {
-	Duration types.Int64  `tfsdk:"duration"`
-	TimeUnit types.Object `tfsdk:"time_unit"`
-}
-
-type TransactionDataCollectionModel struct {
+type transactionDataCollectionModel struct {
 	Timeout types.Object `tfsdk:"timeout"`
 }
 
-type TransactionDataCollectionTimeoutModel struct {
-	Duration types.Int64  `tfsdk:"duration"`
-	TimeUnit types.Object `tfsdk:"time_unit"`
-}
-
 var (
-	filterServiceTFObjectTypes = map[string]attr.Type{
-		"group_ids":      types.SetType{ElemType: types.StringType},
-		"population_ids": types.SetType{ElemType: types.StringType},
-		"scim":           types.StringType,
+	genericTimeoutServiceTFObjectTypes = map[string]attr.Type{
+		"duration":  types.Int64Type,
+		"time_unit": types.StringType,
 	}
 
-	automationServiceTFObjectTypes = map[string]attr.Type{
-		"issue":  types.StringType,
-		"revoke": types.StringType,
-		"update": types.StringType,
+	governmentIdServiceTFObjectTypes = map[string]attr.Type{
+		"verify": types.StringType,
 	}
 
-	notificationServiceTFObjectTypes = map[string]attr.Type{
-		"methods":  types.SetType{ElemType: types.StringType},
-		"template": types.ObjectType{AttrTypes: notificationTemplateServiceTFObjectTypes},
+	facialComparisonServiceTFObjectTypes = map[string]attr.Type{
+		"verify":    types.StringType,
+		"threshold": types.StringType,
 	}
 
-	notificationTemplateServiceTFObjectTypes = map[string]attr.Type{
-		"locale":  types.StringType,
-		"variant": types.StringType,
+	livenessServiceTFObjectTypes = map[string]attr.Type{
+		"verify":    types.StringType,
+		"threshold": types.StringType,
+	}
+
+	transactionServiceTFObjectTypes = map[string]attr.Type{
+		"timeout":              types.ObjectType{AttrTypes: genericTimeoutServiceTFObjectTypes},
+		"data_collection":      types.ObjectType{AttrTypes: dataCollectionServiceTFObjectTypes},
+		"data_collection_only": types.BoolType,
+	}
+
+	dataCollectionServiceTFObjectTypes = map[string]attr.Type{
+		"timeout": types.ObjectType{AttrTypes: genericTimeoutServiceTFObjectTypes},
 	}
 )
 
@@ -159,7 +151,7 @@ func NewVerifyPolicyResource() resource.Resource {
 
 // Metadata
 func (r *VerifyPolicyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_credential_issuance_rule"
+	resp.TypeName = req.ProviderTypeName + "_verify_policy"
 }
 
 func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -233,6 +225,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description:         defaultDescription.Description,
 				MarkdownDescription: defaultDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
 			},
 
 			"description": schema.StringAttribute{
@@ -246,17 +239,15 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 			"government_id": schema.SingleNestedAttribute{
 				Optional: true,
+				Computed: true,
 				Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
 						Description:         governmentIdVerifyDescription.Description,
 						MarkdownDescription: governmentIdVerifyDescription.MarkdownDescription,
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(
-								string(verify.ENUMVERIFY_REQUIRED),
-								string(verify.ENUMVERIFY_OPTIONAL),
-								string(verify.ENUMVERIFY_DISABLED),
-							),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
 						},
 					},
 				},
@@ -264,29 +255,25 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 			"facial_comparison": schema.SingleNestedAttribute{
 				Optional: true,
+				Computed: true,
+
 				Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
 						Description:         facialComparisonVerifyDescription.Description,
 						MarkdownDescription: facialComparisonVerifyDescription.MarkdownDescription,
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(
-								string(verify.ENUMVERIFY_REQUIRED),
-								string(verify.ENUMVERIFY_OPTIONAL),
-								string(verify.ENUMVERIFY_DISABLED),
-							),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
 						},
 					},
 					"threshold": schema.StringAttribute{
 						Description:         facialComparisonThresholdDescription.Description,
 						MarkdownDescription: facialComparisonThresholdDescription.MarkdownDescription,
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(
-								string(verify.ENUMTHRESHOLD_LOW),
-								string(verify.ENUMTHRESHOLD_MEDIUM),
-								string(verify.ENUMTHRESHOLD_HIGH),
-							),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
 						},
 					},
 				},
@@ -294,29 +281,25 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 			"liveness": schema.SingleNestedAttribute{
 				Optional: true,
+				Computed: true,
+
 				Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
 						Description:         livenessVerifyDescription.Description,
 						MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(
-								string(verify.ENUMVERIFY_REQUIRED),
-								string(verify.ENUMVERIFY_OPTIONAL),
-								string(verify.ENUMVERIFY_DISABLED),
-							),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
 						},
 					},
 					"threshold": schema.StringAttribute{
 						Description:         livenessThresholdDescription.Description,
 						MarkdownDescription: livenessThresholdDescription.MarkdownDescription,
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(
-								string(verify.ENUMTHRESHOLD_LOW),
-								string(verify.ENUMTHRESHOLD_MEDIUM),
-								string(verify.ENUMTHRESHOLD_HIGH),
-							),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
 						},
 					},
 				},
@@ -324,6 +307,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 			"email": schema.SingleNestedAttribute{
 				Optional: true,
+
 				Attributes: map[string]schema.Attribute{
 					"create_mfa_device": schema.BoolAttribute{
 						Description:         livenessVerifyDescription.Description,
@@ -425,11 +409,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						MarkdownDescription: governmentIdVerifyDescription.MarkdownDescription,
 						Required:            true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(
-								string(verify.ENUMVERIFY_REQUIRED),
-								string(verify.ENUMVERIFY_OPTIONAL),
-								string(verify.ENUMVERIFY_DISABLED),
-							),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
 						},
 					},
 				},
@@ -437,6 +417,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 			"phone": schema.SingleNestedAttribute{
 				Optional: true,
+
 				Attributes: map[string]schema.Attribute{
 					"create_mfa_device": schema.BoolAttribute{
 						Description:         livenessVerifyDescription.Description,
@@ -538,11 +519,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						MarkdownDescription: governmentIdVerifyDescription.MarkdownDescription,
 						Required:            true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(
-								string(verify.ENUMVERIFY_REQUIRED),
-								string(verify.ENUMVERIFY_OPTIONAL),
-								string(verify.ENUMVERIFY_DISABLED),
-							),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
 						},
 					},
 				},
@@ -550,20 +527,25 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 			"transaction": schema.SingleNestedAttribute{
 				Optional: true,
+				Computed: true,
+
 				Attributes: map[string]schema.Attribute{
 					"timeout": schema.SingleNestedAttribute{
 						Description: "Contains template parameters.",
 						Optional:    true,
+						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int64Attribute{
 								Description:         livenessVerifyDescription.Description,
 								MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
-								Required:            true,
+								Optional:            true,
+								Computed:            true,
 							},
 							"time_unit": schema.StringAttribute{
 								Description:         livenessVerifyDescription.Description,
 								MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
-								Required:            true,
+								Optional:            true,
+								Computed:            true,
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										string(verify.ENUMLONGTIMEUNIT_SECONDS),
@@ -576,20 +558,24 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"data_collection": schema.SingleNestedAttribute{
 						Description: "Contains template parameters.",
 						Optional:    true,
+						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"timeout": schema.SingleNestedAttribute{
 								Description: "Contains template parameters.",
 								Optional:    true,
+								Computed:    true,
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int64Attribute{
 										Description:         livenessVerifyDescription.Description,
 										MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
-										Required:            true,
+										Optional:            true,
+										Computed:            true,
 									},
 									"time_unit": schema.StringAttribute{
 										Description:         livenessVerifyDescription.Description,
 										MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
-										Required:            true,
+										Optional:            true,
+										Computed:            true,
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												string(verify.ENUMLONGTIMEUNIT_SECONDS),
@@ -605,6 +591,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						Description:         livenessVerifyDescription.Description,
 						MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
 						Optional:            true,
+						Computed:            true,
 					},
 				},
 			},
@@ -653,7 +640,7 @@ func (r *VerifyPolicyResource) Configure(ctx context.Context, req resource.Confi
 }
 
 func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state VerifyPolicyResourceModel
+	var plan, state verifyPolicyResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -662,7 +649,7 @@ func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
+	ctx = context.WithValue(ctx, verify.ContextServerVariables, map[string]string{
 		"suffix": r.region.URLSuffix,
 	})
 
@@ -704,7 +691,7 @@ func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRe
 }
 
 func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *VerifyPolicyResourceModel
+	var data *verifyPolicyResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -713,7 +700,7 @@ func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
+	ctx = context.WithValue(ctx, verify.ContextServerVariables, map[string]string{
 		"suffix": r.region.URLSuffix,
 	})
 
@@ -751,7 +738,7 @@ func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadReques
 }
 
 func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state VerifyPolicyResourceModel
+	var plan, state verifyPolicyResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -760,7 +747,7 @@ func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
+	ctx = context.WithValue(ctx, verify.ContextServerVariables, map[string]string{
 		"suffix": r.region.URLSuffix,
 	})
 
@@ -803,7 +790,7 @@ func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 }
 
 func (r *VerifyPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *VerifyPolicyResourceModel
+	var data *verifyPolicyResourceModel
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -812,7 +799,7 @@ func (r *VerifyPolicyResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
+	ctx = context.WithValue(ctx, verify.ContextServerVariables, map[string]string{
 		"suffix": r.region.URLSuffix,
 	})
 
@@ -856,12 +843,141 @@ func (r *VerifyPolicyResource) ImportState(ctx context.Context, req resource.Imp
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
 }
 
-func (p *VerifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyPolicy, diag.Diagnostics) {
+func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// buuild issuance rule object with required attributes
 	data := verify.NewVerifyPolicyWithDefaults()
 
+	// Government Id Verification Object
+	if !p.GovernmentId.IsNull() && !p.GovernmentId.IsUnknown() {
+
+		var governmentId governmentIdModel
+		d := p.GovernmentId.As(ctx, &governmentId, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		verifyGovernmentId, d := governmentId.expandgovernmentIdModel()
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		data.SetGovernmentId(*verifyGovernmentId)
+	}
+
+	// Facial Comparison Verification Object
+	if !p.FacialComparison.IsNull() && !p.FacialComparison.IsUnknown() {
+
+		var facialComparison facialComparisonModel
+		d := p.FacialComparison.As(ctx, &facialComparison, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		verifyFacialComparison, d := facialComparison.expandFacialComparisonModel()
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		data.SetFacialComparison(*verifyFacialComparison)
+	}
+
+	// Liveness Verification Object
+	if !p.Liveness.IsNull() && !p.Liveness.IsUnknown() {
+
+		var liveness livenessnModel
+		d := p.Liveness.As(ctx, &liveness, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		verifyLiveness, d := liveness.expandLivenessModel()
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		data.SetLiveness(*verifyLiveness)
+	}
+
+	// Transaction Object
+	if !p.Transaction.IsNull() && !p.Transaction.IsUnknown() {
+
+		var transaction transactionModel
+		d := p.Transaction.As(ctx, &transaction, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		transactionSettings, d := transaction.expandTransactionModel(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetTransaction(*transactionSettings)
+	}
+
+	// Email Object
+	if !p.Email.IsNull() && !p.Email.IsUnknown() {
+
+		var emailConfiguration deviceModel
+		d := p.Email.As(ctx, &emailConfiguration, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		emailSettings, d := emailConfiguration.expandDevice(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetEmail(*emailSettings)
+	}
+
+	// Phone Object
+	if !p.Phone.IsNull() && !p.Phone.IsUnknown() {
+
+		var phoneConfiguration deviceModel
+		d := p.Phone.As(ctx, &phoneConfiguration, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		phoneSettings, d := phoneConfiguration.expandDevice(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetPhone(*phoneSettings)
+	}
+
+	// Top-level arguments
 	data.SetId(p.Id.ValueString())
 
 	environment := verify.NewObjectEnvironment()
@@ -904,14 +1020,228 @@ func (p *VerifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		if data == nil {
 			diags.AddWarning(
 				"Unexpected Value",
-				"Credential Issuer Profile object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+				"Verify Policy object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
 			)
 		}
 	}
 	return data, diags
 }
 
-func (p *VerifyPolicyResourceModel) toState(apiObject *verify.VerifyPolicy) diag.Diagnostics {
+func (p *governmentIdModel) expandgovernmentIdModel() (*verify.GovernmentIdConfiguration, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	verifyGovernmentId := verify.NewGovernmentIdConfigurationWithDefaults()
+	if !p.Verify.IsNull() && !p.Verify.IsUnknown() {
+		verifyGovernmentId.SetVerify(verify.EnumVerify(p.Verify.ValueString()))
+	}
+
+	if verifyGovernmentId == nil {
+		diags.AddWarning(
+			"Unexpected Value",
+			"GovernmentId configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+		)
+	}
+	return verifyGovernmentId, diags
+
+}
+
+func (p *facialComparisonModel) expandFacialComparisonModel() (*verify.FacialComparisonConfiguration, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	verifyFacialComparison := verify.NewFacialComparisonConfigurationWithDefaults()
+	if !p.Verify.IsNull() && !p.Verify.IsUnknown() {
+		verifyFacialComparison.SetVerify(verify.EnumVerify(p.Verify.ValueString()))
+	}
+
+	if !p.Threshold.IsNull() && !p.Threshold.IsUnknown() {
+		verifyFacialComparison.SetThreshold(verify.EnumThreshold(p.Threshold.ValueString()))
+	}
+
+	if verifyFacialComparison == nil {
+		diags.AddWarning(
+			"Unexpected Value",
+			"Facial Comparison configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+		)
+	}
+	return verifyFacialComparison, diags
+
+}
+
+func (p *livenessnModel) expandLivenessModel() (*verify.LivenessConfiguration, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	verifyLiveness := verify.NewLivenessConfigurationWithDefaults()
+	if !p.Verify.IsNull() && !p.Verify.IsUnknown() {
+		verifyLiveness.SetVerify(verify.EnumVerify(p.Verify.ValueString()))
+	}
+
+	if !p.Threshold.IsNull() && !p.Threshold.IsUnknown() {
+		verifyLiveness.SetThreshold(verify.EnumThreshold(p.Threshold.ValueString()))
+	}
+
+	if verifyLiveness == nil {
+		diags.AddWarning(
+			"Unexpected Value",
+			"Liveness configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+		)
+	}
+	return verifyLiveness, diags
+
+}
+
+// i hate this function
+func (p *transactionModel) expandTransactionModel(ctx context.Context) (*verify.TransactionConfiguration, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	transactionSettings := verify.NewTransactionConfigurationWithDefaults()
+
+	if !p.DataCollectionOnly.IsNull() && !p.DataCollectionOnly.IsUnknown() {
+		transactionSettings.SetDataCollectionOnly(p.DataCollectionOnly.ValueBool())
+	}
+
+	if !p.DataCollection.IsNull() && !p.DataCollection.IsUnknown() {
+		var dataCollection transactionDataCollectionModel
+		d := p.DataCollection.As(ctx, &dataCollection, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		var genericTimeout genericTimeoutModel
+		d = dataCollection.Timeout.As(ctx, &genericTimeout, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		dataCollectionTimeout := verify.NewTransactionConfigurationDataCollectionTimeoutWithDefaults()
+		if !genericTimeout.TimeUnit.IsNull() && !genericTimeout.TimeUnit.IsUnknown() {
+			dataCollectionTimeout.SetTimeUnit(verify.EnumShortTimeUnit(genericTimeout.TimeUnit.ValueString()))
+		}
+
+		if !genericTimeout.Duration.IsNull() && !genericTimeout.Duration.IsUnknown() {
+			dataCollectionTimeout.SetDuration(int32(genericTimeout.Duration.ValueInt64()))
+		}
+
+		transactionDataCollection := verify.NewTransactionConfigurationDataCollection(*dataCollectionTimeout)
+		transactionSettings.SetDataCollection(*transactionDataCollection)
+	}
+
+	if !p.Timeout.IsNull() && !p.Timeout.IsUnknown() {
+		var genericTimeout genericTimeoutModel
+		d := p.Timeout.As(ctx, &genericTimeout, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		transactionTimeout := verify.NewTransactionConfigurationTimeoutWithDefaults()
+		transactionTimeout.SetTimeUnit(verify.EnumShortTimeUnit(genericTimeout.TimeUnit.ValueString()))
+		transactionTimeout.SetDuration(int32(genericTimeout.Duration.ValueInt64()))
+
+		transactionSettings.SetTimeout(*transactionTimeout)
+	}
+
+	if transactionSettings == nil {
+		diags.AddWarning(
+			"Unexpected Value",
+			"Transaction configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+		)
+	}
+	return transactionSettings, diags
+
+}
+
+func (p *deviceModel) expandDevice(ctx context.Context) (*verify.EmailPhoneConfiguration, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	deviceSettings := verify.NewEmailPhoneConfigurationWithDefaults()
+
+	if !p.CreateMfaDevice.IsNull() && !p.CreateMfaDevice.IsUnknown() {
+		deviceSettings.SetCreateMfaDevice(p.CreateMfaDevice.ValueBool())
+	}
+
+	if !p.Verify.IsNull() && !p.Verify.IsUnknown() {
+		deviceSettings.SetVerify(verify.EnumVerify(p.Verify.ValueString()))
+	}
+
+	if !p.OTP.IsNull() && !p.OTP.IsUnknown() {
+		var otpConfiguration otpConfigurationModel
+		d := p.OTP.As(ctx, &otpConfiguration, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		// OTP Attempts
+		// OTP Deliveries (also has cooldown object)
+
+		// OTP LifeTime (generic timeout model)
+		var genericTimeout genericTimeoutModel
+		d = otpConfiguration.LifeTime.As(ctx, &genericTimeout, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		lifeTime := verify.NewEmailPhoneConfigurationOtpLifeTimeWithDefaults()
+		if !genericTimeout.TimeUnit.IsNull() && !genericTimeout.TimeUnit.IsUnknown() {
+			lifeTime.SetTimeUnit(verify.EnumLongTimeUnit(genericTimeout.TimeUnit.ValueString()))
+		}
+
+		if !genericTimeout.Duration.IsNull() && !genericTimeout.Duration.IsUnknown() {
+			lifeTime.SetDuration(int32(genericTimeout.Duration.ValueInt64()))
+		}
+
+		// OTP Notification
+
+		transactionDataCollection := verify.NewTransactionConfigurationDataCollection(*dataCollectionTimeout)
+		transactionSettings.SetDataCollection(*transactionDataCollection)
+	}
+
+	if !p.Timeout.IsNull() && !p.Timeout.IsUnknown() {
+		var genericTimeout genericTimeoutModel
+		d := p.Timeout.As(ctx, &genericTimeout, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		transactionTimeout := verify.NewTransactionConfigurationTimeoutWithDefaults()
+		transactionTimeout.SetTimeUnit(verify.EnumShortTimeUnit(genericTimeout.TimeUnit.ValueString()))
+		transactionTimeout.SetDuration(int32(genericTimeout.Duration.ValueInt64()))
+
+		deviceSettings.SetOtp(*transactionTimeout)
+	}
+
+	if transactionSettings == nil {
+		diags.AddWarning(
+			"Unexpected Value",
+			"Transaction configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+		)
+	}
+	return transactionSettings, diags
+
+}
+
+func (p *verifyPolicyResourceModel) toState(apiObject *verify.VerifyPolicy) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -925,11 +1255,131 @@ func (p *VerifyPolicyResourceModel) toState(apiObject *verify.VerifyPolicy) diag
 
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.Name = framework.StringToTF(apiObject.GetName())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.CreatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 
+	var d diag.Diagnostics
+	p.GovernmentId, d = p.toStateGovernmentId(apiObject.GovernmentId)
+	diags.Append(d...)
+
+	p.FacialComparison, d = p.toStateFacialComparison(apiObject.FacialComparison)
+	diags.Append(d...)
+
+	p.Liveness, d = p.toStateLiveness(apiObject.Liveness)
+	diags.Append(d...)
+
+	p.Transaction, d = p.toStateTransaction(apiObject.Transaction)
+	diags.Append(d...)
+
 	return diags
+}
+
+func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.GovernmentIdConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		return types.ObjectNull(governmentIdServiceTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(governmentIdServiceTFObjectTypes, map[string]attr.Value{
+		"verify": framework.EnumOkToTF(apiObject.GetVerifyOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *verifyPolicyResourceModel) toStateFacialComparison(apiObject *verify.FacialComparisonConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		return types.ObjectNull(facialComparisonServiceTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(facialComparisonServiceTFObjectTypes, map[string]attr.Value{
+		"verify":    framework.EnumOkToTF(apiObject.GetVerifyOk()),
+		"threshold": framework.EnumOkToTF(apiObject.GetThresholdOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *verifyPolicyResourceModel) toStateLiveness(apiObject *verify.LivenessConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		return types.ObjectNull(livenessServiceTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(livenessServiceTFObjectTypes, map[string]attr.Value{
+		"verify":    framework.EnumOkToTF(apiObject.GetVerifyOk()),
+		"threshold": framework.EnumOkToTF(apiObject.GetThresholdOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *verifyPolicyResourceModel) toStateTransaction(apiObject *verify.TransactionConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		return types.ObjectNull(transactionServiceTFObjectTypes), diags
+	}
+
+	transactionTimeout := types.ObjectNull(genericTimeoutServiceTFObjectTypes)
+	if v, ok := apiObject.GetTimeoutOk(); ok {
+		var d diag.Diagnostics
+
+		o := map[string]attr.Value{
+			"duration":  framework.Int32OkToTF(v.GetDurationOk()),
+			"time_unit": framework.EnumOkToTF(v.GetTimeUnitOk()),
+		}
+
+		objValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+		diags.Append(d...)
+
+		transactionTimeout = objValue
+	}
+
+	transactionDataCollection := types.ObjectNull(dataCollectionServiceTFObjectTypes)
+	if v, ok := apiObject.GetDataCollectionOk(); ok {
+		var d diag.Diagnostics
+
+		transactionDataCollectionTimeout := types.ObjectNull(genericTimeoutServiceTFObjectTypes)
+		if t, ok := v.GetTimeoutOk(); ok {
+			o := map[string]attr.Value{
+				"duration":  framework.Int32OkToTF(t.GetDurationOk()),
+				"time_unit": framework.EnumOkToTF(t.GetTimeUnitOk()),
+			}
+
+			objValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+			diags.Append(d...)
+
+			transactionDataCollectionTimeout = objValue
+		}
+
+		o := map[string]attr.Value{
+			"timeout": transactionDataCollectionTimeout,
+		}
+
+		objValue, d := types.ObjectValue(dataCollectionServiceTFObjectTypes, o)
+		diags.Append(d...)
+
+		transactionDataCollection = objValue
+
+	}
+
+	objValue, d := types.ObjectValue(transactionServiceTFObjectTypes, map[string]attr.Value{
+		"timeout":              transactionTimeout,
+		"data_collection":      transactionDataCollection,
+		"data_collection_only": framework.BoolOkToTF(apiObject.GetDataCollectionOnlyOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
 }
