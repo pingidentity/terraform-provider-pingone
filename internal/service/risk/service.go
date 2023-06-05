@@ -13,6 +13,7 @@ import (
 
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
+		NewRiskPolicyResource,
 		NewRiskPredictorResource,
 	}
 }
