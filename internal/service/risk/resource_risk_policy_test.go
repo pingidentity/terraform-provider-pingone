@@ -460,8 +460,8 @@ func TestAccRiskPolicy_PolicyOverrides(t *testing.T) {
 			"result.type":                         "VALUE",
 			"condition.type":                      "VALUE_COMPARISON",
 			"condition.equals":                    "MEDIUM",
-			"condition.compact_name":              "ipVelocityByUser",
-			"condition.predictor_reference_value": "${details.ipVelocityByUser.level}",
+			"condition.compact_name":              fmt.Sprintf("%s1", name),
+			"condition.predictor_reference_value": fmt.Sprintf("${details.%s1.level}", name),
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "overrides.*", map[string]string{
 			"name":                                   "allowed_list",
@@ -984,6 +984,17 @@ func testAccRiskPolicyConfig_Overrides_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_velocity = {
+    of = "$${event.user.id}"
+  }
+}
+
 resource "pingone_risk_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
@@ -1036,7 +1047,7 @@ resource "pingone_risk_policy" "%[2]s" {
 
       condition = {
         type         = "VALUE_COMPARISON"
-        compact_name = "ipVelocityByUser"
+        compact_name = pingone_risk_predictor.%[2]s.compact_name
         equals       = "MEDIUM"
       }
     },
@@ -1065,6 +1076,17 @@ resource "pingone_risk_policy" "%[2]s" {
 func testAccRiskPolicyConfig_Overrides_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_velocity = {
+    of = "$${event.user.id}"
+  }
+}
 
 resource "pingone_risk_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id

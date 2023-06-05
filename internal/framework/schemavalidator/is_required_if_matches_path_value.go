@@ -96,7 +96,7 @@ func (v IsRequiredIfMatchesPathValueValidator) Validate(ctx context.Context, req
 
 			// Found a matched path.  Compare the matched path to the provided path.
 			// If a matched value, and the current argument has not been set, return an error.
-			if v.TargetValue.Equal(matchedPathValue) && (req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown()) {
+			if v.TargetValue.Equal(matchedPathValue) && (req.ConfigValue.IsNull()) {
 
 				resp.Diagnostics.AddAttributeError(
 					matchedPath,
