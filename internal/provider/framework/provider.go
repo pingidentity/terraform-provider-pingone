@@ -32,7 +32,6 @@ type pingOneProvider struct {
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
 	version string
-	client  *pingone.Client
 }
 
 // pingOneProviderModel describes the provider data model.

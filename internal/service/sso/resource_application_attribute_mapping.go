@@ -125,7 +125,7 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage custom attribute mappings for applications configured in PingOne.",
+		Description: "Resource to create and manage custom attribute mappings for administrator defined applications configured in PingOne.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),

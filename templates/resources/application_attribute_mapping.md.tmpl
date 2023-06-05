@@ -9,6 +9,8 @@ description: |-
 
 {{ .Description | trimspace }}
 
+~> Attributes can only be mapped to administrator defined applications that are managed through the `pingone_application` resource.
+
 ## Example Usage - OIDC Application
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-oidc.tf") }}

@@ -130,6 +130,34 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	})
 }
 
+func TestAccApplicationFlowPolicyAssignment_SystemApplication(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_flow_policy_assignment.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationFlowPolicyAssignmentConfig_SystemApplication(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -202,6 +230,32 @@ resource "pingone_application_flow_policy_assignment" "%[2]s" {
 resource "pingone_application_flow_policy_assignment" "%[2]s-2" {
   environment_id = data.pingone_environment.davinci_test.id
   application_id = pingone_application.%[2]s.id
+
+  flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
+
+  priority = 1
+}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationFlowPolicyAssignmentConfig_SystemApplication(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_system_application" "%[2]s" {
+  environment_id = data.pingone_environment.davinci_test.id
+  type           = "PING_ONE_PORTAL"
+  enabled        = true
+}
+
+data "pingone_flow_policies" "%[2]s" {
+  environment_id = data.pingone_environment.davinci_test.id
+
+  scim_filter = "(trigger.type eq \"AUTHENTICATION\")"
+}
+
+resource "pingone_application_flow_policy_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.davinci_test.id
+  application_id = pingone_system_application.%[2]s.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
 

@@ -55,7 +55,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Metadata(ctx context.Context, 
 func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a DaVinci flow policy assignment for an application configured in PingOne.",
+		Description: "Resource to create and manage a DaVinci flow policy assignment for an administrator defined application or built-in system applications configured in PingOne.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -64,13 +64,12 @@ func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, re
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the application flow policy assignment in."),
 			),
 
-			"application_id": framework.Attr_LinkID(framework.SchemaAttributeDescription{
-				Description: "The ID of the application to create the flow policy assignment for.",
-			}),
+			"application_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to create the flow policy assignment for.\n\n-> The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources."),
+			),
 
-			"flow_policy_id": framework.Attr_LinkIDWithValidators(framework.SchemaAttributeDescription{
-				Description: "The ID of the DaVinci flow policy to associate.",
-			},
+			"flow_policy_id": framework.Attr_LinkIDWithValidators(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the DaVinci flow policy to associate."),
 				[]validator.String{
 					verify.P1DVResourceIDValidator(),
 				},

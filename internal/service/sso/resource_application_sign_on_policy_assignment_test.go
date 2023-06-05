@@ -3,6 +3,7 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -183,6 +184,38 @@ func TestAccApplicationSignOnPolicyAssignment_Change(t *testing.T) {
 	})
 }
 
+func TestAccApplicationSignOnPolicyAssignment_SystemApplication(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_sign_on_policy_assignment.%s", resourceName)
+
+	name := resourceName
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationSignOnPolicyAssignmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationSignOnPolicyAssignmentConfig_SystemApplication(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -263,4 +296,29 @@ resource "pingone_application_sign_on_policy_assignment" "%[2]s-2" {
   sign_on_policy_id = pingone_sign_on_policy.%[2]s-2.id
   priority          = 1
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationSignOnPolicyAssignmentConfig_SystemApplication(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_system_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  type           = "PING_ONE_PORTAL"
+  enabled        = true
+}
+
+resource "pingone_sign_on_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_application_sign_on_policy_assignment" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  application_id = pingone_system_application.%[3]s.id
+
+  sign_on_policy_id = pingone_sign_on_policy.%[3]s.id
+  priority          = 1
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

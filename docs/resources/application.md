@@ -2,12 +2,12 @@
 page_title: "pingone_application Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne applications
+  Resource to create and manage administrator defined applications in PingOne.
 ---
 
 # pingone_application (Resource)
 
-Resource to create and manage PingOne applications
+Resource to create and manage administrator defined applications in PingOne.
 
 ## Example Usage - Single Page Application (SPA)
 
