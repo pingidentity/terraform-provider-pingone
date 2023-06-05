@@ -23,6 +23,7 @@ NOTES:
 FEATURES:
 
 * **New Resource:** `pingone_branding_theme_default` ([#375](https://github.com/pingidentity/terraform-provider-pingone/issues/375))
+* **New Resource:** `pingone_risk_policy` ([#381](https://github.com/pingidentity/terraform-provider-pingone/issues/381))
 * **New Resource:** `pingone_system_application` ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
 
 ENHANCEMENTS:
