@@ -2,6 +2,12 @@
 
 NOTES:
 
+* `resource/pingone_application_attribute_mapping`: Updated documentation to reflect support for only administrator defined applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application_flow_policy_assignment`: Updated documentation to reflect support for Portal and Self-Service built-in system applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application_resource_grant`: Updated documentation to reflect support for Portal and Self-Service built-in system applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application_role_assignment`: Updated documentation to reflect support for only administrator defined applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application_sign_on_policy_assignment`: Updated documentation to reflect support for Portal and Self-Service built-in system applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application`: Updated documentation to reflect support for only administrator defined applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
 * `resource/pingone_branding_settings`: Migrated to plugin framework. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
 * `resource/pingone_branding_theme`: Corrected documentation example syntax. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
 * `resource/pingone_branding_theme`: Migrated to plugin framework. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
@@ -12,6 +18,11 @@ NOTES:
 FEATURES:
 
 * **New Resource:** `pingone_branding_theme_default` ([#375](https://github.com/pingidentity/terraform-provider-pingone/issues/375))
+* **New Resource:** `pingone_system_application` ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+
+ENHANCEMENTS:
+
+* `resource/pingone_application_role_assignment`: Added validation logic to ensure that only valid applications are accepted for role assignment. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
 
 BUG FIXES:
 
