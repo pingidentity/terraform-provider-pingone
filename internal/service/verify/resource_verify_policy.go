@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
@@ -194,9 +196,13 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 	const attrMaxLength = 1024
+	const attrMinDuration = 0
+	const attrMaxDurationSeconds = 1800
+	const attrMaxDurationMinutes = 30
 
 	verifyOptionPhraseFmt := "`REQUIRED`, `OPTIONAL`, or `DISABLED`."
 	thresholdOptionPhraseFmt := "`LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions)."
+	transactionTimeoutPhraseFmt := "can be `SECONDS`, `MINUTES`."
 
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Name of the verification policy displayed in PingOne Admin UI.",
@@ -240,6 +246,28 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 	otpNotificationTemplateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Name of the template to use to pass a one-time passcode (OTP). The default value of `email_phone_verification` is static. Use the `notification.variant_name` property to define an alternate template.",
+	)
+
+	transactionTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Length of time before transaction timeout expires. " +
+			"If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `0-30`. " +
+			"If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0-1800`.",
+	)
+
+	transactionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Time unit of transaction timeout; %s", transactionTimeoutPhraseFmt),
+	)
+
+	dataCollectionDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("%s\nWhen setting or changing timeouts in the transaction configuration object, `dataCollection.timeout.duration` must be less than or equal to `timeout.duration`.", transactionTimeoutDurationDescription),
+	)
+
+	dataCollectionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Time unit of data collection timeout; %s", transactionTimeoutPhraseFmt),
+	)
+
+	dataCollectionOnlyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"When `true`, collects documents specified in the policy without determining their validity; defaults to `false`.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -679,27 +707,46 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 
 			"transaction": schema.SingleNestedAttribute{
-				Optional: true,
-				Computed: true,
+				Description: "Defines the transaction requirements for transactions invoked by the policy.",
+				Optional:    true,
+				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"timeout": schema.SingleNestedAttribute{
-						Description: "Contains template parameters.",
+						Description: "Object for transaction timeout.",
 						Optional:    true,
 						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int64Attribute{
-								Description:         livenessVerifyDescription.Description,
-								MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
+								Description:         transactionTimeoutDurationDescription.Description,
+								MarkdownDescription: transactionTimeoutDurationDescription.MarkdownDescription,
 								Optional:            true,
 								Computed:            true,
 								Validators: []validator.Int64{
 									int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("duration")),
+									int64validator.Any(
+										int64validator.All(
+											int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
+											int64validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`MINUTES`),
+												"If `time_unit` is `MINUTES`, the allowed duration range is 0-30.",
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+										int64validator.All(
+											int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
+											int64validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`SECONDS`),
+												"If `time_unit` is `SECONDS`, the allowed duration range is 0-1800.",
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+									),
 								},
 							},
 							"time_unit": schema.StringAttribute{
-								Description:         livenessVerifyDescription.Description,
-								MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
+								Description:         transactionTimeoutTimeUnitDescription.Description,
+								MarkdownDescription: transactionTimeoutTimeUnitDescription.MarkdownDescription,
 								Optional:            true,
 								Computed:            true,
 								Validators: []validator.String{
@@ -710,27 +757,48 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						},
 					},
 					"data_collection": schema.SingleNestedAttribute{
-						Description: "Contains template parameters.",
+						Description: "Object for data collection timeout definition.",
 						Optional:    true,
 						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"timeout": schema.SingleNestedAttribute{
-								Description: "Contains template parameters.",
+								Description: "Object for data collection timeout.",
 								Optional:    true,
 								Computed:    true,
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int64Attribute{
-										Description:         livenessVerifyDescription.Description,
-										MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
+										Description:         dataCollectionDurationDescription.Description,
+										MarkdownDescription: dataCollectionDurationDescription.MarkdownDescription,
 										Optional:            true,
 										Computed:            true,
 										Validators: []validator.Int64{
 											int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("duration")),
+											int64validatorinternal.IsLessThanEqualToPathValue(
+												path.MatchRoot("transaction").AtName("timeout").AtName("duration"),
+											),
+											int64validator.Any(
+												int64validator.All(
+													int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
+													int64validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`MINUTES`),
+														"If `time_unit` is `MINUTES`, the allowed duration range is 0-30.",
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+												int64validator.All(
+													int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
+													int64validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`SECONDS`),
+														"If `time_unit` is `SECONDS`, the allowed duration range is 0-1800.",
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+											),
 										},
 									},
 									"time_unit": schema.StringAttribute{
-										Description:         livenessVerifyDescription.Description,
-										MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
+										Description:         dataCollectionTimeoutTimeUnitDescription.Description,
+										MarkdownDescription: dataCollectionTimeoutTimeUnitDescription.MarkdownDescription,
 										Optional:            true,
 										Computed:            true,
 										Validators: []validator.String{
@@ -743,8 +811,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						},
 					},
 					"data_collection_only": schema.BoolAttribute{
-						Description:         livenessVerifyDescription.Description,
-						MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
+						Description:         dataCollectionOnlyDescription.Description,
+						MarkdownDescription: dataCollectionOnlyDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 					},
