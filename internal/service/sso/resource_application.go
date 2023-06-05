@@ -22,7 +22,7 @@ func ResourceApplication() *schema.Resource {
 	return &schema.Resource{
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne applications",
+		Description: "Resource to create and manage administrator defined applications in PingOne.",
 
 		CreateContext: resourceApplicationCreate,
 		ReadContext:   resourceApplicationRead,

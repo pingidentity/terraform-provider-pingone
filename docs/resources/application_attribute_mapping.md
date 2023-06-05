@@ -2,12 +2,14 @@
 page_title: "pingone_application_attribute_mapping Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage custom attribute mappings for applications configured in PingOne.
+  Resource to create and manage custom attribute mappings for administrator defined applications configured in PingOne.
 ---
 
 # pingone_application_attribute_mapping (Resource)
 
-Resource to create and manage custom attribute mappings for applications configured in PingOne.
+Resource to create and manage custom attribute mappings for administrator defined applications configured in PingOne.
+
+~> Attributes can only be mapped to administrator defined applications that are managed through the `pingone_application` resource.
 
 ## Example Usage - OIDC Application
 
