@@ -14,6 +14,11 @@ NOTES:
 * `resource/pingone_credential_type`: Improved the documentation for the `title` and `description` attributes and explained their correlation to fields in the `card_design_template`. ([#377](https://github.com/pingidentity/terraform-provider-pingone/issues/377))
 * `resource/pingone_risk_predictor`: Corrected custom map type documentation example. ([#378](https://github.com/pingidentity/terraform-provider-pingone/issues/378))
 * `resource/pingone_risk_predictor`: Corrected documentation examples. ([#387](https://github.com/pingidentity/terraform-provider-pingone/issues/387))
+* bump `github.com/golangci/golangci-lint` v1.52.2 => v1.53.2 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.20.0 => v0.22.0 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.10.0 => v0.11.0 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.6.0 => v0.7.1 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.7.0 => v0.7.3 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
 
 FEATURES:
 
