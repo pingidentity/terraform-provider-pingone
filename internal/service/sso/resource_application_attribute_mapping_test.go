@@ -3,6 +3,7 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -487,6 +488,31 @@ func TestAccApplicationAttributeMapping_Core_Expression(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.given + ', ' + user.name.family}"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccApplicationAttributeMapping_SystemApplication(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccApplicationAttributeMappingConfig_SystemApplication(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid parameter value - Unmappable application type`),
 			},
 		},
 	})
@@ -1176,4 +1202,24 @@ resource "pingone_application_attribute_mapping" "%[2]s" {
   required = true
   value    = "$${user.name.given + ', ' + user.name.family}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationAttributeMappingConfig_SystemApplication(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_system_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  type           = "PING_ONE_PORTAL"
+  enabled        = true
+}
+
+resource "pingone_application_attribute_mapping" "%[2]s" {
+  environment_id = pingone_environment.%[2]s.id
+  application_id = pingone_system_application.%[3]s.id
+
+  name     = "sub"
+  required = true
+  value    = "$${user.name.given + ', ' + user.name.family}"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

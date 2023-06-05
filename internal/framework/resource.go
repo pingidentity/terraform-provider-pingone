@@ -89,6 +89,19 @@ func StringSetOkToTF(v []string, ok bool) basetypes.SetValue {
 	}
 }
 
+func StringSetToTF(v []string) basetypes.SetValue {
+	if v == nil {
+		return types.SetNull(types.StringType)
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, StringToTF(item))
+		}
+
+		return types.SetValueMust(types.StringType, list)
+	}
+}
+
 func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 	if v == nil {
 		return types.ListNull(types.StringType), nil

@@ -2,12 +2,14 @@
 page_title: "pingone_application_role_assignment Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne admin role assignments to applications.
+  Resource to create and manage PingOne admin role assignments to administrator defined applications.
 ---
 
 # pingone_application_role_assignment (Resource)
 
-Resource to create and manage PingOne admin role assignments to applications.
+Resource to create and manage PingOne admin role assignments to administrator defined applications.
+
+~> Role assignments can only be applied to administrator defined applications that are managed through the `pingone_application` resource.
 
 ## Example Usage - Assign Population Scope
 

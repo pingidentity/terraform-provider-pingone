@@ -1,6 +1,6 @@
 ---
 page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
-subcategory: "SSO"
+subcategory: "Platform"
 description: |-
 {{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
 ---
@@ -8,10 +8,6 @@ description: |-
 # {{.Name}} ({{.Type}})
 
 {{ .Description | trimspace }}
-
-~> This resource is for assignment of a PingOne native sign-on policy only.  For assignment of a DaVinci flow policy, use the `pingone_application_flow_policy_assignment` resource.
-
--> Sign-on policies can be mapped to administrator defined applications that are managed through the `pingone_application` resource, and built-in system applications that are managed through the `pingone_system_application` resource.
 
 {{ if .HasExample -}}
 ## Example Usage

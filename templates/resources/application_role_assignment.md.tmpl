@@ -9,6 +9,8 @@ description: |-
 
 {{ .Description | trimspace }}
 
+~> Role assignments can only be applied to administrator defined applications that are managed through the `pingone_application` resource.
+
 ## Example Usage - Assign Population Scope
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-population.tf") }}
