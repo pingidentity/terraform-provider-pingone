@@ -1,7 +1,7 @@
 resource "pingone_risk_predictor" "my_awesome_ip_reputation_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome IP Reputation Predictor"
-  compact_name   = "my_awesome_ip_reputation_predictor"
+  compact_name   = "myAwesomeIpReputationPredictor"
 
   default = {
     result = {

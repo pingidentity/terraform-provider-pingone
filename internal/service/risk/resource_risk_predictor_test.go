@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -801,12 +802,15 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 
 	name := resourceName
 
+	year, month, day := time.Now().Local().Date()
+	activationAt := time.Date(year, month, day, 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1).Format(time.RFC3339)
+
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "NEW_DEVICE"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.activation_at", "2023-05-02T00:00:00Z"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.activation_at", activationAt),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -825,11 +829,11 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name),
+				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name, activationAt),
 				Check:  fullCheck,
 			},
 			{
-				Config:  testAccRiskPredictorConfig_NewDevice_Full(resourceName, name),
+				Config:  testAccRiskPredictorConfig_NewDevice_Full(resourceName, name, activationAt),
 				Destroy: true,
 			},
 			// Minimal
@@ -843,7 +847,7 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 			},
 			// Change
 			{
-				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name),
+				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name, activationAt),
 				Check:  fullCheck,
 			},
 			{
@@ -851,7 +855,7 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 				Check:  minimalCheck,
 			},
 			{
-				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name),
+				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name, activationAt),
 				Check:  fullCheck,
 			},
 		},
@@ -867,6 +871,9 @@ func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 	name := resourceName
 	compactName := "newDevice"
 
+	year, month, day := time.Now().Local().Date()
+	activationAt := time.Date(year, month, day, 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1).Format(time.RFC3339)
+
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "newDevice"),
@@ -874,7 +881,7 @@ func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "NEW_DEVICE"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.activation_at", "2023-05-02T00:00:00Z"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.activation_at", activationAt),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -885,7 +892,7 @@ func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccRiskPredictorConfig_NewDevice_OverwriteUndeletable(resourceName, name, compactName),
+				Config: testAccRiskPredictorConfig_NewDevice_OverwriteUndeletable(resourceName, name, compactName, activationAt),
 				Check:  fullCheck,
 			},
 		},
@@ -1868,7 +1875,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_NewDevice_Full(resourceName, name string) string {
+func testAccRiskPredictorConfig_NewDevice_Full(resourceName, name, activationAt string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -1887,9 +1894,9 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   predictor_device = {
     detect        = "NEW_DEVICE"
-    activation_at = "2023-05-02T00:00:00Z"
+    activation_at = "%[4]s"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, activationAt)
 }
 
 func testAccRiskPredictorConfig_NewDevice_Minimal(resourceName, name string) string {
@@ -1906,7 +1913,7 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_NewDevice_OverwriteUndeletable(resourceName, name, compactName string) string {
+func testAccRiskPredictorConfig_NewDevice_OverwriteUndeletable(resourceName, name, compactName, activationAt string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -1924,9 +1931,9 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   predictor_device = {
     detect        = "NEW_DEVICE"
-    activation_at = "2023-05-02T00:00:00Z"
+    activation_at = "%[5]s"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName, activationAt)
 }
 
 func testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name string) string {

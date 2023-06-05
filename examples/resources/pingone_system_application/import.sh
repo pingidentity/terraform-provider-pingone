@@ -1,0 +1,1 @@
+$ terraform import pingone_system_application.example <environment_id>/<application_id>

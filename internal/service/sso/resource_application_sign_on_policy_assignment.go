@@ -19,7 +19,7 @@ func ResourceApplicationSignOnPolicyAssignment() *schema.Resource {
 	return &schema.Resource{
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a sign-on policy assignment for applications configured in PingOne.",
+		Description: "Resource to create and manage a sign-on policy assignment for administrator defined applications or built-in system applications configured in PingOne.",
 
 		CreateContext: resourcePingOneApplicationSignOnPolicyAssignmentCreate,
 		ReadContext:   resourcePingOneApplicationSignOnPolicyAssignmentRead,
@@ -39,7 +39,7 @@ func ResourceApplicationSignOnPolicyAssignment() *schema.Resource {
 				ForceNew:         true,
 			},
 			"application_id": {
-				Description:      "The ID of the application to create the sign-on policy assignment for.",
+				Description:      "The ID of the application to create the sign-on policy assignment for.\n\n-> The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,

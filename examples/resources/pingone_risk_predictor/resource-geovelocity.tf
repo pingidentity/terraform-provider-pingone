@@ -1,7 +1,7 @@
-resource "pingone_risk_predictor" "my_awesome_geovelocity_predictor" {
+resource "pingone_risk_predictor" "my_awesome_geovelocity_anomaly_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Geovelocity Predictor"
-  compact_name   = "my_awesome_geovelocity_predictor"
+  compact_name   = "myAwesomeGeovelocityPredictor"
 
   default = {
     result = {

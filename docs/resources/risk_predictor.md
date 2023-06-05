@@ -15,7 +15,7 @@ Resource to manage Risk predictors in a PingOne environment.
 resource "pingone_risk_predictor" "my_awesome_anonymous_network_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Anonymous Network Predictor"
-  compact_name   = "my_awesome_anonymous_network_predictor"
+  compact_name   = "myAwesomeAnonymousNetworkPredictor"
 
   default = {
     result = {
@@ -35,15 +35,15 @@ resource "pingone_risk_predictor" "my_awesome_anonymous_network_predictor" {
 resource "pingone_risk_predictor" "my_awesome_anonymous_network_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Anonymous Network Predictor"
-  compact_name   = "my_awesome_anonymous_network_predictor"
+  compact_name   = "myAwesomeAnonymousNetworkPredictor"
 
   predictor_anonymous_network = {}
 }
 
-resource "pingone_risk_predictor" "my_awesome_geovelocity_predictor" {
+resource "pingone_risk_predictor" "my_awesome_geovelocity_anomaly_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Geovelocity Predictor"
-  compact_name   = "my_awesome_geovelocity_predictor"
+  compact_name   = "myAwesomeGeovelocityPredictor"
 
   predictor_geovelocity = {}
 }
@@ -51,7 +51,7 @@ resource "pingone_risk_predictor" "my_awesome_geovelocity_predictor" {
 resource "pingone_risk_predictor" "my_awesome_composite_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Composite Predictor"
-  compact_name   = "my_awesome_composite_predictor"
+  compact_name   = "myAwesomeCompositePredictor"
 
   predictor_composite = {
     composition = {
@@ -65,7 +65,7 @@ resource "pingone_risk_predictor" "my_awesome_composite_predictor" {
             "type" : "VALUE_COMPARISON"
             }, {
             "equals" : "High",
-            "value" : "$${details.${pingone_risk_predictor.my_awesome_geovelocity_predictor.compact_name}.level}",
+            "value" : "$${details.${pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name}.level}",
             "type" : "VALUE_COMPARISON"
             }, {
             "and" : [{
@@ -90,7 +90,7 @@ resource "pingone_risk_predictor" "my_awesome_composite_predictor" {
 resource "pingone_risk_predictor" "my_awesome_custom_predictor_between_ranges" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Custom Predictor Between Ranges"
-  compact_name   = "my_awesome_custom_predictor_between_ranges"
+  compact_name   = "myAwesomeCustomPredictorBetweenRanges"
 
   default = {
     result = {
@@ -99,7 +99,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_between_ranges" {
   }
 
   predictor_custom_map = {
-    contains = "$${event.my_custom_field}"
+    contains = "$${event.myCustomField}"
 
     between_ranges = {
       high = {
@@ -123,7 +123,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_between_ranges" {
 resource "pingone_risk_predictor" "my_awesome_custom_predictor_ip_ranges" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Custom Predictor IP Ranges"
-  compact_name   = "my_awesome_custom_predictor_ip_ranges"
+  compact_name   = "myAwesomeCustomPredictorIpRanges"
 
   default = {
     result = {
@@ -132,7 +132,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_ip_ranges" {
   }
 
   predictor_custom_map = {
-    contains = "$${event.my_custom_field}"
+    contains = "$${event.myCustomField}"
 
     ip_ranges = {
       high = {
@@ -156,7 +156,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_ip_ranges" {
 resource "pingone_risk_predictor" "my_awesome_custom_predictor_list" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Custom Predictor List"
-  compact_name   = "my_awesome_custom_predictor_list"
+  compact_name   = "myAwesomeCustomPredictorList"
 
   default = {
     result = {
@@ -165,7 +165,7 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_list" {
   }
 
   predictor_custom_map = {
-    contains = "$${event.my_custom_field}"
+    contains = "$${event.myCustomField}"
 
     string_list = {
       high = {
@@ -187,10 +187,10 @@ resource "pingone_risk_predictor" "my_awesome_custom_predictor_list" {
 ## Example Usage - Geovelocity Predictor
 
 ```terraform
-resource "pingone_risk_predictor" "my_awesome_geovelocity_predictor" {
+resource "pingone_risk_predictor" "my_awesome_geovelocity_anomaly_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Geovelocity Predictor"
-  compact_name   = "my_awesome_geovelocity_predictor"
+  compact_name   = "myAwesomeGeovelocityPredictor"
 
   default = {
     result = {
@@ -210,7 +210,7 @@ resource "pingone_risk_predictor" "my_awesome_geovelocity_predictor" {
 resource "pingone_risk_predictor" "my_awesome_ip_reputation_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome IP Reputation Predictor"
-  compact_name   = "my_awesome_ip_reputation_predictor"
+  compact_name   = "myAwesomeIpReputationPredictor"
 
   default = {
     result = {
@@ -230,7 +230,7 @@ resource "pingone_risk_predictor" "my_awesome_ip_reputation_predictor" {
 resource "pingone_risk_predictor" "my_awesome_new_device_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome New Device Predictor"
-  compact_name   = "my_awesome_new_device_predictor"
+  compact_name   = "myAwesomeNewDevicePredictor"
 
   default = {
     result = {
@@ -240,7 +240,7 @@ resource "pingone_risk_predictor" "my_awesome_new_device_predictor" {
 
   predictor_device = {
     detect        = "NEW_DEVICE"
-    activation_at = "2023-05-01T00:00:00Z"
+    activation_at = "2023-06-01T00:00:00Z"
   }
 }
 ```
@@ -251,7 +251,7 @@ resource "pingone_risk_predictor" "my_awesome_new_device_predictor" {
 resource "pingone_risk_predictor" "my_awesome_user_location_predictor" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome User Location Predictor"
-  compact_name   = "my_awesome_user_location_predictor"
+  compact_name   = "myAwesomeUserLocationPredictor"
 
   default = {
     result = {
@@ -274,7 +274,7 @@ resource "pingone_risk_predictor" "my_awesome_user_location_predictor" {
 resource "pingone_risk_predictor" "my_awesome_user_risk_behavior_predictor_by_user" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome User Risk Behavior Predictor By User"
-  compact_name   = "my_awesome_user_risk_behavior_predictor_by_user"
+  compact_name   = "myAwesomeUserRiskBehaviorPredictorByUser"
 
   default = {
     result = {
@@ -292,7 +292,7 @@ resource "pingone_risk_predictor" "my_awesome_user_risk_behavior_predictor_by_us
 resource "pingone_risk_predictor" "my_awesome_user_risk_behavior_predictor_by_organization" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome User Risk Behavior Predictor By Organization"
-  compact_name   = "my_awesome_user_risk_behavior_predictor_by_organization"
+  compact_name   = "myAwesomeUserRiskBehaviorPredictorByOrganization"
 
   default = {
     result = {
@@ -314,7 +314,7 @@ resource "pingone_risk_predictor" "my_awesome_user_risk_behavior_predictor_by_or
 resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_ip" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Velocity Predictor By IP"
-  compact_name   = "my_awesome_velocity_predictor_by_ip"
+  compact_name   = "myAwesomeVelocityPredictorByIp"
 
   default = {
     result = {
@@ -330,7 +330,7 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_ip" {
 resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Velocity Predictor By User"
-  compact_name   = "my_awesome_velocity_predictor_by_user"
+  compact_name   = "myAwesomeVelocityPredictorByUser"
 
   default = {
     result = {
