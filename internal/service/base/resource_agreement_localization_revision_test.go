@@ -83,7 +83,7 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	dateVariant2 := time.Now().Local().Add(time.Hour * time.Duration(2))
+	dateVariant2 := time.Now().In(time.UTC).Add(time.Hour * time.Duration(2))
 
 	variant1 := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
