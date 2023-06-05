@@ -790,8 +790,8 @@ github.com/patrickcping/pingone-go-sdk-v2/management v0.20.0 h1:WIg+GM5v1GQ2xPD9
 github.com/patrickcping/pingone-go-sdk-v2/management v0.20.0/go.mod h1:vKLKw38LIr8jUWg3/GUdxO4YqwMJreYLzkVehKX2UoU=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.10.0 h1:2w7Bkuy5oaEbOb1iVaY+qwkZm43pyvtQj+9p83TwzZo=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.10.0/go.mod h1:+Lm+lJucLEceYY89ZonH6w9GbU2Upnq3XLO9AMfsnQM=
-github.com/patrickcping/pingone-go-sdk-v2/risk v0.6.0 h1:4jM0idnJEZnJlgkA/xDOiWPRIlpoCDHgsy13SYUq/d8=
-github.com/patrickcping/pingone-go-sdk-v2/risk v0.6.0/go.mod h1:VntAM/eGSmmBkjXpD4KA/qdCr+9+glGvF6upRjCE6fQ=
+github.com/patrickcping/pingone-go-sdk-v2/risk v0.7.0 h1:jIwDIbb+ax+ZpXqtDzvsURDd/ZZiqRjqhG5E7o4fDzE=
+github.com/patrickcping/pingone-go-sdk-v2/risk v0.7.0/go.mod h1:Fz4rO3FRbwZ10D94h1rP14i4tF/52O38UcuvFbXVul8=
 github.com/pavius/impi v0.0.3 h1:DND6MzU+BLABhOZXbELR3FU8b+zDgcq4dOCNLhiTYuI=
 github.com/pavius/impi v0.0.3/go.mod h1:x/hU0bfdWIhuOT1SKwiJg++yvkk6EuOtJk8WtDZqgr8=
 github.com/pelletier/go-toml/v2 v2.0.6 h1:nrzqCb7j9cDFj2coyLNLaZuJTLjWjlaz6nvTvIwycIU=
@@ -1041,8 +1041,8 @@ golang.org/x/exp v0.0.0-20191227195350-da58074b4299/go.mod h1:2RIsYlXP63K8oxa1u0
 golang.org/x/exp v0.0.0-20200119233911-0405dc783f0a/go.mod h1:2RIsYlXP63K8oxa1u096TMicItID8zy7Y6sNkU49FU4=
 golang.org/x/exp v0.0.0-20200207192155-f17229e696bd/go.mod h1:J/WKrq2StrnmMY6+EHIKF9dgMWnmCNThgcyBT1FY9mM=
 golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6/go.mod h1:3jZMyOhIsHpP37uCMkUooju7aAi5cS1Q23tOzKc+0MU=
-golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc h1:mCRnTeVUjcrhlRmO0VK8a6k6Rrf6TF9htwo2pJVSjIU=
-golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc/go.mod h1:V1LtkGg67GoY2N1AnLN78QLrzxkLyJw7RJb1gzOOz9w=
+golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 h1:k/i9J1pBpvlfR+9QsetwPyERsqu1GIbi967PQMq3Ivc=
+golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1/go.mod h1:V1LtkGg67GoY2N1AnLN78QLrzxkLyJw7RJb1gzOOz9w=
 golang.org/x/exp/typeparams v0.0.0-20220428152302-39d4317da171/go.mod h1:AbB0pIl9nAr9wVwH+Z2ZpaocVmF5I4GyWCDIsVjR0bk=
 golang.org/x/exp/typeparams v0.0.0-20230203172020-98cc5a0785f9/go.mod h1:AbB0pIl9nAr9wVwH+Z2ZpaocVmF5I4GyWCDIsVjR0bk=
 golang.org/x/exp/typeparams v0.0.0-20230224173230-c95f2b4c22f2 h1:J74nGeMgeFnYQJN59eFwh06jX/V8g0lB7LWpjSLxtgU=
