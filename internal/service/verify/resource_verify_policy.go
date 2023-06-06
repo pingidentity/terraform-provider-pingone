@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -276,11 +277,11 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. " +
 			"If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.\n\n" +
 			"Verify policies can perform any of five checks:\n" +
-			"* Government identity document - Validate a government-issued identity document, which includes a photograph." +
-			"* Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph." +
-			"* Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask." +
-			"* Email - Receive a one-time password (OTP) on an email address and return the OTP to the service." +
-			"* Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n",
+			"* Government identity document - Validate a government-issued identity document, which includes a photograph.\n" +
+			"* Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.\n" +
+			"* Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.\n" +
+			"* Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.\n" +
+			"* Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n\n",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -318,15 +319,24 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 				Computed:    true,
 
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"verify": framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
+					}
+
+					objValue, d := types.ObjectValue(governmentIdServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
+
 				Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
 						Description:         governmentIdVerifyDescription.Description,
 						MarkdownDescription: governmentIdVerifyDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
-							stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("verify")),
 						},
 					},
 				},
@@ -339,25 +349,33 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 				Computed:    true,
 
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"verify":    framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
+						"threshold": framework.StringToTF(string(verify.ENUMTHRESHOLD_MEDIUM)),
+					}
+
+					objValue, d := types.ObjectValue(facialComparisonServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
+
 				Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
 						Description:         facialComparisonVerifyDescription.Description,
 						MarkdownDescription: facialComparisonVerifyDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
-							stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("verify")),
 						},
 					},
 					"threshold": schema.StringAttribute{
 						Description:         facialComparisonThresholdDescription.Description,
 						MarkdownDescription: facialComparisonThresholdDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
-							stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("threshold")),
 						},
 					},
 				},
@@ -370,25 +388,33 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 				Computed:    true,
 
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"verify":    framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
+						"threshold": framework.StringToTF(string(verify.ENUMTHRESHOLD_MEDIUM)),
+					}
+
+					objValue, d := types.ObjectValue(livenessServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
+
 				Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
 						Description:         livenessVerifyDescription.Description,
 						MarkdownDescription: livenessVerifyDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
-							stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("verify")),
 						},
 					},
 					"threshold": schema.StringAttribute{
 						Description:         livenessThresholdDescription.Description,
 						MarkdownDescription: livenessThresholdDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
-							stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("threshold")),
 						},
 					},
 				},
@@ -401,117 +427,131 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 				Computed:    true,
 
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"count": framework.Int32ToTF(5),
+					}
+					attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"duration":  framework.Int32ToTF(10),
+						"time_unit": framework.StringToTF(string(verify.ENUMLONGTIMEUNIT_MINUTES)),
+					}
+					lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"template_name": framework.StringToTF("email_phone_verification"),
+						"variant_name":  types.StringNull(),
+					}
+					notificationObjValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"duration":  framework.Int32ToTF(30),
+						"time_unit": framework.StringToTF(string(verify.ENUMLONGTIMEUNIT_SECONDS)),
+					}
+					cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"count":    framework.Int32ToTF(3),
+						"cooldown": cooldownObjValue,
+					}
+					deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"attempts":     attemptsObjValue,
+						"lifetime":     lifetimeObjValue,
+						"deliveries":   deliveriesObjValue,
+						"notification": notificationObjValue,
+					}
+					otpObjValue, d := types.ObjectValue(otpServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					createMfaDevice := new(bool)
+					*createMfaDevice = false
+					o = map[string]attr.Value{
+						"verify":            framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
+						"create_mfa_device": framework.BoolOkToTF(createMfaDevice, true),
+						"otp":               otpObjValue,
+					}
+					objValue, d := types.ObjectValue(deviceServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
+
 				Attributes: map[string]schema.Attribute{
 					"create_mfa_device": schema.BoolAttribute{
 						Description: "When enabled, PingOne Verify registers the email address with PingOne MFA as a verified MFA device.",
 						Optional:    true,
-						Computed:    true,
 					},
 					"otp": schema.SingleNestedAttribute{
 						Description: "SMS/Voice/Email one-time password (OTP) configuration.",
 						Optional:    true,
-						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"attempts": schema.SingleNestedAttribute{
 								Description: "OTP attempts configuration.",
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int64Attribute{
 										Description: "Allowed maximum number of OTP failures.",
-										Optional:    true,
-										Computed:    true,
-										Validators: []validator.Int64{
-											int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("count")),
-										},
+										Required:    true,
 									},
-								},
-
-								Validators: []validator.Object{
-									objectvalidator.IsRequired(),
 								},
 							},
 							"deliveries": schema.SingleNestedAttribute{
 								Description: "OTP delivery configuration.",
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int64Attribute{
 										Description: "Allowed maximum number of OTP deliveries.",
-										Optional:    true,
-										Computed:    true,
-										Validators: []validator.Int64{
-											int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("count")),
-										},
+										Required:    true,
 									},
 									"cooldown": schema.SingleNestedAttribute{
 										Description: "Cooldown (waiting period between OTP attempts) configuration.",
-										Optional:    true,
-										Computed:    true,
+										Required:    true,
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int64Attribute{
 												Description: "Cooldown duration configuration.",
-												Optional:    true,
-												Computed:    true,
-												Validators: []validator.Int64{
-													int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("duration")),
-												},
+												Required:    true,
 											},
 											"time_unit": schema.StringAttribute{
 												Description:         otpDeliveriesCooldownTimeUnitDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownTimeUnitDescription.MarkdownDescription,
-												Optional:            true,
-												Computed:            true,
+												Required:            true,
 												Validators: []validator.String{
 													stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumLongTimeUnitEnumValues)...),
-													stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("time_unit")),
 												},
 											},
 										},
-
-										Validators: []validator.Object{
-											objectvalidator.IsRequired(),
-										},
 									},
-								},
-
-								Validators: []validator.Object{
-									objectvalidator.IsRequired(),
 								},
 							},
 							"lifetime": schema.SingleNestedAttribute{
 								Description: "The length of time for which the OTP is valid.",
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int64Attribute{
 										Description: "OTP duration configuration.",
-										Optional:    true,
-										Computed:    true,
-										Validators: []validator.Int64{
-											int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("duration")),
-										},
+										Required:    true,
 									},
 									"time_unit": schema.StringAttribute{
 										Description:         otpLifetimeTimeUnitDescription.Description,
 										MarkdownDescription: otpLifetimeTimeUnitDescription.MarkdownDescription,
-										Optional:            true,
-										Computed:            true,
+										Required:            true,
 										Validators: []validator.String{
 											stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumLongTimeUnitEnumValues)...),
-											stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("time_unit")),
 										},
 									},
-								},
-
-								Validators: []validator.Object{
-									objectvalidator.IsRequired(),
 								},
 							},
 							"notification": schema.SingleNestedAttribute{
 								Description: "OTP notification template configuration.",
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"template_name": schema.StringAttribute{
 										Description:         otpNotificationTemplateDescription.Description,
@@ -522,16 +562,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 									"variant_name": schema.StringAttribute{
 										Description: "Name of the template variant to use to pass a one-time passcode (OTP).",
 										Optional:    true,
-										Computed:    true,
 										Validators: []validator.String{
 											stringvalidator.LengthAtLeast(attrMinLength),
-											stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("variant_name")),
 										},
 									},
-								},
-
-								Validators: []validator.Object{
-									objectvalidator.IsRequired(),
 								},
 							},
 						},
@@ -539,11 +573,9 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"verify": schema.StringAttribute{
 						Description:         deviceVerifyDescription.Description,
 						MarkdownDescription: deviceVerifyDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
-							stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("verify")),
 						},
 					},
 				},
@@ -556,117 +588,131 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 				Computed:    true,
 
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"count": framework.Int32ToTF(5),
+					}
+					attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"duration":  framework.Int32ToTF(5),
+						"time_unit": framework.StringToTF(string(verify.ENUMLONGTIMEUNIT_MINUTES)),
+					}
+					lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"template_name": framework.StringToTF("email_phone_verification"),
+						"variant_name":  types.StringNull(),
+					}
+					notificationObjValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"duration":  framework.Int32ToTF(30),
+						"time_unit": framework.StringToTF(string(verify.ENUMLONGTIMEUNIT_SECONDS)),
+					}
+					cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"count":    framework.Int32ToTF(3),
+						"cooldown": cooldownObjValue,
+					}
+					deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"attempts":     attemptsObjValue,
+						"lifetime":     lifetimeObjValue,
+						"deliveries":   deliveriesObjValue,
+						"notification": notificationObjValue,
+					}
+					otpObjValue, d := types.ObjectValue(otpServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					createMfaDevice := new(bool)
+					*createMfaDevice = false
+					o = map[string]attr.Value{
+						"verify":            framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
+						"create_mfa_device": framework.BoolOkToTF(createMfaDevice, true),
+						"otp":               otpObjValue,
+					}
+					objValue, d := types.ObjectValue(deviceServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
+
 				Attributes: map[string]schema.Attribute{
 					"create_mfa_device": schema.BoolAttribute{
 						Description: "When enabled, PingOne Verify registers the mobile phone with PingOne MFA as a verified MFA device.",
 						Optional:    true,
-						Computed:    true,
 					},
 					"otp": schema.SingleNestedAttribute{
 						Description: "SMS/Voice/Email one-time password (OTP) configuration.",
 						Optional:    true,
-						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"attempts": schema.SingleNestedAttribute{
 								Description: "OTP attempts configuration.",
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int64Attribute{
 										Description: "Allowed maximum number of OTP failures.",
-										Optional:    true,
-										Computed:    true,
-										Validators: []validator.Int64{
-											int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("count")),
-										},
+										Required:    true,
 									},
-								},
-
-								Validators: []validator.Object{
-									objectvalidator.IsRequired(),
 								},
 							},
 							"deliveries": schema.SingleNestedAttribute{
 								Description: "OTP delivery configuration.",
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int64Attribute{
 										Description: "Allowed maximum number of OTP deliveries.",
-										Optional:    true,
-										Computed:    true,
-										Validators: []validator.Int64{
-											int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("count")),
-										},
+										Required:    true,
 									},
 									"cooldown": schema.SingleNestedAttribute{
 										Description: "Cooldown (waiting period between OTP attempts) configuration.",
-										Optional:    true,
-										Computed:    true,
+										Required:    true,
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int64Attribute{
 												Description: "Cooldown duration configuration.",
-												Optional:    true,
-												Computed:    true,
-												Validators: []validator.Int64{
-													int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("duration")),
-												},
+												Required:    true,
 											},
 											"time_unit": schema.StringAttribute{
 												Description:         otpDeliveriesCooldownTimeUnitDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownTimeUnitDescription.MarkdownDescription,
-												Optional:            true,
-												Computed:            true,
+												Required:            true,
 												Validators: []validator.String{
 													stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumLongTimeUnitEnumValues)...),
-													stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("time_unit")),
 												},
 											},
 										},
-
-										Validators: []validator.Object{
-											objectvalidator.IsRequired(),
-										},
 									},
-								},
-
-								Validators: []validator.Object{
-									objectvalidator.IsRequired(),
 								},
 							},
 							"lifetime": schema.SingleNestedAttribute{
 								Description: "The length of time for which the OTP is valid.",
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int64Attribute{
 										Description: "OTP duration configuration.",
-										Optional:    true,
-										Computed:    true,
-										Validators: []validator.Int64{
-											int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("duration")),
-										},
+										Required:    true,
 									},
 									"time_unit": schema.StringAttribute{
 										Description:         otpLifetimeTimeUnitDescription.Description,
 										MarkdownDescription: otpLifetimeTimeUnitDescription.MarkdownDescription,
-										Optional:            true,
-										Computed:            true,
+										Required:            true,
 										Validators: []validator.String{
 											stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumLongTimeUnitEnumValues)...),
-											stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("time_unit")),
 										},
 									},
-								},
-
-								Validators: []validator.Object{
-									objectvalidator.IsRequired(),
 								},
 							},
 							"notification": schema.SingleNestedAttribute{
 								Description: "OTP notification template configuration.",
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"template_name": schema.StringAttribute{
 										Description:         otpNotificationTemplateDescription.Description,
@@ -677,16 +723,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 									"variant_name": schema.StringAttribute{
 										Description: "Name of the template variant to use to pass a one-time passcode (OTP).",
 										Optional:    true,
-										Computed:    true,
 										Validators: []validator.String{
 											stringvalidator.LengthAtLeast(attrMinLength),
-											stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("variant_name")),
 										},
 									},
-								},
-
-								Validators: []validator.Object{
-									objectvalidator.IsRequired(),
 								},
 							},
 						},
@@ -694,11 +734,9 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"verify": schema.StringAttribute{
 						Description:         deviceVerifyDescription.Description,
 						MarkdownDescription: deviceVerifyDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
-							stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("verify")),
 						},
 					},
 				},
@@ -707,23 +745,54 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 
 			"transaction": schema.SingleNestedAttribute{
-				Description: "Defines the transaction requirements for transactions invoked by the policy.",
+				Description: "Defines the requirements for transactions invoked by the policy.",
 				Optional:    true,
 				Computed:    true,
+
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"duration":  framework.Int32ToTF(30),
+						"time_unit": framework.StringToTF(string(verify.ENUMSHORTTIMEUNIT_MINUTES)),
+					}
+					timeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"duration":  framework.Int32ToTF(15),
+						"time_unit": framework.StringToTF(string(verify.ENUMSHORTTIMEUNIT_MINUTES)),
+					}
+					dataCollectionTimeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					o = map[string]attr.Value{
+						"timeout": dataCollectionTimeoutObjValue,
+					}
+					dataCollectionObjValue, d := types.ObjectValue(dataCollectionServiceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					dataCollectionBool := new(bool)
+					*dataCollectionBool = false
+					objValue, d := types.ObjectValue(transactionServiceTFObjectTypes, map[string]attr.Value{
+						"timeout":              timeoutObjValue,
+						"data_collection":      dataCollectionObjValue,
+						"data_collection_only": framework.BoolOkToTF(dataCollectionBool, true),
+					})
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
 
 				Attributes: map[string]schema.Attribute{
 					"timeout": schema.SingleNestedAttribute{
 						Description: "Object for transaction timeout.",
 						Optional:    true,
-						Computed:    true,
+
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int64Attribute{
 								Description:         transactionTimeoutDurationDescription.Description,
 								MarkdownDescription: transactionTimeoutDurationDescription.MarkdownDescription,
-								Optional:            true,
-								Computed:            true,
+								Required:            true,
 								Validators: []validator.Int64{
-									int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("duration")),
 									int64validator.Any(
 										int64validator.All(
 											int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
@@ -747,8 +816,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 							"time_unit": schema.StringAttribute{
 								Description:         transactionTimeoutTimeUnitDescription.Description,
 								MarkdownDescription: transactionTimeoutTimeUnitDescription.MarkdownDescription,
-								Optional:            true,
-								Computed:            true,
+								Required:            true,
 								Validators: []validator.String{
 									stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumShortTimeUnitEnumValues)...),
 									stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("time_unit")),
@@ -759,20 +827,16 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"data_collection": schema.SingleNestedAttribute{
 						Description: "Object for data collection timeout definition.",
 						Optional:    true,
-						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"timeout": schema.SingleNestedAttribute{
 								Description: "Object for data collection timeout.",
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int64Attribute{
 										Description:         dataCollectionDurationDescription.Description,
 										MarkdownDescription: dataCollectionDurationDescription.MarkdownDescription,
-										Optional:            true,
-										Computed:            true,
+										Required:            true,
 										Validators: []validator.Int64{
-											int64validator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("duration")),
 											int64validatorinternal.IsLessThanEqualToPathValue(
 												path.MatchRoot("transaction").AtName("timeout").AtName("duration"),
 											),
@@ -799,8 +863,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 									"time_unit": schema.StringAttribute{
 										Description:         dataCollectionTimeoutTimeUnitDescription.Description,
 										MarkdownDescription: dataCollectionTimeoutTimeUnitDescription.MarkdownDescription,
-										Optional:            true,
-										Computed:            true,
+										Required:            true,
 										Validators: []validator.String{
 											stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumShortTimeUnitEnumValues)...),
 											stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("time_unit")),
@@ -814,7 +877,6 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						Description:         dataCollectionOnlyDescription.Description,
 						MarkdownDescription: dataCollectionOnlyDescription.MarkdownDescription,
 						Optional:            true,
-						Computed:            true,
 					},
 				},
 			},

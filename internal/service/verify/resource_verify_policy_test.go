@@ -225,85 +225,85 @@ func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name str
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
-  description    = "%[4]s"  
+  description    = "%[4]s"
   default        = false
 
   government_id = {
-	verify = "REQUIRED"
+    verify = "REQUIRED"
   }
 
   facial_comparison = {
-	verify = "REQUIRED"
-	threshold = "HIGH"	
+    verify    = "REQUIRED"
+    threshold = "HIGH"
   }
-  
+
   liveness = {
-	verify = "REQUIRED"
-	threshold = "HIGH"		
-  }  
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
 
   email = {
-	verify = "REQUIRED"
-	create_mfa_device: true
-	otp = {
-		attempts = {
-			count = "4"
-		}
-		lifetime = {
-			duration = "16"
-			time_unit = "MINUTES"
-		},
-		deliveries = {
-			count = 5
-			cooldown = {
-				duration = "33"
-				time_unit = "SECONDS"
-			}
-		}
-		notification = {
-			variant_name = "english_b"
-		}
-	}
-}
+    verify = "REQUIRED"
+    create_mfa_device : true
+    otp = {
+      attempts = {
+        count = "4"
+      }
+      lifetime = {
+        duration  = "16"
+        time_unit = "MINUTES"
+      },
+      deliveries = {
+        count = 5
+        cooldown = {
+          duration  = "33"
+          time_unit = "SECONDS"
+        }
+      }
+      notification = {
+        variant_name = "english_b"
+      }
+    }
+  }
 
-phone = {
-	verify = "REQUIRED"
-	create_mfa_device: true
-	otp = {
-		attempts = {
-			count = "2"
-		}
-		lifetime = {
-			duration = "7"
-			time_unit = "MINUTES"
-		},
-		deliveries = {
-			count = 3
-			cooldown = {
-				duration = "16"
-				time_unit = "SECONDS"
-			}
-		}
-		notification = {
-			variant_name = "variant23_b"
-		}
-	}
-}
-  
+  phone = {
+    verify = "REQUIRED"
+    create_mfa_device : true
+    otp = {
+      attempts = {
+        count = "2"
+      }
+      lifetime = {
+        duration  = "7"
+        time_unit = "MINUTES"
+      },
+      deliveries = {
+        count = 3
+        cooldown = {
+          duration  = "16"
+          time_unit = "SECONDS"
+        }
+      }
+      notification = {
+        variant_name = "variant23_b"
+      }
+    }
+  }
+
   transaction = {
-	timeout = {
-		duration = "27"
-		time_unit = "MINUTES"
-	}
+    timeout = {
+      duration  = "27"
+      time_unit = "MINUTES"
+    }
 
-	data_collection = {
-		timeout = {
-			duration = "12"
-			time_unit = "MINUTES"
-		}
-	}
+    data_collection = {
+      timeout = {
+        duration  = "12"
+        time_unit = "MINUTES"
+      }
+    }
 
-	data_collection_only = false
+    data_collection_only = false
   }
 
   depends_on = [pingone_environment.%[2]s]
@@ -317,10 +317,10 @@ func testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, name 
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
-  description    = "%[4]s"  
+  description    = "%[4]s"
 
   government_id = {
-	verify = "REQUIRED"
+    verify = "REQUIRED"
   }
 
   depends_on = [pingone_environment.%[2]s]
