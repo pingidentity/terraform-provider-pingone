@@ -1,5 +1,13 @@
 ## 0.15.1 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_population`: Migrated to plugin framework. ([#400](https://github.com/pingidentity/terraform-provider-pingone/issues/400))
+
+BUG FIXES:
+
+* `resource/pingone_population`: Fixed panic on plan when population is removed outside of Terraform. ([#400](https://github.com/pingidentity/terraform-provider-pingone/issues/400))
+
 ## 0.15.0 (06 June 2023)
 
 NOTES:
