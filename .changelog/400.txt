@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_population`: Migrated to plugin framework.
+```
+
+```release-note:bug
+`resource/pingone_population`: Fixed panic on plan when population is removed outside of Terraform.
+```

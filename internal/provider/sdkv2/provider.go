@@ -119,7 +119,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_group_nesting":                         sso.ResourceGroupNesting(),
 				"pingone_identity_provider":                     sso.ResourceIdentityProvider(),
 				"pingone_password_policy":                       sso.ResourcePasswordPolicy(),
-				"pingone_population":                            sso.ResourcePopulation(),
 				"pingone_resource":                              sso.ResourceResource(),
 				"pingone_resource_scope":                        sso.ResourceResourceScope(),
 				"pingone_resource_scope_openid":                 sso.ResourceResourceScopeOpenID(),
