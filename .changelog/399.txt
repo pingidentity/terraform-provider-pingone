@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_mfa_policy`: Migrated to plugin framework.
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_policy`: Supports the ability to define the pairing key lifetime and push limit for mobile applications.
+```
