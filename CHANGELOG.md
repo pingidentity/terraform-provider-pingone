@@ -1,4 +1,4 @@
-## 0.15.0 (Unreleased)
+## 0.15.0 (06 June 2023)
 
 NOTES:
 
