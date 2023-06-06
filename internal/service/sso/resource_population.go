@@ -144,11 +144,7 @@ func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Build the model for the API
-	population, d := plan.expand()
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	population := plan.expand()
 
 	// Run the API call
 	response, d := PingOnePopulationCreate(ctx, r.client, plan.EnvironmentId.ValueString(), *population)
@@ -234,11 +230,7 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Build the model for the API
-	population, d := plan.expand()
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	population := plan.expand()
 
 	// Run the API call
 	response, d := framework.ParseResponse(
@@ -319,8 +311,7 @@ func (r *PopulationResource) ImportState(ctx context.Context, req resource.Impor
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *PopulationResourceModel) expand() (*management.Population, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *PopulationResourceModel) expand() *management.Population {
 
 	data := management.NewPopulation(p.Name.ValueString())
 
@@ -334,7 +325,7 @@ func (p *PopulationResourceModel) expand() (*management.Population, diag.Diagnos
 		)
 	}
 
-	return data, diags
+	return data
 }
 
 func (p *PopulationResourceModel) toState(apiObject *management.Population) diag.Diagnostics {
