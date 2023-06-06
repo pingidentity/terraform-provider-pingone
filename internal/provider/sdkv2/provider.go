@@ -131,7 +131,6 @@ func New(version string) func() *schema.Provider {
 
 				"pingone_mfa_application_push_credential": mfa.ResourceApplicationPushCredential(),
 				"pingone_mfa_fido_policy":                 mfa.ResourceFIDOPolicy(),
-				"pingone_mfa_policy":                      mfa.ResourceMFAPolicy(),
 				"pingone_mfa_settings":                    mfa.ResourceMFASettings(),
 			},
 		}

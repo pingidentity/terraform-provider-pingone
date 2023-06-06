@@ -178,19 +178,19 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
 
 ### Required
 
-- `email` (Block List, Min: 1, Max: 1) Email OTP authentication policy settings. (see [below for nested schema](#nestedblock--email))
-- `environment_id` (String) The ID of the environment to create the sign on policy in.
-- `mobile` (Block List, Min: 1, Max: 1) Mobile authenticator device policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource. (see [below for nested schema](#nestedblock--mobile))
+- `environment_id` (String) The ID of the environment to create the MFA policy in.
 - `name` (String) A string that specifies the MFA policy's name.
-- `platform` (Block List, Min: 1, Max: 1) Platform biometrics authentication policy settings. (see [below for nested schema](#nestedblock--platform))
-- `security_key` (Block List, Min: 1, Max: 1) Security key (FIDO2) authentication policy settings. (see [below for nested schema](#nestedblock--security_key))
-- `sms` (Block List, Min: 1, Max: 1) SMS OTP authentication policy settings. (see [below for nested schema](#nestedblock--sms))
-- `totp` (Block List, Min: 1, Max: 1) TOTP authenticator policy settings. (see [below for nested schema](#nestedblock--totp))
-- `voice` (Block List, Min: 1, Max: 1) Voice OTP authentication policy settings. (see [below for nested schema](#nestedblock--voice))
 
 ### Optional
 
-- `device_selection` (String) A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments), `PROMPT_TO_SELECT` and `ALWAYS_PROMPT_TO_SELECT`. Defaults to `DEFAULT_TO_FIRST`.
+- `device_selection` (String) A string that defines the device selection method.  Options are `ALWAYS_PROMPT_TO_SELECT`, `DEFAULT_TO_FIRST`, `PROMPT_TO_SELECT`.  Defaults to `DEFAULT_TO_FIRST`.
+- `email` (Block List) Email OTP authentication policy settings.  At least one of the following must be defined: `sms`, `voice`, `email`, `mobile`, `totp`, `security_key`, `platform`. (see [below for nested schema](#nestedblock--email))
+- `mobile` (Block List) Mobile authenticator device policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource.  At least one of the following must be defined: `sms`, `voice`, `email`, `mobile`, `totp`, `security_key`, `platform`. (see [below for nested schema](#nestedblock--mobile))
+- `platform` (Block List) Platform biometrics authentication policy settings.  At least one of the following must be defined: `sms`, `voice`, `email`, `mobile`, `totp`, `security_key`, `platform`. (see [below for nested schema](#nestedblock--platform))
+- `security_key` (Block List) Security key (FIDO2) authentication policy settings.  At least one of the following must be defined: `sms`, `voice`, `email`, `mobile`, `totp`, `security_key`, `platform`. (see [below for nested schema](#nestedblock--security_key))
+- `sms` (Block List) SMS OTP authentication policy settings.  At least one of the following must be defined: `sms`, `voice`, `email`, `mobile`, `totp`, `security_key`, `platform`. (see [below for nested schema](#nestedblock--sms))
+- `totp` (Block List) TOTP authenticator policy settings.  At least one of the following must be defined: `sms`, `voice`, `email`, `mobile`, `totp`, `security_key`, `platform`. (see [below for nested schema](#nestedblock--totp))
+- `voice` (Block List) Voice OTP authentication policy settings.  At least one of the following must be defined: `sms`, `voice`, `email`, `mobile`, `totp`, `security_key`, `platform`. (see [below for nested schema](#nestedblock--voice))
 
 ### Read-Only
 
@@ -205,11 +205,11 @@ Required:
 
 Optional:
 
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration. Defaults to `0`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
-- `otp_lifetime_duration` (Number) An integer that defines turation (number of time units) that the passcode is valid before it expires. Defaults to `30`.
-- `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
+- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration.  Defaults to `0`.
+- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.  Defaults to `3`.
+- `otp_lifetime_duration` (Number) An integer that defines duration (number of time units) that the passcode is valid before it expires.  Defaults to `30`.
+- `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedblock--mobile"></a>
@@ -222,9 +222,9 @@ Required:
 Optional:
 
 - `application` (Block Set) Settings for a configured Mobile Application. (see [below for nested schema](#nestedblock--mobile--application))
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Defaults to `2`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
+- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.  Defaults to `2`.
+- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.  Defaults to `3`.
 
 <a id="nestedblock--mobile--application"></a>
 ### Nested Schema for `mobile.application`
@@ -239,13 +239,25 @@ Optional:
 
 - `auto_enrollment_enabled` (Boolean) Set to `true` if you want the application to allow Auto Enrollment. Auto Enrollment means that the user can authenticate for the first time from an unpaired device, and the successful authentication will result in the pairing of the device for MFA.
 - `device_authorization_enabled` (Boolean) Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.
-- `device_authorization_extra_verification` (String) Specifies the level of further verification when `device_authorization_enabled` is true. The PingOne platform performs an extra verification check by sending a "silent" push notification to the customer native application, and receives a confirmation in return.  Extra verification can be one of the following levels: `permissive`: The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed.  `restrictive`: The PingOne platform performs the extra verification check.The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed.
-- `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response. Set the value to `permissive` if you want to allow the process to continue. Set the value to `restrictive` if you want to block the user in such situations.
-- `push_timeout_duration` (Number) An integer that defines the amount of time (in seconds) a user has to respond to a push notification before it expires. Minimum is 40 seconds and maximum is 150 seconds. If this parameter is not provided, the duration is set to 40 seconds. Defaults to `40`.
-
-Read-Only:
-
+- `device_authorization_extra_verification` (String) Specifies the level of further verification when `device_authorization_enabled` is true. The PingOne platform performs an extra verification check by sending a "silent" push notification to the customer native application, and receives a confirmation in return.  Options are `permissive` (the PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed), `restrictive` (the PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed).
+- `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response.  Options are `permissive` (if you want to allow the process to continue), `restrictive` (if you want to block the user in such situations).
+- `pairing_key_lifetime_duration` (Number) The amount of time an issued pairing key can be used until it expires. Minimum is `1` minute and maximum is `48` hours.  Defaults to `10`.
+- `pairing_key_lifetime_timeunit` (String) The time unit for the `pairing_key_lifetime_duration` parameter.  Options are `HOURS`, `MINUTES`.  Defaults to `MINUTES`.
+- `push_limit` (Block List) A single block that describes mobile application push limit settings. (see [below for nested schema](#nestedblock--mobile--application--push_limit))
+- `push_timeout_duration` (Number) An integer that defines the amount of time (in seconds) a user has to respond to a push notification before it expires. Minimum is `40` seconds and maximum is `150` seconds.  Defaults to `40`.
 - `push_timeout_timeunit` (String) The time unit for the `push_timeout_duration` parameter. Currently, the only permitted value is `SECONDS`.
+
+<a id="nestedblock--mobile--application--push_limit"></a>
+### Nested Schema for `mobile.application.push_limit`
+
+Optional:
+
+- `count` (Number) The number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is `1` and the maximum value is `50`.  Defaults to `5`.
+- `lock_duration_duration` (Number) The length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes.  Defaults to `30`.
+- `lock_duration_timeunit` (String) The time unit for the `lock_duration_duration` parameter.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `time_period_duration` (Number) The time period in which the push notifications are counted towards the defined limit. The minimum value is `1` minute and the maximum value is `120` minutes.  Defaults to `10`.
+- `time_period_timeunit` (String) The time unit for the `time_period_duration` parameter.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+
 
 
 
@@ -282,11 +294,11 @@ Required:
 
 Optional:
 
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration. Defaults to `0`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
-- `otp_lifetime_duration` (Number) An integer that defines turation (number of time units) that the passcode is valid before it expires. Defaults to `30`.
-- `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
+- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration.  Defaults to `0`.
+- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.  Defaults to `3`.
+- `otp_lifetime_duration` (Number) An integer that defines duration (number of time units) that the passcode is valid before it expires.  Defaults to `30`.
+- `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedblock--totp"></a>
@@ -298,9 +310,9 @@ Required:
 
 Optional:
 
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Defaults to `2`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
+- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.  Defaults to `2`.
+- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.  Defaults to `3`.
 
 
 <a id="nestedblock--voice"></a>
@@ -312,11 +324,11 @@ Required:
 
 Optional:
 
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration. Defaults to `0`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
-- `otp_lifetime_duration` (Number) An integer that defines turation (number of time units) that the passcode is valid before it expires. Defaults to `30`.
-- `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
+- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration.  Defaults to `0`.
+- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.  Defaults to `3`.
+- `otp_lifetime_duration` (Number) An integer that defines duration (number of time units) that the passcode is valid before it expires.  Defaults to `30`.
+- `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 ## Import
 

@@ -630,24 +630,20 @@ func TestAccMFAPolicy_Mobile_BadApplicationErrors(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name),
-				// Appliation referenced in `mobile.application.id` does not exist
-				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` does not exist"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` does not exist"),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name),
-				// Appliation referenced in `mobile.application.id` is not of type OIDC
-				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` is not of type OIDC"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` is not of type OIDC"),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name),
-				// Appliation referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type
-				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type"),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name),
-				// Appliation referenced in `mobile.application.id` does not contain mobile application configuration
-				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` does not contain mobile application configuration"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` does not contain mobile application configuration"),
 			},
 		},
 	})
@@ -996,7 +992,7 @@ func TestAccMFAPolicy_SecurityKey_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.fido_policy_id", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "security_key.0.fido_policy_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1040,7 +1036,7 @@ func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.fido_policy_id", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "security_key.0.fido_policy_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1116,7 +1112,7 @@ func TestAccMFAPolicy_Platform_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "platform.0.fido_policy_id", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "platform.0.fido_policy_id"),
 				),
 			},
 		},
@@ -1160,7 +1156,7 @@ func TestAccMFAPolicy_Platform_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "platform.0.fido_policy_id", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "platform.0.fido_policy_id"),
 				),
 			},
 			{
