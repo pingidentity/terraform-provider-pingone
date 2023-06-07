@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -201,58 +202,85 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	const attrMaxDurationSeconds = 1800
 	const attrMaxDurationMinutes = 30
 
-	verifyOptionPhraseFmt := "`REQUIRED`, `OPTIONAL`, or `DISABLED`."
+	// defaults
+	const defaultNotificationTemplate = "email_phone_verification"
+	const defaultVerify = verify.ENUMVERIFY_DISABLED
+	const defaultThreshold = verify.ENUMTHRESHOLD_MEDIUM
+	const defaultOTPAttemptsCount = 5
+	const defaultOTPEmailDuration = 10
+	const defaultOTPEmailTimeUnit = verify.ENUMLONGTIMEUNIT_MINUTES
+	const defaultOTPPhoneDuration = 5
+	const defaultOTPPhoneTimeUnit = verify.ENUMLONGTIMEUNIT_MINUTES
+	const defaultOTPCooldownDuration = 30
+	const defaultOTPCooldownTimeUnit = verify.ENUMLONGTIMEUNIT_SECONDS
+	const defaultOTPDeliveryCount = 3
+	const defaultTransactionDuration = 30
+	const defaultTransactionDataCollectionDuration = 15
+	const defaultTransactionTimeUnit = verify.ENUMSHORTTIMEUNIT_MINUTES
+	defaultCreateMfaDevice := new(bool)
+	*defaultCreateMfaDevice = false
+
+	verifyOptionPhraseFmt := "`REQUIRED`, `OPTIONAL`, or `DISABLED`"
 	thresholdOptionPhraseFmt := "`LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions)."
 	transactionTimeoutPhraseFmt := "can be `SECONDS`, `MINUTES`."
-
-	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Name of the verification policy displayed in PingOne Admin UI.",
-	)
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Required as `true` to set the verify policy as the default policy for the environment; otherwise optional and defaults to `false`.",
 	)
 
 	governmentIdVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Controls if Government ID verification is %s", verifyOptionPhraseFmt),
+		fmt.Sprintf("Controls if Government ID verification is %s. Default is `%s`.", verifyOptionPhraseFmt, defaultVerify),
 	)
 
 	facialComparisonVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Controls if facial comparison verification is %s", verifyOptionPhraseFmt),
+		fmt.Sprintf("Controls if facial comparison verification is %s. Default is `%s`.", verifyOptionPhraseFmt, defaultVerify),
 	)
 
 	facialComparisonThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Threshold for successful facial comparison; can be %s", thresholdOptionPhraseFmt),
+		fmt.Sprintf("Threshold for successful facial comparison; can be %s. Default is `%s`.", thresholdOptionPhraseFmt, defaultThreshold),
 	)
 
 	livenessVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Controls if liveness check is %s", verifyOptionPhraseFmt),
+		fmt.Sprintf("Controls if liveness check is %s. Default is `%s`.", verifyOptionPhraseFmt, defaultVerify),
 	)
 
 	livenessThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Threshold for successful liveness comparison; can be %s", thresholdOptionPhraseFmt),
+		fmt.Sprintf("Threshold for successful liveness comparison; can be %s. Default is `%s`.", thresholdOptionPhraseFmt, defaultThreshold),
 	)
 
 	deviceVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Controls if email or phone verification is %s", verifyOptionPhraseFmt),
+		fmt.Sprintf("Controls if email or phone verification is %s. Default is `%s`.", verifyOptionPhraseFmt, defaultVerify),
+	)
+
+	otpLifeTimeEmailDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("OTP duration configuration. Default is %d.", defaultOTPEmailDuration),
+	)
+
+	otpLifeTimePhoneDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("OTP duration configuration. Default is %d.", defaultOTPPhoneDuration),
 	)
 
 	otpLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Time unit of OTP duration configuration: `SECONDS`, `MINUTES`, `HOURS`.",
+		fmt.Sprintf("Time unit of OTP duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `%s`.", defaultOTPPhoneTimeUnit),
+	)
+
+	otpDeliveriesCooldownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Cooldown duration configuration. Default value is %d.", defaultOTPCooldownDuration),
 	)
 
 	otpDeliveriesCooldownTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Time unit of cooldown duration configuration: `SECONDS`, `MINUTES`, `HOURS`.",
+		fmt.Sprintf("Time unit of cooldown duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `%s`.", defaultOTPCooldownTimeUnit),
 	)
 
 	otpNotificationTemplateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Name of the template to use to pass a one-time passcode (OTP). The default value of `email_phone_verification` is static. Use the `notification.variant_name` property to define an alternate template.",
+		fmt.Sprintf("Name of the template to use to pass a one-time passcode (OTP). The default value of `%s` is static. Use the `notification.variant_name` property to define an alternate template.", defaultNotificationTemplate),
 	)
 
 	transactionTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Length of time before transaction timeout expires. " +
-			"If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `0-30`. " +
-			"If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0-1800`.",
+		"Length of time before transaction timeout expires.\n" +
+			fmt.Sprintf("* If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
+			fmt.Sprintf("* If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
+			fmt.Sprintf("* The default value is `%d %s`.", defaultTransactionDuration, defaultTransactionTimeUnit),
 	)
 
 	transactionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -260,7 +288,11 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	)
 
 	dataCollectionDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("%s\nWhen setting or changing timeouts in the transaction configuration object, `dataCollection.timeout.duration` must be less than or equal to `timeout.duration`.", transactionTimeoutDurationDescription),
+		"Length of time before transaction timeout expires.\n" +
+			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
+			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
+			fmt.Sprintf("* The default value is `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit) +
+			"~Note: When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.",
 	)
 
 	dataCollectionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -291,9 +323,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			),
 
 			"name": schema.StringAttribute{
-				Description:         nameDescription.Description,
-				MarkdownDescription: nameDescription.MarkdownDescription,
-				Required:            true,
+				Description: "Name of the verification policy displayed in PingOne Admin UI.",
+				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
@@ -304,6 +335,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				MarkdownDescription: defaultDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
 			},
 
 			"description": schema.StringAttribute{
@@ -321,7 +354,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"verify": framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
+						"verify": framework.StringToTF(string(defaultVerify)),
 					}
 
 					objValue, d := types.ObjectValue(governmentIdServiceTFObjectTypes, o)
@@ -351,8 +384,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"verify":    framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
-						"threshold": framework.StringToTF(string(verify.ENUMTHRESHOLD_MEDIUM)),
+						"verify":    framework.StringToTF(string(defaultVerify)),
+						"threshold": framework.StringToTF(string(defaultThreshold)),
 					}
 
 					objValue, d := types.ObjectValue(facialComparisonServiceTFObjectTypes, o)
@@ -390,8 +423,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"verify":    framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
-						"threshold": framework.StringToTF(string(verify.ENUMTHRESHOLD_MEDIUM)),
+						"verify":    framework.StringToTF(string(defaultVerify)),
+						"threshold": framework.StringToTF(string(defaultThreshold)),
 					}
 
 					objValue, d := types.ObjectValue(livenessServiceTFObjectTypes, o)
@@ -429,34 +462,34 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"count": framework.Int32ToTF(5),
+						"count": framework.Int32ToTF(defaultOTPAttemptsCount),
 					}
 					attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(10),
-						"time_unit": framework.StringToTF(string(verify.ENUMLONGTIMEUNIT_MINUTES)),
+						"duration":  framework.Int32ToTF(defaultOTPEmailDuration),
+						"time_unit": framework.StringToTF(string(defaultOTPEmailTimeUnit)),
 					}
 					lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"template_name": framework.StringToTF("email_phone_verification"),
+						"template_name": framework.StringToTF(defaultNotificationTemplate),
 						"variant_name":  types.StringNull(),
 					}
 					notificationObjValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(30),
-						"time_unit": framework.StringToTF(string(verify.ENUMLONGTIMEUNIT_SECONDS)),
+						"duration":  framework.Int32ToTF(defaultOTPCooldownDuration),
+						"time_unit": framework.StringToTF(string(defaultOTPCooldownTimeUnit)),
 					}
 					cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"count":    framework.Int32ToTF(3),
+						"count":    framework.Int32ToTF(defaultOTPDeliveryCount),
 						"cooldown": cooldownObjValue,
 					}
 					deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
@@ -471,11 +504,9 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					otpObjValue, d := types.ObjectValue(otpServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
-					createMfaDevice := new(bool)
-					*createMfaDevice = false
 					o = map[string]attr.Value{
-						"verify":            framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
-						"create_mfa_device": framework.BoolOkToTF(createMfaDevice, true),
+						"verify":            framework.StringToTF(string(defaultVerify)),
+						"create_mfa_device": framework.BoolOkToTF(defaultCreateMfaDevice, true),
 						"otp":               otpObjValue,
 					}
 					objValue, d := types.ObjectValue(deviceServiceTFObjectTypes, o)
@@ -516,8 +547,9 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 										Required:    true,
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int64Attribute{
-												Description: "Cooldown duration configuration.",
-												Required:    true,
+												Description:         otpDeliveriesCooldownDurationDescription.Description,
+												MarkdownDescription: otpDeliveriesCooldownDurationDescription.MarkdownDescription,
+												Required:            true,
 											},
 											"time_unit": schema.StringAttribute{
 												Description:         otpDeliveriesCooldownTimeUnitDescription.Description,
@@ -536,8 +568,9 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int64Attribute{
-										Description: "OTP duration configuration.",
-										Required:    true,
+										Description:         otpLifeTimeEmailDurationDescription.Description,
+										MarkdownDescription: otpLifeTimeEmailDurationDescription.MarkdownDescription,
+										Required:            true,
 									},
 									"time_unit": schema.StringAttribute{
 										Description:         otpLifetimeTimeUnitDescription.Description,
@@ -551,13 +584,27 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 							},
 							"notification": schema.SingleNestedAttribute{
 								Description: "OTP notification template configuration.",
-								Required:    true,
+								Optional:    true,
+								Computed:    true,
+
+								Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+									o := map[string]attr.Value{
+										"template_name": framework.StringToTF(defaultNotificationTemplate),
+										"variant_name":  types.StringNull(),
+									}
+
+									objValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
+									resp.Diagnostics.Append(d...)
+
+									return objValue
+								}()),
+
 								Attributes: map[string]schema.Attribute{
 									"template_name": schema.StringAttribute{
 										Description:         otpNotificationTemplateDescription.Description,
 										MarkdownDescription: otpNotificationTemplateDescription.MarkdownDescription,
 										Computed:            true,
-										Default:             stringdefault.StaticString("email_phone_verification"),
+										Default:             stringdefault.StaticString(defaultNotificationTemplate),
 									},
 									"variant_name": schema.StringAttribute{
 										Description: "Name of the template variant to use to pass a one-time passcode (OTP).",
@@ -590,34 +637,34 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"count": framework.Int32ToTF(5),
+						"count": framework.Int32ToTF(defaultOTPAttemptsCount),
 					}
 					attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(5),
-						"time_unit": framework.StringToTF(string(verify.ENUMLONGTIMEUNIT_MINUTES)),
+						"duration":  framework.Int32ToTF(defaultOTPPhoneDuration),
+						"time_unit": framework.StringToTF(string(defaultOTPPhoneTimeUnit)),
 					}
 					lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"template_name": framework.StringToTF("email_phone_verification"),
+						"template_name": framework.StringToTF(defaultNotificationTemplate),
 						"variant_name":  types.StringNull(),
 					}
 					notificationObjValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(30),
-						"time_unit": framework.StringToTF(string(verify.ENUMLONGTIMEUNIT_SECONDS)),
+						"duration":  framework.Int32ToTF(defaultOTPCooldownDuration),
+						"time_unit": framework.StringToTF(string(defaultOTPCooldownTimeUnit)),
 					}
 					cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"count":    framework.Int32ToTF(3),
+						"count":    framework.Int32ToTF(defaultOTPDeliveryCount),
 						"cooldown": cooldownObjValue,
 					}
 					deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
@@ -632,11 +679,9 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					otpObjValue, d := types.ObjectValue(otpServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
-					createMfaDevice := new(bool)
-					*createMfaDevice = false
 					o = map[string]attr.Value{
-						"verify":            framework.StringToTF(string(verify.ENUMVERIFY_DISABLED)),
-						"create_mfa_device": framework.BoolOkToTF(createMfaDevice, true),
+						"verify":            framework.StringToTF(string(defaultVerify)),
+						"create_mfa_device": framework.BoolOkToTF(defaultCreateMfaDevice, true),
 						"otp":               otpObjValue,
 					}
 					objValue, d := types.ObjectValue(deviceServiceTFObjectTypes, o)
@@ -677,8 +722,9 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 										Required:    true,
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int64Attribute{
-												Description: "Cooldown duration configuration.",
-												Required:    true,
+												Description:         otpDeliveriesCooldownDurationDescription.Description,
+												MarkdownDescription: otpDeliveriesCooldownDurationDescription.MarkdownDescription,
+												Required:            true,
 											},
 											"time_unit": schema.StringAttribute{
 												Description:         otpDeliveriesCooldownTimeUnitDescription.Description,
@@ -697,8 +743,9 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Required:    true,
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int64Attribute{
-										Description: "OTP duration configuration.",
-										Required:    true,
+										Description:         otpLifeTimePhoneDurationDescription.Description,
+										MarkdownDescription: otpLifeTimePhoneDurationDescription.MarkdownDescription,
+										Required:            true,
 									},
 									"time_unit": schema.StringAttribute{
 										Description:         otpLifetimeTimeUnitDescription.Description,
@@ -712,13 +759,27 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 							},
 							"notification": schema.SingleNestedAttribute{
 								Description: "OTP notification template configuration.",
-								Required:    true,
+								Optional:    true,
+								Computed:    true,
+
+								Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+									o := map[string]attr.Value{
+										"template_name": framework.StringToTF(defaultNotificationTemplate),
+										"variant_name":  types.StringNull(),
+									}
+
+									objValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
+									resp.Diagnostics.Append(d...)
+
+									return objValue
+								}()),
+
 								Attributes: map[string]schema.Attribute{
 									"template_name": schema.StringAttribute{
 										Description:         otpNotificationTemplateDescription.Description,
 										MarkdownDescription: otpNotificationTemplateDescription.MarkdownDescription,
 										Computed:            true,
-										Default:             stringdefault.StaticString("email_phone_verification"),
+										Default:             stringdefault.StaticString(defaultNotificationTemplate),
 									},
 									"variant_name": schema.StringAttribute{
 										Description: "Name of the template variant to use to pass a one-time passcode (OTP).",
@@ -751,15 +812,15 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"duration":  framework.Int32ToTF(30),
-						"time_unit": framework.StringToTF(string(verify.ENUMSHORTTIMEUNIT_MINUTES)),
+						"duration":  framework.Int32ToTF(defaultTransactionDuration),
+						"time_unit": framework.StringToTF(string(defaultTransactionTimeUnit)),
 					}
 					timeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(15),
-						"time_unit": framework.StringToTF(string(verify.ENUMSHORTTIMEUNIT_MINUTES)),
+						"duration":  framework.Int32ToTF(defaultTransactionDataCollectionDuration),
+						"time_unit": framework.StringToTF(string(defaultTransactionTimeUnit)),
 					}
 					dataCollectionTimeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
@@ -1374,7 +1435,6 @@ func (p *livenessnModel) expandLivenessModel() (*verify.LivenessConfiguration, d
 
 }
 
-// todo review i hate this function
 func (p *transactionModel) expandTransactionModel(ctx context.Context) (*verify.TransactionConfiguration, diag.Diagnostics) {
 	var diags diag.Diagnostics
 

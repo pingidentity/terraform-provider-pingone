@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -219,6 +220,51 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 	})
 }
 
+func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := acctest.ResourceNameGen()
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccVerifyPolicy_NoChecksDefined(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile(`(?s)(.*Error: Invalid Attribute Combination.*){5}`),
+				Destroy:     true,
+			},
+			{
+				Config: testAccVerifyPolicy_EmptyCheckDefinitions(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile(`(?s)(.*Inappropriate value for attribute \"government_id\".*)` +
+					`(.*Inappropriate value for attribute \"facial_comparison\".*)` +
+					`(.*Inappropriate value for attribute \"liveness\".*)` +
+					`(.*Inappropriate value for attribute \"email\".*)` +
+					`(.*Inappropriate value for attribute \"phone\".*)`),
+				Destroy: true,
+			},
+			{
+				Config: testAccVerifyPolicy_IncorrectTransactionDurationRange(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile(`(?s)(.*Attribute transaction.timeout.duration value must be between 0 and 30.*)` +
+					`(.*Attribute transaction.data_collection.timeout.duration value must be between\n0 and 1800.*)`),
+				Destroy: true,
+			},
+			{
+				Config:      testAccVerifyPolicy_TransactionDataCollectionDurationBeyondTimeoutDuration(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Provided value is not valid"),
+				Destroy:     true,
+			},
+		},
+	})
+}
+
 func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -321,6 +367,108 @@ resource "pingone_verify_policy" "%[3]s" {
 
   government_id = {
     verify = "REQUIRED"
+  }
+
+  depends_on = [pingone_environment.%[2]s]
+
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccVerifyPolicy_NoChecksDefined(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "%[4]s"
+
+  depends_on = [pingone_environment.%[2]s]
+
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccVerifyPolicy_EmptyCheckDefinitions(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "%[4]s"
+
+  government_id = {}
+
+  facial_comparison = {}
+
+  liveness = {}
+
+  email = {}
+
+  phone = {}
+
+  depends_on = [pingone_environment.%[2]s]
+
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccVerifyPolicy_IncorrectTransactionDurationRange(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "%[4]s"
+  default        = false
+
+  facial_comparison = {
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
+
+  transaction = {
+    timeout = {
+      duration  = "35"
+      time_unit = "MINUTES"
+    }
+
+    data_collection = {
+      timeout = {
+        duration  = "2000"
+        time_unit = "SECONDS"
+      }
+    }
+  }
+
+  depends_on = [pingone_environment.%[2]s]
+
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccVerifyPolicy_TransactionDataCollectionDurationBeyondTimeoutDuration(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "%[4]s"
+  default        = false
+
+  facial_comparison = {
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
+
+  transaction = {
+    timeout = {
+      duration  = "15"
+      time_unit = "MINUTES"
+    }
+
+    data_collection = {
+      timeout = {
+        duration  = "20"
+        time_unit = "MINUTES"
+      }
+    }
   }
 
   depends_on = [pingone_environment.%[2]s]
