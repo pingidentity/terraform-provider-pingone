@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_issuance_rule Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Datasource to retrieve a PingOne Credentials credential issuance rule for the specified credential type.
 ---

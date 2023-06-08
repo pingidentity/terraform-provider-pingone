@@ -1,120 +1,30 @@
 ---
-page_title: "pingone_verify_policy Resource - terraform-provider-pingone"
+page_title: "pingone_verify_policy Data Source - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
-  Resource to configure the requirements to verify a user, including the parameters for verification, such as the number of one-time password (OTP) attempts and OTP expiration.
-  A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
-  Verify policies can perform any of five checks:
-  * Government identity document - Validate a government-issued identity document, which includes a photograph.
-  * Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
-  * Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
-  * Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
-  * Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
+  Data source to retrieve the default PingOne Verify Policy or to find a PingOne Verify Policy by its Verify Policy Id or Name.
 ---
 
-# pingone_verify_policy (Resource)
+# pingone_verify_policy (Data Source)
 
-Resource to configure the requirements to verify a user, including the parameters for verification, such as the number of one-time password (OTP) attempts and OTP expiration.
-
-A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
-
-Verify policies can perform any of five checks:
-* Government identity document - Validate a government-issued identity document, which includes a photograph.
-* Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
-* Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
-* Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
-* Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
+Data source to retrieve the default PingOne Verify Policy or to find a PingOne Verify Policy by its Verify Policy Id or Name.
 
 ## Example Usage
 
 ```terraform
-resource "pingone_environment" "my_environment" {
-  # ...
+data "pingone_verify_policy" "find_by_id_example" {
+  environment_id   = var.environment_id
+  verify_policy_id = var.verify_policy_id
 }
 
-resource "pingone_verify_policy" "my_verify_everything_policy" {
-  environment_id = pingone_environment.my_environment.id
-  name           = "My Awesome Verify Policy"
-  description    = "Example - All Verification Checks Required"
-  default        = false
+data "pingone_verify_policy" "find_by_name_example" {
+  environment_id = var.environment_id
+  name           = "foo"
+}
 
-  government_id = {
-    verify = "REQUIRED"
-  }
-
-  facial_comparison = {
-    verify    = "REQUIRED"
-    threshold = "HIGH"
-  }
-
-  liveness = {
-    verify    = "REQUIRED"
-    threshold = "HIGH"
-  }
-
-  email = {
-    verify = "REQUIRED"
-    create_mfa_device : true
-    otp = {
-      attempts = {
-        count = "5"
-      }
-      lifetime = {
-        duration  = "10"
-        time_unit = "MINUTES"
-      },
-      deliveries = {
-        count = 3
-        cooldown = {
-          duration  = "30"
-          time_unit = "SECONDS"
-        }
-      }
-      notification = {
-        variant_name = "custom_variant_a"
-      }
-    }
-  }
-
-  phone = {
-    verify = "REQUIRED"
-    create_mfa_device : true
-    otp = {
-      attempts = {
-        count = "5"
-      }
-      lifetime = {
-        duration  = "10"
-        time_unit = "MINUTES"
-      },
-      deliveries = {
-        count = 3
-        cooldown = {
-          duration  = "30"
-          time_unit = "SECONDS"
-        }
-      }
-    }
-  }
-
-  transaction = {
-    timeout = {
-      duration  = "30"
-      time_unit = "MINUTES"
-    }
-
-    data_collection = {
-      timeout = {
-        duration  = "15"
-        time_unit = "MINUTES"
-      }
-    }
-
-    data_collection_only = false
-  }
-
-  depends_on = [pingone_environment.my_environment]
-
+data "pingone_verify_policy" "find_default_policy_example" {
+  environment_id = var.environment_id
+  default        = true
 }
 ```
 
@@ -124,54 +34,49 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 ### Required
 
 - `environment_id` (String) PingOne environment identifier (UUID) in which the verify policy exists.
-- `name` (String) Name of the verification policy displayed in PingOne Admin UI.
 
 ### Optional
 
-- `default` (Boolean) Required as `true` to set the verify policy as the default policy for the environment; otherwise optional and defaults to `false`.
-- `description` (String) Description of the verification policy displayed in PingOne Admin UI, 1-1024 characters.
-- `email` (Attributes) Defines the verification requirements to validate an email address using a one-time password (OTP). (see [below for nested schema](#nestedatt--email))
-- `facial_comparison` (Attributes) Defines the verification requirements to compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph. (see [below for nested schema](#nestedatt--facial_comparison))
-- `government_id` (Attributes) Defines the verification requirements for a government-issued identity document, which includes a photograph. (see [below for nested schema](#nestedatt--government_id))
-- `liveness` (Attributes) Defines the verification requirements to inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask. (see [below for nested schema](#nestedatt--liveness))
-- `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
-- `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
+- `default` (Boolean) Set value to `true` to return the default verify policy. There is only one default policy per environment.
+- `name` (String) Name of the verification policy displayed in PingOne Admin UI.
+- `verify_policy_id` (String) Identifier (UUID) associated with the verify policy.
 
 ### Read-Only
 
 - `created_at` (String) Date and time the verify policy was created.
+- `description` (String) Description of the verification policy displayed in PingOne Admin UI, 1-1024 characters.
+- `email` (Attributes) Defines the verification requirements to validate an email address using a one-time password (OTP). (see [below for nested schema](#nestedatt--email))
+- `facial_comparison` (Attributes) Defines the verification requirements to compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph. (see [below for nested schema](#nestedatt--facial_comparison))
+- `government_id` (Attributes) Defines the verification requirements for a government-issued identity document, which includes a photograph. (see [below for nested schema](#nestedatt--government_id))
 - `id` (String) The ID of this resource.
+- `liveness` (Attributes) Defines the verification requirements to inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask. (see [below for nested schema](#nestedatt--liveness))
+- `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
+- `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
 - `updated_at` (String) Date and time the verify policy was updated. Can be null.
 
 <a id="nestedatt--email"></a>
 ### Nested Schema for `email`
 
-Required:
-
-- `verify` (String) Controls if email or phone verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
-
-Optional:
+Read-Only:
 
 - `create_mfa_device` (Boolean) When enabled, PingOne Verify registers the email address with PingOne MFA as a verified MFA device.
 - `otp` (Attributes) SMS/Voice/Email one-time password (OTP) configuration. (see [below for nested schema](#nestedatt--email--otp))
+- `verify` (String) Controls if email or phone verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
 
 <a id="nestedatt--email--otp"></a>
 ### Nested Schema for `email.otp`
 
-Required:
+Read-Only:
 
 - `attempts` (Attributes) OTP attempts configuration. (see [below for nested schema](#nestedatt--email--otp--attempts))
 - `deliveries` (Attributes) OTP delivery configuration. (see [below for nested schema](#nestedatt--email--otp--deliveries))
 - `lifetime` (Attributes) The length of time for which the OTP is valid. (see [below for nested schema](#nestedatt--email--otp--lifetime))
-
-Optional:
-
 - `notification` (Attributes) OTP notification template configuration. (see [below for nested schema](#nestedatt--email--otp--notification))
 
 <a id="nestedatt--email--otp--attempts"></a>
 ### Nested Schema for `email.otp.attempts`
 
-Required:
+Read-Only:
 
 - `count` (Number) Allowed maximum number of OTP failures.
 
@@ -179,7 +84,7 @@ Required:
 <a id="nestedatt--email--otp--deliveries"></a>
 ### Nested Schema for `email.otp.deliveries`
 
-Required:
+Read-Only:
 
 - `cooldown` (Attributes) Cooldown (waiting period between OTP attempts) configuration. (see [below for nested schema](#nestedatt--email--otp--deliveries--cooldown))
 - `count` (Number) Allowed maximum number of OTP deliveries.
@@ -187,7 +92,7 @@ Required:
 <a id="nestedatt--email--otp--deliveries--cooldown"></a>
 ### Nested Schema for `email.otp.deliveries.count`
 
-Required:
+Read-Only:
 
 - `duration` (Number) Cooldown duration configuration. Default value is 30.
 - `time_unit` (String) Time unit of cooldown duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `SECONDS`.
@@ -197,7 +102,7 @@ Required:
 <a id="nestedatt--email--otp--lifetime"></a>
 ### Nested Schema for `email.otp.lifetime`
 
-Required:
+Read-Only:
 
 - `duration` (Number) OTP duration configuration. Default is 10.
 - `time_unit` (String) Time unit of OTP duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `MINUTES`.
@@ -206,13 +111,10 @@ Required:
 <a id="nestedatt--email--otp--notification"></a>
 ### Nested Schema for `email.otp.notification`
 
-Optional:
-
-- `variant_name` (String) Name of the template variant to use to pass a one-time passcode (OTP).
-
 Read-Only:
 
 - `template_name` (String) Name of the template to use to pass a one-time passcode (OTP). The default value of `email_phone_verification` is static. Use the `notification.variant_name` property to define an alternate template.
+- `variant_name` (String) Name of the template variant to use to pass a one-time passcode (OTP).
 
 
 
@@ -220,7 +122,7 @@ Read-Only:
 <a id="nestedatt--facial_comparison"></a>
 ### Nested Schema for `facial_comparison`
 
-Required:
+Read-Only:
 
 - `threshold` (String) Threshold for successful facial comparison; can be `LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions).. Default is `MEDIUM`.
 - `verify` (String) Controls if facial comparison verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
@@ -229,7 +131,7 @@ Required:
 <a id="nestedatt--government_id"></a>
 ### Nested Schema for `government_id`
 
-Required:
+Read-Only:
 
 - `verify` (String) Controls if Government ID verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
 
@@ -237,7 +139,7 @@ Required:
 <a id="nestedatt--liveness"></a>
 ### Nested Schema for `liveness`
 
-Required:
+Read-Only:
 
 - `threshold` (String) Threshold for successful liveness comparison; can be `LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions).. Default is `MEDIUM`.
 - `verify` (String) Controls if liveness check is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
@@ -246,32 +148,26 @@ Required:
 <a id="nestedatt--phone"></a>
 ### Nested Schema for `phone`
 
-Required:
-
-- `verify` (String) Controls if email or phone verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
-
-Optional:
+Read-Only:
 
 - `create_mfa_device` (Boolean) When enabled, PingOne Verify registers the mobile phone with PingOne MFA as a verified MFA device.
 - `otp` (Attributes) SMS/Voice/Email one-time password (OTP) configuration. (see [below for nested schema](#nestedatt--phone--otp))
+- `verify` (String) Controls if email or phone verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
 
 <a id="nestedatt--phone--otp"></a>
 ### Nested Schema for `phone.otp`
 
-Required:
+Read-Only:
 
 - `attempts` (Attributes) OTP attempts configuration. (see [below for nested schema](#nestedatt--phone--otp--attempts))
 - `deliveries` (Attributes) OTP delivery configuration. (see [below for nested schema](#nestedatt--phone--otp--deliveries))
 - `lifetime` (Attributes) The length of time for which the OTP is valid. (see [below for nested schema](#nestedatt--phone--otp--lifetime))
-
-Optional:
-
 - `notification` (Attributes) OTP notification template configuration. (see [below for nested schema](#nestedatt--phone--otp--notification))
 
 <a id="nestedatt--phone--otp--attempts"></a>
 ### Nested Schema for `phone.otp.attempts`
 
-Required:
+Read-Only:
 
 - `count` (Number) Allowed maximum number of OTP failures.
 
@@ -279,7 +175,7 @@ Required:
 <a id="nestedatt--phone--otp--deliveries"></a>
 ### Nested Schema for `phone.otp.deliveries`
 
-Required:
+Read-Only:
 
 - `cooldown` (Attributes) Cooldown (waiting period between OTP attempts) configuration. (see [below for nested schema](#nestedatt--phone--otp--deliveries--cooldown))
 - `count` (Number) Allowed maximum number of OTP deliveries.
@@ -287,7 +183,7 @@ Required:
 <a id="nestedatt--phone--otp--deliveries--cooldown"></a>
 ### Nested Schema for `phone.otp.deliveries.count`
 
-Required:
+Read-Only:
 
 - `duration` (Number) Cooldown duration configuration. Default value is 30.
 - `time_unit` (String) Time unit of cooldown duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `SECONDS`.
@@ -297,7 +193,7 @@ Required:
 <a id="nestedatt--phone--otp--lifetime"></a>
 ### Nested Schema for `phone.otp.lifetime`
 
-Required:
+Read-Only:
 
 - `duration` (Number) OTP duration configuration. Default is 5.
 - `time_unit` (String) Time unit of OTP duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `MINUTES`.
@@ -306,13 +202,10 @@ Required:
 <a id="nestedatt--phone--otp--notification"></a>
 ### Nested Schema for `phone.otp.notification`
 
-Optional:
-
-- `variant_name` (String) Name of the template variant to use to pass a one-time passcode (OTP).
-
 Read-Only:
 
 - `template_name` (String) Name of the template to use to pass a one-time passcode (OTP). The default value of `email_phone_verification` is static. Use the `notification.variant_name` property to define an alternate template.
+- `variant_name` (String) Name of the template variant to use to pass a one-time passcode (OTP).
 
 
 
@@ -320,7 +213,7 @@ Read-Only:
 <a id="nestedatt--transaction"></a>
 ### Nested Schema for `transaction`
 
-Optional:
+Read-Only:
 
 - `data_collection` (Attributes) Object for data collection timeout definition. (see [below for nested schema](#nestedatt--transaction--data_collection))
 - `data_collection_only` (Boolean) When `true`, collects documents specified in the policy without determining their validity; defaults to `false`.
@@ -329,14 +222,14 @@ Optional:
 <a id="nestedatt--transaction--data_collection"></a>
 ### Nested Schema for `transaction.data_collection`
 
-Required:
+Read-Only:
 
 - `timeout` (Attributes) Object for data collection timeout. (see [below for nested schema](#nestedatt--transaction--data_collection--timeout))
 
 <a id="nestedatt--transaction--data_collection--timeout"></a>
 ### Nested Schema for `transaction.data_collection.timeout`
 
-Required:
+Read-Only:
 
 - `duration` (Number) Length of time before transaction timeout expires.
 * If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
@@ -351,18 +244,10 @@ Required:
 <a id="nestedatt--transaction--timeout"></a>
 ### Nested Schema for `transaction.timeout`
 
-Required:
+Read-Only:
 
 - `duration` (Number) Length of time before transaction timeout expires.
 * If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
 * If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
 * The default value is `30 MINUTES`.
 - `time_unit` (String) Time unit of transaction timeout; can be `SECONDS`, `MINUTES`.
-
-## Import
-
-Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
-
-```shell
-$ terraform import pingone_verify_policy.example <environment_id>/<verify_policy_id>
-```

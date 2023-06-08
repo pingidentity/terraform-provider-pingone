@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_type Resource - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Resource to create and manage the credential types used by compatible wallet applications.
   ~> You must ensure that any fields used in the card_design_template are defined appropriately in metadata.fields or errors occur when you attempt to create a credential of that type.

@@ -18,7 +18,10 @@ func Resources() []func() resource.Resource {
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewVerifyPolicyDataSource,
+		NewVerifyPoliciesDataSource,
+	}
 }
 
 func prepareClient(ctx context.Context, resourceConfig framework.ResourceType) (*verify.APIClient, error) {
