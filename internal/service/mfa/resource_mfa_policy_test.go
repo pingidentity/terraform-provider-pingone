@@ -551,34 +551,53 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
 						"id":                           verify.P1ResourceIDRegexp,
-						"push_enabled":                 regexp.MustCompile(`^true$`),
-						"push_timeout_duration":        regexp.MustCompile(`^100$`),
-						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
-						"otp_enabled":                  regexp.MustCompile(`^true$`),
+						"auto_enrollment_enabled":      regexp.MustCompile(`^true$`),
 						"device_authorization_enabled": regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
-						"auto_enrollment_enabled":                 regexp.MustCompile(`^true$`),
-						"integrity_detection":                     regexp.MustCompile(`^$`),
+						"otp_enabled":                       regexp.MustCompile(`^true$`),
+						"pairing_key_lifetime_duration":     regexp.MustCompile(`^15$`),
+						"pairing_key_lifetime_timeunit":     regexp.MustCompile(`^HOURS$`),
+						"push_enabled":                      regexp.MustCompile(`^true$`),
+						"push_limit.count":                  regexp.MustCompile(`^7$`),
+						"push_limit.lock_duration_duration": regexp.MustCompile(`^600$`),
+						"push_limit.lock_duration_timeunit": regexp.MustCompile(`^SECONDS$`),
+						"push_limit.time_period_duration":   regexp.MustCompile(`^5$`),
+						"push_limit.time_period_timeunit":   regexp.MustCompile(`^MINUTES$`),
+						"push_timeout_duration":             regexp.MustCompile(`^100$`),
+						"push_timeout_timeunit":             regexp.MustCompile(`^SECONDS$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                    verify.P1ResourceIDRegexp,
-						"push_enabled":          regexp.MustCompile(`^false$`),
-						"push_timeout_duration": regexp.MustCompile(`^40$`),
-						"push_timeout_timeunit": regexp.MustCompile(`^SECONDS$`),
-						"otp_enabled":           regexp.MustCompile(`^true$`),
-						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
-						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
+						"id":                                verify.P1ResourceIDRegexp,
+						"device_authorization_enabled":      regexp.MustCompile(`^false$`),
+						"integrity_detection":               regexp.MustCompile(`^permissive$`),
+						"otp_enabled":                       regexp.MustCompile(`^true$`),
+						"pairing_key_lifetime_duration":     regexp.MustCompile(`^10$`),
+						"pairing_key_lifetime_timeunit":     regexp.MustCompile(`^MINUTES$`),
+						"push_enabled":                      regexp.MustCompile(`^false$`),
+						"push_limit.count":                  regexp.MustCompile(`^7$`),
+						"push_limit.lock_duration_duration": regexp.MustCompile(`^20$`),
+						"push_limit.lock_duration_timeunit": regexp.MustCompile(`^MINUTES$`),
+						"push_limit.time_period_duration":   regexp.MustCompile(`^10$`),
+						"push_limit.time_period_timeunit":   regexp.MustCompile(`^MINUTES$`),
+						"push_timeout_duration":             regexp.MustCompile(`^40$`),
+						"push_timeout_timeunit":             regexp.MustCompile(`^SECONDS$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                           verify.P1ResourceIDRegexp,
-						"push_enabled":                 regexp.MustCompile(`^true$`),
-						"push_timeout_duration":        regexp.MustCompile(`^40$`),
-						"push_timeout_timeunit":        regexp.MustCompile(`^SECONDS$`),
-						"otp_enabled":                  regexp.MustCompile(`^true$`),
-						"device_authorization_enabled": regexp.MustCompile(`^false$`),
-						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
-						"auto_enrollment_enabled":                 regexp.MustCompile(`^true$`),
-						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
+						"id":                                verify.P1ResourceIDRegexp,
+						"auto_enrollment_enabled":           regexp.MustCompile(`^true$`),
+						"device_authorization_enabled":      regexp.MustCompile(`^false$`),
+						"integrity_detection":               regexp.MustCompile(`^permissive$`),
+						"otp_enabled":                       regexp.MustCompile(`^true$`),
+						"pairing_key_lifetime_duration":     regexp.MustCompile(`^10$`),
+						"pairing_key_lifetime_timeunit":     regexp.MustCompile(`^MINUTES$`),
+						"push_enabled":                      regexp.MustCompile(`^true$`),
+						"push_limit.count":                  regexp.MustCompile(`^5$`),
+						"push_limit.lock_duration_duration": regexp.MustCompile(`^30$`),
+						"push_limit.lock_duration_timeunit": regexp.MustCompile(`^MINUTES$`),
+						"push_limit.time_period_duration":   regexp.MustCompile(`^10$`),
+						"push_limit.time_period_timeunit":   regexp.MustCompile(`^MINUTES$`),
+						"push_timeout_duration":             regexp.MustCompile(`^40$`),
+						"push_timeout_timeunit":             regexp.MustCompile(`^SECONDS$`),
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
@@ -1704,6 +1723,19 @@ resource "pingone_mfa_policy" "%[2]s" {
       device_authorization_extra_verification = "restrictive"
 
       auto_enrollment_enabled = true
+
+	  pairing_key_lifetime_duration = 15
+	  pairing_key_lifetime_timeunit = "HOURS"
+
+	  push_limit = {
+		count = 7
+
+		lock_duration_duration = 600
+		lock_duration_timeunit = "SECONDS"
+
+		time_period_duration = 5
+		time_period_timeunit = "MINUTES"
+	  }
     }
 
     application {
@@ -1713,6 +1745,16 @@ resource "pingone_mfa_policy" "%[2]s" {
       otp_enabled  = true
 
       integrity_detection = "permissive"
+
+
+	  pairing_key_lifetime_duration = 10
+
+	  push_limit = {
+		count = 7
+
+		lock_duration_duration = 20
+		time_period_duration = 10
+	  }
     }
 
     application {

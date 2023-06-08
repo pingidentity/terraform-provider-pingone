@@ -14,7 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -78,7 +80,7 @@ type mfaPolicyResourceMobileApplicationModel struct {
 	IntegrityDetection                   types.String `tfsdk:"integrity_detection"`
 	PairingKeyLifetimeDuration           types.Int64  `tfsdk:"pairing_key_lifetime_duration"`
 	PairingKeyLifetimeTimeunit           types.String `tfsdk:"pairing_key_lifetime_timeunit"`
-	PushLimit                            types.List   `tfsdk:"push_limit"`
+	PushLimit                            types.Object `tfsdk:"push_limit"`
 }
 
 type mfaPolicyResourceMobileApplicationPushLimitModel struct {
@@ -131,7 +133,7 @@ var (
 		"integrity_detection":                     types.StringType,
 		"pairing_key_lifetime_duration":           types.Int64Type,
 		"pairing_key_lifetime_timeunit":           types.StringType,
-		"push_limit":                              types.ListType{ElemType: types.ObjectType{AttrTypes: mfaPolicyMobileApplicationPushLimitTFObjectTypes}},
+		"push_limit":                              types.ObjectType{AttrTypes: mfaPolicyMobileApplicationPushLimitTFObjectTypes},
 	}
 
 	mfaPolicyMobileApplicationPushLimitTFObjectTypes = map[string]attr.Type{
@@ -237,6 +239,8 @@ func (r *MFAPolicyResource) Schema(ctx context.Context, req resource.SchemaReque
 	mobileOtpFailureCooldownTimeunitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The type of time unit for `otp_failure_cooldown_duration`.",
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues).DefaultValue(string(mfa.ENUMTIMEUNIT_MINUTES))
+
+	mobileApplicationIdDescription := framework.SchemaAttributeDescriptionFromMarkdown("The mobile application's ID.  Mobile applications are configured with the `pingone_application` resource, as an OIDC `NATIVE` type.")
 
 	mobileApplicationPushTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that defines the amount of time (in seconds) a user has to respond to a push notification before it expires. Minimum is `40` seconds and maximum is `150` seconds.",
@@ -464,9 +468,15 @@ func (r *MFAPolicyResource) Schema(ctx context.Context, req resource.SchemaReque
 
 							NestedObject: schema.NestedBlockObject{
 								Attributes: map[string]schema.Attribute{
-									"id": framework.Attr_LinkID(
-										framework.SchemaAttributeDescriptionFromMarkdown("The mobile application's ID.  Mobile applications are configured with the `pingone_application` resource, as an OIDC `NATIVE` type."),
-									),
+									"id": schema.StringAttribute{
+										Description:         mobileApplicationIdDescription.Description,
+										MarkdownDescription: mobileApplicationIdDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											verify.P1ResourceIDValidator(),
+										},
+									},
 
 									"push_enabled": schema.BoolAttribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("Specifies whether push notification is enabled or disabled for the policy.").Description,
@@ -509,6 +519,9 @@ func (r *MFAPolicyResource) Schema(ctx context.Context, req resource.SchemaReque
 									"device_authorization_enabled": schema.BoolAttribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.").Description,
 										Optional:    true,
+										Computed:    true,
+
+										Default: booldefault.StaticBool(false),
 									},
 
 									"device_authorization_extra_verification": schema.StringAttribute{
@@ -563,78 +576,88 @@ func (r *MFAPolicyResource) Schema(ctx context.Context, req resource.SchemaReque
 											stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("pairing_key_lifetime_duration")),
 										},
 									},
-								},
 
-								Blocks: map[string]schema.Block{
-									"push_limit": schema.ListNestedBlock{
+									"push_limit": schema.SingleNestedAttribute{
 										Description: "A single block that describes mobile application push limit settings.",
 
-										NestedObject: schema.NestedBlockObject{
-											Attributes: map[string]schema.Attribute{
-												"count": schema.Int64Attribute{
-													Description:         mobileApplicationPushLimitCountDescription.Description,
-													MarkdownDescription: mobileApplicationPushLimitCountDescription.MarkdownDescription,
-													Optional:            true,
-													Computed:            true,
+										Optional: true,
+										Computed: true,
 
-													Default: int64default.StaticInt64(int64(mobileApplicationPushLimitCountDefault)),
+										Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+											o := map[string]attr.Value{
+												"count":                  types.Int64Value(mobileApplicationPushLimitCountDefault),
+												"lock_duration_duration": types.Int64Value(mobileApplicationPushLimitLockDurationDurationDefault),
+												"lock_duration_timeunit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+												"time_period_duration":   types.Int64Value(int64(mobileApplicationPushLimitTimePeriodDurationDefault)),
+												"time_period_timeunit":   types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+											}
 
-													Validators: []validator.Int64{
-														int64validator.AtLeast(int64(mobileApplicationPushLimitCountMin)),
-														int64validator.AtMost(int64(mobileApplicationPushLimitCountMax)),
-													},
-												},
+											objValue, d := types.ObjectValue(mfaPolicyMobileApplicationPushLimitTFObjectTypes, o)
+											resp.Diagnostics.Append(d...)
 
-												"lock_duration_duration": schema.Int64Attribute{
-													Description:         mobileApplicationPushLimitLockDurationDurationDescription.Description,
-													MarkdownDescription: mobileApplicationPushLimitLockDurationDurationDescription.MarkdownDescription,
-													Optional:            true,
-													Computed:            true,
+											return objValue
+										}()),
 
-													Default: int64default.StaticInt64(int64(mobileApplicationPushLimitLockDurationDurationDefault)),
-												},
+										Attributes: map[string]schema.Attribute{
+											"count": schema.Int64Attribute{
+												Description:         mobileApplicationPushLimitCountDescription.Description,
+												MarkdownDescription: mobileApplicationPushLimitCountDescription.MarkdownDescription,
+												Optional:            true,
+												Computed:            true,
 
-												"lock_duration_timeunit": schema.StringAttribute{
-													Description:         mobileApplicationPushLimitLockDurationTimeunitDescription.Description,
-													MarkdownDescription: mobileApplicationPushLimitLockDurationTimeunitDescription.MarkdownDescription,
-													Optional:            true,
-													Computed:            true,
+												Default: int64default.StaticInt64(int64(mobileApplicationPushLimitCountDefault)),
 
-													Default: stringdefault.StaticString(string(mfa.ENUMTIMEUNIT_MINUTES)),
-
-													Validators: []validator.String{
-														stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
-														stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("lock_duration_duration")),
-													},
-												},
-
-												"time_period_duration": schema.Int64Attribute{
-													Description:         mobileApplicationPushLimitTimePeriodDurationDescription.Description,
-													MarkdownDescription: mobileApplicationPushLimitTimePeriodDurationDescription.MarkdownDescription,
-													Optional:            true,
-													Computed:            true,
-
-													Default: int64default.StaticInt64(int64(mobileApplicationPushLimitTimePeriodDurationDefault)),
-												},
-
-												"time_period_timeunit": schema.StringAttribute{
-													Description:         mobileApplicationPushLimitTimePeriodTimeunitDescription.Description,
-													MarkdownDescription: mobileApplicationPushLimitTimePeriodTimeunitDescription.MarkdownDescription,
-													Optional:            true,
-													Computed:            true,
-
-													Default: stringdefault.StaticString(string(mfa.ENUMTIMEUNIT_MINUTES)),
-
-													Validators: []validator.String{
-														stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
-														stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("time_period_duration")),
-													},
+												Validators: []validator.Int64{
+													int64validator.AtLeast(int64(mobileApplicationPushLimitCountMin)),
+													int64validator.AtMost(int64(mobileApplicationPushLimitCountMax)),
 												},
 											},
-										},
 
-										Validators: []validator.List{
-											listvalidator.SizeAtMost(1),
+											"lock_duration_duration": schema.Int64Attribute{
+												Description:         mobileApplicationPushLimitLockDurationDurationDescription.Description,
+												MarkdownDescription: mobileApplicationPushLimitLockDurationDurationDescription.MarkdownDescription,
+												Optional:            true,
+												Computed:            true,
+
+												Default: int64default.StaticInt64(int64(mobileApplicationPushLimitLockDurationDurationDefault)),
+											},
+
+											"lock_duration_timeunit": schema.StringAttribute{
+												Description:         mobileApplicationPushLimitLockDurationTimeunitDescription.Description,
+												MarkdownDescription: mobileApplicationPushLimitLockDurationTimeunitDescription.MarkdownDescription,
+												Optional:            true,
+												Computed:            true,
+
+												Default: stringdefault.StaticString(string(mfa.ENUMTIMEUNIT_MINUTES)),
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+													stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("lock_duration_duration")),
+												},
+											},
+
+											"time_period_duration": schema.Int64Attribute{
+												Description:         mobileApplicationPushLimitTimePeriodDurationDescription.Description,
+												MarkdownDescription: mobileApplicationPushLimitTimePeriodDurationDescription.MarkdownDescription,
+												Optional:            true,
+												Computed:            true,
+
+												Default: int64default.StaticInt64(int64(mobileApplicationPushLimitTimePeriodDurationDefault)),
+											},
+
+											"time_period_timeunit": schema.StringAttribute{
+												Description:         mobileApplicationPushLimitTimePeriodTimeunitDescription.Description,
+												MarkdownDescription: mobileApplicationPushLimitTimePeriodTimeunitDescription.MarkdownDescription,
+												Optional:            true,
+												Computed:            true,
+
+												Default: stringdefault.StaticString(string(mfa.ENUMTIMEUNIT_MINUTES)),
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+													stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("time_period_duration")),
+												},
+											},
 										},
 									},
 								},
@@ -960,7 +983,7 @@ func (r *MFAPolicyResource) Create(ctx context.Context, req resource.CreateReque
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*mfa.DeviceAuthenticationPolicy))...)
+	resp.Diagnostics.Append(state.toState(ctx, response.(*mfa.DeviceAuthenticationPolicy))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1007,7 +1030,7 @@ func (r *MFAPolicyResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*mfa.DeviceAuthenticationPolicy))...)
+	resp.Diagnostics.Append(data.toState(ctx, response.(*mfa.DeviceAuthenticationPolicy))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1058,7 +1081,7 @@ func (r *MFAPolicyResource) Update(ctx context.Context, req resource.UpdateReque
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*mfa.DeviceAuthenticationPolicy))...)
+	resp.Diagnostics.Append(state.toState(ctx, response.(*mfa.DeviceAuthenticationPolicy))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1308,6 +1331,51 @@ func (p *mfaPolicyResourceMobileModel) expand(ctx context.Context, apiClient *ma
 				)
 			}
 
+			if !applicationPlan.PairingKeyLifetimeDuration.IsNull() && !applicationPlan.PairingKeyLifetimeDuration.IsUnknown() {
+				item.SetPairingKeyLifetime(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime(
+					int32(applicationPlan.PairingKeyLifetimeDuration.ValueInt64()),
+					mfa.EnumTimeUnitPairingKeyLifetime(applicationPlan.PairingKeyLifetimeTimeunit.ValueString())),
+				)
+			}
+
+			if !applicationPlan.PushLimit.IsNull() && !applicationPlan.PushLimit.IsUnknown() {
+
+				var pushLimitPlan mfaPolicyResourceMobileApplicationPushLimitModel
+				diags.Append(applicationPlan.PushLimit.As(ctx, &pushLimitPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				pushLimit := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimit()
+
+				if !pushLimitPlan.Count.IsNull() && !pushLimitPlan.Count.IsUnknown() {
+					pushLimit.SetCount(int32(pushLimitPlan.Count.ValueInt64()))
+				}
+
+				if !pushLimitPlan.LockDurationDuration.IsNull() && !pushLimitPlan.LockDurationDuration.IsUnknown() {
+					pushLimit.SetLockDuration(
+						*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration(
+							int32(pushLimitPlan.LockDurationDuration.ValueInt64()),
+							mfa.EnumTimeUnit(pushLimitPlan.LockDurationTimeunit.ValueString()),
+						),
+					)
+				}
+
+				if !pushLimitPlan.TimePeriodDuration.IsNull() && !pushLimitPlan.TimePeriodDuration.IsUnknown() {
+					pushLimit.SetTimePeriod(
+						*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod(
+							int32(pushLimitPlan.TimePeriodDuration.ValueInt64()),
+							mfa.EnumTimeUnit(pushLimitPlan.TimePeriodTimeunit.ValueString()),
+						),
+					)
+				}
+
+				item.SetPushLimit(*pushLimit)
+			}
+
 			if !applicationPlan.OTPEnabled.IsNull() && !applicationPlan.OTPEnabled.IsUnknown() {
 				item.SetOtp(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerOtp(applicationPlan.OTPEnabled.ValueBool()))
 			}
@@ -1367,7 +1435,7 @@ func (p *mfaPolicyResourceFidoDeviceModel) expand(ctx context.Context) (*mfa.Dev
 	return data, diags
 }
 
-func (p *mfaPolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticationPolicy) diag.Diagnostics {
+func (p *mfaPolicyResourceModel) toState(ctx context.Context, apiObject *mfa.DeviceAuthenticationPolicy) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -1399,7 +1467,8 @@ func (p *mfaPolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticationPoli
 	p.Email, d = offlineDeviceOkToTF(apiObject.GetEmailOk())
 	diags.Append(d...)
 
-	p.Mobile, d = mobileDeviceOkToTF(apiObject.GetMobileOk())
+	uhh, uhhok := apiObject.GetMobileOk()
+	p.Mobile, d = mobileDeviceOkToTF(ctx, uhh, uhhok)
 	diags.Append(d...)
 
 	p.Totp, d = totpDeviceOkToTF(apiObject.GetTotpOk())
@@ -1457,7 +1526,7 @@ func offlineDeviceOkToTF(apiObject *mfa.DeviceAuthenticationPolicyOfflineDevice,
 	return returnVar, diags
 }
 
-func mobileDeviceOkToTF(apiObject *mfa.DeviceAuthenticationPolicyMobile, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func mobileDeviceOkToTF(ctx context.Context, apiObject *mfa.DeviceAuthenticationPolicyMobile, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: mfaPolicyMobileTFObjectTypes}
@@ -1485,7 +1554,9 @@ func mobileDeviceOkToTF(apiObject *mfa.DeviceAuthenticationPolicyMobile, ok bool
 		}
 	}
 
-	applicationObj, d := mobileApplicationsOkToTF(apiObject.GetApplicationsOk())
+	uhh, uhhok := apiObject.GetApplicationsOk()
+
+	applicationObj, d := mobileApplicationsOkToTF(ctx, uhh, uhhok)
 	diags.Append(d...)
 	objectMap["application"] = applicationObj
 
@@ -1498,7 +1569,7 @@ func mobileDeviceOkToTF(apiObject *mfa.DeviceAuthenticationPolicyMobile, ok bool
 	return returnVar, diags
 }
 
-func mobileApplicationsOkToTF(apiObject []mfa.DeviceAuthenticationPolicyMobileApplicationsInner, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func mobileApplicationsOkToTF(ctx context.Context, apiObject []mfa.DeviceAuthenticationPolicyMobileApplicationsInner, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: mfaPolicyMobileApplicationTFObjectTypes}
@@ -1521,7 +1592,7 @@ func mobileApplicationsOkToTF(apiObject []mfa.DeviceAuthenticationPolicyMobileAp
 			"integrity_detection":                     framework.EnumOkToTF(item.GetIntegrityDetectionOk()),
 			"pairing_key_lifetime_duration":           types.Int64Null(),
 			"pairing_key_lifetime_timeunit":           types.StringNull(),
-			"push_limit":                              types.ListNull(types.ObjectType{AttrTypes: mfaPolicyMobileApplicationPushLimitTFObjectTypes}),
+			"push_limit":                              types.ObjectNull(mfaPolicyMobileApplicationPushLimitTFObjectTypes),
 		}
 
 		if v, ok := item.GetPushOk(); ok {
@@ -1551,7 +1622,8 @@ func mobileApplicationsOkToTF(apiObject []mfa.DeviceAuthenticationPolicyMobileAp
 			objectMap["pairing_key_lifetime_timeunit"] = framework.EnumOkToTF(v.GetTimeUnitOk())
 		}
 
-		pushLimitObj, d := mobileApplicationsPushLimitsOkToTF(item.GetPushLimitOk())
+		uhh, uhhok := item.GetPushLimitOk()
+		pushLimitObj, d := mobileApplicationsPushLimitOkToTF(ctx, uhh, uhhok)
 		diags.Append(d...)
 		objectMap["push_limit"] = pushLimitObj
 
@@ -1564,13 +1636,11 @@ func mobileApplicationsOkToTF(apiObject []mfa.DeviceAuthenticationPolicyMobileAp
 	return types.SetValueMust(tfObjType, list), diags
 }
 
-func mobileApplicationsPushLimitsOkToTF(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimit, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func mobileApplicationsPushLimitOkToTF(ctx context.Context, apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimit, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: mfaPolicyMobileApplicationPushLimitTFObjectTypes}
-
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(mfaPolicyMobileApplicationPushLimitTFObjectTypes), diags
 	}
 
 	objectMap := map[string]attr.Value{
@@ -1591,10 +1661,7 @@ func mobileApplicationsPushLimitsOkToTF(apiObject *mfa.DeviceAuthenticationPolic
 		objectMap["time_period_timeunit"] = framework.EnumOkToTF(v.GetTimeUnitOk())
 	}
 
-	flattenedObj, d := types.ObjectValue(mfaPolicyMobileApplicationPushLimitTFObjectTypes, objectMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(mfaPolicyMobileApplicationPushLimitTFObjectTypes, objectMap)
 	diags.Append(d...)
 
 	return returnVar, diags
