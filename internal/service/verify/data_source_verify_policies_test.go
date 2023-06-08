@@ -54,59 +54,59 @@ func testAccVerifyPolicies_NoFilter(environmentName, licenseID, resourceName, na
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_verify_policy" "%[3]s-1" {
-	environment_id = pingone_environment.%[2]s.id
-	name           = "%[4]s-1"
-	description    = "%[4]s-1"
-	default        = false
-	
-	government_id = {
-		verify = "REQUIRED"
-	}
-	depends_on = [pingone_environment.%[2]s]
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-1"
+  description    = "%[4]s-1"
+  default        = false
+
+  government_id = {
+    verify = "REQUIRED"
+  }
+  depends_on = [pingone_environment.%[2]s]
 }
 
 resource "pingone_verify_policy" "%[3]s-2" {
-	environment_id = pingone_environment.%[2]s.id
-	name           = "%[4]s-2"
-	description    = "%[4]s-2"
-	default        = false
-	
-	facial_comparison = {
-		verify    = "REQUIRED"
-		threshold = "HIGH"
-	}
-    depends_on = [pingone_environment.%[2]s]
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-2"
+  description    = "%[4]s-2"
+  default        = false
+
+  facial_comparison = {
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
+  depends_on = [pingone_environment.%[2]s]
 }
 
 resource "pingone_verify_policy" "%[3]s-3" {
-	environment_id = pingone_environment.%[2]s.id
-	name           = "%[4]s-3"
-	description    = "%[4]s-3"
-	default        = false
-  
-	liveness = {
-		verify    = "REQUIRED"
-		threshold = "HIGH"
-	}
-	depends_on = [pingone_environment.%[2]s]
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-3"
+  description    = "%[4]s-3"
+  default        = false
+
+  liveness = {
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
+  depends_on = [pingone_environment.%[2]s]
 }
 
 resource "pingone_verify_policy" "%[3]s-4" {
-	environment_id = pingone_environment.%[2]s.id
-	name           = "%[4]s-4"
-	description    = "%[4]s-4"
-	default        = false
-  
-	liveness = {
-		verify    = "REQUIRED"
-		threshold = "LOW"
-	}
-	depends_on = [pingone_environment.%[2]s]
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-4"
+  description    = "%[4]s-4"
+  default        = false
+
+  liveness = {
+    verify    = "REQUIRED"
+    threshold = "LOW"
+  }
+  depends_on = [pingone_environment.%[2]s]
 }
 
 data "pingone_verify_policies" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  depends_on = [pingone_verify_policy.%[3]s-1, pingone_verify_policy.%[3]s-2, pingone_verify_policy.%[3]s-3, pingone_verify_policy.%[3]s-4]	
+  depends_on = [pingone_verify_policy.%[3]s-1, pingone_verify_policy.%[3]s-2, pingone_verify_policy.%[3]s-3, pingone_verify_policy.%[3]s-4]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

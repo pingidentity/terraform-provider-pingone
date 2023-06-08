@@ -278,10 +278,10 @@ resource "pingone_verify_policy" "%[3]s" {
 }
 
 data "pingone_verify_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id   = pingone_environment.%[2]s.id
   verify_policy_id = pingone_verify_policy.%[3]s.id
 
-  depends_on = [pingone_verify_policy.%[3]s]	
+  depends_on = [pingone_verify_policy.%[3]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -304,9 +304,9 @@ resource "pingone_verify_policy" "%[3]s" {
 
 data "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name = "%[4]s"
+  name           = "%[4]s"
 
-  depends_on = [pingone_verify_policy.%[3]s]	
+  depends_on = [pingone_verify_policy.%[3]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -316,9 +316,9 @@ func testAccVerifyPolicy_FindDefaultPolicy(environmentName, licenseID, resourceN
 
 data "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  default = true
+  default        = true
 
-  depends_on = [pingone_environment.%[2]s]	
+  depends_on = [pingone_environment.%[2]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -327,7 +327,7 @@ func testAccVerifyPolicy_FindByIDFail(environmentName, licenseID, resourceName, 
 	%[1]s
 
 data "pingone_verify_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id   = pingone_environment.%[2]s.id
   verify_policy_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
 
@@ -340,7 +340,7 @@ func testAccVerifyPolicy_FindByNameFail(environmentName, licenseID, resourceName
 
 data "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name = "%[4]s"
+  name           = "%[4]s"
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
