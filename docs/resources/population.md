@@ -2,12 +2,12 @@
 page_title: "pingone_population Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne populations
+  Resource to create and manage PingOne populations.
 ---
 
 # pingone_population (Resource)
 
-Resource to create and manage PingOne populations
+Resource to create and manage PingOne populations.
 
 ## Example Usage
 
