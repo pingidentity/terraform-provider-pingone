@@ -77,6 +77,34 @@ func testAccCheckVerifyPolicyDestroy(s *terraform.State) error {
 	return nil
 }
 
+func TestAccVerifyPolicy_NewEnv(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_verify_policy.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVerifyPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
+				),
+			},
+		},
+	})
+}
+
 func TestAccVerifyPolicy_Full(t *testing.T) {
 	t.Parallel()
 
@@ -252,8 +280,8 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 			},
 			{
 				Config: testAccVerifyPolicy_IncorrectTransactionDurationRange(environmentName, licenseID, resourceName, name),
-				ExpectError: regexp.MustCompile(`(?s)(.*Attribute transaction.timeout.duration value must be between 0 and 30.*)` +
-					`(.*Attribute transaction.data_collection.timeout.duration value must be between\n0 and 1800.*)`),
+				ExpectError: regexp.MustCompile(`(?s)(?:.*Attribute transaction.timeout.duration value must be between 0 and 30.*)` +
+					`(?:.*Attribute transaction.data_collection.timeout.duration value must be between\n0 and 1800.*)`),
 				Destroy: true,
 			},
 			{
@@ -263,6 +291,24 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 			},
 		},
 	})
+}
+func testAccVerifyPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_verify_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name        = "%[4]s"
+  description = "%[4]s"
+
+  facial_comparison = {
+    verify    = "REQUIRED"
+    threshold = "LOW"
+  }
+
+  depends_on = [pingone_environment.%[2]s]
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name string) string {
