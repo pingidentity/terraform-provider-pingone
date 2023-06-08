@@ -37,7 +37,7 @@ resource "pingone_trusted_email_address" "my_trusted_email" {
 
 - `email_address` (String) The trusted email address, for example `john.smith@bxretail.org`.
 - `email_domain_id` (String) The ID of the email domain to associate the trusted email address with.
-- `environment_id` (String) The ID of the environment to associate the trusted email address with.
+- `environment_id` (String) The ID of the environment to associate the trusted email address with.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

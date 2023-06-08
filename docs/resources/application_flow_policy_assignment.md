@@ -87,9 +87,9 @@ resource "pingone_application_flow_policy_assignment" "foo" {
 
 - `application_id` (String) The ID of the application to create the flow policy assignment for.
 
--> The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources.
-- `environment_id` (String) The ID of the environment to create the application flow policy assignment in.
-- `flow_policy_id` (String) The ID of the DaVinci flow policy to associate.
+-> The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to create the application flow policy assignment in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `flow_policy_id` (String) The ID of the DaVinci flow policy to associate.  This field is immutable and will trigger a replace plan if changed.
 - `priority` (Number) The order in which the policy referenced by this assignment is evaluated during an authentication flow relative to other policies. An assignment with a lower priority will be evaluated first.
 
 ### Read-Only

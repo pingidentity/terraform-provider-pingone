@@ -62,7 +62,7 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 - `button_color` (String) The button color for the theme. It must be a valid hexadecimal color code.
 - `button_text_color` (String) The button text color for the branding theme. It must be a valid hexadecimal color code.
 - `card_color` (String) The card color for the branding theme. It must be a valid hexadecimal color code.
-- `environment_id` (String) The ID of the environment to set branding settings for.
+- `environment_id` (String) The ID of the environment to set branding settings for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `heading_text_color` (String) The heading text color for the branding theme. It must be a valid hexadecimal color code.
 - `link_text_color` (String) The hyperlink text color for the branding theme. It must be a valid hexadecimal color code.
 - `name` (String) A string that specifies the unique name of the branding theme.
@@ -87,7 +87,7 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 Required:
 
 - `href` (String) The URL or fully qualified path to the background image file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.
-- `id` (String) The ID of the background image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.
+- `id` (String) The ID of the background image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 
 <a id="nestedblock--logo"></a>
@@ -96,7 +96,7 @@ Required:
 Required:
 
 - `href` (String) The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.
-- `id` (String) The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.
+- `id` (String) The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ## Import
 

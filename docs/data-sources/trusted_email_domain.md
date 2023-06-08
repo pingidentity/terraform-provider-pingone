@@ -30,7 +30,7 @@ data "pingone_trusted_email_domain" "example_by_id" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment that is configured with the trusted email domain.
+- `environment_id` (String) The ID of the environment that is configured with the trusted email domain.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 

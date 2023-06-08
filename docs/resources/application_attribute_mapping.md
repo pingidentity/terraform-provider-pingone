@@ -242,8 +242,8 @@ resource "pingone_application_attribute_mapping" "bar" {
 
 ### Required
 
-- `application_id` (String) The ID of the application to create the attribute mapping for.
-- `environment_id` (String) The ID of the environment to create the application attribute mapping in.
+- `application_id` (String) The ID of the application to create the attribute mapping for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to create the application attribute mapping in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies the name of attribute and must be unique within an application. For SAML applications, the `saml_subject` name is a case-insensitive name which indicates the mapping to be used for the subject in an assertion and can be overridden. For OpenID Connect applications, the `sub` name indicates the mapping to be used for the subject in the token and can be overridden.  The following OpenID Connect names are reserved and cannot be used: `acr`, `amr`, `at_hash`, `aud`, `auth_time`, `azp`, `client_id`, `exp`, `iat`, `iss`, `jti`, `nbf`, `nonce`, `org`, `scope`, `sid`.
 - `value` (String) A string that specifies the string constants or expression for mapping the attribute path against a specific source. The expression format is `${<source>.<attribute_path>}`. The only supported source is user (for example, `${user.id}`).  When defining attribute mapping values in Terraform, the expression must be escaped (for example `value = "$${user.id}}"`)
 

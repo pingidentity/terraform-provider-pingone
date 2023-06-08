@@ -66,7 +66,7 @@ resource "pingone_notification_policy" "user" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to associate the notification policy with.
+- `environment_id` (String) The ID of the environment to associate the notification policy with.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name to use for the notification policy.  Must be unique among the notification policies in the environment.
 
 ### Optional

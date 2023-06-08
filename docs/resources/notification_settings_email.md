@@ -38,7 +38,7 @@ resource "pingone_notification_settings_email" "mfa_settings" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to configure email settings in.
+- `environment_id` (String) The ID of the environment to configure email settings in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `host` (String) A string that specifies the organization's SMTP server.
 - `password` (String, Sensitive) A string that specifies the organization's SMTP server's password.
 - `port` (Number) An integer that specifies the port used by the organization's SMTP server to send emails (default: `465`). Note that the protocol used depends upon the port specified. If you specify port `25`, `587`, or `2525`, SMTP with `STARTTLS` is used. Otherwise, `SMTPS` is used.
