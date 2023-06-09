@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_sign_on_policy_action`: Support user provisioning gateway configuration on the "Login" sign-on policy action
+```
