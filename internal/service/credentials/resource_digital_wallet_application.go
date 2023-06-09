@@ -74,7 +74,7 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 
 			"application_id": schema.StringAttribute{
 				Description: "The identifier (UUID) of the PingOne application associated with the digital wallet application.",
-				Optional:    true,
+				Required:    true,
 				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
 				},

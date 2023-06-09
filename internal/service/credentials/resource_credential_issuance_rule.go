@@ -157,7 +157,7 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 
 			"digital_wallet_application_id": schema.StringAttribute{
 				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet.",
-				Optional:    true,
+				Required:    true,
 				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
 				},
