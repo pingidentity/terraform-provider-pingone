@@ -112,7 +112,7 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 							Required:            true,
 
 							Validators: []validator.String{
-								verify.P1DVResourceIDValidator(),
+								verify.P1ResourceIDValidator(),
 							},
 						},
 

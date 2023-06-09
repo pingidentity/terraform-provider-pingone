@@ -250,7 +250,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 							Required:            true,
 
 							Validators: []validator.String{
-								verify.P1DVResourceIDValidator(),
+								verify.P1ResourceIDValidator(),
 							},
 						},
 
@@ -279,7 +279,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 							Required:            true,
 
 							Validators: []validator.String{
-								verify.P1DVResourceIDValidator(),
+								verify.P1ResourceIDValidator(),
 							},
 						},
 
