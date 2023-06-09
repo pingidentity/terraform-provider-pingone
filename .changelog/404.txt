@@ -1,0 +1,15 @@
+```release-note:note
+Adjusted documentation for multiple resources/datasources to clarify PingOne ID attribute validation and plan replacement on change.
+```
+
+```release-note:note
+`resource/pingone_flow_policy_assignment`: Adjusted schema such that the `flow_policy_id` required parameter no longer triggers a replacement plan on change.
+```
+
+```release-note:note
+`resource/pingone_branding_settings`: Adjusted schema such that the icon `id` required parameter no longer triggers a replacement plan on change.
+```
+
+```release-note:bug
+`resource/pingone_branding_theme`: Fixed change to theme icon/background ID triggers a replacement plan on change, leading to removal failures if the theme is set as default.
+```
