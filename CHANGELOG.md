@@ -2,11 +2,15 @@
 
 NOTES:
 
+* Adjusted documentation for multiple resources/datasources to clarify PingOne ID attribute validation and plan replacement on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
 * `data_source/pingone_credential_type`: Corrected typo in data source description. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_branding_settings`: Adjusted schema such that the icon `id` required parameter no longer triggers a replacement plan on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
+* `resource/pingone_flow_policy_assignment`: Adjusted schema such that the `flow_policy_id` required parameter no longer triggers a replacement plan on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
 
 BUG FIXES:
 
 * `data_source/pingone_credential_issuer_profile`: Fixed mismatched `created_at` and `updated_at` mapping. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_branding_theme`: Fixed change to theme icon/background ID triggers a replacement plan on change, leading to removal failures if the theme is set as default. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
 * `resource/pingone_credential_issuance_rule`: Fixed incorrect replacement of resource when the `digital_wallet_id` value was changed. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
 * `resource/pingone_credential_issuer_profile`: Fixed mismatched `created_at` and `updated_at` mapping. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
 * `resource/pingone_digital_wallet_application`: Fixed incorrect replacement of resource when the `application_id` value was changed. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
