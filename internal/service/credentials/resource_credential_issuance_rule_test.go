@@ -517,21 +517,18 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 func testAccCredentialIssuanceRule_InvalidDigitalWalletID(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-
 resource "pingone_credential_type" "%[2]s" {
   environment_id       = data.pingone_environment.general_test.id
   title                = "%[3]s"
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
-
     fields = [
       {
         type       = "Alphanumeric Text"
@@ -542,22 +539,18 @@ resource "pingone_credential_type" "%[2]s" {
     ]
   }
 }
-
 resource "pingone_credential_issuance_rule" "%[2]s" {
   environment_id     = data.pingone_environment.general_test.id
   credential_type_id = resource.pingone_credential_type.%[2]s.id
   status             = "DISABLED"
-
   filter = {
     scim = "address.countryCode eq \"CA\""
   }
-
   automation = {
     issue  = "PERIODIC"
     revoke = "PERIODIC"
     update = "PERIODIC"
   }
-
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

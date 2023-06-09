@@ -1,0 +1,19 @@
+```release-note:note
+`data_source/pingone_credential_type`: Corrected typo in data source description.
+```
+
+```release-note:bug
+`resource/pingone_digital_wallet_application`: Fixed incorrect replacement of resource when the `application_id` value was changed.
+```
+
+```release-note:bug
+`resource/pingone_credential_issuance_rule`: Fixed incorrect replacement of resource when the `digital_wallet_id` value was changed.
+```
+
+```release-note:bug
+`resource/pingone_credential_issuer_profile`: Fixed mismatched `created_at` and `updated_at` mapping.
+```
+
+```release-note:bug
+`data_source/pingone_credential_issuer_profile`: Fixed mismatched `created_at` and `updated_at` mapping.
+```

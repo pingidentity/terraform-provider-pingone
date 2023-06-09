@@ -32,8 +32,8 @@ type CredentialIssuerProfileResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
 	EnvironmentId         types.String `tfsdk:"environment_id"`
 	ApplicationInstanceId types.String `tfsdk:"application_instance_id"`
-	CreatedAt             types.String `tfsdk:"updated_at"`
-	UpdatedAt             types.String `tfsdk:"created_at"`
+	CreatedAt             types.String `tfsdk:"created_at"`
+	UpdatedAt             types.String `tfsdk:"updated_at"`
 	Name                  types.String `tfsdk:"name"`
 }
 
