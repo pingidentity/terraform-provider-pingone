@@ -88,6 +88,17 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 		),
 	}
 
+	singleStepChange := resource.TestStep{
+		Config: testAccApplicationFlowPolicyAssignmentConfig_Change(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
+		),
+	}
+
 	multipleStep := resource.TestStep{
 		Config: testAccApplicationFlowPolicyAssignmentConfig_Multiple(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
@@ -126,6 +137,7 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 			singleStep,
 			multipleStep,
 			singleStep,
+			singleStepChange,
 		},
 	})
 }
@@ -193,7 +205,7 @@ resource "pingone_application_flow_policy_assignment" "%[2]s" {
 }`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationFlowPolicyAssignmentConfig_Multiple(resourceName, name string) string {
+func testAccApplicationFlowPolicyAssignmentConfig_Change(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -224,6 +236,41 @@ resource "pingone_application_flow_policy_assignment" "%[2]s" {
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[1]
 
+  priority = 1
+}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationFlowPolicyAssignmentConfig_Multiple(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.davinci_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+data "pingone_flow_policies" "%[2]s" {
+  environment_id = data.pingone_environment.davinci_test.id
+
+  scim_filter = "(trigger.type eq \"AUTHENTICATION\")"
+}
+
+resource "pingone_application_flow_policy_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.davinci_test.id
+  application_id = pingone_application.%[2]s.id
+
+  flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
+
   priority = 2
 }
 
@@ -231,7 +278,7 @@ resource "pingone_application_flow_policy_assignment" "%[2]s-2" {
   environment_id = data.pingone_environment.davinci_test.id
   application_id = pingone_application.%[2]s.id
 
-  flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
+  flow_policy_id = data.pingone_flow_policies.%[2]s.ids[1]
 
   priority = 1
 }`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)

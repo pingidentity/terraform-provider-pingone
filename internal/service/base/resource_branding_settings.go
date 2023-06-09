@@ -70,6 +70,10 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 
 	const attrMinLength = 1
 
+	logoIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.",
+	)
+
 	logoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
 	)
@@ -102,9 +106,15 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
-						"id": framework.Attr_LinkID(
-							framework.SchemaAttributeDescriptionFromMarkdown("The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
-						),
+						"id": schema.StringAttribute{
+							Description:         logoIdDescription.Description,
+							MarkdownDescription: logoIdDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								verify.P1ResourceIDValidator(),
+							},
+						},
 
 						"href": schema.StringAttribute{
 							Description:         logoHrefDescription.Description,

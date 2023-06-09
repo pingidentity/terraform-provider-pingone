@@ -23,7 +23,7 @@ data "pingone_credential_types" "example_all_credential_types_ids" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the credential type in.
+- `environment_id` (String) The ID of the environment to create the credential type in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

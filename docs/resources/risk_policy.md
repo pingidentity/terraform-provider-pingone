@@ -154,7 +154,7 @@ resource "pingone_risk_policy" "my_awesome_weights_risk_policy" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to configure the risk policy in.
+- `environment_id` (String) The ID of the environment to configure the risk policy in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies the unique, friendly name for this policy set. Valid characters consist of any Unicode letter, mark (such as, accent, umlaut), # (numeric), / (forward slash), . (period), ' (apostrophe), _ (underscore), space, or - (hyphen). Maximum size is 256 characters.
 
 ### Optional

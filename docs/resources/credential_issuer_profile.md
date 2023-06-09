@@ -32,7 +32,7 @@ resource "pingone_credential_issuer_profile" "my_credential_issuer" {
 
 ### Required
 
-- `environment_id` (String) TThe ID of the environment to create the credential issuer in.
+- `environment_id` (String) The ID of the environment to create the credential issuer in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name of the credential issuer. The name is included in the metadata of an issued verifiable credential.
 
 ### Read-Only

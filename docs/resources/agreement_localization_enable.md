@@ -88,10 +88,10 @@ resource "pingone_agreement_localization_enable" "my_agreement_fr_enable" {
 
 ### Required
 
-- `agreement_id` (String) The ID of the agreement configured with an agreement localization to enable/disable.
-- `agreement_localization_id` (String) The ID of the agreement localization to enable/disable.
+- `agreement_id` (String) The ID of the agreement configured with an agreement localization to enable/disable.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `agreement_localization_id` (String) The ID of the agreement localization to enable/disable.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `enabled` (Boolean) A boolean that specifies the current enabled state of the agreement localization. The agreement localization must have an active revision text to be enabled.
-- `environment_id` (String) The ID of the environment configured with an agreement localization to enable/disable.
+- `environment_id` (String) The ID of the environment configured with an agreement localization to enable/disable.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

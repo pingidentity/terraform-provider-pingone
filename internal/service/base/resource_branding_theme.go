@@ -98,8 +98,16 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 		"The HREF and the ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
 	)
 
+	logoIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.",
+	)
+
 	logoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+	)
+
+	backgroundImageIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the background image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.",
 	)
 
 	backgroundImageHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -236,9 +244,15 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
-						"id": framework.Attr_LinkID(
-							framework.SchemaAttributeDescriptionFromMarkdown("The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
-						),
+						"id": schema.StringAttribute{
+							Description:         logoIdDescription.Description,
+							MarkdownDescription: logoIdDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								verify.P1ResourceIDValidator(),
+							},
+						},
 
 						"href": schema.StringAttribute{
 							Description:         logoHrefDescription.Description,
@@ -259,9 +273,15 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
-						"id": framework.Attr_LinkID(
-							framework.SchemaAttributeDescriptionFromMarkdown("The ID of the background image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
-						),
+						"id": schema.StringAttribute{
+							Description:         backgroundImageIdDescription.Description,
+							MarkdownDescription: backgroundImageIdDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								verify.P1ResourceIDValidator(),
+							},
+						},
 
 						"href": schema.StringAttribute{
 							Description:         backgroundImageHrefDescription.Description,
