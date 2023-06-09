@@ -1,3 +1,16 @@
+## 0.16.0 (Unreleased)
+
+NOTES:
+
+* `data_source/pingone_credential_type`: Corrected typo in data source description. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+
+BUG FIXES:
+
+* `data_source/pingone_credential_issuer_profile`: Fixed mismatched `created_at` and `updated_at` mapping. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_credential_issuance_rule`: Fixed incorrect replacement of resource when the `digital_wallet_id` value was changed. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_credential_issuer_profile`: Fixed mismatched `created_at` and `updated_at` mapping. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_digital_wallet_application`: Fixed incorrect replacement of resource when the `application_id` value was changed. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+
 ## 0.15.1 (07 June 2023)
 
 NOTES:

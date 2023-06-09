@@ -99,7 +99,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data to retrieve a PingOne Credentials credential type by its Credential Type Id.",
+		Description: "Datasource to retrieve a PingOne Credentials credential type by its Credential Type Id.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
