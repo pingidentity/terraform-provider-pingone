@@ -15,6 +15,10 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-login.tf") }}
 
+## Example Usage - First Factor (Username/Password) with New User Provisioning Gateway
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-login-with-provisioning.tf") }}
+
 ## Example Usage - Identifier First
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-idfirst.tf") }}
