@@ -1517,17 +1517,17 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     new_user_provisioning {
       gateway {
         id           = pingone_gateway.%[2]s-1.id
-		user_type_id = pingone_gateway.%[2]s-1.user_type.*[index(pingone_gateway.%[2]s-1.user_type[*].name, "User Set 2")].id
+        user_type_id = pingone_gateway.%[2]s-1.user_type.* [index(pingone_gateway.%[2]s-1.user_type[*].name, "User Set 2")].id
       }
 
       gateway {
         id           = pingone_gateway.%[2]s-2.id
-		user_type_id = pingone_gateway.%[2]s-2.user_type.*[index(pingone_gateway.%[2]s-2.user_type[*].name, "User Set 1")].id
+        user_type_id = pingone_gateway.%[2]s-2.user_type.* [index(pingone_gateway.%[2]s-2.user_type[*].name, "User Set 1")].id
       }
 
       gateway {
         id           = pingone_gateway.%[2]s-1.id
-		user_type_id = pingone_gateway.%[2]s-1.user_type.*[index(pingone_gateway.%[2]s-1.user_type[*].name, "User Set 1")].id
+        user_type_id = pingone_gateway.%[2]s-1.user_type.* [index(pingone_gateway.%[2]s-1.user_type[*].name, "User Set 1")].id
       }
     }
   }
