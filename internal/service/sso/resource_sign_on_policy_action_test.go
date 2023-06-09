@@ -164,24 +164,24 @@ func TestAccSignOnPolicyAction_LoginAction_Gateway(t *testing.T) {
 	withGateway := resource.TestStep{
 		Config: testAccSignOnPolicyActionConfig_LoginFullWithNewUserProvisioning(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "new_user_provisioning.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.#", "3"),
-			resource.TestMatchResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.0.id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.0.type", "LDAP"),
-			resource.TestMatchResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.0.user_type_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.1.id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.1.type", "LDAP"),
-			resource.TestMatchResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.1.user_type_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.2.id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.2.type", "LDAP"),
-			resource.TestMatchResourceAttr(resourceFullName, "new_user_provisioning.0.gateway.2.user_type_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.#", "3"),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.0.id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.0.type", "LDAP"),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.0.user_type_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.1.id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.1.type", "LDAP"),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.1.user_type_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.2.id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.2.type", "LDAP"),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.2.user_type_id", verify.P1ResourceIDRegexp),
 		),
 	}
 
 	withoutGateway := resource.TestStep{
 		Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "new_user_provisioning.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.#", "0"),
 		),
 	}
 
@@ -197,7 +197,7 @@ func TestAccSignOnPolicyAction_LoginAction_Gateway(t *testing.T) {
 			//Errors
 			{
 				Config:      testAccSignOnPolicyActionConfig_LoginFullWithNewUserProvisioningWrongGateway(resourceName, name),
-				ExpectError: regexp.MustCompile(`gateway.0.type must be one of \[LDAP\]`),
+				ExpectError: regexp.MustCompile(`Only 'LDAP' type gateways are supported for new user provisioning.`),
 			},
 		},
 	})

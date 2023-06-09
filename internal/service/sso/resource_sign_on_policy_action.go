@@ -54,7 +54,7 @@ func resourceSignOnPolicyActionCreate(ctx context.Context, d *schema.ResourceDat
 			return apiClient.SignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
 		},
 		"CreateSignOnPolicyAction",
-		sdk.DefaultCustomError,
+		customErrorSignOnPolicyActionCreateUpdate,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
@@ -321,7 +321,7 @@ func resourceSignOnPolicyActionUpdate(ctx context.Context, d *schema.ResourceDat
 			return apiClient.SignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
 		},
 		"UpdateSignOnPolicyAction",
-		sdk.DefaultCustomError,
+		customErrorSignOnPolicyActionCreateUpdate,
 		nil,
 	)
 	if diags.HasError() {
@@ -405,6 +405,27 @@ func resourceSignOnPolicyActionImport(ctx context.Context, d *schema.ResourceDat
 
 	return []*schema.ResourceData{d}, nil
 }
+
+var (
+	customErrorSignOnPolicyActionCreateUpdate = func(error model.P1Error) diag.Diagnostics {
+		var diags diag.Diagnostics
+
+		// Value not allowed
+		if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "newUserProvisioning.gateways" {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Only 'LDAP' type gateways are supported for new user provisioning.",
+					Detail:   "The \"new_user_provisioning.gateway\" provided for the login sign on policy action is not supported by the PingOne platform.  Please ensure gateways are of type 'LDAP'.",
+				})
+
+				return diags
+			}
+		}
+
+		return nil
+	}
+)
 
 func expandSOPAction(d *schema.ResourceData) (*management.SignOnPolicyAction, diag.Diagnostics) {
 
@@ -709,6 +730,29 @@ func expandSOPActionLogin(d *schema.ResourceData, sopPriority int32) (*managemen
 			sopActionType.SetRecovery(*management.NewSignOnPolicyActionLoginAllOfRecovery(true))
 		}
 
+		if newUserProvisioningPlan, ok := vp["new_user_provisioning"].([]interface{}); ok && newUserProvisioningPlan != nil && len(newUserProvisioningPlan) > 0 && newUserProvisioningPlan[0] != nil {
+			newUserProvisioningPlanMap := newUserProvisioningPlan[0].(map[string]interface{})
+
+			if gatewaysPlan, ok := newUserProvisioningPlanMap["gateway"].(*schema.Set); ok && gatewaysPlan != nil && len(gatewaysPlan.List()) > 0 && gatewaysPlan.List()[0] != "" {
+				gateways := make([]management.SignOnPolicyActionLoginAllOfNewUserProvisioningGateways, 0)
+
+				for _, gatewayPlan := range gatewaysPlan.List() {
+					gatewayPlanMap := gatewayPlan.(map[string]interface{})
+
+					gateways = append(gateways, *management.NewSignOnPolicyActionLoginAllOfNewUserProvisioningGateways(
+						gatewayPlanMap["id"].(string),
+						management.EnumSignOnPolicyActionLoginNewUserProvisioningGatewayType(gatewayPlanMap["type"].(string)),
+						*management.NewSignOnPolicyActionLoginAllOfNewUserProvisioningUserType(gatewayPlanMap["user_type_id"].(string)),
+					))
+				}
+
+				sopActionType.SetNewUserProvisioning(
+					*management.NewSignOnPolicyActionLoginAllOfNewUserProvisioning(
+						gateways,
+					),
+				)
+			}
+		}
 	}
 
 	return sopActionType, diags
@@ -1618,6 +1662,48 @@ func flattenActionLogin(signOnPolicyActionLogin *management.SignOnPolicyActionLo
 		action["recovery_enabled"] = v.GetEnabled()
 	} else {
 		action["recovery_enabled"] = nil
+	}
+
+	action["new_user_provisioning"] = nil
+	if v, ok := signOnPolicyActionLogin.GetNewUserProvisioningOk(); ok {
+
+		newUserProvisioningList := make([]interface{}, 0, 1)
+		newUserProvisioning := map[string]interface{}{}
+
+		if gateways, ok := v.GetGatewaysOk(); ok && len(gateways) > 0 {
+			gatewaysMap := make([]interface{}, 0, 1)
+
+			for _, gateway := range gateways {
+
+				gatewayMap := map[string]interface{}{}
+
+				if c, ok := gateway.GetIdOk(); ok && *c != "" {
+					gatewayMap["id"] = *c
+				} else {
+					gatewayMap["id"] = nil
+				}
+
+				if c, ok := gateway.GetTypeOk(); ok && *c != "" {
+					gatewayMap["type"] = *c
+				} else {
+					gatewayMap["type"] = nil
+				}
+
+				if c, ok := gateway.GetUserTypeOk(); ok && c != nil {
+					gatewayMap["user_type_id"] = c.GetId()
+				} else {
+					gatewayMap["user_type_id"] = nil
+				}
+
+				gatewaysMap = append(gatewaysMap, gatewayMap)
+			}
+
+			newUserProvisioning["gateway"] = gatewaysMap
+		} else {
+			newUserProvisioning["gateway"] = nil
+		}
+
+		action["new_user_provisioning"] = append(newUserProvisioningList, newUserProvisioning)
 	}
 
 	return append(actionList, action)
