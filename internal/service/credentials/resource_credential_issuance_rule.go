@@ -155,9 +155,13 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 				framework.SchemaAttributeDescriptionFromMarkdown("Identifier (UUID) of the credential type with which this credential issuance rule is associated."),
 			),
 
-			"digital_wallet_application_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet."),
-			),
+			"digital_wallet_application_id": schema.StringAttribute{
+				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet.",
+				Optional:    true,
+				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
+				},
+			},
 
 			"status": schema.StringAttribute{
 				Description:         statusDescription.Description,
