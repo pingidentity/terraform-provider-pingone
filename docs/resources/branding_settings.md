@@ -56,7 +56,7 @@ resource "pingone_branding_settings" "branding" {
 Required:
 
 - `href` (String) The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.
-- `id` (String) The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `id` (String) The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.
 
 ## Import
 

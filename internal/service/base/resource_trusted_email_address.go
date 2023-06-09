@@ -19,7 +19,6 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -88,16 +87,9 @@ func (r *TrustedEmailAddressResource) Schema(ctx context.Context, req resource.S
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to associate the trusted email address with."),
 			),
 
-			"email_domain_id": schema.StringAttribute{
-				Description: "The ID of the email domain to associate the trusted email address with.",
-				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
-			},
+			"email_domain_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the email domain to associate the trusted email address with."),
+			),
 
 			"email_address": schema.StringAttribute{
 				MarkdownDescription: emailAddressDescription.MarkdownDescription,
