@@ -65,7 +65,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, re
 			),
 
 			"application_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to create the flow policy assignment for.\n\n-> The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to create the flow policy assignment for. The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources."),
 			),
 
 			"flow_policy_id": schema.StringAttribute{
