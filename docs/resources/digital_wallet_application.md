@@ -57,7 +57,7 @@ resource "pingone_digital_wallet_application" "my_digital_wallet_app" {
 
 - `app_open_url` (String) The URL enables deep-linking to the digital wallet application, and is sent in notifications to the user to communicate with the service.
 - `application_id` (String) The identifier (UUID) of the PingOne application associated with the digital wallet application.
-- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet application is created and managed.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet application is created and managed.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name associated with the digital wallet application.
 
 ### Read-Only
