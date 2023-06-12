@@ -1108,7 +1108,7 @@ func (r *RiskPolicyResource) ImportState(ctx context.Context, req resource.Impor
 	if len(attributes) != splitLength {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/risk_predictor_id\"", req.ID),
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/risk_policy_id\"", req.ID),
 		)
 		return
 	}
