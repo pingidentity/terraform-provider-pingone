@@ -884,6 +884,31 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 	})
 }
 
+func TestAccSignOnPolicyAction_ConditionsInvalidPriority1(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsPriority1(resourceName, name),
+				ExpectError: regexp.MustCompile("Condition `user_attribute_equals` is defined cannot be set when the policy action priority is 1"),
+			},
+			{
+				Config:      testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulationsPriority1(resourceName, name),
+				ExpectError: regexp.MustCompile("Condition `user_is_member_of_any_population_id` is defined cannot be set when the policy action priority is 1"),
+			},
+		},
+	})
+}
+
 func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
 	t.Parallel()
 
@@ -2255,6 +2280,83 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
       attribute_reference = "$${user.mfaEnabled}"
       value_boolean       = true
     }
+  }
+
+  login {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsPriority1(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  conditions {
+    user_attribute_equals {
+      attribute_reference = "$${user.mfaEnabled}"
+      value_boolean       = true
+    }
+  }
+
+  login {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulationsPriority1(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_population" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-1"
+}
+
+resource "pingone_population" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-2"
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  conditions {
+    user_is_member_of_any_population_id = [
+      pingone_population.%[2]s.id,
+      pingone_population.%[2]s-1.id,
+      pingone_population.%[2]s-2.id
+    ]
   }
 
   login {}
