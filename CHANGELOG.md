@@ -8,6 +8,10 @@ NOTES:
 * `resource/pingone_flow_policy_assignment`: Adjusted schema such that the `flow_policy_id` required parameter no longer triggers a replacement plan on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
 * `resource/pingone_sign_on_policy_action`: Adjust documentation to clarify the where conditions can and cannot be used in a policy action. ([#412](https://github.com/pingidentity/terraform-provider-pingone/issues/412))
 
+ENHANCEMENTS:
+
+* `resource/pingone_sign_on_policy_action`: Support user provisioning gateway configuration on the "Login" sign-on policy action ([#407](https://github.com/pingidentity/terraform-provider-pingone/issues/407))
+
 BUG FIXES:
 
 * `data_source/pingone_credential_issuer_profile`: Fixed mismatched `created_at` and `updated_at` mapping. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
