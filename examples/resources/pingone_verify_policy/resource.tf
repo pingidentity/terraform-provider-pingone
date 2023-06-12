@@ -83,6 +83,4 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
     data_collection_only = false
   }
 
-  depends_on = [pingone_environment.my_environment]
-
 }
