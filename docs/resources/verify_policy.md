@@ -343,7 +343,7 @@ Required:
 * If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
 * The default value is `15 MINUTES`.
 
-~Note: When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.
+~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.
 - `time_unit` (String) Time unit of data collection timeout; can be `SECONDS`, `MINUTES`.
 
 

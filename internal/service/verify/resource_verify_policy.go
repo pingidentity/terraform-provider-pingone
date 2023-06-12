@@ -292,7 +292,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
 			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
 			fmt.Sprintf("* The default value is `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit) +
-			"~Note: When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.",
+			"~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.",
 	)
 
 	dataCollectionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -313,7 +313,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"* Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.\n" +
 			"* Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.\n" +
 			"* Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.\n" +
-			"* Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n\n",
+			"* Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n\n ",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
