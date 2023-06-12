@@ -25,7 +25,7 @@ func testAccCheckVerifyPolicyDestroy(s *terraform.State) error {
 		return err
 	}
 
-	apiClient := p1Client.API.CredentialsAPIClient
+	apiClient := p1Client.API.VerifyAPIClient
 	ctx = context.WithValue(ctx, verify.ContextServerVariables, map[string]string{
 		"suffix": p1Client.API.Region.URLSuffix,
 	})
@@ -36,7 +36,7 @@ func testAccCheckVerifyPolicyDestroy(s *terraform.State) error {
 	})
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_credential_issuer_profile" {
+		if rs.Type != "pingone_verify_policy" {
 			continue
 		}
 
@@ -55,7 +55,7 @@ func testAccCheckVerifyPolicyDestroy(s *terraform.State) error {
 			return err
 		}
 
-		body, r, err := apiClient.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, rs.Primary.Attributes["environment_id"]).Execute()
+		body, r, err := apiClient.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]).Execute()
 
 		if err != nil {
 
@@ -71,7 +71,7 @@ func testAccCheckVerifyPolicyDestroy(s *terraform.State) error {
 			return err
 		}
 
-		return fmt.Errorf("PingOne Credential Issuer Profile %s still exists", rs.Primary.ID)
+		return fmt.Errorf("PingOne Verify Policy %s still exists", rs.Primary.ID)
 	}
 
 	return nil
