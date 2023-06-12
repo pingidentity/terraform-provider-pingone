@@ -1,0 +1,7 @@
+```release-note:bug
+resource/pingone_sign_on_policy_action: Fix plugin panic crash when defining conditions.user_attribute_equals in a priority 1 MFA sign-on policy.
+```
+
+```release-note:note
+resource/pingone_sign_on_policy_action: Adjust documentation to clarify the use of the conditions.user_attribute_equals condition in MFA policy actions.
+```
