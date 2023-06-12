@@ -67,10 +67,9 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"user_attribute_equals": {
-						Description: "One or more conditions where an attribute on the user's profile must match the configured value.  Applies to policy actions of type `identifier_first`, `login`, `mfa`, but cannot be set on policy actions where the priority is `1`.",
-						Type:        schema.TypeSet,
-						Optional:    true,
-						//ValidateFunc:  validation..ValidateStructHasKeysFunc([]string{"attribute_reference", "value", "value_boolean"}, nil),
+						Description:   "One or more conditions where an attribute on the user's profile must match the configured value.  Applies to policy actions of type `identifier_first`, `login`, `mfa`, but cannot be set on policy actions where the priority is `1`.",
+						Type:          schema.TypeSet,
+						Optional:      true,
 						ConflictsWith: []string{"progressive_profiling", "agreement", "identity_provider"},
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
