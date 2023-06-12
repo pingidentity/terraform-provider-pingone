@@ -221,8 +221,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	*defaultCreateMfaDevice = false
 
 	verifyOptionPhraseFmt := "`REQUIRED`, `OPTIONAL`, or `DISABLED`"
-	thresholdOptionPhraseFmt := "`LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions)."
-	transactionTimeoutPhraseFmt := "can be `SECONDS`, `MINUTES`."
+	thresholdOptionPhraseFmt := "`LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions)"
+	transactionTimeoutPhraseFmt := "can be `SECONDS` or `MINUTES`"
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Required as `true` to set the verify policy as the default policy for the environment; otherwise optional and defaults to `false`.",
@@ -277,26 +277,26 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	)
 
 	transactionTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Length of time before transaction timeout expires.\n" +
-			fmt.Sprintf("* If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
-			fmt.Sprintf("* If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
-			fmt.Sprintf("* The default value is `%d %s`.", defaultTransactionDuration, defaultTransactionTimeUnit),
+		"Length of time before the transaction expires.\n" +
+			fmt.Sprintf("    - If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
+			fmt.Sprintf("    - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
+			fmt.Sprintf("    - The default value is `%d %s`.\n", defaultTransactionDuration, defaultTransactionTimeUnit),
 	)
 
 	transactionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Time unit of transaction timeout; %s", transactionTimeoutPhraseFmt),
+		fmt.Sprintf("Time unit of transaction timeout; %s.", transactionTimeoutPhraseFmt),
 	)
 
 	dataCollectionDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Length of time before transaction timeout expires.\n" +
-			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
-			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
-			fmt.Sprintf("* The default value is `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit) +
-			"~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.",
+		"Length of time before the data collection transaction expires.\n" +
+			fmt.Sprintf("    - If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
+			fmt.Sprintf("    - If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
+			fmt.Sprintf("    - The default value is `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit) +
+			"    ~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.\n",
 	)
 
 	dataCollectionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Time unit of data collection timeout; %s", transactionTimeoutPhraseFmt),
+		fmt.Sprintf("Time unit of data collection timeout; %s.", transactionTimeoutPhraseFmt),
 	)
 
 	dataCollectionOnlyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -309,11 +309,11 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. " +
 			"If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.\n\n" +
 			"Verify policies can perform any of five checks:\n" +
-			"* Government identity document - Validate a government-issued identity document, which includes a photograph.\n" +
-			"* Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.\n" +
-			"* Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.\n" +
-			"* Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.\n" +
-			"* Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n\n ",
+			"- Government identity document - Validate a government-issued identity document, which includes a photograph.\n" +
+			"- Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.\n" +
+			"- Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.\n" +
+			"- Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.\n" +
+			"- Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n\n ",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),

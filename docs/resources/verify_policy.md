@@ -5,11 +5,11 @@ description: |-
   Resource to configure the requirements to verify a user, including the parameters for verification, such as the number of one-time password (OTP) attempts and OTP expiration.
   A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
   Verify policies can perform any of five checks:
-  * Government identity document - Validate a government-issued identity document, which includes a photograph.
-  * Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
-  * Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
-  * Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
-  * Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
+  - Government identity document - Validate a government-issued identity document, which includes a photograph.
+  - Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
+  - Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
+  - Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
+  - Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
 ---
 
 # pingone_verify_policy (Resource)
@@ -19,11 +19,11 @@ Resource to configure the requirements to verify a user, including the parameter
 A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
 
 Verify policies can perform any of five checks:
-* Government identity document - Validate a government-issued identity document, which includes a photograph.
-* Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
-* Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
-* Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
-* Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
+- Government identity document - Validate a government-issued identity document, which includes a photograph.
+- Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
+- Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
+- Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
+- Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
 
 ## Example Usage
 
@@ -222,7 +222,7 @@ Read-Only:
 
 Required:
 
-- `threshold` (String) Threshold for successful facial comparison; can be `LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions).. Default is `MEDIUM`.
+- `threshold` (String) Threshold for successful facial comparison; can be `LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions). Default is `MEDIUM`.
 - `verify` (String) Controls if facial comparison verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
 
 
@@ -239,7 +239,7 @@ Required:
 
 Required:
 
-- `threshold` (String) Threshold for successful liveness comparison; can be `LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions).. Default is `MEDIUM`.
+- `threshold` (String) Threshold for successful liveness comparison; can be `LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions). Default is `MEDIUM`.
 - `verify` (String) Controls if liveness check is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
 
 
@@ -338,13 +338,13 @@ Required:
 
 Required:
 
-- `duration` (Number) Length of time before transaction timeout expires.
-* If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
-* If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
-* The default value is `15 MINUTES`.
+- `duration` (Number) Length of time before the data collection transaction expires.
+    - If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
+    - If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
+    - The default value is `15 MINUTES`.
 
-~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.
-- `time_unit` (String) Time unit of data collection timeout; can be `SECONDS`, `MINUTES`.
+    ~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.
+- `time_unit` (String) Time unit of data collection timeout; can be `SECONDS` or `MINUTES`.
 
 
 
@@ -353,11 +353,11 @@ Required:
 
 Required:
 
-- `duration` (Number) Length of time before transaction timeout expires.
-* If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
-* If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
-* The default value is `30 MINUTES`.
-- `time_unit` (String) Time unit of transaction timeout; can be `SECONDS`, `MINUTES`.
+- `duration` (Number) Length of time before the transaction expires.
+    - If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
+    - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
+    - The default value is `30 MINUTES`.
+- `time_unit` (String) Time unit of transaction timeout; can be `SECONDS` or `MINUTES`.
 
 ## Import
 
