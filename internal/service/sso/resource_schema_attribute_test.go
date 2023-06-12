@@ -253,7 +253,7 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccSchemaAttributeConfig_Full(resourceName, name, attrType, true, true, true),
-				ExpectError: regexp.MustCompile(`Cannot set attribute unique parameter when the attribute type is not STRING.  Attribute type found: JSON`),
+				ExpectError: regexp.MustCompile(`Invalid attribute type`),
 			},
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, true, true),
@@ -305,7 +305,7 @@ func TestAccSchemaAttribute_FullJSON(t *testing.T) {
 			},
 			{
 				Config:      testAccSchemaAttributeConfig_Full(resourceName, name, attrType, true, false, false),
-				ExpectError: regexp.MustCompile(`Cannot set attribute unique parameter when the attribute type is not STRING.  Attribute type found: JSON`),
+				ExpectError: regexp.MustCompile(`Invalid attribute type`),
 			},
 			{
 				Config: testAccSchemaAttributeConfig_Full(resourceName, name, attrType, false, true, false),
@@ -362,10 +362,10 @@ func TestAccSchemaAttribute_Minimal(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttrSet(resourceFullName, "schema_id"),
+					resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "display_name", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "STRING"),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
