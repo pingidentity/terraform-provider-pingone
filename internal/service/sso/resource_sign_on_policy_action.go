@@ -986,8 +986,8 @@ func buildAttributeEqualsCondition(v []attributeEquality, tfSchemaAttribute stri
 
 	if sopPriority < 2 {
 		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  fmt.Sprintf("Condition `%s` is defined but has no effect where the action priority is 1.", tfSchemaAttribute),
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Condition `%s` is defined cannot be set when the policy action priority is 1.", tfSchemaAttribute),
 		})
 	} else {
 
