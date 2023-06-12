@@ -11,6 +11,8 @@ description: |-
 
 ~> A warning will be issued following `terraform apply` when attempting to remove the final sign-on policy action from an associated sign-on policy.  When removing the final sign-on policy action from a sign-on policy, it's recommended to also remove the associated sign-on policy at the same time.  Further information can be found [here](https://github.com/pingidentity/terraform-provider-pingone/issues/68).
 
+~> Some policy action conditions, such as `conditions.user_attribute_equals` and `conditions.user_is_member_of_any_population_id` conditions, are not available where the `priority` of a policy action is `1`.  Please refer to the schema documentation for more information.
+
 ## Example Usage - First Factor (Username/Password)
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-login.tf") }}
