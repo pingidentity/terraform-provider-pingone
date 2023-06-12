@@ -2,12 +2,12 @@
 page_title: "pingone_schema_attribute Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne schema attributes
+  Resource to create and manage PingOne schema attributes.
 ---
 
 # pingone_schema_attribute (Resource)
 
-Resource to create and manage PingOne schema attributes
+Resource to create and manage PingOne schema attributes.
 
 ## Example Usage
 
@@ -43,25 +43,25 @@ resource "pingone_schema_attribute" "my_attribute" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the schema attribute in.
+- `environment_id` (String) The ID of the environment to create the schema attribute in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The system name of the schema attribute.
-- `schema_id` (String) The ID of the schema to apply the schema attribute to.
+- `schema_id` (String) The ID of the schema to apply the schema attribute to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
 - `description` (String) A description of the attribute. If provided, it must not be an empty string. Valid characters consists of any Unicode letter, mark (for example, accent or umlaut), numeric character, punctuation character, or space.
-- `display_name` (String) The display name of the attribute such as 'T-shirt size’. If provided, it must not be an empty string. Valid characters consist of any Unicode letter, mark (for example, accent or umlaut), numeric character, forward slash, dot, apostrophe, underscore, space, or hyphen.
-- `enabled` (Boolean) Indicates whether or not the attribute is enabled. Defaults to `true`.
-- `multivalued` (Boolean) Indicates whether the attribute has multiple values or a single one.  Maximum number of values stored is 1,000. Defaults to `false`.
-- `type` (String) The type of the attribute. This can be `STRING`, `JSON`, `BOOLEAN`, or `COMPLEX`. `COMPLEX` and `BOOLEAN` attributes cannot be created, but standard attributes of those types may be updated. `JSON` attributes are limited by size (total size must not exceed 16KB). Defaults to `STRING`.
-- `unique` (Boolean) Indicates whether or not the attribute must have a unique value within the PingOne environment. Defaults to `false`.
+- `display_name` (String) The display name of the attribute such as 'T-shirt size'. If provided, it must not be an empty string. Valid characters consist of any Unicode letter, mark (for example, accent or umlaut), numeric character, forward slash, dot, apostrophe, underscore, space, or hyphen.
+- `enabled` (Boolean) Indicates whether or not the attribute is enabled.  Defaults to `true`.
+- `multivalued` (Boolean) Indicates whether the attribute has multiple values or a single one. Maximum number of values stored is 1,000.  This field is immutable and will trigger a replace plan if changed.  Defaults to `false`.
+- `type` (String) The type of the attribute.  Options are `BOOLEAN`, `COMPLEX`, `JSON`, `STRING`.  `COMPLEX` and `BOOLEAN` attributes cannot be created, but standard attributes of those types may be updated. `JSON` attributes are limited by size (total size must not exceed 16KB).  This field is immutable and will trigger a replace plan if changed.  Defaults to `STRING`.
+- `unique` (Boolean) Indicates whether or not the attribute must have a unique value within the PingOne environment.  This field is immutable and will trigger a replace plan if changed.  Defaults to `false`.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `ldap_attribute` (String) The unique identifier for the LDAP attribute.
 - `required` (Boolean) Indicates whether or not the attribute is required.
-- `schema_type` (String) The schema type of the attribute. This can be `CORE`, `STANDARD` or `CUSTOM`. `CORE` and `STANDARD` attributes are supplied by default. `CORE` attributes cannot be updated or deleted. `STANDARD` attributes cannot be deleted, but their mutable properties can be updated. `CUSTOM` attributes can be deleted, and their mutable properties can be updated. New attributes are created with a schema type of `CUSTOM`.
+- `schema_type` (String) The schema type of the attribute.  Options are `CORE`, `CUSTOM`, `STANDARD`.  `CORE` and `STANDARD` attributes are supplied by default. `CORE` attributes cannot be updated or deleted. `STANDARD` attributes cannot be deleted, but their mutable properties can be updated. `CUSTOM` attributes can be deleted, and their mutable properties can be updated. New attributes are created with a schema type of `CUSTOM`.
 
 ## Import
 
