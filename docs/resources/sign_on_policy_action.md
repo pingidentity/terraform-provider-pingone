@@ -32,6 +32,54 @@ resource "pingone_sign_on_policy_action" "my_policy_first_factor" {
 }
 ```
 
+## Example Usage - First Factor (Username/Password) with New User Provisioning Gateway
+
+```terraform
+resource "pingone_gateway" "my_awesome_ldap_gateway" {
+  environment_id = pingone_environment.my_environment.id
+  name           = "My Awesome LDAP Gateway"
+
+  # ...
+
+  user_type {
+    name = "User Set 1"
+
+    # ...
+  }
+}
+
+resource "pingone_gateway_credential" "my_awesome_ldap_gateway" {
+  environment_id = pingone_environment.my_environment.id
+  gateway_id     = pingone_gateway.my_awesome_ldap_gateway.id
+}
+
+resource "pingone_sign_on_policy_action" "my_policy_first_factor" {
+  environment_id    = pingone_environment.my_environment.id
+  sign_on_policy_id = pingone_sign_on_policy.my_policy.id
+
+  priority = 1
+
+  conditions {
+    last_sign_on_older_than_seconds = 604800 // 7 days
+  }
+
+  login {
+    recovery_enabled = true
+
+    new_user_provisioning {
+      gateway {
+        id           = pingone_gateway.my_awesome_ldap_gateway.id
+        user_type_id = pingone_gateway.my_awesome_ldap_gateway.user_type.* [index(pingone_gateway.my_awesome_ldap_gateway.user_type[*].name, "User Set 1")].id
+      }
+    }
+  }
+
+  depends_on = [
+    pingone_gateway_credential.my_awesome_ldap_gateway
+  ]
+}
+```
+
 ## Example Usage - Identifier First
 
 ```terraform
@@ -291,7 +339,29 @@ Optional:
 
 Optional:
 
+- `new_user_provisioning` (Block List, Max: 1) Enables user entries existing outside of PingOne to be provisioned during login, using an external integration solution (such as a Gateway). (see [below for nested schema](#nestedblock--login--new_user_provisioning))
 - `recovery_enabled` (Boolean) A boolean that specifies whether account recovery features are active on the policy action. Defaults to `true`.
+
+<a id="nestedblock--login--new_user_provisioning"></a>
+### Nested Schema for `login.new_user_provisioning`
+
+Required:
+
+- `gateway` (Block Set, Min: 1) One or more blocks that describe a preconfigured gateway and user type that are specified in the Gateway Management schema to determine how to find and migrate user entries existing in an external directory. (see [below for nested schema](#nestedblock--login--new_user_provisioning--gateway))
+
+<a id="nestedblock--login--new_user_provisioning--gateway"></a>
+### Nested Schema for `login.new_user_provisioning.gateway`
+
+Required:
+
+- `id` (String) A string that specifies the UUID ID of the gateway instance.  The ID may come from the `id` parameter of the `pingone_gateway` resource.  Must be a valid PingOne resource ID.
+- `user_type_id` (String) A string that specifies the UUID ID of the user type within the gateway instance.  The ID may come from the `user_type[*].id` parameter of the `pingone_gateway` resource.  Must be a valid PingOne resource ID.
+
+Optional:
+
+- `type` (String) A string that specifies the type of the gateway. Currently, only `LDAP` is supported. Defaults to `LDAP`.
+
+
 
 
 <a id="nestedblock--mfa"></a>

@@ -1,6 +1,8 @@
 package sso
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -281,6 +283,45 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"recovery_enabled": recoveryEnabledSchema(),
+					"new_user_provisioning": {
+						Description: "Enables user entries existing outside of PingOne to be provisioned during login, using an external integration solution (such as a Gateway).",
+						Type:        schema.TypeList,
+						MaxItems:    1,
+						Optional:    true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"gateway": {
+									Description: "One or more blocks that describe a preconfigured gateway and user type that are specified in the Gateway Management schema to determine how to find and migrate user entries existing in an external directory.",
+									Type:        schema.TypeSet,
+									MinItems:    1,
+									Required:    true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"id": {
+												Description:      "A string that specifies the UUID ID of the gateway instance.  The ID may come from the `id` parameter of the `pingone_gateway` resource.  Must be a valid PingOne resource ID.",
+												Type:             schema.TypeString,
+												Required:         true,
+												ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+											},
+											"type": {
+												Description:      fmt.Sprintf("A string that specifies the type of the gateway. Currently, only `%s` is supported.", string(management.ENUMGATEWAYTYPE_LDAP)),
+												Type:             schema.TypeString,
+												Optional:         true,
+												Default:          string(management.ENUMGATEWAYTYPE_LDAP),
+												ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMGATEWAYTYPE_LDAP)}, false)),
+											},
+											"user_type_id": {
+												Description:      "A string that specifies the UUID ID of the user type within the gateway instance.  The ID may come from the `user_type[*].id` parameter of the `pingone_gateway` resource.  Must be a valid PingOne resource ID.",
+												Type:             schema.TypeString,
+												Required:         true,
+												ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
