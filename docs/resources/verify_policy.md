@@ -113,8 +113,6 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
     data_collection_only = false
   }
 
-  depends_on = [pingone_environment.my_environment]
-
 }
 ```
 
@@ -148,7 +146,7 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 
 Required:
 
-- `verify` (String) Controls if email or phone verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
+- `verify` (String) Controls the verification requirements for an Email or Phone verification.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
 
 Optional:
 
@@ -189,8 +187,8 @@ Required:
 
 Required:
 
-- `duration` (Number) Cooldown duration configuration. Default value is 30.
-- `time_unit` (String) Time unit of cooldown duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `SECONDS`.
+- `duration` (Number) Cooldown duration.  Defaults to `30`.
+- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
 
 
 
@@ -199,8 +197,8 @@ Required:
 
 Required:
 
-- `duration` (Number) OTP duration configuration. Default is 10.
-- `time_unit` (String) Time unit of OTP duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `MINUTES`.
+- `duration` (Number) Lifetime of the OTP delivered via email.  Defaults to `10`.
+- `time_unit` (String) Time unit of the OTP duration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedatt--email--otp--notification"></a>
@@ -222,8 +220,8 @@ Read-Only:
 
 Required:
 
-- `threshold` (String) Threshold for successful facial comparison; can be `LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions). Default is `MEDIUM`.
-- `verify` (String) Controls if facial comparison verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
+- `threshold` (String) Facial Comparison threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
+- `verify` (String) Controls Facial Comparison verification requirements.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
 
 
 <a id="nestedatt--government_id"></a>
@@ -231,7 +229,7 @@ Required:
 
 Required:
 
-- `verify` (String) Controls if Government ID verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
+- `verify` (String) Controls Government ID verification requirements.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
 
 
 <a id="nestedatt--liveness"></a>
@@ -239,8 +237,8 @@ Required:
 
 Required:
 
-- `threshold` (String) Threshold for successful liveness comparison; can be `LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions). Default is `MEDIUM`.
-- `verify` (String) Controls if liveness check is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
+- `threshold` (String) Liveness Check threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
+- `verify` (String) Controls Liveness Check verification requirements.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
 
 
 <a id="nestedatt--phone"></a>
@@ -248,7 +246,7 @@ Required:
 
 Required:
 
-- `verify` (String) Controls if email or phone verification is `REQUIRED`, `OPTIONAL`, or `DISABLED`. Default is `DISABLED`.
+- `verify` (String) Controls the verification requirements for an Email or Phone verification.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
 
 Optional:
 
@@ -289,8 +287,8 @@ Required:
 
 Required:
 
-- `duration` (Number) Cooldown duration configuration. Default value is 30.
-- `time_unit` (String) Time unit of cooldown duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `SECONDS`.
+- `duration` (Number) Cooldown duration.  Defaults to `30`.
+- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
 
 
 
@@ -299,8 +297,8 @@ Required:
 
 Required:
 
-- `duration` (Number) OTP duration configuration. Default is 5.
-- `time_unit` (String) Time unit of OTP duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `MINUTES`.
+- `duration` (Number) Lifetime of the OTP delivered via phone (SMS).  Defaults to `5`.
+- `time_unit` (String) Time unit of the OTP duration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedatt--phone--otp--notification"></a>
@@ -344,7 +342,7 @@ Required:
     - The default value is `15 MINUTES`.
 
     ~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.
-- `time_unit` (String) Time unit of data collection timeout; can be `SECONDS` or `MINUTES`.
+- `time_unit` (String) Time unit of data collection timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 
@@ -357,7 +355,7 @@ Required:
     - If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
     - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
     - The default value is `30 MINUTES`.
-- `time_unit` (String) Time unit of transaction timeout; can be `SECONDS` or `MINUTES`.
+- `time_unit` (String) Time unit of transaction timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 ## Import
 

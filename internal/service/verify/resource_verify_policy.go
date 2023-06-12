@@ -220,57 +220,53 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	defaultCreateMfaDevice := new(bool)
 	*defaultCreateMfaDevice = false
 
-	verifyOptionPhraseFmt := "`REQUIRED`, `OPTIONAL`, or `DISABLED`"
-	thresholdOptionPhraseFmt := "`LOW`, `MEDIUM`, `HIGH` (for which PingOne Verify uses industry and vendor recommended definitions)"
-	transactionTimeoutPhraseFmt := "can be `SECONDS` or `MINUTES`"
-
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Required as `true` to set the verify policy as the default policy for the environment; otherwise optional and defaults to `false`.",
 	)
 
 	governmentIdVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Controls if Government ID verification is %s. Default is `%s`.", verifyOptionPhraseFmt, defaultVerify),
-	)
+		"Controls Government ID verification requirements.",
+	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
 
 	facialComparisonVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Controls if facial comparison verification is %s. Default is `%s`.", verifyOptionPhraseFmt, defaultVerify),
-	)
+		"Controls Facial Comparison verification requirements.",
+	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
 
 	facialComparisonThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Threshold for successful facial comparison; can be %s. Default is `%s`.", thresholdOptionPhraseFmt, defaultThreshold),
-	)
+		"Facial Comparison threshold requirements.",
+	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues).DefaultValue(string(defaultThreshold))
 
 	livenessVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Controls if liveness check is %s. Default is `%s`.", verifyOptionPhraseFmt, defaultVerify),
-	)
+		"Controls Liveness Check verification requirements.",
+	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
 
 	livenessThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Threshold for successful liveness comparison; can be %s. Default is `%s`.", thresholdOptionPhraseFmt, defaultThreshold),
-	)
+		"Liveness Check threshold requirements.",
+	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues).DefaultValue(string(defaultThreshold))
 
 	deviceVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Controls if email or phone verification is %s. Default is `%s`.", verifyOptionPhraseFmt, defaultVerify),
-	)
+		"Controls the verification requirements for an Email or Phone verification.",
+	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
 
 	otpLifeTimeEmailDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("OTP duration configuration. Default is %d.", defaultOTPEmailDuration),
-	)
+		"Lifetime of the OTP delivered via email.",
+	).DefaultValue(fmt.Sprint(defaultOTPEmailDuration))
 
 	otpLifeTimePhoneDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("OTP duration configuration. Default is %d.", defaultOTPPhoneDuration),
-	)
+		"Lifetime of the OTP delivered via phone (SMS).",
+	).DefaultValue(fmt.Sprint(defaultOTPPhoneDuration))
 
 	otpLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Time unit of OTP duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `%s`.", defaultOTPPhoneTimeUnit),
-	)
+		"Time unit of the OTP duration.",
+	).AllowedValuesEnum(verify.AllowedEnumLongTimeUnitEnumValues).DefaultValue(string(defaultOTPPhoneTimeUnit))
 
 	otpDeliveriesCooldownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Cooldown duration configuration. Default value is %d.", defaultOTPCooldownDuration),
-	)
+		"Cooldown duration.",
+	).DefaultValue(fmt.Sprint(defaultOTPCooldownDuration))
 
 	otpDeliveriesCooldownTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Time unit of cooldown duration configuration: `SECONDS`, `MINUTES`, `HOURS`. Default is `%s`.", defaultOTPCooldownTimeUnit),
-	)
+		"Time unit of the cooldown duration configuration.",
+	).AllowedValuesEnum(verify.AllowedEnumLongTimeUnitEnumValues).DefaultValue(string(defaultOTPCooldownTimeUnit))
 
 	otpNotificationTemplateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("Name of the template to use to pass a one-time passcode (OTP). The default value of `%s` is static. Use the `notification.variant_name` property to define an alternate template.", defaultNotificationTemplate),
@@ -284,8 +280,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	)
 
 	transactionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Time unit of transaction timeout; %s.", transactionTimeoutPhraseFmt),
-	)
+		"Time unit of transaction timeout.",
+	).AllowedValuesEnum(verify.AllowedEnumShortTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
 
 	dataCollectionDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Length of time before the data collection transaction expires.\n" +
@@ -296,8 +292,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	)
 
 	dataCollectionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Time unit of data collection timeout; %s.", transactionTimeoutPhraseFmt),
-	)
+		"Time unit of data collection timeout.",
+	).AllowedValuesEnum(verify.AllowedEnumShortTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
 
 	dataCollectionOnlyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"When `true`, collects documents specified in the policy without determining their validity; defaults to `false`.",
