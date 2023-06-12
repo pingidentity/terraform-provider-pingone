@@ -1345,7 +1345,7 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 	if !p.CreatedAt.IsNull() && !p.CreatedAt.IsUnknown() {
 		createdAt, err := time.Parse(time.RFC3339, p.CreatedAt.ValueString())
 		if err != nil {
-			diags.AddWarning(
+			diags.AddError(
 				"Unexpected Value",
 				fmt.Sprintf("Unexpected createdAt value: %s.  Please report this to the provider maintainers.", err.Error()),
 			)
@@ -1356,7 +1356,7 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 	if !p.UpdatedAt.IsNull() && !p.UpdatedAt.IsUnknown() {
 		updatedAt, err := time.Parse(time.RFC3339, p.UpdatedAt.ValueString())
 		if err != nil {
-			diags.AddWarning(
+			diags.AddError(
 				"Unexpected Value",
 				fmt.Sprintf("Unexpected updatedAt value: %s.  Please report this to the provider maintainers.", err.Error()),
 			)
@@ -1364,7 +1364,7 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		data.SetUpdatedAt(updatedAt)
 
 		if data == nil {
-			diags.AddWarning(
+			diags.AddError(
 				"Unexpected Value",
 				"Verify Policy object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
 			)
@@ -1382,7 +1382,7 @@ func (p *governmentIdModel) expandgovernmentIdModel() (*verify.GovernmentIdConfi
 	}
 
 	if verifyGovernmentId == nil {
-		diags.AddWarning(
+		diags.AddError(
 			"Unexpected Value",
 			"GovernmentId configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
 		)
@@ -1404,7 +1404,7 @@ func (p *facialComparisonModel) expandFacialComparisonModel() (*verify.FacialCom
 	}
 
 	if verifyFacialComparison == nil {
-		diags.AddWarning(
+		diags.AddError(
 			"Unexpected Value",
 			"Facial Comparison configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
 		)
@@ -1426,7 +1426,7 @@ func (p *livenessnModel) expandLivenessModel() (*verify.LivenessConfiguration, d
 	}
 
 	if verifyLiveness == nil {
-		diags.AddWarning(
+		diags.AddError(
 			"Unexpected Value",
 			"Liveness configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
 		)
@@ -1497,7 +1497,7 @@ func (p *transactionModel) expandTransactionModel(ctx context.Context) (*verify.
 	}
 
 	if transactionSettings == nil {
-		diags.AddWarning(
+		diags.AddError(
 			"Unexpected Value",
 			"Transaction configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
 		)
@@ -1631,7 +1631,7 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.EmailPhoneConfi
 	}
 
 	if deviceSettings == nil {
-		diags.AddWarning(
+		diags.AddError(
 			"Unexpected Value",
 			"Device configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
 		)
