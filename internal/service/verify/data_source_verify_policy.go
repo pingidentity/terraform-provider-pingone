@@ -209,8 +209,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 		"Length of time before transaction timeout expires.\n" +
 			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
 			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
-			fmt.Sprintf("* The default value is `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit) +
-			"~Note: When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.",
+			fmt.Sprintf("* The default value is `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit),
 	)
 
 	dataCollectionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
