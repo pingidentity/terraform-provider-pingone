@@ -7,9 +7,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func MustBeTrueIfPathSetToValue(pathAttributeValue basetypes.StringValue, expression path.Expression) validator.Bool {
-	return boolMustBeValueIfPathSetToValue{
-		BoolValue:          types.BoolValue(true),
+func MustNotBeFalseIfPathSetToValue(pathAttributeValue basetypes.StringValue, expression path.Expression) validator.Bool {
+	return boolMustNotBeValueIfPathSetToValue{
+		BoolValue:          types.BoolValue(false),
 		PathAttributeValue: pathAttributeValue,
 		PathExpression:     expression,
 	}
