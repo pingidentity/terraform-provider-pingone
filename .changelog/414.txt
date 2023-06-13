@@ -1,3 +1,7 @@
 ```release-note:note
 `resource/pingone_schema_attribute`: Migrated to plugin framework.
 ```
+
+```release-note:enhancement
+`resource/pingone_schema_attribute`: Supports properties for enumerated values and regular expression validation.
+```
