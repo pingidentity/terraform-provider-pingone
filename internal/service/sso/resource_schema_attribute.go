@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -14,13 +17,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
+	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
+	setplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setplanmodifier"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
@@ -32,20 +41,50 @@ type SchemaAttributeResource struct {
 }
 
 type SchemaAttributeResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	SchemaId      types.String `tfsdk:"schema_id"`
-	Name          types.String `tfsdk:"name"`
-	DisplayName   types.String `tfsdk:"display_name"`
-	Description   types.String `tfsdk:"description"`
-	Enabled       types.Bool   `tfsdk:"enabled"`
-	Type          types.String `tfsdk:"type"`
-	SchemaType    types.String `tfsdk:"schema_type"`
-	Multivalued   types.Bool   `tfsdk:"multivalued"`
-	Unique        types.Bool   `tfsdk:"unique"`
-	Required      types.Bool   `tfsdk:"required"`
-	LdapAttribute types.String `tfsdk:"ldap_attribute"`
+	Id               types.String `tfsdk:"id"`
+	EnvironmentId    types.String `tfsdk:"environment_id"`
+	Description      types.String `tfsdk:"description"`
+	DisplayName      types.String `tfsdk:"display_name"`
+	Enabled          types.Bool   `tfsdk:"enabled"`
+	EnumeratedValues types.Set    `tfsdk:"enumerated_values"`
+	LdapAttribute    types.String `tfsdk:"ldap_attribute"`
+	Multivalued      types.Bool   `tfsdk:"multivalued"`
+	Name             types.String `tfsdk:"name"`
+	RegexValidation  types.Object `tfsdk:"regex_validation"`
+	Required         types.Bool   `tfsdk:"required"`
+	SchemaId         types.String `tfsdk:"schema_id"`
+	SchemaType       types.String `tfsdk:"schema_type"`
+	Type             types.String `tfsdk:"type"`
+	Unique           types.Bool   `tfsdk:"unique"`
 }
+
+type SchemaAttributeEnumeratedValuesResourceModel struct {
+	Archived    types.Bool   `tfsdk:"archived"`
+	Description types.String `tfsdk:"description"`
+	Value       types.String `tfsdk:"value"`
+}
+
+type SchemaAttributeRegexValidationModel struct {
+	Pattern                     types.String `tfsdk:"pattern"`
+	Requirements                types.String `tfsdk:"requirements"`
+	ValuesPatternShouldMatch    types.Set    `tfsdk:"values_pattern_should_match"`
+	ValuesPatternShouldNotMatch types.Set    `tfsdk:"values_pattern_should_not_match"`
+}
+
+var (
+	schemaAttributeEnumeratedValuesTFObjectTypes = map[string]attr.Type{
+		"archived":    types.BoolType,
+		"description": types.StringType,
+		"value":       types.StringType,
+	}
+
+	schemaAttributeRegexValidationTFObjectTypes = map[string]attr.Type{
+		"pattern":                         types.StringType,
+		"requirements":                    types.StringType,
+		"values_pattern_should_match":     types.SetType{ElemType: types.StringType},
+		"values_pattern_should_not_match": types.SetType{ElemType: types.StringType},
+	}
+)
 
 // Framework interfaces
 var (
@@ -91,6 +130,14 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 		"The schema type of the attribute.",
 	).AllowedValuesEnum(management.AllowedEnumSchemaAttributeSchemaTypeEnumValues).AppendMarkdownString(
 		fmt.Sprintf("`%s` and `%s` attributes are supplied by default. `%s` attributes cannot be updated or deleted. `%s` attributes cannot be deleted, but their mutable properties can be updated. `%s` attributes can be deleted, and their mutable properties can be updated. New attributes are created with a schema type of `%s`.", management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CORE, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CORE, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM),
+	)
+
+	enumeratedValuesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of one or more enumerated values for the attribute. If provided, it must not be an empty set.  Can only be set where the attribute type is `STRING` and cannot be set alongside `regex_validation`.  If the attribute has been created without enumerated values and this parameter is added later, this will trigger a replacement plan of the attribute resource.  If the attribute has been created with enumerated values that are subsequently removed, this will update without needing to replace the attribute resource.",
+	)
+
+	regexValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -163,6 +210,21 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 					boolplanmodifier.RequiresReplace(),
 				},
 
+				Validators: []validator.Bool{
+					boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
+						types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_JSON)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
+						types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_COMPLEX)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
+						types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_BOOLEAN)),
+						path.MatchRoot("type"),
+					),
+				},
+
 				Default: booldefault.StaticBool(false),
 			},
 
@@ -177,6 +239,89 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				},
 
 				Default: booldefault.StaticBool(false),
+			},
+
+			"enumerated_values": schema.SetNestedAttribute{
+				Description:         enumeratedValuesDescription.Description,
+				MarkdownDescription: enumeratedValuesDescription.MarkdownDescription,
+				Optional:            true,
+
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"value": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the value of the enumerated value item. If provided, it must not be an empty string.").Description,
+							Required:    true,
+						},
+
+						"archived": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the enumerated value is archived. Archived values cannot be added to a user, but existing archived values are preserved. This allows clients that read the schema to know all possible values of an attribute.").Description,
+							Optional:    true,
+							Computed:    true,
+
+							Default: booldefault.StaticBool(false),
+						},
+
+						"description": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description of the enumerated value.").Description,
+							Optional:    true,
+						},
+					},
+				},
+
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.RequiresReplaceIf(
+						setplanmodifierinternal.RequiresReplaceIfPreviouslyNull(),
+						"The attribute has been previously created without enumerated values validation.  To add enumerated values validation, the attribute must be replaced.",
+						"The attribute has been previously created without enumerated values validation.  To add enumerated values validation, the attribute must be replaced.",
+					),
+				},
+
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(attrMinLength),
+					setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("regex_validation")),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_JSON)), path.MatchRelative().AtParent().AtName("type")),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_BOOLEAN)), path.MatchRelative().AtParent().AtName("type")),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_COMPLEX)), path.MatchRelative().AtParent().AtName("type")),
+				},
+			},
+
+			"regex_validation": schema.SingleNestedAttribute{
+				Description:         regexValidationDescription.Description,
+				MarkdownDescription: regexValidationDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"pattern": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the regular expression to which the attribute must conform.").Description,
+						Required:    true,
+					},
+
+					"requirements": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a developer friendly description of the regular expression requirements.").Description,
+						Required:    true,
+					},
+
+					"values_pattern_should_match": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of one or more strings matching the regular expression.").Description,
+						Optional:    true,
+
+						ElementType: types.StringType,
+					},
+
+					"values_pattern_should_not_match": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of one or more strings that do not match the regular expression.").Description,
+						Optional:    true,
+
+						ElementType: types.StringType,
+					},
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enumerated_values")),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_JSON)), path.MatchRelative().AtParent().AtName("type")),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_BOOLEAN)), path.MatchRelative().AtParent().AtName("type")),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_COMPLEX)), path.MatchRelative().AtParent().AtName("type")),
+				},
 			},
 
 			"required": schema.BoolAttribute{
@@ -249,7 +394,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Build the model for the API
-	schemaAttribute, d := plan.expand("CREATE")
+	schemaAttribute, d := plan.expand(ctx, "CREATE")
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -348,7 +493,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Build the model for the API
-	schemaAttribute, d := plan.expand("UPDATE")
+	schemaAttribute, d := plan.expand(ctx, "UPDATE")
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -359,9 +504,9 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.client.SchemasApi.UpdateAttributePatch(ctx, plan.EnvironmentId.ValueString(), plan.SchemaId.ValueString(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
+			return r.client.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), plan.SchemaId.ValueString(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
 		},
-		"UpdateAttributePatch",
+		"UpdateAttributePut",
 		framework.DefaultCustomError,
 		nil,
 	)
@@ -433,7 +578,7 @@ func (r *SchemaAttributeResource) ImportState(ctx context.Context, req resource.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *SchemaAttributeResourceModel) expand(action string) (*management.SchemaAttribute, diag.Diagnostics) {
+func (p *SchemaAttributeResourceModel) expand(ctx context.Context, action string) (*management.SchemaAttribute, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	attrType := p.Type.ValueString()
@@ -448,6 +593,8 @@ func (p *SchemaAttributeResourceModel) expand(action string) (*management.Schema
 
 	data := *management.NewSchemaAttribute(p.Enabled.ValueBool(), p.Name.ValueString(), management.EnumSchemaAttributeType(attrType))
 
+	data.SetSchemaType(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM)
+
 	if !p.DisplayName.IsNull() && !p.DisplayName.IsUnknown() {
 		data.SetDisplayName(p.DisplayName.ValueString())
 	}
@@ -458,6 +605,7 @@ func (p *SchemaAttributeResourceModel) expand(action string) (*management.Schema
 
 	attrUnique := p.Unique.ValueBool()
 
+	// This is handled in schema validation, but we optionally check here too
 	if attrUnique && attrType != "STRING" {
 		diags.AddError(
 			"Invalid attribute type",
@@ -471,6 +619,70 @@ func (p *SchemaAttributeResourceModel) expand(action string) (*management.Schema
 	data.SetMultiValued(p.Multivalued.ValueBool())
 
 	data.SetRequired(p.Unique.ValueBool())
+
+	if !p.EnumeratedValues.IsNull() && !p.EnumeratedValues.IsUnknown() {
+		var plan []SchemaAttributeEnumeratedValuesResourceModel
+		diags.Append(p.EnumeratedValues.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		enumeratedValues := make([]management.SchemaAttributeEnumeratedValuesInner, 0)
+		for _, v := range plan {
+			enumeratedValue := management.NewSchemaAttributeEnumeratedValuesInner(v.Value.ValueString())
+
+			if !v.Archived.IsNull() && !v.Archived.IsUnknown() {
+				enumeratedValue.SetArchived(v.Archived.ValueBool())
+			}
+
+			if !v.Description.IsNull() && !v.Description.IsUnknown() {
+				enumeratedValue.SetDescription(v.Description.ValueString())
+			}
+
+			enumeratedValues = append(enumeratedValues, *enumeratedValue)
+		}
+
+		data.SetEnumeratedValues(enumeratedValues)
+	}
+
+	if !p.RegexValidation.IsNull() && !p.RegexValidation.IsUnknown() {
+
+		var plan SchemaAttributeRegexValidationModel
+		diags.Append(p.RegexValidation.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		regexValidation := management.NewSchemaAttributeRegexValidation(
+			plan.Pattern.ValueString(),
+			plan.Requirements.ValueString(),
+		)
+
+		if !plan.ValuesPatternShouldMatch.IsNull() && !plan.ValuesPatternShouldMatch.IsUnknown() {
+			var values []string
+			diags.Append(plan.ValuesPatternShouldMatch.ElementsAs(ctx, &values, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			regexValidation.SetValuesPatternShouldMatch(values)
+		}
+
+		if !plan.ValuesPatternShouldNotMatch.IsNull() && !plan.ValuesPatternShouldNotMatch.IsUnknown() {
+			var values []string
+			diags.Append(plan.ValuesPatternShouldNotMatch.ElementsAs(ctx, &values, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			regexValidation.SetValuesPatternShouldNotMatch(values)
+		}
+
+		data.SetRegexValidation(*regexValidation)
+	}
 
 	return &data, diags
 }
@@ -487,19 +699,78 @@ func (p *SchemaAttributeResourceModel) toState(apiObject *management.SchemaAttri
 		return diags
 	}
 
+	var d diag.Diagnostics
+
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
-	p.SchemaId = framework.StringOkToTF(apiObject.Schema.GetIdOk())
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
+
+	p.EnumeratedValues, d = schemaAttributeEnumeratedValuesOkToTF(apiObject.GetEnumeratedValuesOk())
+	diags.Append(d...)
+
+	p.LdapAttribute = framework.StringOkToTF(apiObject.GetLdapAttributeOk())
+	p.Multivalued = framework.BoolOkToTF(apiObject.GetMultiValuedOk())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+
+	p.RegexValidation, d = schemaAttributeRegexValidationOkToTF(apiObject.GetRegexValidationOk())
+	diags.Append(d...)
+
+	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
+	p.SchemaId = framework.StringOkToTF(apiObject.Schema.GetIdOk())
+	p.SchemaType = framework.EnumOkToTF(apiObject.GetSchemaTypeOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
 	p.Unique = framework.BoolOkToTF(apiObject.GetUniqueOk())
-	p.Multivalued = framework.BoolOkToTF(apiObject.GetMultiValuedOk())
-	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
-	p.LdapAttribute = framework.StringOkToTF(apiObject.GetLdapAttributeOk())
-	p.SchemaType = framework.EnumOkToTF(apiObject.GetSchemaTypeOk())
 
 	return diags
+}
+
+func schemaAttributeEnumeratedValuesOkToTF(apiObject []management.SchemaAttributeEnumeratedValuesInner, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: schemaAttributeEnumeratedValuesTFObjectTypes}
+
+	if !ok || len(apiObject) == 0 {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		objMap := map[string]attr.Value{
+			"archived":    framework.BoolOkToTF(v.GetArchivedOk()),
+			"description": framework.StringOkToTF(v.GetDescriptionOk()),
+			"value":       framework.StringOkToTF(v.GetValueOk()),
+		}
+
+		flattenedObj, d := types.ObjectValue(schemaAttributeEnumeratedValuesTFObjectTypes, objMap)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func schemaAttributeRegexValidationOkToTF(apiObject *management.SchemaAttributeRegexValidation, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(schemaAttributeRegexValidationTFObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"pattern":                         framework.StringOkToTF(apiObject.GetPatternOk()),
+		"requirements":                    framework.StringOkToTF(apiObject.GetRequirementsOk()),
+		"values_pattern_should_match":     framework.StringSetOkToTF(apiObject.GetValuesPatternShouldMatchOk()),
+		"values_pattern_should_not_match": framework.StringSetOkToTF(apiObject.GetValuesPatternShouldNotMatchOk()),
+	}
+
+	flattenedObj, d := types.ObjectValue(schemaAttributeRegexValidationTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return flattenedObj, diags
 }

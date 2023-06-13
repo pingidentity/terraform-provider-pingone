@@ -52,7 +52,9 @@ resource "pingone_schema_attribute" "my_attribute" {
 - `description` (String) A description of the attribute. If provided, it must not be an empty string. Valid characters consists of any Unicode letter, mark (for example, accent or umlaut), numeric character, punctuation character, or space.
 - `display_name` (String) The display name of the attribute such as 'T-shirt size'. If provided, it must not be an empty string. Valid characters consist of any Unicode letter, mark (for example, accent or umlaut), numeric character, forward slash, dot, apostrophe, underscore, space, or hyphen.
 - `enabled` (Boolean) Indicates whether or not the attribute is enabled.  Defaults to `true`.
+- `enumerated_values` (Attributes Set) A set of one or more enumerated values for the attribute. If provided, it must not be an empty set.  Can only be set where the attribute type is `STRING` and cannot be set alongside `regex_validation`.  If the attribute has been created without enumerated values and this parameter is added later, this will trigger a replacement plan of the attribute resource.  If the attribute has been created with enumerated values that are subsequently removed, this will update without needing to replace the attribute resource. (see [below for nested schema](#nestedatt--enumerated_values))
 - `multivalued` (Boolean) Indicates whether the attribute has multiple values or a single one. Maximum number of values stored is 1,000.  This field is immutable and will trigger a replace plan if changed.  Defaults to `false`.
+- `regex_validation` (Attributes) A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`. (see [below for nested schema](#nestedatt--regex_validation))
 - `type` (String) The type of the attribute.  Options are `BOOLEAN`, `COMPLEX`, `JSON`, `STRING`.  `COMPLEX` and `BOOLEAN` attributes cannot be created, but standard attributes of those types may be updated. `JSON` attributes are limited by size (total size must not exceed 16KB).  This field is immutable and will trigger a replace plan if changed.  Defaults to `STRING`.
 - `unique` (Boolean) Indicates whether or not the attribute must have a unique value within the PingOne environment.  This field is immutable and will trigger a replace plan if changed.  Defaults to `false`.
 
@@ -62,6 +64,32 @@ resource "pingone_schema_attribute" "my_attribute" {
 - `ldap_attribute` (String) The unique identifier for the LDAP attribute.
 - `required` (Boolean) Indicates whether or not the attribute is required.
 - `schema_type` (String) The schema type of the attribute.  Options are `CORE`, `CUSTOM`, `STANDARD`.  `CORE` and `STANDARD` attributes are supplied by default. `CORE` attributes cannot be updated or deleted. `STANDARD` attributes cannot be deleted, but their mutable properties can be updated. `CUSTOM` attributes can be deleted, and their mutable properties can be updated. New attributes are created with a schema type of `CUSTOM`.
+
+<a id="nestedatt--enumerated_values"></a>
+### Nested Schema for `enumerated_values`
+
+Required:
+
+- `value` (String) A string that specifies the value of the enumerated value item. If provided, it must not be an empty string.
+
+Optional:
+
+- `archived` (Boolean) A boolean that specifies whether the enumerated value is archived. Archived values cannot be added to a user, but existing archived values are preserved. This allows clients that read the schema to know all possible values of an attribute.
+- `description` (String) A string that specifies the description of the enumerated value.
+
+
+<a id="nestedatt--regex_validation"></a>
+### Nested Schema for `regex_validation`
+
+Required:
+
+- `pattern` (String) A string that specifies the regular expression to which the attribute must conform.
+- `requirements` (String) A string that specifies a developer friendly description of the regular expression requirements.
+
+Optional:
+
+- `values_pattern_should_match` (Set of String) A set of one or more strings matching the regular expression.
+- `values_pattern_should_not_match` (Set of String) A set of one or more strings that do not match the regular expression.
 
 ## Import
 
