@@ -6,10 +6,12 @@ NOTES:
 * `data_source/pingone_credential_type`: Corrected typo in data source description. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
 * `resource/pingone_branding_settings`: Adjusted schema such that the icon `id` required parameter no longer triggers a replacement plan on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
 * `resource/pingone_flow_policy_assignment`: Adjusted schema such that the `flow_policy_id` required parameter no longer triggers a replacement plan on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
+* `resource/pingone_schema_attribute`: Migrated to plugin framework. ([#414](https://github.com/pingidentity/terraform-provider-pingone/issues/414))
 * `resource/pingone_sign_on_policy_action`: Adjust documentation to clarify the where conditions can and cannot be used in a policy action. ([#412](https://github.com/pingidentity/terraform-provider-pingone/issues/412))
 
 ENHANCEMENTS:
 
+* `resource/pingone_schema_attribute`: Supports properties for enumerated values and regular expression validation. ([#414](https://github.com/pingidentity/terraform-provider-pingone/issues/414))
 * `resource/pingone_sign_on_policy_action`: Support user provisioning gateway configuration on the "Login" sign-on policy action ([#407](https://github.com/pingidentity/terraform-provider-pingone/issues/407))
 
 BUG FIXES:
