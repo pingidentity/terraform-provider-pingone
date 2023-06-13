@@ -619,28 +619,28 @@ resource "pingone_schema_attribute" "%[2]s" {
 
   enumerated_values = [
     {
-      value = "value1"
-      archived = "false"
+      value       = "value1"
+      archived    = "false"
       description = "Test description"
     },
     {
-      value = "value2"
+      value       = "value2"
       description = "Test description"
     },
     {
-      value = "value3"
-      archived = "true"
+      value       = "value3"
+      archived    = "true"
       description = "Test description"
     },
     {
       value = "value4"
     },
     {
-      value = "value5"
+      value    = "value5"
       archived = "true"
     },
     {
-      value = "value6"
+      value    = "value6"
       archived = "false"
     }
   ]
@@ -665,7 +665,7 @@ resource "pingone_schema_attribute" "%[2]s" {
   type = "%[4]s"
 
   regex_validation = {
-    pattern = "^[a-zA-Z0-9]*$",
+    pattern      = "^[a-zA-Z0-9]*$",
     requirements = "Did you hear about the cow that aced all her tests?  She was outstanding in her field."
 
     values_pattern_should_match = [
