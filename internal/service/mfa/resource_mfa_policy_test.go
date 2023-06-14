@@ -615,6 +615,9 @@ func TestAccMFAPolicy_Mobile_IntegrityDetectionErrors(t *testing.T) {
 
 	name := resourceName
 
+	apnsKey := resourceName
+	fcmKey := resourceName
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -622,12 +625,12 @@ func TestAccMFAPolicy_Mobile_IntegrityDetectionErrors(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name),
+				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name, apnsKey, fcmKey),
 				// Integrity detection (`mobile.application.integrity_detection`) has no effect when the Application resource has integrity detection disabled
 				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) has no effect when the Application resource has integrity detection disabled"),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name),
+				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name, apnsKey, fcmKey),
 				// Integrity detection (`mobile.application.integrity_detection`) must be set when the Application resource has integrity detection enabled
 				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) must be set when the Application resource has integrity detection enabled"),
 			},
@@ -1791,7 +1794,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name string) string {
+func testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name, apnsKey, fcmKey string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -1821,6 +1824,26 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
+
+resource "pingone_mfa_application_push_credential" "%[2]s-apns" {
+	environment_id = data.pingone_environment.general_test.id
+	application_id = pingone_application.%[2]s.id
+  
+	apns {
+	  key               = "%[4]s"
+	  team_id           = "team.id.updated"
+	  token_signing_key = "-----BEGIN PRIVATE KEY-----%[4]s-----END PRIVATE KEY-----"
+	}
+  }
+
+  resource "pingone_mfa_application_push_credential" "%[2]s-fcm" {
+	environment_id = data.pingone_environment.general_test.id
+	application_id = pingone_application.%[2]s.id
+  
+	fcm {
+	  key = "%[5]s"
+	}
+  }
 
 resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1873,10 +1896,15 @@ resource "pingone_mfa_policy" "%[2]s" {
     enabled = false
   }
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  depends_on = [
+	pingone_mfa_application_push_credential.%[2]s-apns,
+	pingone_mfa_application_push_credential.%[2]s-fcm
+	  ]
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, apnsKey, fcmKey)
 }
 
-func testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name string) string {
+func testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name, apnsKey, fcmKey string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -1915,6 +1943,26 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
+
+resource "pingone_mfa_application_push_credential" "%[2]s-apns" {
+	environment_id = data.pingone_environment.general_test.id
+	application_id = pingone_application.%[2]s.id
+  
+	apns {
+	  key               = "%[4]s"
+	  team_id           = "team.id.updated"
+	  token_signing_key = "-----BEGIN PRIVATE KEY-----%[4]s-----END PRIVATE KEY-----"
+	}
+  }
+
+  resource "pingone_mfa_application_push_credential" "%[2]s-fcm" {
+	environment_id = data.pingone_environment.general_test.id
+	application_id = pingone_application.%[2]s.id
+  
+	fcm {
+	  key = "%[5]s"
+	}
+  }
 
 resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1965,7 +2013,13 @@ resource "pingone_mfa_policy" "%[2]s" {
     enabled = false
   }
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  depends_on = [
+	pingone_mfa_application_push_credential.%[2]s-apns,
+	pingone_mfa_application_push_credential.%[2]s-fcm
+	  ]
+
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, apnsKey, fcmKey)
 }
 
 func testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name string) string {
