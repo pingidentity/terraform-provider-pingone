@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -412,21 +411,13 @@ func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *manageme
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.AgreementId = framework.StringToTF(*apiObject.GetAgreement().Id)
 	p.AgreementLocalizationId = framework.StringToTF(*apiObject.GetLanguage().Id)
-	p.ContentType = enumAgreementRevisionContentTypeOkToTF(apiObject.GetContentTypeOk())
+	p.ContentType = framework.EnumOkToTF(apiObject.GetContentTypeOk())
 	p.EffectiveAt = framework.TimeOkToTF(apiObject.GetEffectiveAtOk())
 	p.NotValidAfter = framework.TimeOkToTF(apiObject.GetNotValidAfterOk())
 	p.RequireReconsent = framework.BoolOkToTF(apiObject.GetRequireReconsentOk())
 	p.Text = framework.StringToTF(revisionText)
 
 	return diags
-}
-
-func enumAgreementRevisionContentTypeOkToTF(v *management.EnumAgreementRevisionContentType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
-	}
 }
 
 func agreementLocalizationRevisionDeleteErrorHandler(error model.P1Error) diag.Diagnostics {
