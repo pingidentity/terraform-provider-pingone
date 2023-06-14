@@ -1099,7 +1099,7 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	p.Id = framework.StringOkToTF(environmentApiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
-	p.Type = enumEnvironmentTypeOkToTF(environmentApiObject.GetTypeOk())
+	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
 	p.Region = enumRegionCodeOkToTF(environmentApiObject.GetRegionOk())
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
@@ -1112,7 +1112,7 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 		p.OrganizationId = types.StringNull()
 	}
 
-	p.Solution = enumSolutionTypeOkToTF(servicesApiObject.GetSolutionTypeOk())
+	p.Solution = framework.EnumOkToTF(servicesApiObject.GetSolutionTypeOk())
 
 	services, d := toStateEnvironmentServices(servicesApiObject.GetProducts())
 	diags.Append(d...)
@@ -1243,27 +1243,11 @@ func toStateEnvironmentServicesBookmark(bookmarks []management.BillOfMaterialsPr
 
 }
 
-func enumEnvironmentTypeOkToTF(v *management.EnumEnvironmentType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
-	}
-}
-
 func enumRegionCodeOkToTF(v *management.EnumRegionCode, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
 		return types.StringValue(model.FindRegionByAPICode(*v).Region)
-	}
-}
-
-func enumSolutionTypeOkToTF(v *management.EnumSolutionType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
 	}
 }
 
