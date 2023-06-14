@@ -94,7 +94,10 @@ Read-Only:
 
 Read-Only:
 
-- `duration` (Number) Cooldown duration.  Defaults to `30`.
+- `duration` (Number) Cooldown duration.
+    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
+    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
+    - Defaults to `30 SECONDS`.
 - `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
 
 
@@ -104,8 +107,11 @@ Read-Only:
 
 Read-Only:
 
-- `duration` (Number) Lifetime of the OTP delivered via email.  Defaults to `10`.
-- `time_unit` (String) Time unit of the OTP duration.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `duration` (Number) Lifetime of the OTP delivered via email.
+    - If `lifetime.time_unit` is `MINUTES`, the allowed range is `1 - 30`.
+    - If `lifetime.time_unit` is `SECONDS`, the allowed range is `60 - 1800`.
+    - Defaults to `10 MINUTES`.
+- `time_unit` (String) Time unit of the OTP (Email) duration lifetime.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedatt--email--otp--notification"></a>
@@ -185,7 +191,10 @@ Read-Only:
 
 Read-Only:
 
-- `duration` (Number) Cooldown duration.  Defaults to `30`.
+- `duration` (Number) Cooldown duration.
+    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
+    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
+    - Defaults to `30 SECONDS`.
 - `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
 
 
@@ -195,8 +204,11 @@ Read-Only:
 
 Read-Only:
 
-- `duration` (Number) Lifetime of the OTP delivered via phone (SMS).  Defaults to `5`.
-- `time_unit` (String) Time unit of the OTP duration.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `duration` (Number) Lifetime of the OTP delivered via phone (SMS).
+    - If `lifetime.time_unit` is `MINUTES`, the allowed range is `1 - 30`.
+    - If `lifetime.time_unit` is `SECONDS`, the allowed range is `60 - 1800`.
+    - Defaults to `5 MINUTES`.
+- `time_unit` (String) Time unit of the OTP (SMS) duration lifetime.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedatt--phone--otp--notification"></a>
@@ -231,10 +243,12 @@ Read-Only:
 
 Read-Only:
 
-- `duration` (Number) Length of time before transaction timeout expires.
-* If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
-* If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
-* The default value is `15 MINUTES`.
+- `duration` (Number) Length of time before the data collection transaction expires.
+    - If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
+    - If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
+    - Defaults to `15 MINUTES`.
+
+    ~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.
 - `time_unit` (String) Time unit of data collection timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
@@ -244,8 +258,8 @@ Read-Only:
 
 Read-Only:
 
-- `duration` (Number) Length of time before transaction timeout expires.
-* If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
-* If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
-* The default value is `30 MINUTES`.
+- `duration` (Number) Length of time before the transaction expires.
+    - If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
+    - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
+    - Defaults to `30 MINUTES`.
 - `time_unit` (String) Time unit of transaction timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.

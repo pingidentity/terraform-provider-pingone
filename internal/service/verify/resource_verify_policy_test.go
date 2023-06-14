@@ -121,7 +121,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", name),
+		resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("Description for %s", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "REQUIRED"),
@@ -168,7 +168,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
-		resource.TestCheckResourceAttr(resourceFullName, "description", updatedName),
+		resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("Description for %s", updatedName)),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "REQUIRED"),
@@ -213,7 +213,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
-		resource.TestCheckResourceAttr(resourceFullName, "description", updatedName),
+		resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("Timeunit Policy Update Description for %s", updatedName)),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "DISABLED"),
@@ -367,7 +367,7 @@ func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name str
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
-  description    = "%[4]s"
+  description    = "Description for %[4]s"
 
   government_id = {
     verify = "REQUIRED"
@@ -458,7 +458,7 @@ func testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, name 
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
-  description    = "%[4]s"
+  description    = "Description for %[4]s"
 
   government_id = {
     verify = "REQUIRED"
@@ -475,7 +475,7 @@ func testAccVerifyPolicy_UpdateTimeUnits(environmentName, licenseID, resourceNam
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
-  description    = "%[4]s"
+  description    = "Timeunit Policy Update Description for %[4]s"
 
   government_id = {
     verify = "DISABLED"

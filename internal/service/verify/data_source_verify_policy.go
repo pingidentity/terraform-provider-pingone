@@ -121,19 +121,31 @@ func (r *VerifyPolicyDataSource) Metadata(ctx context.Context, req datasource.Me
 func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	// schema descriptions and validation settings
 	const attrMinLength = 1
+
 	const attrMinDuration = 0
 	const attrMaxDurationSeconds = 1800
 	const attrMaxDurationMinutes = 30
 
+	const attrMinLifetimeDurationSeconds = 60
+	const attrMaxLifetimeDurationSeconds = 1800
+	const attrMinLifetimeDurationMinutes = 1
+	const attrMaxLifetimeDurationMinutes = 30
+
 	// defaults
 	const defaultNotificationTemplate = "email_phone_verification"
+
 	const defaultVerify = verify.ENUMVERIFY_DISABLED
 	const defaultThreshold = verify.ENUMTHRESHOLD_MEDIUM
+
 	const defaultOTPEmailDuration = 10
+	const defaultOTPEmailTimeUnit = verify.ENUMTIMEUNIT_MINUTES
+
 	const defaultOTPPhoneDuration = 5
 	const defaultOTPPhoneTimeUnit = verify.ENUMTIMEUNIT_MINUTES
+
 	const defaultOTPCooldownDuration = 30
 	const defaultOTPCooldownTimeUnit = verify.ENUMTIMEUNIT_SECONDS
+
 	const defaultTransactionDuration = 30
 	const defaultTransactionDataCollectionDuration = 15
 	const defaultTransactionTimeUnit = verify.ENUMTIMEUNIT_MINUTES
@@ -167,20 +179,33 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
 
 	otpLifeTimeEmailDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Lifetime of the OTP delivered via email.",
-	).DefaultValue(fmt.Sprint(defaultOTPEmailDuration))
+		"Lifetime of the OTP delivered via email.\n" +
+			fmt.Sprintf("    - If `lifetime.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes) +
+			fmt.Sprintf("    - If `lifetime.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultOTPEmailDuration, defaultOTPEmailTimeUnit),
+	)
+
+	otpLifetimeEmailTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Time unit of the OTP (Email) duration lifetime.",
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultOTPEmailTimeUnit))
 
 	otpLifeTimePhoneDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Lifetime of the OTP delivered via phone (SMS).",
-	).DefaultValue(fmt.Sprint(defaultOTPPhoneDuration))
+		"Lifetime of the OTP delivered via phone (SMS).\n" +
+			fmt.Sprintf("    - If `lifetime.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes) +
+			fmt.Sprintf("    - If `lifetime.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultOTPPhoneDuration, defaultOTPPhoneTimeUnit),
+	)
 
-	otpLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Time unit of the OTP duration.",
+	otpLifetimePhoneTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Time unit of the OTP (SMS) duration lifetime.",
 	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultOTPPhoneTimeUnit))
 
 	otpDeliveriesCooldownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Cooldown duration.",
-	).DefaultValue(fmt.Sprint(defaultOTPCooldownDuration))
+		"Cooldown duration.\n" +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultOTPCooldownDuration, defaultOTPCooldownTimeUnit),
+	)
 
 	otpDeliveriesCooldownTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Time unit of the cooldown duration configuration.",
@@ -191,10 +216,10 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	)
 
 	transactionTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Length of time before transaction timeout expires.\n" +
-			fmt.Sprintf("* If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
-			fmt.Sprintf("* If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
-			fmt.Sprintf("* The default value is `%d %s`.", defaultTransactionDuration, defaultTransactionTimeUnit),
+		"Length of time before the transaction expires.\n" +
+			fmt.Sprintf("    - If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
+			fmt.Sprintf("    - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultTransactionDuration, defaultTransactionTimeUnit),
 	)
 
 	transactionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -202,10 +227,11 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
 
 	dataCollectionDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Length of time before transaction timeout expires.\n" +
-			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
-			fmt.Sprintf("* If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
-			fmt.Sprintf("* The default value is `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit),
+		"Length of time before the data collection transaction expires.\n" +
+			fmt.Sprintf("    - If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
+			fmt.Sprintf("    - If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit) +
+			"    ~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.\n",
 	)
 
 	dataCollectionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -376,8 +402,8 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 										Computed:            true,
 									},
 									"time_unit": schema.StringAttribute{
-										Description:         otpLifetimeTimeUnitDescription.Description,
-										MarkdownDescription: otpLifetimeTimeUnitDescription.MarkdownDescription,
+										Description:         otpLifetimeEmailTimeUnitDescription.Description,
+										MarkdownDescription: otpLifetimeEmailTimeUnitDescription.MarkdownDescription,
 										Computed:            true,
 									},
 								},
@@ -467,8 +493,8 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 										Computed:            true,
 									},
 									"time_unit": schema.StringAttribute{
-										Description:         otpLifetimeTimeUnitDescription.Description,
-										MarkdownDescription: otpLifetimeTimeUnitDescription.MarkdownDescription,
+										Description:         otpLifetimePhoneTimeUnitDescription.Description,
+										MarkdownDescription: otpLifetimePhoneTimeUnitDescription.MarkdownDescription,
 										Computed:            true,
 									},
 								},
