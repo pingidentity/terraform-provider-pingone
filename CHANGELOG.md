@@ -3,8 +3,15 @@
 NOTES:
 
 * Adjusted documentation for multiple resources/datasources to clarify PingOne ID attribute validation and plan replacement on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
+* `data-source/pingone_credential_issuance_rule`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `data-source/pingone_credential_type`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `data-source/pingone_environment`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
 * `data_source/pingone_credential_type`: Corrected typo in data source description. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_agreement_localization_revision`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
 * `resource/pingone_branding_settings`: Adjusted schema such that the icon `id` required parameter no longer triggers a replacement plan on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
+* `resource/pingone_credential_issuance_rule`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `resource/pingone_credential_type`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `resource/pingone_environment`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
 * `resource/pingone_flow_policy_assignment`: Adjusted schema such that the `flow_policy_id` required parameter no longer triggers a replacement plan on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
 * `resource/pingone_schema_attribute`: Migrated to plugin framework. ([#414](https://github.com/pingidentity/terraform-provider-pingone/issues/414))
 * `resource/pingone_sign_on_policy_action`: Adjust documentation to clarify the where conditions can and cannot be used in a policy action. ([#412](https://github.com/pingidentity/terraform-provider-pingone/issues/412))
