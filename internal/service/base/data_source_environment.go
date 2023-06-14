@@ -342,7 +342,7 @@ func (p *EnvironmentDataSourceModel) toState(environmentApiObject *management.En
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
-	p.Region = framework.EnumOkToTF(environmentApiObject.GetRegionOk())
+	p.Region = enumRegionCodeOkToTF(environmentApiObject.GetRegionOk())
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
 		p.LicenseId = framework.StringOkToTF(v.GetIdOk())
