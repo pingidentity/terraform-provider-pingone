@@ -177,7 +177,7 @@ func TestAccVerifyPolicyDataSource_FailureChecks(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccVerifyPolicy_FindByIDFail(environmentName, licenseID, resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Error when calling `ReadOneVerifyPolicy`: 404 Not Found"),
+				ExpectError: regexp.MustCompile("Error: Error when calling `ReadOneVerifyPolicy`: verifyPolicy could not be found"),
 			},
 			{
 				Config:      testAccVerifyPolicy_FindByNameFail(environmentName, licenseID, resourceName, name),
@@ -194,7 +194,6 @@ resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
   description    = "%[4]s"
-  default        = false
 
   government_id = {
     verify = "REQUIRED"
@@ -292,7 +291,6 @@ resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
   description    = "%[4]s"
-  default        = false
 
   liveness = {
     verify    = "REQUIRED"

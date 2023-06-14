@@ -141,7 +141,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "email.otp.deliveries.cooldown.duration", "33"),
 		resource.TestCheckResourceAttr(resourceFullName, "email.otp.deliveries.cooldown.time_unit", "SECONDS"),
 		resource.TestCheckResourceAttr(resourceFullName, "email.otp.notification.template_name", "email_phone_verification"),
-		resource.TestCheckResourceAttr(resourceFullName, "email.otp.notification.variant_name", "english_b"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.otp.notification.variant_name", "variantABC"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "phone.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "phone.create_mfa_device", "true"),
@@ -152,7 +152,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.deliveries.cooldown.duration", "16"),
 		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.deliveries.cooldown.time_unit", "SECONDS"),
 		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.notification.template_name", "email_phone_verification"),
-		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.notification.variant_name", "variant23_b"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.notification.variant_name", "variantABC"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.timeout.duration", "27"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.timeout.time_unit", "MINUTES"),
@@ -209,6 +209,52 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
 
+	updateTimeUnitsPolicy := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
+		resource.TestCheckResourceAttr(resourceFullName, "description", updatedName),
+		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "DISABLED"),
+
+		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
+		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),
+
+		resource.TestCheckResourceAttr(resourceFullName, "liveness.verify", "OPTIONAL"),
+		resource.TestCheckResourceAttr(resourceFullName, "liveness.threshold", "LOW"),
+
+		resource.TestCheckResourceAttr(resourceFullName, "email.verify", "REQUIRED"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.create_mfa_device", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.otp.attempts.count", "4"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.otp.lifetime.duration", "90"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.otp.lifetime.time_unit", "SECONDS"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.otp.deliveries.count", "5"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.otp.deliveries.cooldown.duration", "65"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.otp.deliveries.cooldown.time_unit", "SECONDS"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.otp.notification.template_name", "email_phone_verification"),
+
+		resource.TestCheckResourceAttr(resourceFullName, "phone.verify", "REQUIRED"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.create_mfa_device", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.attempts.count", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.lifetime.duration", "600"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.lifetime.time_unit", "SECONDS"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.deliveries.count", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.deliveries.cooldown.duration", "5"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.deliveries.cooldown.time_unit", "MINUTES"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.notification.template_name", "email_phone_verification"),
+		resource.TestCheckResourceAttr(resourceFullName, "phone.otp.notification.variant_name", "variantZYX"),
+
+		resource.TestCheckResourceAttr(resourceFullName, "transaction.timeout.duration", "1500"),
+		resource.TestCheckResourceAttr(resourceFullName, "transaction.timeout.time_unit", "SECONDS"),
+		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.duration", "423"),
+		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.time_unit", "SECONDS"),
+		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection_only", "true"),
+
+		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
+		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
+	)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -239,6 +285,10 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 			{
 				Config: testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, updatedName),
 				Check:  minimalPolicy,
+			},
+			{
+				Config: testAccVerifyPolicy_UpdateTimeUnits(environmentName, licenseID, resourceName, updatedName),
+				Check:  updateTimeUnitsPolicy,
 			},
 			{
 				Config: testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name),
@@ -279,10 +329,9 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 				Destroy: true,
 			},
 			{
-				Config: testAccVerifyPolicy_IncorrectTransactionDurationRange(environmentName, licenseID, resourceName, name),
-				ExpectError: regexp.MustCompile(`(?s)(?:.*Attribute transaction.timeout.duration value must be between 0 and 30.*)` +
-					`(?:.*Attribute transaction.data_collection.timeout.duration value must be between\n0 and 1800.*)`),
-				Destroy: true,
+				Config:      testAccVerifyPolicy_IncorrectTransactionDurationRange(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Provided value is not valid"),
+				Destroy:     true,
 			},
 			{
 				Config:      testAccVerifyPolicy_TransactionDataCollectionDurationBeyondTimeoutDuration(environmentName, licenseID, resourceName, name),
@@ -314,11 +363,11 @@ resource "pingone_verify_policy" "%[3]s" {
 func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
+
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
   description    = "%[4]s"
-  default        = false
 
   government_id = {
     verify = "REQUIRED"
@@ -353,7 +402,7 @@ resource "pingone_verify_policy" "%[3]s" {
         }
       }
       notification = {
-        variant_name = "english_b"
+        variant_name = "variantABC"
       }
     }
   }
@@ -377,7 +426,7 @@ resource "pingone_verify_policy" "%[3]s" {
         }
       }
       notification = {
-        variant_name = "variant23_b"
+        variant_name = "variantABC"
       }
     }
   }
@@ -413,6 +462,93 @@ resource "pingone_verify_policy" "%[3]s" {
 
   government_id = {
     verify = "REQUIRED"
+  }
+
+  depends_on = [pingone_environment.%[2]s]
+
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccVerifyPolicy_UpdateTimeUnits(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "%[4]s"
+
+  government_id = {
+    verify = "DISABLED"
+  }
+
+  facial_comparison = {
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
+
+  liveness = {
+    verify    = "OPTIONAL"
+    threshold = "LOW"
+  }
+
+  email = {
+    verify = "REQUIRED"
+    create_mfa_device : true
+    otp = {
+      attempts = {
+        count = "4"
+      }
+      lifetime = {
+        duration  = "90"
+        time_unit = "SECONDS"
+      },
+      deliveries = {
+        count = 5
+        cooldown = {
+          duration  = "65"
+          time_unit = "SECONDS"
+        }
+      }
+    }
+  }
+
+  phone = {
+    verify = "REQUIRED"
+    otp = {
+      attempts = {
+        count = "2"
+      }
+      lifetime = {
+        duration  = "600"
+        time_unit = "SECONDS"
+      },
+      deliveries = {
+        count = 1
+        cooldown = {
+          duration  = "5"
+          time_unit = "MINUTES"
+        }
+      }
+      notification = {
+        variant_name = "variantZYX"
+      }
+    }
+  }
+
+  transaction = {
+    timeout = {
+      duration  = "1500"
+      time_unit = "SECONDS"
+    }
+
+    data_collection = {
+      timeout = {
+        duration  = "423"
+        time_unit = "SECONDS"
+      }
+    }
+
+    data_collection_only = true
   }
 
   depends_on = [pingone_environment.%[2]s]
@@ -463,7 +599,6 @@ resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
   description    = "%[4]s"
-  default        = false
 
   facial_comparison = {
     verify    = "REQUIRED"
@@ -496,7 +631,6 @@ resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
   description    = "%[4]s"
-  default        = false
 
   facial_comparison = {
     verify    = "REQUIRED"

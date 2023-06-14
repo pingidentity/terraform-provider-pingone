@@ -6,7 +6,6 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Verify Policy"
   description    = "Example - All Verification Checks Required"
-  default        = false
 
   government_id = {
     verify = "REQUIRED"

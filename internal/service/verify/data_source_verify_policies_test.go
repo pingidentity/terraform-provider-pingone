@@ -57,7 +57,6 @@ resource "pingone_verify_policy" "%[3]s-1" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s-1"
   description    = "%[4]s-1"
-  default        = false
 
   government_id = {
     verify = "REQUIRED"
@@ -69,7 +68,6 @@ resource "pingone_verify_policy" "%[3]s-2" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s-2"
   description    = "%[4]s-2"
-  default        = false
 
   facial_comparison = {
     verify    = "REQUIRED"
@@ -82,7 +80,6 @@ resource "pingone_verify_policy" "%[3]s-3" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s-3"
   description    = "%[4]s-3"
-  default        = false
 
   liveness = {
     verify    = "REQUIRED"
@@ -95,7 +92,6 @@ resource "pingone_verify_policy" "%[3]s-4" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s-4"
   description    = "%[4]s-4"
-  default        = false
 
   liveness = {
     verify    = "REQUIRED"

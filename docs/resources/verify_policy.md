@@ -36,7 +36,6 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Verify Policy"
   description    = "Example - All Verification Checks Required"
-  default        = false
 
   government_id = {
     verify = "REQUIRED"
@@ -126,7 +125,6 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 
 ### Optional
 
-- `default` (Boolean) Required as `true` to set the verify policy as the default policy for the environment; otherwise optional and defaults to `false`.
 - `description` (String) Description of the verification policy displayed in PingOne Admin UI, 1-1024 characters.
 - `email` (Attributes) Defines the verification requirements to validate an email address using a one-time password (OTP). (see [below for nested schema](#nestedatt--email))
 - `facial_comparison` (Attributes) Defines the verification requirements to compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph. (see [below for nested schema](#nestedatt--facial_comparison))
@@ -138,6 +136,7 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 ### Read-Only
 
 - `created_at` (String) Date and time the verify policy was created.
+- `default` (Boolean) Specifies whether this is the environment's default verify policy.
 - `id` (String) The ID of this resource.
 - `updated_at` (String) Date and time the verify policy was updated. Can be null.
 
@@ -187,8 +186,11 @@ Required:
 
 Required:
 
-- `duration` (Number) Cooldown duration.  Defaults to `30`.
-- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
+- `duration` (Number) Cooldown duration.
+    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
+    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
+    - Defaults to `30 SECONDS`.
+- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
 
 
 
@@ -197,8 +199,11 @@ Required:
 
 Required:
 
-- `duration` (Number) Lifetime of the OTP delivered via email.  Defaults to `10`.
-- `time_unit` (String) Time unit of the OTP duration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `duration` (Number) Lifetime of the OTP delivered via email.
+    - If `lifetime.time_unit` is `MINUTES`, the allowed range is `1 - 30`.
+    - If `lifetime.time_unit` is `SECONDS`, the allowed range is `60 - 1800`.
+    - Defaults to `10 MINUTES`.
+- `time_unit` (String) Time unit of the OTP (Email) duration lifetime.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedatt--email--otp--notification"></a>
@@ -287,8 +292,11 @@ Required:
 
 Required:
 
-- `duration` (Number) Cooldown duration.  Defaults to `30`.
-- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
+- `duration` (Number) Cooldown duration.
+    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
+    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
+    - Defaults to `30 SECONDS`.
+- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
 
 
 
@@ -297,8 +305,11 @@ Required:
 
 Required:
 
-- `duration` (Number) Lifetime of the OTP delivered via phone (SMS).  Defaults to `5`.
-- `time_unit` (String) Time unit of the OTP duration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `duration` (Number) Lifetime of the OTP delivered via phone (SMS).
+    - If `lifetime.time_unit` is `MINUTES`, the allowed range is `1 - 30`.
+    - If `lifetime.time_unit` is `SECONDS`, the allowed range is `60 - 1800`.
+    - Defaults to `5 MINUTES`.
+- `time_unit` (String) Time unit of the OTP (SMS) duration lifetime.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedatt--phone--otp--notification"></a>
@@ -339,7 +350,7 @@ Required:
 - `duration` (Number) Length of time before the data collection transaction expires.
     - If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
     - If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
-    - The default value is `15 MINUTES`.
+    - Defaults to `15 MINUTES`.
 
     ~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.
 - `time_unit` (String) Time unit of data collection timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
@@ -354,7 +365,7 @@ Required:
 - `duration` (Number) Length of time before the transaction expires.
     - If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `0 - 30`.
     - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
-    - The default value is `30 MINUTES`.
+    - Defaults to `30 MINUTES`.
 - `time_unit` (String) Time unit of transaction timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 ## Import

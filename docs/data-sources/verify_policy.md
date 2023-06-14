@@ -95,7 +95,7 @@ Read-Only:
 Read-Only:
 
 - `duration` (Number) Cooldown duration.  Defaults to `30`.
-- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
+- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
 
 
 
@@ -105,7 +105,7 @@ Read-Only:
 Read-Only:
 
 - `duration` (Number) Lifetime of the OTP delivered via email.  Defaults to `10`.
-- `time_unit` (String) Time unit of the OTP duration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `time_unit` (String) Time unit of the OTP duration.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedatt--email--otp--notification"></a>
@@ -186,7 +186,7 @@ Read-Only:
 Read-Only:
 
 - `duration` (Number) Cooldown duration.  Defaults to `30`.
-- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
+- `time_unit` (String) Time unit of the cooldown duration configuration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
 
 
 
@@ -196,7 +196,7 @@ Read-Only:
 Read-Only:
 
 - `duration` (Number) Lifetime of the OTP delivered via phone (SMS).  Defaults to `5`.
-- `time_unit` (String) Time unit of the OTP duration.  Options are `HOURS`, `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+- `time_unit` (String) Time unit of the OTP duration.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedatt--phone--otp--notification"></a>

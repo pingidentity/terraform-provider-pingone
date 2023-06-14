@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -32,8 +33,9 @@ import (
 
 // Types
 type VerifyPolicyResource struct {
-	client *verify.APIClient
-	region model.RegionMapping
+	client     *verify.APIClient
+	mgmtClient *management.APIClient
+	region     model.RegionMapping
 }
 
 type verifyPolicyResourceModel struct {
@@ -198,30 +200,42 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 	const attrMaxLength = 1024
+
 	const attrMinDuration = 0
 	const attrMaxDurationSeconds = 1800
 	const attrMaxDurationMinutes = 30
 
+	const attrMinLifetimeDurationSeconds = 60
+	const attrMaxLifetimeDurationSeconds = 1800
+	const attrMinLifetimeDurationMinutes = 1
+	const attrMaxLifetimeDurationMinutes = 30
+
 	// defaults
 	const defaultNotificationTemplate = "email_phone_verification"
+
 	const defaultVerify = verify.ENUMVERIFY_DISABLED
 	const defaultThreshold = verify.ENUMTHRESHOLD_MEDIUM
 	const defaultOTPAttemptsCount = 5
-	const defaultOTPEmailDuration = 10
-	const defaultOTPEmailTimeUnit = verify.ENUMLONGTIMEUNIT_MINUTES
-	const defaultOTPPhoneDuration = 5
-	const defaultOTPPhoneTimeUnit = verify.ENUMLONGTIMEUNIT_MINUTES
-	const defaultOTPCooldownDuration = 30
-	const defaultOTPCooldownTimeUnit = verify.ENUMLONGTIMEUNIT_SECONDS
 	const defaultOTPDeliveryCount = 3
+
+	const defaultOTPEmailDuration = 10
+	const defaultOTPEmailTimeUnit = verify.ENUMTIMEUNIT_MINUTES
+
+	const defaultOTPPhoneDuration = 5
+	const defaultOTPPhoneTimeUnit = verify.ENUMTIMEUNIT_MINUTES
+
+	const defaultOTPCooldownDuration = 30
+	const defaultOTPCooldownTimeUnit = verify.ENUMTIMEUNIT_SECONDS
+
 	const defaultTransactionDuration = 30
 	const defaultTransactionDataCollectionDuration = 15
-	const defaultTransactionTimeUnit = verify.ENUMSHORTTIMEUNIT_MINUTES
+	const defaultTransactionTimeUnit = verify.ENUMTIMEUNIT_MINUTES
+
 	defaultCreateMfaDevice := new(bool)
 	*defaultCreateMfaDevice = false
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Required as `true` to set the verify policy as the default policy for the environment; otherwise optional and defaults to `false`.",
+		"Specifies whether this is the environment's default verify policy.",
 	)
 
 	governmentIdVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -249,24 +263,37 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
 
 	otpLifeTimeEmailDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Lifetime of the OTP delivered via email.",
-	).DefaultValue(fmt.Sprint(defaultOTPEmailDuration))
+		"Lifetime of the OTP delivered via email.\n" +
+			fmt.Sprintf("    - If `lifetime.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes) +
+			fmt.Sprintf("    - If `lifetime.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultOTPEmailDuration, defaultOTPEmailTimeUnit),
+	)
+
+	otpLifetimeEmailTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Time unit of the OTP (Email) duration lifetime.",
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultOTPEmailTimeUnit))
 
 	otpLifeTimePhoneDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Lifetime of the OTP delivered via phone (SMS).",
-	).DefaultValue(fmt.Sprint(defaultOTPPhoneDuration))
+		"Lifetime of the OTP delivered via phone (SMS).\n" +
+			fmt.Sprintf("    - If `lifetime.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes) +
+			fmt.Sprintf("    - If `lifetime.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultOTPPhoneDuration, defaultOTPPhoneTimeUnit),
+	)
 
-	otpLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Time unit of the OTP duration.",
-	).AllowedValuesEnum(verify.AllowedEnumLongTimeUnitEnumValues).DefaultValue(string(defaultOTPPhoneTimeUnit))
+	otpLifetimePhoneTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Time unit of the OTP (SMS) duration lifetime.",
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultOTPPhoneTimeUnit))
 
 	otpDeliveriesCooldownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Cooldown duration.",
-	).DefaultValue(fmt.Sprint(defaultOTPCooldownDuration))
+		"Cooldown duration.\n" +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultOTPCooldownDuration, defaultOTPCooldownTimeUnit),
+	)
 
 	otpDeliveriesCooldownTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Time unit of the cooldown duration configuration.",
-	).AllowedValuesEnum(verify.AllowedEnumLongTimeUnitEnumValues).DefaultValue(string(defaultOTPCooldownTimeUnit))
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultOTPCooldownTimeUnit))
 
 	otpNotificationTemplateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("Name of the template to use to pass a one-time passcode (OTP). The default value of `%s` is static. Use the `notification.variant_name` property to define an alternate template.", defaultNotificationTemplate),
@@ -276,24 +303,24 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 		"Length of time before the transaction expires.\n" +
 			fmt.Sprintf("    - If `transaction.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
 			fmt.Sprintf("    - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
-			fmt.Sprintf("    - The default value is `%d %s`.\n", defaultTransactionDuration, defaultTransactionTimeUnit),
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultTransactionDuration, defaultTransactionTimeUnit),
 	)
 
 	transactionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Time unit of transaction timeout.",
-	).AllowedValuesEnum(verify.AllowedEnumShortTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
 
 	dataCollectionDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Length of time before the data collection transaction expires.\n" +
 			fmt.Sprintf("    - If `transaction.data_collection.timeout.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationMinutes) +
 			fmt.Sprintf("    - If `transaction.data_collection.timeout.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinDuration, attrMaxDurationSeconds) +
-			fmt.Sprintf("    - The default value is `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n\n", defaultTransactionDataCollectionDuration, defaultTransactionTimeUnit) +
 			"    ~> When setting or changing timeouts in the transaction configuration object, `transaction.data_collection.timeout.duration` must be less than or equal to `transaction.timeout.duration`.\n",
 	)
 
 	dataCollectionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Time unit of data collection timeout.",
-	).AllowedValuesEnum(verify.AllowedEnumShortTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
 
 	dataCollectionOnlyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"When `true`, collects documents specified in the policy without determining their validity; defaults to `false`.",
@@ -329,7 +356,6 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"default": schema.BoolAttribute{
 				Description:         defaultDescription.Description,
 				MarkdownDescription: defaultDescription.MarkdownDescription,
-				Optional:            true,
 				Computed:            true,
 
 				Default: booldefault.StaticBool(false),
@@ -515,6 +541,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"create_mfa_device": schema.BoolAttribute{
 						Description: "When enabled, PingOne Verify registers the email address with PingOne MFA as a verified MFA device.",
 						Optional:    true,
+						Computed:    true,
+						Default:     booldefault.StaticBool(*defaultCreateMfaDevice),
 					},
 					"otp": schema.SingleNestedAttribute{
 						Description: "SMS/Voice/Email one-time password (OTP) configuration.",
@@ -546,13 +574,33 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 												Description:         otpDeliveriesCooldownDurationDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownDurationDescription.MarkdownDescription,
 												Required:            true,
+												Validators: []validator.Int64{
+													int64validator.Any(
+														int64validator.All(
+															int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
+															int64validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`MINUTES`),
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationMinutes),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+														int64validator.All(
+															int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
+															int64validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`SECONDS`),
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationSeconds),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+													),
+												},
 											},
 											"time_unit": schema.StringAttribute{
 												Description:         otpDeliveriesCooldownTimeUnitDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownTimeUnitDescription.MarkdownDescription,
 												Required:            true,
 												Validators: []validator.String{
-													stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumLongTimeUnitEnumValues)...),
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumTimeUnitEnumValues)...),
 												},
 											},
 										},
@@ -567,13 +615,33 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 										Description:         otpLifeTimeEmailDurationDescription.Description,
 										MarkdownDescription: otpLifeTimeEmailDurationDescription.MarkdownDescription,
 										Required:            true,
+										Validators: []validator.Int64{
+											int64validator.Any(
+												int64validator.All(
+													int64validator.Between(attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
+													int64validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`MINUTES`),
+														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+												int64validator.All(
+													int64validator.Between(attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
+													int64validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`SECONDS`),
+														fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+											),
+										},
 									},
 									"time_unit": schema.StringAttribute{
-										Description:         otpLifetimeTimeUnitDescription.Description,
-										MarkdownDescription: otpLifetimeTimeUnitDescription.MarkdownDescription,
+										Description:         otpLifetimeEmailTimeUnitDescription.Description,
+										MarkdownDescription: otpLifetimeEmailTimeUnitDescription.MarkdownDescription,
 										Required:            true,
 										Validators: []validator.String{
-											stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumLongTimeUnitEnumValues)...),
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumTimeUnitEnumValues)...),
 										},
 									},
 								},
@@ -690,6 +758,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"create_mfa_device": schema.BoolAttribute{
 						Description: "When enabled, PingOne Verify registers the mobile phone with PingOne MFA as a verified MFA device.",
 						Optional:    true,
+						Computed:    true,
+						Default:     booldefault.StaticBool(*defaultCreateMfaDevice),
 					},
 					"otp": schema.SingleNestedAttribute{
 						Description: "SMS/Voice/Email one-time password (OTP) configuration.",
@@ -721,13 +791,33 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 												Description:         otpDeliveriesCooldownDurationDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownDurationDescription.MarkdownDescription,
 												Required:            true,
+												Validators: []validator.Int64{
+													int64validator.Any(
+														int64validator.All(
+															int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
+															int64validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`MINUTES`),
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationMinutes),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+														int64validator.All(
+															int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
+															int64validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`SECONDS`),
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationSeconds),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+													),
+												},
 											},
 											"time_unit": schema.StringAttribute{
 												Description:         otpDeliveriesCooldownTimeUnitDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownTimeUnitDescription.MarkdownDescription,
 												Required:            true,
 												Validators: []validator.String{
-													stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumLongTimeUnitEnumValues)...),
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumTimeUnitEnumValues)...),
 												},
 											},
 										},
@@ -742,13 +832,33 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 										Description:         otpLifeTimePhoneDurationDescription.Description,
 										MarkdownDescription: otpLifeTimePhoneDurationDescription.MarkdownDescription,
 										Required:            true,
+										Validators: []validator.Int64{
+											int64validator.Any(
+												int64validator.All(
+													int64validator.Between(attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
+													int64validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`MINUTES`),
+														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+												int64validator.All(
+													int64validator.Between(attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
+													int64validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`SECONDS`),
+														fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+											),
+										},
 									},
 									"time_unit": schema.StringAttribute{
-										Description:         otpLifetimeTimeUnitDescription.Description,
-										MarkdownDescription: otpLifetimeTimeUnitDescription.MarkdownDescription,
+										Description:         otpLifetimePhoneTimeUnitDescription.Description,
+										MarkdownDescription: otpLifetimePhoneTimeUnitDescription.MarkdownDescription,
 										Required:            true,
 										Validators: []validator.String{
-											stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumLongTimeUnitEnumValues)...),
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumTimeUnitEnumValues)...),
 										},
 									},
 								},
@@ -855,7 +965,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 											int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
 											int64validatorinternal.RegexMatchesPathValue(
 												regexp.MustCompile(`MINUTES`),
-												"If `time_unit` is `MINUTES`, the allowed duration range is 0-30.",
+												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationMinutes),
 												path.MatchRelative().AtParent().AtName("time_unit"),
 											),
 										),
@@ -863,7 +973,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 											int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
 											int64validatorinternal.RegexMatchesPathValue(
 												regexp.MustCompile(`SECONDS`),
-												"If `time_unit` is `SECONDS`, the allowed duration range is 0-1800.",
+												fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationSeconds),
 												path.MatchRelative().AtParent().AtName("time_unit"),
 											),
 										),
@@ -875,7 +985,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								MarkdownDescription: transactionTimeoutTimeUnitDescription.MarkdownDescription,
 								Required:            true,
 								Validators: []validator.String{
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumShortTimeUnitEnumValues)...),
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumTimeUnitEnumValues)...),
 									stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("time_unit")),
 								},
 							},
@@ -902,7 +1012,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 													int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
 													int64validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`MINUTES`),
-														"If `time_unit` is `MINUTES`, the allowed duration range is 0-30.",
+														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationMinutes),
 														path.MatchRelative().AtParent().AtName("time_unit"),
 													),
 												),
@@ -910,7 +1020,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 													int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
 													int64validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`SECONDS`),
-														"If `time_unit` is `SECONDS`, the allowed duration range is 0-1800.",
+														fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationSeconds),
 														path.MatchRelative().AtParent().AtName("time_unit"),
 													),
 												),
@@ -922,7 +1032,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 										MarkdownDescription: dataCollectionTimeoutTimeUnitDescription.MarkdownDescription,
 										Required:            true,
 										Validators: []validator.String{
-											stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumShortTimeUnitEnumValues)...),
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumTimeUnitEnumValues)...),
 											stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("time_unit")),
 										},
 									},
@@ -977,6 +1087,18 @@ func (r *VerifyPolicyResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
+	// management client is used to perform checks for the prerequisite native application
+	preparedMgmtClient, err := prepareMgmtClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
+	r.mgmtClient = preparedMgmtClient
 	r.client = preparedClient
 	r.region = resourceConfig.Client.API.Region
 }
@@ -1330,10 +1452,6 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		data.SetName(p.Name.ValueString())
 	}
 
-	if !p.Default.IsNull() && !p.Default.IsUnknown() {
-		data.SetDefault(p.Default.ValueBool())
-	}
-
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		data.SetDescription(p.Description.ValueString())
 	}
@@ -1343,7 +1461,7 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		if err != nil {
 			diags.AddError(
 				"Unexpected Value",
-				fmt.Sprintf("Unexpected createdAt value: %s.  Please report this to the provider maintainers.", err.Error()),
+				fmt.Sprintf("Unexpected createdAt value: %s. Please report this to the provider maintainers.", err.Error()),
 			)
 		}
 		data.SetCreatedAt(createdAt)
@@ -1354,7 +1472,7 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		if err != nil {
 			diags.AddError(
 				"Unexpected Value",
-				fmt.Sprintf("Unexpected updatedAt value: %s.  Please report this to the provider maintainers.", err.Error()),
+				fmt.Sprintf("Unexpected updatedAt value: %s. Please report this to the provider maintainers.", err.Error()),
 			)
 		}
 		data.SetUpdatedAt(updatedAt)
@@ -1362,10 +1480,15 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		if data == nil {
 			diags.AddError(
 				"Unexpected Value",
-				"Verify Policy object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+				"Verify Policy object was unexpectedly null on expansion. Please report this to the provider maintainers.",
 			)
 		}
 	}
+
+	// Verify policies managed via TF currently cannot be set to the default policy due to a potential lock situation or state management problem.
+	// The verify policy will also have default set to false.
+	data.SetDefault(false)
+
 	return data, diags
 }
 
@@ -1463,7 +1586,7 @@ func (p *transactionModel) expandTransactionModel(ctx context.Context) (*verify.
 
 		dataCollectionTimeout := verify.NewTransactionConfigurationDataCollectionTimeoutWithDefaults()
 		if !genericTimeout.TimeUnit.IsNull() && !genericTimeout.TimeUnit.IsUnknown() {
-			dataCollectionTimeout.SetTimeUnit(verify.EnumShortTimeUnit(genericTimeout.TimeUnit.ValueString()))
+			dataCollectionTimeout.SetTimeUnit(verify.EnumTimeUnit(genericTimeout.TimeUnit.ValueString()))
 		}
 
 		if !genericTimeout.Duration.IsNull() && !genericTimeout.Duration.IsUnknown() {
@@ -1486,7 +1609,7 @@ func (p *transactionModel) expandTransactionModel(ctx context.Context) (*verify.
 		}
 
 		transactionTimeout := verify.NewTransactionConfigurationTimeoutWithDefaults()
-		transactionTimeout.SetTimeUnit(verify.EnumShortTimeUnit(genericTimeout.TimeUnit.ValueString()))
+		transactionTimeout.SetTimeUnit(verify.EnumTimeUnit(genericTimeout.TimeUnit.ValueString()))
 		transactionTimeout.SetDuration(int32(genericTimeout.Duration.ValueInt64()))
 
 		transactionSettings.SetTimeout(*transactionTimeout)
@@ -1502,10 +1625,10 @@ func (p *transactionModel) expandTransactionModel(ctx context.Context) (*verify.
 
 }
 
-func (p *deviceModel) expandDevice(ctx context.Context) (*verify.EmailPhoneConfiguration, diag.Diagnostics) {
+func (p *deviceModel) expandDevice(ctx context.Context) (*verify.OTPDeviceConfiguration, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	deviceSettings := verify.NewEmailPhoneConfigurationWithDefaults()
+	deviceSettings := verify.NewOTPDeviceConfigurationWithDefaults()
 
 	if !p.CreateMfaDevice.IsNull() && !p.CreateMfaDevice.IsUnknown() {
 		deviceSettings.SetCreateMfaDevice(p.CreateMfaDevice.ValueBool())
@@ -1526,7 +1649,7 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.EmailPhoneConfi
 			return nil, diags
 		}
 
-		otpSettings := verify.NewEmailPhoneConfigurationOtpWithDefaults()
+		otpSettings := verify.NewOTPDeviceConfigurationOtpWithDefaults()
 
 		// OTP Attempts
 		var attempts otpAttemptsModel
@@ -1538,7 +1661,7 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.EmailPhoneConfi
 		if diags.HasError() {
 			return nil, diags
 		}
-		otpAttempts := verify.NewEmailPhoneConfigurationOtpAttemptsWithDefaults()
+		otpAttempts := verify.NewOTPDeviceConfigurationOtpAttemptsWithDefaults()
 		if !attempts.Count.IsNull() && !attempts.Count.IsUnknown() {
 			otpAttempts.SetCount(int32(attempts.Count.ValueInt64()))
 		}
@@ -1554,7 +1677,7 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.EmailPhoneConfi
 		if diags.HasError() {
 			return nil, diags
 		}
-		otpDeliveries := verify.NewEmailPhoneConfigurationOtpDeliveriesWithDefaults()
+		otpDeliveries := verify.NewOTPDeviceConfigurationOtpDeliveriesWithDefaults()
 		if !deliveries.Count.IsNull() && !deliveries.Count.IsUnknown() {
 			otpDeliveries.SetCount(int32(deliveries.Count.ValueInt64()))
 		}
@@ -1570,12 +1693,12 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.EmailPhoneConfi
 				return nil, diags
 			}
 
-			deliveriesCooldown := verify.NewEmailPhoneConfigurationOtpDeliveriesCooldownWithDefaults()
+			deliveriesCooldown := verify.NewOTPDeviceConfigurationOtpDeliveriesCooldownWithDefaults()
 			if !cooldown.Duration.IsNull() && !cooldown.Duration.IsUnknown() {
 				deliveriesCooldown.SetDuration(int32(cooldown.Duration.ValueInt64()))
 			}
 			if !cooldown.TimeUnit.IsNull() && !cooldown.TimeUnit.IsUnknown() {
-				deliveriesCooldown.SetTimeUnit(verify.EnumLongTimeUnit(cooldown.TimeUnit.ValueString()))
+				deliveriesCooldown.SetTimeUnit(verify.EnumTimeUnit(cooldown.TimeUnit.ValueString()))
 			}
 
 			otpDeliveries.SetCooldown(*deliveriesCooldown)
@@ -1592,9 +1715,9 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.EmailPhoneConfi
 		if diags.HasError() {
 			return nil, diags
 		}
-		otpLifeTime := verify.NewEmailPhoneConfigurationOtpLifeTimeWithDefaults()
+		otpLifeTime := verify.NewOTPDeviceConfigurationOtpLifeTimeWithDefaults()
 		if !genericTimeout.TimeUnit.IsNull() && !genericTimeout.TimeUnit.IsUnknown() {
-			otpLifeTime.SetTimeUnit(verify.EnumLongTimeUnit(genericTimeout.TimeUnit.ValueString()))
+			otpLifeTime.SetTimeUnit(verify.EnumTimeUnit(genericTimeout.TimeUnit.ValueString()))
 		}
 
 		if !genericTimeout.Duration.IsNull() && !genericTimeout.Duration.IsUnknown() {
@@ -1612,7 +1735,7 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.EmailPhoneConfi
 		if diags.HasError() {
 			return nil, diags
 		}
-		otpNotification := verify.NewEmailPhoneConfigurationOtpNotificationWithDefaults()
+		otpNotification := verify.NewOTPDeviceConfigurationOtpNotificationWithDefaults()
 		if !notification.TemplateName.IsNull() && !notification.TemplateName.IsUnknown() {
 			otpNotification.SetTemplateName(notification.TemplateName.ValueString())
 		}
@@ -1657,32 +1780,32 @@ func (p *verifyPolicyResourceModel) toState(apiObject *verify.VerifyPolicy) diag
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 
 	var d diag.Diagnostics
-	p.GovernmentId, d = p.toStateGovernmentId(apiObject.GovernmentId)
+	p.GovernmentId, d = p.toStateGovernmentId(apiObject.GetGovernmentIdOk())
 	diags.Append(d...)
 
-	p.FacialComparison, d = p.toStateFacialComparison(apiObject.FacialComparison)
+	p.FacialComparison, d = p.toStateFacialComparison(apiObject.GetFacialComparisonOk())
 	diags.Append(d...)
 
-	p.Liveness, d = p.toStateLiveness(apiObject.Liveness)
+	p.Liveness, d = p.toStateLiveness(apiObject.GetLivenessOk())
 	diags.Append(d...)
 
-	p.Email, d = p.toStateDevice(apiObject.Email)
+	p.Email, d = p.toStateDevice(apiObject.GetEmailOk())
 	diags.Append(d...)
 
-	p.Phone, d = p.toStateDevice(apiObject.Phone)
+	p.Phone, d = p.toStateDevice(apiObject.GetPhoneOk())
 	diags.Append(d...)
 
-	p.Transaction, d = p.toStateTransaction(apiObject.Transaction)
+	p.Transaction, d = p.toStateTransaction(apiObject.GetTransactionOk())
 	diags.Append(d...)
 
 	return diags
 }
 
-func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.GovernmentIdConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.GovernmentIdConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectNull(governmentIdServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectUnknown(governmentIdDataSourceServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(governmentIdServiceTFObjectTypes, map[string]attr.Value{
@@ -1693,11 +1816,11 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 	return objValue, diags
 }
 
-func (p *verifyPolicyResourceModel) toStateFacialComparison(apiObject *verify.FacialComparisonConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyResourceModel) toStateFacialComparison(apiObject *verify.FacialComparisonConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
-		return types.ObjectNull(facialComparisonServiceTFObjectTypes), diags
+		return types.ObjectUnknown(facialComparisonServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(facialComparisonServiceTFObjectTypes, map[string]attr.Value{
@@ -1709,11 +1832,11 @@ func (p *verifyPolicyResourceModel) toStateFacialComparison(apiObject *verify.Fa
 	return objValue, diags
 }
 
-func (p *verifyPolicyResourceModel) toStateLiveness(apiObject *verify.LivenessConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyResourceModel) toStateLiveness(apiObject *verify.LivenessConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
-		return types.ObjectNull(livenessServiceTFObjectTypes), diags
+		return types.ObjectUnknown(livenessServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(livenessServiceTFObjectTypes, map[string]attr.Value{
@@ -1725,11 +1848,11 @@ func (p *verifyPolicyResourceModel) toStateLiveness(apiObject *verify.LivenessCo
 	return objValue, diags
 }
 
-func (p *verifyPolicyResourceModel) toStateTransaction(apiObject *verify.TransactionConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyResourceModel) toStateTransaction(apiObject *verify.TransactionConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
-		return types.ObjectNull(transactionServiceTFObjectTypes), diags
+		return types.ObjectUnknown(transactionServiceTFObjectTypes), diags
 	}
 
 	transactionTimeout := types.ObjectNull(genericTimeoutServiceTFObjectTypes)
@@ -1785,11 +1908,11 @@ func (p *verifyPolicyResourceModel) toStateTransaction(apiObject *verify.Transac
 	return objValue, diags
 }
 
-func (p *verifyPolicyResourceModel) toStateDevice(apiObject *verify.EmailPhoneConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyResourceModel) toStateDevice(apiObject *verify.OTPDeviceConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
-		return types.ObjectNull(deviceServiceTFObjectTypes), diags
+		return types.ObjectUnknown(deviceServiceTFObjectTypes), diags
 	}
 
 	otp := types.ObjectNull(otpServiceTFObjectTypes)

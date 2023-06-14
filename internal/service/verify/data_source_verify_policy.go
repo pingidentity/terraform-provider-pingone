@@ -131,12 +131,12 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	const defaultThreshold = verify.ENUMTHRESHOLD_MEDIUM
 	const defaultOTPEmailDuration = 10
 	const defaultOTPPhoneDuration = 5
-	const defaultOTPPhoneTimeUnit = verify.ENUMLONGTIMEUNIT_MINUTES
+	const defaultOTPPhoneTimeUnit = verify.ENUMTIMEUNIT_MINUTES
 	const defaultOTPCooldownDuration = 30
-	const defaultOTPCooldownTimeUnit = verify.ENUMLONGTIMEUNIT_SECONDS
+	const defaultOTPCooldownTimeUnit = verify.ENUMTIMEUNIT_SECONDS
 	const defaultTransactionDuration = 30
 	const defaultTransactionDataCollectionDuration = 15
-	const defaultTransactionTimeUnit = verify.ENUMSHORTTIMEUNIT_MINUTES
+	const defaultTransactionTimeUnit = verify.ENUMTIMEUNIT_MINUTES
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Set value to `true` to return the default verify policy. There is only one default policy per environment.",
@@ -176,7 +176,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 
 	otpLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Time unit of the OTP duration.",
-	).AllowedValuesEnum(verify.AllowedEnumLongTimeUnitEnumValues).DefaultValue(string(defaultOTPPhoneTimeUnit))
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultOTPPhoneTimeUnit))
 
 	otpDeliveriesCooldownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Cooldown duration.",
@@ -184,7 +184,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 
 	otpDeliveriesCooldownTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Time unit of the cooldown duration configuration.",
-	).AllowedValuesEnum(verify.AllowedEnumLongTimeUnitEnumValues).DefaultValue(string(defaultOTPCooldownTimeUnit))
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultOTPCooldownTimeUnit))
 
 	otpNotificationTemplateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("Name of the template to use to pass a one-time passcode (OTP). The default value of `%s` is static. Use the `notification.variant_name` property to define an alternate template.", defaultNotificationTemplate),
@@ -199,7 +199,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 
 	transactionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Time unit of transaction timeout.",
-	).AllowedValuesEnum(verify.AllowedEnumShortTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
 
 	dataCollectionDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Length of time before transaction timeout expires.\n" +
@@ -210,7 +210,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 
 	dataCollectionTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Time unit of data collection timeout.",
-	).AllowedValuesEnum(verify.AllowedEnumShortTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultTransactionTimeUnit))
 
 	dataCollectionOnlyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"When `true`, collects documents specified in the policy without determining their validity; defaults to `false`.",
@@ -749,32 +749,32 @@ func (p *verifyPolicyDataSourceModel) toState(apiObject *verify.VerifyPolicy) di
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 
 	var d diag.Diagnostics
-	p.GovernmentId, d = p.toStateGovernmentId(apiObject.GovernmentId)
+	p.GovernmentId, d = p.toStateGovernmentId(apiObject.GetGovernmentIdOk())
 	diags.Append(d...)
 
-	p.FacialComparison, d = p.toStateFacialComparison(apiObject.FacialComparison)
+	p.FacialComparison, d = p.toStateFacialComparison(apiObject.GetFacialComparisonOk())
 	diags.Append(d...)
 
-	p.Liveness, d = p.toStateLiveness(apiObject.Liveness)
+	p.Liveness, d = p.toStateLiveness(apiObject.GetLivenessOk())
 	diags.Append(d...)
 
-	p.Email, d = p.toStateDevice(apiObject.Email)
+	p.Email, d = p.toStateDevice(apiObject.GetEmailOk())
 	diags.Append(d...)
 
-	p.Phone, d = p.toStateDevice(apiObject.Phone)
+	p.Phone, d = p.toStateDevice(apiObject.GetPhoneOk())
 	diags.Append(d...)
 
-	p.Transaction, d = p.toStateTransaction(apiObject.Transaction)
+	p.Transaction, d = p.toStateTransaction(apiObject.GetTransactionOk())
 	diags.Append(d...)
 
 	return diags
 }
 
-func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.GovernmentIdConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.GovernmentIdConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectNull(governmentIdDataSourceServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectUnknown(governmentIdDataSourceServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(governmentIdDataSourceServiceTFObjectTypes, map[string]attr.Value{
@@ -785,11 +785,11 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 	return objValue, diags
 }
 
-func (p *verifyPolicyDataSourceModel) toStateFacialComparison(apiObject *verify.FacialComparisonConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyDataSourceModel) toStateFacialComparison(apiObject *verify.FacialComparisonConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectNull(facialComparisonDataSourceServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectUnknown(facialComparisonDataSourceServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(facialComparisonDataSourceServiceTFObjectTypes, map[string]attr.Value{
@@ -801,11 +801,11 @@ func (p *verifyPolicyDataSourceModel) toStateFacialComparison(apiObject *verify.
 	return objValue, diags
 }
 
-func (p *verifyPolicyDataSourceModel) toStateLiveness(apiObject *verify.LivenessConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyDataSourceModel) toStateLiveness(apiObject *verify.LivenessConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectNull(livenessDataSourceServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectUnknown(livenessDataSourceServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(livenessDataSourceServiceTFObjectTypes, map[string]attr.Value{
@@ -817,11 +817,11 @@ func (p *verifyPolicyDataSourceModel) toStateLiveness(apiObject *verify.Liveness
 	return objValue, diags
 }
 
-func (p *verifyPolicyDataSourceModel) toStateTransaction(apiObject *verify.TransactionConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyDataSourceModel) toStateTransaction(apiObject *verify.TransactionConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectNull(transactionDataSourceServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectUnknown(transactionDataSourceServiceTFObjectTypes), diags
 	}
 
 	transactionTimeout := types.ObjectNull(genericTimeoutDataSourceServiceTFObjectTypes)
@@ -877,11 +877,11 @@ func (p *verifyPolicyDataSourceModel) toStateTransaction(apiObject *verify.Trans
 	return objValue, diags
 }
 
-func (p *verifyPolicyDataSourceModel) toStateDevice(apiObject *verify.EmailPhoneConfiguration) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *verifyPolicyDataSourceModel) toStateDevice(apiObject *verify.OTPDeviceConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectNull(deviceDataSourceServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectUnknown(deviceDataSourceServiceTFObjectTypes), diags
 	}
 
 	otp := types.ObjectNull(otpDataSourceServiceTFObjectTypes)
