@@ -1,0 +1,27 @@
+```release-note:note
+`data-source/pingone_environment`: Code optimisation of ENUM values to TF state.
+```
+
+```release-note:note
+`resource/pingone_agreement_localization_revision`: Code optimisation of ENUM values to TF state.
+```
+
+```release-note:note
+`resource/pingone_environment`: Code optimisation of ENUM values to TF state.
+```
+
+```release-note:note
+`data-source/pingone_credential_issuance_rule`: Code optimisation of ENUM values to TF state.
+```
+
+```release-note:note
+`data-source/pingone_credential_type`: Code optimisation of ENUM values to TF state.
+```
+
+```release-note:note
+`resource/pingone_credential_issuance_rule`: Code optimisation of ENUM values to TF state.
+```
+
+```release-note:note
+`resource/pingone_credential_type`: Code optimisation of ENUM values to TF state.
+```
