@@ -9,11 +9,21 @@ description: |-
 
 {{ .Description | trimspace }}
 
-{{ if .HasExample -}}
-## Example Usage
+## Example Usage - Custom Twilio
 
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
-{{- end }}
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-twilio.tf") }}
+
+## Example Usage - Custom Syniverse
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-syniverse.tf") }}
+
+## Example Usage - Custom Provider
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-provider.tf") }}
+
+## Example Usage - PingOne Twilio
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pingone-twilio.tf") }}
 
 {{ .SchemaMarkdown | trimspace }}
 

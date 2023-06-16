@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -13,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -20,8 +23,11 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -166,45 +172,86 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe custom phone delivery settings.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_CUSTOM_PROVIDER),
 	)
 
-	providerCustomNumbersCapabilitiesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+	providerCustomAuthenticationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The custom provider account's authentication method.",
+	).AllowedValuesComplex(map[string]string{
+		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC):  "`username` and `password` parameters are required to be set",
+		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER): "`token` parameter is required to be set",
+	})
+
+	providerCustomAuthenticationUsernameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the username for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC),
 	)
+
+	providerCustomAuthenticationPasswordDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the password for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC),
+	)
+
+	providerCustomAuthenticationTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the authentication token to use for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER),
+	)
+
+	providerCustomNumbersCapabilitiesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A collection of the types of phone delivery service capabilities.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapabilityEnumValues)
 
 	providerCustomNumbersSupportedCountriesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	providerCustomRequestsAfterTagDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	providerCustomRequestsBeforeTagDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	providerCustomRequestsBodyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	providerCustomRequestsDeliveryMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	providerCustomRequestsMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	providerCustomRequestsPhoneNumberFormatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	providerCustomRequestsUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.\n" +
+			"    - `SHORT_CODE`: A collection containing a single 2-character ISO country code, for example, `US`, `GB`, `CA`.\n" +
+			"    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.\n" +
+			"    For other custom provider types, if this attribute is null (empty is not supported), the specified short code `number` can only be used to dispatch notifications to United States recipient numbers.\n" +
+			"    - `TOLL_FREE`: A collection of valid 2-character country ISO codes, for example, `US`, `GB`, `CA`.\n" +
+			"    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.\n" +
+			"    For other custom provider types, if this attribute is null (empty is not supported), the specified toll-free `number` can only be used to dispatch notifications to United States recipient numbers.\n" +
+			"    - `PHONE_NUMBER`: this attribute cannot be specified.",
 	)
 
 	providerCustomNumbersTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The type of phone number.",
+		"A string that specifies the type of phone number.",
 	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersTypeEnumValues)
+
+	providerCustomRequestsAfterTagDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For voice OTP notifications only.  A string that specifies a closing tag which is commonly used by custom providers for defining a pause between each number in the OTP number string.  Example value: `</Say> <Pause length=\"1\"/>`",
+	)
+
+	providerCustomRequestsBeforeTagDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For voice OTP notifications only.  A string that specifies an opening tag which is commonly used by custom providers for defining a pause between each number in the OTP number string.  Possible value: `<Say>`.",
+	)
+
+	providerCustomRequestsBodyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Optional when the `method` is `POST`.  A string that specifies the notification's request body. The body should include the `${to}` and `${message}` mandatory variables. For some vendors, the optional `${from}` variable may also be required. For example `messageType=ARN&message=${message}&phoneNumber=${to}&sender=${from}`.  In addition, you can use [dynamic variables](https://apidocs.pingidentity.com/pingone/platform/v1/api/#notifications-templates-dynamic-variables) and the following optional variables:\n" +
+			"    - `${voice}` - the type of voice configured for notifications\n" +
+			"    - `${locale}` - locale\n" +
+			"    - `${otp}` - OTP\n" +
+			"    - `${user.username}` - user's username\n" +
+			"    - `${user.name.given}` - user's given name\n" +
+			"    - `${user.name.family}` - user's family name",
+	)
+
+	providerCustomRequestsDeliveryMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the notification's delivery method.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomDeliveryMethodEnumValues)
+
+	providerCustomRequestsHeadersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A map of strings that specifies the notification's request headers, matching the format of the request body. The header should include only one of the following if the `method` is set to `POST`:\n" +
+			"    - `content-type` = `application/x-www-form-urlencoded` (where the `body` should be form encoded)\n" +
+			"    - `content-type` = `application/json` (where the `body` should be JSON encoded)",
+	)
+
+	providerCustomRequestsMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of HTTP request method.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomRequestMethodEnumValues)
+
+	providerCustomRequestsPhoneNumberFormatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the phone number format.",
+	).AllowedValuesComplex(map[string]string{
+		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERFORMAT_FULL):        "The phone number format with a leading `+` sign, in the E.164 standard format.  For example: `+14155552671`",
+		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERFORMAT_NUMBER_ONLY): "The phone number format without a leading `+` sign, in the E.164 standard format.  For example: `14155552671`",
+	}).DefaultValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERFORMAT_FULL))
+
+	providerCustomRequestsUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The provider's remote gateway or customer gateway URL.  For requests using the `POST` method, use the provider's remote gateway URL.  For requests using the `GET` method, use the provider's remote gateway URL, including the `${to}` and `${message}` mandatory variables, and the optional `${from}` variable, for example: `https://api.transmitsms.com/send-sms.json?to=${to}&from=${from}&message=${message}`",
+	)
 
 	// Twilio provider
 	providerCustomTwilioDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -264,7 +311,61 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 						Required:    true,
 					},
 
-					// "authentication": schema.SingleNestedAttribute{},
+					"authentication": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that provides authentication settings for authenticating to the custom service API.").Description,
+						Required:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"method": schema.StringAttribute{
+								Description:         providerCustomAuthenticationMethodDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationMethodDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomAuthMethodEnumValues)...),
+								},
+							},
+
+							"username": schema.StringAttribute{
+								Description:         providerCustomAuthenticationUsernameDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationUsernameDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"password": schema.StringAttribute{
+								Description:         providerCustomAuthenticationPasswordDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationPasswordDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"token": schema.StringAttribute{
+								Description:         providerCustomAuthenticationTokenDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationTokenDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+						},
+					},
 
 					"numbers": schema.SetNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the numbers to use for phone delivery.").Description,
@@ -284,7 +385,12 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 
 									ElementType: types.StringType,
 
-									Validators: []validator.Set{},
+									Validators: []validator.Set{
+										setvalidator.ValueStringsAre(
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapabilityEnumValues)...),
+										),
+										setvalidator.SizeAtLeast(attrMinLength),
+									},
 								},
 
 								"number": schema.StringAttribute{
@@ -304,7 +410,36 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 
 									ElementType: types.StringType,
 
-									Validators: []validator.Set{},
+									Validators: []validator.Set{
+										setvalidator.Any(
+											// Can be set if `type` is `SHORT_CODE` or `TOLL_FREE`, must also be at least one in size and be a 2 letter country code
+											setvalidator.All(
+												setvalidator.All(
+													setvalidator.Any(
+														setvalidatorinternal.IsRequiredIfMatchesPathValue(
+															types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_SHORT_CODE)),
+															path.MatchRelative().AtParent().AtName("type"),
+														),
+														setvalidator.SizeAtMost(attrMinLength),
+													),
+													setvalidatorinternal.IsRequiredIfMatchesPathValue(
+														types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_TOLL_FREE)),
+														path.MatchRelative().AtParent().AtName("type"),
+													),
+												),
+												setvalidator.ValueStringsAre(
+													stringvalidator.RegexMatches(verify.IsTwoCharCountryCode, "must be a valid two character country code"),
+												),
+												setvalidator.SizeAtLeast(attrMinLength),
+											),
+
+											// Cannot be set if `type` is `PHONE_NUMBER`
+											setvalidatorinternal.ConflictsIfMatchesPathValue(
+												types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_PHONE_NUMBER)),
+												path.MatchRelative().AtParent().AtName("type"),
+											),
+										),
+									},
 								},
 
 								"type": schema.StringAttribute{
@@ -330,18 +465,40 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 									Description:         providerCustomRequestsAfterTagDescription.Description,
 									MarkdownDescription: providerCustomRequestsAfterTagDescription.MarkdownDescription,
 									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.ConflictsIfMatchesPathValue(
+											types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMDELIVERYMETHOD_SMS)),
+											path.MatchRelative().AtParent().AtName("delivery_method"),
+										),
+									},
 								},
 
 								"before_tag": schema.StringAttribute{
 									Description:         providerCustomRequestsBeforeTagDescription.Description,
 									MarkdownDescription: providerCustomRequestsBeforeTagDescription.MarkdownDescription,
 									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.ConflictsIfMatchesPathValue(
+											types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMDELIVERYMETHOD_SMS)),
+											path.MatchRelative().AtParent().AtName("delivery_method"),
+										),
+									},
 								},
 
 								"body": schema.StringAttribute{
 									Description:         providerCustomRequestsBodyDescription.Description,
 									MarkdownDescription: providerCustomRequestsBodyDescription.MarkdownDescription,
-									Required:            true,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.ConflictsIfMatchesPathValue(
+											types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMREQUESTMETHOD_GET)),
+											path.MatchRelative().AtParent().AtName("method"),
+										),
+										stringvalidator.RegexMatches(regexp.MustCompile(`\$\{to\}.*\$\{message\}`), "Body must have `${to}` and `${message}` mandatory variables"),
+									},
 								},
 
 								"delivery_method": schema.StringAttribute{
@@ -349,31 +506,40 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 									MarkdownDescription: providerCustomRequestsDeliveryMethodDescription.MarkdownDescription,
 									Required:            true,
 
-									// Validators: []validator.String{
-									// 	stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomRequestsDeliveryMethodEnumValues)...),
-									// },
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomDeliveryMethodEnumValues)...),
+									},
 								},
 
-								// "headers": types.MapType{ElemType: types.StringType},
+								"headers": schema.MapAttribute{
+									Description:         providerCustomRequestsHeadersDescription.Description,
+									MarkdownDescription: providerCustomRequestsHeadersDescription.MarkdownDescription,
+									Optional:            true,
+
+									ElementType: types.StringType,
+								},
 
 								"method": schema.StringAttribute{
 									Description:         providerCustomRequestsMethodDescription.Description,
 									MarkdownDescription: providerCustomRequestsMethodDescription.MarkdownDescription,
 									Required:            true,
 
-									// Validators: []validator.String{
-									// 	stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomRequestsDeliveryMethodEnumValues)...),
-									// },
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomRequestMethodEnumValues)...),
+									},
 								},
 
 								"phone_number_format": schema.StringAttribute{
 									Description:         providerCustomRequestsPhoneNumberFormatDescription.Description,
 									MarkdownDescription: providerCustomRequestsPhoneNumberFormatDescription.MarkdownDescription,
-									Required:            true,
+									Optional:            true,
+									Computed:            true,
 
-									// Validators: []validator.String{
-									// 	stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomRequestsDeliveryMethodEnumValues)...),
-									// },
+									Default: stringdefault.StaticString(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERFORMAT_FULL)),
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumberFormatEnumValues)...),
+									},
 								},
 
 								"url": schema.StringAttribute{
@@ -381,9 +547,18 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 									MarkdownDescription: providerCustomRequestsUrlDescription.MarkdownDescription,
 									Required:            true,
 
-									// Validators: []validator.String{
-									// 	stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomRequestsDeliveryMethodEnumValues)...),
-									// },
+									Validators: []validator.String{
+										stringvalidator.Any(
+											stringvalidator.All(
+												stringvalidator.RegexMatches(regexp.MustCompile(`\$\{to\}.*\$\{message\}`), "URL must have `${to}` and `${message}` mandatory variables"),
+												stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+													types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMREQUESTMETHOD_GET)),
+													path.MatchRelative().AtParent().AtName("method"),
+												),
+											),
+										),
+										stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "URL must be a valid HTTPS URL"),
+									},
 								},
 							},
 						},
@@ -786,13 +961,10 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 			return nil, diags
 		}
 
-		numbers := make([]management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverseAllOfNumbers, 0)
-
 		providerData := management.NewNotificationsSettingsPhoneDeliverySettingsTwilioSyniverse(
 			management.EnumNotificationsSettingsPhoneDeliverySettingsProvider(p.ProviderType.ValueString()),
 			providerPlan.Sid.ValueString(),
 			providerPlan.AuthToken.ValueString(),
-			numbers,
 		)
 
 		data.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse = providerData
@@ -808,13 +980,10 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 			return nil, diags
 		}
 
-		numbers := make([]management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverseAllOfNumbers, 0)
-
 		providerData := management.NewNotificationsSettingsPhoneDeliverySettingsTwilioSyniverse(
 			management.EnumNotificationsSettingsPhoneDeliverySettingsProvider(p.ProviderType.ValueString()),
 			"",
 			providerPlan.AuthToken.ValueString(),
-			numbers,
 		)
 
 		data.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse = providerData
