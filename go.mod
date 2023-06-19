@@ -23,6 +23,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.22.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.12.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.7.1
+	github.com/patrickcping/pingone-go-sdk-v2/verify v0.1.0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.47.0
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
@@ -199,7 +200,6 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/owenrumney/go-sarif v1.1.1 // indirect
-	github.com/patrickcping/pingone-go-sdk-v2/verify v0.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

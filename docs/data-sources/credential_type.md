@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_type Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Datasource to retrieve a PingOne Credentials credential type by its Credential Type Id.
 ---

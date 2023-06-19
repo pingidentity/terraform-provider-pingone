@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_issuer_profile Resource - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Resource to retrieve or update the credential issuer information.
   A credential issuer profile, which enables issuance of credentials, is automatically created when the credential service is added to an environment. This resource is typically only required to update the credential issuer name.

@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_digital_wallet_applications Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Datasource to retrieve a list of multiple PingOne Credentials digital wallet applications.  Filtering the list by SCIM or data filter currently is not supported.
 ---

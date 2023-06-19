@@ -21,6 +21,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/verify"
 )
 
 // Ensure PingOneProvider satisfies various provider interfaces.
@@ -196,6 +197,7 @@ func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resou
 	v = append(v, sso.Resources()...)
 	v = append(v, risk.Resources()...)
 	v = append(v, credentials.Resources()...)
+	v = append(v, verify.Resources()...)
 	return v
 }
 
@@ -207,6 +209,7 @@ func (p *pingOneProvider) DataSources(ctx context.Context) []func() datasource.D
 	v = append(v, sso.DataSources()...)
 	v = append(v, risk.DataSources()...)
 	v = append(v, credentials.DataSources()...)
+	v = append(v, verify.DataSources()...)
 	return v
 }
 

@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_issuance_rule Resource - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Resource to create, read, and update rules for issuing, updating, and revoking credentials by credential type.
   An issuance rule is defined for a specific credential_type and digital_wallet_application, and the filter determines the targeted list of users allowed to receive the specific credential type.
