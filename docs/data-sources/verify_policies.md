@@ -23,7 +23,7 @@ data "pingone_verify_policies" "find_all_verify_policies_example" {
 
 ### Required
 
-- `environment_id` (String) PingOne environment identifier (UUID) in which the verify policy exists.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the verify policy exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
