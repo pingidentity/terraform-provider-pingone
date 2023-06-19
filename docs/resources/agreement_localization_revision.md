@@ -88,10 +88,10 @@ resource "pingone_agreement_localization_enable" "my_agreement_fr_enable" {
 
 ### Required
 
-- `agreement_id` (String) The ID of the agreement to associate the agreement localization revision with.
-- `agreement_localization_id` (String) The ID of the agreement localization to associate the revision with.
+- `agreement_id` (String) The ID of the agreement to associate the agreement localization revision with.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `agreement_localization_id` (String) The ID of the agreement localization to associate the revision with.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `content_type` (String) The content type to apply to the revision text configured in the `text` parameter. Options are `text/html` and `text/plain`, as defined by [rfc-6838](https://datatracker.ietf.org/doc/html/rfc6838#section-4.2.1) and [Media Types/text](https://www.iana.org/assignments/media-types/media-types.xhtml#text).
-- `environment_id` (String) The ID of the environment to associate the agreement localization revision with.
+- `environment_id` (String) The ID of the environment to associate the agreement localization revision with.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `require_reconsent` (Boolean) Whether the user is required to provide a renewed consent to the language revision after it becomes effective.
 - `text` (String) Text or HTML for the revision. HTML support includes **tags** (italicize, bold, links, headers, paragraph, line breaks), **link (a) tags** (allow href, style, target attributes), **block tags (p, b, h)** (allow style and align attributes).
 

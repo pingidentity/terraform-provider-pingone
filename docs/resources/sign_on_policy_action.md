@@ -11,6 +11,8 @@ Resource to create and manage PingOne sign on policy actions.
 
 ~> A warning will be issued following `terraform apply` when attempting to remove the final sign-on policy action from an associated sign-on policy.  When removing the final sign-on policy action from a sign-on policy, it's recommended to also remove the associated sign-on policy at the same time.  Further information can be found [here](https://github.com/pingidentity/terraform-provider-pingone/issues/68).
 
+~> Some policy action conditions, such as `conditions.user_attribute_equals` and `conditions.user_is_member_of_any_population_id` conditions, are not available where the `priority` of a policy action is `1`.  Please refer to the schema documentation for more information.
+
 ## Example Usage - First Factor (Username/Password)
 
 ```terraform
@@ -27,6 +29,54 @@ resource "pingone_sign_on_policy_action" "my_policy_first_factor" {
   login {
     recovery_enabled = true
   }
+}
+```
+
+## Example Usage - First Factor (Username/Password) with New User Provisioning Gateway
+
+```terraform
+resource "pingone_gateway" "my_awesome_ldap_gateway" {
+  environment_id = pingone_environment.my_environment.id
+  name           = "My Awesome LDAP Gateway"
+
+  # ...
+
+  user_type {
+    name = "User Set 1"
+
+    # ...
+  }
+}
+
+resource "pingone_gateway_credential" "my_awesome_ldap_gateway" {
+  environment_id = pingone_environment.my_environment.id
+  gateway_id     = pingone_gateway.my_awesome_ldap_gateway.id
+}
+
+resource "pingone_sign_on_policy_action" "my_policy_first_factor" {
+  environment_id    = pingone_environment.my_environment.id
+  sign_on_policy_id = pingone_sign_on_policy.my_policy.id
+
+  priority = 1
+
+  conditions {
+    last_sign_on_older_than_seconds = 604800 // 7 days
+  }
+
+  login {
+    recovery_enabled = true
+
+    new_user_provisioning {
+      gateway {
+        id           = pingone_gateway.my_awesome_ldap_gateway.id
+        user_type_id = pingone_gateway.my_awesome_ldap_gateway.user_type.* [index(pingone_gateway.my_awesome_ldap_gateway.user_type[*].name, "User Set 1")].id
+      }
+    }
+  }
+
+  depends_on = [
+    pingone_gateway_credential.my_awesome_ldap_gateway
+  ]
 }
 ```
 
@@ -194,7 +244,7 @@ resource "pingone_sign_on_policy_action" "my_policy_pingid" {
 ### Optional
 
 - `agreement` (Block List, Max: 1) Options specific to the **Agreements** policy action. (see [below for nested schema](#nestedblock--agreement))
-- `conditions` (Block List, Max: 1) Conditions to apply to the sign on policy action. (see [below for nested schema](#nestedblock--conditions))
+- `conditions` (Block List, Max: 1) Conditions to apply to the sign on policy action.  Applies to policy actions of type `agreement`, `identifier_first`, `identity_provider`, `login`, `mfa`, `progressive_profiling`. (see [below for nested schema](#nestedblock--conditions))
 - `enforce_lockout_for_identity_providers` (Boolean) A boolean that if set to true and if the user's account is locked (the account.canAuthenticate attribute is set to false), then social sign on with an external identity provider is prevented. Defaults to `false`.
 - `identifier_first` (Block List, Max: 1) Options specific to the **Identifier First** policy action. (see [below for nested schema](#nestedblock--identifier_first))
 - `identity_provider` (Block List, Max: 1) Options specific to the **Identity Provider** policy action. (see [below for nested schema](#nestedblock--identity_provider))
@@ -229,15 +279,15 @@ Optional:
 
 Optional:
 
-- `anonymous_network_detected` (Boolean) A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected anonymous network. Defaults to `false`.
-- `anonymous_network_detected_allowed_cidr` (Set of String) A list of allowed CIDR when an anonymous network is detected.
-- `geovelocity_anomaly_detected` (Boolean) A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected geovelocity anomaly. Defaults to `false`.
-- `ip_out_of_range_cidr` (Set of String) A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.
-- `ip_reputation_high_risk` (Boolean) A boolean that specifies whether the user's IP risk should be used when evaluating this policy action.  A value of `HIGH` will prompt the user to authenticate with this action. Defaults to `false`.
-- `last_sign_on_older_than_seconds` (Number) Set the number of seconds by which the user will not be prompted for this action following the last successful authentication.
-- `last_sign_on_older_than_seconds_mfa` (Number) Set the number of seconds by which the user will not be prompted for this action following the last successful authentication of an MFA authenticator device.
-- `user_attribute_equals` (Block Set) One or more conditions where an attribute on the user's profile must match the configured value. (see [below for nested schema](#nestedblock--conditions--user_attribute_equals))
-- `user_is_member_of_any_population_id` (Set of String) Activate this action only for users within the specified list of population IDs.
+- `anonymous_network_detected` (Boolean) A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected anonymous network.  Applies to policy actions of type `mfa`. Defaults to `false`.
+- `anonymous_network_detected_allowed_cidr` (Set of String) A list of allowed CIDR when an anonymous network is detected.  Applies to policy actions of type `mfa`.
+- `geovelocity_anomaly_detected` (Boolean) A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected geovelocity anomaly.  Applies to policy actions of type `mfa`. Defaults to `false`.
+- `ip_out_of_range_cidr` (Set of String) A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.  Applies to policy actions of type `mfa`.
+- `ip_reputation_high_risk` (Boolean) A boolean that specifies whether the user's IP risk should be used when evaluating this policy action.  A value of `HIGH` will prompt the user to authenticate with this action.  Applies to policy actions of type `mfa`. Defaults to `false`.
+- `last_sign_on_older_than_seconds` (Number) Set the number of seconds by which the user will not be prompted for this action following the last successful authentication.  Applies to policy actions of type `identifier_first`, `identity_provider`, `login`, `mfa`.
+- `last_sign_on_older_than_seconds_mfa` (Number) Set the number of seconds by which the user will not be prompted for this action following the last successful authentication of an MFA authenticator device.  Applies to policy actions of type `mfa`.
+- `user_attribute_equals` (Block Set) One or more conditions where an attribute on the user's profile must match the configured value.  Applies to policy actions of type `identifier_first`, `login`, `mfa`, but cannot be set on policy actions where the priority is `1`. (see [below for nested schema](#nestedblock--conditions--user_attribute_equals))
+- `user_is_member_of_any_population_id` (Set of String) Activate this action only for users within the specified list of population IDs.  Applies to policy actions of type `identifier_first`, `login`, `mfa`, but cannot be set on policy actions where the priority is `1`.
 
 <a id="nestedblock--conditions--user_attribute_equals"></a>
 ### Nested Schema for `conditions.user_attribute_equals`
@@ -289,7 +339,29 @@ Optional:
 
 Optional:
 
+- `new_user_provisioning` (Block List, Max: 1) Enables user entries existing outside of PingOne to be provisioned during login, using an external integration solution (such as a Gateway). (see [below for nested schema](#nestedblock--login--new_user_provisioning))
 - `recovery_enabled` (Boolean) A boolean that specifies whether account recovery features are active on the policy action. Defaults to `true`.
+
+<a id="nestedblock--login--new_user_provisioning"></a>
+### Nested Schema for `login.new_user_provisioning`
+
+Required:
+
+- `gateway` (Block Set, Min: 1) One or more blocks that describe a preconfigured gateway and user type that are specified in the Gateway Management schema to determine how to find and migrate user entries existing in an external directory. (see [below for nested schema](#nestedblock--login--new_user_provisioning--gateway))
+
+<a id="nestedblock--login--new_user_provisioning--gateway"></a>
+### Nested Schema for `login.new_user_provisioning.gateway`
+
+Required:
+
+- `id` (String) A string that specifies the UUID ID of the gateway instance.  The ID may come from the `id` parameter of the `pingone_gateway` resource.  Must be a valid PingOne resource ID.
+- `user_type_id` (String) A string that specifies the UUID ID of the user type within the gateway instance.  The ID may come from the `user_type[*].id` parameter of the `pingone_gateway` resource.  Must be a valid PingOne resource ID.
+
+Optional:
+
+- `type` (String) A string that specifies the type of the gateway. Currently, only `LDAP` is supported. Defaults to `LDAP`.
+
+
 
 
 <a id="nestedblock--mfa"></a>

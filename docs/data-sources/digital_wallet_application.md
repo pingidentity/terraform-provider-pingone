@@ -36,7 +36,7 @@ data "pingone_digital_wallet_application" "example_by_application_id" {
 
 ### Required
 
-- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet app exists.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet app exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 

@@ -33,7 +33,7 @@ data "pingone_populations" "by_data_filter" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to filter populations from.
+- `environment_id` (String) The ID of the environment to filter populations from.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 

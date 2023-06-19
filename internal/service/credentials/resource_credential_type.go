@@ -842,7 +842,7 @@ func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, 
 			"attribute":  framework.StringOkToTF(v.GetAttributeOk()),
 			"value":      framework.StringOkToTF(v.GetValueOk()),
 			"is_visible": framework.BoolOkToTF(v.GetIsVisibleOk()),
-			"type":       enumCredentialTypeMetaDataFieldsOkToTF(v.GetTypeOk()),
+			"type":       framework.EnumOkToTF(v.GetTypeOk()),
 		}
 		innerflattenedObj, d := types.ObjectValue(innerFieldsServiceTFObjectTypes, fieldsMap)
 		diags.Append(d...)
@@ -853,14 +853,6 @@ func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, 
 	diags.Append(d...)
 
 	return fields, diags
-}
-
-func enumCredentialTypeMetaDataFieldsOkToTF(v *credentials.EnumCredentialTypeMetaDataFieldsType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
-	}
 }
 
 func credentialTypeRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {

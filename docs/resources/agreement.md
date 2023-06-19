@@ -99,7 +99,7 @@ resource "pingone_agreement_enable" "my_agreement_enable" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to associate the agreement with.
+- `environment_id` (String) The ID of the environment to associate the agreement with.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies the name of the agreement to configure.
 
 ### Optional

@@ -29,7 +29,7 @@ resource "pingone_population" "my_population" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the population in.
+- `environment_id` (String) The ID of the environment to create the population in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name of the population.
 
 ### Optional

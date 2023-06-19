@@ -26,8 +26,8 @@ type CredentialIssuerProfileDataSourceModel struct {
 	Id                    types.String `tfsdk:"id"`
 	EnvironmentId         types.String `tfsdk:"environment_id"`
 	ApplicationInstanceId types.String `tfsdk:"application_instance_id"`
-	CreatedAt             types.String `tfsdk:"updated_at"`
-	UpdatedAt             types.String `tfsdk:"created_at"`
+	CreatedAt             types.String `tfsdk:"created_at"`
+	UpdatedAt             types.String `tfsdk:"updated_at"`
 	Name                  types.String `tfsdk:"name"`
 }
 
@@ -57,7 +57,7 @@ func (r *CredentialIssuerProfileDataSource) Schema(ctx context.Context, req data
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("TThe ID of the environment that contains the credential issuer."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that contains the credential issuer."),
 			),
 
 			"application_instance_id": schema.StringAttribute{

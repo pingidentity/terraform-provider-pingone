@@ -37,7 +37,7 @@ resource "pingone_system_application" "pingone_self_service" {
 ### Required
 
 - `enabled` (Boolean) A boolean that specifies the enabled/disabled status of the application.  Defaults to `true`.
-- `environment_id` (String) The ID of the environment to manage built-in system applications in.
+- `environment_id` (String) The ID of the environment to manage built-in system applications in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `type` (String) A string that specifies the type of system application, used as the primary identifier.  Options are `PING_ONE_PORTAL`, `PING_ONE_SELF_SERVICE`.
 
 ### Optional

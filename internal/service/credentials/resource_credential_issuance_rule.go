@@ -155,9 +155,13 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 				framework.SchemaAttributeDescriptionFromMarkdown("Identifier (UUID) of the credential type with which this credential issuance rule is associated."),
 			),
 
-			"digital_wallet_application_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet."),
-			),
+			"digital_wallet_application_id": schema.StringAttribute{
+				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet.",
+				Required:    true,
+				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
+				},
+			},
 
 			"status": schema.StringAttribute{
 				Description:         statusDescription.Description,
@@ -736,7 +740,7 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
 	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.GetId())
-	p.Status = enumCredentialIssuanceStatusOkToTF(apiObject.GetStatusOk())
+	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
 
 	// automation object
 	if v, ok := apiObject.GetAutomationOk(); ok {
@@ -770,9 +774,9 @@ func toStateAutomation(automation *credentials.CredentialIssuanceRuleAutomation)
 	var diags diag.Diagnostics
 
 	automationMap := map[string]attr.Value{
-		"issue":  enumCredentialIssuanceRuleAutomationOkToTF(automation.GetIssueOk()),
-		"revoke": enumCredentialIssuanceRuleAutomationOkToTF(automation.GetRevokeOk()),
-		"update": enumCredentialIssuanceRuleAutomationOkToTF(automation.GetUpdateOk()),
+		"issue":  framework.EnumOkToTF(automation.GetIssueOk()),
+		"revoke": framework.EnumOkToTF(automation.GetRevokeOk()),
+		"update": framework.EnumOkToTF(automation.GetUpdateOk()),
 	}
 	flattenedObj, d := types.ObjectValue(automationServiceTFObjectTypes, automationMap)
 	diags.Append(d...)
@@ -860,21 +864,5 @@ func enumCredentialIssuanceRuleNotificationMethodOkToTF(v []credentials.EnumCred
 		}
 
 		return types.SetValueMust(types.StringType, list)
-	}
-}
-
-func enumCredentialIssuanceRuleAutomationOkToTF(v *credentials.EnumCredentialIssuanceRuleAutomationMethod, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
-	}
-}
-
-func enumCredentialIssuanceStatusOkToTF(v *credentials.EnumCredentialIssuanceRuleStatus, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
 	}
 }

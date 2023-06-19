@@ -88,10 +88,10 @@ resource "pingone_agreement_localization_enable" "my_agreement_fr_enable" {
 
 ### Required
 
-- `agreement_id` (String) The ID of the agreement to associate the agreement localization with.
+- `agreement_id` (String) The ID of the agreement to associate the agreement localization with.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `display_name` (String) A string used as the title of the agreement for the language presented to the user.
-- `environment_id` (String) The ID of the environment to associate the agreement localization with.
-- `language_id` (String) The ID of the language in the PingOne environment that the localization applies to.
+- `environment_id` (String) The ID of the environment to associate the agreement localization with.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `language_id` (String) The ID of the language in the PingOne environment that the localization applies to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 

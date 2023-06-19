@@ -22,7 +22,7 @@ data "pingone_credential_issuer_profile" "example_by_id" {
 
 ### Required
 
-- `environment_id` (String) TThe ID of the environment that contains the credential issuer.
+- `environment_id` (String) The ID of the environment that contains the credential issuer.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
