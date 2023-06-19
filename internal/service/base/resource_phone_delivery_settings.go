@@ -55,10 +55,10 @@ type PhoneDeliverySettingsProviderCustomResourceModel struct {
 }
 
 type PhoneDeliverySettingsProviderCustomAuthenticationResourceModel struct {
-	Method   types.String `tfsdk:"method"`
-	Password types.String `tfsdk:"password"`
-	Token    types.String `tfsdk:"token"`
-	Username types.String `tfsdk:"username"`
+	Method    types.String `tfsdk:"method"`
+	Password  types.String `tfsdk:"password"`
+	AuthToken types.String `tfsdk:"auth_token"`
+	Username  types.String `tfsdk:"username"`
 }
 
 type PhoneDeliverySettingsProviderCustomNumbersResourceModel struct {
@@ -105,10 +105,10 @@ var (
 	}
 
 	customAuthenticationTFObjectTypes = map[string]attr.Type{
-		"method":   types.StringType,
-		"password": types.StringType,
-		"token":    types.StringType,
-		"username": types.StringType,
+		"method":     types.StringType,
+		"password":   types.StringType,
+		"auth_token": types.StringType,
+		"username":   types.StringType,
 	}
 
 	customNumbersTFObjectTypes = map[string]attr.Type{
@@ -169,7 +169,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 
 	// Custom provider
 	providerCustomDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe custom phone delivery settings.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_CUSTOM_PROVIDER),
+		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe custom phone delivery settings.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_PROVIDER),
 	)
 
 	providerCustomAuthenticationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -187,7 +187,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		fmt.Sprintf("A string that specifies the password for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC),
 	)
 
-	providerCustomAuthenticationTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+	providerCustomAuthenticationAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the authentication token to use for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER),
 	)
 
@@ -255,7 +255,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 
 	// Twilio provider
 	providerCustomTwilioDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe phone delivery settings for a custom Twilio account.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_CUSTOM_TWILIO),
+		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe phone delivery settings for a custom Twilio account.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_TWILIO),
 	)
 
 	providerCustomTwilioAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -268,7 +268,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 
 	// Syniverse provider
 	providerCustomSyniverseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe phone delivery settings for a custom syniverse account.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_CUSTOM_SYNIVERSE),
+		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe phone delivery settings for a custom syniverse account.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_SYNIVERSE),
 	)
 
 	providerCustomSyniverseAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -343,6 +343,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								Description:         providerCustomAuthenticationPasswordDescription.Description,
 								MarkdownDescription: providerCustomAuthenticationPasswordDescription.MarkdownDescription,
 								Optional:            true,
+								Sensitive:           true,
 
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
@@ -352,10 +353,11 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								},
 							},
 
-							"token": schema.StringAttribute{
-								Description:         providerCustomAuthenticationTokenDescription.Description,
-								MarkdownDescription: providerCustomAuthenticationTokenDescription.MarkdownDescription,
+							"auth_token": schema.StringAttribute{
+								Description:         providerCustomAuthenticationAuthTokenDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationAuthTokenDescription.MarkdownDescription,
 								Optional:            true,
+								Sensitive:           true,
 
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
@@ -704,7 +706,7 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.NotificationsSettingsPhoneDeliverySettings))...)
+	resp.Diagnostics.Append(state.toState(ctx, response.(*management.NotificationsSettingsPhoneDeliverySettings))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -751,7 +753,7 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.NotificationsSettingsPhoneDeliverySettings))...)
+	resp.Diagnostics.Append(data.toState(ctx, response.(*management.NotificationsSettingsPhoneDeliverySettings))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -802,7 +804,7 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.NotificationsSettingsPhoneDeliverySettings))...)
+	resp.Diagnostics.Append(state.toState(ctx, response.(*management.NotificationsSettingsPhoneDeliverySettings))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -900,8 +902,8 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 			authentication.SetUsername(authenticationPlan.Username.ValueString())
 		}
 
-		if !authenticationPlan.Token.IsNull() && !authenticationPlan.Token.IsUnknown() {
-			authentication.SetToken(authenticationPlan.Token.ValueString())
+		if !authenticationPlan.AuthToken.IsNull() && !authenticationPlan.AuthToken.IsUnknown() {
+			authentication.SetAuthToken(authenticationPlan.AuthToken.ValueString())
 		}
 
 		// Expand requests
@@ -916,20 +918,26 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 
 			for _, requestPlan := range requestsPlan {
 
-				var headers map[string]string
-				diags.Append(requestPlan.Headers.ElementsAs(ctx, &headers, false)...)
-				if diags.HasError() {
-					return nil, diags
-				}
-
 				request := management.NewNotificationsSettingsPhoneDeliverySettingsCustomRequest(
 					management.EnumNotificationsSettingsPhoneDeliverySettingsCustomDeliveryMethod(requestPlan.DeliveryMethod.ValueString()),
 					requestPlan.Url.ValueString(),
-					requestPlan.Body.ValueString(),
-					headers,
 					management.EnumNotificationsSettingsPhoneDeliverySettingsCustomRequestMethod(requestPlan.Method.ValueString()),
 					management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumberFormat(requestPlan.PhoneNumberFormat.ValueString()),
 				)
+
+				if !requestPlan.Body.IsNull() && !requestPlan.Body.IsUnknown() {
+					request.SetBody(requestPlan.Body.ValueString())
+				}
+
+				if !requestPlan.Headers.IsNull() && !requestPlan.Headers.IsUnknown() {
+					var headersPlan map[string]string
+					diags.Append(requestPlan.Headers.ElementsAs(ctx, &headersPlan, false)...)
+					if diags.HasError() {
+						return nil, diags
+					}
+
+					request.SetHeaders(headersPlan)
+				}
 
 				requests = append(requests, *request)
 			}
@@ -992,7 +1000,7 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 	return &data, diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toState(apiObject *management.NotificationsSettingsPhoneDeliverySettings) diag.Diagnostics {
+func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObject *management.NotificationsSettingsPhoneDeliverySettings) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -1034,7 +1042,16 @@ func (p *PhoneDeliverySettingsResourceModel) toState(apiObject *management.Notif
 
 	var d diag.Diagnostics
 
-	p.ProviderCustom, d = p.toStatePhoneDeliverySettingsProviderCustom(apiObject.NotificationsSettingsPhoneDeliverySettingsCustom)
+	var providerPlan PhoneDeliverySettingsProviderCustomResourceModel
+	diags.Append(p.ProviderCustom.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return diags
+	}
+
+	p.ProviderCustom, d = p.toStatePhoneDeliverySettingsProviderCustom(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsCustom)
 	diags.Append(d...)
 
 	p.ProviderCustomTwilio, d = p.toStatePhoneDeliverySettingsProviderCustomTwilio(apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
@@ -1046,7 +1063,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(apiObject *management.Notif
 	return diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustom(apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustom) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustom(ctx context.Context, planData PhoneDeliverySettingsProviderCustomResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustom) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1059,7 +1076,17 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 
 	var d diag.Diagnostics
 
-	objMap["authentication"], d = phoneDeliverySettingsCustomAuthenticationOkToTF(apiObject.GetAuthenticationOk())
+	var authenticationPlan PhoneDeliverySettingsProviderCustomAuthenticationResourceModel
+	diags.Append(planData.Authentication.As(ctx, &authenticationPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return types.ObjectNull(customTFObjectTypes), diags
+	}
+
+	authentication, ok := apiObject.GetAuthenticationOk()
+	objMap["authentication"], d = phoneDeliverySettingsCustomAuthenticationOkToTF(authenticationPlan, authentication, ok)
 	diags.Append(d...)
 	if diags.HasError() {
 		return types.ObjectNull(customTFObjectTypes), diags
@@ -1083,7 +1110,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	return objValue, diags
 }
 
-func phoneDeliverySettingsCustomAuthenticationOkToTF(apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustomAllOfAuthentication, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func phoneDeliverySettingsCustomAuthenticationOkToTF(planData PhoneDeliverySettingsProviderCustomAuthenticationResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustomAllOfAuthentication, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -1091,10 +1118,10 @@ func phoneDeliverySettingsCustomAuthenticationOkToTF(apiObject *management.Notif
 	}
 
 	returnVar, d := types.ObjectValue(customAuthenticationTFObjectTypes, map[string]attr.Value{
-		"method":   framework.EnumOkToTF(apiObject.GetMethodOk()),
-		"password": framework.StringOkToTF(apiObject.GetPasswordOk()),
-		"token":    framework.StringOkToTF(apiObject.GetTokenOk()),
-		"username": framework.StringOkToTF(apiObject.GetUsernameOk()),
+		"method":     framework.EnumOkToTF(apiObject.GetMethodOk()),
+		"password":   planData.Password,
+		"auth_token": planData.AuthToken,
+		"username":   framework.StringOkToTF(apiObject.GetUsernameOk()),
 	})
 	diags.Append(d...)
 

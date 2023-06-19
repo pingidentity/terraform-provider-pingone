@@ -206,7 +206,7 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "BASIC"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.username", "testusername"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.password", "testpassword"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.token"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.auth_token"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.numbers.#", "3"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
@@ -239,14 +239,14 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 			"headers":             "",
 			"method":              "POST",
 			"phone_number_format": "FULL",
-			"url":                 "https://ping-devops.com/fake-send-to-test",
+			"url":                 "https://pingdevops.com/fake-send-to-test",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
 			"delivery_method":     "SMS",
 			"headers":             "",
 			"method":              "GET",
 			"phone_number_format": "NUMBER_ONLY",
-			"url":                 "https://ping-devops.com/fake-send-to-test?to=${to}&message=${message}",
+			"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&message=${message}",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
 			"after_tag":           "</Say> <Pause length=\"1\"/>",
@@ -256,7 +256,7 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 			"headers":             "",
 			"method":              "POST",
 			"phone_number_format": "FULL",
-			"url":                 "https://ping-devops.com/fake-send-to-test",
+			"url":                 "https://pingdevops.com/fake-send-to-test",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
 			"after_tag":           "</Say> <Pause length=\"1\"/>",
@@ -265,7 +265,7 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 			"headers":             "",
 			"method":              "GET",
 			"phone_number_format": "NUMBER_ONLY",
-			"url":                 "https://ping-devops.com/fake-send-to-test?to=${to}&message=${message}",
+			"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&message=${message}",
 		}),
 
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_twilio"),
@@ -283,7 +283,7 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "BEARER"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.username"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.password"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.token", "testtoken"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.auth_token", "testtoken"),
 
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.numbers"),
 
@@ -291,7 +291,7 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
 			"delivery_method": "SMS",
 			"method":          "GET",
-			"url":             "https://ping-devops.com/fake-send-to-test?to=${to}&message=${message}",
+			"url":             "https://pingdevops.com/fake-send-to-test?to=${to}&message=${message}",
 		}),
 
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_twilio"),
@@ -351,21 +351,21 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
   provider_type = "CUSTOM_PROVIDER"
 
   provider_custom = {
-	name = "%[4]s"
+    name = "%[4]s"
 
-	authentication = {
-		method = "BEARER"
-		token = "testtoken"
-	}
+    authentication = {
+      method = "BEARER"
+      auth_token  = "testtoken"
+    }
 
-	requests = [
-		{
-			delivery_method =     "SMS"
-			method =              "GET"
-			phone_number_format = "FULL"
-			url =                 "https://ping-devops.com/fake-send-to-test?to=${to}&message=${message}"
-		}
-	]
+    requests = [
+      {
+        delivery_method     = "SMS"
+        method              = "GET"
+        phone_number_format = "FULL"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+      }
+    ]
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -376,12 +376,12 @@ func testAccPhoneDeliverySettingsConfig_Custom_Twilio(resourceName, twilioSID, t
 
 resource "pingone_phone_delivery_settings" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  
+
   provider_type = "CUSTOM_TWILIO"
 
   provider_custom_twilio = {
-	sid = "%[3]s"
-	auth_token = "%[4]s"
+    sid        = "%[3]s"
+    auth_token = "%[4]s"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, twilioSID, twilioAuthToken)
 }
@@ -392,11 +392,11 @@ func testAccPhoneDeliverySettingsConfig_Custom_Syniverse(resourceName, syniverse
 
 resource "pingone_phone_delivery_settings" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  
+
   provider_type = "CUSTOM_SYNIVERSE"
 
   provider_custom_syniverse = {
-	auth_token = "%[3]s"
+    auth_token = "%[3]s"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, syniverseAuthToken)
 }
@@ -407,90 +407,100 @@ func testAccPhoneDeliverySettingsConfig_Custom_Full(resourceName, name string) s
 
 resource "pingone_phone_delivery_settings" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  
+
   provider_type = "CUSTOM_PROVIDER"
 
   provider_custom = {
-	name = "%[3]s"
+    name = "%[3]s"
 
-	authentication = {
-		method = "BASIC"
-		username = "testusername"
-		password = "testpassword"
-	}
+    authentication = {
+      method   = "BASIC"
+      username = "testusername"
+      password = "testpassword"
+    }
 
-	numbers = [
-		{
-			available =           "true"
-			capabilities =         ["VOICE", "SMS"]
-			number =              "+441234567890"
-			selected =             "true"
-			supported_countries = ["US","FR","GB","DE"]
-			type =                "TOLL_FREE"
-		},
+    numbers = [
+      {
+        available           = "true"
+        capabilities        = ["VOICE", "SMS"]
+        number              = "+441234567890"
+        selected            = "true"
+        supported_countries = ["US", "FR", "GB", "DE"]
+        type                = "TOLL_FREE"
+      },
 
-		{
-			capabilities =         ["VOICE"]
-			number =              "+441234567891"
-			supported_countries = ["US"]
-			type =                "SHORT_CODE"
-		},
+      {
+        capabilities        = ["VOICE"]
+        number              = "+441234567891"
+        supported_countries = ["US"]
+        type                = "SHORT_CODE"
+      },
 
-		{
-			available =           "false"
-			capabilities =         ["SMS"]
-			number =              "+441234567892"
-			selected =             "false"
-			supported_countries = ["FR"]
-			type =                "PHONE_NUMBER"
-		}
-	]
+      {
+        available           = "false"
+        capabilities        = ["SMS"]
+        number              = "+441234567892"
+        selected            = "false"
+        supported_countries = ["FR"]
+        type                = "PHONE_NUMBER"
+      }
+    ]
 
-	requests = [
-		{
-			body =                 jsonencode({
-				"to": "${to}",
-				"message": "${message}"
-			})
-			delivery_method =     "SMS"
-			headers =             ""
-			method =              "POST"
-			phone_number_format = "FULL"
-			url =                 "https://ping-devops.com/fake-send-to-test"
-		},
+    requests = [
+      {
+        body = jsonencode({
+          "to"      = "$${to}",
+          "message" = "$${message}"
+        })
+        delivery_method = "SMS"
+        headers = {
+          testheader = "testvalue1",
+        }
+        method              = "POST"
+        phone_number_format = "FULL"
+        url                 = "https://pingdevops.com/fake-send-to-test"
+      },
 
-		{
-			delivery_method =     "SMS"
-			headers =             ""
-			method =              "GET"
-			phone_number_format = "NUMBER_ONLY"
-			url =                 "https://ping-devops.com/fake-send-to-test?to=${to}&message=${message}"
-		},
+      {
+        delivery_method = "SMS"
+        headers = {
+          testheader = "testvalue2",
+        }
+        method              = "GET"
+        phone_number_format = "NUMBER_ONLY"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+      },
 
-		{
-			after_tag =           "</Say> <Pause length=\"1\"/>"
-			before_tag =          "<Say>"
-			body =                jsonencode({
-				"to": "${to}",
-				"message": "${message}"
-			})
-			delivery_method =     "VOICE"
-			headers=             ""
-			method =              "POST"
-			phone_number_format = "FULL"
-			url =                 "https://ping-devops.com/fake-send-to-test"
-		},
+      {
+        after_tag  = "</Say> <Pause length=\"1\"/>"
+        before_tag = "<Say>"
+        body = jsonencode({
+          "to"      = "$${to}",
+          "message" = "$${message}"
+        })
+        delivery_method = "VOICE"
+        headers = {
+          "content-type" = "application/json",
+          testheader     = "testvalue3",
+        }
+        method              = "POST"
+        phone_number_format = "FULL"
+        url                 = "https://pingdevops.com/fake-send-to-test"
+      },
 
-		{
-			after_tag           "</Say> <Pause length=\"1\"/>"
-			before_tag          "<Say>"
-			delivery_method     "VOICE"
-			headers             ""
-			method              "GET"
-			phone_number_format "NUMBER_ONLY"
-			url                 "https://ping-devops.com/fake-send-to-test?to=${to}&message=${message}"
-		}
-	]
+      {
+        after_tag       = "</Say> <Pause length=\"1\"/>"
+        before_tag      = "<Say>"
+        delivery_method = "VOICE"
+        headers = {
+          "content-type" = "application/json",
+          testheader     = "testvalue4",
+        }
+        method              = "GET"
+        phone_number_format = "NUMBER_ONLY"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+      }
+    ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -501,25 +511,25 @@ func testAccPhoneDeliverySettingsConfig_Custom_Minimal(resourceName, name string
 
 resource "pingone_phone_delivery_settings" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  
+
   provider_type = "CUSTOM_PROVIDER"
 
   provider_custom = {
-	name = "%[3]s"
+    name = "%[3]s"
 
-	authentication = {
-		method = "BEARER"
-		token = "testtoken"
-	}
+    authentication = {
+      method = "BEARER"
+      auth_token  = "testtoken"
+    }
 
-	requests = [
-		{
-			delivery_method =     "SMS"
-			method =              "GET"
-			phone_number_format = "FULL"
-			url =                 "https://ping-devops.com/fake-send-to-test?to=${to}&message=${message}"
-		}
-	]
+    requests = [
+      {
+        delivery_method     = "SMS"
+        method              = "GET"
+        phone_number_format = "FULL"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+      }
+    ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

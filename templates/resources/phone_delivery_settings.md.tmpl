@@ -21,10 +21,6 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-provider.tf") }}
 
-## Example Usage - PingOne Twilio
-
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pingone-twilio.tf") }}
-
 {{ .SchemaMarkdown | trimspace }}
 
 {{ if .HasImport -}}
