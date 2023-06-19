@@ -111,6 +111,7 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 
 	twilioSID := os.Getenv("PINGONE_TWILIO_SID")
 	twilioAuthToken := os.Getenv("PINGONE_TWILIO_AUTH_TOKEN")
+	number := os.Getenv("PINGONE_TWILIO_NUMBER")
 
 	check := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
@@ -119,6 +120,15 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom_twilio.sid", twilioSID),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom_twilio.auth_token", twilioAuthToken),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom_twilio.numbers.*", map[string]string{
+			"available":      "true",
+			"capabilities.#": "2",
+			"capabilities.0": "SMS",
+			"capabilities.1": "VOICE",
+			"number":         number,
+			"selected":       "true",
+			"type":           "PHONE_NUMBER",
+		}),
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_syniverse"),
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
@@ -131,20 +141,24 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken, number),
 				Check:  check,
 			},
 			{
-				Config:  testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken),
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken, number),
 				Destroy: true,
 			},
 			// Errors
 			{
-				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, "unknownsid", twilioAuthToken),
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, "unknownsid", twilioAuthToken, number),
 				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
 			},
 			{
-				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, "unknownauthtoken"),
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, "unknownauthtoken", number),
+				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
+			},
+			{
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio_NoNumber(environmentName, licenseID, resourceName, twilioSID, "unknownauthtoken"),
 				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
 			},
 		},
@@ -205,7 +219,7 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
-	name := resourceFullName
+	name := resourceName
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
@@ -396,7 +410,31 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken string) string {
+func testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken, number string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  provider_custom_twilio = {
+    sid        = "%[4]s"
+    auth_token = "%[5]s"
+
+	numbers = [
+      {
+        available           = "true"
+        capabilities        = ["VOICE", "SMS"]
+        number              = "%[6]s"
+        selected            = "true"
+        type                = "PHONE_NUMBER"
+      }
+	]
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, twilioSID, twilioAuthToken, number)
+}
+
+func testAccPhoneDeliverySettingsConfig_Custom_Twilio_NoNumber(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
