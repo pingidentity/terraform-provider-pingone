@@ -105,6 +105,10 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_phone_delivery_settings.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	twilioSID := os.Getenv("PINGONE_TWILIO_SID")
 	twilioAuthToken := os.Getenv("PINGONE_TWILIO_AUTH_TOKEN")
 
@@ -127,20 +131,20 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Twilio(resourceName, twilioSID, twilioAuthToken),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken),
 				Check:  check,
 			},
 			{
-				Config:  testAccPhoneDeliverySettingsConfig_Custom_Twilio(resourceName, twilioSID, twilioAuthToken),
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken),
 				Destroy: true,
 			},
 			// Errors
 			{
-				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(resourceName, "unknownsid", twilioAuthToken),
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, "unknownsid", twilioAuthToken),
 				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
 			},
 			{
-				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(resourceName, twilioSID, "unknownauthtoken"),
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, "unknownauthtoken"),
 				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
 			},
 		},
@@ -152,6 +156,10 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_phone_delivery_settings.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	syniverseAuthToken := os.Getenv("PINGONE_SYNIVERSE_AUTH_TOKEN")
 
@@ -173,16 +181,16 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Syniverse(resourceName, syniverseAuthToken),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken),
 				Check:  check,
 			},
 			{
-				Config:  testAccPhoneDeliverySettingsConfig_Custom_Syniverse(resourceName, syniverseAuthToken),
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken),
 				Destroy: true,
 			},
 			// Errors
 			{
-				Config:      testAccPhoneDeliverySettingsConfig_Custom_Syniverse(resourceName, "unknownauthtoken"),
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, "unknownauthtoken"),
 				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
 			},
 		},
@@ -195,7 +203,11 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_phone_delivery_settings.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceFullName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
@@ -210,62 +222,78 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.numbers.#", "3"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
-			"available":           "true",
-			"capabilities":        "", //SMS,VOICE
-			"number":              "+441234567890",
-			"selected":            "true",
-			"supported_countries": "",
-			"type":                "TOLL_FREE",
+			"available":             "true",
+			"capabilities.#":        "2",
+			"capabilities.0":        "SMS",
+			"capabilities.1":        "VOICE",
+			"number":                "+441234567890",
+			"selected":              "true",
+			"supported_countries.#": "4",
+			"supported_countries.0": "DE",
+			"supported_countries.1": "FR",
+			"supported_countries.2": "GB",
+			"supported_countries.3": "US",
+			"type":                  "TOLL_FREE",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
-			"capabilities":        "", //SMS,VOICE
-			"number":              "+441234567891",
-			"supported_countries": "",
-			"type":                "SHORT_CODE",
+			"available":             "false",
+			"capabilities.#":        "1",
+			"capabilities.0":        "VOICE",
+			"number":                "+441234567891",
+			"supported_countries.#": "1",
+			"supported_countries.0": "US",
+			"selected":              "false",
+			"type":                  "SHORT_CODE",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
-			"available":           "false",
-			"capabilities":        "", //SMS,VOICE
-			"number":              "+441234567892",
-			"selected":            "false",
-			"supported_countries": "",
-			"type":                "PHONE_NUMBER",
+			"available":      "false",
+			"capabilities.#": "1",
+			"capabilities.0": "SMS",
+			"number":         "+441234567892",
+			"selected":       "false",
+			"type":           "PHONE_NUMBER",
 		}),
 
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.requests.#", "4"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
-			"body":                "{\"to\": \"${to}\", \"message\": \"${message}\"}",
-			"delivery_method":     "SMS",
-			"headers":             "",
-			"method":              "POST",
-			"phone_number_format": "FULL",
-			"url":                 "https://pingdevops.com/fake-send-to-test",
+			"body":                 "{\"from\":\"${from}\",\"message\":\"${message}\",\"to\":\"${to}\"}",
+			"delivery_method":      "SMS",
+			"headers.%":            "2",
+			"headers.content-type": "application/json",
+			"headers.testheader":   "testvalue1",
+			"method":               "POST",
+			"phone_number_format":  "FULL",
+			"url":                  "https://pingdevops.com/fake-send-to-test",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
 			"delivery_method":     "SMS",
-			"headers":             "",
 			"method":              "GET",
+			"headers.%":           "1",
+			"headers.testheader":  "testvalue2",
 			"phone_number_format": "NUMBER_ONLY",
-			"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&message=${message}",
+			"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&from=${from}&message=${message}",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
+			"after_tag":            "</Say> <Pause length=\"1\"/>",
+			"before_tag":           "<Say>",
+			"body":                 "{\"from\":\"${from}\",\"message\":\"${message}\",\"to\":\"${to}\"}",
+			"delivery_method":      "VOICE",
+			"headers.%":            "2",
+			"headers.content-type": "application/json",
+			"headers.testheader":   "testvalue3",
+			"method":               "POST",
+			"phone_number_format":  "FULL",
+			"url":                  "https://pingdevops.com/fake-send-to-test",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
 			"after_tag":           "</Say> <Pause length=\"1\"/>",
 			"before_tag":          "<Say>",
-			"body":                "{\"to\": \"${to}\", \"message\": \"${message}\"}",
 			"delivery_method":     "VOICE",
-			"headers":             "",
-			"method":              "POST",
-			"phone_number_format": "FULL",
-			"url":                 "https://pingdevops.com/fake-send-to-test",
-		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
-			"after_tag":           "</Say> <Pause length=\"1\"/>",
-			"before_tag":          "<Say>",
-			"delivery_method":     "VOICE",
-			"headers":             "",
+			"headers.%":           "1",
+			"headers.testheader":  "testvalue4",
 			"method":              "GET",
 			"phone_number_format": "NUMBER_ONLY",
-			"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&message=${message}",
+			"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&from=${from}&message=${message}",
 		}),
 
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_twilio"),
@@ -308,33 +336,33 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(resourceName, name),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
 				Check:  fullCheck,
 			},
 			{
-				Config:  testAccPhoneDeliverySettingsConfig_Custom_Full(resourceName, name),
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
 				Destroy: true,
 			},
 			// Minimal
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Minimal(resourceName, name),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Minimal(environmentName, licenseID, resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config:  testAccPhoneDeliverySettingsConfig_Custom_Minimal(resourceName, name),
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_Minimal(environmentName, licenseID, resourceName, name),
 				Destroy: true,
 			},
 			// update
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(resourceName, name),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
 				Check:  fullCheck,
 			},
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Minimal(resourceName, name),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Minimal(environmentName, licenseID, resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(resourceName, name),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
 				Check:  fullCheck,
 			},
 		},
@@ -348,14 +376,12 @@ func testAccPhoneDeliverySettingsConfig_NewEnv(environmentName, licenseID, resou
 resource "pingone_phone_delivery_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  provider_type = "CUSTOM_PROVIDER"
-
   provider_custom = {
     name = "%[4]s"
 
     authentication = {
-      method = "BEARER"
-      auth_token  = "testtoken"
+      method     = "BEARER"
+      auth_token = "testtoken"
     }
 
     requests = [
@@ -370,48 +396,42 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccPhoneDeliverySettingsConfig_Custom_Twilio(resourceName, twilioSID, twilioAuthToken string) string {
+func testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_phone_delivery_settings" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  provider_type = "CUSTOM_TWILIO"
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
   provider_custom_twilio = {
-    sid        = "%[3]s"
-    auth_token = "%[4]s"
+    sid        = "%[4]s"
+    auth_token = "%[5]s"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, twilioSID, twilioAuthToken)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, twilioSID, twilioAuthToken)
 }
 
-func testAccPhoneDeliverySettingsConfig_Custom_Syniverse(resourceName, syniverseAuthToken string) string {
+func testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_phone_delivery_settings" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  provider_type = "CUSTOM_SYNIVERSE"
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
   provider_custom_syniverse = {
-    auth_token = "%[3]s"
+    auth_token = "%[4]s"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, syniverseAuthToken)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, syniverseAuthToken)
 }
 
-func testAccPhoneDeliverySettingsConfig_Custom_Full(resourceName, name string) string {
+func testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_phone_delivery_settings" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  provider_type = "CUSTOM_PROVIDER"
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
   provider_custom = {
-    name = "%[3]s"
+    name = "%[4]s"
 
     authentication = {
       method   = "BASIC"
@@ -437,12 +457,11 @@ resource "pingone_phone_delivery_settings" "%[2]s" {
       },
 
       {
-        available           = "false"
-        capabilities        = ["SMS"]
-        number              = "+441234567892"
-        selected            = "false"
-        supported_countries = ["FR"]
-        type                = "PHONE_NUMBER"
+        available    = "false"
+        capabilities = ["SMS"]
+        number       = "+441234567892"
+        selected     = "false"
+        type         = "PHONE_NUMBER"
       }
     ]
 
@@ -450,10 +469,12 @@ resource "pingone_phone_delivery_settings" "%[2]s" {
       {
         body = jsonencode({
           "to"      = "$${to}",
+          "from"    = "$${from}",
           "message" = "$${message}"
         })
         delivery_method = "SMS"
         headers = {
+			"content-type" = "application/json",
           testheader = "testvalue1",
         }
         method              = "POST"
@@ -468,7 +489,7 @@ resource "pingone_phone_delivery_settings" "%[2]s" {
         }
         method              = "GET"
         phone_number_format = "NUMBER_ONLY"
-        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&from=$${from}&message=$${message}"
       },
 
       {
@@ -476,6 +497,7 @@ resource "pingone_phone_delivery_settings" "%[2]s" {
         before_tag = "<Say>"
         body = jsonencode({
           "to"      = "$${to}",
+          "from"    = "$${from}",
           "message" = "$${message}"
         })
         delivery_method = "VOICE"
@@ -493,33 +515,30 @@ resource "pingone_phone_delivery_settings" "%[2]s" {
         before_tag      = "<Say>"
         delivery_method = "VOICE"
         headers = {
-          "content-type" = "application/json",
           testheader     = "testvalue4",
         }
         method              = "GET"
         phone_number_format = "NUMBER_ONLY"
-        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&from=$${from}&message=$${message}"
       }
     ]
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccPhoneDeliverySettingsConfig_Custom_Minimal(resourceName, name string) string {
+func testAccPhoneDeliverySettingsConfig_Custom_Minimal(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_phone_delivery_settings" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  provider_type = "CUSTOM_PROVIDER"
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
   provider_custom = {
-    name = "%[3]s"
+    name = "%[4]s"
 
     authentication = {
-      method = "BEARER"
-      auth_token  = "testtoken"
+      method     = "BEARER"
+      auth_token = "testtoken"
     }
 
     requests = [
@@ -531,5 +550,5 @@ resource "pingone_phone_delivery_settings" "%[2]s" {
       }
     ]
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

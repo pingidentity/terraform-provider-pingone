@@ -106,7 +106,7 @@ func StringMapOkToTF(v *map[string]string, ok bool) basetypes.MapValue {
 	if !ok || v == nil {
 		return types.MapNull(types.StringType)
 	} else {
-		var list map[string]attr.Value
+		list := make(map[string]attr.Value, 0)
 		for key, item := range *v {
 			list[key] = StringToTF(item)
 		}
@@ -120,8 +120,8 @@ func EnumSetOkToTF(v interface{}, ok bool) basetypes.SetValue {
 		return types.SetNull(types.StringType)
 	} else {
 		list := make([]attr.Value, 0)
-		for _, item := range v.([]interface{}) {
-			list = append(list, types.StringValue(utils.EnumToString(item)))
+		for _, item := range utils.EnumSliceToStringSlice(v) {
+			list = append(list, StringToTF(item))
 		}
 
 		return types.SetValueMust(types.StringType, list)

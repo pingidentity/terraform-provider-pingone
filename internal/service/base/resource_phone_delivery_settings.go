@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -14,12 +15,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -169,8 +172,12 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 
 	// Custom provider
 	providerCustomDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe custom phone delivery settings.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_PROVIDER),
-	)
+		"A single nested attribute with attributes that describe custom phone delivery settings.",
+	).ExactlyOneOf([]string{
+		"provider_custom",
+		"provider_custom_twilio",
+		"provider_custom_syniverse",
+	})
 
 	providerCustomAuthenticationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The custom provider account's authentication method.",
@@ -255,8 +262,12 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 
 	// Twilio provider
 	providerCustomTwilioDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe phone delivery settings for a custom Twilio account.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_TWILIO),
-	)
+		"A single nested attribute with attributes that describe phone delivery settings for a custom Twilio account.",
+	).ExactlyOneOf([]string{
+		"provider_custom",
+		"provider_custom_twilio",
+		"provider_custom_syniverse",
+	})
 
 	providerCustomTwilioAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The secret key of the Twilio account.",
@@ -268,8 +279,12 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 
 	// Syniverse provider
 	providerCustomSyniverseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Required when the `provider` parameter is set to `%s`.  A nested attribute with attributes that describe phone delivery settings for a custom syniverse account.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_SYNIVERSE),
-	)
+		"A single nested attribute with attributes that describe phone delivery settings for a custom syniverse account.",
+	).ExactlyOneOf([]string{
+		"provider_custom",
+		"provider_custom_twilio",
+		"provider_custom_syniverse",
+	})
 
 	providerCustomSyniverseAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The secret key of the Syniverse account.",
@@ -289,15 +304,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 			"provider_type": schema.StringAttribute{
 				Description:         providerTypeDescription.Description,
 				MarkdownDescription: providerTypeDescription.MarkdownDescription,
-				Required:            true,
-
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-
-				Validators: []validator.String{
-					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsProviderEnumValues)...),
-				},
+				Computed:            true,
 			},
 
 			"provider_custom": schema.SingleNestedAttribute{
@@ -378,6 +385,9 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								"available": schema.BoolAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
 									Optional:    true,
+									Computed:    true,
+
+									Default: booldefault.StaticBool(false),
 								},
 
 								"capabilities": schema.SetAttribute{
@@ -403,12 +413,15 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								"selected": schema.BoolAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
 									Optional:    true,
+									Computed:    true,
+
+									Default: booldefault.StaticBool(false),
 								},
 
 								"supported_countries": schema.SetAttribute{
 									Description:         providerCustomNumbersSupportedCountriesDescription.Description,
 									MarkdownDescription: providerCustomNumbersSupportedCountriesDescription.MarkdownDescription,
-									Required:            true,
+									Optional:            true,
 
 									ElementType: types.StringType,
 
@@ -495,11 +508,19 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 									Optional:            true,
 
 									Validators: []validator.String{
-										stringvalidatorinternal.ConflictsIfMatchesPathValue(
-											types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMREQUESTMETHOD_GET)),
-											path.MatchRelative().AtParent().AtName("method"),
+										stringvalidator.Any(
+											stringvalidator.All(
+												stringvalidator.RegexMatches(regexp.MustCompile(`\$\{to\}.*\$\{message\}`), "Body must have `${to}` and `${message}` mandatory variables"),
+												stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+													types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMREQUESTMETHOD_POST)),
+													path.MatchRelative().AtParent().AtName("method"),
+												),
+											),
+											stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+												types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMREQUESTMETHOD_GET)),
+												path.MatchRelative().AtParent().AtName("method"),
+											),
 										),
-										stringvalidator.RegexMatches(regexp.MustCompile(`\$\{to\}.*\$\{message\}`), "Body must have `${to}` and `${message}` mandatory variables"),
 									},
 								},
 
@@ -558,6 +579,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 													path.MatchRelative().AtParent().AtName("method"),
 												),
 											),
+											stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+												types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMREQUESTMETHOD_POST)),
+												path.MatchRelative().AtParent().AtName("method"),
+											),
 										),
 										stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "URL must be a valid HTTPS URL"),
 									},
@@ -565,6 +590,14 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 							},
 						},
 					},
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("provider_custom"),
+						path.MatchRelative().AtParent().AtName("provider_custom_twilio"),
+						path.MatchRelative().AtParent().AtName("provider_custom_syniverse"),
+					),
 				},
 			},
 
@@ -595,6 +628,14 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 						},
 					},
 				},
+
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("provider_custom"),
+						path.MatchRelative().AtParent().AtName("provider_custom_twilio"),
+						path.MatchRelative().AtParent().AtName("provider_custom_syniverse"),
+					),
+				},
 			},
 
 			"provider_custom_syniverse": schema.SingleNestedAttribute{
@@ -613,6 +654,14 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 							stringplanmodifier.RequiresReplace(),
 						},
 					},
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("provider_custom"),
+						path.MatchRelative().AtParent().AtName("provider_custom_twilio"),
+						path.MatchRelative().AtParent().AtName("provider_custom_syniverse"),
+					),
 				},
 			},
 
@@ -939,12 +988,20 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 					request.SetHeaders(headersPlan)
 				}
 
+				if !requestPlan.BeforeTag.IsNull() && !requestPlan.BeforeTag.IsUnknown() {
+					request.SetBeforeTag(requestPlan.BeforeTag.ValueString())
+				}
+
+				if !requestPlan.AfterTag.IsNull() && !requestPlan.AfterTag.IsUnknown() {
+					request.SetAfterTag(requestPlan.AfterTag.ValueString())
+				}
+
 				requests = append(requests, *request)
 			}
 		}
 
 		providerData := management.NewNotificationsSettingsPhoneDeliverySettingsCustom(
-			management.EnumNotificationsSettingsPhoneDeliverySettingsProvider(p.ProviderType.ValueString()),
+			management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_PROVIDER,
 			providerPlan.Name.ValueString(),
 			requests,
 			*authentication,
@@ -952,6 +1009,57 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 
 		if !providerPlan.Numbers.IsNull() && !providerPlan.Numbers.IsUnknown() {
 			numbers := make([]management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, 0)
+
+			var numbersPlan []PhoneDeliverySettingsProviderCustomNumbersResourceModel
+			diags.Append(providerPlan.Numbers.ElementsAs(ctx, &numbersPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			for _, numberPlan := range numbersPlan {
+
+				var capabilitiesSlice []string
+				diags.Append(numberPlan.Capabilities.ElementsAs(ctx, &capabilitiesSlice, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				capabilities := make([]management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapability, 0)
+
+				for _, capability := range capabilitiesSlice {
+					capabilities = append(capabilities, management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapability(capability))
+				}
+
+				number := management.NewNotificationsSettingsPhoneDeliverySettingsCustomNumbers(
+					numberPlan.Number.ValueString(),
+					management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersType(numberPlan.Type.ValueString()),
+					capabilities,
+				)
+
+				if !numberPlan.Selected.IsNull() && !numberPlan.Selected.IsUnknown() {
+					number.SetSelected(numberPlan.Selected.ValueBool())
+				}
+
+				if !numberPlan.Available.IsNull() && !numberPlan.Available.IsUnknown() {
+					number.SetAvailable(numberPlan.Available.ValueBool())
+				}
+
+				if !numberPlan.SupportedCountries.IsNull() && !numberPlan.SupportedCountries.IsUnknown() {
+					var supportedCountries []string
+					diags.Append(numberPlan.SupportedCountries.ElementsAs(ctx, &supportedCountries, false)...)
+					if diags.HasError() {
+						return nil, diags
+					}
+
+					number.SetSupportedCountries(supportedCountries)
+				}
+
+				numbers = append(numbers, *number)
+			}
+
+			tflog.Debug(ctx, "HERE!!!!!", map[string]interface{}{
+				"numbers": numbers,
+			})
 
 			providerData.SetNumbers(numbers)
 		}
@@ -970,7 +1078,7 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 		}
 
 		providerData := management.NewNotificationsSettingsPhoneDeliverySettingsTwilioSyniverse(
-			management.EnumNotificationsSettingsPhoneDeliverySettingsProvider(p.ProviderType.ValueString()),
+			management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_SYNIVERSE,
 			providerPlan.Sid.ValueString(),
 			providerPlan.AuthToken.ValueString(),
 		)
@@ -989,7 +1097,7 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 		}
 
 		providerData := management.NewNotificationsSettingsPhoneDeliverySettingsTwilioSyniverse(
-			management.EnumNotificationsSettingsPhoneDeliverySettingsProvider(p.ProviderType.ValueString()),
+			management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_TWILIO,
 			"",
 			providerPlan.AuthToken.ValueString(),
 		)

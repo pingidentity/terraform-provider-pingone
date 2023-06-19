@@ -15,8 +15,6 @@ Resource to create and manage SMS/voice delivery settings in a PingOne environme
 resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
   environment_id = pingone_environment.my_environment.id
 
-  provider_type = "CUSTOM_TWILIO"
-
   auth_token = var.twilio_auth_token
   sid        = var.twilio_sid
 }
@@ -28,8 +26,6 @@ resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
 resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
   environment_id = pingone_environment.my_environment.id
 
-  provider_type = "CUSTOM_SYNIVERSE"
-
   auth_token = var.syniverse_auth_token
 }
 ```
@@ -39,8 +35,6 @@ resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
 ```terraform
 resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
   environment_id = pingone_environment.my_environment.id
-
-  provider_type = "CUSTOM_PROVIDER"
 
   provider_custom = {
     name = "My awesome custom notifications provider"
@@ -86,18 +80,18 @@ resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to configure SMS/voice settings for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `provider_type` (String) A string that specifies the type of the phone delivery service.  Options are `CUSTOM_PROVIDER`, `CUSTOM_SYNIVERSE`, `CUSTOM_TWILIO`.
 
 ### Optional
 
-- `provider_custom` (Attributes) Required when the `provider` parameter is set to `CUSTOM_PROVIDER`.  A nested attribute with attributes that describe custom phone delivery settings. (see [below for nested schema](#nestedatt--provider_custom))
-- `provider_custom_syniverse` (Attributes) Required when the `provider` parameter is set to `CUSTOM_SYNIVERSE`.  A nested attribute with attributes that describe phone delivery settings for a custom syniverse account. (see [below for nested schema](#nestedatt--provider_custom_syniverse))
-- `provider_custom_twilio` (Attributes) Required when the `provider` parameter is set to `CUSTOM_TWILIO`.  A nested attribute with attributes that describe phone delivery settings for a custom Twilio account. (see [below for nested schema](#nestedatt--provider_custom_twilio))
+- `provider_custom` (Attributes) A single nested attribute with attributes that describe custom phone delivery settings.  At least one of the following must be defined: `provider_custom`, `provider_custom_twilio`, `provider_custom_syniverse`. (see [below for nested schema](#nestedatt--provider_custom))
+- `provider_custom_syniverse` (Attributes) A single nested attribute with attributes that describe phone delivery settings for a custom syniverse account.  At least one of the following must be defined: `provider_custom`, `provider_custom_twilio`, `provider_custom_syniverse`. (see [below for nested schema](#nestedatt--provider_custom_syniverse))
+- `provider_custom_twilio` (Attributes) A single nested attribute with attributes that describe phone delivery settings for a custom Twilio account.  At least one of the following must be defined: `provider_custom`, `provider_custom_twilio`, `provider_custom_syniverse`. (see [below for nested schema](#nestedatt--provider_custom_twilio))
 
 ### Read-Only
 
 - `created_at` (String) A string that specifies the time the resource was created.
 - `id` (String) The ID of this resource.
+- `provider_type` (String) A string that specifies the type of the phone delivery service.  Options are `CUSTOM_PROVIDER`, `CUSTOM_SYNIVERSE`, `CUSTOM_TWILIO`.
 - `updated_at` (String) A string that specifies the time the resource was last updated.
 
 <a id="nestedatt--provider_custom"></a>
@@ -160,6 +154,12 @@ Required:
 
 - `capabilities` (Set of String) A collection of the types of phone delivery service capabilities.  Options are `SMS`, `VOICE`.
 - `number` (String) A string that specifies the phone number, toll-free number or short code.
+- `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
+
+Optional:
+
+- `available` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
 - `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
     - `SHORT_CODE`: A collection containing a single 2-character ISO country code, for example, `US`, `GB`, `CA`.
     If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
@@ -168,12 +168,6 @@ Required:
     If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
     For other custom provider types, if this attribute is null (empty is not supported), the specified toll-free `number` can only be used to dispatch notifications to United States recipient numbers.
     - `PHONE_NUMBER`: this attribute cannot be specified.
-- `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
-
-Optional:
-
-- `available` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
-- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
 
 
 
