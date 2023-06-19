@@ -23,6 +23,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 
 		CreateContext: resourcePingOneApplicationPushCredentialCreate,
 		ReadContext:   resourcePingOneApplicationPushCredentialRead,
+		UpdateContext: resourcePingOneApplicationPushCredentialUpdate,
 		DeleteContext: resourcePingOneApplicationPushCredentialDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -54,14 +55,27 @@ func ResourceApplicationPushCredential() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {
-							Description: "A string that represents the server key of the Firebase cloud messaging service.",
-							Type:        schema.TypeString,
-							Required:    true,
-							Sensitive:   true,
+							Description:  "A string that represents the server key of the Firebase cloud messaging service.  One of `key` or `google_service_account_credentials` must be specified.",
+							Type:         schema.TypeString,
+							Optional:     true,
+							Sensitive:    true,
+							Deprecated:   "This field is deprecated and will be removed in a future release.  Use `google_service_account_credentials` instead.",
+							ExactlyOneOf: []string{"fcm.0.key", "fcm.0.google_service_account_credentials"},
 							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 								return old == "DUMMY_SUPPRESS_VALUE"
 							},
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+						},
+						"google_service_account_credentials": {
+							Description:  "A string in JSON format that represents the service account credentials of Firebase cloud messaging service.  One of `key` or `google_service_account_credentials` must be specified.",
+							Type:         schema.TypeString,
+							Optional:     true,
+							Sensitive:    true,
+							ExactlyOneOf: []string{"fcm.0.key", "fcm.0.google_service_account_credentials"},
+							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+								return old == "DUMMY_SUPPRESS_VALUE"
+							},
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 						},
 					},
 				},
@@ -183,7 +197,7 @@ func expandPushCredentialRequest(d *schema.ResourceData) (*mfa.CreateMFAPushCred
 	var diags diag.Diagnostics
 
 	if v, ok := d.GetOk("fcm"); ok {
-		mfaPushCredentialRequest.MFAPushCredentialFCM, diags = expandPushCredentialRequestFCM(v)
+		mfaPushCredentialRequest.MFAPushCredentialFCM, mfaPushCredentialRequest.MFAPushCredentialFCMHTTPV1, diags = expandPushCredentialRequestFCM(v)
 	}
 
 	if v, ok := d.GetOk("apns"); ok {
@@ -197,18 +211,49 @@ func expandPushCredentialRequest(d *schema.ResourceData) (*mfa.CreateMFAPushCred
 	return mfaPushCredentialRequest, diags
 }
 
-func expandPushCredentialRequestFCM(c interface{}) (*mfa.MFAPushCredentialFCM, diag.Diagnostics) {
+func expandPushCredentialRequestUpdate(d *schema.ResourceData) (*mfa.UpdateMFAPushCredentialRequest, diag.Diagnostics) {
+
+	mfaPushCredentialRequest := &mfa.UpdateMFAPushCredentialRequest{}
+	var diags diag.Diagnostics
+
+	if v, ok := d.GetOk("fcm"); ok {
+		mfaPushCredentialRequest.MFAPushCredentialFCM, mfaPushCredentialRequest.MFAPushCredentialFCMHTTPV1, diags = expandPushCredentialRequestFCM(v)
+	}
+
+	if v, ok := d.GetOk("apns"); ok {
+		mfaPushCredentialRequest.MFAPushCredentialAPNS, diags = expandPushCredentialRequestAPNS(v)
+	}
+
+	if v, ok := d.GetOk("hms"); ok {
+		mfaPushCredentialRequest.MFAPushCredentialHMS, diags = expandPushCredentialRequestHMS(v)
+	}
+
+	return mfaPushCredentialRequest, diags
+}
+
+func expandPushCredentialRequestFCM(c interface{}) (*mfa.MFAPushCredentialFCM, *mfa.MFAPushCredentialFCMHTTPV1, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if v, ok := c.([]interface{}); ok && v != nil && len(v) > 0 && v[0] != nil {
 		vp := v[0].(map[string]interface{})
 
-		credential := mfa.NewMFAPushCredentialFCM(
-			mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_FCM,
-			vp["key"].(string),
-		)
+		if credentialKey, ok := vp["key"].(string); ok && credentialKey != "" {
+			credential := mfa.NewMFAPushCredentialFCM(
+				mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_FCM,
+				credentialKey,
+			)
 
-		return credential, diags
+			return credential, nil, diags
+		}
+
+		if credentialKey, ok := vp["google_service_account_credentials"].(string); ok && credentialKey != "" {
+			credential := mfa.NewMFAPushCredentialFCMHTTPV1(
+				mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_FCM_HTTP_V1,
+				credentialKey,
+			)
+
+			return nil, credential, diags
+		}
 
 	}
 
@@ -217,7 +262,7 @@ func expandPushCredentialRequestFCM(c interface{}) (*mfa.MFAPushCredentialFCM, d
 		Summary:  "Block `fcm` must be defined when using the FCM push notification type",
 	})
 
-	return nil, diags
+	return nil, nil, diags
 }
 
 func expandPushCredentialRequestAPNS(c interface{}) (*mfa.MFAPushCredentialAPNS, diag.Diagnostics) {
@@ -298,13 +343,22 @@ func resourcePingOneApplicationPushCredentialRead(ctx context.Context, d *schema
 
 	respObject := resp.(*mfa.MFAPushCredentialResponse)
 
+	d.Set("fcm", nil)
+	d.Set("apns", nil)
+	d.Set("hms", nil)
+
 	if respObject.GetType() == mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_FCM {
 		credential := make([]interface{}, 0)
 		d.Set("fcm", append(credential, map[string]string{
 			"key": "DUMMY_SUPPRESS_VALUE",
 		}))
-	} else {
-		d.Set("fcm", nil)
+	}
+
+	if respObject.GetType() == mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_FCM_HTTP_V1 {
+		credential := make([]interface{}, 0)
+		d.Set("fcm", append(credential, map[string]string{
+			"google_service_account_credentials": "DUMMY_SUPPRESS_VALUE",
+		}))
 	}
 
 	if respObject.GetType() == mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_APNS {
@@ -314,8 +368,6 @@ func resourcePingOneApplicationPushCredentialRead(ctx context.Context, d *schema
 			"team_id":           "DUMMY_SUPPRESS_VALUE",
 			"token_signing_key": "DUMMY_SUPPRESS_VALUE",
 		}))
-	} else {
-		d.Set("apns", nil)
 	}
 
 	if respObject.GetType() == mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_HMS {
@@ -324,11 +376,39 @@ func resourcePingOneApplicationPushCredentialRead(ctx context.Context, d *schema
 			"client_id":     "DUMMY_SUPPRESS_VALUE",
 			"client_secret": "DUMMY_SUPPRESS_VALUE",
 		}))
-	} else {
-		d.Set("hms", nil)
 	}
 
 	return diags
+}
+
+func resourcePingOneApplicationPushCredentialUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	p1Client := meta.(*client.Client)
+	apiClient := p1Client.API.MFAAPIClient
+	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
+		"suffix": p1Client.API.Region.URLSuffix,
+	})
+	var diags diag.Diagnostics
+
+	mfaPushCredentialRequest, diags := expandPushCredentialRequestUpdate(d)
+	if diags.HasError() {
+		return diags
+	}
+
+	_, diags = sdk.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApplicationMFAPushCredentialsApi.UpdateMFAPushCredential(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).UpdateMFAPushCredentialRequest(*mfaPushCredentialRequest).Execute()
+		},
+		"UpdateMFAPushCredential",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
+		return diags
+	}
+
+	return resourcePingOneApplicationPushCredentialRead(ctx, d, meta)
 }
 
 func resourcePingOneApplicationPushCredentialDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

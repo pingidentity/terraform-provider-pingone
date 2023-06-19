@@ -3,6 +3,7 @@ package mfa_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -83,33 +84,48 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 
 	name := resourceName
 
+	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
+
+	fullFCMCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+		resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
+	)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// FCM (deprecated)
 			{
 				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
-				),
+				Check:  fullFCMCheck,
 			},
 			{
 				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s2", name)),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
-				),
+				Check:  fullFCMCheck,
+			},
+			{
+				Config:  testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s2", name)),
+				Destroy: true,
+			},
+			// FCM new
+			{
+				Config: testAccApplicationPushCredentialConfig_FCMHTTPV1(resourceName, name, firebaseCredentials),
+				Check:  fullFCMCheck,
+			},
+			{
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
+				Check:  fullFCMCheck,
+			},
+			{
+				Config: testAccApplicationPushCredentialConfig_FCMHTTPV1(resourceName, name, firebaseCredentials),
+				Check:  fullFCMCheck,
 			},
 		},
 	})
@@ -293,6 +309,57 @@ resource "pingone_mfa_application_push_credential" "%[2]s" {
 
   fcm {
     key = "%[4]s"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
+}
+
+func testAccApplicationPushCredentialConfig_FCMHTTPV1(resourceName, name, key string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      package_name = "com.%[2]s.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "dummykeydoesnotexist"
+          verification_key  = "dummykeydoesnotexist"
+        }
+      }
+    }
+
+    package_name = "com.%[2]s.package"
+  }
+}
+
+resource "pingone_mfa_application_push_credential" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  fcm {
+    google_service_account_credentials = jsonencode(%[4]s)
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
 }
