@@ -23,6 +23,12 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.7.3 => v0.8.0 ([#424](https://github.com/pingidentity/terraform-provider-pingone/issues/424))
 * bump `github.com/terraform-linters/tflint` v0.46.1 => v0.47.0 ([#424](https://github.com/pingidentity/terraform-provider-pingone/issues/424))
 
+FEATURES:
+
+* **New Data Source:** `pingone_verify_policies` ([#403](https://github.com/pingidentity/terraform-provider-pingone/issues/403))
+* **New Data Source:** `pingone_verify_policy` ([#403](https://github.com/pingidentity/terraform-provider-pingone/issues/403))
+* **New Resource:** `pingone_verify_policy` ([#403](https://github.com/pingidentity/terraform-provider-pingone/issues/403))
+
 ENHANCEMENTS:
 
 * `resource/pingone_schema_attribute`: Supports properties for enumerated values and regular expression validation. ([#414](https://github.com/pingidentity/terraform-provider-pingone/issues/414))
