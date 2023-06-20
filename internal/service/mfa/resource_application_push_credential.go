@@ -23,7 +23,6 @@ func ResourceApplicationPushCredential() *schema.Resource {
 
 		CreateContext: resourcePingOneApplicationPushCredentialCreate,
 		ReadContext:   resourcePingOneApplicationPushCredentialRead,
-		UpdateContext: resourcePingOneApplicationPushCredentialUpdate,
 		DeleteContext: resourcePingOneApplicationPushCredentialDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -59,6 +58,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Sensitive:    true,
+							ForceNew:     true,
 							Deprecated:   "This field is deprecated and will be removed in a future release.  Use `google_service_account_credentials` instead.",
 							ExactlyOneOf: []string{"fcm.0.key", "fcm.0.google_service_account_credentials"},
 							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
@@ -71,6 +71,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Sensitive:    true,
+							ForceNew:     true,
 							ExactlyOneOf: []string{"fcm.0.key", "fcm.0.google_service_account_credentials"},
 							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 								return old == "DUMMY_SUPPRESS_VALUE"
@@ -194,26 +195,6 @@ func resourcePingOneApplicationPushCredentialCreate(ctx context.Context, d *sche
 func expandPushCredentialRequest(d *schema.ResourceData) (*mfa.CreateMFAPushCredentialRequest, diag.Diagnostics) {
 
 	mfaPushCredentialRequest := &mfa.CreateMFAPushCredentialRequest{}
-	var diags diag.Diagnostics
-
-	if v, ok := d.GetOk("fcm"); ok {
-		mfaPushCredentialRequest.MFAPushCredentialFCM, mfaPushCredentialRequest.MFAPushCredentialFCMHTTPV1, diags = expandPushCredentialRequestFCM(v)
-	}
-
-	if v, ok := d.GetOk("apns"); ok {
-		mfaPushCredentialRequest.MFAPushCredentialAPNS, diags = expandPushCredentialRequestAPNS(v)
-	}
-
-	if v, ok := d.GetOk("hms"); ok {
-		mfaPushCredentialRequest.MFAPushCredentialHMS, diags = expandPushCredentialRequestHMS(v)
-	}
-
-	return mfaPushCredentialRequest, diags
-}
-
-func expandPushCredentialRequestUpdate(d *schema.ResourceData) (*mfa.UpdateMFAPushCredentialRequest, diag.Diagnostics) {
-
-	mfaPushCredentialRequest := &mfa.UpdateMFAPushCredentialRequest{}
 	var diags diag.Diagnostics
 
 	if v, ok := d.GetOk("fcm"); ok {
@@ -379,36 +360,6 @@ func resourcePingOneApplicationPushCredentialRead(ctx context.Context, d *schema
 	}
 
 	return diags
-}
-
-func resourcePingOneApplicationPushCredentialUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
-
-	mfaPushCredentialRequest, diags := expandPushCredentialRequestUpdate(d)
-	if diags.HasError() {
-		return diags
-	}
-
-	_, diags = sdk.ParseResponse(
-		ctx,
-
-		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationMFAPushCredentialsApi.UpdateMFAPushCredential(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).UpdateMFAPushCredentialRequest(*mfaPushCredentialRequest).Execute()
-		},
-		"UpdateMFAPushCredential",
-		sdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
-	}
-
-	return resourcePingOneApplicationPushCredentialRead(ctx, d, meta)
 }
 
 func resourcePingOneApplicationPushCredentialDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

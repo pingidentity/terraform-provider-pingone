@@ -49,7 +49,7 @@ resource "pingone_mfa_application_push_credential" "example_fcm" {
   application_id = pingone_application.my_application.id
 
   fcm {
-    key = var.fcm_key
+    google_service_account_credentials = var.google_service_account_credentials_json
   }
 }
 
@@ -108,9 +108,10 @@ Required:
 <a id="nestedblock--fcm"></a>
 ### Nested Schema for `fcm`
 
-Required:
+Optional:
 
-- `key` (String, Sensitive) A string that represents the server key of the Firebase cloud messaging service.
+- `google_service_account_credentials` (String, Sensitive) A string in JSON format that represents the service account credentials of Firebase cloud messaging service.  One of `key` or `google_service_account_credentials` must be specified.
+- `key` (String, Sensitive, Deprecated) A string that represents the server key of the Firebase cloud messaging service.  One of `key` or `google_service_account_credentials` must be specified.
 
 
 <a id="nestedblock--hms"></a>
