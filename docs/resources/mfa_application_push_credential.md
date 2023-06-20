@@ -9,6 +9,8 @@ description: |-
 
 Resource to create and manage push credentials for a mobile MFA application configured in PingOne.
 
+~> If the type of credential is changed (e.g., FCM to APNS, or `fcm.key` to `fcm.google_service_account_credentials`), this will trigger a replacement plan.
+
 ## Example Usage
 
 ```terraform
@@ -82,14 +84,14 @@ resource "pingone_mfa_application_push_credential" "example_hms" {
 
 ### Required
 
-- `application_id` (String) The ID of the application to create the push notification credential for.
-- `environment_id` (String) The ID of the environment to create the application push notification credential in.
+- `application_id` (String) The ID of the application to create the push notification credential for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to create the application push notification credential in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
-- `apns` (Block List, Max: 1) A block that specifies the credential settings for the Apple Push Notification Service. (see [below for nested schema](#nestedblock--apns))
-- `fcm` (Block List, Max: 1) A block that specifies the credential settings for the Firebase Cloud Messaging service. (see [below for nested schema](#nestedblock--fcm))
-- `hms` (Block List, Max: 1) A block that specifies the credential settings for Huawei Moble Service push messaging. (see [below for nested schema](#nestedblock--hms))
+- `apns` (Block List) A single block that specifies the credential settings for the Apple Push Notification Service. (see [below for nested schema](#nestedblock--apns))
+- `fcm` (Block List) A single block that specifies the credential settings for the Firebase Cloud Messaging service. (see [below for nested schema](#nestedblock--fcm))
+- `hms` (Block List) A single block that specifies the credential settings for Huawei Moble Service push messaging. (see [below for nested schema](#nestedblock--hms))
 
 ### Read-Only
 
@@ -110,8 +112,8 @@ Required:
 
 Optional:
 
-- `google_service_account_credentials` (String, Sensitive) A string in JSON format that represents the service account credentials of Firebase cloud messaging service.  One of `key` or `google_service_account_credentials` must be specified.
-- `key` (String, Sensitive, Deprecated) A string that represents the server key of the Firebase cloud messaging service.  One of `key` or `google_service_account_credentials` must be specified.
+- `google_service_account_credentials` (String, Sensitive) A string in JSON format that represents the service account credentials of Firebase cloud messaging service.  At least one of the following must be defined: `key`, `google_service_account_credentials`.
+- `key` (String, Sensitive, Deprecated) A string that represents the server key of the Firebase cloud messaging service.  At least one of the following must be defined: `key`, `google_service_account_credentials`.
 
 
 <a id="nestedblock--hms"></a>
