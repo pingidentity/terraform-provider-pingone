@@ -215,6 +215,14 @@ func PreCheckEnvironmentAndGoogleJSONKey(t *testing.T) {
 	}
 }
 
+func PreCheckEnvironmentAndGoogleFirebaseCredentials(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS"); v == "" {
+		t.Fatal("PINGONE_GOOGLE_FIREBASE_CREDENTIALS is missing and must be set")
+	}
+}
+
 func PreCheckEnvironmentAndPEM(t *testing.T) {
 
 	PreCheckEnvironment(t)
