@@ -40,10 +40,10 @@ func ResourceNotificationTemplateContent() *schema.Resource {
 				ForceNew:         true,
 			},
 			"template_name": {
-				Description:      "The ID of the template to manage localised contents for.  Options are `email_verification_admin`, `email_verification_user`, `general`, `transaction`, `verification_code_template`, `recovery_code_template`, `device_pairing`, `strong_authentication`.",
+				Description:      "The ID of the template to manage localised contents for.  Options are `email_verification_admin`, `email_verification_user`, `general`, `transaction`, `verification_code_template`, `recovery_code_template`, `device_pairing`, `strong_authentication`, `email_phone_verification`, `id_verification`, `credential_issued`, `credential_updated`, `digital_wallet_pairing`, `credential_revoked`.",
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"email_verification_admin", "email_verification_user", "general", "transaction", "verification_code_template", "recovery_code_template", "device_pairing", "strong_authentication"}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"email_verification_admin", "email_verification_user", "general", "transaction", "verification_code_template", "recovery_code_template", "device_pairing", "strong_authentication", "email_phone_verification", "id_verification", "credential_issued", "credential_updated", "digital_wallet_pairing", "credential_revoked"}, false)),
 				ForceNew:         true,
 			},
 			"locale": {
