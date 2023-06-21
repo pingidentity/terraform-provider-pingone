@@ -205,6 +205,25 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		fmt.Sprintf("A string that specifies the authentication token to use for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER),
 	)
 
+	providerCustomNumbersCapabilitiesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A collection of the types of phone delivery service capabilities.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapabilityEnumValues)
+
+	providerCustomNumbersSupportedCountriesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.\n" +
+			"    - `SHORT_CODE`: A collection containing a single 2-character ISO country code, for example, `US`, `GB`, `CA`.\n" +
+			"    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.\n" +
+			"    For other custom provider types, if this attribute is null (empty is not supported), the specified short code `number` can only be used to dispatch notifications to United States recipient numbers.\n" +
+			"    - `TOLL_FREE`: A collection of valid 2-character country ISO codes, for example, `US`, `GB`, `CA`.\n" +
+			"    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.\n" +
+			"    For other custom provider types, if this attribute is null (empty is not supported), the specified toll-free `number` can only be used to dispatch notifications to United States recipient numbers.\n" +
+			"    - `PHONE_NUMBER`: this attribute cannot be specified.",
+	)
+
+	providerCustomNumbersTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of phone number.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersTypeEnumValues)
+
 	providerCustomRequestsAfterTagDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"For voice OTP notifications only.  A string that specifies a closing tag which is commonly used by custom providers for defining a pause between each number in the OTP number string.  Example value: `</Say> <Pause length=\"1\"/>`",
 	)
@@ -364,7 +383,99 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 						},
 					},
 
-					"numbers": phoneDeliverySettingsNumberSchema(),
+					"numbers": schema.SetNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the numbers to use for phone delivery.").Description,
+						Optional:    true,
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"available": schema.BoolAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Optional:    true,
+									Computed:    true,
+
+									Default: booldefault.StaticBool(false),
+								},
+
+								"capabilities": schema.SetAttribute{
+									Description:         providerCustomNumbersCapabilitiesDescription.Description,
+									MarkdownDescription: providerCustomNumbersCapabilitiesDescription.MarkdownDescription,
+									Required:            true,
+
+									ElementType: types.StringType,
+
+									Validators: []validator.Set{
+										setvalidator.ValueStringsAre(
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapabilityEnumValues)...),
+										),
+										setvalidator.SizeAtLeast(attrMinLength),
+									},
+								},
+
+								"number": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the phone number, toll-free number or short code.").Description,
+									Required:    true,
+								},
+
+								"selected": schema.BoolAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Optional:    true,
+									Computed:    true,
+
+									Default: booldefault.StaticBool(false),
+								},
+
+								"supported_countries": schema.SetAttribute{
+									Description:         providerCustomNumbersSupportedCountriesDescription.Description,
+									MarkdownDescription: providerCustomNumbersSupportedCountriesDescription.MarkdownDescription,
+									Optional:            true,
+
+									ElementType: types.StringType,
+
+									Validators: []validator.Set{
+										setvalidator.Any(
+											// Can be set if `type` is `SHORT_CODE` or `TOLL_FREE`, must also be at least one in size and be a 2 letter country code
+											setvalidator.All(
+												setvalidator.All(
+													setvalidator.Any(
+														setvalidatorinternal.IsRequiredIfMatchesPathValue(
+															types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_SHORT_CODE)),
+															path.MatchRelative().AtParent().AtName("type"),
+														),
+														setvalidator.SizeAtMost(attrMinLength),
+													),
+													setvalidatorinternal.IsRequiredIfMatchesPathValue(
+														types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_TOLL_FREE)),
+														path.MatchRelative().AtParent().AtName("type"),
+													),
+												),
+												setvalidator.ValueStringsAre(
+													stringvalidator.RegexMatches(verify.IsTwoCharCountryCode, "must be a valid two character country code"),
+												),
+												setvalidator.SizeAtLeast(attrMinLength),
+											),
+
+											// Cannot be set if `type` is `PHONE_NUMBER`
+											setvalidatorinternal.ConflictsIfMatchesPathValue(
+												types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_PHONE_NUMBER)),
+												path.MatchRelative().AtParent().AtName("type"),
+											),
+										),
+									},
+								},
+
+								"type": schema.StringAttribute{
+									Description:         providerCustomNumbersTypeDescription.Description,
+									MarkdownDescription: providerCustomNumbersTypeDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersTypeEnumValues)...),
+									},
+								},
+							},
+						},
+					},
 
 					"requests": schema.SetNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the outbound custom notification requests.").Description,
@@ -524,7 +635,51 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 						},
 					},
 
-					"numbers": phoneDeliverySettingsNumberSchema(),
+					"numbers": schema.SetNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the numbers to use for phone delivery.").Description,
+						Computed:    true,
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"available": schema.BoolAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Computed:    true,
+								},
+
+								"capabilities": schema.SetAttribute{
+									Description:         providerCustomNumbersCapabilitiesDescription.Description,
+									MarkdownDescription: providerCustomNumbersCapabilitiesDescription.MarkdownDescription,
+									Computed:            true,
+
+									ElementType: types.StringType,
+								},
+
+								"number": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the phone number, toll-free number or short code.").Description,
+									Computed:    true,
+								},
+
+								"selected": schema.BoolAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Computed:    true,
+								},
+
+								"supported_countries": schema.SetAttribute{
+									Description:         providerCustomNumbersSupportedCountriesDescription.Description,
+									MarkdownDescription: providerCustomNumbersSupportedCountriesDescription.MarkdownDescription,
+									Computed:            true,
+
+									ElementType: types.StringType,
+								},
+
+								"type": schema.StringAttribute{
+									Description:         providerCustomNumbersTypeDescription.Description,
+									MarkdownDescription: providerCustomNumbersTypeDescription.MarkdownDescription,
+									Computed:            true,
+								},
+							},
+						},
+					},
 				},
 
 				Validators: []validator.Object{
@@ -553,7 +708,51 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 						},
 					},
 
-					"numbers": phoneDeliverySettingsNumberSchema(),
+					"numbers": schema.SetNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the numbers to use for phone delivery.").Description,
+						Computed:    true,
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"available": schema.BoolAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Computed:    true,
+								},
+
+								"capabilities": schema.SetAttribute{
+									Description:         providerCustomNumbersCapabilitiesDescription.Description,
+									MarkdownDescription: providerCustomNumbersCapabilitiesDescription.MarkdownDescription,
+									Computed:            true,
+
+									ElementType: types.StringType,
+								},
+
+								"number": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the phone number, toll-free number or short code.").Description,
+									Computed:    true,
+								},
+
+								"selected": schema.BoolAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Computed:    true,
+								},
+
+								"supported_countries": schema.SetAttribute{
+									Description:         providerCustomNumbersSupportedCountriesDescription.Description,
+									MarkdownDescription: providerCustomNumbersSupportedCountriesDescription.MarkdownDescription,
+									Computed:            true,
+
+									ElementType: types.StringType,
+								},
+
+								"type": schema.StringAttribute{
+									Description:         providerCustomNumbersTypeDescription.Description,
+									MarkdownDescription: providerCustomNumbersTypeDescription.MarkdownDescription,
+									Computed:            true,
+								},
+							},
+						},
+					},
 				},
 
 				Validators: []validator.Object{
@@ -573,124 +772,6 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 			"updated_at": schema.StringAttribute{
 				Description: "A string that specifies the time the resource was last updated.",
 				Computed:    true,
-			},
-		},
-	}
-}
-
-func phoneDeliverySettingsNumberSchema() schema.SetNestedAttribute {
-
-	const attrMinLength = 1
-
-	providerCustomNumbersCapabilitiesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A collection of the types of phone delivery service capabilities.",
-	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapabilityEnumValues)
-
-	providerCustomNumbersSupportedCountriesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.\n" +
-			"    - `SHORT_CODE`: A collection containing a single 2-character ISO country code, for example, `US`, `GB`, `CA`.\n" +
-			"    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.\n" +
-			"    For other custom provider types, if this attribute is null (empty is not supported), the specified short code `number` can only be used to dispatch notifications to United States recipient numbers.\n" +
-			"    - `TOLL_FREE`: A collection of valid 2-character country ISO codes, for example, `US`, `GB`, `CA`.\n" +
-			"    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.\n" +
-			"    For other custom provider types, if this attribute is null (empty is not supported), the specified toll-free `number` can only be used to dispatch notifications to United States recipient numbers.\n" +
-			"    - `PHONE_NUMBER`: this attribute cannot be specified.",
-	)
-
-	providerCustomNumbersTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the type of phone number.",
-	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersTypeEnumValues)
-
-	return schema.SetNestedAttribute{
-		Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the numbers to use for phone delivery.").Description,
-		Optional:    true,
-
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"available": schema.BoolAttribute{
-					Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
-					Optional:    true,
-					Computed:    true,
-
-					Default: booldefault.StaticBool(false),
-				},
-
-				"capabilities": schema.SetAttribute{
-					Description:         providerCustomNumbersCapabilitiesDescription.Description,
-					MarkdownDescription: providerCustomNumbersCapabilitiesDescription.MarkdownDescription,
-					Required:            true,
-
-					ElementType: types.StringType,
-
-					Validators: []validator.Set{
-						setvalidator.ValueStringsAre(
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapabilityEnumValues)...),
-						),
-						setvalidator.SizeAtLeast(attrMinLength),
-					},
-				},
-
-				"number": schema.StringAttribute{
-					Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the phone number, toll-free number or short code.").Description,
-					Required:    true,
-				},
-
-				"selected": schema.BoolAttribute{
-					Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
-					Optional:    true,
-					Computed:    true,
-
-					Default: booldefault.StaticBool(false),
-				},
-
-				"supported_countries": schema.SetAttribute{
-					Description:         providerCustomNumbersSupportedCountriesDescription.Description,
-					MarkdownDescription: providerCustomNumbersSupportedCountriesDescription.MarkdownDescription,
-					Optional:            true,
-
-					ElementType: types.StringType,
-
-					Validators: []validator.Set{
-						setvalidator.Any(
-							// Can be set if `type` is `SHORT_CODE` or `TOLL_FREE`, must also be at least one in size and be a 2 letter country code
-							setvalidator.All(
-								setvalidator.All(
-									setvalidator.Any(
-										setvalidatorinternal.IsRequiredIfMatchesPathValue(
-											types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_SHORT_CODE)),
-											path.MatchRelative().AtParent().AtName("type"),
-										),
-										setvalidator.SizeAtMost(attrMinLength),
-									),
-									setvalidatorinternal.IsRequiredIfMatchesPathValue(
-										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_TOLL_FREE)),
-										path.MatchRelative().AtParent().AtName("type"),
-									),
-								),
-								setvalidator.ValueStringsAre(
-									stringvalidator.RegexMatches(verify.IsTwoCharCountryCode, "must be a valid two character country code"),
-								),
-								setvalidator.SizeAtLeast(attrMinLength),
-							),
-
-							// Cannot be set if `type` is `PHONE_NUMBER`
-							setvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_PHONE_NUMBER)),
-								path.MatchRelative().AtParent().AtName("type"),
-							),
-						),
-					},
-				},
-
-				"type": schema.StringAttribute{
-					Description:         providerCustomNumbersTypeDescription.Description,
-					MarkdownDescription: providerCustomNumbersTypeDescription.MarkdownDescription,
-					Required:            true,
-
-					Validators: []validator.String{
-						stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersTypeEnumValues)...),
-					},
-				},
 			},
 		},
 	}
@@ -761,7 +842,7 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 			return r.client.PhoneDeliverySettingsApi.CreatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
 		},
 		"CreatePhoneDeliverySettings",
-		framework.DefaultCustomError,
+		phoneDeliverySettingsCreateUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(d...)
@@ -859,7 +940,7 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 			return r.client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
 		},
 		"UpdatePhoneDeliverySettings",
-		framework.DefaultCustomError,
+		phoneDeliverySettingsCreateUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
 	)
 	resp.Diagnostics.Append(d...)
@@ -927,6 +1008,24 @@ func (r *PhoneDeliverySettingsResource) ImportState(ctx context.Context, req res
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+}
+
+func phoneDeliverySettingsCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Invalid composition
+	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+		if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
+			diags.AddError(
+				"Authentication error",
+				fmt.Sprintf("%s. Please check the credentials used to connect to Twilio/Syniverse and retry.", details[0].GetMessage()),
+			)
+
+			return diags
+		}
+	}
+
+	return nil
 }
 
 func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*management.NotificationsSettingsPhoneDeliverySettings, diag.Diagnostics) {
@@ -1208,23 +1307,53 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 
 	var d diag.Diagnostics
 
-	var providerPlan PhoneDeliverySettingsProviderCustomResourceModel
-	diags.Append(p.ProviderCustom.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if diags.HasError() {
-		return diags
+	if p.ProviderType.Equal(types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_PROVIDER))) {
+		var providerPlan PhoneDeliverySettingsProviderCustomResourceModel
+		diags.Append(p.ProviderCustom.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return diags
+		}
+
+		p.ProviderCustom, d = p.toStatePhoneDeliverySettingsProviderCustom(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsCustom)
+		diags.Append(d...)
+	} else {
+		p.ProviderCustom = types.ObjectNull(customTFObjectTypes)
 	}
 
-	p.ProviderCustom, d = p.toStatePhoneDeliverySettingsProviderCustom(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsCustom)
-	diags.Append(d...)
+	if p.ProviderType.Equal(types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_TWILIO))) {
+		var providerPlan PhoneDeliverySettingsProviderCustomTwilioResourceModel
+		diags.Append(p.ProviderCustomTwilio.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return diags
+		}
 
-	p.ProviderCustomTwilio, d = p.toStatePhoneDeliverySettingsProviderCustomTwilio(apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
-	diags.Append(d...)
+		p.ProviderCustomTwilio, d = p.toStatePhoneDeliverySettingsProviderCustomTwilio(providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
+		diags.Append(d...)
+	} else {
+		p.ProviderCustomTwilio = types.ObjectNull(twilioTFObjectTypes)
+	}
 
-	p.ProviderCustomSyniverse, d = p.toStatePhoneDeliverySettingsProviderCustomSyniverse(apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
-	diags.Append(d...)
+	if p.ProviderType.Equal(types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_SYNIVERSE))) {
+		var providerPlan PhoneDeliverySettingsProviderCustomSyniverseResourceModel
+		diags.Append(p.ProviderCustomSyniverse.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return diags
+		}
+
+		p.ProviderCustomSyniverse, d = p.toStatePhoneDeliverySettingsProviderCustomSyniverse(providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
+		diags.Append(d...)
+	} else {
+		p.ProviderCustomSyniverse = types.ObjectNull(syniverseTFObjectTypes)
+	}
 
 	return diags
 }
@@ -1362,7 +1491,7 @@ func phoneDeliverySettingsCustomRequestsOkToTF(apiObject []management.Notificati
 	return returnVar, diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomTwilio(apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomTwilio(planData PhoneDeliverySettingsProviderCustomTwilioResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1371,7 +1500,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 
 	objMap := map[string]attr.Value{
 		"sid":        framework.StringOkToTF(apiObject.GetSidOk()),
-		"auth_token": framework.StringOkToTF(apiObject.GetAuthTokenOk()),
+		"auth_token": planData.AuthToken,
 	}
 
 	var d diag.Diagnostics
@@ -1385,7 +1514,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	return objValue, diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomSyniverse(apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomSyniverse(planData PhoneDeliverySettingsProviderCustomSyniverseResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1393,7 +1522,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	}
 
 	objMap := map[string]attr.Value{
-		"auth_token": framework.StringOkToTF(apiObject.GetAuthTokenOk()),
+		"auth_token": planData.AuthToken,
 	}
 
 	var d diag.Diagnostics

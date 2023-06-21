@@ -151,14 +151,14 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 			// Errors
 			{
 				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, "unknownsid", twilioAuthToken, number),
-				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
+				ExpectError: regexp.MustCompile(`Authentication error`),
 			},
 			{
 				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, "unknownauthtoken", number),
-				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
+				ExpectError: regexp.MustCompile(`Authentication error`),
 			},
 			{
-				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio_NoNumber(environmentName, licenseID, resourceName, twilioSID, "unknownauthtoken"),
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_Twilio_NoNumber(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken),
 				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
 			},
 		},
@@ -176,6 +176,7 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	syniverseAuthToken := os.Getenv("PINGONE_SYNIVERSE_AUTH_TOKEN")
+	number := os.Getenv("PINGONE_SYNIVERSE_NUMBER")
 
 	check := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
@@ -195,16 +196,20 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken, number),
 				Check:  check,
 			},
 			{
-				Config:  testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken),
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken, number),
 				Destroy: true,
 			},
 			// Errors
 			{
-				Config:      testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, "unknownauthtoken"),
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, "unknownauthtoken", number),
+				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
+			},
+			{
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_Syniverse_NoNumber(environmentName, licenseID, resourceName, syniverseAuthToken),
 				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
 			},
 		},
@@ -421,15 +426,11 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
     sid        = "%[4]s"
     auth_token = "%[5]s"
 
-	numbers = [
-      {
-        available           = "true"
-        capabilities        = ["VOICE", "SMS"]
-        number              = "%[6]s"
-        selected            = "true"
-        type                = "PHONE_NUMBER"
-      }
-	]
+    // number_configuration = [
+	// 	{
+    // 		number       = "%[6]s"
+    // 	}
+	// ]
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, twilioSID, twilioAuthToken, number)
 }
@@ -448,7 +449,30 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, twilioSID, twilioAuthToken)
 }
 
-func testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken string) string {
+func testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken, number string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  provider_custom_syniverse = {
+    auth_token = "%[4]s"
+
+	numbers = [
+      {
+        available    = "true"
+        capabilities = ["VOICE", "SMS"]
+        number       = "%[5]s"
+        selected     = "true"
+        type         = "PHONE_NUMBER"
+      }
+    ]
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, syniverseAuthToken, number)
+}
+
+func testAccPhoneDeliverySettingsConfig_Custom_Syniverse_NoNumber(environmentName, licenseID, resourceName, syniverseAuthToken string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -512,8 +536,8 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
         })
         delivery_method = "SMS"
         headers = {
-			"content-type" = "application/json",
-          testheader = "testvalue1",
+          "content-type" = "application/json",
+          testheader     = "testvalue1",
         }
         method              = "POST"
         phone_number_format = "FULL"
@@ -553,7 +577,7 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
         before_tag      = "<Say>"
         delivery_method = "VOICE"
         headers = {
-          testheader     = "testvalue4",
+          testheader = "testvalue4",
         }
         method              = "GET"
         phone_number_format = "NUMBER_ONLY"

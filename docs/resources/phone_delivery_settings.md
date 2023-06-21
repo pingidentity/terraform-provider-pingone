@@ -178,6 +178,30 @@ Required:
 
 - `auth_token` (String, Sensitive) The secret key of the Syniverse account.  This field is immutable and will trigger a replace plan if changed.
 
+Read-Only:
+
+- `numbers` (Attributes Set) One or more objects that describe the numbers to use for phone delivery. (see [below for nested schema](#nestedatt--provider_custom_syniverse--numbers))
+
+<a id="nestedatt--provider_custom_syniverse--numbers"></a>
+### Nested Schema for `provider_custom_syniverse.numbers`
+
+Read-Only:
+
+- `available` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `capabilities` (Set of String) A collection of the types of phone delivery service capabilities.  Options are `SMS`, `VOICE`.
+- `number` (String) A string that specifies the phone number, toll-free number or short code.
+- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
+    - `SHORT_CODE`: A collection containing a single 2-character ISO country code, for example, `US`, `GB`, `CA`.
+    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
+    For other custom provider types, if this attribute is null (empty is not supported), the specified short code `number` can only be used to dispatch notifications to United States recipient numbers.
+    - `TOLL_FREE`: A collection of valid 2-character country ISO codes, for example, `US`, `GB`, `CA`.
+    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
+    For other custom provider types, if this attribute is null (empty is not supported), the specified toll-free `number` can only be used to dispatch notifications to United States recipient numbers.
+    - `PHONE_NUMBER`: this attribute cannot be specified.
+- `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
+
+
 
 <a id="nestedatt--provider_custom_twilio"></a>
 ### Nested Schema for `provider_custom_twilio`
@@ -186,6 +210,29 @@ Required:
 
 - `auth_token` (String, Sensitive) The secret key of the Twilio account.  This field is immutable and will trigger a replace plan if changed.
 - `sid` (String) The public ID of the Twilio account.  This field is immutable and will trigger a replace plan if changed.
+
+Read-Only:
+
+- `numbers` (Attributes Set) One or more objects that describe the numbers to use for phone delivery. (see [below for nested schema](#nestedatt--provider_custom_twilio--numbers))
+
+<a id="nestedatt--provider_custom_twilio--numbers"></a>
+### Nested Schema for `provider_custom_twilio.numbers`
+
+Read-Only:
+
+- `available` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `capabilities` (Set of String) A collection of the types of phone delivery service capabilities.  Options are `SMS`, `VOICE`.
+- `number` (String) A string that specifies the phone number, toll-free number or short code.
+- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
+    - `SHORT_CODE`: A collection containing a single 2-character ISO country code, for example, `US`, `GB`, `CA`.
+    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
+    For other custom provider types, if this attribute is null (empty is not supported), the specified short code `number` can only be used to dispatch notifications to United States recipient numbers.
+    - `TOLL_FREE`: A collection of valid 2-character country ISO codes, for example, `US`, `GB`, `CA`.
+    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
+    For other custom provider types, if this attribute is null (empty is not supported), the specified toll-free `number` can only be used to dispatch notifications to United States recipient numbers.
+    - `PHONE_NUMBER`: this attribute cannot be specified.
+- `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
 
 ## Import
 
