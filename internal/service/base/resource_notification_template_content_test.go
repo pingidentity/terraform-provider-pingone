@@ -310,7 +310,7 @@ func TestAccNotificationTemplateContent_InvalidData(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name.Invalid, locale.Valid),
-				ExpectError: regexp.MustCompile(`expected template_name to be one of \[email_verification_admin email_verification_user general transaction verification_code_template recovery_code_template device_pairing strong_authentication\], got strong_authentication_doesnotexist`),
+				ExpectError: regexp.MustCompile(`expected template_name to be one of \[email_verification_admin email_verification_user general transaction verification_code_template recovery_code_template device_pairing strong_authentication email_phone_verification id_verification credential_issued credential_updated digital_wallet_pairing credential_revoked\], got strong_authentication_doesnotexist`),
 			},
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name.Valid, locale.Invalid),
