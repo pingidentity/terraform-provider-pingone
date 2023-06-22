@@ -1,5 +1,9 @@
 ## 0.17.0 (Unreleased)
 
+ENHANCEMENTS:
+
+* `resource/pingone_notification_template_content`: Add support for P1Verify and P1Credentials notification templates: `email_phone_verification`, `id_verification`, `credential_issued`, `credential_updated`, `digital_wallet_pairing`, `credential_revoked`. ([#428](https://github.com/pingidentity/terraform-provider-pingone/issues/428))
+
 ## 0.16.0 (19 June 2023)
 
 NOTES:
