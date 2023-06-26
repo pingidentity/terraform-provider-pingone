@@ -1,4 +1,8 @@
 ```release-note:new-resource
+pingone_notification_settings
+```
+
+```release-note:new-resource
 pingone_phone_delivery_settings
 ```
 

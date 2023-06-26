@@ -102,6 +102,32 @@ func StringSetToTF(v []string) basetypes.SetValue {
 	}
 }
 
+func StringListOkToTF(v []string, ok bool) basetypes.ListValue {
+	if !ok || v == nil {
+		return types.ListNull(types.StringType)
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, StringToTF(item))
+		}
+
+		return types.ListValueMust(types.StringType, list)
+	}
+}
+
+func StringListToTF(v []string) basetypes.ListValue {
+	if v == nil {
+		return types.ListNull(types.StringType)
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, StringToTF(item))
+		}
+
+		return types.ListValueMust(types.StringType, list)
+	}
+}
+
 func StringMapOkToTF(v *map[string]string, ok bool) basetypes.MapValue {
 	if !ok || v == nil {
 		return types.MapNull(types.StringType)
