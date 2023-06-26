@@ -12,21 +12,39 @@ Resource to create and manage SMS/voice delivery settings in a PingOne environme
 ## Example Usage - Custom Twilio
 
 ```terraform
-resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
+resource "pingone_phone_delivery_settings" "my_awesome_custom_twilio_provider" {
   environment_id = pingone_environment.my_environment.id
 
-  auth_token = var.twilio_auth_token
-  sid        = var.twilio_sid
+  provider_custom_twilio = {
+    auth_token = var.twilio_auth_token
+    sid        = var.twilio_sid
+
+    selected_numbers = [
+      {
+        number = var.my_twilio_number
+        type   = "PHONE_NUMBER"
+      }
+    ]
+  }
 }
 ```
 
 ## Example Usage - Custom Syniverse
 
 ```terraform
-resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
+resource "pingone_phone_delivery_settings" "my_awesome_custom_syniverse_provider" {
   environment_id = pingone_environment.my_environment.id
 
-  auth_token = var.syniverse_auth_token
+  provider_custom_syniverse = {
+    auth_token = var.syniverse_auth_token
+
+    selected_numbers = [
+      {
+        number = var.my_syniverse_number
+        type   = "PHONE_NUMBER"
+      }
+    ]
+  }
 }
 ```
 
@@ -177,13 +195,38 @@ Optional:
 Required:
 
 - `auth_token` (String, Sensitive) The secret key of the Syniverse account.  This field is immutable and will trigger a replace plan if changed.
+- `selected_numbers` (Attributes Set) One or more objects that describe the numbers to use for phone delivery. (see [below for nested schema](#nestedatt--provider_custom_syniverse--selected_numbers))
 
 Read-Only:
 
-- `numbers` (Attributes Set) One or more objects that describe the numbers to use for phone delivery. (see [below for nested schema](#nestedatt--provider_custom_syniverse--numbers))
+- `service_numbers` (Attributes Set) One or more objects that describe the numbers that are defined in the Twilio service. (see [below for nested schema](#nestedatt--provider_custom_syniverse--service_numbers))
 
-<a id="nestedatt--provider_custom_syniverse--numbers"></a>
-### Nested Schema for `provider_custom_syniverse.numbers`
+<a id="nestedatt--provider_custom_syniverse--selected_numbers"></a>
+### Nested Schema for `provider_custom_syniverse.selected_numbers`
+
+Required:
+
+- `number` (String) A string that specifies the phone number, toll-free number or short code that has been configured in Twilio.
+
+Optional:
+
+- `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
+    - `SHORT_CODE`: A collection containing a single 2-character ISO country code, for example, `US`, `GB`, `CA`.
+    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
+    For other custom provider types, if this attribute is null (empty is not supported), the specified short code `number` can only be used to dispatch notifications to United States recipient numbers.
+    - `TOLL_FREE`: A collection of valid 2-character country ISO codes, for example, `US`, `GB`, `CA`.
+    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
+    For other custom provider types, if this attribute is null (empty is not supported), the specified toll-free `number` can only be used to dispatch notifications to United States recipient numbers.
+    - `PHONE_NUMBER`: this attribute cannot be specified.
+
+Read-Only:
+
+- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
+
+
+<a id="nestedatt--provider_custom_syniverse--service_numbers"></a>
+### Nested Schema for `provider_custom_syniverse.service_numbers`
 
 Read-Only:
 
@@ -209,14 +252,39 @@ Read-Only:
 Required:
 
 - `auth_token` (String, Sensitive) The secret key of the Twilio account.  This field is immutable and will trigger a replace plan if changed.
+- `selected_numbers` (Attributes Set) One or more objects that describe the numbers to use for phone delivery. (see [below for nested schema](#nestedatt--provider_custom_twilio--selected_numbers))
 - `sid` (String) The public ID of the Twilio account.  This field is immutable and will trigger a replace plan if changed.
 
 Read-Only:
 
-- `numbers` (Attributes Set) One or more objects that describe the numbers to use for phone delivery. (see [below for nested schema](#nestedatt--provider_custom_twilio--numbers))
+- `service_numbers` (Attributes Set) One or more objects that describe the numbers to use for phone delivery. (see [below for nested schema](#nestedatt--provider_custom_twilio--service_numbers))
 
-<a id="nestedatt--provider_custom_twilio--numbers"></a>
-### Nested Schema for `provider_custom_twilio.numbers`
+<a id="nestedatt--provider_custom_twilio--selected_numbers"></a>
+### Nested Schema for `provider_custom_twilio.selected_numbers`
+
+Required:
+
+- `number` (String) A string that specifies the phone number, toll-free number or short code that has been configured in Twilio.
+- `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
+
+Optional:
+
+- `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
+    - `SHORT_CODE`: A collection containing a single 2-character ISO country code, for example, `US`, `GB`, `CA`.
+    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
+    For other custom provider types, if this attribute is null (empty is not supported), the specified short code `number` can only be used to dispatch notifications to United States recipient numbers.
+    - `TOLL_FREE`: A collection of valid 2-character country ISO codes, for example, `US`, `GB`, `CA`.
+    If the custom provider is of `type` `CUSTOM_PROVIDER`, this attribute must not be empty or null.
+    For other custom provider types, if this attribute is null (empty is not supported), the specified toll-free `number` can only be used to dispatch notifications to United States recipient numbers.
+    - `PHONE_NUMBER`: this attribute cannot be specified.
+
+Read-Only:
+
+- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+
+
+<a id="nestedatt--provider_custom_twilio--service_numbers"></a>
+### Nested Schema for `provider_custom_twilio.service_numbers`
 
 Read-Only:
 

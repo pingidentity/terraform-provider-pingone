@@ -30,6 +30,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"golang.org/x/exp/slices"
 )
 
 // Types
@@ -72,6 +73,13 @@ type PhoneDeliverySettingsProviderCustomNumbersResourceModel struct {
 	Capabilities       types.Set    `tfsdk:"capabilities"`
 }
 
+type PhoneDeliverySettingsProviderCustomSelectedNumbersResourceModel struct {
+	SupportedCountries types.Set    `tfsdk:"supported_countries"`
+	Type               types.String `tfsdk:"type"`
+	Selected           types.Bool   `tfsdk:"selected"`
+	Number             types.String `tfsdk:"number"`
+}
+
 type PhoneDeliverySettingsProviderCustomRequestsResourceModel struct {
 	DeliveryMethod    types.String `tfsdk:"delivery_method"`
 	Url               types.String `tfsdk:"url"`
@@ -84,14 +92,16 @@ type PhoneDeliverySettingsProviderCustomRequestsResourceModel struct {
 }
 
 type PhoneDeliverySettingsProviderCustomTwilioResourceModel struct {
-	Sid       types.String `tfsdk:"sid"`
-	AuthToken types.String `tfsdk:"auth_token"`
-	Numbers   types.Set    `tfsdk:"numbers"`
+	Sid             types.String `tfsdk:"sid"`
+	AuthToken       types.String `tfsdk:"auth_token"`
+	SelectedNumbers types.Set    `tfsdk:"selected_numbers"`
+	ServiceNumbers  types.Set    `tfsdk:"service_numbers"`
 }
 
 type PhoneDeliverySettingsProviderCustomSyniverseResourceModel struct {
-	AuthToken types.String `tfsdk:"auth_token"`
-	Numbers   types.Set    `tfsdk:"numbers"`
+	AuthToken       types.String `tfsdk:"auth_token"`
+	SelectedNumbers types.Set    `tfsdk:"selected_numbers"`
+	ServiceNumbers  types.Set    `tfsdk:"service_numbers"`
 }
 
 var (
@@ -138,16 +148,29 @@ var (
 	twilioTFObjectTypes = map[string]attr.Type{
 		"auth_token": types.StringType,
 		"sid":        types.StringType,
-		"numbers": types.SetType{ElemType: types.ObjectType{
+		"selected_numbers": types.SetType{ElemType: types.ObjectType{
+			AttrTypes: customSelectedNumbersTFObjectTypes,
+		}},
+		"service_numbers": types.SetType{ElemType: types.ObjectType{
 			AttrTypes: customNumbersTFObjectTypes,
 		}},
 	}
 
 	syniverseTFObjectTypes = map[string]attr.Type{
 		"auth_token": types.StringType,
-		"numbers": types.SetType{ElemType: types.ObjectType{
+		"selected_numbers": types.SetType{ElemType: types.ObjectType{
+			AttrTypes: customSelectedNumbersTFObjectTypes,
+		}},
+		"service_numbers": types.SetType{ElemType: types.ObjectType{
 			AttrTypes: customNumbersTFObjectTypes,
 		}},
+	}
+
+	customSelectedNumbersTFObjectTypes = map[string]attr.Type{
+		"number":              types.StringType,
+		"selected":            types.BoolType,
+		"supported_countries": types.SetType{ElemType: types.StringType},
+		"type":                types.StringType,
 	}
 )
 
@@ -312,6 +335,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 				Description:         providerTypeDescription.Description,
 				MarkdownDescription: providerTypeDescription.MarkdownDescription,
 				Computed:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"provider_custom": schema.SingleNestedAttribute{
@@ -635,7 +662,77 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 						},
 					},
 
-					"numbers": schema.SetNestedAttribute{
+					"selected_numbers": schema.SetNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the numbers to use for phone delivery.").Description,
+						Required:    true,
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"number": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the phone number, toll-free number or short code that has been configured in Twilio.").Description,
+									Required:    true,
+								},
+
+								"selected": schema.BoolAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Computed:    true,
+
+									Default: booldefault.StaticBool(true),
+								},
+
+								"supported_countries": schema.SetAttribute{
+									Description:         providerCustomNumbersSupportedCountriesDescription.Description,
+									MarkdownDescription: providerCustomNumbersSupportedCountriesDescription.MarkdownDescription,
+									Optional:            true,
+
+									ElementType: types.StringType,
+
+									Validators: []validator.Set{
+										setvalidator.Any(
+											// Can be set if `type` is `SHORT_CODE` or `TOLL_FREE`, must also be at least one in size and be a 2 letter country code
+											setvalidator.All(
+												setvalidator.All(
+													setvalidator.Any(
+														setvalidatorinternal.IsRequiredIfMatchesPathValue(
+															types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_SHORT_CODE)),
+															path.MatchRelative().AtParent().AtName("type"),
+														),
+														setvalidator.SizeAtMost(attrMinLength),
+													),
+													setvalidatorinternal.IsRequiredIfMatchesPathValue(
+														types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_TOLL_FREE)),
+														path.MatchRelative().AtParent().AtName("type"),
+													),
+												),
+												setvalidator.ValueStringsAre(
+													stringvalidator.RegexMatches(verify.IsTwoCharCountryCode, "must be a valid two character country code"),
+												),
+												setvalidator.SizeAtLeast(attrMinLength),
+											),
+
+											// Cannot be set if `type` is `PHONE_NUMBER`
+											setvalidatorinternal.ConflictsIfMatchesPathValue(
+												types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_PHONE_NUMBER)),
+												path.MatchRelative().AtParent().AtName("type"),
+											),
+										),
+									},
+								},
+
+								"type": schema.StringAttribute{
+									Description:         providerCustomNumbersTypeDescription.Description,
+									MarkdownDescription: providerCustomNumbersTypeDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersTypeEnumValues)...),
+									},
+								},
+							},
+						},
+					},
+
+					"service_numbers": schema.SetNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the numbers to use for phone delivery.").Description,
 						Computed:    true,
 
@@ -662,6 +759,8 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								"selected": schema.BoolAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
 									Computed:    true,
+
+									Default: booldefault.StaticBool(true),
 								},
 
 								"supported_countries": schema.SetAttribute{
@@ -708,8 +807,72 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 						},
 					},
 
-					"numbers": schema.SetNestedAttribute{
+					"selected_numbers": schema.SetNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the numbers to use for phone delivery.").Description,
+						Required:    true,
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"number": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the phone number, toll-free number or short code that has been configured in Twilio.").Description,
+									Required:    true,
+								},
+
+								"selected": schema.BoolAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Computed:    true,
+								},
+
+								"supported_countries": schema.SetAttribute{
+									Description:         providerCustomNumbersSupportedCountriesDescription.Description,
+									MarkdownDescription: providerCustomNumbersSupportedCountriesDescription.MarkdownDescription,
+									Optional:            true,
+
+									ElementType: types.StringType,
+
+									Validators: []validator.Set{
+										setvalidator.Any(
+											// Can be set if `type` is `SHORT_CODE` or `TOLL_FREE`, must also be at least one in size and be a 2 letter country code
+											setvalidator.All(
+												setvalidator.All(
+													setvalidator.Any(
+														setvalidatorinternal.IsRequiredIfMatchesPathValue(
+															types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_SHORT_CODE)),
+															path.MatchRelative().AtParent().AtName("type"),
+														),
+														setvalidator.SizeAtMost(attrMinLength),
+													),
+													setvalidatorinternal.IsRequiredIfMatchesPathValue(
+														types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_TOLL_FREE)),
+														path.MatchRelative().AtParent().AtName("type"),
+													),
+												),
+												setvalidator.ValueStringsAre(
+													stringvalidator.RegexMatches(verify.IsTwoCharCountryCode, "must be a valid two character country code"),
+												),
+												setvalidator.SizeAtLeast(attrMinLength),
+											),
+
+											// Cannot be set if `type` is `PHONE_NUMBER`
+											setvalidatorinternal.ConflictsIfMatchesPathValue(
+												types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMNUMBERSTYPE_PHONE_NUMBER)),
+												path.MatchRelative().AtParent().AtName("type"),
+											),
+										),
+									},
+								},
+
+								"type": schema.StringAttribute{
+									Description:         providerCustomNumbersTypeDescription.Description,
+									MarkdownDescription: providerCustomNumbersTypeDescription.MarkdownDescription,
+									Computed:            true,
+								},
+							},
+						},
+					},
+
+					"service_numbers": schema.SetNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("One or more objects that describe the numbers that are defined in the Twilio service.").Description,
 						Computed:    true,
 
 						NestedObject: schema.NestedAttributeObject{
@@ -767,6 +930,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 			"created_at": schema.StringAttribute{
 				Description: "A string that specifies the time the resource was created.",
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"updated_at": schema.StringAttribute{
@@ -828,14 +995,14 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 	}
 
 	// Build the model for the API
-	phoneDeliverySettings, d := plan.expand(ctx)
+	phoneDeliverySettings, d := plan.expand(ctx, nil)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	createResponse, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
@@ -848,6 +1015,43 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// If twilio or syniverse, then a numbers set will be returned from the services API calls.  We need to merge with configured numbers set.
+	var response interface{}
+
+	if !plan.ProviderCustomTwilio.IsNull() && !plan.ProviderCustomTwilio.IsUnknown() ||
+		!plan.ProviderCustomSyniverse.IsNull() && !plan.ProviderCustomSyniverse.IsUnknown() {
+
+		phoneDeliverySettingsId, numbers, d := parsePhoneDeliverySettingsNumbers(createResponse.(*management.NotificationsSettingsPhoneDeliverySettings))
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		phoneDeliverySettingsUpdate, d := plan.expand(ctx, numbers)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		response, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettingsUpdate).Execute()
+			},
+			"UpdatePhoneDeliverySettings",
+			phoneDeliverySettingsCreateUpdateCustomErrorHandler,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+	} else {
+		response = createResponse
 	}
 
 	// Create the state to save
@@ -926,7 +1130,7 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 	}
 
 	// Build the model for the API
-	phoneDeliverySettings, d := plan.expand(ctx)
+	phoneDeliverySettings, d := plan.expand(ctx, nil)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1028,7 +1232,7 @@ func phoneDeliverySettingsCreateUpdateCustomErrorHandler(error model.P1Error) di
 	return nil
 }
 
-func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*management.NotificationsSettingsPhoneDeliverySettings, diag.Diagnostics) {
+func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, serviceNumbers []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers) (*management.NotificationsSettingsPhoneDeliverySettings, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.NotificationsSettingsPhoneDeliverySettings{
@@ -1037,6 +1241,14 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 	}
 
 	if !p.ProviderCustom.IsNull() && !p.ProviderCustom.IsUnknown() {
+
+		if len(serviceNumbers) > 0 {
+			diags.AddWarning(
+				"Invalid combination of selected/service numbers",
+				"The existence of service numbers is not expected for custom provider types.  Please raise an issue with the provider maintainers.",
+			)
+		}
+
 		var providerPlan PhoneDeliverySettingsProviderCustomResourceModel
 		diags.Append(p.ProviderCustom.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
@@ -1159,17 +1371,37 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 			providerPlan.AuthToken.ValueString(),
 		)
 
-		if !providerPlan.Numbers.IsNull() && !providerPlan.Numbers.IsUnknown() {
-			var numbersPlan []PhoneDeliverySettingsProviderCustomNumbersResourceModel
-			diags.Append(providerPlan.Numbers.ElementsAs(ctx, &numbersPlan, false)...)
+		if !providerPlan.SelectedNumbers.IsNull() && !providerPlan.SelectedNumbers.IsUnknown() && len(serviceNumbers) > 0 {
+			var selectedNumbersPlan []PhoneDeliverySettingsProviderCustomSelectedNumbersResourceModel
+			diags.Append(providerPlan.SelectedNumbers.ElementsAs(ctx, &selectedNumbersPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			numbers, d := phoneDeliverySettingsExpandNumbers(ctx, numbersPlan)
-			diags.Append(d...)
-			if diags.HasError() {
-				return nil, diags
+			numbers := make([]management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, 0)
+
+			for _, serviceNumber := range serviceNumbers {
+
+				overriddenServiceNumber := serviceNumber
+
+				for _, selectedNumberPlan := range selectedNumbersPlan {
+					if serviceNumber.GetNumber() == selectedNumberPlan.Number.ValueString() {
+
+						overriddenServiceNumber.SetSelected(true)
+
+						if !selectedNumberPlan.SupportedCountries.IsNull() && !selectedNumberPlan.SupportedCountries.IsUnknown() {
+							var supportedCountries []string
+							diags.Append(selectedNumberPlan.SupportedCountries.ElementsAs(ctx, &supportedCountries, false)...)
+							if diags.HasError() {
+								return nil, diags
+							}
+
+							overriddenServiceNumber.SetSupportedCountries(supportedCountries)
+						}
+					}
+				}
+
+				numbers = append(numbers, overriddenServiceNumber)
 			}
 
 			providerData.SetNumbers(numbers)
@@ -1194,26 +1426,26 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context) (*manag
 			providerPlan.AuthToken.ValueString(),
 		)
 
-		if !providerPlan.Numbers.IsNull() && !providerPlan.Numbers.IsUnknown() {
-			var numbersPlan []PhoneDeliverySettingsProviderCustomNumbersResourceModel
-			diags.Append(providerPlan.Numbers.ElementsAs(ctx, &numbersPlan, false)...)
-			if diags.HasError() {
-				return nil, diags
-			}
-
-			numbers, d := phoneDeliverySettingsExpandNumbers(ctx, numbersPlan)
-			diags.Append(d...)
-			if diags.HasError() {
-				return nil, diags
-			}
-
-			providerData.SetNumbers(numbers)
-		}
-
 		data.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse = providerData
 	}
 
 	return &data, diags
+}
+
+func parsePhoneDeliverySettingsNumbers(apiObject *management.NotificationsSettingsPhoneDeliverySettings) (string, []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	apiObjectInstance := apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse
+
+	if apiObjectInstance == nil {
+		diags.AddError(
+			"Invalid phone delivery settings API response",
+			"Twilio or Syniverse phone delivery settings must present in the API response.  Please raise this as an issue with the provider maintainers.",
+		)
+		return "", nil, diags
+	}
+
+	return apiObjectInstance.GetId(), apiObjectInstance.GetNumbers(), diags
 }
 
 func phoneDeliverySettingsExpandNumbers(ctx context.Context, numbersPlan []PhoneDeliverySettingsProviderCustomNumbersResourceModel) ([]management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, diag.Diagnostics) {
@@ -1223,23 +1455,25 @@ func phoneDeliverySettingsExpandNumbers(ctx context.Context, numbersPlan []Phone
 
 	for _, numberPlan := range numbersPlan {
 
-		var capabilitiesSlice []string
-		diags.Append(numberPlan.Capabilities.ElementsAs(ctx, &capabilitiesSlice, false)...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		capabilities := make([]management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapability, 0)
-
-		for _, capability := range capabilitiesSlice {
-			capabilities = append(capabilities, management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapability(capability))
-		}
-
 		number := management.NewNotificationsSettingsPhoneDeliverySettingsCustomNumbers(
 			numberPlan.Number.ValueString(),
 			management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersType(numberPlan.Type.ValueString()),
-			capabilities,
 		)
+
+		if !numberPlan.Capabilities.IsNull() && !numberPlan.Capabilities.IsUnknown() {
+			var capabilitiesSlice []string
+			diags.Append(numberPlan.Capabilities.ElementsAs(ctx, &capabilitiesSlice, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			capabilities := make([]management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapability, 0)
+
+			for _, capability := range capabilitiesSlice {
+				capabilities = append(capabilities, management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapability(capability))
+			}
+			number.SetCapabilities(capabilities)
+		}
 
 		if !numberPlan.Selected.IsNull() && !numberPlan.Selected.IsUnknown() {
 			number.SetSelected(numberPlan.Selected.ValueBool())
@@ -1333,7 +1567,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 			return diags
 		}
 
-		p.ProviderCustomTwilio, d = p.toStatePhoneDeliverySettingsProviderCustomTwilio(providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
+		p.ProviderCustomTwilio, d = p.toStatePhoneDeliverySettingsProviderCustomTwilio(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
 		diags.Append(d...)
 	} else {
 		p.ProviderCustomTwilio = types.ObjectNull(twilioTFObjectTypes)
@@ -1349,7 +1583,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 			return diags
 		}
 
-		p.ProviderCustomSyniverse, d = p.toStatePhoneDeliverySettingsProviderCustomSyniverse(providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
+		p.ProviderCustomSyniverse, d = p.toStatePhoneDeliverySettingsProviderCustomSyniverse(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
 		diags.Append(d...)
 	} else {
 		p.ProviderCustomSyniverse = types.ObjectNull(syniverseTFObjectTypes)
@@ -1491,7 +1725,7 @@ func phoneDeliverySettingsCustomRequestsOkToTF(apiObject []management.Notificati
 	return returnVar, diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomTwilio(planData PhoneDeliverySettingsProviderCustomTwilioResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomTwilio(ctx context.Context, planData PhoneDeliverySettingsProviderCustomTwilioResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1505,7 +1739,8 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 
 	var d diag.Diagnostics
 
-	objMap["numbers"], d = phoneDeliverySettingsCustomNumbersOkToTF(apiObject.GetNumbersOk())
+	numbers, ok := apiObject.GetNumbersOk()
+	objMap["selected_numbers"], objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
 	diags.Append(d...)
 
 	objValue, d := types.ObjectValue(twilioTFObjectTypes, objMap)
@@ -1514,7 +1749,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	return objValue, diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomSyniverse(planData PhoneDeliverySettingsProviderCustomSyniverseResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomSyniverse(ctx context.Context, planData PhoneDeliverySettingsProviderCustomSyniverseResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1527,11 +1762,88 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 
 	var d diag.Diagnostics
 
-	objMap["numbers"], d = phoneDeliverySettingsCustomNumbersOkToTF(apiObject.GetNumbersOk())
+	numbers, ok := apiObject.GetNumbersOk()
+	objMap["selected_numbers"], objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
 	diags.Append(d...)
 
 	objValue, d := types.ObjectValue(syniverseTFObjectTypes, objMap)
 	diags.Append(d...)
 
 	return objValue, diags
+}
+
+func phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx context.Context, plan basetypes.SetValue, apiObject []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, ok bool) (basetypes.SetValue, basetypes.SetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: customNumbersTFObjectTypes}
+	tfSelectedObjType := types.ObjectType{AttrTypes: customSelectedNumbersTFObjectTypes}
+
+	if !ok || len(apiObject) == 0 {
+		return types.SetNull(tfSelectedObjType), types.SetNull(tfObjType), diags
+	}
+
+	// Get the list of numbers
+	selectedNumbers := make([]string, 0)
+	if !plan.IsNull() && !plan.IsUnknown() {
+		var numbersPlan []PhoneDeliverySettingsProviderCustomSelectedNumbersResourceModel
+		diags.Append(plan.ElementsAs(ctx, &numbersPlan, false)...)
+		if diags.HasError() {
+			return types.SetNull(tfSelectedObjType), types.SetNull(tfObjType), diags
+		}
+
+		for _, v := range numbersPlan {
+			selectedNumbers = append(selectedNumbers, v.Number.ValueString())
+		}
+	}
+
+	flattenedSelectedNumbersList := []attr.Value{}
+	flattenedNumbersList := []attr.Value{}
+	for _, v := range apiObject {
+
+		if vNumber, ok := v.GetNumberOk(); ok {
+
+			objMap := map[string]attr.Value{
+				"supported_countries": framework.StringSetOkToTF(v.GetSupportedCountriesOk()),
+				"type":                framework.EnumOkToTF(v.GetTypeOk()),
+				"selected":            framework.BoolOkToTF(v.GetSelectedOk()),
+				"available":           framework.BoolOkToTF(v.GetAvailableOk()),
+				"number":              framework.StringToTF(*vNumber),
+				"capabilities":        framework.EnumSetOkToTF(v.GetCapabilitiesOk()),
+			}
+
+			flattenedNumberObj, d := types.ObjectValue(customNumbersTFObjectTypes, objMap)
+			diags.Append(d...)
+
+			flattenedNumbersList = append(flattenedNumbersList, flattenedNumberObj)
+
+			if slices.Contains(selectedNumbers, *vNumber) {
+
+				selectedObjMap := map[string]attr.Value{
+					"supported_countries": objMap["supported_countries"],
+					"type":                objMap["type"],
+					"selected":            objMap["selected"],
+					"number":              objMap["number"],
+				}
+
+				flattenedSelectedNumberObj, d := types.ObjectValue(customSelectedNumbersTFObjectTypes, selectedObjMap)
+				diags.Append(d...)
+
+				flattenedSelectedNumbersList = append(flattenedSelectedNumbersList, flattenedSelectedNumberObj)
+			}
+		}
+	}
+
+	var returnVarSelectedNumbers basetypes.SetValue
+	if !plan.IsNull() && !plan.IsUnknown() {
+		var d diag.Diagnostics
+		returnVarSelectedNumbers, d = types.SetValue(tfSelectedObjType, flattenedSelectedNumbersList)
+		diags.Append(d...)
+	} else {
+		returnVarSelectedNumbers = types.SetNull(tfSelectedObjType)
+	}
+
+	returnVarNumbers, d := types.SetValue(tfObjType, flattenedNumbersList)
+	diags.Append(d...)
+
+	return returnVarSelectedNumbers, returnVarNumbers, diags
 }
