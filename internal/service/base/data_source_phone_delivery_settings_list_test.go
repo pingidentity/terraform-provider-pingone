@@ -73,7 +73,7 @@ func testAccPhoneDeliverySettingsListDataSourceConfig_ByAll(environmentName, lic
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_phone_delivery_settings_sender" "%[3]s-1" {
+resource "pingone_phone_delivery_settings" "%[3]s-1" {
   environment_id = pingone_environment.%[2]s.id
 
   provider_custom = {
@@ -95,7 +95,7 @@ resource "pingone_phone_delivery_settings_sender" "%[3]s-1" {
   }
 }
 
-resource "pingone_phone_delivery_settings_sender" "%[3]s-2" {
+resource "pingone_phone_delivery_settings" "%[3]s-2" {
   environment_id = pingone_environment.%[2]s.id
 
   provider_custom = {
@@ -117,7 +117,7 @@ resource "pingone_phone_delivery_settings_sender" "%[3]s-2" {
   }
 }
 
-resource "pingone_phone_delivery_settings_sender" "%[3]s-3" {
+resource "pingone_phone_delivery_settings" "%[3]s-3" {
   environment_id = pingone_environment.%[2]s.id
 
   provider_custom = {
@@ -143,9 +143,9 @@ data "pingone_phone_delivery_settings_list" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   depends_on = [
-    pingone_phone_delivery_settings_sender.%[3]s-1,
-    pingone_phone_delivery_settings_sender.%[3]s-2,
-    pingone_phone_delivery_settings_sender.%[3]s-3,
+    pingone_phone_delivery_settings.%[3]s-1,
+    pingone_phone_delivery_settings.%[3]s-2,
+    pingone_phone_delivery_settings.%[3]s-3,
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
