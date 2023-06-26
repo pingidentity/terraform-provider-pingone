@@ -41,7 +41,7 @@ func TestAccCertificateSigningResponse_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "signature_algorithm", "SHA256withRSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "subject_dn", "CN=terraform, OU=Non-Production Testing, O=Ping Identity, C=GB"),
 					resource.TestCheckResourceAttr(resourceFullName, "usage_type", "SIGNING"),
-					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "3650"),
+					resource.TestCheckResourceAttr(resourceFullName, "validity_period", "3560"),
 					resource.TestCheckResourceAttr(resourceFullName, "issuer_dn", "CN=Test CA, OU=Non-Production Testing, O=Ping Identity, C=GB"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "serial_number"),
