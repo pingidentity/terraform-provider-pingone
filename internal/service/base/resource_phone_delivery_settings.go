@@ -1740,7 +1740,10 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	var d diag.Diagnostics
 
 	numbers, ok := apiObject.GetNumbersOk()
-	objMap["selected_numbers"], objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
+	objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx, numbers, ok)
+	diags.Append(d...)
+
+	objMap["selected_numbers"], d = phoneDeliverySettingsTwilioSyniverseSelectedNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
 	diags.Append(d...)
 
 	objValue, d := types.ObjectValue(twilioTFObjectTypes, objMap)
@@ -1763,7 +1766,10 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	var d diag.Diagnostics
 
 	numbers, ok := apiObject.GetNumbersOk()
-	objMap["selected_numbers"], objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
+	objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx, numbers, ok)
+	diags.Append(d...)
+
+	objMap["selected_numbers"], d = phoneDeliverySettingsTwilioSyniverseSelectedNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
 	diags.Append(d...)
 
 	objValue, d := types.ObjectValue(syniverseTFObjectTypes, objMap)
@@ -1772,31 +1778,15 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	return objValue, diags
 }
 
-func phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx context.Context, plan basetypes.SetValue, apiObject []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, ok bool) (basetypes.SetValue, basetypes.SetValue, diag.Diagnostics) {
+func phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx context.Context, apiObject []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: customNumbersTFObjectTypes}
-	tfSelectedObjType := types.ObjectType{AttrTypes: customSelectedNumbersTFObjectTypes}
 
 	if !ok || len(apiObject) == 0 {
-		return types.SetNull(tfSelectedObjType), types.SetNull(tfObjType), diags
+		return types.SetNull(tfObjType), diags
 	}
 
-	// Get the list of numbers
-	selectedNumbers := make([]string, 0)
-	if !plan.IsNull() && !plan.IsUnknown() {
-		var numbersPlan []PhoneDeliverySettingsProviderCustomSelectedNumbersResourceModel
-		diags.Append(plan.ElementsAs(ctx, &numbersPlan, false)...)
-		if diags.HasError() {
-			return types.SetNull(tfSelectedObjType), types.SetNull(tfObjType), diags
-		}
-
-		for _, v := range numbersPlan {
-			selectedNumbers = append(selectedNumbers, v.Number.ValueString())
-		}
-	}
-
-	flattenedSelectedNumbersList := []attr.Value{}
 	flattenedNumbersList := []attr.Value{}
 	for _, v := range apiObject {
 
@@ -1815,35 +1805,61 @@ func phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx context.Context, plan
 			diags.Append(d...)
 
 			flattenedNumbersList = append(flattenedNumbersList, flattenedNumberObj)
-
-			if slices.Contains(selectedNumbers, *vNumber) {
-
-				selectedObjMap := map[string]attr.Value{
-					"supported_countries": objMap["supported_countries"],
-					"type":                objMap["type"],
-					"selected":            objMap["selected"],
-					"number":              objMap["number"],
-				}
-
-				flattenedSelectedNumberObj, d := types.ObjectValue(customSelectedNumbersTFObjectTypes, selectedObjMap)
-				diags.Append(d...)
-
-				flattenedSelectedNumbersList = append(flattenedSelectedNumbersList, flattenedSelectedNumberObj)
-			}
 		}
-	}
-
-	var returnVarSelectedNumbers basetypes.SetValue
-	if !plan.IsNull() && !plan.IsUnknown() {
-		var d diag.Diagnostics
-		returnVarSelectedNumbers, d = types.SetValue(tfSelectedObjType, flattenedSelectedNumbersList)
-		diags.Append(d...)
-	} else {
-		returnVarSelectedNumbers = types.SetNull(tfSelectedObjType)
 	}
 
 	returnVarNumbers, d := types.SetValue(tfObjType, flattenedNumbersList)
 	diags.Append(d...)
 
-	return returnVarSelectedNumbers, returnVarNumbers, diags
+	return returnVarNumbers, diags
+}
+
+func phoneDeliverySettingsTwilioSyniverseSelectedNumbersOkToTF(ctx context.Context, plan basetypes.SetValue, apiObject []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: customSelectedNumbersTFObjectTypes}
+
+	if !ok || len(apiObject) == 0 || plan.IsNull() || plan.IsUnknown() {
+		return types.SetNull(tfObjType), diags
+	}
+
+	// Get the list of numbers
+	selectedNumbers := make([]string, 0)
+	if !plan.IsNull() && !plan.IsUnknown() {
+		var numbersPlan []PhoneDeliverySettingsProviderCustomSelectedNumbersResourceModel
+		diags.Append(plan.ElementsAs(ctx, &numbersPlan, false)...)
+		if diags.HasError() {
+			return types.SetNull(tfObjType), diags
+		}
+
+		for _, v := range numbersPlan {
+			selectedNumbers = append(selectedNumbers, v.Number.ValueString())
+		}
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		if vNumber, ok := v.GetNumberOk(); ok {
+			if slices.Contains(selectedNumbers, *vNumber) {
+
+				selectedObjMap := map[string]attr.Value{
+					"supported_countries": framework.StringSetOkToTF(v.GetSupportedCountriesOk()),
+					"type":                framework.EnumOkToTF(v.GetTypeOk()),
+					"selected":            framework.BoolOkToTF(v.GetSelectedOk()),
+					"number":              framework.StringToTF(*vNumber),
+				}
+
+				flattenedObj, d := types.ObjectValue(customSelectedNumbersTFObjectTypes, selectedObjMap)
+				diags.Append(d...)
+
+				flattenedList = append(flattenedList, flattenedObj)
+			}
+		}
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
