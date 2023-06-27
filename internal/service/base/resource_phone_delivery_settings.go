@@ -1740,7 +1740,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	var d diag.Diagnostics
 
 	numbers, ok := apiObject.GetNumbersOk()
-	objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx, numbers, ok)
+	objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(numbers, ok)
 	diags.Append(d...)
 
 	objMap["selected_numbers"], d = phoneDeliverySettingsTwilioSyniverseSelectedNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
@@ -1766,7 +1766,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	var d diag.Diagnostics
 
 	numbers, ok := apiObject.GetNumbersOk()
-	objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx, numbers, ok)
+	objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(numbers, ok)
 	diags.Append(d...)
 
 	objMap["selected_numbers"], d = phoneDeliverySettingsTwilioSyniverseSelectedNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
@@ -1778,7 +1778,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	return objValue, diags
 }
 
-func phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(ctx context.Context, apiObject []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(apiObject []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: customNumbersTFObjectTypes}
