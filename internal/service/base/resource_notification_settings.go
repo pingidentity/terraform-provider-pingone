@@ -13,6 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -31,23 +34,14 @@ type NotificationSettingsResource struct {
 }
 
 type NotificationSettingsResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	DeliveryMode  types.String `tfsdk:"delivery_mode"`
-	// Restrictions          types.Object `tfsdk:"restrictions"`
+	Id                    types.String `tfsdk:"id"`
+	EnvironmentId         types.String `tfsdk:"environment_id"`
+	DeliveryMode          types.String `tfsdk:"delivery_mode"`
 	ProviderFallbackChain types.List   `tfsdk:"provider_fallback_chain"`
-	From                  types.List   `tfsdk:"from"`
-	ReplyTo               types.List   `tfsdk:"reply_to"`
+	From                  types.Object `tfsdk:"from"`
+	ReplyTo               types.Object `tfsdk:"reply_to"`
 	AllowedList           types.Set    `tfsdk:"allowed_list"`
 	UpdatedAt             types.String `tfsdk:"updated_at"`
-}
-
-type NotificationSettingsRestrictionsResourceModel struct {
-	SMSVoiceQuota types.Object `tfsdk:"sms_voice_quota"`
-}
-
-type NotificationSettingsRestrictionsSMSVoiceQuotaResourceModel struct {
-	Daily types.Object `tfsdk:"daily"`
 }
 
 type NotificationSettingsAllowedListResourceModel struct {
@@ -85,15 +79,23 @@ func (r *NotificationSettingsResource) Schema(ctx context.Context, req resource.
 
 	deliveryModeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the delivery mode that the settings apply for.",
-	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsDeliveryModeEnumValues)
+	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsDeliveryModeEnumValues).DefaultValue(string(management.ENUMNOTIFICATIONSSETTINGSDELIVERYMODE_ALL))
 
 	providerFallbackChainDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An ordered list of strings that which represents the execution order of different SMS/Voice providers configured for the environment. The providers and their accounts’ configurations are represented in the list by the ID of the corresponding `pingone_phone_delivery_settings` resource. The only provider which is not represented by the `pingone_phone_delivery_settings.id` value is the PingOne Twilio provider. The PingOne Twilio provider is represented by the `PINGONE_TWILIO` string. If this parameter's list is empty, an SMS or voice message will be sent using the default Ping Twilio account. Otherwise, an SMS or voice message will be sent using the first provider in the list. If the server fails to queue the message using that provider, it will use the next provider in the list to try to send the message. This process will go on until there are no more providers in the list. If the server failed to send the message using all providers, the notification status is set to `FAILED`.",
 	)
 
 	allowedListDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A set of objects that represent actors that are exempt from any delivery restrictions.",
 	)
+
+	fromNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the email sender's \"from\" name.",
+	).DefaultValue("PingOne")
+
+	fromEmailAddressDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the email sender's \"from\" email address.",
+	).DefaultValue("noreply@pingidentity.com")
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -110,25 +112,22 @@ func (r *NotificationSettingsResource) Schema(ctx context.Context, req resource.
 				Description:         deliveryModeDescription.Description,
 				MarkdownDescription: deliveryModeDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
+
+				Default: stringdefault.StaticString(string(management.ENUMNOTIFICATIONSSETTINGSDELIVERYMODE_ALL)),
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsDeliveryModeEnumValues)...),
 				},
 			},
 
-			// "restrictions": schema.Int64Attribute{
-			// 	MarkdownDescription: restrictionsDescription.MarkdownDescription,
-			// 	Description:         restrictionsDescription.Description,
-			// 	Required:            true,
-			// 	Validators: []validator.Int64{
-			// 		int64validator.AtLeast(attrMinLength),
-			// 	},
-			// },
-
 			"provider_fallback_chain": schema.ListAttribute{
 				Description:         providerFallbackChainDescription.Description,
 				MarkdownDescription: providerFallbackChainDescription.MarkdownDescription,
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
+
+				Default: listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 
 				ElementType: types.StringType,
 
@@ -142,7 +141,7 @@ func (r *NotificationSettingsResource) Schema(ctx context.Context, req resource.
 				},
 			},
 
-			"allowed_list": schema.ListNestedAttribute{
+			"allowed_list": schema.SetNestedAttribute{
 				Description:         allowedListDescription.Description,
 				MarkdownDescription: allowedListDescription.MarkdownDescription,
 				Optional:            true,
@@ -150,7 +149,7 @@ func (r *NotificationSettingsResource) Schema(ctx context.Context, req resource.
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"user_id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the user ID to add to the allowed list.").Description,
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the user ID to add to the allowed list.  Must be a valid PingOne resource ID.").Description,
 							Required:    true,
 
 							Validators: []validator.String{
@@ -161,59 +160,64 @@ func (r *NotificationSettingsResource) Schema(ctx context.Context, req resource.
 				},
 			},
 
-			"updated_at": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the time the resource was last updated.").Description,
-				Computed:    true,
-			},
-		},
-
-		Blocks: map[string]schema.Block{
-			"from": schema.ListNestedBlock{
+			"from": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A required single block that specifies the email sender's \"from\" name and email address.").Description,
+				Optional:    true,
+				Computed:    true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the email sender's \"from\" name.").Description,
-							Optional:    true,
-						},
-						"email_address": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the email sender's \"from\" email address.").Description,
-							Required:    true,
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(emailAddressMaxLength),
-							},
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"name":          types.StringValue("PingOne"),
+						"email_address": types.StringValue("noreply@pingidentity.com"),
+					}
+
+					objValue, d := types.ObjectValue(emailSourceTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
+
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Description:         fromNameDescription.Description,
+						MarkdownDescription: fromNameDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"email_address": schema.StringAttribute{
+						Description:         fromEmailAddressDescription.Description,
+						MarkdownDescription: fromEmailAddressDescription.MarkdownDescription,
+						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(emailAddressMaxLength),
 						},
 					},
-				},
-
-				Validators: []validator.List{
-					// listvalidator.IsRequired(),
-					listvalidator.SizeAtMost(1),
 				},
 			},
-			"reply_to": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the email sender's \"reply to\" name and email address.").Description,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the email sender's \"reply to\" name.").Description,
-							Optional:    true,
-						},
-						"email_address": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the email sender's \"reply to\" email address.").Description,
-							Required:    true,
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(emailAddressMaxLength),
-							},
+			"reply_to": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A required single block that specifies the email sender's \"reply to\" name and email address.").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the email sender's \"reply to\" name.").Description,
+						Optional:    true,
+					},
+
+					"email_address": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the email sender's \"reply to\" email address.").Description,
+						Required:    true,
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(emailAddressMaxLength),
 						},
 					},
 				},
+			},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-				},
+			"updated_at": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the time the resource was last updated in RFC3339 format.").Description,
+				Computed:    true,
 			},
 		},
 	}
@@ -423,8 +427,7 @@ func (r *NotificationSettingsResource) Delete(ctx context.Context, req resource.
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := r.client.NotificationsSettingsApi.DeleteNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
-			return nil, r, err
+			return r.client.NotificationsSettingsApi.DeleteNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"DeleteNotificationsSettings",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -499,36 +502,40 @@ func (p *NotificationSettingsResourceModel) expand(ctx context.Context) (*manage
 	}
 
 	if !p.From.IsNull() && !p.From.IsUnknown() {
-		var plan []EmailSourceModel
-		d := p.From.ElementsAs(ctx, &plan, false)
-		diags.Append(d...)
+		var plan EmailSourceModel
+		diags.Append(p.From.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 
 		from := management.NewNotificationsSettingsFrom()
 
-		if !plan[0].EmailAddress.IsNull() && !plan[0].EmailAddress.IsUnknown() {
-			from.SetAddress(plan[0].EmailAddress.ValueString())
+		if !plan.EmailAddress.IsNull() && !plan.EmailAddress.IsUnknown() {
+			from.SetAddress(plan.EmailAddress.ValueString())
 		}
 
-		if !plan[0].Name.IsNull() && !plan[0].Name.IsUnknown() {
-			from.SetName(plan[0].Name.ValueString())
+		if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+			from.SetName(plan.Name.ValueString())
 		}
 
 		data.SetFrom(*from)
 	}
 
 	if !p.ReplyTo.IsNull() && !p.ReplyTo.IsUnknown() {
-		var plan []EmailSourceModel
-		d := p.ReplyTo.ElementsAs(ctx, &plan, false)
-		diags.Append(d...)
+		var plan EmailSourceModel
+		diags.Append(p.ReplyTo.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 
 		replyTo := management.NewNotificationsSettingsReplyTo()
 
-		if !plan[0].EmailAddress.IsNull() && !plan[0].EmailAddress.IsUnknown() {
-			replyTo.SetAddress(plan[0].EmailAddress.ValueString())
+		if !plan.EmailAddress.IsNull() && !plan.EmailAddress.IsUnknown() {
+			replyTo.SetAddress(plan.EmailAddress.ValueString())
 		}
 
-		if !plan[0].Name.IsNull() && !plan[0].Name.IsUnknown() {
-			replyTo.SetName(plan[0].Name.ValueString())
+		if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+			replyTo.SetName(plan.Name.ValueString())
 		}
 
 		data.SetReplyTo(*replyTo)
@@ -560,11 +567,11 @@ func (p *NotificationSettingsResourceModel) toState(apiObject *management.Notifi
 	p.AllowedList, d = notificationsSettingsAllowedListOkToTF(apiObject.GetWhitelistOk())
 	diags.Append(d...)
 
-	from, d := toStateEmailSource(apiObject.GetFromOk())
+	from, d := toStateEmailSourceObject(apiObject.GetFromOk())
 	diags.Append(d...)
 	p.From = from
 
-	replyTo, d := toStateEmailSource(apiObject.GetReplyToOk())
+	replyTo, d := toStateEmailSourceObject(apiObject.GetReplyToOk())
 	diags.Append(d...)
 	p.ReplyTo = replyTo
 
@@ -599,4 +606,74 @@ func notificationsSettingsAllowedListOkToTF(apiObject []management.Notifications
 	diags.Append(d...)
 
 	return returnVar, diags
+}
+
+func toStateEmailSourceObject(emailSource interface{}, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || emailSource == nil {
+		return types.ObjectNull(emailSourceTFObjectTypes), diags
+	}
+
+	var emailSourceMap map[string]attr.Value
+
+	switch t := emailSource.(type) {
+	case *management.NotificationsSettingsEmailDeliverySettingsFrom:
+		if t.GetAddress() == "" {
+			return types.ObjectNull(emailSourceTFObjectTypes), diags
+		}
+
+		emailSourceMap = map[string]attr.Value{
+			"email_address": framework.StringOkToTF(t.GetAddressOk()),
+		}
+
+		emailSourceMap["name"] = framework.StringOkToTF(t.GetNameOk())
+
+	case *management.NotificationsSettingsEmailDeliverySettingsReplyTo:
+		if t.GetAddress() == "" {
+			return types.ObjectNull(emailSourceTFObjectTypes), diags
+		}
+
+		emailSourceMap = map[string]attr.Value{
+			"email_address": framework.StringOkToTF(t.GetAddressOk()),
+		}
+
+		emailSourceMap["name"] = framework.StringOkToTF(t.GetNameOk())
+
+	case *management.NotificationsSettingsFrom:
+		if t.GetAddress() == "" {
+			return types.ObjectNull(emailSourceTFObjectTypes), diags
+		}
+
+		emailSourceMap = map[string]attr.Value{
+			"email_address": framework.StringOkToTF(t.GetAddressOk()),
+		}
+
+		emailSourceMap["name"] = framework.StringOkToTF(t.GetNameOk())
+
+	case *management.NotificationsSettingsReplyTo:
+		if t.GetAddress() == "" {
+			return types.ObjectNull(emailSourceTFObjectTypes), diags
+		}
+
+		emailSourceMap = map[string]attr.Value{
+			"email_address": framework.StringOkToTF(t.GetAddressOk()),
+		}
+
+		emailSourceMap["name"] = framework.StringOkToTF(t.GetNameOk())
+
+	default:
+		diags.AddError(
+			"Unexpected Email Source Type",
+			fmt.Sprintf("Expected an email type object, got: %T. Please report this issue to the provider maintainers.", t),
+		)
+
+		return types.ObjectNull(emailSourceTFObjectTypes), diags
+	}
+
+	returnVar, d := types.ObjectValue(emailSourceTFObjectTypes, emailSourceMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+
 }

@@ -50,41 +50,41 @@ resource "pingone_notification_settings" "my_awesome_notification_settings" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to configure notifications settings in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `provider_fallback_chain` (List of String) An ordered list of strings that which represents the execution order of different SMS/Voice providers configured for the environment. The providers and their accounts’ configurations are represented in the list by the ID of the corresponding `pingone_phone_delivery_settings` resource. The only provider which is not represented by the `pingone_phone_delivery_settings.id` value is the PingOne Twilio provider. The PingOne Twilio provider is represented by the `PINGONE_TWILIO` string. If this parameter's list is empty, an SMS or voice message will be sent using the default Ping Twilio account. Otherwise, an SMS or voice message will be sent using the first provider in the list. If the server fails to queue the message using that provider, it will use the next provider in the list to try to send the message. This process will go on until there are no more providers in the list. If the server failed to send the message using all providers, the notification status is set to `FAILED`.
 
 ### Optional
 
-- `allowed_list` (Attributes List) (see [below for nested schema](#nestedatt--allowed_list))
-- `delivery_mode` (String) A string that specifies the delivery mode that the settings apply for.  Options are `ALL`.
-- `from` (Block List) A required single block that specifies the email sender's "from" name and email address. (see [below for nested schema](#nestedblock--from))
-- `reply_to` (Block List) A single block that specifies the email sender's "reply to" name and email address. (see [below for nested schema](#nestedblock--reply_to))
+- `allowed_list` (Attributes Set) A set of objects that represent actors that are exempt from any delivery restrictions. (see [below for nested schema](#nestedatt--allowed_list))
+- `delivery_mode` (String) A string that specifies the delivery mode that the settings apply for.  Options are `ALL`.  Defaults to `ALL`.
+- `from` (Attributes) A required single block that specifies the email sender's "from" name and email address. (see [below for nested schema](#nestedatt--from))
+- `provider_fallback_chain` (List of String) An ordered list of strings that which represents the execution order of different SMS/Voice providers configured for the environment. The providers and their accounts’ configurations are represented in the list by the ID of the corresponding `pingone_phone_delivery_settings` resource. The only provider which is not represented by the `pingone_phone_delivery_settings.id` value is the PingOne Twilio provider. The PingOne Twilio provider is represented by the `PINGONE_TWILIO` string. If this parameter's list is empty, an SMS or voice message will be sent using the default Ping Twilio account. Otherwise, an SMS or voice message will be sent using the first provider in the list. If the server fails to queue the message using that provider, it will use the next provider in the list to try to send the message. This process will go on until there are no more providers in the list. If the server failed to send the message using all providers, the notification status is set to `FAILED`.
+- `reply_to` (Attributes) A required single block that specifies the email sender's "reply to" name and email address. (see [below for nested schema](#nestedatt--reply_to))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `updated_at` (String) A string that specifies the time the resource was last updated.
+- `updated_at` (String) A string that specifies the time the resource was last updated in RFC3339 format.
 
 <a id="nestedatt--allowed_list"></a>
 ### Nested Schema for `allowed_list`
 
 Required:
 
-- `user_id` (String) A string that specifies the user ID to add to the allowed list.
+- `user_id` (String) A string that specifies the user ID to add to the allowed list.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedblock--from"></a>
+<a id="nestedatt--from"></a>
 ### Nested Schema for `from`
 
 Required:
 
-- `email_address` (String) A string that specifies the email sender's "from" email address.
+- `email_address` (String) A string that specifies the email sender's "from" email address.  Defaults to `noreply@pingidentity.com`.
 
 Optional:
 
-- `name` (String) A string that specifies the email sender's "from" name.
+- `name` (String) A string that specifies the email sender's "from" name.  Defaults to `PingOne`.
 
 
-<a id="nestedblock--reply_to"></a>
+<a id="nestedatt--reply_to"></a>
 ### Nested Schema for `reply_to`
 
 Required:
