@@ -9,15 +9,17 @@ description: |-
 
 {{ .Description | trimspace }}
 
+!> The device factor types `security_key` and `platform` are now deprecated, and cannot be configured for environments created after 19th June 2023, nor environments that have been upgraded to use the latest FIDO2 policies.  Existing environments that were created before 19th June 2023 and have not been upgraded can continue to use the `security_key` and `platform` device types, but should look to upgrade the environment's FIDO2 policy support and migrate to the `fido2` device factor type.
+
 ## Example Usage - Basic Policy
 
-The following example enables the Platform Biometrics, Security Key FIDO2 and Authenticator TOTP factors. 
+The following example enables the FIDO2 and TOTP Authenticator factors. 
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-basic-example.tf") }}
 
 ## Example Usage - Mobile Authenticator
 
-The following example configures and enables the Mobile Authenticator (using PingOne MFA SDK), Platform Biometrics, Security Key FIDO2 and Authenticator TOTP factors. 
+The following example configures and enables the Mobile Authenticator (using PingOne MFA SDK) and Authenticator TOTP factors. 
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-mobile-authenticator.tf") }}
 

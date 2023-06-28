@@ -9,9 +9,11 @@ description: |-
 
 Resource to create and manage MFA Policies in a PingOne Environment.
 
+!> The device factor types `security_key` and `platform` are now deprecated, and cannot be configured for environments created after 19th June 2023, nor environments that have been upgraded to use the latest FIDO2 policies.  Existing environments that were created before 19th June 2023 and have not been upgraded can continue to use the `security_key` and `platform` device types, but should look to upgrade the environment's FIDO2 policy support and migrate to the `fido2` device factor type.
+
 ## Example Usage - Basic Policy
 
-The following example enables the Platform Biometrics, Security Key FIDO2 and Authenticator TOTP factors. 
+The following example enables the FIDO2 and TOTP Authenticator factors. 
 
 ```terraform
 resource "pingone_environment" "my_environment" {
@@ -49,13 +51,12 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
   email {
     enabled = false
   }
-
 }
 ```
 
 ## Example Usage - Mobile Authenticator
 
-The following example configures and enables the Mobile Authenticator (using PingOne MFA SDK), Platform Biometrics, Security Key FIDO2 and Authenticator TOTP factors. 
+The following example configures and enables the Mobile Authenticator (using PingOne MFA SDK) and Authenticator TOTP factors. 
 
 ```terraform
 resource "pingone_environment" "my_environment" {
@@ -169,7 +170,6 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
   email {
     enabled = false
   }
-
 }
 ```
 
@@ -191,6 +191,8 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
 ### Optional
 
 - `device_selection` (String) A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments), `PROMPT_TO_SELECT` and `ALWAYS_PROMPT_TO_SELECT`. Defaults to `DEFAULT_TO_FIRST`.
+- `platform` (Block List, Max: 1, Deprecated) **Deprecation Notice** The `platform` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `platform` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies. Platform biometrics authentication policy settings. (see [below for nested schema](#nestedblock--platform))
+- `security_key` (Block List, Max: 1, Deprecated) **Deprecation Notice** The `security_key` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `security_key` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies. Security key (FIDO2) authentication policy settings. (see [below for nested schema](#nestedblock--security_key))
 
 ### Read-Only
 
@@ -210,6 +212,7 @@ Optional:
 - `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
 - `otp_lifetime_duration` (Number) An integer that defines turation (number of time units) that the passcode is valid before it expires. Defaults to `30`.
 - `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
+- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
 
 
 <a id="nestedblock--mobile"></a>
@@ -241,36 +244,13 @@ Optional:
 - `device_authorization_enabled` (Boolean) Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.
 - `device_authorization_extra_verification` (String) Specifies the level of further verification when `device_authorization_enabled` is true. The PingOne platform performs an extra verification check by sending a "silent" push notification to the customer native application, and receives a confirmation in return.  Extra verification can be one of the following levels: `permissive`: The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed.  `restrictive`: The PingOne platform performs the extra verification check.The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed.
 - `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response. Set the value to `permissive` if you want to allow the process to continue. Set the value to `restrictive` if you want to block the user in such situations.
+- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
 - `push_timeout_duration` (Number) An integer that defines the amount of time (in seconds) a user has to respond to a push notification before it expires. Minimum is 40 seconds and maximum is 150 seconds. If this parameter is not provided, the duration is set to 40 seconds. Defaults to `40`.
 
 Read-Only:
 
 - `push_timeout_timeunit` (String) The time unit for the `push_timeout_duration` parameter. Currently, the only permitted value is `SECONDS`.
 
-
-
-<a id="nestedblock--platform"></a>
-### Nested Schema for `platform`
-
-Required:
-
-- `enabled` (Boolean) Enabled or disabled in the policy.
-
-Optional:
-
-- `fido_policy_id` (String) Specifies the FIDO policy ID. This property can be null. When null, the environment's default FIDO Policy is used.
-
-
-<a id="nestedblock--security_key"></a>
-### Nested Schema for `security_key`
-
-Required:
-
-- `enabled` (Boolean) Enabled or disabled in the policy.
-
-Optional:
-
-- `fido_policy_id` (String) Specifies the FIDO policy ID. This property can be null. When null, the environment's default FIDO Policy is used.
 
 
 <a id="nestedblock--sms"></a>
@@ -287,6 +267,7 @@ Optional:
 - `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
 - `otp_lifetime_duration` (Number) An integer that defines turation (number of time units) that the passcode is valid before it expires. Defaults to `30`.
 - `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
+- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
 
 
 <a id="nestedblock--totp"></a>
@@ -301,6 +282,7 @@ Optional:
 - `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Defaults to `2`.
 - `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
 - `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
+- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
 
 
 <a id="nestedblock--voice"></a>
@@ -317,6 +299,36 @@ Optional:
 - `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
 - `otp_lifetime_duration` (Number) An integer that defines turation (number of time units) that the passcode is valid before it expires. Defaults to `30`.
 - `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
+- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
+
+
+
+
+
+<a id="nestedblock--platform"></a>
+### Nested Schema for `platform`
+
+Required:
+
+- `enabled` (Boolean) Enabled or disabled in the policy.
+
+Optional:
+
+- `fido_policy_id` (String) Specifies the FIDO policy ID. This property can be null. When null, the environment's default FIDO Policy is used.
+- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
+
+
+<a id="nestedblock--security_key"></a>
+### Nested Schema for `security_key`
+
+Required:
+
+- `enabled` (Boolean) Enabled or disabled in the policy.
+
+Optional:
+
+- `fido_policy_id` (String) Specifies the FIDO policy ID. This property can be null. When null, the environment's default FIDO Policy is used.
+- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
 
 ## Import
 

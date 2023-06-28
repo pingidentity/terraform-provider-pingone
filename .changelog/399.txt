@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_mfa_policy`: Support the ability to phase out MFA devices using new `pairing_disabled` parameters for each device type in the policy.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_policy`: The `platform` and `security_key` FIDO device types are deprecated and need to be replaced with the `fido2` device type.  `platform` and `security_key` are no longer configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies.  Existing environments that have not been upgraded to use the latest FIDO2 policies can continue to use the factors to facilitate migration.
+```
