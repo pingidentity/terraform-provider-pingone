@@ -1405,9 +1405,9 @@ resource "pingone_gateway" "%[2]s-1" {
   vendor = "PingDirectory"
 
   servers = [
-    "ds1.dummyldapservice.com:636",
-    "ds3.dummyldapservice.com:636",
-    "ds2.dummyldapservice.com:636",
+    "ds1.dummyldapservice.com:389",
+    "ds3.dummyldapservice.com:389",
+    "ds2.dummyldapservice.com:389",
   ]
 
   user_type {
@@ -1487,9 +1487,9 @@ resource "pingone_gateway" "%[2]s-2" {
   vendor = "PingDirectory"
 
   servers = [
-    "ds1.dummyldapservice.com:636",
-    "ds3.dummyldapservice.com:636",
-    "ds2.dummyldapservice.com:636",
+    "ds1.dummyldapservice.com:389",
+    "ds3.dummyldapservice.com:389",
+    "ds2.dummyldapservice.com:389",
   ]
 
   user_type {
