@@ -391,9 +391,9 @@ func TestAccGateway_LDAP(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", ""),
 			resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:636"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:636"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:636"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:389"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:389"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:389"),
 			resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "vendor", "PingDirectory"),
 			resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "0"),
@@ -413,7 +413,7 @@ func TestAccGateway_LDAP(t *testing.T) {
 				Destroy: true,
 			},
 			// Minimal
-			fullStep,
+			minimalStep,
 			{
 				Config:  testAccGatewayConfig_LDAPMinimal(resourceName, name),
 				Destroy: true,
@@ -783,9 +783,9 @@ resource "pingone_gateway" "%[2]s" {
   vendor = "PingDirectory"
 
   servers = [
-    "ds1.dummyldapservice.com:636",
-    "ds3.dummyldapservice.com:636",
-    "ds2.dummyldapservice.com:636",
+    "ds1.dummyldapservice.com:389",
+    "ds3.dummyldapservice.com:389",
+    "ds2.dummyldapservice.com:389",
   ]
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
