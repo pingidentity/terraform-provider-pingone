@@ -587,6 +587,11 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"push_timeout_timeunit":                   regexp.MustCompile(`^SECONDS$`),
 						"pairing_key_lifetime_duration":           regexp.MustCompile(`^3$`),
 						"pairing_key_lifetime_timeunit":           regexp.MustCompile(`^HOURS$`),
+						"push_limit_count":                        regexp.MustCompile(`^10$`),
+						"push_limit_lock_duration":                regexp.MustCompile(`^260$`),
+						"push_limit_lock_duration_timeunit":       regexp.MustCompile(`^SECONDS$`),
+						"push_limit_time_period_duration":         regexp.MustCompile(`^300$`),
+						"push_limit_time_period_timeunit":         regexp.MustCompile(`^SECONDS$`),
 						"otp_enabled":                             regexp.MustCompile(`^true$`),
 						"device_authorization_enabled":            regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
@@ -601,6 +606,11 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"push_timeout_timeunit":                   regexp.MustCompile(`^SECONDS$`),
 						"pairing_key_lifetime_duration":           regexp.MustCompile(`^10$`),
 						"pairing_key_lifetime_timeunit":           regexp.MustCompile(`^MINUTES$`),
+						"push_limit_count":                        regexp.MustCompile(`^5$`),
+						"push_limit_lock_duration":                regexp.MustCompile(`^30$`),
+						"push_limit_lock_duration_timeunit":       regexp.MustCompile(`^MINUTES$`),
+						"push_limit_time_period_duration":         regexp.MustCompile(`^10$`),
+						"push_limit_time_period_timeunit":         regexp.MustCompile(`^MINUTES$`),
 						"otp_enabled":                             regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
@@ -613,6 +623,11 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"push_timeout_timeunit":                   regexp.MustCompile(`^SECONDS$`),
 						"pairing_key_lifetime_duration":           regexp.MustCompile(`^55$`),
 						"pairing_key_lifetime_timeunit":           regexp.MustCompile(`^MINUTES$`),
+						"push_limit_count":                        regexp.MustCompile(`^5$`),
+						"push_limit_lock_duration":                regexp.MustCompile(`^25$`),
+						"push_limit_lock_duration_timeunit":       regexp.MustCompile(`^MINUTES$`),
+						"push_limit_time_period_duration":         regexp.MustCompile(`^5$`),
+						"push_limit_time_period_timeunit":         regexp.MustCompile(`^MINUTES$`),
 						"otp_enabled":                             regexp.MustCompile(`^true$`),
 						"device_authorization_enabled":            regexp.MustCompile(`^false$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
@@ -670,24 +685,20 @@ func TestAccMFAPolicy_Mobile_BadApplicationErrors(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name),
-				// Appliation referenced in `mobile.application.id` does not exist
-				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` does not exist"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` does not exist"),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name),
-				// Appliation referenced in `mobile.application.id` is not of type OIDC
-				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` is not of type OIDC"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` is not of type OIDC"),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name),
-				// Appliation referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type
-				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type"),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name),
-				// Appliation referenced in `mobile.application.id` does not contain mobile application configuration
-				ExpectError: regexp.MustCompile("Appliation referenced in `mobile.application.id` does not contain mobile application configuration"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` does not contain mobile application configuration"),
 			},
 		},
 	})
@@ -760,6 +771,11 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"push_timeout_timeunit":                   regexp.MustCompile(`^SECONDS$`),
 						"pairing_key_lifetime_duration":           regexp.MustCompile(`^3$`),
 						"pairing_key_lifetime_timeunit":           regexp.MustCompile(`^HOURS$`),
+						"push_limit_count":                        regexp.MustCompile(`^10$`),
+						"push_limit_lock_duration":                regexp.MustCompile(`^260$`),
+						"push_limit_lock_duration_timeunit":       regexp.MustCompile(`^SECONDS$`),
+						"push_limit_time_period_duration":         regexp.MustCompile(`^300$`),
+						"push_limit_time_period_timeunit":         regexp.MustCompile(`^SECONDS$`),
 						"otp_enabled":                             regexp.MustCompile(`^true$`),
 						"device_authorization_enabled":            regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
@@ -774,6 +790,11 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"push_timeout_timeunit":                   regexp.MustCompile(`^SECONDS$`),
 						"pairing_key_lifetime_duration":           regexp.MustCompile(`^10$`),
 						"pairing_key_lifetime_timeunit":           regexp.MustCompile(`^MINUTES$`),
+						"push_limit_count":                        regexp.MustCompile(`^5$`),
+						"push_limit_lock_duration":                regexp.MustCompile(`^30$`),
+						"push_limit_lock_duration_timeunit":       regexp.MustCompile(`^MINUTES$`),
+						"push_limit_time_period_duration":         regexp.MustCompile(`^10$`),
+						"push_limit_time_period_timeunit":         regexp.MustCompile(`^MINUTES$`),
 						"otp_enabled":                             regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
@@ -786,6 +807,11 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"push_timeout_timeunit":                   regexp.MustCompile(`^SECONDS$`),
 						"pairing_key_lifetime_duration":           regexp.MustCompile(`^55$`),
 						"pairing_key_lifetime_timeunit":           regexp.MustCompile(`^MINUTES$`),
+						"push_limit_count":                        regexp.MustCompile(`^5$`),
+						"push_limit_lock_duration":                regexp.MustCompile(`^25$`),
+						"push_limit_lock_duration_timeunit":       regexp.MustCompile(`^MINUTES$`),
+						"push_limit_time_period_duration":         regexp.MustCompile(`^5$`),
+						"push_limit_time_period_timeunit":         regexp.MustCompile(`^MINUTES$`),
 						"otp_enabled":                             regexp.MustCompile(`^true$`),
 						"device_authorization_enabled":            regexp.MustCompile(`^false$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
@@ -833,6 +859,11 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"push_timeout_timeunit":                   regexp.MustCompile(`^SECONDS$`),
 						"pairing_key_lifetime_duration":           regexp.MustCompile(`^3$`),
 						"pairing_key_lifetime_timeunit":           regexp.MustCompile(`^HOURS$`),
+						"push_limit_count":                        regexp.MustCompile(`^10$`),
+						"push_limit_lock_duration":                regexp.MustCompile(`^260$`),
+						"push_limit_lock_duration_timeunit":       regexp.MustCompile(`^SECONDS$`),
+						"push_limit_time_period_duration":         regexp.MustCompile(`^300$`),
+						"push_limit_time_period_timeunit":         regexp.MustCompile(`^SECONDS$`),
 						"otp_enabled":                             regexp.MustCompile(`^true$`),
 						"device_authorization_enabled":            regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^restrictive$`),
@@ -847,6 +878,11 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"push_timeout_timeunit":                   regexp.MustCompile(`^SECONDS$`),
 						"pairing_key_lifetime_duration":           regexp.MustCompile(`^10$`),
 						"pairing_key_lifetime_timeunit":           regexp.MustCompile(`^MINUTES$`),
+						"push_limit_count":                        regexp.MustCompile(`^5$`),
+						"push_limit_lock_duration":                regexp.MustCompile(`^30$`),
+						"push_limit_lock_duration_timeunit":       regexp.MustCompile(`^MINUTES$`),
+						"push_limit_time_period_duration":         regexp.MustCompile(`^10$`),
+						"push_limit_time_period_timeunit":         regexp.MustCompile(`^MINUTES$`),
 						"otp_enabled":                             regexp.MustCompile(`^true$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
@@ -859,6 +895,11 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"push_timeout_timeunit":                   regexp.MustCompile(`^SECONDS$`),
 						"pairing_key_lifetime_duration":           regexp.MustCompile(`^55$`),
 						"pairing_key_lifetime_timeunit":           regexp.MustCompile(`^MINUTES$`),
+						"push_limit_count":                        regexp.MustCompile(`^5$`),
+						"push_limit_lock_duration":                regexp.MustCompile(`^25$`),
+						"push_limit_lock_duration_timeunit":       regexp.MustCompile(`^MINUTES$`),
+						"push_limit_time_period_duration":         regexp.MustCompile(`^5$`),
+						"push_limit_time_period_timeunit":         regexp.MustCompile(`^MINUTES$`),
 						"otp_enabled":                             regexp.MustCompile(`^true$`),
 						"device_authorization_enabled":            regexp.MustCompile(`^false$`),
 						"device_authorization_extra_verification": regexp.MustCompile(`^$`),
@@ -1610,6 +1651,51 @@ resource "pingone_mfa_application_push_credential" "%[2]s-3" {
   }
 }
 
+resource "pingone_application" "%[2]s-4" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-4"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id    = "com.%[2]s4.bundle"
+      package_name = "com.%[2]s4.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "dummykeydoesnotexist"
+          verification_key  = "dummykeydoesnotexist"
+        }
+      }
+    }
+  }
+}
+
+resource "pingone_mfa_application_push_credential" "%[2]s-4" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s-4.id
+
+  fcm {
+    key = "dummykey"
+  }
+}
+
 resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1645,6 +1731,12 @@ resource "pingone_mfa_policy" "%[2]s" {
       pairing_key_lifetime_duration = 3
       pairing_key_lifetime_timeunit = "HOURS"
 
+      push_limit_count                  = 10
+      push_limit_lock_duration          = 260
+      push_limit_lock_duration_timeunit = "SECONDS"
+      push_limit_time_period_duration   = 300
+      push_limit_time_period_timeunit   = "SECONDS"
+
       otp_enabled = true
 
       device_authorization_enabled            = true
@@ -1655,7 +1747,6 @@ resource "pingone_mfa_policy" "%[2]s" {
 
     application {
       id = pingone_application.%[2]s-2.id
-
 
       pairing_disabled = false
 
@@ -1672,6 +1763,9 @@ resource "pingone_mfa_policy" "%[2]s" {
       otp_enabled  = true
 
       pairing_key_lifetime_duration = 55
+
+      push_limit_lock_duration        = 25
+      push_limit_time_period_duration = 5
 
       device_authorization_enabled = false
 

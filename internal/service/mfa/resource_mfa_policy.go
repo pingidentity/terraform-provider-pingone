@@ -154,6 +154,41 @@ func ResourceMFAPolicy() *schema.Resource {
 										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_HOURS), string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_MINUTES)}, false)),
 										Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
 									},
+									"push_limit_count": {
+										Description:      "The number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is 1 and the maximum value is 50. If this parameter is not provided, the default value is 5.",
+										Type:             schema.TypeInt,
+										Optional:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 50)),
+										Default:          5,
+									},
+									"push_limit_lock_duration": {
+										Description:      "The length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is 1 minute and the maximum value is 120 minutes. If this parameter is not provided, the default value is 30 minutes.",
+										Type:             schema.TypeInt,
+										Optional:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
+										Default:          30,
+									},
+									"push_limit_lock_duration_timeunit": {
+										Description:      fmt.Sprintf("The time unit for the `push_limit_lock_duration` parameter.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
+										Type:             schema.TypeString,
+										Optional:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
+										Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
+									},
+									"push_limit_time_period_duration": {
+										Description:      "The time period in which the push notifications are counted towards the defined limit. The minimum value is 1 minute and the maximum value is 120 minutes. If this parameter is not provided, the default value is 10 minutes.",
+										Type:             schema.TypeInt,
+										Optional:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
+										Default:          10,
+									},
+									"push_limit_time_period_timeunit": {
+										Description:      fmt.Sprintf("The time unit for the `push_limit_time_period_duration` parameter.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
+										Type:             schema.TypeString,
+										Optional:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
+										Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
+									},
 									"otp_enabled": {
 										Description: "Specifies whether OTP authentication is enabled or disabled for the policy.",
 										Type:        schema.TypeBool,
@@ -695,6 +730,26 @@ func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *
 				item.SetPairingKeyLifetime(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime(int32(pairingKeyLifetimeDuration), mfa.EnumTimeUnitPairingKeyLifetime(pairingKeyLifetimeTimeunit)))
 			}
 
+			pushLimit := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimit()
+
+			if c3, ok := c2["push_limit_count"].(int); ok {
+				pushLimit.SetCount(int32(c3))
+			}
+
+			lockDuration, lockDurationOk := c2["push_limit_lock_duration"].(int)
+			lockDurationTimeunit, lockDurationTimeunitOk := c2["push_limit_lock_duration_timeunit"].(string)
+			if lockDurationOk && lockDurationTimeunitOk {
+				pushLimit.SetLockDuration(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration(int32(lockDuration), mfa.EnumTimeUnit(lockDurationTimeunit)))
+			}
+
+			timePeriodDuration, timePeriodOk := c2["push_limit_time_period_duration"].(int)
+			timePeriodTimeunit, timePeriodTimeunitOk := c2["push_limit_time_period_timeunit"].(string)
+			if timePeriodOk && timePeriodTimeunitOk {
+				pushLimit.SetTimePeriod(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod(int32(timePeriodDuration), mfa.EnumTimeUnit(timePeriodTimeunit)))
+			}
+
+			item.SetPushLimit(*pushLimit)
+
 			if c3, ok := c2["otp_enabled"].(bool); ok {
 				item.SetOtp(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerOtp(c3))
 			}
@@ -766,7 +821,7 @@ func checkApplicationForMobileApp(ctx context.Context, apiClient *management.API
 	if resp == nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Appliation referenced in `mobile.application.id` does not exist",
+			Summary:  "Application referenced in `mobile.application.id` does not exist",
 		})
 		return nil, diags
 	}
@@ -779,7 +834,7 @@ func checkApplicationForMobileApp(ctx context.Context, apiClient *management.API
 	if respObject.ApplicationOIDC == nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Appliation referenced in `mobile.application.id` is not of type OIDC",
+			Summary:  "Application referenced in `mobile.application.id` is not of type OIDC",
 			Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
 		})
 		return nil, diags
@@ -791,7 +846,7 @@ func checkApplicationForMobileApp(ctx context.Context, apiClient *management.API
 	if respObject.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_NATIVE_APP && respObject.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_CUSTOM_APP {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Appliation referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type",
+			Summary:  "Application referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type",
 			Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
 		})
 		return nil, diags
@@ -801,7 +856,7 @@ func checkApplicationForMobileApp(ctx context.Context, apiClient *management.API
 	if _, ok := respObject.ApplicationOIDC.GetMobileOk(); !ok {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Appliation referenced in `mobile.application.id` does not contain mobile application configuration",
+			Summary:  "Application referenced in `mobile.application.id` does not contain mobile application configuration",
 			Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
 		})
 		return nil, diags
@@ -816,7 +871,7 @@ func checkApplicationForMobileApp(ctx context.Context, apiClient *management.API
 
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "Appliation referenced in `mobile.application.id` does not contain mobile application configuration",
+				Summary:  "Application referenced in `mobile.application.id` does not contain mobile application configuration",
 				Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
 			})
 			return nil, diags
@@ -1009,6 +1064,33 @@ func expandMFAPolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileAp
 			}
 		}
 
+		if v1, ok := v.GetPushLimitOk(); ok {
+
+			if v2, ok := v1.GetCountOk(); ok {
+				item["push_limit_count"] = v2
+			}
+
+			if v2, ok := v1.GetLockDurationOk(); ok {
+				if v3, ok := v2.GetDurationOk(); ok {
+					item["push_limit_lock_duration"] = v3
+				}
+
+				if v3, ok := v2.GetTimeUnitOk(); ok {
+					item["push_limit_lock_duration_timeunit"] = v3
+				}
+			}
+
+			if v2, ok := v1.GetTimePeriodOk(); ok {
+				if v3, ok := v2.GetDurationOk(); ok {
+					item["push_limit_time_period_duration"] = v3
+				}
+
+				if v3, ok := v2.GetTimeUnitOk(); ok {
+					item["push_limit_time_period_timeunit"] = v3
+				}
+			}
+		}
+
 		if v1, ok := v.GetAutoEnrollmentOk(); ok {
 			item["auto_enrollment_enabled"] = v1.GetEnabled()
 		}
@@ -1087,7 +1169,7 @@ func flattenMFAPolicyFIDO2Device(c *mfa.DeviceAuthenticationPolicyFido2) []map[s
 		item["pairing_disabled"] = *v
 	}
 
-	if v, ok := c.GetFido2PolicyIdOk(); ok {
+	if v, ok := c.GetFido2PolicyIdOk(); ok && *v != "" {
 		item["fido2_policy_id"] = v
 	}
 
