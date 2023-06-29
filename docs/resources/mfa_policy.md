@@ -182,8 +182,6 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
 - `environment_id` (String) The ID of the environment to create the sign on policy in.
 - `mobile` (Block List, Min: 1, Max: 1) Mobile authenticator device policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource. (see [below for nested schema](#nestedblock--mobile))
 - `name` (String) A string that specifies the MFA policy's name.
-- `platform` (Block List, Min: 1, Max: 1) Platform biometrics authentication policy settings. (see [below for nested schema](#nestedblock--platform))
-- `security_key` (Block List, Min: 1, Max: 1) Security key (FIDO2) authentication policy settings. (see [below for nested schema](#nestedblock--security_key))
 - `sms` (Block List, Min: 1, Max: 1) SMS OTP authentication policy settings. (see [below for nested schema](#nestedblock--sms))
 - `totp` (Block List, Min: 1, Max: 1) TOTP authenticator policy settings. (see [below for nested schema](#nestedblock--totp))
 - `voice` (Block List, Min: 1, Max: 1) Voice OTP authentication policy settings. (see [below for nested schema](#nestedblock--voice))
@@ -245,6 +243,8 @@ Optional:
 - `device_authorization_extra_verification` (String) Specifies the level of further verification when `device_authorization_enabled` is true. The PingOne platform performs an extra verification check by sending a "silent" push notification to the customer native application, and receives a confirmation in return.  Extra verification can be one of the following levels: `permissive`: The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed.  `restrictive`: The PingOne platform performs the extra verification check.The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed.
 - `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response. Set the value to `permissive` if you want to allow the process to continue. Set the value to `restrictive` if you want to block the user in such situations.
 - `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
+- `pairing_key_lifetime_duration` (Number) The amount of time an issued pairing key can be used until it expires. Minimum is 1 minute and maximum is 48 hours. If this parameter is not provided, the duration is set to 10 minutes. Defaults to `10`.
+- `pairing_key_lifetime_timeunit` (String) The time unit for the `pairing_key_lifetime_duration` parameter.  Options are `HOURS` or `MINUTES`. Defaults to `MINUTES`.
 - `push_timeout_duration` (Number) An integer that defines the amount of time (in seconds) a user has to respond to a push notification before it expires. Minimum is 40 seconds and maximum is 150 seconds. If this parameter is not provided, the duration is set to 40 seconds. Defaults to `40`.
 
 Read-Only:

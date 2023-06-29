@@ -141,6 +141,19 @@ func ResourceMFAPolicy() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 									},
+									"pairing_key_lifetime_duration": {
+										Description: "The amount of time an issued pairing key can be used until it expires. Minimum is 1 minute and maximum is 48 hours. If this parameter is not provided, the duration is set to 10 minutes.",
+										Type:        schema.TypeInt,
+										Optional:    true,
+										Default:     10,
+									},
+									"pairing_key_lifetime_timeunit": {
+										Description:      fmt.Sprintf("The time unit for the `pairing_key_lifetime_duration` parameter.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_HOURS), string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_MINUTES)),
+										Type:             schema.TypeString,
+										Optional:         true,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_HOURS), string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_MINUTES)}, false)),
+										Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
+									},
 									"otp_enabled": {
 										Description: "Specifies whether OTP authentication is enabled or disabled for the policy.",
 										Type:        schema.TypeBool,
@@ -214,10 +227,27 @@ func ResourceMFAPolicy() *schema.Resource {
 					},
 				},
 			},
-			"security_key": {
-				Description: "Security key (FIDO2) authentication policy settings.",
+			"fido2": {
+				Description: "FIDO2 device authentication policy settings.",
 				Type:        schema.TypeList,
 				MaxItems:    1,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Description: "Enabled or disabled in the policy.",
+							Type:        schema.TypeBool,
+							Required:    true,
+						},
+						"pairing_disabled": {
+							Description: "You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+						},
+					},
+				},
+			},
 			"security_key": {
 				Description: "**Deprecation Notice** The `security_key` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `security_key` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies. Security key (FIDO2) authentication policy settings.",
 				Type:        schema.TypeList,
@@ -643,6 +673,12 @@ func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *
 				item.SetPushTimeout(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout(int32(c3), mfa.ENUMTIMEUNITPUSHTIMEOUT_SECONDS))
 			}
 
+			pairingKeyLifetimeDuration, pairingKeyLifetimeDurationOk := c2["pairing_key_lifetime_duration"].(int)
+			pairingKeyLifetimeTimeunit, pairingKeyLifetimeTimeunitOk := c2["pairing_key_lifetime_timeunit"].(string)
+			if pairingKeyLifetimeDurationOk && pairingKeyLifetimeTimeunitOk {
+				item.SetPairingKeyLifetime(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime(int32(pairingKeyLifetimeDuration), mfa.EnumTimeUnitPairingKeyLifetime(pairingKeyLifetimeTimeunit)))
+			}
+
 			if c3, ok := c2["otp_enabled"].(bool); ok {
 				item.SetOtp(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerOtp(c3))
 			}
@@ -927,6 +963,16 @@ func expandMFAPolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileAp
 
 			if v2, ok := v1.GetTimeUnitOk(); ok {
 				item["push_timeout_timeunit"] = v2
+			}
+		}
+
+		if v1, ok := v.GetPairingKeyLifetimeOk(); ok {
+			if v2, ok := v1.GetDurationOk(); ok {
+				item["pairing_key_lifetime_duration"] = v2
+			}
+
+			if v2, ok := v1.GetTimeUnitOk(); ok {
+				item["pairing_key_lifetime_timeunit"] = v2
 			}
 		}
 
