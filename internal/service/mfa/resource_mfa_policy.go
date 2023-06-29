@@ -245,6 +245,12 @@ func ResourceMFAPolicy() *schema.Resource {
 							Optional:    true,
 							Default:     false,
 						},
+						"fido2_policy_id": {
+							Description:      "Specifies the UUID that represents the FIDO2 policy in PingOne. This property can be null. When null, the environment's default FIDO2 Policy is used.",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+						},
 					},
 				},
 			},
@@ -451,6 +457,12 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 		d.Set("totp", nil)
 	}
 
+	if v, ok := respObject.GetFido2Ok(); ok {
+		d.Set("fido2", flattenMFAPolicyFIDO2Device(v))
+	} else {
+		d.Set("fido2", nil)
+	}
+
 	if v, ok := respObject.GetSecurityKeyOk(); ok {
 		d.Set("security_key", flattenMFAPolicyFIDODevice(v))
 	} else {
@@ -586,6 +598,10 @@ func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *sc
 		false,
 		false,
 	)
+
+	if v, ok := d.GetOk("fido2"); ok {
+		item.SetFido2(*expandMFAPolicyFIDO2Device(v.([]interface{})[0]))
+	}
 
 	if v, ok := d.GetOk("security_key"); ok {
 		item.SetSecurityKey(*expandMFAPolicyFIDODevice(v.([]interface{})[0]))
@@ -848,6 +864,23 @@ func expandMFAPolicyFIDODevice(v interface{}) *mfa.DeviceAuthenticationPolicyFID
 	return item
 }
 
+func expandMFAPolicyFIDO2Device(v interface{}) *mfa.DeviceAuthenticationPolicyFido2 {
+
+	obj := v.(map[string]interface{})
+
+	item := mfa.NewDeviceAuthenticationPolicyFido2(obj["enabled"].(bool))
+
+	if v, ok := obj["fido2_policy_id"].(string); ok {
+		item.SetFido2PolicyId(v)
+	}
+
+	if v, ok := obj["pairing_disabled"]; ok {
+		item.SetPairingDisabled(v.(bool))
+	}
+
+	return item
+}
+
 func flattenMFAPolicyOfflineDevice(c *mfa.DeviceAuthenticationPolicyOfflineDevice) []map[string]interface{} {
 	item := map[string]interface{}{
 		"enabled": c.GetEnabled(),
@@ -1039,6 +1072,23 @@ func flattenMFAPolicyFIDODevice(c *mfa.DeviceAuthenticationPolicyFIDODevice) []m
 
 	if v, ok := c.GetFidoPolicyIdOk(); ok {
 		item["fido_policy_id"] = v
+	}
+
+	return append(make([]map[string]interface{}, 0), item)
+}
+
+func flattenMFAPolicyFIDO2Device(c *mfa.DeviceAuthenticationPolicyFido2) []map[string]interface{} {
+
+	item := map[string]interface{}{
+		"enabled": c.GetEnabled(),
+	}
+
+	if v, ok := c.GetPairingDisabledOk(); ok {
+		item["pairing_disabled"] = *v
+	}
+
+	if v, ok := c.GetFido2PolicyIdOk(); ok {
+		item["fido2_policy_id"] = v
 	}
 
 	return append(make([]map[string]interface{}, 0), item)

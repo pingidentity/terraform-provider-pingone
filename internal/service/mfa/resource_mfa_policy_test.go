@@ -1038,6 +1038,7 @@ func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 				),
@@ -1070,6 +1071,7 @@ func TestAccMFAPolicy_FIDO2_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 				),
@@ -1102,6 +1104,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 				),
@@ -1116,6 +1119,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 				),
@@ -1130,6 +1134,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 				),
@@ -2230,7 +2235,7 @@ func testAccMFAPolicyConfig_FullFIDO2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_fido_policy" "%[2]s" {
+resource "pingone_mfa_fido2_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2267,7 +2272,7 @@ resource "pingone_mfa_policy" "%[2]s" {
     enabled          = true
     pairing_disabled = true
 
-    fido_policy_id = pingone_mfa_fido_policy.%[2]s.id
+    fido2_policy_id = pingone_mfa_fido2_policy.%[2]s.id
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -2277,7 +2282,7 @@ func testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_fido_policy" "%[2]s" {
+resource "pingone_mfa_fido2_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 

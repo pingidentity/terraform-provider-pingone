@@ -32,11 +32,7 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
     enabled = true
   }
 
-  security_key {
-    enabled = true
-  }
-
-  platform {
+  fido2 {
     enabled = true
   }
 
@@ -151,11 +147,7 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
     enabled = true
   }
 
-  security_key {
-    enabled = true
-  }
-
-  platform {
+  fido2 {
     enabled = true
   }
 
@@ -189,6 +181,7 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
 ### Optional
 
 - `device_selection` (String) A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments), `PROMPT_TO_SELECT` and `ALWAYS_PROMPT_TO_SELECT`. Defaults to `DEFAULT_TO_FIRST`.
+- `fido2` (Block List, Max: 1) FIDO2 device authentication policy settings. (see [below for nested schema](#nestedblock--fido2))
 - `platform` (Block List, Max: 1, Deprecated) **Deprecation Notice** The `platform` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `platform` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies. Platform biometrics authentication policy settings. (see [below for nested schema](#nestedblock--platform))
 - `security_key` (Block List, Max: 1, Deprecated) **Deprecation Notice** The `security_key` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `security_key` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies. Security key (FIDO2) authentication policy settings. (see [below for nested schema](#nestedblock--security_key))
 
@@ -302,7 +295,17 @@ Optional:
 - `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
 
 
+<a id="nestedblock--fido2"></a>
+### Nested Schema for `fido2`
 
+Required:
+
+- `enabled` (Boolean) Enabled or disabled in the policy.
+
+Optional:
+
+- `fido2_policy_id` (String) Specifies the UUID that represents the FIDO2 policy in PingOne. This property can be null. When null, the environment's default FIDO2 Policy is used.
+- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
 
 
 <a id="nestedblock--platform"></a>
