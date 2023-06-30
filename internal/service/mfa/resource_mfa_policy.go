@@ -286,17 +286,12 @@ func fidoDeviceResourceSchema() *schema.Resource {
 func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	managementApiClient := p1Client.API.ManagementAPIClient
-	ctxManagement := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
-	mfaPolicy, diags := expandMFAPolicy(ctxManagement, managementApiClient, d)
+	mfaPolicy, diags := expandMFAPolicy(ctx, managementApiClient, d)
 	if diags.HasError() {
 		return diags
 	}
@@ -325,9 +320,7 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -407,17 +400,12 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	managementApiClient := p1Client.API.ManagementAPIClient
-	ctxManagement := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
-	mfaPolicy, diags := expandMFAPolicy(ctxManagement, managementApiClient, d)
+	mfaPolicy, diags := expandMFAPolicy(ctx, managementApiClient, d)
 	if diags.HasError() {
 		return diags
 	}
@@ -442,9 +430,7 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(
@@ -498,11 +484,19 @@ func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *sc
 		*expandMFAPolicyOfflineDevice(d.Get("email").([]interface{})[0]),
 		*mobile,
 		*expandMFAPolicyTOTPDevice(d.Get("totp").([]interface{})[0]),
-		*expandMFAPolicyFIDODevice(d.Get("security_key").([]interface{})[0]),
-		*expandMFAPolicyFIDODevice(d.Get("platform").([]interface{})[0]),
+		// *expandMFAPolicyFIDODevice(d.Get("security_key").([]interface{})[0]),
+		// *expandMFAPolicyFIDODevice(d.Get("platform").([]interface{})[0]),
 		false,
 		false,
 	)
+
+	if v, ok := d.GetOk("security_key"); ok {
+		item.SetSecurityKey(*expandMFAPolicyFIDODevice(v.([]interface{})[0]))
+	}
+
+	if v, ok := d.GetOk("platform"); ok {
+		item.SetPlatform(*expandMFAPolicyFIDODevice(v.([]interface{})[0]))
+	}
 
 	if v, ok := d.GetOk("device_selection"); ok {
 		item.SetAuthentication(*mfa.NewDeviceAuthenticationPolicyAuthentication(mfa.EnumMFADevicePolicySelection(v.(string))))
