@@ -309,7 +309,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		}
 	}
 
-	if servicesOverridden == true && (config.AuthHostnameOverride == nil || *config.AuthHostnameOverride == "") {
+	if servicesOverridden && (config.AuthHostnameOverride == nil || *config.AuthHostnameOverride == "") {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("service_endpoints").AtName("auth_hostname"),
 			"Required service endpoints not configured.",
@@ -317,7 +317,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		)
 	}
 
-	if servicesOverridden == true && (config.APIHostnameOverride == nil || *config.APIHostnameOverride == "") {
+	if servicesOverridden && (config.APIHostnameOverride == nil || *config.APIHostnameOverride == "") {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("service_endpoints").AtName("api_hostname"),
 			"Required service endpoints not configured.",
@@ -325,7 +325,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		)
 	}
 
-	if servicesOverridden == true && (config.AgreementMgmtHostnameOverride == nil) {
+	if servicesOverridden && (config.AgreementMgmtHostnameOverride == nil) {
 		resp.Diagnostics.AddAttributeWarning(
 			path.Root("service_endpoints").AtName("agreement_management_hostname"),
 			"Service endpoints not configured.",

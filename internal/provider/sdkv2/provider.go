@@ -290,7 +290,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			}
 		}
 
-		if servicesOverridden == true && (config.AuthHostnameOverride == nil || config.APIHostnameOverride == nil) {
+		if servicesOverridden && (config.AuthHostnameOverride == nil || config.APIHostnameOverride == nil) {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  "Required service endpoints not configured.",
@@ -298,7 +298,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			})
 		}
 
-		if servicesOverridden == true && (config.AgreementMgmtHostnameOverride == nil) {
+		if servicesOverridden && (config.AgreementMgmtHostnameOverride == nil) {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Warning,
 				Summary:  "Service endpoints not configured.",
