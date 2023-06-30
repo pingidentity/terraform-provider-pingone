@@ -29,14 +29,10 @@ func testAccCheckCredentialIssuerProfilePassthrough(s *terraform.State) error {
 	}
 
 	apiClient := p1Client.API.CredentialsAPIClient
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 
 	mgmtApiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_credential_issuer_profile" {
