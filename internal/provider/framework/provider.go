@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -42,7 +43,14 @@ type pingOneProviderModel struct {
 	EnvironmentID                        types.String `tfsdk:"environment_id"`
 	APIAccessToken                       types.String `tfsdk:"api_access_token"`
 	Region                               types.String `tfsdk:"region"`
+	ServiceEndpoints                     types.List   `tfsdk:"service_endpoints"`
 	ForceDeleteProductionEnvironmentType types.Bool   `tfsdk:"force_delete_production_type"`
+}
+
+type pingOneProviderServiceEndpointsModel struct {
+	AuthHostname          types.String `tfsdk:"auth_hostname"`
+	APIHostname           types.String `tfsdk:"api_hostname"`
+	AgreementMgmtHostname types.String `tfsdk:"agreement_management_hostname"`
 }
 
 func (p *pingOneProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -51,31 +59,113 @@ func (p *pingOneProvider) Metadata(ctx context.Context, req provider.MetadataReq
 }
 
 func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+
+	clientIDDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must be configured with `client_secret` and `environment_id`.",
+	)
+
+	clientSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.  Must be configured with `client_id` and `environment_id`.",
+	)
+
+	environmentIDDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.",
+	)
+
+	apiAccessTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
+	)
+
+	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The PingOne region to use.  Options are `AsiaPacific`, `Canada`, `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
+	)
+
+	forceDeleteProductionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
+	)
+
+	serviceEndpointsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single block containing configuration items to override the service API endpoints of PingOne.",
+	)
+
+	serviceEndpointsAuthHostnameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Hostname for the PingOne authentication service API.  Default value can be set with the `PINGONE_AUTH_SERVICE_HOSTNAME` environment variable.",
+	)
+
+	serviceEndpointsApiHostnameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Hostname for the PingOne management service API.  Default value can be set with the `PINGONE_API_SERVICE_HOSTNAME` environment variable.",
+	)
+
+	serviceEndpointsAgreementManagementHostnameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Hostname for the PingOne agreement management service API.  Default value can be set with the `PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME` environment variable.",
+	)
+
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
-				MarkdownDescription: "Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must be configured with `client_secret` and `environment_id`.",
+				Description:         clientIDDescription.Description,
+				MarkdownDescription: clientIDDescription.MarkdownDescription,
 				Optional:            true,
 			},
+
 			"client_secret": schema.StringAttribute{
-				MarkdownDescription: "Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.  Must be configured with `client_id` and `environment_id`.",
+				Description:         clientSecretDescription.Description,
+				MarkdownDescription: clientSecretDescription.MarkdownDescription,
 				Optional:            true,
 			},
+
 			"environment_id": schema.StringAttribute{
-				MarkdownDescription: "Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.",
+				Description:         environmentIDDescription.Description,
+				MarkdownDescription: environmentIDDescription.MarkdownDescription,
 				Optional:            true,
 			},
+
 			"api_access_token": schema.StringAttribute{
-				MarkdownDescription: "The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
+				Description:         apiAccessTokenDescription.Description,
+				MarkdownDescription: apiAccessTokenDescription.MarkdownDescription,
 				Optional:            true,
 			},
+
 			"region": schema.StringAttribute{
-				MarkdownDescription: "The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
+				Description:         regionDescription.Description,
+				MarkdownDescription: regionDescription.MarkdownDescription,
 				Optional:            true,
 			},
+
 			"force_delete_production_type": schema.BoolAttribute{
-				MarkdownDescription: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
+				Description:         forceDeleteProductionTypeDescription.Description,
+				MarkdownDescription: forceDeleteProductionTypeDescription.MarkdownDescription,
 				Optional:            true,
+			},
+		},
+
+		Blocks: map[string]schema.Block{
+			"service_endpoints": schema.ListNestedBlock{
+				Description:         serviceEndpointsDescription.Description,
+				MarkdownDescription: serviceEndpointsDescription.MarkdownDescription,
+
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"auth_hostname": schema.StringAttribute{
+							Description:         serviceEndpointsAuthHostnameDescription.Description,
+							MarkdownDescription: serviceEndpointsAuthHostnameDescription.MarkdownDescription,
+							Required:            true,
+						},
+
+						"api_hostname": schema.StringAttribute{
+							Description:         serviceEndpointsApiHostnameDescription.Description,
+							MarkdownDescription: serviceEndpointsApiHostnameDescription.MarkdownDescription,
+							Required:            true,
+						},
+
+						"agreement_management_hostname": schema.StringAttribute{
+							Description:         serviceEndpointsAgreementManagementHostnameDescription.Description,
+							MarkdownDescription: serviceEndpointsAgreementManagementHostnameDescription.MarkdownDescription,
+							Required:            true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -157,7 +247,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		data.ForceDeleteProductionEnvironmentType = basetypes.NewBoolValue(v)
 	}
 
-	// Example client configuration for data sources and resources
 	config := &pingone.Config{
 		ClientID:      data.ClientID.ValueString(),
 		ClientSecret:  data.ClientSecret.ValueString(),
@@ -167,11 +256,91 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		ForceDelete:   data.ForceDeleteProductionEnvironmentType.ValueBool(),
 	}
 
+	servicesOverridden := false
+	if !data.ServiceEndpoints.IsNull() {
+
+		var serviceEndpointsData pingOneProviderServiceEndpointsModel
+		resp.Diagnostics.Append(data.ServiceEndpoints.ElementsAs(ctx, &serviceEndpointsData, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if !serviceEndpointsData.AuthHostname.IsNull() {
+			v := serviceEndpointsData.AuthHostname.ValueString()
+			config.AuthHostnameOverride = &v
+		}
+
+		if !serviceEndpointsData.APIHostname.IsNull() {
+			v := serviceEndpointsData.APIHostname.ValueString()
+			config.APIHostnameOverride = &v
+		}
+
+		if !serviceEndpointsData.AgreementMgmtHostname.IsNull() {
+			v := serviceEndpointsData.AgreementMgmtHostname.ValueString()
+			config.AgreementMgmtHostnameOverride = &v
+		}
+
+	} else {
+		if v := os.Getenv("PINGONE_AUTH_SERVICE_HOSTNAME"); v != "" {
+			config.AuthHostnameOverride = &v
+			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "auth_hostname"), map[string]interface{}{
+				"env_var":       "PINGONE_AUTH_SERVICE_HOSTNAME",
+				"env_var_value": config.AuthHostnameOverride,
+			})
+			servicesOverridden = true
+		}
+
+		if v := os.Getenv("PINGONE_API_SERVICE_HOSTNAME"); v != "" {
+			config.APIHostnameOverride = &v
+			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "api_hostname"), map[string]interface{}{
+				"env_var":       "PINGONE_API_SERVICE_HOSTNAME",
+				"env_var_value": config.APIHostnameOverride,
+			})
+			servicesOverridden = true
+		}
+
+		if v := os.Getenv("PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME"); v != "" {
+			config.AgreementMgmtHostnameOverride = &v
+			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "agreement_management_hostname"), map[string]interface{}{
+				"env_var":       "PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME",
+				"env_var_value": config.AgreementMgmtHostnameOverride,
+			})
+			servicesOverridden = true
+		}
+	}
+
+	if servicesOverridden == true && (config.AuthHostnameOverride == nil || *config.AuthHostnameOverride == "") {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("service_endpoints").AtName("auth_hostname"),
+			"Required service endpoints not configured.",
+			"When overriding service endpoints using environment variables, PINGONE_AUTH_SERVICE_HOSTNAME and PINGONE_API_SERVICE_HOSTNAME are required to be set.",
+		)
+	}
+
+	if servicesOverridden == true && (config.APIHostnameOverride == nil || *config.APIHostnameOverride == "") {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("service_endpoints").AtName("api_hostname"),
+			"Required service endpoints not configured.",
+			"When overriding service endpoints using environment variables, PINGONE_AUTH_SERVICE_HOSTNAME and PINGONE_API_SERVICE_HOSTNAME are required to be set.",
+		)
+	}
+
+	if servicesOverridden == true && (config.AgreementMgmtHostnameOverride == nil) {
+		resp.Diagnostics.AddAttributeWarning(
+			path.Root("service_endpoints").AtName("agreement_management_hostname"),
+			"Service endpoints not configured.",
+			"When overriding service endpoints using environment variables, PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME is recommended to be set.  Misconfiguration is likely to cause issues with using the provider.",
+		)
+	}
+
 	err := config.Validate()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Parameter validation error",
 			fmt.Sprintf("%s", err))
+	}
+
+	if resp.Diagnostics.HasError() {
 		return
 	}
 

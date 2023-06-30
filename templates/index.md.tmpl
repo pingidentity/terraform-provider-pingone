@@ -49,3 +49,13 @@ For detailed instructions on how to prepare PingOne for Terraform access, see th
 ### Optional
 
 - `force_delete_production_type` (Boolean) Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.
+- `service_endpoints` (Block List) A single block containing configuration items to override the service API endpoints of PingOne. (see [below for nested schema](#nestedblock--service_endpoints))
+
+<a id="nestedblock--service_endpoints"></a>
+### Nested Schema for `service_endpoints`
+
+Required:
+
+- `agreement_management_hostname` (String) Hostname for the PingOne agreement management service API.  Default value can be set with the `PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME` environment variable.
+- `api_hostname` (String) Hostname for the PingOne management service API.  Default value can be set with the `PINGONE_API_SERVICE_HOSTNAME` environment variable.
+- `auth_hostname` (String) Hostname for the PingOne authentication service API.  Default value can be set with the `PINGONE_AUTH_SERVICE_HOSTNAME` environment variable.

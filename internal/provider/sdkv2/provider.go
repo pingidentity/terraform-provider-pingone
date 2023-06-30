@@ -69,6 +69,31 @@ func New(version string) func() *schema.Provider {
 					Optional:    true,
 					Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
 				},
+				"service_endpoints": {
+					Type:        schema.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: "A single block containing configuration items to override the service API endpoints of PingOne.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"auth_hostname": {
+								Type:        schema.TypeString,
+								Required:    true,
+								Description: "Hostname for the PingOne authentication service API.  Default value can be set with the `PINGONE_AUTH_SERVICE_HOSTNAME` environment variable.",
+							},
+							"api_hostname": {
+								Type:        schema.TypeString,
+								Required:    true,
+								Description: "Hostname for the PingOne management service API.  Default value can be set with the `PINGONE_API_SERVICE_HOSTNAME` environment variable.",
+							},
+							"agreement_management_hostname": {
+								Type:        schema.TypeString,
+								Required:    true,
+								Description: "Hostname for the PingOne agreement management service API.  Default value can be set with the `PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME` environment variable.",
+							},
+						},
+					},
+				},
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
@@ -142,7 +167,7 @@ func New(version string) func() *schema.Provider {
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-
+		var diags diag.Diagnostics
 		var config client.Config
 
 		// Set the defaults
@@ -223,9 +248,71 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			config.ForceDelete = forceDelete
 		}
 
+		servicesOverridden := false
+		if v, ok := d.Get("service_endpoints").([]interface{}); ok && len(v) > 0 && v[0] != nil {
+			if v, ok := d.Get("auth_hostname").(string); ok && v != "" {
+				config.AuthHostnameOverride = &v
+			}
+
+			if v, ok := d.Get("api_hostname").(string); ok && v != "" {
+				config.APIHostnameOverride = &v
+			}
+
+			if v, ok := d.Get("agreement_management_hostname").(string); ok && v != "" {
+				config.AgreementMgmtHostnameOverride = &v
+			}
+		} else {
+			if v := os.Getenv("PINGONE_AUTH_SERVICE_HOSTNAME"); v != "" {
+				config.AuthHostnameOverride = &v
+				tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "auth_hostname"), map[string]interface{}{
+					"env_var":       "PINGONE_AUTH_SERVICE_HOSTNAME",
+					"env_var_value": config.AuthHostnameOverride,
+				})
+				servicesOverridden = true
+			}
+
+			if v := os.Getenv("PINGONE_API_SERVICE_HOSTNAME"); v != "" {
+				config.APIHostnameOverride = &v
+				tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "api_hostname"), map[string]interface{}{
+					"env_var":       "PINGONE_API_SERVICE_HOSTNAME",
+					"env_var_value": config.APIHostnameOverride,
+				})
+				servicesOverridden = true
+			}
+
+			if v := os.Getenv("PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME"); v != "" {
+				config.AgreementMgmtHostnameOverride = &v
+				tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "agreement_management_hostname"), map[string]interface{}{
+					"env_var":       "PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME",
+					"env_var_value": config.AgreementMgmtHostnameOverride,
+				})
+				servicesOverridden = true
+			}
+		}
+
+		if servicesOverridden == true && (config.AuthHostnameOverride == nil || config.APIHostnameOverride == nil) {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Required service endpoints not configured.",
+				Detail:   "When overriding service endpoints using environment variables, PINGONE_AUTH_SERVICE_HOSTNAME and PINGONE_API_SERVICE_HOSTNAME are required to be set.",
+			})
+		}
+
+		if servicesOverridden == true && (config.AgreementMgmtHostnameOverride == nil) {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Service endpoints not configured.",
+				Detail:   "When overriding service endpoints using environment variables, PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME is recommended to be set.  Misconfiguration is likely to cause issues with using the provider.",
+			})
+		}
+
 		err := config.Validate()
 		if err != nil {
-			return nil, diag.FromErr(err)
+			diags = append(diags, diag.FromErr(err)...)
+		}
+
+		if diags.HasError() {
+			return nil, diags
 		}
 
 		client, err := config.APIClient(ctx)
@@ -234,6 +321,6 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			return nil, diag.FromErr(err)
 		}
 
-		return client, nil
+		return client, diags
 	}
 }
