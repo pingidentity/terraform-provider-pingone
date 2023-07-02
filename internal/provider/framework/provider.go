@@ -6,11 +6,13 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -77,7 +79,7 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 	)
 
 	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The PingOne region to use.  Options are `AsiaPacific`, `Canada`, `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
+		"The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
 	)
 
 	forceDeleteProductionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -165,6 +167,11 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 							Required:            true,
 						},
 					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
+					listvalidator.SizeAtLeast(1),
 				},
 			},
 		},
