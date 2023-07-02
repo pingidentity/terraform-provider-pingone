@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -101,7 +102,7 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 		Blocks: map[string]schema.Block{
 
 			"logo_image": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The HREF and the ID for the company logo.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the HREF and ID for the company logo.").Description,
 
 				NestedObject: schema.NestedBlockObject{
 
@@ -125,6 +126,10 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 							},
 						},
 					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
 				},
 			},
 		},
