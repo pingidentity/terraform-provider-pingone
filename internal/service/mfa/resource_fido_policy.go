@@ -18,6 +18,8 @@ import (
 func ResourceFIDOPolicy() *schema.Resource {
 	return &schema.Resource{
 
+		DeprecationMessage: "This resource is deprecated, please use the `pingone_mfa_fido2_policy` resource going forward.  This resource is no longer configurable for environments created after 19th June 2023, nor environments that have been upgraded to use the latest FIDO2 policies. Existing environments that were created before 19th June 2023 and have not been upgraded can continue to use this resource to facilitate migration.",
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage MFA FIDO Policies in a PingOne Environment.",
 
