@@ -86,11 +86,6 @@ func New(version string) func() *schema.Provider {
 								Required:    true,
 								Description: "Hostname for the PingOne management service API.  Default value can be set with the `PINGONE_API_SERVICE_HOSTNAME` environment variable.",
 							},
-							"agreement_management_hostname": {
-								Type:        schema.TypeString,
-								Required:    true,
-								Description: "Hostname for the PingOne agreement management service API.  Default value can be set with the `PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME` environment variable.",
-							},
 						},
 					},
 				},
@@ -257,10 +252,6 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			if v, ok := d.Get("api_hostname").(string); ok && v != "" {
 				config.APIHostnameOverride = &v
 			}
-
-			if v, ok := d.Get("agreement_management_hostname").(string); ok && v != "" {
-				config.AgreementMgmtHostnameOverride = &v
-			}
 		} else {
 			if v := os.Getenv("PINGONE_AUTH_SERVICE_HOSTNAME"); v != "" {
 				config.AuthHostnameOverride = &v
@@ -279,15 +270,6 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 				})
 				servicesOverridden = true
 			}
-
-			if v := os.Getenv("PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME"); v != "" {
-				config.AgreementMgmtHostnameOverride = &v
-				tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "agreement_management_hostname"), map[string]interface{}{
-					"env_var":       "PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME",
-					"env_var_value": config.AgreementMgmtHostnameOverride,
-				})
-				servicesOverridden = true
-			}
 		}
 
 		if servicesOverridden && (config.AuthHostnameOverride == nil || config.APIHostnameOverride == nil) {
@@ -295,14 +277,6 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 				Severity: diag.Error,
 				Summary:  "Required service endpoints not configured.",
 				Detail:   "When overriding service endpoints using environment variables, PINGONE_AUTH_SERVICE_HOSTNAME and PINGONE_API_SERVICE_HOSTNAME are required to be set.",
-			})
-		}
-
-		if servicesOverridden && (config.AgreementMgmtHostnameOverride == nil) {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  "Service endpoints not configured.",
-				Detail:   "When overriding service endpoints using environment variables, PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME is recommended to be set.  Misconfiguration is likely to cause issues with using the provider.",
 			})
 		}
 

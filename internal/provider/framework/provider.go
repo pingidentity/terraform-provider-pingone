@@ -98,10 +98,6 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 		"Hostname for the PingOne management service API.  Default value can be set with the `PINGONE_API_SERVICE_HOSTNAME` environment variable.",
 	)
 
-	serviceEndpointsAgreementManagementHostnameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Hostname for the PingOne agreement management service API.  Default value can be set with the `PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME` environment variable.",
-	)
-
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
@@ -158,12 +154,6 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 						"api_hostname": schema.StringAttribute{
 							Description:         serviceEndpointsApiHostnameDescription.Description,
 							MarkdownDescription: serviceEndpointsApiHostnameDescription.MarkdownDescription,
-							Required:            true,
-						},
-
-						"agreement_management_hostname": schema.StringAttribute{
-							Description:         serviceEndpointsAgreementManagementHostnameDescription.Description,
-							MarkdownDescription: serviceEndpointsAgreementManagementHostnameDescription.MarkdownDescription,
 							Required:            true,
 						},
 					},
@@ -282,11 +272,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			config.APIHostnameOverride = &v
 		}
 
-		if !serviceEndpointsData.AgreementMgmtHostname.IsNull() {
-			v := serviceEndpointsData.AgreementMgmtHostname.ValueString()
-			config.AgreementMgmtHostnameOverride = &v
-		}
-
 	} else {
 		if v := os.Getenv("PINGONE_AUTH_SERVICE_HOSTNAME"); v != "" {
 			config.AuthHostnameOverride = &v
@@ -305,15 +290,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			})
 			servicesOverridden = true
 		}
-
-		if v := os.Getenv("PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME"); v != "" {
-			config.AgreementMgmtHostnameOverride = &v
-			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "agreement_management_hostname"), map[string]interface{}{
-				"env_var":       "PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME",
-				"env_var_value": config.AgreementMgmtHostnameOverride,
-			})
-			servicesOverridden = true
-		}
 	}
 
 	if servicesOverridden && (config.AuthHostnameOverride == nil || *config.AuthHostnameOverride == "") {
@@ -329,14 +305,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			path.Root("service_endpoints").AtName("api_hostname"),
 			"Required service endpoints not configured.",
 			"When overriding service endpoints using environment variables, PINGONE_AUTH_SERVICE_HOSTNAME and PINGONE_API_SERVICE_HOSTNAME are required to be set.",
-		)
-	}
-
-	if servicesOverridden && (config.AgreementMgmtHostnameOverride == nil) {
-		resp.Diagnostics.AddAttributeWarning(
-			path.Root("service_endpoints").AtName("agreement_management_hostname"),
-			"Service endpoints not configured.",
-			"When overriding service endpoints using environment variables, PINGONE_AGREEMENT_MANAGEMENT_SERVICE_HOSTNAME is recommended to be set.  Misconfiguration is likely to cause issues with using the provider.",
 		)
 	}
 
