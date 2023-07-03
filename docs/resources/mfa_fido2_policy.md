@@ -128,7 +128,7 @@ Optional:
 
 Required:
 
-- `attributes` (Attributes Set) A list of objects that describe attributes associated with the users's account that can be displayed during registration and authentication.
+- `attributes` (Attributes List) A list of objects that describe attributes associated with the users's account that can be displayed during registration and authentication.
     - The content of the list should reflect the preferred order.
     - If the first attribute is empty for the user, PingOne will continue through the list until a non-empty attribute is found.
     - You can specify any user attribute (including custom attributes) that meet the following criteria: attribute type must be String, validation cannot be set to enumerated values.
@@ -144,7 +144,7 @@ Required:
 
 Optional:
 
-- `sub_attributes` (Attributes Set) A set of objects that describe the sub attributes to use when `name` is configured to use an attribute that is a complex data type. (see [below for nested schema](#nestedatt--user_display_name_attributes--attributes--sub_attributes))
+- `sub_attributes` (Attributes List) A lsit of objects that describe the sub attributes to use when `name` is configured to use an attribute that is a complex data type. (see [below for nested schema](#nestedatt--user_display_name_attributes--attributes--sub_attributes))
 
 <a id="nestedatt--user_display_name_attributes--attributes--sub_attributes"></a>
 ### Nested Schema for `user_display_name_attributes.attributes.sub_attributes`
