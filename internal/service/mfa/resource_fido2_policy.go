@@ -653,20 +653,87 @@ func (p *FIDO2PolicyResourceModel) expand(ctx context.Context) (*mfa.FIDO2Policy
 
 	// MDS Authenticator Requirements
 	var mdsAuthenticatorRequirementsPlan FIDO2PolicyMdsAuthenticatorsRequirementsResourceModel
-	diags.Append(p.MdsAuthenticatorsRequirements.As(ctx, &backupEligibilityPlan, basetypes.ObjectAsOptions{
+	diags.Append(p.MdsAuthenticatorsRequirements.As(ctx, &mdsAuthenticatorRequirementsPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
 	})...)
 	if diags.HasError() {
 		return nil, diags
 	}
+
 	mdsAuthenticatorsRequirements := mfa.NewFIDO2PolicyMdsAuthenticatorsRequirements(
-		allowedAuthenticators,
 		mdsAuthenticatorRequirementsPlan.EnforceDuringAuthentication.ValueBool(),
 		mfa.EnumFIDO2PolicyMDSAuthenticatorOption(mdsAuthenticatorRequirementsPlan.Option.ValueString()),
 	)
 
+	if !mdsAuthenticatorRequirementsPlan.AllowedAuthenticatorIDs.IsNull() && !mdsAuthenticatorRequirementsPlan.AllowedAuthenticatorIDs.IsUnknown() {
+		allowedAuthenticators := make([]mfa.FIDO2PolicyMdsAuthenticatorsRequirementsAllowedAuthenticatorsInner, 0)
+
+		var allowedAuthenticatorIDsPlan []string
+		diags.Append(mdsAuthenticatorRequirementsPlan.AllowedAuthenticatorIDs.ElementsAs(ctx, &allowedAuthenticatorIDsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		for _, allowedAuthenticatorIDPlan := range allowedAuthenticatorIDsPlan {
+
+			allowedAuthenticator := *mfa.NewFIDO2PolicyMdsAuthenticatorsRequirementsAllowedAuthenticatorsInner(
+				allowedAuthenticatorIDPlan,
+			)
+
+			allowedAuthenticators = append(allowedAuthenticators, allowedAuthenticator)
+		}
+
+		mdsAuthenticatorsRequirements.SetAllowedAuthenticators(allowedAuthenticators)
+	}
+
 	// User display name attributes
+	var userDisplayNameAttributesPlan FIDO2PolicyUserDisplayNameAttributesResourceModel
+	diags.Append(p.UserDisplayNameAttributes.As(ctx, &userDisplayNameAttributesPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	attributes := make([]mfa.FIDO2PolicyUserDisplayNameAttributesAttributesInner, 0)
+	if !userDisplayNameAttributesPlan.Attributes.IsNull() && !userDisplayNameAttributesPlan.Attributes.IsUnknown() {
+
+		var userDisplayNameAttributesAttributesPlan []FIDO2PolicyUserDisplayNameAttributesAttributesResourceModel
+		diags.Append(userDisplayNameAttributesPlan.Attributes.ElementsAs(ctx, &userDisplayNameAttributesAttributesPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		for _, attributePlan := range userDisplayNameAttributesAttributesPlan {
+
+			attribute := *mfa.NewFIDO2PolicyUserDisplayNameAttributesAttributesInner(
+				attributePlan.Name.ValueString(),
+			)
+
+			if !attributePlan.SubAttributes.IsNull() && !attributePlan.SubAttributes.IsUnknown() {
+				var userDisplayNameAttributesAttributesSubAttributesPlan []FIDO2PolicyUserDisplayNameAttributesAttributesSubAttributesResourceModel
+				diags.Append(attributePlan.SubAttributes.ElementsAs(ctx, &userDisplayNameAttributesAttributesSubAttributesPlan, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				subAttributes := make([]mfa.FIDO2PolicyUserDisplayNameAttributesAttributesInnerSubAttributesInner, 0)
+
+				for _, subAttributePlan := range userDisplayNameAttributesAttributesSubAttributesPlan {
+					subAttributes = append(subAttributes, *mfa.NewFIDO2PolicyUserDisplayNameAttributesAttributesInnerSubAttributesInner(
+						subAttributePlan.Name.ValueString(),
+					))
+				}
+
+				attribute.SetSubAttributes(subAttributes)
+			}
+
+			attributes = append(attributes, attribute)
+		}
+	}
+
 	userDisplayNameAttributes := mfa.NewFIDO2PolicyUserDisplayNameAttributes(
 		attributes,
 	)
@@ -774,17 +841,21 @@ func toStateMdsAuthenticatorsRequirements(apiObject *mfa.FIDO2PolicyMdsAuthentic
 		return types.ObjectNull(fido2PolicyMdsAuthenticatorRequirementsTFObjectTypes), nil
 	}
 
-	allowedAuthenticatorsList := make([]string, 0)
-	for _, item := range apiObject.GetAllowedAuthenticators() {
-		if id, ok := item.GetIdOk(); ok {
-			allowedAuthenticatorsList = append(allowedAuthenticatorsList, *id)
-		}
-	}
-
 	o := map[string]attr.Value{
-		"allowed_authenticator_ids":     framework.StringSetToTF(allowedAuthenticatorsList),
+		"allowed_authenticator_ids":     types.SetNull(types.StringType),
 		"enforce_during_authentication": framework.BoolOkToTF(apiObject.GetEnforceDuringAuthenticationOk()),
 		"option":                        framework.EnumOkToTF(apiObject.GetOptionOk()),
+	}
+
+	if v, ok := apiObject.GetAllowedAuthenticatorsOk(); ok {
+		allowedAuthenticatorsList := make([]string, 0)
+		for _, item := range v {
+			if id, ok := item.GetIdOk(); ok {
+				allowedAuthenticatorsList = append(allowedAuthenticatorsList, *id)
+			}
+		}
+
+		o["allowed_authenticator_ids"] = framework.StringSetToTF(allowedAuthenticatorsList)
 	}
 
 	objValue, d := types.ObjectValue(fido2PolicyMdsAuthenticatorRequirementsTFObjectTypes, o)
