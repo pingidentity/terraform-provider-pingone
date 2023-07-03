@@ -80,17 +80,17 @@ resource "pingone_mfa_fido2_policy" "my_awesome_fido2_policy" {
 
 ### Required
 
-- `attestation_requirements` (String) Options are `DIRECT`, `NONE`.
-- `authenticator_attachment` (String) Options are `BOTH`, `CROSS_PLATFORM`, `PLATFORM`.
-- `backup_eligibility` (Attributes) A single nested object that specifies the backup eligibility of FIDO2 devices. (see [below for nested schema](#nestedatt--backup_eligibility))
-- `device_display_name` (String)
-- `discoverable_credentials` (String) Options are `DISCOURAGED`, `PREFERRED`, `REQUIRED`.
+- `attestation_requirements` (String) A string that specifies the level of attestation to apply.  Options are `DIRECT` (perform attestation), `NONE` (don't perform attestation).  If `NONE` is specified, the `mds_authentication_requirements.option` parameter should also be set to `NONE`.
+- `authenticator_attachment` (String) A string that specifies the types of authenticators that are allowed.  Options are `BOTH` (allow both categories of authenticators), `CROSS_PLATFORM` (allow use of cross-platform authenticators, which are external to the accessing device (such as a security key)), `PLATFORM` (only allow the use of FIDO device authenticators that contain an internal authenticator (such as a face or fingerprint scanner)).
+- `backup_eligibility` (Attributes) A single nested object that contains settings used to control whether users should be allowed to register and authenticate with a device that uses cloud-synced credentials, such as a passkey. (see [below for nested schema](#nestedatt--backup_eligibility))
+- `device_display_name` (String) The name to display for the device in registration and authentication windows. Can be up to 100 characters. If you want to use translatable text (configured for each language under **Languages** in the Admin Console), you can use any of the keys listed on the `FIDO Policy` page of the `Self-Service` module and the `Sign On Policy` module. The value of the parameter should include only the part of the key name that comes after the module name, for example, `fidoPolicy.deviceDisplayName01` or `fidoPolicy.deviceDisplayName07`. See each language under the **Languages** section of the admin console UI for the full list of keys. For more information on translatable keys, see [Modifying translatable keys](https://docs.pingidentity.com/access/sources/dita/topic?category=p1&resourceid=pingone_modifying_translatable_keys) in the PingOne documentation.
+- `discoverable_credentials` (String) A string that specifies the behaviour when registered users are authenticating without providing credentials.  Options are `DISCOURAGED` (discoverable credentials are not used, even when supported by the FIDO device. In cases where use of discoverable credentials is required by the FIDO device itself, this setting does not override the device setting), `PREFERRED` (use discoverable credentials where possible), `REQUIRED` (require the use of discoverable credentials. This option is required for usernameless authentication).
 - `environment_id` (String) The ID of the environment to configure the FIDO2 policy in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `mds_authenticators_requirements` (Attributes) A single nested object that specifies MDS authenticator requirements. (see [below for nested schema](#nestedatt--mds_authenticators_requirements))
+- `mds_authenticators_requirements` (Attributes) A single nested object that specifies MDS authenticator requirements, used to specify whether attestation is requested from the authenticator, and whether this information is used to restrict authenticator usage. (see [below for nested schema](#nestedatt--mds_authenticators_requirements))
 - `name` (String) A string that specifies the unique, friendly name for this FIDO2 policy.
-- `relying_party_id` (String)
-- `user_display_name_attributes` (Attributes) A single nested object that specifies user display name attributes. (see [below for nested schema](#nestedatt--user_display_name_attributes))
-- `user_verification` (Attributes) A single nested object that specifies user verification settings. (see [below for nested schema](#nestedatt--user_verification))
+- `relying_party_id` (String) The ID of the relying party. The value should be a domain name, such as `bxretail.org` (in lower-case characters).
+- `user_display_name_attributes` (Attributes) A single nested object that specifies the string associated with the users's account that is displayed during registration and authentication. (see [below for nested schema](#nestedatt--user_display_name_attributes))
+- `user_verification` (Attributes) A single nested object that specifies user verification settings, used to control whether the user must perform a gesture (such as a public key credential, fingerprint scan, or a PIN code) when registering or authenticating with their FIDO device. (see [below for nested schema](#nestedatt--user_verification))
 
 ### Optional
 
@@ -106,8 +106,8 @@ resource "pingone_mfa_fido2_policy" "my_awesome_fido2_policy" {
 
 Required:
 
-- `allow` (Boolean)
-- `enforce_during_authentication` (Boolean)
+- `allow` (Boolean) A boolean that specifies whether to allow users to register and authenticate with a device that uses cloud-synced credentials.
+- `enforce_during_authentication` (Boolean) A boolean that specifies whether the backup eligibility of the device should be checked again at each authentication attempt.  Set to `true` if you want the backup eligibility of the device to be checked again at each authentication attempt and not just once during registration. Set to `false` to have it checked only at registration.
 
 
 <a id="nestedatt--mds_authenticators_requirements"></a>
@@ -115,12 +115,12 @@ Required:
 
 Required:
 
-- `enforce_during_authentication` (Boolean)
-- `option` (String) Options are `AUDIT_ONLY`, `CERTIFIED`, `GLOBAL`, `NONE`, `SPECIFIC`.
+- `enforce_during_authentication` (Boolean) A boolean that specifies whether devices characteristics related to verification are checked again on each authentication attempt.  Set to `true` if you want the device characteristics related to attestation to be checked again at each authentication attempt and not just once during registration. Set to `false` to have them checked only at registration.
+- `option` (String) A string that specifies the types of device that are allowed on the basis of the attestation provided.  Options are `AUDIT_ONLY` (attestation is requested and the information is used for logging purposes, but the information is not used for filtering authenticators), `CERTIFIED` (allow only FIDO Certified authenticators), `GLOBAL` (allow use of all FIDO authenticators listed in the Global Authenticators table), `NONE` (do not request attestation, allow all FIDO devices), `SPECIFIC` (allow only the authenticators specified with the `allowed_authenticator_ids` parameter).
 
 Optional:
 
-- `allowed_authenticator_ids` (Set of String)
+- `allowed_authenticator_ids` (Set of String) A set of strings that is used if `option` is set to `SPECIFIC`, to specify the mdsIdentitfer IDs of authenticators that are allowed in the policy.
 
 
 <a id="nestedatt--user_display_name_attributes"></a>
@@ -128,25 +128,30 @@ Optional:
 
 Required:
 
-- `attributes` (Attributes Set) (see [below for nested schema](#nestedatt--user_display_name_attributes--attributes))
+- `attributes` (Attributes Set) A list of objects that describe attributes associated with the users's account that can be displayed during registration and authentication.
+    - The content of the list should reflect the preferred order.
+    - If the first attribute is empty for the user, PingOne will continue through the list until a non-empty attribute is found.
+    - You can specify any user attribute (including custom attributes) that meet the following criteria: attribute type must be String, validation cannot be set to enumerated values.
+    - The array must contain the user attribute `username` to ensure that there is at least one non-empty attribute.
+    - You can have a maximum of six user attributes in the list. (see [below for nested schema](#nestedatt--user_display_name_attributes--attributes))
 
 <a id="nestedatt--user_display_name_attributes--attributes"></a>
 ### Nested Schema for `user_display_name_attributes.attributes`
 
 Required:
 
-- `name` (String)
+- `name` (String) The name of the attribute in PingOne, for example `username` or `email`.  The attribute can be any user attribute, including a custom attribute, that is a string data type and does not have enumerated values configured.  If you want to use the `name` attribute for the user (or any attribute that is a complex data type), you must also specify the `sub_attributes` parameter, which can be either the `given` and `family` user attributes or the `formatted` user attribute.
 
 Optional:
 
-- `sub_attributes` (Attributes Set) (see [below for nested schema](#nestedatt--user_display_name_attributes--attributes--sub_attributes))
+- `sub_attributes` (Attributes Set) A set of objects that describe the sub attributes to use when `name` is configured to use an attribute that is a complex data type. (see [below for nested schema](#nestedatt--user_display_name_attributes--attributes--sub_attributes))
 
 <a id="nestedatt--user_display_name_attributes--attributes--sub_attributes"></a>
 ### Nested Schema for `user_display_name_attributes.attributes.sub_attributes`
 
 Required:
 
-- `name` (String)
+- `name` (String) The name of a complex attribute's sub attribute in PingOne, for example `given` or `formatted` where the parent object has a name value of `name`.
 
 
 
@@ -156,8 +161,8 @@ Required:
 
 Required:
 
-- `enforce_during_authentication` (Boolean)
-- `option` (String) Options are `DISCOURAGED`, `PREFERRED`, `REQUIRED`.
+- `enforce_during_authentication` (Boolean) A boolean that specifies whether device characteristics related to user verification are to be checked again at each authentication attempt. Set to `true` if you want the device characteristics related to user verification to be checked again at each authentication attempt and not just once during registration. Set to `false` to have them checked only at registration.
+- `option` (String) A string that specifies the type of user verification to perform.  Options are `DISCOURAGED`, `PREFERRED`, `REQUIRED`.  Options are `DISCOURAGED` (user verification is not required, even when supported by the FIDO device. In cases where user verification is required by the FIDO device itself, this setting does not override the device setting), `PREFERRED` (user verification is required if the user's FIDO device supports it, but is not required if the user's device does not support it), `REQUIRED` (only FIDO devices supporting user verification can be used).  For usernameless flows, only FIDO devices supporting user verification can be used, regardless of the value configured in this parameter.
 
 ## Import
 

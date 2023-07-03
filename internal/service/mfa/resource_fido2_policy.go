@@ -138,68 +138,94 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 	const attrDeviceDisplayNameMaxLength = 100
 
 	attestationRequirementsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyAttestationRequirementsEnumValues)
+		"A string that specifies the level of attestation to apply.",
+	).AllowedValuesComplex(map[string]string{
+		string(mfa.ENUMFIDO2POLICYATTESTATIONREQUIREMENTS_DIRECT): "perform attestation",
+		string(mfa.ENUMFIDO2POLICYATTESTATIONREQUIREMENTS_NONE):   "don't perform attestation",
+	}).AppendMarkdownString(fmt.Sprintf("If `%s` is specified, the `mds_authentication_requirements.option` parameter should also be set to `%s`.", mfa.ENUMFIDO2POLICYATTESTATIONREQUIREMENTS_NONE, mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_NONE))
 
 	authenticatorAttachmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyAuthenticatorAttachmentEnumValues)
+		"A string that specifies the types of authenticators that are allowed.",
+	).AllowedValuesComplex(map[string]string{
+		string(mfa.ENUMFIDO2POLICYAUTHENTICATORATTACHMENT_PLATFORM):       "only allow the use of FIDO device authenticators that contain an internal authenticator (such as a face or fingerprint scanner)",
+		string(mfa.ENUMFIDO2POLICYAUTHENTICATORATTACHMENT_CROSS_PLATFORM): "allow use of cross-platform authenticators, which are external to the accessing device (such as a security key)",
+		string(mfa.ENUMFIDO2POLICYAUTHENTICATORATTACHMENT_BOTH):           "allow both categories of authenticators",
+	})
 
 	backupEligibilityAllowDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A boolean that specifies whether to allow users to register and authenticate with a device that uses cloud-synced credentials.",
 	)
 
 	backupEligibilityEnforceDuringAuthnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A boolean that specifies whether the backup eligibility of the device should be checked again at each authentication attempt.  Set to `true` if you want the backup eligibility of the device to be checked again at each authentication attempt and not just once during registration. Set to `false` to have it checked only at registration.",
 	)
 
 	deviceDisplayNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"The name to display for the device in registration and authentication windows. Can be up to 100 characters. If you want to use translatable text (configured for each language under **Languages** in the Admin Console), you can use any of the keys listed on the `FIDO Policy` page of the `Self-Service` module and the `Sign On Policy` module. The value of the parameter should include only the part of the key name that comes after the module name, for example, `fidoPolicy.deviceDisplayName01` or `fidoPolicy.deviceDisplayName07`. See each language under the **Languages** section of the admin console UI for the full list of keys. For more information on translatable keys, see [Modifying translatable keys](https://docs.pingidentity.com/access/sources/dita/topic?category=p1&resourceid=pingone_modifying_translatable_keys) in the PingOne documentation.",
 	)
 
 	discoverableCredentialsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyDiscoverableCredentialsEnumValues)
+		"A string that specifies the behaviour when registered users are authenticating without providing credentials",
+	).AllowedValuesComplex(map[string]string{
+		string(mfa.ENUMFIDO2POLICYDISCOVERABLECREDENTIALS_DISCOURAGED): "discoverable credentials are not used, even when supported by the FIDO device. In cases where use of discoverable credentials is required by the FIDO device itself, this setting does not override the device setting",
+		string(mfa.ENUMFIDO2POLICYDISCOVERABLECREDENTIALS_REQUIRED):    "require the use of discoverable credentials. This option is required for usernameless authentication",
+		string(mfa.ENUMFIDO2POLICYDISCOVERABLECREDENTIALS_PREFERRED):   "use discoverable credentials where possible",
+	})
 
 	mdsAuthenticatorRequirementsAllowedAuthenticatorIDsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		fmt.Sprintf("A set of strings that is used if `option` is set to `%s`, to specify the mdsIdentitfer IDs of authenticators that are allowed in the policy.", mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_SPECIFIC),
 	)
 
 	mdsAuthenticatorRequirementsEnforceDuringAuthnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A boolean that specifies whether devices characteristics related to verification are checked again on each authentication attempt.  Set to `true` if you want the device characteristics related to attestation to be checked again at each authentication attempt and not just once during registration. Set to `false` to have them checked only at registration.",
 	)
 
 	mdsAuthenticatorRequirementsOptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyMDSAuthenticatorOptionEnumValues)
+		"A string that specifies the types of device that are allowed on the basis of the attestation provided.",
+	).AllowedValuesComplex(map[string]string{
+		string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_NONE):       "do not request attestation, allow all FIDO devices",
+		string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_AUDIT_ONLY): "attestation is requested and the information is used for logging purposes, but the information is not used for filtering authenticators",
+		string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_GLOBAL):     "allow use of all FIDO authenticators listed in the Global Authenticators table",
+		string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_CERTIFIED):  "allow only FIDO Certified authenticators",
+		string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_SPECIFIC):   "allow only the authenticators specified with the `allowed_authenticator_ids` parameter",
+	})
 
 	relyingPartyIDDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"The ID of the relying party. The value should be a domain name, such as `bxretail.org` (in lower-case characters).",
 	)
 
 	userDisplayNameAttributesAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A list of objects that describe attributes associated with the users's account that can be displayed during registration and authentication.\n" +
+			"    - The content of the list should reflect the preferred order.\n" +
+			"    - If the first attribute is empty for the user, PingOne will continue through the list until a non-empty attribute is found.\n" +
+			"    - You can specify any user attribute (including custom attributes) that meet the following criteria: attribute type must be String, validation cannot be set to enumerated values.\n" +
+			"    - The array must contain the user attribute `username` to ensure that there is at least one non-empty attribute.\n" +
+			"    - You can have a maximum of six user attributes in the list.",
 	)
 
 	userDisplayNameAttributesAttributesNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"The name of the attribute in PingOne, for example `username` or `email`.  The attribute can be any user attribute, including a custom attribute, that is a string data type and does not have enumerated values configured.  If you want to use the `name` attribute for the user (or any attribute that is a complex data type), you must also specify the `sub_attributes` parameter, which can be either the `given` and `family` user attributes or the `formatted` user attribute.",
 	)
 
 	userDisplayNameAttributesAttributesSubAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A set of objects that describe the sub attributes to use when `name` is configured to use an attribute that is a complex data type.",
 	)
 
 	userDisplayNameAttributesAttributesSubAttributesNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"The name of a complex attribute's sub attribute in PingOne, for example `given` or `formatted` where the parent object has a name value of `name`.",
 	)
 
 	userVerificationEnforceDuringAuthnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A boolean that specifies whether device characteristics related to user verification are to be checked again at each authentication attempt. Set to `true` if you want the device characteristics related to user verification to be checked again at each authentication attempt and not just once during registration. Set to `false` to have them checked only at registration.",
 	)
 
 	userVerificationOptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyUserVerificationOptionEnumValues)
+		"A string that specifies the type of user verification to perform.",
+	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyUserVerificationOptionEnumValues).AllowedValuesComplex(map[string]string{
+		string(mfa.ENUMFIDO2POLICYUSERVERIFICATIONOPTION_REQUIRED):    "only FIDO devices supporting user verification can be used",
+		string(mfa.ENUMFIDO2POLICYUSERVERIFICATIONOPTION_DISCOURAGED): "user verification is not required, even when supported by the FIDO device. In cases where user verification is required by the FIDO device itself, this setting does not override the device setting",
+		string(mfa.ENUMFIDO2POLICYUSERVERIFICATIONOPTION_PREFERRED):   "user verification is required if the user's FIDO device supports it, but is not required if the user's device does not support it",
+	}).AppendMarkdownString("For usernameless flows, only FIDO devices supporting user verification can be used, regardless of the value configured in this parameter.")
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -252,7 +278,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"backup_eligibility": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies the backup eligibility of FIDO2 devices.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that contains settings used to control whether users should be allowed to register and authenticate with a device that uses cloud-synced credentials, such as a passkey.").Description,
 				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
@@ -292,7 +318,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"mds_authenticators_requirements": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies MDS authenticator requirements.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies MDS authenticator requirements, used to specify whether attestation is requested from the authenticator, and whether this information is used to restrict authenticator usage.").Description,
 				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
@@ -337,7 +363,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"user_display_name_attributes": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies user display name attributes.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies the string associated with the users's account that is displayed during registration and authentication.").Description,
 				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
@@ -392,7 +418,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"user_verification": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies user verification settings.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies user verification settings, used to control whether the user must perform a gesture (such as a public key credential, fingerprint scan, or a PIN code) when registering or authenticating with their FIDO device.").Description,
 				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
