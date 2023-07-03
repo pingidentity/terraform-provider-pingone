@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -47,7 +46,7 @@ func testAccCheckFIDO2PolicyDestroy(s *terraform.State) error {
 			return err
 		}
 
-		body, r, err := apiClient.FIDO2PolicyApi.ReadOneFido2Policy(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+		body, r, err := apiClient.FIDO2PolicyApi.ReadOneFIDO2Policy(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
 
 		if err != nil {
 
@@ -109,25 +108,58 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "default_result.type", "VALUE"),
-		resource.TestCheckResourceAttr(resourceFullName, "default_result.level", "LOW"),
-		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "evaluated_predictors.#", "3"),
-		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.1", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.2", verify.P1ResourceIDRegexp),
-		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test FIDO policy"),
+		resource.TestCheckResourceAttr(resourceFullName, "attestation_requirements", "DIRECT"),
+		resource.TestCheckResourceAttr(resourceFullName, "authenticator_attachment", "BOTH"),
+		resource.TestCheckResourceAttr(resourceFullName, "backup_eligibility.allow", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "backup_eligibility.enforce_during_authentication", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "device_display_name", "Test Device Max"),
+		resource.TestCheckResourceAttr(resourceFullName, "discoverable_credentials", "PREFERRED"),
+		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.allowed_authenticator_ids.#", "3"),
+		resource.TestMatchResourceAttr(resourceFullName, "mds_authenticators_requirements.allowed_authenticator_ids.0", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "mds_authenticators_requirements.allowed_authenticator_ids.1", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "mds_authenticators_requirements.allowed_authenticator_ids.2", verify.P1ResourceIDRegexp),
+		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.enforce_during_authentication", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.option", "SPECIFIC"),
+		resource.TestCheckResourceAttr(resourceFullName, "relying_party_id", "pingidentity.com"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.#", "3"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_display_name_attributes.attributes.*", map[string]string{
+			"name": "username",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_display_name_attributes.attributes.*", map[string]string{
+			"name": "email",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_display_name_attributes.attributes.*", map[string]string{
+			"name":                  "name",
+			"sub_attributes.#":      "2",
+			"sub_attributes.0.name": "given",
+			"sub_attributes.1.name": "family",
+		}),
+		resource.TestCheckResourceAttr(resourceFullName, "user_verification.enforce_during_authentication", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_verification.option", "REQUIRED"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "default_result.type", "VALUE"),
-		resource.TestCheckResourceAttr(resourceFullName, "default_result.level", "LOW"),
-		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.#", regexp.MustCompile(`^(?:[2-9]|[12]\d)\d*$`)),
-		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "0"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "attestation_requirements", "NONE"),
+		resource.TestCheckResourceAttr(resourceFullName, "authenticator_attachment", "PLATFORM"),
+		resource.TestCheckResourceAttr(resourceFullName, "backup_eligibility.allow", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "backup_eligibility.enforce_during_authentication", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "device_display_name", "fidoPolicy.deviceDisplayName02"),
+		resource.TestCheckResourceAttr(resourceFullName, "discoverable_credentials", "DISCOURAGED"),
+		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.allowed_authenticator_ids.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.enforce_during_authentication", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.option", "NONE"),
+		resource.TestCheckResourceAttr(resourceFullName, "relying_party_id", "ping-devops.com"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.#", "1"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_display_name_attributes.attributes.*", map[string]string{
+			"name": "username",
+		}),
+		resource.TestCheckResourceAttr(resourceFullName, "user_verification.enforce_during_authentication", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_verification.option", "DISCOURAGED"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -177,11 +209,39 @@ func testAccFIDO2PolicyConfig_NewEnv(environmentName, licenseID, resourceName, n
 
 resource "pingone_mfa_fido2_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+  name           = "%[3]s"
 
-  attestation_requirements = "AUDIT_ONLY"
-  resident_key_requirement = "DISCOURAGED"
+  attestation_requirements = "NONE"
+  authenticator_attachment = "PLATFORM"
 
+  backup_eligibility = {
+    allow                         = false
+    enforce_during_authentication = true
+  }
+
+  device_display_name = "fidoPolicy.deviceDisplayName02"
+
+  discoverable_credentials = "DISCOURAGED"
+
+  mds_authenticators_requirements = {
+    enforce_during_authentication = false
+    option                        = "NONE"
+  }
+
+  relying_party_id = "ping-devops.com"
+
+  user_display_name_attributes = {
+    attributes = [
+      {
+        name = "username"
+      }
+    ]
+  }
+
+  user_verification = {
+    enforce_during_authentication = false
+    option                        = "DISCOURAGED"
+  }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -194,12 +254,57 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
   name           = "%[3]s"
   description    = "Test FIDO policy"
 
-  attestation_requirements = "CERTIFIED"
-  resident_key_requirement = "DISCOURAGED"
+  attestation_requirements = "DIRECT"
+  authenticator_attachment = "BOTH"
 
-  enforce_during_authentication = true
+  backup_eligibility = {
+    allow                         = true
+    enforce_during_authentication = false
+  }
 
-  // allowed_authenticators
+  device_display_name = "Test Device Max"
+
+  discoverable_credentials = "PREFERRED"
+
+  mds_authenticators_requirements = {
+    allowed_authenticator_ids = [
+      "authenticator_id_1",
+      "authenticator_id_3",
+      "authenticator_id_2",
+    ]
+
+    enforce_during_authentication = true
+    option                        = "SPECIFIC"
+  }
+
+  relying_party_id = "pingidentity.com"
+
+  user_display_name_attributes = {
+    attributes = [
+      {
+        name = "email"
+      },
+      {
+        name = "name",
+        sub_attributes = [
+          {
+            name = "given"
+          },
+          {
+            name = "family"
+          }
+        ]
+      },
+      {
+        name = "username"
+      }
+    ]
+  }
+
+  user_verification = {
+    enforce_during_authentication = true
+    option                        = "REQUIRED"
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -212,8 +317,37 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  attestation_requirements = "GLOBAL"
-  resident_key_requirement = "REQUIRED"
+  attestation_requirements = "NONE"
+  authenticator_attachment = "PLATFORM"
+
+  backup_eligibility = {
+    allow                         = false
+    enforce_during_authentication = true
+  }
+
+  device_display_name = "fidoPolicy.deviceDisplayName02"
+
+  discoverable_credentials = "DISCOURAGED"
+
+  mds_authenticators_requirements = {
+    enforce_during_authentication = false
+    option                        = "NONE"
+  }
+
+  relying_party_id = "ping-devops.com"
+
+  user_display_name_attributes = {
+    attributes = [
+      {
+        name = "username"
+      }
+    ]
+  }
+
+  user_verification = {
+    enforce_during_authentication = false
+    option                        = "DISCOURAGED"
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

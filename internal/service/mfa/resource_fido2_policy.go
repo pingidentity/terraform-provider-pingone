@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -14,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -74,26 +76,33 @@ type FIDO2PolicyUserVerificationResourceModel struct {
 }
 
 var (
-	metadataServiceTFObjectTypes = map[string]attr.Type{
-		"background_image":   types.StringType,
-		"bg_opacity_percent": types.Int64Type,
-		"card_color":         types.StringType,
-		"columns":            types.Int64Type,
-		"description":        types.StringType,
-		"text_color":         types.StringType,
-		"version":            types.Int64Type,
-		"logo_image":         types.StringType,
-		"name":               types.StringType,
-		"fields":             types.ListType{ElemType: types.ObjectType{AttrTypes: innerFieldsServiceTFObjectTypes}},
+	fido2PolicyBackupEligibilityTFObjectTypes = map[string]attr.Type{
+		"allow":                         types.BoolType,
+		"enforce_during_authentication": types.BoolType,
 	}
 
-	innerFieldsServiceTFObjectTypes = map[string]attr.Type{
-		"id":         types.StringType,
-		"type":       types.StringType,
-		"title":      types.StringType,
-		"is_visible": types.BoolType,
-		"attribute":  types.StringType,
-		"value":      types.StringType,
+	fido2PolicyMdsAuthenticatorRequirementsTFObjectTypes = map[string]attr.Type{
+		"allowed_authenticator_ids":     types.SetType{ElemType: types.StringType},
+		"enforce_during_authentication": types.BoolType,
+		"option":                        types.StringType,
+	}
+
+	fido2PolicyUserDisplayNameAttributesTFObjectTypes = map[string]attr.Type{
+		"attributes": types.SetType{ElemType: types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesTFObjectTypes}},
+	}
+
+	fido2PolicyUserDisplayNameAttributesAttributesTFObjectTypes = map[string]attr.Type{
+		"sub_attributes": types.SetType{ElemType: types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesSubAttributesTFObjectTypes}},
+		"name":           types.StringType,
+	}
+
+	fido2PolicyUserDisplayNameAttributesAttributesSubAttributesTFObjectTypes = map[string]attr.Type{
+		"name": types.StringType,
+	}
+
+	fido2PolicyUserVerificationTFObjectTypes = map[string]attr.Type{
+		"enforce_during_authentication": types.BoolType,
+		"option":                        types.StringType,
 	}
 )
 
@@ -127,6 +136,70 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	const attrNameMaxLength = 256
 	const attrDeviceDisplayNameMaxLength = 100
+
+	attestationRequirementsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyAttestationRequirementsEnumValues)
+
+	authenticatorAttachmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyAuthenticatorAttachmentEnumValues)
+
+	backupEligibilityAllowDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	backupEligibilityEnforceDuringAuthnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	deviceDisplayNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	discoverableCredentialsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyDiscoverableCredentialsEnumValues)
+
+	mdsAuthenticatorRequirementsAllowedAuthenticatorIDsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	mdsAuthenticatorRequirementsEnforceDuringAuthnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	mdsAuthenticatorRequirementsOptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyMDSAuthenticatorOptionEnumValues)
+
+	relyingPartyIDDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	userDisplayNameAttributesAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	userDisplayNameAttributesAttributesNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	userDisplayNameAttributesAttributesSubAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	userDisplayNameAttributesAttributesSubAttributesNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	userVerificationEnforceDuringAuthnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	userVerificationOptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PolicyUserVerificationOptionEnumValues)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -209,8 +282,8 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"discoverable_credentials": schema.StringAttribute{
-				Description:         deviceDisplayNameDescription.Description,
-				MarkdownDescription: deviceDisplayNameDescription.MarkdownDescription,
+				Description:         discoverableCredentialsDescription.Description,
+				MarkdownDescription: discoverableCredentialsDescription.MarkdownDescription,
 				Required:            true,
 
 				Validators: []validator.String{
@@ -226,9 +299,13 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 					"allowed_authenticator_ids": schema.SetAttribute{
 						Description:         mdsAuthenticatorRequirementsAllowedAuthenticatorIDsDescription.Description,
 						MarkdownDescription: mdsAuthenticatorRequirementsAllowedAuthenticatorIDsDescription.MarkdownDescription,
-						Required:            true,
+						Optional:            true,
 
 						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtLeast(1),
+						},
 					},
 
 					"enforce_during_authentication": schema.BoolAttribute{
@@ -269,7 +346,47 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 						MarkdownDescription: userDisplayNameAttributesAttributesDescription.MarkdownDescription,
 						Required:            true,
 
-						ElementType: types.StringType,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									Description:         userDisplayNameAttributesAttributesNameDescription.Description,
+									MarkdownDescription: userDisplayNameAttributesAttributesNameDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(attrMinLength),
+									},
+								},
+
+								"sub_attributes": schema.SetNestedAttribute{
+									Description:         userDisplayNameAttributesAttributesSubAttributesDescription.Description,
+									MarkdownDescription: userDisplayNameAttributesAttributesSubAttributesDescription.MarkdownDescription,
+									Optional:            true,
+
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"name": schema.StringAttribute{
+												Description:         userDisplayNameAttributesAttributesSubAttributesNameDescription.Description,
+												MarkdownDescription: userDisplayNameAttributesAttributesSubAttributesNameDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.String{
+													stringvalidator.LengthAtLeast(attrMinLength),
+												},
+											},
+										},
+									},
+
+									Validators: []validator.Set{
+										setvalidator.SizeAtLeast(1),
+									},
+								},
+							},
+						},
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtLeast(1),
+						},
 					},
 				},
 			},
@@ -520,26 +637,55 @@ func (r *FIDO2PolicyResource) ImportState(ctx context.Context, req resource.Impo
 func (p *FIDO2PolicyResourceModel) expand(ctx context.Context) (*mfa.FIDO2Policy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	// Backup eligibility
+	var backupEligibilityPlan FIDO2PolicyBackupEligibilityResourceModel
+	diags.Append(p.BackupEligibility.As(ctx, &backupEligibilityPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
 	backupEligibility := mfa.NewFIDO2PolicyBackupEligibility(
-		allow,
-		enforceDuringAuthentication,
+		backupEligibilityPlan.Allow.ValueBool(),
+		backupEligibilityPlan.EnforceDuringAuthentication.ValueBool(),
 	)
 
+	// MDS Authenticator Requirements
+	var mdsAuthenticatorRequirementsPlan FIDO2PolicyMdsAuthenticatorsRequirementsResourceModel
+	diags.Append(p.MdsAuthenticatorsRequirements.As(ctx, &backupEligibilityPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
 	mdsAuthenticatorsRequirements := mfa.NewFIDO2PolicyMdsAuthenticatorsRequirements(
 		allowedAuthenticators,
-		enforceDuringAuthentication,
-		mfa.EnumFIDO2PolicyMDSAuthenticatorOption(option),
+		mdsAuthenticatorRequirementsPlan.EnforceDuringAuthentication.ValueBool(),
+		mfa.EnumFIDO2PolicyMDSAuthenticatorOption(mdsAuthenticatorRequirementsPlan.Option.ValueString()),
 	)
 
+	// User display name attributes
 	userDisplayNameAttributes := mfa.NewFIDO2PolicyUserDisplayNameAttributes(
 		attributes,
 	)
 
+	// User verification
+	var userVerificationPlan FIDO2PolicyUserVerificationResourceModel
+	diags.Append(p.UserVerification.As(ctx, &userVerificationPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
 	userVerification := mfa.NewFIDO2PolicyUserVerification(
-		enforceDuringAuthentication,
-		option,
+		userVerificationPlan.EnforceDuringAuthentication.ValueBool(),
+		mfa.EnumFIDO2PolicyUserVerificationOption(userVerificationPlan.Option.ValueString()),
 	)
 
+	// Main object
 	data := mfa.NewFIDO2Policy(
 		mfa.EnumFIDO2PolicyAttestationRequirements(p.AttestationRequirements.ValueString()),
 		mfa.EnumFIDO2PolicyAuthenticatorAttachment(p.AuthenticatorAttachment.ValueString()),
@@ -573,7 +719,8 @@ func (p *FIDO2PolicyResourceModel) toState(apiObject *mfa.FIDO2Policy) diag.Diag
 		return diags
 	}
 
-	// credential attributes
+	var d diag.Diagnostics
+
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
@@ -582,17 +729,162 @@ func (p *FIDO2PolicyResourceModel) toState(apiObject *mfa.FIDO2Policy) diag.Diag
 	p.AttestationRequirements = framework.EnumOkToTF(apiObject.GetAttestationRequirementsOk())
 	p.AuthenticatorAttachment = framework.EnumOkToTF(apiObject.GetAuthenticatorAttachmentOk())
 
-	p.BackupEligibility = framework.StringOkToTF(apiObject.GetIdOk())
+	p.BackupEligibility, d = toStateBackupEligibility(apiObject.GetBackupEligibilityOk())
+	diags.Append(d...)
 
 	p.DeviceDisplayName = framework.StringOkToTF(apiObject.GetDeviceDisplayNameOk())
 	p.DiscoverableCredentials = framework.EnumOkToTF(apiObject.GetDiscoverableCredentialsOk())
 
-	p.MdsAuthenticatorsRequirements = framework.StringOkToTF(apiObject.GetIdOk())
+	p.MdsAuthenticatorsRequirements, d = toStateMdsAuthenticatorsRequirements(apiObject.GetMdsAuthenticatorsRequirementsOk())
+	diags.Append(d...)
 
 	p.RelyingPartyId = framework.StringOkToTF(apiObject.GetRelyingPartyIdOk())
 
-	p.UserDisplayNameAttributes = framework.StringOkToTF(apiObject.GetIdOk())
-	p.UserVerification = framework.StringOkToTF(apiObject.GetIdOk())
+	p.UserDisplayNameAttributes, d = toStateUserDisplayNameAttributes(apiObject.GetUserDisplayNameAttributesOk())
+	diags.Append(d...)
+
+	p.UserVerification, d = toStateUserVerification(apiObject.GetUserVerificationOk())
+	diags.Append(d...)
 
 	return diags
+}
+
+func toStateBackupEligibility(apiObject *mfa.FIDO2PolicyBackupEligibility, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(fido2PolicyBackupEligibilityTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"allow":                         framework.BoolOkToTF(apiObject.GetAllowOk()),
+		"enforce_during_authentication": framework.BoolOkToTF(apiObject.GetEnforceDuringAuthenticationOk()),
+	}
+
+	objValue, d := types.ObjectValue(fido2PolicyBackupEligibilityTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateMdsAuthenticatorsRequirements(apiObject *mfa.FIDO2PolicyMdsAuthenticatorsRequirements, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(fido2PolicyMdsAuthenticatorRequirementsTFObjectTypes), nil
+	}
+
+	allowedAuthenticatorsList := make([]string, 0)
+	for _, item := range apiObject.GetAllowedAuthenticators() {
+		if id, ok := item.GetIdOk(); ok {
+			allowedAuthenticatorsList = append(allowedAuthenticatorsList, *id)
+		}
+	}
+
+	o := map[string]attr.Value{
+		"allowed_authenticator_ids":     framework.StringSetToTF(allowedAuthenticatorsList),
+		"enforce_during_authentication": framework.BoolOkToTF(apiObject.GetEnforceDuringAuthenticationOk()),
+		"option":                        framework.EnumOkToTF(apiObject.GetOptionOk()),
+	}
+
+	objValue, d := types.ObjectValue(fido2PolicyMdsAuthenticatorRequirementsTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateUserDisplayNameAttributes(apiObject *mfa.FIDO2PolicyUserDisplayNameAttributes, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(fido2PolicyUserDisplayNameAttributesTFObjectTypes), nil
+	}
+
+	attributesSet, d := toStateUserDisplayNameAttributesAttributes(apiObject.GetAttributesOk())
+	diags.Append(d...)
+
+	o := map[string]attr.Value{
+		"attributes": attributesSet,
+	}
+
+	objValue, d := types.ObjectValue(fido2PolicyUserDisplayNameAttributesTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateUserDisplayNameAttributesAttributes(apiObject []mfa.FIDO2PolicyUserDisplayNameAttributesAttributesInner, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesTFObjectTypes}
+
+	if !ok || len(apiObject) == 0 {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		subAttributes, d := toStateUserDisplayNameAttributesAttributesSubAttributes(v.GetSubAttributesOk())
+		diags.Append(d...)
+
+		objMap := map[string]attr.Value{
+			"sub_attributes": subAttributes,
+			"name":           framework.StringOkToTF(v.GetNameOk()),
+		}
+
+		flattenedObj, d := types.ObjectValue(fido2PolicyUserDisplayNameAttributesAttributesTFObjectTypes, objMap)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateUserDisplayNameAttributesAttributesSubAttributes(apiObject []mfa.FIDO2PolicyUserDisplayNameAttributesAttributesInnerSubAttributesInner, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesSubAttributesTFObjectTypes}
+
+	if !ok || len(apiObject) == 0 {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		objMap := map[string]attr.Value{
+			"name": framework.StringOkToTF(v.GetNameOk()),
+		}
+
+		flattenedObj, d := types.ObjectValue(fido2PolicyUserDisplayNameAttributesAttributesSubAttributesTFObjectTypes, objMap)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateUserVerification(apiObject *mfa.FIDO2PolicyUserVerification, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(fido2PolicyUserVerificationTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"enforce_during_authentication": framework.BoolOkToTF(apiObject.GetEnforceDuringAuthenticationOk()),
+		"option":                        framework.EnumOkToTF(apiObject.GetOptionOk()),
+	}
+
+	objValue, d := types.ObjectValue(fido2PolicyUserVerificationTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
 }
