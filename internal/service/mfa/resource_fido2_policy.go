@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -13,13 +15,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	listvalidatormfa "github.com/pingidentity/terraform-provider-pingone/internal/service/mfa/listvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
@@ -58,12 +65,12 @@ type FIDO2PolicyMdsAuthenticatorsRequirementsResourceModel struct {
 }
 
 type FIDO2PolicyUserDisplayNameAttributesResourceModel struct {
-	Attributes types.Set `tfsdk:"attributes"`
+	Attributes types.List `tfsdk:"attributes"`
 }
 
 type FIDO2PolicyUserDisplayNameAttributesAttributesResourceModel struct {
 	Name          types.String `tfsdk:"name"`
-	SubAttributes types.Set    `tfsdk:"sub_attributes"`
+	SubAttributes types.List   `tfsdk:"sub_attributes"`
 }
 
 type FIDO2PolicyUserDisplayNameAttributesAttributesSubAttributesResourceModel struct {
@@ -88,11 +95,11 @@ var (
 	}
 
 	fido2PolicyUserDisplayNameAttributesTFObjectTypes = map[string]attr.Type{
-		"attributes": types.SetType{ElemType: types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesTFObjectTypes}},
+		"attributes": types.ListType{ElemType: types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesTFObjectTypes}},
 	}
 
 	fido2PolicyUserDisplayNameAttributesAttributesTFObjectTypes = map[string]attr.Type{
-		"sub_attributes": types.SetType{ElemType: types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesSubAttributesTFObjectTypes}},
+		"sub_attributes": types.ListType{ElemType: types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesSubAttributesTFObjectTypes}},
 		"name":           types.StringType,
 	}
 
@@ -208,7 +215,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	userDisplayNameAttributesAttributesSubAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A set of objects that describe the sub attributes to use when `name` is configured to use an attribute that is a complex data type.",
+		"A lsit of objects that describe the sub attributes to use when `name` is configured to use an attribute that is a complex data type.",
 	)
 
 	userDisplayNameAttributesAttributesSubAttributesNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -255,6 +262,10 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 			"default": schema.BoolAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that describes whether this policy should serve as the default FIDO policy.").Description,
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"attestation_requirements": schema.StringAttribute{
@@ -264,6 +275,11 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumFIDO2PolicyAttestationRequirementsEnumValues)...),
+					stringvalidatorinternal.ShouldBeDefinedValueIfPathMatchesValue(
+						types.StringValue(string(mfa.ENUMFIDO2POLICYATTESTATIONREQUIREMENTS_NONE)),
+						types.StringValue(string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_NONE)),
+						path.MatchRoot("mds_authenticators_requirements").AtName("option"),
+					),
 				},
 			},
 
@@ -331,6 +347,26 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 
 						Validators: []validator.Set{
 							setvalidator.SizeAtLeast(1),
+							setvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_SPECIFIC)),
+								path.MatchRelative().AtParent().AtName("option"),
+							),
+							setvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_NONE)),
+								path.MatchRelative().AtParent().AtName("option"),
+							),
+							setvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_CERTIFIED)),
+								path.MatchRelative().AtParent().AtName("option"),
+							),
+							setvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_GLOBAL)),
+								path.MatchRelative().AtParent().AtName("option"),
+							),
+							setvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_AUDIT_ONLY)),
+								path.MatchRelative().AtParent().AtName("option"),
+							),
 						},
 					},
 
@@ -347,6 +383,11 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumFIDO2PolicyMDSAuthenticatorOptionEnumValues)...),
+							stringvalidatorinternal.ShouldBeDefinedValueIfPathMatchesValue(
+								types.StringValue(string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_NONE)),
+								types.StringValue(string(mfa.ENUMFIDO2POLICYATTESTATIONREQUIREMENTS_NONE)),
+								path.MatchRoot("attestation_requirements"),
+							),
 						},
 					},
 				},
@@ -359,6 +400,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.RegexMatches(regexp.MustCompile(`^(?:[\w-]+\.)+(?:[a-z]{2,}|xn--[a-z0-9]+)$`), "must be a valid domain name"),
 				},
 			},
 
@@ -367,7 +409,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"attributes": schema.SetNestedAttribute{
+					"attributes": schema.ListNestedAttribute{
 						Description:         userDisplayNameAttributesAttributesDescription.Description,
 						MarkdownDescription: userDisplayNameAttributesAttributesDescription.MarkdownDescription,
 						Required:            true,
@@ -384,7 +426,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 									},
 								},
 
-								"sub_attributes": schema.SetNestedAttribute{
+								"sub_attributes": schema.ListNestedAttribute{
 									Description:         userDisplayNameAttributesAttributesSubAttributesDescription.Description,
 									MarkdownDescription: userDisplayNameAttributesAttributesSubAttributesDescription.MarkdownDescription,
 									Optional:            true,
@@ -403,15 +445,16 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 									},
 
-									Validators: []validator.Set{
-										setvalidator.SizeAtLeast(1),
+									Validators: []validator.List{
+										listvalidator.SizeAtLeast(1),
 									},
 								},
 							},
 						},
 
-						Validators: []validator.Set{
-							setvalidator.SizeAtLeast(1),
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(1),
+							listvalidatormfa.FIDO2UserDisplayNameAttributeContainsUsername(),
 						},
 					},
 				},
@@ -897,11 +940,11 @@ func toStateUserDisplayNameAttributes(apiObject *mfa.FIDO2PolicyUserDisplayNameA
 		return types.ObjectNull(fido2PolicyUserDisplayNameAttributesTFObjectTypes), nil
 	}
 
-	attributesSet, d := toStateUserDisplayNameAttributesAttributes(apiObject.GetAttributesOk())
+	attributesList, d := toStateUserDisplayNameAttributesAttributes(apiObject.GetAttributesOk())
 	diags.Append(d...)
 
 	o := map[string]attr.Value{
-		"attributes": attributesSet,
+		"attributes": attributesList,
 	}
 
 	objValue, d := types.ObjectValue(fido2PolicyUserDisplayNameAttributesTFObjectTypes, o)
@@ -910,22 +953,22 @@ func toStateUserDisplayNameAttributes(apiObject *mfa.FIDO2PolicyUserDisplayNameA
 	return objValue, diags
 }
 
-func toStateUserDisplayNameAttributesAttributes(apiObject []mfa.FIDO2PolicyUserDisplayNameAttributesAttributesInner, ok bool) (types.Set, diag.Diagnostics) {
+func toStateUserDisplayNameAttributesAttributes(apiObject []mfa.FIDO2PolicyUserDisplayNameAttributesAttributesInner, ok bool) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesTFObjectTypes}
 
 	if !ok || len(apiObject) == 0 {
-		return types.SetNull(tfObjType), diags
+		return types.ListNull(tfObjType), diags
 	}
 
 	flattenedList := []attr.Value{}
 	for _, v := range apiObject {
 
-		subAttributes, d := toStateUserDisplayNameAttributesAttributesSubAttributes(v.GetSubAttributesOk())
+		subAttributesList, d := toStateUserDisplayNameAttributesAttributesSubAttributes(v.GetSubAttributesOk())
 		diags.Append(d...)
 
 		objMap := map[string]attr.Value{
-			"sub_attributes": subAttributes,
+			"sub_attributes": subAttributesList,
 			"name":           framework.StringOkToTF(v.GetNameOk()),
 		}
 
@@ -935,18 +978,18 @@ func toStateUserDisplayNameAttributesAttributes(apiObject []mfa.FIDO2PolicyUserD
 		flattenedList = append(flattenedList, flattenedObj)
 	}
 
-	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	returnVar, d := types.ListValue(tfObjType, flattenedList)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func toStateUserDisplayNameAttributesAttributesSubAttributes(apiObject []mfa.FIDO2PolicyUserDisplayNameAttributesAttributesInnerSubAttributesInner, ok bool) (types.Set, diag.Diagnostics) {
+func toStateUserDisplayNameAttributesAttributesSubAttributes(apiObject []mfa.FIDO2PolicyUserDisplayNameAttributesAttributesInnerSubAttributesInner, ok bool) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: fido2PolicyUserDisplayNameAttributesAttributesSubAttributesTFObjectTypes}
 
 	if !ok || len(apiObject) == 0 {
-		return types.SetNull(tfObjType), diags
+		return types.ListNull(tfObjType), diags
 	}
 
 	flattenedList := []attr.Value{}
@@ -962,7 +1005,7 @@ func toStateUserDisplayNameAttributesAttributesSubAttributes(apiObject []mfa.FID
 		flattenedList = append(flattenedList, flattenedObj)
 	}
 
-	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	returnVar, d := types.ListValue(tfObjType, flattenedList)
 	diags.Append(d...)
 
 	return returnVar, diags
