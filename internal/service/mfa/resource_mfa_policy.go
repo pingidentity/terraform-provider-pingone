@@ -267,6 +267,10 @@ func ResourceMFAPolicy() *schema.Resource {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Optional:    true,
+				ConflictsWith: []string{
+					"security_key",
+					"platform",
+				},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -294,16 +298,22 @@ func ResourceMFAPolicy() *schema.Resource {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Optional:    true,
-				Deprecated:  "The `security_key` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `security_key` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies.",
-				Elem:        fidoDeviceResourceSchema(),
+				ConflictsWith: []string{
+					"fido2",
+				},
+				Deprecated: "The `security_key` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `security_key` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies.",
+				Elem:       fidoDeviceResourceSchema(),
 			},
 			"platform": {
 				Description: "**Deprecation Notice** The `platform` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `platform` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies. Platform biometrics authentication policy settings.",
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Optional:    true,
-				Deprecated:  "The `platform` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `platform` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies.",
-				Elem:        fidoDeviceResourceSchema(),
+				ConflictsWith: []string{
+					"fido2",
+				},
+				Deprecated: "The `platform` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `platform` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies.",
+				Elem:       fidoDeviceResourceSchema(),
 			},
 		},
 	}
@@ -389,17 +399,10 @@ func fidoDeviceResourceSchema() *schema.Resource {
 func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-
 	managementApiClient := p1Client.API.ManagementAPIClient
-	ctxManagement := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 	var diags diag.Diagnostics
 
-	mfaPolicy, diags := expandMFAPolicy(ctxManagement, managementApiClient, d)
+	mfaPolicy, diags := expandMFAPolicyPost(ctx, managementApiClient, d)
 	if diags.HasError() {
 		return diags
 	}
@@ -408,7 +411,7 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, d.Get("environment_id").(string)).DeviceAuthenticationPolicy(*mfaPolicy).Execute()
+			return apiClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, d.Get("environment_id").(string)).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
 		},
 		"CreateDeviceAuthenticationPolicies",
 		mfaPolicyCreateUpdateCustomErrorHandler,
@@ -418,9 +421,9 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 		return diags
 	}
 
-	respObject := resp.(*mfa.DeviceAuthenticationPolicy)
+	respObject := resp.(*mfa.DeviceAuthenticationPolicyPost)
 
-	d.SetId(respObject.GetId())
+	d.SetId(respObject.DeviceAuthenticationPolicy.GetId())
 
 	return resourceMFAPolicyRead(ctx, d, meta)
 }
@@ -428,9 +431,7 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -516,17 +517,11 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-
 	managementApiClient := p1Client.API.ManagementAPIClient
-	ctxManagement := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
-	mfaPolicy, diags := expandMFAPolicy(ctxManagement, managementApiClient, d)
+	mfaPolicy, diags := expandMFAPolicy(ctx, managementApiClient, d)
 	if diags.HasError() {
 		return diags
 	}
@@ -551,9 +546,7 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(
@@ -613,6 +606,14 @@ var mfaPolicyCreateUpdateCustomErrorHandler = func(error model.P1Error) diag.Dia
 	}
 
 	return nil
+}
+
+func expandMFAPolicyPost(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	mfaPolicyPost := mfa.DeviceAuthenticationPolicyPost{}
+	mfaPolicyPost.DeviceAuthenticationPolicy, diags = expandMFAPolicy(ctx, apiClient, d)
+
+	return &mfaPolicyPost, diags
 }
 
 func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
