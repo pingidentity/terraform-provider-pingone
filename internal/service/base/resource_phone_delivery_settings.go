@@ -984,10 +984,6 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -1072,10 +1068,6 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -1118,10 +1110,6 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -1169,10 +1157,6 @@ func (r *PhoneDeliverySettingsResource) Delete(ctx context.Context, req resource
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

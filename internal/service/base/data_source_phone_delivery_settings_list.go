@@ -102,10 +102,6 @@ func (r *PhoneDeliverySettingsListDataSource) Read(ctx context.Context, req data
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
