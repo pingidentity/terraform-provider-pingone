@@ -424,7 +424,7 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 		return diags
 	}
 
-	respObject := resp.(*mfa.DeviceAuthenticationPolicyPost)
+	respObject := resp.(*mfa.DeviceAuthenticationPolicyPostResponse)
 
 	d.SetId(respObject.DeviceAuthenticationPolicy.GetId())
 

@@ -17,3 +17,7 @@
 ```release-note:new-data-source
 pingone_mfa_policies
 ```
+
+```release-note:new-resource
+pingone_mfa_policies
+```
