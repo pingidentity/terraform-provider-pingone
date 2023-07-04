@@ -438,7 +438,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
   discoverable_credentials = "DISCOURAGED"
 
   mds_authenticators_requirements = {
-	allowed_authenticator_ids = [
+    allowed_authenticator_ids = [
       "authenticator_id_1",
       "authenticator_id_3",
       "authenticator_id_2",
