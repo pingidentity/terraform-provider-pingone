@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_types Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Datasource to retrieve a list of multiple PingOne Credentials credential types.  Filtering the list by SCIM or data filter currently is not supported.
 ---

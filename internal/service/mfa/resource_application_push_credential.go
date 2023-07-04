@@ -146,9 +146,7 @@ func ResourceApplicationPushCredential() *schema.Resource {
 func resourcePingOneApplicationPushCredentialCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	mfaPushCredentialRequest, diags := expandPushCredentialRequest(d)
@@ -160,7 +158,7 @@ func resourcePingOneApplicationPushCredentialCreate(ctx context.Context, d *sche
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationMFAPushCredentialsApi.CreateMFAPushCredential(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).CreateMFAPushCredentialRequest(*mfaPushCredentialRequest).Execute()
+			return apiClient.ApplicationsApplicationMFAPushCredentialsApi.CreateMFAPushCredential(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).MFAPushCredentialRequest(*mfaPushCredentialRequest).Execute()
 		},
 		"CreateMFAPushCredential",
 		sdk.DefaultCustomError,
@@ -177,9 +175,9 @@ func resourcePingOneApplicationPushCredentialCreate(ctx context.Context, d *sche
 	return resourcePingOneApplicationPushCredentialRead(ctx, d, meta)
 }
 
-func expandPushCredentialRequest(d *schema.ResourceData) (*mfa.CreateMFAPushCredentialRequest, diag.Diagnostics) {
+func expandPushCredentialRequest(d *schema.ResourceData) (*mfa.MFAPushCredentialRequest, diag.Diagnostics) {
 
-	mfaPushCredentialRequest := &mfa.CreateMFAPushCredentialRequest{}
+	mfaPushCredentialRequest := &mfa.MFAPushCredentialRequest{}
 	var diags diag.Diagnostics
 
 	if v, ok := d.GetOk("fcm"); ok {
@@ -272,9 +270,7 @@ func expandPushCredentialRequestHMS(c interface{}) (*mfa.MFAPushCredentialHMS, d
 func resourcePingOneApplicationPushCredentialRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -334,9 +330,7 @@ func resourcePingOneApplicationPushCredentialRead(ctx context.Context, d *schema
 func resourcePingOneApplicationPushCredentialDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(

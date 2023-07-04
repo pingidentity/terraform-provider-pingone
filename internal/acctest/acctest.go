@@ -339,6 +339,9 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 			service {
 				type = "Credentials"
 			}
+			service {
+				type = "Verify"
+			}
 		}`, resourceName, licenseID)
 }
 

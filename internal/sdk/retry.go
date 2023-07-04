@@ -16,6 +16,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
+	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 )
 
 type Retryable func(context.Context, *http.Response, *model.P1Error) bool
@@ -161,6 +162,22 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 
 				if t.Model() != nil {
 					errorModel, err1 = model.RemarshalErrorObj(t.Model().(risk.P1Error))
+					if err1 != nil {
+						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						return resource.NonRetryableError(err)
+					}
+				}
+
+				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
+				if err1 != nil {
+					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					return resource.NonRetryableError(err)
+				}
+
+			case *verify.GenericOpenAPIError:
+
+				if t.Model() != nil {
+					errorModel, err1 = model.RemarshalErrorObj(t.Model().(verify.P1Error))
 					if err1 != nil {
 						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 						return resource.NonRetryableError(err)

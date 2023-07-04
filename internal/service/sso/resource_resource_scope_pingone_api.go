@@ -71,9 +71,7 @@ func ResourceResourceScopePingOneAPI() *schema.Resource {
 func resourceResourceScopePingOneAPICreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource, diags := getPingOneAPIResource(ctx, apiClient, d.Get("environment_id").(string))
@@ -129,9 +127,7 @@ func resourceResourceScopePingOneAPICreate(ctx context.Context, d *schema.Resour
 func resourceResourceScopePingOneAPIRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource, diags := getPingOneAPIResource(ctx, apiClient, d.Get("environment_id").(string))
@@ -182,9 +178,7 @@ func resourceResourceScopePingOneAPIRead(ctx context.Context, d *schema.Resource
 func resourceResourceScopePingOneAPIUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource, diags := getPingOneAPIResource(ctx, apiClient, d.Get("environment_id").(string))
@@ -217,9 +211,7 @@ func resourceResourceScopePingOneAPIUpdate(ctx context.Context, d *schema.Resour
 func resourceResourceScopePingOneAPIDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource, diags := getPingOneAPIResource(ctx, apiClient, d.Get("environment_id").(string))

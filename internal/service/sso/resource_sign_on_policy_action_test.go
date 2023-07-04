@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -25,9 +24,6 @@ func testAccCheckSignOnPolicyActionDestroy(s *terraform.State) error {
 	}
 
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_sign_on_policy_action" {
@@ -1405,9 +1401,9 @@ resource "pingone_gateway" "%[2]s-1" {
   vendor = "PingDirectory"
 
   servers = [
-    "ds1.dummyldapservice.com:636",
-    "ds3.dummyldapservice.com:636",
-    "ds2.dummyldapservice.com:636",
+    "ds1.dummyldapservice.com:389",
+    "ds3.dummyldapservice.com:389",
+    "ds2.dummyldapservice.com:389",
   ]
 
   user_type {
@@ -1487,9 +1483,9 @@ resource "pingone_gateway" "%[2]s-2" {
   vendor = "PingDirectory"
 
   servers = [
-    "ds1.dummyldapservice.com:636",
-    "ds3.dummyldapservice.com:636",
-    "ds2.dummyldapservice.com:636",
+    "ds1.dummyldapservice.com:389",
+    "ds3.dummyldapservice.com:389",
+    "ds2.dummyldapservice.com:389",
   ]
 
   user_type {

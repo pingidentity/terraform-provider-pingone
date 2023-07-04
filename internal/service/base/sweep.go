@@ -32,9 +32,6 @@ func sweepEnvironments(region string) error {
 	}
 
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	environments, err := sweep.FetchTaggedEnvironmentsByPrefix(ctx, apiClient, fmt.Sprintf("%sdynamic-", sweep.EnvironmentNamePrefix))
 	if err != nil {

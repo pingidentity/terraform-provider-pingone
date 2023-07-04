@@ -384,10 +384,6 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	defaultTimeout := 20 * time.Minute
 	createTimeout, d := plan.Timeouts.Create(ctx, defaultTimeout)
 	resp.Diagnostics.Append(d...)
@@ -508,10 +504,6 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -595,10 +587,6 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan and state data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -780,10 +768,6 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -1099,7 +1083,7 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	p.Id = framework.StringOkToTF(environmentApiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
-	p.Type = enumEnvironmentTypeOkToTF(environmentApiObject.GetTypeOk())
+	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
 	p.Region = enumRegionCodeOkToTF(environmentApiObject.GetRegionOk())
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
@@ -1112,7 +1096,7 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 		p.OrganizationId = types.StringNull()
 	}
 
-	p.Solution = enumSolutionTypeOkToTF(servicesApiObject.GetSolutionTypeOk())
+	p.Solution = framework.EnumOkToTF(servicesApiObject.GetSolutionTypeOk())
 
 	services, d := toStateEnvironmentServices(servicesApiObject.GetProducts())
 	diags.Append(d...)
@@ -1243,27 +1227,11 @@ func toStateEnvironmentServicesBookmark(bookmarks []management.BillOfMaterialsPr
 
 }
 
-func enumEnvironmentTypeOkToTF(v *management.EnumEnvironmentType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
-	}
-}
-
 func enumRegionCodeOkToTF(v *management.EnumRegionCode, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	} else {
 		return types.StringValue(model.FindRegionByAPICode(*v).Region)
-	}
-}
-
-func enumSolutionTypeOkToTF(v *management.EnumSolutionType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
 	}
 }
 

@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_digital_wallet_application Resource - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Resource to create and manage PingOne Credentials digital wallet applications.
   The service controls the relationship between the customer's digital wallet application, which communicates with users' digital wallets, and a customer's PingOne application.
