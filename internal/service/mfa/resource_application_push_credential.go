@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -57,24 +56,6 @@ type applicationPushCredentialHmsResourceModel struct {
 	ClientId     types.String `tfsdk:"client_id"`
 	ClientSecret types.String `tfsdk:"client_secret"`
 }
-
-var (
-	applicationPushCredentialFcmTFObjectTypes = map[string]attr.Type{
-		"key":                                types.StringType,
-		"google_service_account_credentials": types.StringType,
-	}
-
-	applicationPushCredentialApnsTFObjectTypes = map[string]attr.Type{
-		"key":               types.StringType,
-		"team_id":           types.StringType,
-		"token_signing_key": types.StringType,
-	}
-
-	applicationPushCredentialHmsTFObjectTypes = map[string]attr.Type{
-		"client_id":     types.StringType,
-		"client_secret": types.StringType,
-	}
-)
 
 // Framework interfaces
 var (
