@@ -88,9 +88,6 @@ func ResourceApplicationRoleAssignment() *schema.Resource {
 func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	var diags diag.Diagnostics
 
@@ -174,9 +171,7 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	applicationOk, diags := checkApplicationTypeForRoleAssignment(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string))
@@ -241,9 +236,7 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 func resourcePingOneApplicationRoleAssignmentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	if d.Get("read_only").(bool) {

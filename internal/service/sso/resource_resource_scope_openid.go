@@ -72,9 +72,7 @@ func ResourceResourceScopeOpenID() *schema.Resource {
 func resourceResourceScopeOpenIDCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource, diags := getOpenIDResource(ctx, apiClient, d.Get("environment_id").(string))
@@ -130,9 +128,7 @@ func resourceResourceScopeOpenIDCreate(ctx context.Context, d *schema.ResourceDa
 func resourceResourceScopeOpenIDRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource, diags := getOpenIDResource(ctx, apiClient, d.Get("environment_id").(string))
@@ -183,9 +179,7 @@ func resourceResourceScopeOpenIDRead(ctx context.Context, d *schema.ResourceData
 func resourceResourceScopeOpenIDUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource, diags := getOpenIDResource(ctx, apiClient, d.Get("environment_id").(string))
@@ -218,9 +212,7 @@ func resourceResourceScopeOpenIDUpdate(ctx context.Context, d *schema.ResourceDa
 func resourceResourceScopeOpenIDDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource, diags := getOpenIDResource(ctx, apiClient, d.Get("environment_id").(string))

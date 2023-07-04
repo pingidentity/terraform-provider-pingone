@@ -14,11 +14,13 @@ type Client struct {
 func (c *Config) APIClient(ctx context.Context) (*Client, error) {
 
 	config := &pingone.Config{
-		ClientID:      c.ClientID,
-		ClientSecret:  c.ClientSecret,
-		EnvironmentID: c.EnvironmentID,
-		AccessToken:   c.AccessToken,
-		Region:        c.Region,
+		ClientID:             c.ClientID,
+		ClientSecret:         c.ClientSecret,
+		EnvironmentID:        c.EnvironmentID,
+		AccessToken:          c.AccessToken,
+		Region:               c.Region,
+		APIHostnameOverride:  c.APIHostnameOverride,
+		AuthHostnameOverride: c.AuthHostnameOverride,
 	}
 
 	client, err := config.APIClient(ctx)

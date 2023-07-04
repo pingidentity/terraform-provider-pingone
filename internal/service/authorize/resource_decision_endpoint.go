@@ -80,9 +80,7 @@ func ResourceDecisionEndpoint() *schema.Resource {
 func resourceDecisionEndpointCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.AuthorizeAPIClient
-	ctx = context.WithValue(ctx, authorize.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	decisionEndpoint := *authorize.NewDecisionEndpoint(d.Get("description").(string), d.Get("name").(string), d.Get("record_recent_requests").(bool)) // DecisionEndpoint |  (optional)
@@ -122,9 +120,7 @@ func resourceDecisionEndpointCreate(ctx context.Context, d *schema.ResourceData,
 func resourceDecisionEndpointRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.AuthorizeAPIClient
-	ctx = context.WithValue(ctx, authorize.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -186,9 +182,7 @@ func resourceDecisionEndpointRead(ctx context.Context, d *schema.ResourceData, m
 func resourceDecisionEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.AuthorizeAPIClient
-	ctx = context.WithValue(ctx, authorize.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	decisionEndpoint := *authorize.NewDecisionEndpoint(d.Get("description").(string), d.Get("name").(string), d.Get("record_recent_requests").(bool)) // DecisionEndpoint |  (optional)
@@ -224,9 +218,7 @@ func resourceDecisionEndpointUpdate(ctx context.Context, d *schema.ResourceData,
 func resourceDecisionEndpointDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.AuthorizeAPIClient
-	ctx = context.WithValue(ctx, authorize.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(

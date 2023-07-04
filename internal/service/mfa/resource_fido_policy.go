@@ -90,9 +90,7 @@ func ResourceFIDOPolicy() *schema.Resource {
 func resourceFIDOPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	fidoPolicy := expandFIDOPolicy(d)
@@ -121,9 +119,7 @@ func resourceFIDOPolicyCreate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceFIDOPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -190,9 +186,7 @@ func resourceFIDOPolicyRead(ctx context.Context, d *schema.ResourceData, meta in
 func resourceFIDOPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	fidoPolicy := expandFIDOPolicy(d)
@@ -217,9 +211,7 @@ func resourceFIDOPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceFIDOPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(

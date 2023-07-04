@@ -63,9 +63,7 @@ func ResourceResourceScope() *schema.Resource {
 func resourceResourceScopeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	diags = checkResourceType(ctx, apiClient, d.Get("environment_id").(string), d.Get("resource_id").(string))
@@ -99,9 +97,7 @@ func resourceResourceScopeCreate(ctx context.Context, d *schema.ResourceData, me
 func resourceResourceScopeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	diags = checkResourceType(ctx, apiClient, d.Get("environment_id").(string), d.Get("resource_id").(string))
@@ -144,9 +140,7 @@ func resourceResourceScopeRead(ctx context.Context, d *schema.ResourceData, meta
 func resourceResourceScopeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	diags = checkResourceType(ctx, apiClient, d.Get("environment_id").(string), d.Get("resource_id").(string))
@@ -176,9 +170,7 @@ func resourceResourceScopeUpdate(ctx context.Context, d *schema.ResourceData, me
 func resourceResourceScopeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	diags = checkResourceType(ctx, apiClient, d.Get("environment_id").(string), d.Get("resource_id").(string))

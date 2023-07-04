@@ -88,9 +88,6 @@ func ResourceRoleAssignmentUser() *schema.Resource {
 func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	var diags diag.Diagnostics
 
@@ -160,9 +157,7 @@ func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.Reso
 func resourcePingOneRoleAssignmentUserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -211,9 +206,7 @@ func resourcePingOneRoleAssignmentUserRead(ctx context.Context, d *schema.Resour
 func resourcePingOneRoleAssignmentUserDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	if d.Get("read_only").(bool) {
