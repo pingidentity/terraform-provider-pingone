@@ -14,11 +14,10 @@ resource "pingone_schema_attribute" "my_attribute" {
   schema_id      = data.pingone_schema.users.id
 
   name         = "myAttribute"
-  display_name = "My Attribute"
-  description  = "My new attribute"
+  display_name = "My Awesome Attribute"
+  description  = "My new awesome attribute"
 
   type        = "STRING"
   unique      = false
   multivalued = false
-
 }

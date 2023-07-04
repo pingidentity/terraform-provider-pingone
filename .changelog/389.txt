@@ -1,0 +1,7 @@
+```release-note:note
+Minor adjustments of multiple documentation HCL examples.
+```
+
+```release-note:note
+`resource/pingone_mfa_application_push_credential`: Corrected documentation HCL example.
+```
