@@ -524,14 +524,16 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 
 	name := resourceName
 
+	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndGoogleFirebaseCredentials(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name),
+				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -686,14 +688,16 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 
 	name := resourceName
 
+	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndGoogleFirebaseCredentials(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name),
+				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -755,7 +759,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name),
+				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1543,7 +1547,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_FullMobile(resourceName, name string) string {
+func testAccMFAPolicyConfig_FullMobile(resourceName, name, key string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -1579,7 +1583,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s-1" {
   application_id = pingone_application.%[2]s-1.id
 
   fcm {
-    key = "dummykey"
+    google_service_account_credentials = jsonencode(%[4]s)
   }
 }
 
@@ -1660,7 +1664,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s-3" {
   application_id = pingone_application.%[2]s-3.id
 
   fcm {
-    key = "dummykey"
+    google_service_account_credentials = jsonencode(%[4]s)
   }
 }
 
@@ -1742,7 +1746,7 @@ resource "pingone_mfa_policy" "%[2]s" {
     pingone_mfa_application_push_credential.%[2]s-3
   ]
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
 }
 
 func testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name string) string {
