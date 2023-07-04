@@ -35,7 +35,7 @@ func ResourceMFAPolicy() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"environment_id": {
-				Description:      "The ID of the environment to create the sign on policy in.",
+				Description:      "The ID of the environment to create the MFA device policy in.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
@@ -267,6 +267,7 @@ func ResourceMFAPolicy() *schema.Resource {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Optional:    true,
+				Computed:    true,
 				ConflictsWith: []string{
 					"security_key",
 					"platform",

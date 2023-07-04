@@ -171,7 +171,7 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
 ### Required
 
 - `email` (Block List, Min: 1, Max: 1) Email OTP authentication policy settings. (see [below for nested schema](#nestedblock--email))
-- `environment_id` (String) The ID of the environment to create the sign on policy in.
+- `environment_id` (String) The ID of the environment to create the MFA device policy in.
 - `mobile` (Block List, Min: 1, Max: 1) Mobile authenticator device policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource. (see [below for nested schema](#nestedblock--mobile))
 - `name` (String) A string that specifies the MFA policy's name.
 - `sms` (Block List, Min: 1, Max: 1) SMS OTP authentication policy settings. (see [below for nested schema](#nestedblock--sms))
