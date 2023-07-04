@@ -145,7 +145,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_resource_scope_pingone_api":            sso.ResourceResourceScopePingOneAPI(),
 				"pingone_sign_on_policy":                        sso.ResourceSignOnPolicy(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
-				"pingone_user":                                  sso.ResourceUser(),
 
 				"pingone_mfa_fido_policy": mfa.ResourceFIDOPolicy(),
 				"pingone_mfa_policy":      mfa.ResourceMFAPolicy(),

@@ -6,274 +6,414 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceUser() *schema.Resource {
-	return &schema.Resource{
+// Types
+type UserResource struct {
+	client *management.APIClient
+	region model.RegionMapping
+}
 
+type UserResourceModel struct {
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	Username      types.String `tfsdk:"username"`
+	Email         types.String `tfsdk:"email"`
+	Status        types.String `tfsdk:"status"`
+	PopulationId  types.String `tfsdk:"population_id"`
+}
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &UserResource{}
+	_ resource.ResourceWithConfigure   = &UserResource{}
+	_ resource.ResourceWithImportState = &UserResource{}
+)
+
+// New Object
+func NewUserResource() resource.Resource {
+	return &UserResource{}
+}
+
+// Metadata
+func (r *UserResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_user"
+}
+
+// Schema.
+func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The enabled status of the user.",
+	).AllowedValues([]string{"ENABLED", "DISABLED"}).DefaultValue("ENABLED")
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne users",
+		Description: "Resource to create and manage PingOne users.",
 
-		CreateContext: resourceUserCreate,
-		ReadContext:   resourceUserRead,
-		UpdateContext: resourceUserUpdate,
-		DeleteContext: resourceUserDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceUserImport,
-		},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the user in."),
+			),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the user in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
+			"username": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The username of the user.").Description,
+				Required:    true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
-			"username": {
-				Description:      "The username of the user.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty), // TODO: validation per API docs
-				/*
-					pattern: '^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$'
-					minLength: 1
-					maxLength: 128
-				*/
+
+			"email": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The email address of the user.").Description,
+				Required:    true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
-			"email": {
-				Description:      "The email address of the user.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty), // TODO: Email RFC format
+
+			"status": schema.StringAttribute{
+				Description:         statusDescription.Description,
+				MarkdownDescription: statusDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: stringdefault.StaticString("ENABLED"),
+
+				Validators: []validator.String{
+					stringvalidator.OneOf("ENABLED", "DISABLED"),
+				},
 			},
-			"status": {
-				Description:      "The enabled status of the user.  Possible values are `ENABLED` or `DISABLED`.",
-				Type:             schema.TypeString,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ENABLED", "DISABLED"}, false)),
-				Default:          "ENABLED",
-				Optional:         true,
+
+			"population_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The population ID to add the user to.").Description,
+				Required:    true,
+
+				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
+				},
 			},
-			"population_id": {
-				Description:      "The population ID to add the user to.",
-				Type:             schema.TypeString,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				Required:         true,
-			},
-			// TODO: Full schema as-and-when needed
 		},
 	}
 }
 
-func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *UserResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
 
-	var diags diag.Diagnostics
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
 
-	user := *management.NewUser(d.Get("email").(string), d.Get("username").(string))
+		return
+	}
 
-	population := *management.NewUserPopulation(d.Get("population_id").(string))
-	user.SetPopulation(population)
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
 
-	// Create user
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
+}
+
+func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state UserResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	user, userEnabled := plan.expand()
+
+	// Run the API call
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersApi.CreateUser(ctx, d.Get("environment_id").(string)).User(user).Execute()
+			return r.client.UsersApi.CreateUser(ctx, plan.EnvironmentId.ValueString()).User(*user).Execute()
 		},
 		"CreateUser",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.User)
+	userResponse := response.(*management.User)
 
-	// Set status
-
-	userEnabled := *management.NewUserEnabled() // UserEnabled |  (optional)
-	if d.Get("status").(string) == "ENABLED" {
-		userEnabled.SetEnabled(true)
-	} else {
-		userEnabled.SetEnabled(false)
-	}
-
-	_, diags = sdk.ParseResponse(
+	responseEnabled, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.EnableUsersApi.UpdateUserEnabled(ctx, d.Get("environment_id").(string), respObject.GetId()).UserEnabled(userEnabled).Execute()
+			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), userResponse.GetId()).UserEnabled(*userEnabled).Execute()
 		},
 		"UpdateUserEnabled",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
-	}
 
-	d.SetId(respObject.GetId())
+	resp.Diagnostics.Append(d...)
 
-	return resourceUserRead(ctx, d, meta)
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(userResponse, responseEnabled.(*management.UserEnabled))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *UserResourceModel
 
-	var diags diag.Diagnostics
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersApi.ReadUser(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return r.client.UsersApi.ReadUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadUser",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.User)
-
-	d.Set("username", respObject.GetUsername())
-	d.Set("email", respObject.GetEmail())
-	if respObject.GetEnabled() {
-		d.Set("status", "ENABLED")
-	} else {
-		d.Set("status", "DISABLED")
-	}
-	d.Set("population_id", respObject.GetPopulation().Id)
-
-	return diags
-}
-
-func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-
-	var diags diag.Diagnostics
-
-	// The user
-	user := *management.NewUser(d.Get("email").(string), d.Get("username").(string))
-
-	_, diags = sdk.ParseResponse(
+	responseEnabled, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersApi.UpdateUserPut(ctx, d.Get("environment_id").(string), d.Id()).User(user).Execute()
+			return r.client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+		},
+		"ReadUserEnabled",
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
+	resp.Diagnostics.Append(d...)
+
+	// Remove from state if resource is not found
+	if responseEnabled == nil {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response.(*management.User), responseEnabled.(*management.UserEnabled))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state UserResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	user, userEnabled := plan.expand()
+
+	// Run the API call
+	response, d := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.client.UsersApi.UpdateUserPut(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).User(*user).Execute()
 		},
 		"UpdateUserPut",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		nil,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	// Set status
-
-	userEnabled := *management.NewUserEnabled() // UserEnabled |  (optional)
-	if d.Get("status").(string) == "ENABLED" {
-		userEnabled.SetEnabled(true)
-	} else {
-		userEnabled.SetEnabled(false)
-	}
-
-	_, diags = sdk.ParseResponse(
+	responseEnabled, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.EnableUsersApi.UpdateUserEnabled(ctx, d.Get("environment_id").(string), d.Id()).UserEnabled(userEnabled).Execute()
+			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserEnabled(*userEnabled).Execute()
 		},
 		"UpdateUserEnabled",
-		sdk.DefaultCustomError,
-		nil,
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
-	}
 
-	// Set population
+	resp.Diagnostics.Append(d...)
 
-	population := *management.NewUserPopulation(d.Get("population_id").(string))
+	// Create the state to save
+	state = plan
 
-	_, diags = sdk.ParseResponse(
-		ctx,
-
-		func() (interface{}, *http.Response, error) {
-			return apiClient.UserPopulationsApi.UpdateUserPopulation(ctx, d.Get("environment_id").(string), d.Id()).UserPopulation(population).Execute()
-		},
-		"UpdateUserPopulation",
-		sdk.DefaultCustomError,
-		nil,
-	)
-	if diags.HasError() {
-		return diags
-	}
-
-	return resourceUserRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response.(*management.User), responseEnabled.(*management.UserEnabled))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *UserResourceModel
 
-	var diags diag.Diagnostics
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	_, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.UsersApi.DeleteUser(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			r, err := r.client.UsersApi.DeleteUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteUser",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
 	)
-	if diags.HasError() {
+	resp.Diagnostics.Append(d...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func (r *UserResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	splitLength := 2
+	attributes := strings.SplitN(req.ID, "/", splitLength)
+
+	if len(attributes) != splitLength {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/user_id\"", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+}
+
+func (p *UserResourceModel) expand() (*management.User, *management.UserEnabled) {
+
+	userData := management.NewUser(p.Email.ValueString(), p.Username.ValueString())
+
+	population := *management.NewUserPopulation(p.PopulationId.ValueString())
+	userData.SetPopulation(population)
+
+	userEnabledData := management.NewUserEnabled()
+	if p.Status.ValueString() == "ENABLED" {
+		userEnabledData.SetEnabled(true)
+	} else {
+		userEnabledData.SetEnabled(false)
+	}
+
+	return userData, userEnabledData
+}
+
+func (p *UserResourceModel) toState(apiObject *management.User, apiObjectEnabled *management.UserEnabled) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObjectEnabled == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
 		return diags
 	}
 
-	return diags
-}
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
+	p.Email = framework.StringOkToTF(apiObject.GetEmailOk())
 
-func resourceUserImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
-
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/userID\"", d.Id())
+	if v, ok := apiObjectEnabled.GetEnabledOk(); ok && *v {
+		p.Status = framework.StringToTF("ENABLED")
+	} else {
+		p.Status = framework.StringToTF("DISABLED")
 	}
 
-	environmentID, userID := attributes[0], attributes[1]
+	p.PopulationId = framework.StringOkToTF(apiObject.Population.GetIdOk())
 
-	d.Set("environment_id", environmentID)
-	d.SetId(userID)
-
-	resourceUserRead(ctx, d, meta)
-
-	return []*schema.ResourceData{d}, nil
+	return diags
 }

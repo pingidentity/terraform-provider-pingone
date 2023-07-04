@@ -19,6 +19,7 @@ func Resources() []func() resource.Resource {
 		NewPopulationResource,
 		NewResourceAttributeResource,
 		NewSchemaAttributeResource,
+		NewUserResource,
 	}
 }
 
