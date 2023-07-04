@@ -721,18 +721,18 @@ func expandMFAPolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTot
 	return item
 }
 
-// func expandMFAPolicyFIDODevice(v interface{}) *mfa.DeviceAuthenticationPolicyFIDODevice {
+func expandMFAPolicyFIDODevice(v interface{}) *mfa.DeviceAuthenticationPolicyFIDODevice {
 
-// 	obj := v.(map[string]interface{})
+	obj := v.(map[string]interface{})
 
-// 	item := mfa.NewDeviceAuthenticationPolicyFIDODevice(obj["enabled"].(bool))
+	item := mfa.NewDeviceAuthenticationPolicyFIDODevice(obj["enabled"].(bool))
 
-// 	if v, ok := obj["fido_policy_id"].(string); ok {
-// 		item.SetFidoPolicyId(v)
-// 	}
+	if v, ok := obj["fido_policy_id"].(string); ok {
+		item.SetFidoPolicyId(v)
+	}
 
-// 	return item
-// }
+	return item
+}
 
 func flattenMFAPolicyOfflineDevice(c *mfa.DeviceAuthenticationPolicyOfflineDevice) []map[string]interface{} {
 	item := map[string]interface{}{
