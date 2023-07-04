@@ -11,6 +11,7 @@ NOTES:
 * bump `github.com/hashicorp/terraform-plugin-framework-timeouts` v0.3.1 => v0.4.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * bump `github.com/hashicorp/terraform-plugin-framework` v1.3.1 => v1.3.2 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * bump `github.com/hashicorp/terraform-plugin-go` v0.15.0 => v0.17.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/hashicorp/terraform-plugin-go` v0.17.0 => v0.18.0 ([#450](https://github.com/pingidentity/terraform-provider-pingone/issues/450))
 * bump `github.com/hashicorp/terraform-plugin-mux` v0.10.0 => v0.11.1 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.26.1 => v2.27.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.4 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
