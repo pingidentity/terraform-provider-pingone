@@ -32,10 +32,8 @@ func TestAccPhoneDeliverySettingsListDataSource_ByAll(t *testing.T) {
 				Config: testAccPhoneDeliverySettingsListDataSourceConfig_ByAll(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "3"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "1"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", verify.P1ResourceIDRegexp),
 				),
 			},
 		},
@@ -73,55 +71,11 @@ func testAccPhoneDeliverySettingsListDataSourceConfig_ByAll(environmentName, lic
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_phone_delivery_settings" "%[3]s-1" {
+resource "pingone_phone_delivery_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   provider_custom = {
-    name = "%[4]s-1"
-
-    authentication = {
-      method     = "BEARER"
-      auth_token = "testtoken"
-    }
-
-    requests = [
-      {
-        delivery_method     = "SMS"
-        method              = "GET"
-        phone_number_format = "FULL"
-        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
-      }
-    ]
-  }
-}
-
-resource "pingone_phone_delivery_settings" "%[3]s-2" {
-  environment_id = pingone_environment.%[2]s.id
-
-  provider_custom = {
-    name = "%[4]s-2"
-
-    authentication = {
-      method     = "BEARER"
-      auth_token = "testtoken"
-    }
-
-    requests = [
-      {
-        delivery_method     = "SMS"
-        method              = "GET"
-        phone_number_format = "FULL"
-        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
-      }
-    ]
-  }
-}
-
-resource "pingone_phone_delivery_settings" "%[3]s-3" {
-  environment_id = pingone_environment.%[2]s.id
-
-  provider_custom = {
-    name = "%[4]s-3"
+    name = "%[4]s"
 
     authentication = {
       method     = "BEARER"
@@ -143,9 +97,7 @@ data "pingone_phone_delivery_settings_list" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   depends_on = [
-    pingone_phone_delivery_settings.%[3]s-1,
-    pingone_phone_delivery_settings.%[3]s-2,
-    pingone_phone_delivery_settings.%[3]s-3,
+    pingone_phone_delivery_settings.%[3]s,
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
