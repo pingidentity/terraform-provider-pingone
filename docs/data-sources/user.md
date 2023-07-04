@@ -2,12 +2,12 @@
 page_title: "pingone_user Data Source - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Datasource to read PingOne user data
+  Datasource to read PingOne user data.
 ---
 
 # pingone_user (Data Source)
 
-Datasource to read PingOne user data
+Datasource to read PingOne user data.
 
 ## Example Usage
 
@@ -36,7 +36,7 @@ data "pingone_user" "example_by_id" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment.
+- `environment_id` (String) The ID of the environment to create the user in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
@@ -48,4 +48,4 @@ data "pingone_user" "example_by_id" {
 
 - `id` (String) The ID of this resource.
 - `population_id` (String) The population ID the user is assigned to.
-- `status` (String) The enabled status of the user.  Possible values are `ENABLED` or `DISABLED`.
+- `status` (String) The enabled status of the user.  Options are `DISABLED`, `ENABLED`.

@@ -261,12 +261,6 @@ func testAccUsersDataSourceConfig_NotFound(resourceName, filter, name string) st
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-}
-
 data "pingone_users" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 

@@ -1,3 +1,11 @@
 ```release-note:note
 `resource/pingone_user`: Migrated to plugin framework.
 ```
+
+```release-note:note
+`data-source/pingone_user`: Migrated to plugin framework.
+```
+
+```release-note:note
+`data-source/pingone_users`: Migrated to plugin framework.
+```
