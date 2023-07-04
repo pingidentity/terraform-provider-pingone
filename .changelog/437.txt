@@ -13,3 +13,7 @@
 ```release-note:enhancement
 `resource/pingone_mfa_policy`: Supports the ability to define the pairing key lifetime and push limit for mobile applications.
 ```
+
+```release-note:new-data-source
+pingone_mfa_policies
+```

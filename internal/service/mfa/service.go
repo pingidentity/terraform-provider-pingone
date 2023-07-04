@@ -19,7 +19,9 @@ func Resources() []func() resource.Resource {
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewMFAPoliciesDataSource,
+	}
 }
 
 func prepareClient(ctx context.Context, resourceConfig framework.ResourceType) (*mfa.APIClient, error) {
