@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_digital_wallet_application Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Datasource to retrieve a PingOne Credentials digital wallet application.
   The service controls the relationship between the customer's digital wallet application, which communicates with users' digital wallets, and a customer's PingOne application.
@@ -36,7 +36,7 @@ data "pingone_digital_wallet_application" "example_by_application_id" {
 
 ### Required
 
-- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet app exists.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet app exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 

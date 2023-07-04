@@ -215,6 +215,14 @@ func PreCheckEnvironmentAndGoogleJSONKey(t *testing.T) {
 	}
 }
 
+func PreCheckEnvironmentAndGoogleFirebaseCredentials(t *testing.T) {
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS"); v == "" {
+		t.Fatal("PINGONE_GOOGLE_FIREBASE_CREDENTIALS is missing and must be set")
+	}
+}
+
 func PreCheckEnvironmentAndPEM(t *testing.T) {
 
 	PreCheckEnvironment(t)
@@ -236,6 +244,42 @@ func PreCheckEnvironmentAndCustomDomainSSL(t *testing.T) {
 
 	if v := os.Getenv("PINGONE_DOMAIN_KEY_PEM"); v == "" {
 		t.Fatal("PINGONE_DOMAIN_KEY_PEM is missing and must be set")
+	}
+}
+
+func PreCheckEnvironmentAndTwilio(t *testing.T, skipTwilio bool) {
+
+	if skipTwilio {
+		t.Skipf("Twilio integration tests are skipped")
+	}
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_TWILIO_SID"); v == "" {
+		t.Fatal("PINGONE_TWILIO_SID is missing and must be set")
+	}
+
+	if v := os.Getenv("PINGONE_TWILIO_AUTH_TOKEN"); v == "" {
+		t.Fatal("PINGONE_TWILIO_AUTH_TOKEN is missing and must be set")
+	}
+
+	if v := os.Getenv("PINGONE_TWILIO_NUMBER"); v == "" {
+		t.Fatal("PINGONE_TWILIO_NUMBER is missing and must be set")
+	}
+}
+
+func PreCheckEnvironmentAndSyniverse(t *testing.T, skipSyniverse bool) {
+
+	if skipSyniverse {
+		t.Skipf("Syniverse integration tests are skipped")
+	}
+
+	PreCheckEnvironment(t)
+	if v := os.Getenv("PINGONE_SYNIVERSE_AUTH_TOKEN"); v == "" {
+		t.Fatal("PINGONE_SYNIVERSE_AUTH_TOKEN is missing and must be set")
+	}
+
+	if v := os.Getenv("PINGONE_SYNIVERSE_NUMBER"); v == "" {
+		t.Fatal("PINGONE_SYNIVERSE_NUMBER is missing and must be set")
 	}
 }
 
@@ -302,6 +346,9 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 			}
 			service {
 				type = "Credentials"
+			}
+			service {
+				type = "Verify"
 			}
 		}`, resourceName, licenseID)
 }

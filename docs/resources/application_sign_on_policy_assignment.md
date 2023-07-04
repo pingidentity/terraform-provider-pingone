@@ -2,14 +2,16 @@
 page_title: "pingone_application_sign_on_policy_assignment Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage a sign-on policy assignment for applications configured in PingOne.
+  Resource to create and manage a sign-on policy assignment for administrator defined applications or built-in system applications configured in PingOne.
 ---
 
 # pingone_application_sign_on_policy_assignment (Resource)
 
-Resource to create and manage a sign-on policy assignment for applications configured in PingOne.
+Resource to create and manage a sign-on policy assignment for administrator defined applications or built-in system applications configured in PingOne.
 
 ~> This resource is for assignment of a PingOne native sign-on policy only.  For assignment of a DaVinci flow policy, use the `pingone_application_flow_policy_assignment` resource.
+
+-> Sign-on policies can be mapped to administrator defined applications that are managed through the `pingone_application` resource, and built-in system applications that are managed through the `pingone_system_application` resource.
 
 ## Example Usage
 
@@ -44,6 +46,8 @@ resource "pingone_application_sign_on_policy_assignment" "foo" {
 ### Required
 
 - `application_id` (String) The ID of the application to create the sign-on policy assignment for.
+
+-> The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources.
 - `environment_id` (String) The ID of the environment to create the application sign-on policy assignment in.
 - `priority` (Number) The order in which the policy referenced by this assignment is evaluated during an authentication flow relative to other policies. An assignment with a lower priority will be evaluated first.
 - `sign_on_policy_id` (String) The ID of the sign-on policy resource to associate.

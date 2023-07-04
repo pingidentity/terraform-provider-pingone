@@ -72,9 +72,7 @@ func ResourceLanguage() *schema.Resource {
 func resourceLanguageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	var resp interface{}
@@ -105,9 +103,7 @@ func resourceLanguageCreate(ctx context.Context, d *schema.ResourceData, meta in
 func resourceLanguageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -159,9 +155,7 @@ func resourceLanguageRead(ctx context.Context, d *schema.ResourceData, meta inte
 func resourceLanguageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(

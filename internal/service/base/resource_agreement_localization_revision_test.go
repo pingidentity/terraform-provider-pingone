@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -25,9 +24,6 @@ func testAccCheckAgreementLocalizationRevisionDestroy(s *terraform.State) error 
 	}
 
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_agreement_localization_revision" {
@@ -83,7 +79,7 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	dateVariant2 := time.Now().Local().Add(time.Hour * time.Duration(2))
+	dateVariant2 := time.Now().In(time.UTC).Add(time.Hour * time.Duration(2))
 
 	variant1 := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),

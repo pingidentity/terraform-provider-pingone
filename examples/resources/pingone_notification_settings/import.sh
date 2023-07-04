@@ -1,0 +1,1 @@
+$ terraform import pingone_notification_settings.example <environment_id>

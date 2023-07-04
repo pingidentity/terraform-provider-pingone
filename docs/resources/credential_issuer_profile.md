@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_issuer_profile Resource - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Resource to retrieve or update the credential issuer information.
   A credential issuer profile, which enables issuance of credentials, is automatically created when the credential service is added to an environment. This resource is typically only required to update the credential issuer name.
@@ -32,7 +32,7 @@ resource "pingone_credential_issuer_profile" "my_credential_issuer" {
 
 ### Required
 
-- `environment_id` (String) TThe ID of the environment to create the credential issuer in.
+- `environment_id` (String) The ID of the environment to create the credential issuer in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name of the credential issuer. The name is included in the metadata of an issued verifiable credential.
 
 ### Read-Only

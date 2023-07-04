@@ -30,7 +30,7 @@ data "pingone_population" "example_by_id" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment that is configured with the population.
+- `environment_id` (String) The ID of the environment that is configured with the population.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 

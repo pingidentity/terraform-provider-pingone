@@ -20,7 +20,7 @@ func ResourceApplicationRoleAssignment() *schema.Resource {
 	return &schema.Resource{
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne admin role assignments to applications.",
+		Description: "Resource to create and manage PingOne admin role assignments to administrator defined applications.",
 
 		CreateContext: resourcePingOneApplicationRoleAssignmentCreate,
 		ReadContext:   resourcePingOneApplicationRoleAssignmentRead,
@@ -88,9 +88,6 @@ func ResourceApplicationRoleAssignment() *schema.Resource {
 func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	var diags diag.Diagnostics
 
@@ -123,6 +120,20 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 	applicationRoleAssignmentRole := *management.NewRoleAssignmentRole(d.Get("role_id").(string))
 	applicationRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
 	applicationRoleAssignment := *management.NewRoleAssignment(applicationRoleAssignmentRole, applicationRoleAssignmentScope) // ApplicationRoleAssignment |  (optional)
+
+	applicationOk, diags := checkApplicationTypeForRoleAssignment(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string))
+	if diags.HasError() {
+		return diags
+	}
+	if !applicationOk {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Invalid parameter value - Unmappable application type",
+			Detail:   fmt.Sprintf("The application ID provided (%s) relates to an application that is neither `OPENID_CONNECT` or `SAML` type.  Roles cannot be mapped to this application.", d.Get("application_id").(string)),
+		})
+
+		return diags
+	}
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
@@ -160,10 +171,24 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
+
+	applicationOk, diags := checkApplicationTypeForRoleAssignment(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string))
+	if diags.HasError() {
+		return diags
+	}
+	if !applicationOk {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Invalid parameter value - Unmappable application type",
+			Detail:   fmt.Sprintf("The application ID provided (%s) relates to an application that is neither `OPENID_CONNECT` or `SAML` type.  Roles cannot be mapped to this application.", d.Get("application_id").(string)),
+		})
+
+		d.SetId("")
+
+		return diags
+	}
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
@@ -211,9 +236,7 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 func resourcePingOneApplicationRoleAssignmentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	if d.Get("read_only").(bool) {
@@ -260,4 +283,35 @@ func resourcePingOneApplicationRoleAssignmentImport(ctx context.Context, d *sche
 	resourcePingOneApplicationRoleAssignmentRead(ctx, d, meta)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func checkApplicationTypeForRoleAssignment(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string) (bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	resp, d := sdk.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
+		},
+		"ReadOneApplication",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	diags = append(diags, d...)
+	if diags.HasError() {
+		return false, diags
+	}
+
+	respObject := resp.(*management.ReadOneApplication200Response)
+
+	if respObject.ApplicationOIDC != nil && respObject.ApplicationOIDC.GetId() != "" {
+		return true, diags
+	}
+
+	if respObject.ApplicationSAML != nil && respObject.ApplicationSAML.GetId() != "" {
+		return true, diags
+	}
+
+	return false, diags
 }

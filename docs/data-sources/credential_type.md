@@ -1,13 +1,13 @@
 ---
 page_title: "pingone_credential_type Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
-  Data to retrieve a PingOne Credentials credential type by its Credential Type Id.
+  Datasource to retrieve a PingOne Credentials credential type by its Credential Type Id.
 ---
 
 # pingone_credential_type (Data Source)
 
-Data to retrieve a PingOne Credentials credential type by its Credential Type Id.
+Datasource to retrieve a PingOne Credentials credential type by its Credential Type Id.
 
 ## Example Usage
 
@@ -23,8 +23,8 @@ data "pingone_credential_type" "example_by_id" {
 
 ### Required
 
-- `credential_type_id` (String) Identifier (UUID) associated with the credential type.
-- `environment_id` (String) PingOne environment identifier (UUID) in which the credential type exists.
+- `credential_type_id` (String) Identifier (UUID) associated with the credential type.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential type exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

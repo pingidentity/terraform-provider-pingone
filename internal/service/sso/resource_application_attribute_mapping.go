@@ -125,7 +125,7 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage custom attribute mappings for applications configured in PingOne.",
+		Description: "Resource to create and manage custom attribute mappings for administrator defined applications configured in PingOne.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -258,10 +258,6 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -338,10 +334,6 @@ func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req reso
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -384,10 +376,6 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -448,10 +436,6 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

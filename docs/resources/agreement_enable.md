@@ -99,9 +99,9 @@ resource "pingone_agreement_enable" "my_agreement_enable" {
 
 ### Required
 
-- `agreement_id` (String) The ID of the agreement to set the enabled status for.
+- `agreement_id` (String) The ID of the agreement to set the enabled status for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `enabled` (Boolean) A boolean that specifies the current enabled state of the agreement. The agreement must support the default language to be enabled. It cannot be disabled if it is referenced by a sign-on policy action. When an agreement is disabled, it is not used anywhere that it is configured across PingOne.
-- `environment_id` (String) The ID of the environment configured with an agreement to enable/disable.
+- `environment_id` (String) The ID of the environment configured with an agreement to enable/disable.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

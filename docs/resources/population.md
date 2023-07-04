@@ -2,12 +2,12 @@
 page_title: "pingone_population Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne populations
+  Resource to create and manage PingOne populations.
 ---
 
 # pingone_population (Resource)
 
-Resource to create and manage PingOne populations
+Resource to create and manage PingOne populations.
 
 ## Example Usage
 
@@ -29,7 +29,7 @@ resource "pingone_population" "my_population" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the population in.
+- `environment_id` (String) The ID of the environment to create the population in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name of the population.
 
 ### Optional

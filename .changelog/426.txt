@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_mfa_application_push_credential`: PingOne MFA has moved to Firebase Cloud Messaging for sending push messages.  `fcm.key` has now been deprecated, `fcm.google_service_account_credentials` should be used going forward.
+```
+
+```release-note:note
+`resource/pingone_mfa_application_push_credential`: Migrated to plugin framework. **IMPORTANT**: The resource will show drift and will need to be re-applied to ensure consistency in the stored resource state.
+```

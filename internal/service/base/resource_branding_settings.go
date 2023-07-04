@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -70,6 +71,10 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 
 	const attrMinLength = 1
 
+	logoIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.",
+	)
+
 	logoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
 	)
@@ -97,14 +102,20 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 		Blocks: map[string]schema.Block{
 
 			"logo_image": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The HREF and the ID for the company logo.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the HREF and ID for the company logo.").Description,
 
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
-						"id": framework.Attr_LinkID(
-							framework.SchemaAttributeDescriptionFromMarkdown("The ID of the logo image.  This can be retrieved from the `id` parameter of the `pingone_image` resource."),
-						),
+						"id": schema.StringAttribute{
+							Description:         logoIdDescription.Description,
+							MarkdownDescription: logoIdDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								verify.P1ResourceIDValidator(),
+							},
+						},
 
 						"href": schema.StringAttribute{
 							Description:         logoHrefDescription.Description,
@@ -115,6 +126,10 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 							},
 						},
 					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
 				},
 			},
 		},
@@ -160,10 +175,6 @@ func (r *BrandingSettingsResource) Create(ctx context.Context, req resource.Crea
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -212,10 +223,6 @@ func (r *BrandingSettingsResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -258,10 +265,6 @@ func (r *BrandingSettingsResource) Update(ctx context.Context, req resource.Upda
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -309,10 +312,6 @@ func (r *BrandingSettingsResource) Delete(ctx context.Context, req resource.Dele
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

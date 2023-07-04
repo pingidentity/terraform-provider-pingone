@@ -223,10 +223,6 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -341,7 +337,7 @@ func (p *EnvironmentDataSourceModel) toState(environmentApiObject *management.En
 	p.EnvironmentId = framework.StringOkToTF(environmentApiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
-	p.Type = enumEnvironmentTypeOkToTF(environmentApiObject.GetTypeOk())
+	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
 	p.Region = enumRegionCodeOkToTF(environmentApiObject.GetRegionOk())
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
@@ -354,7 +350,7 @@ func (p *EnvironmentDataSourceModel) toState(environmentApiObject *management.En
 		p.OrganizationId = types.StringNull()
 	}
 
-	p.Solution = enumSolutionTypeOkToTF(servicesApiObject.GetSolutionTypeOk())
+	p.Solution = framework.EnumOkToTF(servicesApiObject.GetSolutionTypeOk())
 
 	services, d := toStateEnvironmentServices(servicesApiObject.GetProducts())
 	diags.Append(d...)

@@ -1,17 +1,135 @@
-## 0.15.0 (Unreleased)
+## 0.17.0 (Unreleased)
+
+BREAKING CHANGES:
+
+* `resource/pingone_mfa_fido_policy`: This resource is deprecated, please use the `pingone_mfa_fido2_policy` resource going forward.  This resource is no longer configurable for environments created after 19th June 2023, nor environments that have been upgraded to use the latest FIDO2 policies. Existing environments that were created before 19th June 2023 and have not been upgraded can continue to use this resource to facilitate migration. ([#441](https://github.com/pingidentity/terraform-provider-pingone/issues/441))
 
 NOTES:
 
+* Code optimisations in each resource/data source to remove the need to override the region on each operation. ([#439](https://github.com/pingidentity/terraform-provider-pingone/issues/439))
+* `resource/pingone_mfa_application_push_credential`: Migrated to plugin framework. **IMPORTANT**: The resource will show drift and will need to be re-applied to ensure consistency in the stored resource state. ([#426](https://github.com/pingidentity/terraform-provider-pingone/issues/426))
+* bump `github.com/hashicorp/terraform-plugin-framework-timeouts` v0.3.1 => v0.4.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.3.1 => v1.3.2 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/hashicorp/terraform-plugin-go` v0.15.0 => v0.17.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/hashicorp/terraform-plugin-go` v0.17.0 => v0.18.0 ([#450](https://github.com/pingidentity/terraform-provider-pingone/issues/450))
+* bump `github.com/hashicorp/terraform-plugin-mux` v0.10.0 => v0.11.1 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.26.1 => v2.27.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.4 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.7 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.1.0 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.22.0 => v0.23.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.12.0 => v0.13.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.7.1 => v0.8.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.1.0 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.8.0 => v0.9.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+
+FEATURES:
+
+* **New Data Source:** `pingone_phone_delivery_settings_list` ([#419](https://github.com/pingidentity/terraform-provider-pingone/issues/419))
+* **New Resource:** `pingone_mfa_fido2_policy` ([#441](https://github.com/pingidentity/terraform-provider-pingone/issues/441))
+* **New Resource:** `pingone_notification_settings` ([#419](https://github.com/pingidentity/terraform-provider-pingone/issues/419))
+* **New Resource:** `pingone_phone_delivery_settings` ([#419](https://github.com/pingidentity/terraform-provider-pingone/issues/419))
+
+ENHANCEMENTS:
+
+* Add provider configuration parameters to be able to override the PingOne service URL hostnames. ([#439](https://github.com/pingidentity/terraform-provider-pingone/issues/439))
+* `resource/pingone_mfa_application_push_credential`: PingOne MFA has moved to Firebase Cloud Messaging for sending push messages.  `fcm.key` has now been deprecated, `fcm.google_service_account_credentials` should be used going forward. ([#426](https://github.com/pingidentity/terraform-provider-pingone/issues/426))
+* `resource/pingone_notification_template_content`: Add support for P1Verify and P1Credentials notification templates: `email_phone_verification`, `id_verification`, `credential_issued`, `credential_updated`, `digital_wallet_pairing`, `credential_revoked`. ([#428](https://github.com/pingidentity/terraform-provider-pingone/issues/428))
+
+BUG FIXES:
+
+* Global fix for "<<value>> is not a valid Enum<<object>>" errors. ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* `resource/pingone_branding_settings`: Added missing schema validators to prevent misconfiguration of the single-object `logo_image` block. ([#440](https://github.com/pingidentity/terraform-provider-pingone/issues/440))
+* `resource/pingone_branding_theme`: Added missing schema validators to prevent misconfiguration of the single-object `background_image` and `logo` blocks. ([#440](https://github.com/pingidentity/terraform-provider-pingone/issues/440))
+* `resource/pingone_risk_policy`: Fix for "BOT is not a valid EnumPredictorType" error. ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* `resource/pingone_risk_predictor`: Fix for "BOT is not a valid EnumPredictorType" error. ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+
+## 0.16.0 (19 June 2023)
+
+NOTES:
+
+* Adjusted documentation for multiple resources/datasources to clarify PingOne ID attribute validation and plan replacement on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
+* `data-source/pingone_credential_issuance_rule`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `data-source/pingone_credential_type`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `data-source/pingone_environment`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `data_source/pingone_credential_type`: Corrected typo in data source description. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_agreement_localization_revision`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `resource/pingone_branding_settings`: Adjusted schema such that the icon `id` required parameter no longer triggers a replacement plan on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
+* `resource/pingone_credential_issuance_rule`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `resource/pingone_credential_type`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `resource/pingone_environment`: Code optimisation of ENUM values to TF state. ([#417](https://github.com/pingidentity/terraform-provider-pingone/issues/417))
+* `resource/pingone_flow_policy_assignment`: Adjusted schema such that the `flow_policy_id` required parameter no longer triggers a replacement plan on change. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
+* `resource/pingone_schema_attribute`: Migrated to plugin framework. ([#414](https://github.com/pingidentity/terraform-provider-pingone/issues/414))
+* `resource/pingone_sign_on_policy_action`: Adjust documentation to clarify the where conditions can and cannot be used in a policy action. ([#412](https://github.com/pingidentity/terraform-provider-pingone/issues/412))
+* bump `github.com/golangci/golangci-lint` v1.53.2 => v1.53.3 ([#424](https://github.com/pingidentity/terraform-provider-pingone/issues/424))
+* bump `github.com/hashicorp/terraform-plugin-docs` v0.14.1 => v0.15.0 ([#424](https://github.com/pingidentity/terraform-provider-pingone/issues/424))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.2.0 => v1.3.1 ([#424](https://github.com/pingidentity/terraform-provider-pingone/issues/424))
+* bump `github.com/hashicorp/terraform-plugin-log` v0.8.0 => v0.9.0 ([#424](https://github.com/pingidentity/terraform-provider-pingone/issues/424))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.11.0 => v0.12.0 ([#424](https://github.com/pingidentity/terraform-provider-pingone/issues/424))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.7.3 => v0.8.0 ([#424](https://github.com/pingidentity/terraform-provider-pingone/issues/424))
+* bump `github.com/terraform-linters/tflint` v0.46.1 => v0.47.0 ([#424](https://github.com/pingidentity/terraform-provider-pingone/issues/424))
+
+FEATURES:
+
+* **New Data Source:** `pingone_verify_policies` ([#403](https://github.com/pingidentity/terraform-provider-pingone/issues/403))
+* **New Data Source:** `pingone_verify_policy` ([#403](https://github.com/pingidentity/terraform-provider-pingone/issues/403))
+* **New Resource:** `pingone_verify_policy` ([#403](https://github.com/pingidentity/terraform-provider-pingone/issues/403))
+
+ENHANCEMENTS:
+
+* `resource/pingone_schema_attribute`: Supports properties for enumerated values and regular expression validation. ([#414](https://github.com/pingidentity/terraform-provider-pingone/issues/414))
+* `resource/pingone_sign_on_policy_action`: Support user provisioning gateway configuration on the "Login" sign-on policy action ([#407](https://github.com/pingidentity/terraform-provider-pingone/issues/407))
+
+BUG FIXES:
+
+* `data_source/pingone_credential_issuer_profile`: Fixed mismatched `created_at` and `updated_at` mapping. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_branding_theme`: Fixed change to theme icon/background ID triggers a replacement plan on change, leading to removal failures if the theme is set as default. ([#404](https://github.com/pingidentity/terraform-provider-pingone/issues/404))
+* `resource/pingone_credential_issuance_rule`: Fixed incorrect replacement of resource when the `digital_wallet_id` value was changed. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_credential_issuer_profile`: Fixed mismatched `created_at` and `updated_at` mapping. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_digital_wallet_application`: Fixed incorrect replacement of resource when the `application_id` value was changed. ([#406](https://github.com/pingidentity/terraform-provider-pingone/issues/406))
+* `resource/pingone_sign_on_policy_action`: Fix panic crash when defining `conditions.user_attribute_equals` and/or `conditions.user_is_member_of_any_population_id` in a sign-on policy action that is priority 1. ([#412](https://github.com/pingidentity/terraform-provider-pingone/issues/412))
+
+## 0.15.1 (07 June 2023)
+
+NOTES:
+
+* `resource/pingone_population`: Migrated to plugin framework. ([#400](https://github.com/pingidentity/terraform-provider-pingone/issues/400))
+
+BUG FIXES:
+
+* `resource/pingone_population`: Fixed panic on plan when population is removed outside of Terraform. ([#400](https://github.com/pingidentity/terraform-provider-pingone/issues/400))
+
+## 0.15.0 (06 June 2023)
+
+NOTES:
+
+* `resource/pingone_application_attribute_mapping`: Updated documentation to reflect support for only administrator defined applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application_flow_policy_assignment`: Updated documentation to reflect support for Portal and Self-Service built-in system applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application_resource_grant`: Updated documentation to reflect support for Portal and Self-Service built-in system applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application_role_assignment`: Updated documentation to reflect support for only administrator defined applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application_sign_on_policy_assignment`: Updated documentation to reflect support for Portal and Self-Service built-in system applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+* `resource/pingone_application`: Updated documentation to reflect support for only administrator defined applications. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
 * `resource/pingone_branding_settings`: Migrated to plugin framework. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
 * `resource/pingone_branding_theme`: Corrected documentation example syntax. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
 * `resource/pingone_branding_theme`: Migrated to plugin framework. ([#374](https://github.com/pingidentity/terraform-provider-pingone/issues/374))
 * `resource/pingone_credential_type`: Improved the documentation for the `title` and `description` attributes and explained their correlation to fields in the `card_design_template`. ([#377](https://github.com/pingidentity/terraform-provider-pingone/issues/377))
 * `resource/pingone_risk_predictor`: Corrected custom map type documentation example. ([#378](https://github.com/pingidentity/terraform-provider-pingone/issues/378))
 * `resource/pingone_risk_predictor`: Corrected documentation examples. ([#387](https://github.com/pingidentity/terraform-provider-pingone/issues/387))
+* bump `github.com/golangci/golangci-lint` v1.52.2 => v1.53.2 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.20.0 => v0.22.0 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.10.0 => v0.11.0 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.6.0 => v0.7.1 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.7.0 => v0.7.3 ([#396](https://github.com/pingidentity/terraform-provider-pingone/issues/396))
 
 FEATURES:
 
 * **New Resource:** `pingone_branding_theme_default` ([#375](https://github.com/pingidentity/terraform-provider-pingone/issues/375))
+* **New Resource:** `pingone_risk_policy` ([#381](https://github.com/pingidentity/terraform-provider-pingone/issues/381))
+* **New Resource:** `pingone_system_application` ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
+
+ENHANCEMENTS:
+
+* `resource/pingone_application_role_assignment`: Added validation logic to ensure that only valid applications are accepted for role assignment. ([#395](https://github.com/pingidentity/terraform-provider-pingone/issues/395))
 
 BUG FIXES:
 

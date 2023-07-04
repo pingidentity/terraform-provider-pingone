@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -25,9 +24,6 @@ func testAccCheckSignOnPolicyActionDestroy(s *terraform.State) error {
 	}
 
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_sign_on_policy_action" {
@@ -148,6 +144,56 @@ func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "login.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "login.0.recovery_enabled", "false"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccSignOnPolicyAction_LoginAction_Gateway(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+
+	name := resourceName
+
+	withGateway := resource.TestStep{
+		Config: testAccSignOnPolicyActionConfig_LoginFullWithNewUserProvisioning(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.#", "3"),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.0.id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.0.type", "LDAP"),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.0.user_type_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.1.id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.1.type", "LDAP"),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.1.user_type_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.2.id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.2.type", "LDAP"),
+			resource.TestMatchResourceAttr(resourceFullName, "login.0.new_user_provisioning.0.gateway.2.user_type_id", verify.P1ResourceIDRegexp),
+		),
+	}
+
+	withoutGateway := resource.TestStep{
+		Config: testAccSignOnPolicyActionConfig_LoginMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "login.0.new_user_provisioning.#", "0"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			withGateway,
+			withoutGateway,
+			withGateway,
+			//Errors
+			{
+				Config:      testAccSignOnPolicyActionConfig_LoginFullWithNewUserProvisioningWrongGateway(resourceName, name),
+				ExpectError: regexp.MustCompile(`Only 'LDAP' type gateways are supported for new user provisioning.`),
 			},
 		},
 	})
@@ -884,6 +930,31 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 	})
 }
 
+func TestAccSignOnPolicyAction_ConditionsInvalidPriority1(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsPriority1(resourceName, name),
+				ExpectError: regexp.MustCompile("Condition `user_attribute_equals` is defined cannot be set when the policy action priority is 1"),
+			},
+			{
+				Config:      testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulationsPriority1(resourceName, name),
+				ExpectError: regexp.MustCompile("Condition `user_is_member_of_any_population_id` is defined cannot be set when the policy action priority is 1"),
+			},
+		},
+	})
+}
+
 func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
 	t.Parallel()
 
@@ -1302,6 +1373,227 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
   login {
     recovery_enabled = false // we set this to false because the calculated default from the api is true
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_LoginFullWithNewUserProvisioning(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_gateway" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+  enabled        = true
+
+  type = "LDAP"
+
+  bind_dn       = "ou=test,dc=example,dc=com"
+  bind_password = "dummyPasswordValue"
+
+  vendor = "PingDirectory"
+
+  servers = [
+    "ds1.dummyldapservice.com:389",
+    "ds3.dummyldapservice.com:389",
+    "ds2.dummyldapservice.com:389",
+  ]
+
+  user_type {
+    name               = "User Set 1"
+    password_authority = "LDAP"
+    search_base_dn     = "ou=users1,dc=example,dc=com"
+
+    user_link_attributes = ["objectGUID", "objectSid"]
+
+    user_migration {
+      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+
+      population_id = pingone_population.%[2]s.id
+
+      attribute_mapping {
+        name  = "username"
+        value = "$${ldapAttributes.uid}"
+      }
+
+      attribute_mapping {
+        name  = "email"
+        value = "$${ldapAttributes.mail}"
+      }
+    }
+
+    push_password_changes_to_ldap = true
+  }
+
+  user_type {
+    name               = "User Set 2"
+    password_authority = "PING_ONE"
+    search_base_dn     = "ou=users,dc=example,dc=com"
+
+    user_link_attributes = ["objectGUID", "dn", "objectSid"]
+
+    user_migration {
+      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+
+      population_id = pingone_population.%[2]s.id
+
+      attribute_mapping {
+        name  = "username"
+        value = "$${ldapAttributes.uid}"
+      }
+
+      attribute_mapping {
+        name  = "email"
+        value = "$${ldapAttributes.mail}"
+      }
+
+      attribute_mapping {
+        name  = "name.family"
+        value = "$${ldapAttributes.sn}"
+      }
+    }
+
+    push_password_changes_to_ldap = true
+  }
+
+}
+
+resource "pingone_gateway_credential" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  gateway_id     = pingone_gateway.%[2]s-1.id
+}
+
+resource "pingone_gateway" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+  enabled        = true
+
+  type = "LDAP"
+
+  bind_dn       = "ou=test,dc=example,dc=com"
+  bind_password = "dummyPasswordValue"
+
+  vendor = "PingDirectory"
+
+  servers = [
+    "ds1.dummyldapservice.com:389",
+    "ds3.dummyldapservice.com:389",
+    "ds2.dummyldapservice.com:389",
+  ]
+
+  user_type {
+    name               = "User Set 1"
+    password_authority = "LDAP"
+    search_base_dn     = "ou=users1,dc=example,dc=com"
+
+    user_link_attributes = ["objectGUID", "objectSid"]
+
+    user_migration {
+      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+
+      population_id = pingone_population.%[2]s.id
+
+      attribute_mapping {
+        name  = "username"
+        value = "$${ldapAttributes.uid}"
+      }
+
+      attribute_mapping {
+        name  = "email"
+        value = "$${ldapAttributes.mail}"
+      }
+    }
+
+    push_password_changes_to_ldap = true
+  }
+}
+
+resource "pingone_gateway_credential" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  gateway_id     = pingone_gateway.%[2]s-2.id
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  login {
+    recovery_enabled = false
+
+    new_user_provisioning {
+      gateway {
+        id           = pingone_gateway.%[2]s-1.id
+        user_type_id = pingone_gateway.%[2]s-1.user_type.* [index(pingone_gateway.%[2]s-1.user_type[*].name, "User Set 2")].id
+      }
+
+      gateway {
+        id           = pingone_gateway.%[2]s-2.id
+        user_type_id = pingone_gateway.%[2]s-2.user_type.* [index(pingone_gateway.%[2]s-2.user_type[*].name, "User Set 1")].id
+      }
+
+      gateway {
+        id           = pingone_gateway.%[2]s-1.id
+        user_type_id = pingone_gateway.%[2]s-1.user_type.* [index(pingone_gateway.%[2]s-1.user_type[*].name, "User Set 1")].id
+      }
+    }
+  }
+
+  depends_on = [
+    pingone_gateway_credential.%[2]s-1,
+    pingone_gateway_credential.%[2]s-2,
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_LoginFullWithNewUserProvisioningWrongGateway(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_gateway" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  type = "PING_FEDERATE"
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  login {
+    recovery_enabled = false
+
+    new_user_provisioning {
+      gateway {
+        id           = pingone_gateway.%[2]s.id
+        user_type_id = pingone_gateway.%[2]s.id
+      }
+    }
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -2255,6 +2547,83 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
       attribute_reference = "$${user.mfaEnabled}"
       value_boolean       = true
     }
+  }
+
+  login {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_ConditionsUserAttributeEqualsPriority1(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  conditions {
+    user_attribute_equals {
+      attribute_reference = "$${user.mfaEnabled}"
+      value_boolean       = true
+    }
+  }
+
+  login {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_ConditionsMemberOfPopulationsPriority1(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_population" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-1"
+}
+
+resource "pingone_population" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-2"
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  conditions {
+    user_is_member_of_any_population_id = [
+      pingone_population.%[2]s.id,
+      pingone_population.%[2]s-1.id,
+      pingone_population.%[2]s-2.id
+    ]
   }
 
   login {}

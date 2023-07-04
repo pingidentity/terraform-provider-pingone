@@ -103,7 +103,7 @@ func TestAccAgreementDataSource_NotFound(t *testing.T) {
 }
 
 func testAccAgreementDataSourceConfig_ByNameFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Hour * time.Duration(1))
+	date := time.Now().In(time.UTC).Add(time.Hour * time.Duration(1))
 
 	return fmt.Sprintf(`
 	%[1]s
@@ -158,7 +158,7 @@ data "pingone_agreement" "%[2]s" {
 }
 
 func testAccAgreementDataSourceConfig_ByIDFull(resourceName, name string) string {
-	date := time.Now().Local().Add(time.Hour * time.Duration(1))
+	date := time.Now().In(time.UTC).Add(time.Hour * time.Duration(1))
 
 	return fmt.Sprintf(`
 	%[1]s

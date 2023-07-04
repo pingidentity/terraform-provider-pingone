@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -71,9 +72,13 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential digital wallet application is created and managed."),
 			),
 
-			"application_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The identifier (UUID) of the PingOne mobile application associated with the digital wallet application."),
-			),
+			"application_id": schema.StringAttribute{
+				Description: "The identifier (UUID) of the PingOne application associated with the digital wallet application.",
+				Required:    true,
+				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
+				},
+			},
 
 			"app_open_url": schema.StringAttribute{
 				Description: "The URL enables deep-linking to the digital wallet application, and is sent in notifications to the user to communicate with the service.",
@@ -148,10 +153,6 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -199,10 +200,6 @@ func (r *DigitalWalletApplicationResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -245,10 +242,6 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -296,10 +289,6 @@ func (r *DigitalWalletApplicationResource) Delete(ctx context.Context, req resou
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -377,16 +366,12 @@ func (p *DigitalWalletApplicationResourceModel) toState(apiObject *credentials.D
 func confirmParentAppExistsAndIsNative(ctx context.Context, r *DigitalWalletApplicationResource, environmentId, applicationId string) (*credentials.ObjectApplication, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	ctxMgmt := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Run the API call
 	resp, diags := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.mgmtClient.ApplicationsApi.ReadOneApplication(ctxMgmt, environmentId, applicationId).Execute()
+			return r.mgmtClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
 		},
 		"ReadOneApplication",
 		framework.DefaultCustomError,

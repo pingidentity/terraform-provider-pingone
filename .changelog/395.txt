@@ -1,0 +1,31 @@
+```release-note:new-resource
+pingone_system_application
+```
+
+```release-note:note
+`resource/pingone_application_sign_on_policy_assignment`: Updated documentation to reflect support for Portal and Self-Service built-in system applications.
+```
+
+```release-note:note
+`resource/pingone_application`: Updated documentation to reflect support for only administrator defined applications.
+```
+
+```release-note:note
+`resource/pingone_application_flow_policy_assignment`: Updated documentation to reflect support for Portal and Self-Service built-in system applications.
+```
+
+```release-note:note
+`resource/pingone_application_resource_grant`: Updated documentation to reflect support for Portal and Self-Service built-in system applications.
+```
+
+```release-note:note
+`resource/pingone_application_attribute_mapping`: Updated documentation to reflect support for only administrator defined applications.
+```
+
+```release-note:note
+`resource/pingone_application_role_assignment`: Updated documentation to reflect support for only administrator defined applications.
+```
+
+```release-note:enhancement
+`resource/pingone_application_role_assignment`: Added validation logic to ensure that only valid applications are accepted for role assignment.
+```

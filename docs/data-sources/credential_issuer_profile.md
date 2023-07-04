@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_issuer_profile Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Datasource to retrieve a PingOne Credentials issuer profile.  A PingOne environment contains only one Credential Issuer Profile.
 ---
@@ -22,7 +22,7 @@ data "pingone_credential_issuer_profile" "example_by_id" {
 
 ### Required
 
-- `environment_id` (String) TThe ID of the environment that contains the credential issuer.
+- `environment_id` (String) The ID of the environment that contains the credential issuer.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

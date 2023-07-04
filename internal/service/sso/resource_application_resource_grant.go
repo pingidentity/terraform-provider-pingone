@@ -19,7 +19,7 @@ func ResourceApplicationResourceGrant() *schema.Resource {
 	return &schema.Resource{
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a resource grant for an application configured in PingOne.",
+		Description: "Resource to create and manage a resource grant for administrator defined applications or built-in system applications configured in PingOne.",
 
 		CreateContext: resourcePingOneApplicationResourceGrantCreate,
 		ReadContext:   resourcePingOneApplicationResourceGrantRead,
@@ -39,7 +39,7 @@ func ResourceApplicationResourceGrant() *schema.Resource {
 				ForceNew:         true,
 			},
 			"application_id": {
-				Description:      "The ID of the application to create the resource grant for.",
+				Description:      "The ID of the application to create the resource grant for.\n\n-> The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
@@ -69,9 +69,7 @@ func ResourceApplicationResourceGrant() *schema.Resource {
 func resourcePingOneApplicationResourceGrantCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource := *management.NewApplicationResourceGrantResource(d.Get("resource_id").(string))
@@ -103,9 +101,7 @@ func resourcePingOneApplicationResourceGrantCreate(ctx context.Context, d *schem
 func resourcePingOneApplicationResourceGrantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -138,9 +134,7 @@ func resourcePingOneApplicationResourceGrantRead(ctx context.Context, d *schema.
 func resourcePingOneApplicationResourceGrantUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource := *management.NewApplicationResourceGrantResource(d.Get("resource_id").(string))
@@ -168,9 +162,7 @@ func resourcePingOneApplicationResourceGrantUpdate(ctx context.Context, d *schem
 func resourcePingOneApplicationResourceGrantDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(

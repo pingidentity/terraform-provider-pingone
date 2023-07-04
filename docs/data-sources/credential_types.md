@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_types Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Datasource to retrieve a list of multiple PingOne Credentials credential types.  Filtering the list by SCIM or data filter currently is not supported.
 ---
@@ -23,7 +23,7 @@ data "pingone_credential_types" "example_all_credential_types_ids" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the credential type in.
+- `environment_id` (String) The ID of the environment to create the credential type in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

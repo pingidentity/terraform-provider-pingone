@@ -39,8 +39,8 @@ data "pingone_agreement_localization" "example_by_id" {
 
 ### Required
 
-- `agreement_id` (String) The UUID that identifies the agreement ID that the localization is applied to.
-- `environment_id` (String) The ID of the environment that is configured with the agreement localization.
+- `agreement_id` (String) The UUID that identifies the agreement ID that the localization is applied to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment that is configured with the agreement localization.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 

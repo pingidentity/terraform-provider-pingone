@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_credential_issuance_rule Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Datasource to retrieve a PingOne Credentials credential issuance rule for the specified credential type.
 ---
@@ -24,9 +24,9 @@ data "pingone_credential_issuance_rule" "example_by_id" {
 
 ### Required
 
-- `credential_issuance_rule_id` (String) Identifier (UUID) of the credential issuance rule.
-- `credential_type_id` (String) The ID of the credential type with which this credential issuance rule is associated.
-- `environment_id` (String) The ID of the environment to retrieve the credential issuance rule.
+- `credential_issuance_rule_id` (String) Identifier (UUID) of the credential issuance rule.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `credential_type_id` (String) The ID of the credential type with which this credential issuance rule is associated.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to retrieve the credential issuance rule.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

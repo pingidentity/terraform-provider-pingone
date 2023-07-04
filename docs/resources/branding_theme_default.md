@@ -46,8 +46,8 @@ resource "pingone_branding_theme_default" "my_awesome_theme_active" {
 
 ### Required
 
-- `branding_theme_id` (String) The ID of the branding theme to activate as the environment default.
-- `environment_id` (String) The ID of the environment to set branding settings for.
+- `branding_theme_id` (String) The ID of the branding theme to activate as the environment default.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to set branding settings for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

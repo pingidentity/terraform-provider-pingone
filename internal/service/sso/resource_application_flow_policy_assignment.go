@@ -55,7 +55,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Metadata(ctx context.Context, 
 func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a DaVinci flow policy assignment for an application configured in PingOne.",
+		Description: "Resource to create and manage a DaVinci flow policy assignment for an administrator defined application or built-in system applications configured in PingOne.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -64,17 +64,18 @@ func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, re
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the application flow policy assignment in."),
 			),
 
-			"application_id": framework.Attr_LinkID(framework.SchemaAttributeDescription{
-				Description: "The ID of the application to create the flow policy assignment for.",
-			}),
+			"application_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to create the flow policy assignment for. The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources."),
+			),
 
-			"flow_policy_id": framework.Attr_LinkIDWithValidators(framework.SchemaAttributeDescription{
-				Description: "The ID of the DaVinci flow policy to associate.",
-			},
-				[]validator.String{
+			"flow_policy_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the DaVinci flow policy to associate.").Description,
+				Required:    true,
+
+				Validators: []validator.String{
 					verify.P1DVResourceIDValidator(),
 				},
-			),
+			},
 
 			"priority": schema.Int64Attribute{
 				Description: "The order in which the policy referenced by this assignment is evaluated during an authentication flow relative to other policies. An assignment with a lower priority will be evaluated first.",
@@ -127,10 +128,6 @@ func (r *ApplicationFlowPolicyAssignmentResource) Create(ctx context.Context, re
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -174,10 +171,6 @@ func (r *ApplicationFlowPolicyAssignmentResource) Read(ctx context.Context, req 
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -212,6 +205,46 @@ func (r *ApplicationFlowPolicyAssignmentResource) Read(ctx context.Context, req 
 }
 
 func (r *ApplicationFlowPolicyAssignmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state ApplicationFlowPolicyAssignmentResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	applicationFlowPolicyAssignment := plan.expand()
+
+	// Run the API call
+	response, d := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return r.client.ApplicationFlowPolicyAssignmentsApi.UpdateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+		},
+		"UpdateFlowPolicyAssignment",
+		framework.DefaultCustomError,
+		nil,
+	)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response.(*management.FlowPolicyAssignment))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *ApplicationFlowPolicyAssignmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -223,10 +256,6 @@ func (r *ApplicationFlowPolicyAssignmentResource) Delete(ctx context.Context, re
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

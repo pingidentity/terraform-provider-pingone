@@ -1,6 +1,8 @@
 package sso
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -31,7 +33,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
 		},
 		"conditions": {
-			Description:   "Conditions to apply to the sign on policy action.",
+			Description:   "Conditions to apply to the sign on policy action.  Applies to policy actions of type `agreement`, `identifier_first`, `identity_provider`, `login`, `mfa`, `progressive_profiling`.",
 			Type:          schema.TypeList,
 			MaxItems:      1,
 			Optional:      true,
@@ -39,7 +41,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"last_sign_on_older_than_seconds": {
-						Description:      "Set the number of seconds by which the user will not be prompted for this action following the last successful authentication.",
+						Description:      "Set the number of seconds by which the user will not be prompted for this action following the last successful authentication.  Applies to policy actions of type `identifier_first`, `identity_provider`, `login`, `mfa`.",
 						Type:             schema.TypeInt,
 						Optional:         true,
 						ConflictsWith:    []string{"progressive_profiling", "agreement", "conditions.0.last_sign_on_older_than_seconds_mfa"},
@@ -47,7 +49,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						AtLeastOneOf:     []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"last_sign_on_older_than_seconds_mfa": {
-						Description:      "Set the number of seconds by which the user will not be prompted for this action following the last successful authentication of an MFA authenticator device.",
+						Description:      "Set the number of seconds by which the user will not be prompted for this action following the last successful authentication of an MFA authenticator device.  Applies to policy actions of type `mfa`.",
 						Type:             schema.TypeInt,
 						Optional:         true,
 						ConflictsWith:    []string{"identifier_first", "login", "progressive_profiling", "agreement", "identity_provider", "conditions.0.last_sign_on_older_than_seconds"},
@@ -55,7 +57,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						AtLeastOneOf:     []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"user_is_member_of_any_population_id": {
-						Description:   "Activate this action only for users within the specified list of population IDs.",
+						Description:   "Activate this action only for users within the specified list of population IDs.  Applies to policy actions of type `identifier_first`, `login`, `mfa`, but cannot be set on policy actions where the priority is `1`.",
 						Type:          schema.TypeSet,
 						MaxItems:      100,
 						Optional:      true,
@@ -67,7 +69,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"user_attribute_equals": {
-						Description:   "One or more conditions where an attribute on the user's profile must match the configured value.",
+						Description:   "One or more conditions where an attribute on the user's profile must match the configured value.  Applies to policy actions of type `identifier_first`, `login`, `mfa`, but cannot be set on policy actions where the priority is `1`.",
 						Type:          schema.TypeSet,
 						Optional:      true,
 						ConflictsWith: []string{"progressive_profiling", "agreement", "identity_provider"},
@@ -95,7 +97,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"ip_out_of_range_cidr": {
-						Description:   "A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.",
+						Description:   "A list of strings that specifies the supported network IP addresses expressed as classless inter-domain routing (CIDR) strings.  Applies to policy actions of type `mfa`.",
 						Type:          schema.TypeSet,
 						MaxItems:      100,
 						Optional:      true,
@@ -107,7 +109,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						AtLeastOneOf: []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"ip_reputation_high_risk": {
-						Description:   "A boolean that specifies whether the user's IP risk should be used when evaluating this policy action.  A value of `HIGH` will prompt the user to authenticate with this action.",
+						Description:   "A boolean that specifies whether the user's IP risk should be used when evaluating this policy action.  A value of `HIGH` will prompt the user to authenticate with this action.  Applies to policy actions of type `mfa`.",
 						Type:          schema.TypeBool,
 						Optional:      true,
 						Default:       false,
@@ -115,7 +117,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"geovelocity_anomaly_detected": {
-						Description:   "A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected geovelocity anomaly.",
+						Description:   "A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected geovelocity anomaly.  Applies to policy actions of type `mfa`.",
 						Type:          schema.TypeBool,
 						Optional:      true,
 						Default:       false,
@@ -123,7 +125,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"anonymous_network_detected": {
-						Description:   "A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected anonymous network.",
+						Description:   "A boolean that specifies whether the user should be prompted for re-authentication on this action based on a detected anonymous network.  Applies to policy actions of type `mfa`.",
 						Type:          schema.TypeBool,
 						Optional:      true,
 						Default:       false,
@@ -131,7 +133,7 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 						AtLeastOneOf:  []string{"conditions.0.last_sign_on_older_than_seconds", "conditions.0.last_sign_on_older_than_seconds_mfa", "conditions.0.user_is_member_of_any_population_id", "conditions.0.user_attribute_equals", "conditions.0.ip_out_of_range_cidr", "conditions.0.ip_reputation_high_risk", "conditions.0.geovelocity_anomaly_detected", "conditions.0.anonymous_network_detected"},
 					},
 					"anonymous_network_detected_allowed_cidr": {
-						Description:   "A list of allowed CIDR when an anonymous network is detected.",
+						Description:   "A list of allowed CIDR when an anonymous network is detected.  Applies to policy actions of type `mfa`.",
 						Type:          schema.TypeSet,
 						MaxItems:      100,
 						Optional:      true,
@@ -281,6 +283,45 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"recovery_enabled": recoveryEnabledSchema(),
+					"new_user_provisioning": {
+						Description: "Enables user entries existing outside of PingOne to be provisioned during login, using an external integration solution (such as a Gateway).",
+						Type:        schema.TypeList,
+						MaxItems:    1,
+						Optional:    true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"gateway": {
+									Description: "One or more blocks that describe a preconfigured gateway and user type that are specified in the Gateway Management schema to determine how to find and migrate user entries existing in an external directory.",
+									Type:        schema.TypeSet,
+									MinItems:    1,
+									Required:    true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"id": {
+												Description:      "A string that specifies the UUID ID of the gateway instance.  The ID may come from the `id` parameter of the `pingone_gateway` resource.  Must be a valid PingOne resource ID.",
+												Type:             schema.TypeString,
+												Required:         true,
+												ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+											},
+											"type": {
+												Description:      fmt.Sprintf("A string that specifies the type of the gateway. Currently, only `%s` is supported.", string(management.ENUMGATEWAYTYPE_LDAP)),
+												Type:             schema.TypeString,
+												Optional:         true,
+												Default:          string(management.ENUMGATEWAYTYPE_LDAP),
+												ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMGATEWAYTYPE_LDAP)}, false)),
+											},
+											"user_type_id": {
+												Description:      "A string that specifies the UUID ID of the user type within the gateway instance.  The ID may come from the `user_type[*].id` parameter of the `pingone_gateway` resource.  Must be a valid PingOne resource ID.",
+												Type:             schema.TypeString,
+												Required:         true,
+												ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},

@@ -350,7 +350,7 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 ### Required
 
 - `compact_name` (String) A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).  If the value used for `compact_name` relates to a built-in predictor (a predictor that cannot be deleted), then this resource will attempt to overwrite the predictor's configuration.  This field is immutable and will trigger a replace plan if changed.
-- `environment_id` (String) The ID of the environment to configure the risk predictor in.
+- `environment_id` (String) The ID of the environment to configure the risk predictor in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies the unique, friendly name for the predictor. This name is displayed in the Risk Policies UI, when the admin is asked to define the overrides and weights in policy configuration and is unique per environment.
 
 ### Optional

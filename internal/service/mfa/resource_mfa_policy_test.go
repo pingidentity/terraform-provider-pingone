@@ -10,8 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -26,21 +24,15 @@ func testAccCheckMFAPolicyDestroy(s *terraform.State) error {
 	}
 
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	apiClientManagement := p1Client.API.ManagementAPIClient
-	ctxManagement := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_mfa_policy" {
 			continue
 		}
 
-		_, rEnv, err := apiClientManagement.EnvironmentsApi.ReadOneEnvironment(ctxManagement, rs.Primary.Attributes["environment_id"]).Execute()
+		_, rEnv, err := apiClientManagement.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
 
 		if err != nil {
 
@@ -532,14 +524,16 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 
 	name := resourceName
 
+	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndGoogleFirebaseCredentials(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name),
+				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -694,14 +688,16 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 
 	name := resourceName
 
+	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { acctest.PreCheckEnvironmentAndGoogleFirebaseCredentials(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name),
+				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -763,7 +759,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name),
+				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1551,7 +1547,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_FullMobile(resourceName, name string) string {
+func testAccMFAPolicyConfig_FullMobile(resourceName, name, key string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -1587,7 +1583,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s-1" {
   application_id = pingone_application.%[2]s-1.id
 
   fcm {
-    key = "dummykey"
+    google_service_account_credentials = jsonencode(%[4]s)
   }
 }
 
@@ -1668,7 +1664,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s-3" {
   application_id = pingone_application.%[2]s-3.id
 
   fcm {
-    key = "dummykey"
+    google_service_account_credentials = jsonencode(%[4]s)
   }
 }
 
@@ -1750,7 +1746,7 @@ resource "pingone_mfa_policy" "%[2]s" {
     pingone_mfa_application_push_credential.%[2]s-3
   ]
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
 }
 
 func testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name string) string {

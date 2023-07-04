@@ -83,9 +83,7 @@ func DatasourceResource() *schema.Resource {
 func datasourcePingOneResourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	var resp *management.Resource

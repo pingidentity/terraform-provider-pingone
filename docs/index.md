@@ -26,7 +26,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.15"
+      version = "~> 0.17"
     }
   }
 }
@@ -52,7 +52,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.15"
+      version = "~> 0.17"
     }
   }
 }
@@ -80,7 +80,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.15"
+      version = "~> 0.17"
     }
   }
 }
@@ -113,3 +113,12 @@ $ terraform plan
 ### Optional
 
 - `force_delete_production_type` (Boolean) Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.
+- `service_endpoints` (Block List) A single block containing configuration items to override the service API endpoints of PingOne. (see [below for nested schema](#nestedblock--service_endpoints))
+
+<a id="nestedblock--service_endpoints"></a>
+### Nested Schema for `service_endpoints`
+
+Required:
+
+- `api_hostname` (String) Hostname for the PingOne management service API, for example, `api.pingone.eu`.  Default value can be set with the `PINGONE_API_SERVICE_HOSTNAME` environment variable.
+- `auth_hostname` (String) Hostname for the PingOne authentication service API, for example, `auth.pingone.eu`.  Default value can be set with the `PINGONE_AUTH_SERVICE_HOSTNAME` environment variable.

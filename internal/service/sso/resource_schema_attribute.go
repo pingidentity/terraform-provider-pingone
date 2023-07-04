@@ -6,301 +6,755 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
+	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
+	setplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setplanmodifier"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
-func ResourceSchemaAttribute() *schema.Resource {
-	return &schema.Resource{
+// Types
+type SchemaAttributeResource struct {
+	client *management.APIClient
+	region model.RegionMapping
+}
 
+type SchemaAttributeResourceModel struct {
+	Id               types.String `tfsdk:"id"`
+	EnvironmentId    types.String `tfsdk:"environment_id"`
+	Description      types.String `tfsdk:"description"`
+	DisplayName      types.String `tfsdk:"display_name"`
+	Enabled          types.Bool   `tfsdk:"enabled"`
+	EnumeratedValues types.Set    `tfsdk:"enumerated_values"`
+	LdapAttribute    types.String `tfsdk:"ldap_attribute"`
+	Multivalued      types.Bool   `tfsdk:"multivalued"`
+	Name             types.String `tfsdk:"name"`
+	RegexValidation  types.Object `tfsdk:"regex_validation"`
+	Required         types.Bool   `tfsdk:"required"`
+	SchemaId         types.String `tfsdk:"schema_id"`
+	SchemaType       types.String `tfsdk:"schema_type"`
+	Type             types.String `tfsdk:"type"`
+	Unique           types.Bool   `tfsdk:"unique"`
+}
+
+type SchemaAttributeEnumeratedValuesResourceModel struct {
+	Archived    types.Bool   `tfsdk:"archived"`
+	Description types.String `tfsdk:"description"`
+	Value       types.String `tfsdk:"value"`
+}
+
+type SchemaAttributeRegexValidationModel struct {
+	Pattern                     types.String `tfsdk:"pattern"`
+	Requirements                types.String `tfsdk:"requirements"`
+	ValuesPatternShouldMatch    types.Set    `tfsdk:"values_pattern_should_match"`
+	ValuesPatternShouldNotMatch types.Set    `tfsdk:"values_pattern_should_not_match"`
+}
+
+var (
+	schemaAttributeEnumeratedValuesTFObjectTypes = map[string]attr.Type{
+		"archived":    types.BoolType,
+		"description": types.StringType,
+		"value":       types.StringType,
+	}
+
+	schemaAttributeRegexValidationTFObjectTypes = map[string]attr.Type{
+		"pattern":                         types.StringType,
+		"requirements":                    types.StringType,
+		"values_pattern_should_match":     types.SetType{ElemType: types.StringType},
+		"values_pattern_should_not_match": types.SetType{ElemType: types.StringType},
+	}
+)
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &SchemaAttributeResource{}
+	_ resource.ResourceWithConfigure   = &SchemaAttributeResource{}
+	_ resource.ResourceWithImportState = &SchemaAttributeResource{}
+)
+
+// New Object
+func NewSchemaAttributeResource() resource.Resource {
+	return &SchemaAttributeResource{}
+}
+
+// Metadata
+func (r *SchemaAttributeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_schema_attribute"
+}
+
+// Schema.
+func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Indicates whether or not the attribute is enabled.",
+	).DefaultValue("true")
+
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The type of the attribute.",
+	).AllowedValuesEnum(management.AllowedEnumSchemaAttributeTypeEnumValues).AppendMarkdownString(
+		fmt.Sprintf("`%s` and `%s` attributes cannot be created, but standard attributes of those types may be updated. `%s` attributes are limited by size (total size must not exceed 16KB)", string(management.ENUMSCHEMAATTRIBUTETYPE_COMPLEX), string(management.ENUMSCHEMAATTRIBUTETYPE_BOOLEAN), string(management.ENUMSCHEMAATTRIBUTETYPE_JSON)),
+	).RequiresReplace().DefaultValue(string(management.ENUMSCHEMAATTRIBUTETYPE_STRING))
+
+	uniqueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Indicates whether or not the attribute must have a unique value within the PingOne environment.",
+	).RequiresReplace().DefaultValue("false")
+
+	multivaluedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Indicates whether the attribute has multiple values or a single one. Maximum number of values stored is 1,000.",
+	).RequiresReplace().DefaultValue("false")
+
+	schemaTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The schema type of the attribute.",
+	).AllowedValuesEnum(management.AllowedEnumSchemaAttributeSchemaTypeEnumValues).AppendMarkdownString(
+		fmt.Sprintf("`%s` and `%s` attributes are supplied by default. `%s` attributes cannot be updated or deleted. `%s` attributes cannot be deleted, but their mutable properties can be updated. `%s` attributes can be deleted, and their mutable properties can be updated. New attributes are created with a schema type of `%s`.", management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CORE, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CORE, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM, management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM),
+	)
+
+	enumeratedValuesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of one or more enumerated values for the attribute. If provided, it must not be an empty set.  Can only be set where the attribute type is `STRING` and cannot be set alongside `regex_validation`.  If the attribute has been created without enumerated values and this parameter is added later, this will trigger a replacement plan of the attribute resource.  If the attribute has been created with enumerated values that are subsequently removed, this will update without needing to replace the attribute resource.",
+	)
+
+	regexValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`.",
+	)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne schema attributes",
+		Description: "Resource to create and manage PingOne schema attributes.",
 
-		CreateContext: resourceSchemaAttributeCreate,
-		ReadContext:   resourceSchemaAttributeRead,
-		UpdateContext: resourceSchemaAttributeUpdate,
-		DeleteContext: resourceSchemaAttributeDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceSchemaAttributeImport,
-		},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the schema attribute in."),
+			),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the schema attribute in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+			"schema_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the schema to apply the schema attribute to."),
+			),
+
+			"name": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The system name of the schema attribute.").Description,
+				Required:    true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
-			"schema_id": {
-				Description:      "The ID of the schema to apply the schema attribute to.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"name": {
-				Description:      "The system name of the schema attribute.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"display_name": {
-				Description: "The display name of the attribute such as 'T-shirt size’. If provided, it must not be an empty string. Valid characters consist of any Unicode letter, mark (for example, accent or umlaut), numeric character, forward slash, dot, apostrophe, underscore, space, or hyphen.",
-				Type:        schema.TypeString,
+
+			"display_name": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The display name of the attribute such as 'T-shirt size'. If provided, it must not be an empty string. Valid characters consist of any Unicode letter, mark (for example, accent or umlaut), numeric character, forward slash, dot, apostrophe, underscore, space, or hyphen.").Description,
 				Optional:    true,
 			},
-			"description": {
-				Description: "A description of the attribute. If provided, it must not be an empty string. Valid characters consists of any Unicode letter, mark (for example, accent or umlaut), numeric character, punctuation character, or space.",
-				Type:        schema.TypeString,
+
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A description of the attribute. If provided, it must not be an empty string. Valid characters consists of any Unicode letter, mark (for example, accent or umlaut), numeric character, punctuation character, or space.").Description,
 				Optional:    true,
 			},
-			"enabled": {
-				Description: "Indicates whether or not the attribute is enabled.",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
+
+			"enabled": schema.BoolAttribute{
+				Description:         enabledDescription.Description,
+				MarkdownDescription: enabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(true),
 			},
-			"type": {
-				Description:  "The type of the attribute. This can be `STRING`, `JSON`, `BOOLEAN`, or `COMPLEX`. `COMPLEX` and `BOOLEAN` attributes cannot be created, but standard attributes of those types may be updated. `JSON` attributes are limited by size (total size must not exceed 16KB).",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				Default:      "STRING",
-				ValidateFunc: validation.StringInSlice([]string{"STRING", "JSON", "BOOLEAN", "COMPLEX"}, false),
+
+			"type": schema.StringAttribute{
+				Description:         typeDescription.Description,
+				MarkdownDescription: typeDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Default: stringdefault.StaticString(string(management.ENUMSCHEMAATTRIBUTETYPE_STRING)),
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSchemaAttributeTypeEnumValues)...),
+				},
 			},
-			"unique": {
-				Description: "Indicates whether or not the attribute must have a unique value within the PingOne environment.",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     false,
+
+			"unique": schema.BoolAttribute{
+				Description:         uniqueDescription.Description,
+				MarkdownDescription: uniqueDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.Bool{
+					boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
+						types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_JSON)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
+						types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_COMPLEX)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
+						types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_BOOLEAN)),
+						path.MatchRoot("type"),
+					),
+				},
+
+				Default: booldefault.StaticBool(false),
 			},
-			"multivalued": {
-				Description: "Indicates whether the attribute has multiple values or a single one.  Maximum number of values stored is 1,000.",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     false,
+
+			"multivalued": schema.BoolAttribute{
+				Description:         multivaluedDescription.Description,
+				MarkdownDescription: multivaluedDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+
+				Default: booldefault.StaticBool(false),
 			},
-			"required": {
-				Description: "Indicates whether or not the attribute is required.",
-				Type:        schema.TypeBool,
+
+			"enumerated_values": schema.SetNestedAttribute{
+				Description:         enumeratedValuesDescription.Description,
+				MarkdownDescription: enumeratedValuesDescription.MarkdownDescription,
+				Optional:            true,
+
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"value": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the value of the enumerated value item. If provided, it must not be an empty string.").Description,
+							Required:    true,
+						},
+
+						"archived": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the enumerated value is archived. Archived values cannot be added to a user, but existing archived values are preserved. This allows clients that read the schema to know all possible values of an attribute.").Description,
+							Optional:    true,
+							Computed:    true,
+
+							Default: booldefault.StaticBool(false),
+						},
+
+						"description": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description of the enumerated value.").Description,
+							Optional:    true,
+						},
+					},
+				},
+
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.RequiresReplaceIf(
+						setplanmodifierinternal.RequiresReplaceIfPreviouslyNull(),
+						"The attribute has been previously created without enumerated values validation.  To add enumerated values validation, the attribute must be replaced.",
+						"The attribute has been previously created without enumerated values validation.  To add enumerated values validation, the attribute must be replaced.",
+					),
+				},
+
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(attrMinLength),
+					setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("regex_validation")),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_JSON)), path.MatchRelative().AtParent().AtName("type")),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_BOOLEAN)), path.MatchRelative().AtParent().AtName("type")),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_COMPLEX)), path.MatchRelative().AtParent().AtName("type")),
+				},
+			},
+
+			"regex_validation": schema.SingleNestedAttribute{
+				Description:         regexValidationDescription.Description,
+				MarkdownDescription: regexValidationDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"pattern": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the regular expression to which the attribute must conform.").Description,
+						Required:    true,
+					},
+
+					"requirements": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a developer friendly description of the regular expression requirements.").Description,
+						Required:    true,
+					},
+
+					"values_pattern_should_match": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of one or more strings matching the regular expression.").Description,
+						Optional:    true,
+
+						ElementType: types.StringType,
+					},
+
+					"values_pattern_should_not_match": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of one or more strings that do not match the regular expression.").Description,
+						Optional:    true,
+
+						ElementType: types.StringType,
+					},
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enumerated_values")),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_JSON)), path.MatchRelative().AtParent().AtName("type")),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_BOOLEAN)), path.MatchRelative().AtParent().AtName("type")),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_COMPLEX)), path.MatchRelative().AtParent().AtName("type")),
+				},
+			},
+
+			"required": schema.BoolAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the attribute is required.").Description,
 				Computed:    true,
 			},
-			"ldap_attribute": {
-				Description: "The unique identifier for the LDAP attribute.",
-				Type:        schema.TypeString,
+
+			"ldap_attribute": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The unique identifier for the LDAP attribute.").Description,
 				Computed:    true,
 			},
-			"schema_type": {
-				Description: "The schema type of the attribute. This can be `CORE`, `STANDARD` or `CUSTOM`. `CORE` and `STANDARD` attributes are supplied by default. `CORE` attributes cannot be updated or deleted. `STANDARD` attributes cannot be deleted, but their mutable properties can be updated. `CUSTOM` attributes can be deleted, and their mutable properties can be updated. New attributes are created with a schema type of `CUSTOM`.",
-				Type:        schema.TypeString,
-				Computed:    true,
+
+			"schema_type": schema.StringAttribute{
+				Description:         schemaTypeDescription.Description,
+				MarkdownDescription: schemaTypeDescription.MarkdownDescription,
+				Computed:            true,
 			},
 		},
 	}
 }
 
-func resourceSchemaAttributeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
-
-	schemaAttribute, err := buildSchemaAttribute(d, "CREATE")
-	if err != nil {
-		return diag.FromErr(err)
+func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
+	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
+}
+
+func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state SchemaAttributeResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	schemaAttribute, d := plan.expand(ctx, "CREATE")
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.SchemasApi.CreateAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string)).SchemaAttribute(schemaAttribute.(management.SchemaAttribute)).Execute()
+			return r.client.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), plan.SchemaId.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
 		},
 		"CreateAttribute",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.SchemaAttribute)
+	// Create the state to save
+	state = plan
 
-	d.SetId(respObject.GetId())
-
-	return resourceSchemaAttributeRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response.(*management.SchemaAttribute))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceSchemaAttributeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
+func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *SchemaAttributeResourceModel
 
-	resp, diags := sdk.ParseResponse(
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.SchemasApi.ReadOneAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).Execute()
+			return r.client.SchemasApi.ReadOneAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneAttribute",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.SchemaAttribute)
-
-	d.Set("name", respObject.GetName())
-
-	if v, ok := respObject.GetDisplayNameOk(); ok {
-		d.Set("display_name", v)
-	} else {
-		d.Set("display_name", nil)
-	}
-
-	if v, ok := respObject.GetDescriptionOk(); ok {
-		d.Set("description", v)
-	} else {
-		d.Set("description", nil)
-	}
-
-	d.Set("enabled", respObject.GetEnabled())
-	d.Set("type", respObject.GetType())
-	d.Set("unique", respObject.GetUnique())
-	d.Set("multivalued", respObject.GetMultiValued())
-	d.Set("ldap_attribute", respObject.GetLdapAttribute())
-	d.Set("required", respObject.GetRequired())
-	d.Set("schema_type", respObject.GetSchemaType())
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response.(*management.SchemaAttribute))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceSchemaAttributeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
+func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state SchemaAttributeResourceModel
 
-	schemaAttribute, err := buildSchemaAttribute(d, "UPDATE")
-	if err != nil {
-		return diag.FromErr(err)
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	schemaAttribute, d := plan.expand(ctx, "UPDATE")
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.SchemasApi.UpdateAttributePatch(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).SchemaAttribute(schemaAttribute.(management.SchemaAttribute)).Execute()
+			return r.client.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), plan.SchemaId.ValueString(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
 		},
-		"UpdateAttributePatch",
-		sdk.DefaultCustomError,
+		"UpdateAttributePut",
+		framework.DefaultCustomError,
 		nil,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceSchemaAttributeRead(ctx, d, meta)
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response.(*management.SchemaAttribute))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceSchemaAttributeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
-	var diags diag.Diagnostics
+func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *SchemaAttributeResourceModel
 
-	_, diags = sdk.ParseResponse(
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	_, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			r, err := apiClient.SchemasApi.DeleteAttribute(ctx, d.Get("environment_id").(string), d.Get("schema_id").(string), d.Id()).Execute()
+			r, err := r.client.SchemasApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteAttribute",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
 	)
-	if diags.HasError() {
+	resp.Diagnostics.Append(d...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func (r *SchemaAttributeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	splitLength := 2
+	attributes := strings.SplitN(req.ID, "/", splitLength)
+
+	if len(attributes) != splitLength {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/schema_attribute_id\"", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+}
+
+func (p *SchemaAttributeResourceModel) expand(ctx context.Context, action string) (*management.SchemaAttribute, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attrType := p.Type.ValueString()
+
+	if (attrType == "BOOLEAN" || attrType == "COMPLEX") && action == "CREATE" {
+		diags.AddError(
+			"Invalid attribute type",
+			fmt.Sprintf("Cannot create attributes of type BOOLEAN or COMPLEX.  Custom attributes must be either STRING or JSON.  Attribute type found: %s", attrType),
+		)
+		return nil, diags
+	}
+
+	data := *management.NewSchemaAttribute(p.Enabled.ValueBool(), p.Name.ValueString(), management.EnumSchemaAttributeType(attrType))
+
+	data.SetSchemaType(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM)
+
+	if !p.DisplayName.IsNull() && !p.DisplayName.IsUnknown() {
+		data.SetDisplayName(p.DisplayName.ValueString())
+	}
+
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
+
+	attrUnique := p.Unique.ValueBool()
+
+	// This is handled in schema validation, but we optionally check here too
+	if attrUnique && attrType != "STRING" {
+		diags.AddError(
+			"Invalid attribute type",
+			fmt.Sprintf("Cannot set attribute unique parameter when the attribute type is not STRING.  Attribute type found: %s", attrType),
+		)
+		return nil, diags
+	}
+
+	data.SetUnique(attrUnique)
+
+	data.SetMultiValued(p.Multivalued.ValueBool())
+
+	data.SetRequired(p.Unique.ValueBool())
+
+	if !p.EnumeratedValues.IsNull() && !p.EnumeratedValues.IsUnknown() {
+		var plan []SchemaAttributeEnumeratedValuesResourceModel
+		diags.Append(p.EnumeratedValues.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		enumeratedValues := make([]management.SchemaAttributeEnumeratedValuesInner, 0)
+		for _, v := range plan {
+			enumeratedValue := management.NewSchemaAttributeEnumeratedValuesInner(v.Value.ValueString())
+
+			if !v.Archived.IsNull() && !v.Archived.IsUnknown() {
+				enumeratedValue.SetArchived(v.Archived.ValueBool())
+			}
+
+			if !v.Description.IsNull() && !v.Description.IsUnknown() {
+				enumeratedValue.SetDescription(v.Description.ValueString())
+			}
+
+			enumeratedValues = append(enumeratedValues, *enumeratedValue)
+		}
+
+		data.SetEnumeratedValues(enumeratedValues)
+	}
+
+	if !p.RegexValidation.IsNull() && !p.RegexValidation.IsUnknown() {
+
+		var plan SchemaAttributeRegexValidationModel
+		diags.Append(p.RegexValidation.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		regexValidation := management.NewSchemaAttributeRegexValidation(
+			plan.Pattern.ValueString(),
+			plan.Requirements.ValueString(),
+		)
+
+		if !plan.ValuesPatternShouldMatch.IsNull() && !plan.ValuesPatternShouldMatch.IsUnknown() {
+			var values []string
+			diags.Append(plan.ValuesPatternShouldMatch.ElementsAs(ctx, &values, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			regexValidation.SetValuesPatternShouldMatch(values)
+		}
+
+		if !plan.ValuesPatternShouldNotMatch.IsNull() && !plan.ValuesPatternShouldNotMatch.IsUnknown() {
+			var values []string
+			diags.Append(plan.ValuesPatternShouldNotMatch.ElementsAs(ctx, &values, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			regexValidation.SetValuesPatternShouldNotMatch(values)
+		}
+
+		data.SetRegexValidation(*regexValidation)
+	}
+
+	return &data, diags
+}
+
+func (p *SchemaAttributeResourceModel) toState(apiObject *management.SchemaAttribute) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
 		return diags
 	}
+
+	var d diag.Diagnostics
+
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
+	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
+
+	p.EnumeratedValues, d = schemaAttributeEnumeratedValuesOkToTF(apiObject.GetEnumeratedValuesOk())
+	diags.Append(d...)
+
+	p.LdapAttribute = framework.StringOkToTF(apiObject.GetLdapAttributeOk())
+	p.Multivalued = framework.BoolOkToTF(apiObject.GetMultiValuedOk())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+
+	p.RegexValidation, d = schemaAttributeRegexValidationOkToTF(apiObject.GetRegexValidationOk())
+	diags.Append(d...)
+
+	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
+	p.SchemaId = framework.StringOkToTF(apiObject.Schema.GetIdOk())
+	p.SchemaType = framework.EnumOkToTF(apiObject.GetSchemaTypeOk())
+	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
+	p.Unique = framework.BoolOkToTF(apiObject.GetUniqueOk())
 
 	return diags
 }
 
-func resourceSchemaAttributeImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 3
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
+func schemaAttributeEnumeratedValuesOkToTF(apiObject []management.SchemaAttributeEnumeratedValuesInner, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: schemaAttributeEnumeratedValuesTFObjectTypes}
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/schemaID/attributeID\"", d.Id())
+	if !ok || len(apiObject) == 0 {
+		return types.SetNull(tfObjType), diags
 	}
 
-	environmentID, schemaID, attributeID := attributes[0], attributes[1], attributes[2]
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
 
-	d.Set("environment_id", environmentID)
-	d.Set("schema_id", schemaID)
+		objMap := map[string]attr.Value{
+			"archived":    framework.BoolOkToTF(v.GetArchivedOk()),
+			"description": framework.StringOkToTF(v.GetDescriptionOk()),
+			"value":       framework.StringOkToTF(v.GetValueOk()),
+		}
 
-	d.SetId(attributeID)
+		flattenedObj, d := types.ObjectValue(schemaAttributeEnumeratedValuesTFObjectTypes, objMap)
+		diags.Append(d...)
 
-	resourceSchemaAttributeRead(ctx, d, meta)
+		flattenedList = append(flattenedList, flattenedObj)
+	}
 
-	return []*schema.ResourceData{d}, nil
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func buildSchemaAttribute(d *schema.ResourceData, action string) (interface{}, error) {
+func schemaAttributeRegexValidationOkToTF(apiObject *management.SchemaAttributeRegexValidation, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	attrType := d.Get("type").(string)
-
-	if (attrType == "BOOLEAN" || attrType == "COMPLEX") && action == "CREATE" {
-		return nil, fmt.Errorf("Cannot create attributes of type BOOLEAN or COMPLEX.  Custom attributes must be either STRING or JSON.  Attribute type found: %s", attrType)
+	if !ok || apiObject == nil {
+		return types.ObjectNull(schemaAttributeRegexValidationTFObjectTypes), diags
 	}
 
-	schemaAttribute := *management.NewSchemaAttribute(d.Get("enabled").(bool), d.Get("name").(string), management.EnumSchemaAttributeType(attrType)) // SchemaAttribute |  (optional)
-
-	if v, ok := d.GetOk("display_name"); ok {
-		schemaAttribute.SetDisplayName(v.(string))
+	objMap := map[string]attr.Value{
+		"pattern":                         framework.StringOkToTF(apiObject.GetPatternOk()),
+		"requirements":                    framework.StringOkToTF(apiObject.GetRequirementsOk()),
+		"values_pattern_should_match":     framework.StringSetOkToTF(apiObject.GetValuesPatternShouldMatchOk()),
+		"values_pattern_should_not_match": framework.StringSetOkToTF(apiObject.GetValuesPatternShouldNotMatchOk()),
 	}
 
-	if v, ok := d.GetOk("description"); ok {
-		schemaAttribute.SetDescription(v.(string))
-	}
+	flattenedObj, d := types.ObjectValue(schemaAttributeRegexValidationTFObjectTypes, objMap)
+	diags.Append(d...)
 
-	attrUnique := d.Get("unique").(bool)
-
-	if attrUnique && attrType != "STRING" {
-		return nil, fmt.Errorf("Cannot set attribute unique parameter when the attribute type is not STRING.  Attribute type found: %s", attrType)
-	}
-
-	schemaAttribute.SetUnique(attrUnique)
-
-	schemaAttribute.SetMultiValued(d.Get("multivalued").(bool))
-
-	schemaAttribute.SetRequired(d.Get("required").(bool))
-
-	return schemaAttribute, nil
+	return flattenedObj, diags
 }

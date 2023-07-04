@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -99,7 +98,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data to retrieve a PingOne Credentials credential type by its Credential Type Id.",
+		Description: "Datasource to retrieve a PingOne Credentials credential type by its Credential Type Id.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -259,10 +258,6 @@ func (r *CredentialTypeDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -358,7 +353,7 @@ func toStateFieldsDataSource(innerFields []credentials.CredentialTypeMetaDataFie
 			"attribute":  framework.StringOkToTF(v.GetAttributeOk()),
 			"value":      framework.StringOkToTF(v.GetValueOk()),
 			"is_visible": framework.BoolOkToTF(v.GetIsVisibleOk()),
-			"type":       enumCredentialTypeMetaDataFieldsDataSourceOkToTF(v.GetTypeOk()),
+			"type":       framework.EnumOkToTF(v.GetTypeOk()),
 		}
 		innerflattenedObj, d := types.ObjectValue(innerFieldsDataSourceServiceTFObjectTypes, fieldsMap)
 		diags.Append(d...)
@@ -369,12 +364,4 @@ func toStateFieldsDataSource(innerFields []credentials.CredentialTypeMetaDataFie
 	diags.Append(d...)
 
 	return fields, diags
-}
-
-func enumCredentialTypeMetaDataFieldsDataSourceOkToTF(v *credentials.EnumCredentialTypeMetaDataFieldsType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
-	}
 }

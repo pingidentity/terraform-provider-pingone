@@ -32,6 +32,9 @@ func Attr_ID() schema.StringAttribute {
 }
 
 func Attr_LinkID(description SchemaAttributeDescription) schema.StringAttribute {
+
+	description = description.AppendMarkdownString("Must be a valid PingOne resource ID.")
+
 	return Attr_LinkIDWithValidators(description, []validator.String{
 		verify.P1ResourceIDValidator(),
 	})
@@ -41,6 +44,8 @@ func Attr_LinkIDWithValidators(description SchemaAttributeDescription, validator
 	if description.MarkdownDescription == "" {
 		description.MarkdownDescription = description.Description
 	}
+
+	description = description.RequiresReplace()
 
 	return schema.StringAttribute{
 		Description:         description.Description,

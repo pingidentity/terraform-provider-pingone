@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -25,9 +24,6 @@ func testAccCheckRoleAssignmentApplicationDestroy(s *terraform.State) error {
 	}
 
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_application_role_assignment" {
@@ -207,6 +203,29 @@ func TestAccRoleAssignmentApplication_Environment(t *testing.T) {
 	})
 }
 
+func TestAccRoleAssignmentApplication_SystemApplication(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRoleAssignmentApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccRoleAssignmentApplicationConfig_SystemApplication(environmentName, licenseID, resourceName, "Environment Admin"),
+				ExpectError: regexp.MustCompile(`Invalid parameter value - Unmappable application type`),
+			},
+		},
+	})
+}
+
 func testAccRoleAssignmentApplicationConfig_Population(resourceName, name, roleName string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -298,4 +317,27 @@ resource "pingone_application_role_assignment" "%[2]s" {
 
   scope_environment_id = data.pingone_environment.general_test.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
+}
+
+func testAccRoleAssignmentApplicationConfig_SystemApplication(environmentName, licenseID, resourceName, roleName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_system_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  type           = "PING_ONE_PORTAL"
+  enabled        = true
+}
+
+data "pingone_role" "%[3]s" {
+  name = "%[4]s"
+}
+
+resource "pingone_application_role_assignment" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  application_id = pingone_system_application.%[3]s.id
+  role_id        = data.pingone_role.%[3]s.id
+
+  scope_environment_id = pingone_environment.%[2]s.id
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, roleName)
 }

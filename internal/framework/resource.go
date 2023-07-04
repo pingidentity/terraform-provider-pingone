@@ -89,6 +89,71 @@ func StringSetOkToTF(v []string, ok bool) basetypes.SetValue {
 	}
 }
 
+func StringSetToTF(v []string) basetypes.SetValue {
+	if v == nil {
+		return types.SetNull(types.StringType)
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, StringToTF(item))
+		}
+
+		return types.SetValueMust(types.StringType, list)
+	}
+}
+
+func StringListOkToTF(v []string, ok bool) basetypes.ListValue {
+	if !ok || v == nil {
+		return types.ListNull(types.StringType)
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, StringToTF(item))
+		}
+
+		return types.ListValueMust(types.StringType, list)
+	}
+}
+
+func StringListToTF(v []string) basetypes.ListValue {
+	if v == nil {
+		return types.ListNull(types.StringType)
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, StringToTF(item))
+		}
+
+		return types.ListValueMust(types.StringType, list)
+	}
+}
+
+func StringMapOkToTF(v *map[string]string, ok bool) basetypes.MapValue {
+	if !ok || v == nil {
+		return types.MapNull(types.StringType)
+	} else {
+		list := make(map[string]attr.Value, 0)
+		for key, item := range *v {
+			list[key] = StringToTF(item)
+		}
+
+		return types.MapValueMust(types.StringType, list)
+	}
+}
+
+func EnumSetOkToTF(v interface{}, ok bool) basetypes.SetValue {
+	if !ok || v == nil {
+		return types.SetNull(types.StringType)
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range utils.EnumSliceToStringSlice(v) {
+			list = append(list, StringToTF(item))
+		}
+
+		return types.SetValueMust(types.StringType, list)
+	}
+}
+
 func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 	if v == nil {
 		return types.ListNull(types.StringType), nil

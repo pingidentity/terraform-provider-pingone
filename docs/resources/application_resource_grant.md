@@ -2,12 +2,14 @@
 page_title: "pingone_application_resource_grant Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage a resource grant for an application configured in PingOne.
+  Resource to create and manage a resource grant for administrator defined applications or built-in system applications configured in PingOne.
 ---
 
 # pingone_application_resource_grant (Resource)
 
-Resource to create and manage a resource grant for an application configured in PingOne.
+Resource to create and manage a resource grant for administrator defined applications or built-in system applications configured in PingOne.
+
+-> Resource grants can be mapped to administrator defined applications that are managed through the `pingone_application` resource, and built-in system applications that are managed through the `pingone_system_application` resource.
 
 ## Example Usage
 
@@ -51,6 +53,8 @@ resource "pingone_application_resource_grant" "foo" {
 ### Required
 
 - `application_id` (String) The ID of the application to create the resource grant for.
+
+-> The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources.
 - `environment_id` (String) The ID of the environment to create the application resource grant in.
 - `resource_id` (String) The ID of the protected resource associated with this grant.
 - `scopes` (Set of String) A list of IDs of the scopes associated with this grant.

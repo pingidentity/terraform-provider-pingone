@@ -30,7 +30,7 @@ data "pingone_schema" "example_by_id" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment that is configured with the schema.
+- `environment_id` (String) The ID of the environment that is configured with the schema.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 

@@ -32,8 +32,8 @@ type CredentialIssuerProfileResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
 	EnvironmentId         types.String `tfsdk:"environment_id"`
 	ApplicationInstanceId types.String `tfsdk:"application_instance_id"`
-	CreatedAt             types.String `tfsdk:"updated_at"`
-	UpdatedAt             types.String `tfsdk:"created_at"`
+	CreatedAt             types.String `tfsdk:"created_at"`
+	UpdatedAt             types.String `tfsdk:"updated_at"`
 	Name                  types.String `tfsdk:"name"`
 }
 
@@ -71,7 +71,7 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("TThe ID of the environment to create the credential issuer in."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the credential issuer in."),
 			),
 
 			"application_instance_id": schema.StringAttribute{
@@ -139,10 +139,6 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -230,10 +226,6 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -279,10 +271,6 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)

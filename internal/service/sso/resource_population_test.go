@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -23,9 +22,6 @@ func testAccCheckPopulationDestroy(s *terraform.State) error {
 	}
 
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_population" {
@@ -139,8 +135,8 @@ func TestAccPopulation_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "password_policy_id", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "password_policy_id"),
 				),
 			},
 		},

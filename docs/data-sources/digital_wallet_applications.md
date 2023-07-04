@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_digital_wallet_applications Data Source - terraform-provider-pingone"
-subcategory: "Neo (Verifiable Credentials)"
+subcategory: "Neo (Verify & Credentials)"
 description: |-
   Datasource to retrieve a list of multiple PingOne Credentials digital wallet applications.  Filtering the list by SCIM or data filter currently is not supported.
 ---
@@ -23,7 +23,7 @@ data "pingone_digital_wallet_applications" "example_digital_wallet_app_ids" {
 
 ### Required
 
-- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet app exists.
+- `environment_id` (String) PingOne environment identifier (UUID) in which the credential digital wallet app exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
