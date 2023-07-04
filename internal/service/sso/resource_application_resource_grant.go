@@ -69,9 +69,7 @@ func ResourceApplicationResourceGrant() *schema.Resource {
 func resourcePingOneApplicationResourceGrantCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource := *management.NewApplicationResourceGrantResource(d.Get("resource_id").(string))
@@ -103,9 +101,7 @@ func resourcePingOneApplicationResourceGrantCreate(ctx context.Context, d *schem
 func resourcePingOneApplicationResourceGrantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -138,9 +134,7 @@ func resourcePingOneApplicationResourceGrantRead(ctx context.Context, d *schema.
 func resourcePingOneApplicationResourceGrantUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resource := *management.NewApplicationResourceGrantResource(d.Get("resource_id").(string))
@@ -168,9 +162,7 @@ func resourcePingOneApplicationResourceGrantUpdate(ctx context.Context, d *schem
 func resourcePingOneApplicationResourceGrantDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(

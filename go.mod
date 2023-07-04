@@ -17,7 +17,6 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.27.0
 	github.com/katbyte/terrafmt v0.5.2
 	github.com/patrickcping/pingone-go-sdk-v2 v0.9.0
-	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.2.0
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.2.0
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.2.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.23.0
@@ -200,6 +199,7 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/owenrumney/go-sarif v1.1.1 // indirect
+	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.2.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

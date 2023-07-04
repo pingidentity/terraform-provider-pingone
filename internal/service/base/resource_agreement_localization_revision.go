@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -28,9 +27,8 @@ import (
 
 // Types
 type AgreementLocalizationRevisionResource struct {
-	agreementManagementClient *agreementmanagement.APIClient
-	managementClient          *management.APIClient
-	region                    model.RegionMapping
+	managementClient *management.APIClient
+	region           model.RegionMapping
 }
 
 type AgreementLocalizationRevisionResourceModel struct {
@@ -180,18 +178,7 @@ func (r *AgreementLocalizationRevisionResource) Configure(ctx context.Context, r
 		return
 	}
 
-	preparedClientAgreementMgmt, err := prepareAgreementMgmtClient(ctx, resourceConfig)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
-		)
-
-		return
-	}
-
 	r.managementClient = preparedClient
-	r.agreementManagementClient = preparedClientAgreementMgmt
 	r.region = resourceConfig.Client.API.Region
 }
 
@@ -204,10 +191,6 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -256,10 +239,6 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -288,22 +267,6 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 		return
 	}
 
-	// // Run the API call
-	// revisionTextResponse, d := framework.ParseResponse(
-	// 	ctx,
-
-	// 	func() (interface{}, *http.Response, error) {
-	// 		return r.agreementManagementClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
-	// 	},
-	// 	"ReadOneAgreementLanguageRevision",
-	// 	framework.DefaultCustomError,
-	// 	sdk.DefaultCreateReadRetryable,
-	// )
-	// resp.Diagnostics.Append(d...)
-	// if resp.Diagnostics.HasError() {
-	// 	return
-	// }
-
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response.(*management.AgreementLanguageRevision), data.Text.ValueString())...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -321,10 +284,6 @@ func (r *AgreementLocalizationRevisionResource) Delete(ctx context.Context, req 
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
