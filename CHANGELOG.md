@@ -1,5 +1,9 @@
 ## 0.17.0 (Unreleased)
 
+BREAKING CHANGES:
+
+* `resource/pingone_mfa_fido_policy`: This resource is deprecated, please use the `pingone_mfa_fido2_policy` resource going forward.  This resource is no longer configurable for environments created after 19th June 2023, nor environments that have been upgraded to use the latest FIDO2 policies. Existing environments that were created before 19th June 2023 and have not been upgraded can continue to use this resource to facilitate migration. ([#441](https://github.com/pingidentity/terraform-provider-pingone/issues/441))
+
 NOTES:
 
 * Code optimisations in each resource/data source to remove the need to override the region on each operation. ([#439](https://github.com/pingidentity/terraform-provider-pingone/issues/439))
@@ -21,6 +25,7 @@ NOTES:
 FEATURES:
 
 * **New Data Source:** `pingone_phone_delivery_settings_list` ([#419](https://github.com/pingidentity/terraform-provider-pingone/issues/419))
+* **New Resource:** `pingone_mfa_fido2_policy` ([#441](https://github.com/pingidentity/terraform-provider-pingone/issues/441))
 * **New Resource:** `pingone_notification_settings` ([#419](https://github.com/pingidentity/terraform-provider-pingone/issues/419))
 * **New Resource:** `pingone_phone_delivery_settings` ([#419](https://github.com/pingidentity/terraform-provider-pingone/issues/419))
 
