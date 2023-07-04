@@ -63,9 +63,7 @@ func ResourceGroupNesting() *schema.Resource {
 func resourceGroupNestingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	groupNesting := *management.NewGroupNesting(d.Get("nested_group_id").(string)) // GroupNesting |  (optional)
@@ -94,9 +92,7 @@ func resourceGroupNestingCreate(ctx context.Context, d *schema.ResourceData, met
 func resourceGroupNestingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -128,9 +124,7 @@ func resourceGroupNestingRead(ctx context.Context, d *schema.ResourceData, meta 
 func resourceGroupNestingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(

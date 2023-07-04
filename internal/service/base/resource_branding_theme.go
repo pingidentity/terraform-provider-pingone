@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -91,11 +92,11 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
 
 	backgroundImageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The HREF and the ID for the background image.",
+		"A single block that specifies the HREF and ID for the background image.",
 	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
 
 	logoDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The HREF and the ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
+		"A single block that specifies the HREF and ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
 	)
 
 	logoIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -264,6 +265,10 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 						},
 					},
 				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
+				},
 			},
 
 			"background_image": schema.ListNestedBlock{
@@ -292,6 +297,10 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 							},
 						},
 					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
 				},
 			},
 		},
@@ -337,10 +346,6 @@ func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateR
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -389,10 +394,6 @@ func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -435,10 +436,6 @@ func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateR
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -486,10 +483,6 @@ func (r *BrandingThemeResource) Delete(ctx context.Context, req resource.DeleteR
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

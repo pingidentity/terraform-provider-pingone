@@ -140,10 +140,6 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -230,10 +226,6 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -279,10 +271,6 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)

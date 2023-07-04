@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_branding_theme`: Added missing schema validators to prevent misconfiguration of the single-object `background_image` and `logo` blocks.
+```
+
+```release-note:bug
+`resource/pingone_branding_settings`: Added missing schema validators to prevent misconfiguration of the single-object `logo_image` block.
+```

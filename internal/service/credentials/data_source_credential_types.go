@@ -102,10 +102,6 @@ func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.Rea
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {

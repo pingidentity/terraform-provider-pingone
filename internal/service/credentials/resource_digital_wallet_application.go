@@ -153,10 +153,6 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -204,10 +200,6 @@ func (r *DigitalWalletApplicationResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -250,10 +242,6 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -301,10 +289,6 @@ func (r *DigitalWalletApplicationResource) Delete(ctx context.Context, req resou
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, credentials.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -382,16 +366,12 @@ func (p *DigitalWalletApplicationResourceModel) toState(apiObject *credentials.D
 func confirmParentAppExistsAndIsNative(ctx context.Context, r *DigitalWalletApplicationResource, environmentId, applicationId string) (*credentials.ObjectApplication, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	ctxMgmt := context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Run the API call
 	resp, diags := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return r.mgmtClient.ApplicationsApi.ReadOneApplication(ctxMgmt, environmentId, applicationId).Execute()
+			return r.mgmtClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
 		},
 		"ReadOneApplication",
 		framework.DefaultCustomError,

@@ -1,0 +1,7 @@
+```release-note:enhancement
+Add provider configuration parameters to be able to override the PingOne service URL hostnames.
+```
+
+```release-note:note
+Code optimisations in each resource/data source to remove the need to override the region on each operation.
+```
