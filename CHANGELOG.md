@@ -6,6 +6,7 @@ BREAKING CHANGES:
 
 NOTES:
 
+* Changed "Risk" documentation subcategory to "Protect", for the release of PingOne Protect. ([#452](https://github.com/pingidentity/terraform-provider-pingone/issues/452))
 * Code optimisations in each resource/data source to remove the need to override the region on each operation. ([#439](https://github.com/pingidentity/terraform-provider-pingone/issues/439))
 * Minor adjustments of multiple documentation HCL examples. ([#389](https://github.com/pingidentity/terraform-provider-pingone/issues/389))
 * `resource/pingone_mfa_application_push_credential`: Corrected documentation HCL example. ([#389](https://github.com/pingidentity/terraform-provider-pingone/issues/389))
