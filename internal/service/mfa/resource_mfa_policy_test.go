@@ -1180,6 +1180,250 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 	})
 }
 
+func TestAccMFAPolicy_SecurityKey_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFAPolicyConfig_FullSecurityKey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFAPolicy_SecurityKey_Minimal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFAPolicyConfig_MinimalSecurityKey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.fido_policy_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFAPolicyConfig_FullSecurityKey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
+				),
+			},
+			{
+				Config: testAccMFAPolicyConfig_MinimalSecurityKey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.fido_policy_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
+				),
+			},
+			{
+				Config: testAccMFAPolicyConfig_FullSecurityKey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFAPolicy_Platform_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFAPolicyConfig_FullPlatform(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFAPolicy_Platform_Minimal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFAPolicyConfig_MinimalPlatform(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.fido_policy_id", ""),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFAPolicy_Platform_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFAPolicyConfig_FullPlatform(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
+				),
+			},
+			{
+				Config: testAccMFAPolicyConfig_MinimalPlatform(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.fido_policy_id", ""),
+				),
+			},
+			{
+				Config: testAccMFAPolicyConfig_FullPlatform(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
+				),
+			},
+		},
+	})
+}
+
 func TestAccMFAPolicy_DataModel(t *testing.T) {
 	t.Parallel()
 
@@ -2329,14 +2573,44 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  attestation_requirements = "GLOBAL"
-  resident_key_requirement = "REQUIRED"
+  attestation_requirements = "NONE"
+  authenticator_attachment = "PLATFORM"
 
+  backup_eligibility = {
+    allow                         = false
+    enforce_during_authentication = true
+  }
+
+  device_display_name = "fidoPolicy.deviceDisplayName02"
+
+  discoverable_credentials = "DISCOURAGED"
+
+  mds_authenticators_requirements = {
+    enforce_during_authentication = false
+    option                        = "NONE"
+  }
+
+  relying_party_id = "ping-devops.com"
+
+  user_display_name_attributes = {
+    attributes = [
+      {
+        name = "username"
+      }
+    ]
+  }
+
+  user_verification = {
+    enforce_during_authentication = false
+    option                        = "DISCOURAGED"
+  }
 }
 
 resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+
+  device_selection = "PROMPT_TO_SELECT"
 
   sms {
     enabled = false
@@ -2376,6 +2650,78 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
+  attestation_requirements = "NONE"
+  authenticator_attachment = "PLATFORM"
+
+  backup_eligibility = {
+    allow                         = false
+    enforce_during_authentication = true
+  }
+
+  device_display_name = "fidoPolicy.deviceDisplayName02"
+
+  discoverable_credentials = "DISCOURAGED"
+
+  mds_authenticators_requirements = {
+    enforce_during_authentication = false
+    option                        = "NONE"
+  }
+
+  relying_party_id = "ping-devops.com"
+
+  user_display_name_attributes = {
+    attributes = [
+      {
+        name = "username"
+      }
+    ]
+  }
+
+  user_verification = {
+    enforce_during_authentication = false
+    option                        = "DISCOURAGED"
+  }
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  fido2 {
+    enabled = true
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_FullSecurityKey(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_fido_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
   attestation_requirements = "GLOBAL"
   resident_key_requirement = "REQUIRED"
 
@@ -2405,7 +2751,161 @@ resource "pingone_mfa_policy" "%[2]s" {
     enabled = false
   }
 
-  fido2 {
+  security_key {
+    enabled = true
+
+    fido_policy_id = pingone_mfa_fido_policy.%[2]s.id
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_MinimalSecurityKey(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_fido_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "GLOBAL"
+  resident_key_requirement = "REQUIRED"
+
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = true
+  }
+
+  platform {
+    enabled = false
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_FullPlatform(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_fido_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "GLOBAL"
+  resident_key_requirement = "REQUIRED"
+
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  device_selection = "PROMPT_TO_SELECT"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
+    enabled = true
+
+    fido_policy_id = pingone_mfa_fido_policy.%[2]s.id
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_MinimalPlatform(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_fido_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "GLOBAL"
+  resident_key_requirement = "REQUIRED"
+
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  security_key {
+    enabled = false
+  }
+
+  platform {
     enabled = true
   }
 
