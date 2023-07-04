@@ -28,13 +28,39 @@ resource "pingone_schema_attribute" "my_attribute" {
   schema_id      = data.pingone_schema.users.id
 
   name         = "myAttribute"
-  display_name = "My Attribute"
-  description  = "My new attribute"
+  display_name = "My Awesome Attribute"
+  description  = "My new awesome attribute"
 
   type        = "STRING"
   unique      = false
   multivalued = false
+}
+```
 
+## Example Usage with Regex Validation
+
+```terraform
+resource "pingone_schema_attribute" "my_awesome_regex_attribute" {
+  environment_id = pingone_environment.my_environment.id
+  schema_id      = data.pingone_schema.users.id
+
+  name = "awesomeRegexValidatedAttribute"
+  type = "STRING"
+
+  regex_validation = {
+    pattern      = "^[a-zA-Z0-9]*$",
+    requirements = "Lowercase, uppercase and numeric."
+
+    values_pattern_should_match = [
+      "Up123",
+      "Down456"
+    ]
+
+    values_pattern_should_not_match = [
+      "Charm123!",
+      "Strange456!"
+    ]
+  }
 }
 ```
 

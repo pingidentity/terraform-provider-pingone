@@ -9,11 +9,13 @@ description: |-
 
 {{ .Description | trimspace }}
 
-{{ if .HasExample -}}
 ## Example Usage
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
-{{- end }}
+
+## Example Usage with Regex Validation
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-with-regex-validation.tf") }}
 
 {{ .SchemaMarkdown | trimspace }}
 
