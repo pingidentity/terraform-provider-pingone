@@ -7,6 +7,8 @@ BREAKING CHANGES:
 NOTES:
 
 * Code optimisations in each resource/data source to remove the need to override the region on each operation. ([#439](https://github.com/pingidentity/terraform-provider-pingone/issues/439))
+* Minor adjustments of multiple documentation HCL examples. ([#389](https://github.com/pingidentity/terraform-provider-pingone/issues/389))
+* `resource/pingone_mfa_application_push_credential`: Corrected documentation HCL example. ([#389](https://github.com/pingidentity/terraform-provider-pingone/issues/389))
 * `resource/pingone_mfa_application_push_credential`: Migrated to plugin framework. **IMPORTANT**: The resource will show drift and will need to be re-applied to ensure consistency in the stored resource state. ([#426](https://github.com/pingidentity/terraform-provider-pingone/issues/426))
 * bump `github.com/hashicorp/terraform-plugin-framework-timeouts` v0.3.1 => v0.4.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * bump `github.com/hashicorp/terraform-plugin-framework` v1.3.1 => v1.3.2 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
