@@ -25,3 +25,11 @@ pingone_mfa_policies
 ```release-note:new-guide
 Upgrade MFA Policies to use FIDO2 with Passkeys
 ```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.9.0 => v0.9.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.13.0 => v0.14.0
+```

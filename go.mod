@@ -16,11 +16,11 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.11.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.27.0
 	github.com/katbyte/terrafmt v0.5.2
-	github.com/patrickcping/pingone-go-sdk-v2 v0.9.0
+	github.com/patrickcping/pingone-go-sdk-v2 v0.9.1
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.2.0
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.2.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.23.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.13.0
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.14.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.8.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.2.0
 	github.com/pavius/impi v0.0.3
