@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_risk_predictor Resource - terraform-provider-pingone"
-subcategory: "Risk"
+subcategory: "Protect"
 description: |-
   Resource to manage Risk predictors in a PingOne environment.
 ---
