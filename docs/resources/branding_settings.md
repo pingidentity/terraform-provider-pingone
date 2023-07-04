@@ -44,7 +44,7 @@ resource "pingone_branding_settings" "branding" {
 ### Optional
 
 - `company_name` (String) The company name associated with the specified environment.
-- `logo_image` (Block List) The HREF and the ID for the company logo. (see [below for nested schema](#nestedblock--logo_image))
+- `logo_image` (Block List) A single block that specifies the HREF and ID for the company logo. (see [below for nested schema](#nestedblock--logo_image))
 
 ### Read-Only
 

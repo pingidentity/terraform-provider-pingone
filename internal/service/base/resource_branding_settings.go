@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -101,7 +102,7 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 		Blocks: map[string]schema.Block{
 
 			"logo_image": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The HREF and the ID for the company logo.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the HREF and ID for the company logo.").Description,
 
 				NestedObject: schema.NestedBlockObject{
 
@@ -125,6 +126,10 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 							},
 						},
 					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
 				},
 			},
 		},
@@ -170,10 +175,6 @@ func (r *BrandingSettingsResource) Create(ctx context.Context, req resource.Crea
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -222,10 +223,6 @@ func (r *BrandingSettingsResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
-
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -268,10 +265,6 @@ func (r *BrandingSettingsResource) Update(ctx context.Context, req resource.Upda
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -319,10 +312,6 @@ func (r *BrandingSettingsResource) Delete(ctx context.Context, req resource.Dele
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
-
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": r.region.URLSuffix,
-	})
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

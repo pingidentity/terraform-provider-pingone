@@ -71,9 +71,9 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 ### Optional
 
 - `background_color` (String) The background color for the theme. It must be a valid hexadecimal color code.  At least one of the following must be defined: `background_image`, `background_color`, `use_default_background`.
-- `background_image` (Block List) The HREF and the ID for the background image.  At least one of the following must be defined: `background_image`, `background_color`, `use_default_background`. (see [below for nested schema](#nestedblock--background_image))
+- `background_image` (Block List) A single block that specifies the HREF and ID for the background image.  At least one of the following must be defined: `background_image`, `background_color`, `use_default_background`. (see [below for nested schema](#nestedblock--background_image))
 - `footer_text` (String) The text to be displayed in the footer of the branding theme.
-- `logo` (Block List) The HREF and the ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied. (see [below for nested schema](#nestedblock--logo))
+- `logo` (Block List) A single block that specifies the HREF and ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied. (see [below for nested schema](#nestedblock--logo))
 - `use_default_background` (Boolean) A boolean to specify that the background should be set to the theme template's default.  At least one of the following must be defined: `background_image`, `background_color`, `use_default_background`.
 
 ### Read-Only

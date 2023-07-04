@@ -18,6 +18,8 @@ import (
 func ResourceFIDOPolicy() *schema.Resource {
 	return &schema.Resource{
 
+		DeprecationMessage: "This resource is deprecated, please use the `pingone_mfa_fido2_policy` resource going forward.  This resource is no longer configurable for environments created after 19th June 2023, nor environments that have been upgraded to use the latest FIDO2 policies. Existing environments that were created before 19th June 2023 and have not been upgraded can continue to use this resource to facilitate migration.",
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage MFA FIDO Policies in a PingOne Environment.",
 
@@ -88,9 +90,7 @@ func ResourceFIDOPolicy() *schema.Resource {
 func resourceFIDOPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	fidoPolicy := expandFIDOPolicy(d)
@@ -119,9 +119,7 @@ func resourceFIDOPolicyCreate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceFIDOPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	resp, diags := sdk.ParseResponse(
@@ -188,9 +186,7 @@ func resourceFIDOPolicyRead(ctx context.Context, d *schema.ResourceData, meta in
 func resourceFIDOPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	fidoPolicy := expandFIDOPolicy(d)
@@ -215,9 +211,7 @@ func resourceFIDOPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceFIDOPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
-	ctx = context.WithValue(ctx, mfa.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
+
 	var diags diag.Diagnostics
 
 	_, diags = sdk.ParseResponse(

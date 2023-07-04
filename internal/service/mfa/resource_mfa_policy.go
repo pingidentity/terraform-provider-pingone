@@ -399,7 +399,9 @@ func fidoDeviceResourceSchema() *schema.Resource {
 func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
+
 	managementApiClient := p1Client.API.ManagementAPIClient
+
 	var diags diag.Diagnostics
 
 	mfaPolicy, diags := expandMFAPolicyPost(ctx, managementApiClient, d)
@@ -517,6 +519,7 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
+
 	managementApiClient := p1Client.API.ManagementAPIClient
 
 	var diags diag.Diagnostics

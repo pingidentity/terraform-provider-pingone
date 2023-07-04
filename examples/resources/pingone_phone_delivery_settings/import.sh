@@ -1,0 +1,1 @@
+$ terraform import pingone_phone_delivery_settings.example <environment_id>/<phone_delivery_settings_id>

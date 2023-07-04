@@ -10,8 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -26,14 +24,8 @@ func testAccCheckVerifyPolicyDestroy(s *terraform.State) error {
 	}
 
 	apiClient := p1Client.API.VerifyAPIClient
-	ctx = context.WithValue(ctx, verify.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	mgmtApiClient := p1Client.API.ManagementAPIClient
-	ctx = context.WithValue(ctx, management.ContextServerVariables, map[string]string{
-		"suffix": p1Client.API.Region.URLSuffix,
-	})
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_verify_policy" {

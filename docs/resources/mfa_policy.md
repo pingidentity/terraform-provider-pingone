@@ -99,7 +99,7 @@ resource "pingone_mfa_application_push_credential" "example_fcm" {
   application_id = pingone_application.my_mobile_application.id
 
   fcm {
-    key = var.fcm_key
+    google_service_account_credentials = var.google_service_account_credentials_json
   }
 }
 
