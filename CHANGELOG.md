@@ -3,6 +3,7 @@
 BREAKING CHANGES:
 
 * `resource/pingone_mfa_fido_policy`: This resource is deprecated, please use the `pingone_mfa_fido2_policy` resource going forward.  This resource is no longer configurable for environments created after 19th June 2023, nor environments that have been upgraded to use the latest FIDO2 policies. Existing environments that were created before 19th June 2023 and have not been upgraded can continue to use this resource to facilitate migration. ([#441](https://github.com/pingidentity/terraform-provider-pingone/issues/441))
+* `resource/pingone_mfa_policy`: The `platform` and `security_key` FIDO device types are deprecated and need to be replaced with the `fido2` device type.  `platform` and `security_key` are no longer configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies.  Existing environments that have not been upgraded to use the latest FIDO2 policies can continue to use the factors to facilitate migration. ([#437](https://github.com/pingidentity/terraform-provider-pingone/issues/437))
 
 NOTES:
 
@@ -22,14 +23,19 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.1.0 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.22.0 => v0.23.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.12.0 => v0.13.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.13.0 => v0.14.0 ([#437](https://github.com/pingidentity/terraform-provider-pingone/issues/437))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.7.1 => v0.8.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.1.0 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.8.0 => v0.9.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.9.0 => v0.9.1 ([#437](https://github.com/pingidentity/terraform-provider-pingone/issues/437))
 
 FEATURES:
 
+* **New Data Source:** `pingone_mfa_policies` ([#437](https://github.com/pingidentity/terraform-provider-pingone/issues/437))
 * **New Data Source:** `pingone_phone_delivery_settings_list` ([#419](https://github.com/pingidentity/terraform-provider-pingone/issues/419))
+* **New Guide:** `Upgrade MFA Policies to use FIDO2 with Passkeys` ([#437](https://github.com/pingidentity/terraform-provider-pingone/issues/437))
 * **New Resource:** `pingone_mfa_fido2_policy` ([#441](https://github.com/pingidentity/terraform-provider-pingone/issues/441))
+* **New Resource:** `pingone_mfa_policies` ([#437](https://github.com/pingidentity/terraform-provider-pingone/issues/437))
 * **New Resource:** `pingone_notification_settings` ([#419](https://github.com/pingidentity/terraform-provider-pingone/issues/419))
 * **New Resource:** `pingone_phone_delivery_settings` ([#419](https://github.com/pingidentity/terraform-provider-pingone/issues/419))
 
@@ -37,6 +43,9 @@ ENHANCEMENTS:
 
 * Add provider configuration parameters to be able to override the PingOne service URL hostnames. ([#439](https://github.com/pingidentity/terraform-provider-pingone/issues/439))
 * `resource/pingone_mfa_application_push_credential`: PingOne MFA has moved to Firebase Cloud Messaging for sending push messages.  `fcm.key` has now been deprecated, `fcm.google_service_account_credentials` should be used going forward. ([#426](https://github.com/pingidentity/terraform-provider-pingone/issues/426))
+* `resource/pingone_mfa_policy`: Add support for the new `fido2` MFA device type to enable support for passkeys.  The `fido2` device type is only configurable for newly created environments, or existing environments that have been upgraded to use the latest FIDO2 policies. ([#437](https://github.com/pingidentity/terraform-provider-pingone/issues/437))
+* `resource/pingone_mfa_policy`: Support the ability to phase out MFA devices using new `pairing_disabled` parameters for each device type in the policy. ([#437](https://github.com/pingidentity/terraform-provider-pingone/issues/437))
+* `resource/pingone_mfa_policy`: Supports the ability to define the pairing key lifetime and push limit for mobile applications. ([#437](https://github.com/pingidentity/terraform-provider-pingone/issues/437))
 * `resource/pingone_notification_template_content`: Add support for P1Verify and P1Credentials notification templates: `email_phone_verification`, `id_verification`, `credential_issued`, `credential_updated`, `digital_wallet_pairing`, `credential_revoked`. ([#428](https://github.com/pingidentity/terraform-provider-pingone/issues/428))
 
 BUG FIXES:
