@@ -1,0 +1,1 @@
+$ terraform import pingone_mfa_fido2_policy.example <environment_id>/<mfa_fido2_policy_id>

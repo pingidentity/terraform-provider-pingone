@@ -81,7 +81,8 @@ func TestAccFIDOPolicy_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckFIDOPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -107,7 +108,8 @@ func TestAccFIDOPolicy_Full(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckFIDOPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -136,7 +138,8 @@ func TestAccFIDOPolicy_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckFIDOPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -165,7 +168,8 @@ func TestAccFIDOPolicy_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckFIDOPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
