@@ -2,7 +2,7 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
-resource "pingone_notification_settings_email" "mfa_settings" {
+resource "pingone_notification_settings_email" "my_awesome_smtp_settings" {
   environment_id = pingone_environment.my_environment.id
 
   host     = "smtp-example.bxretail.org"
