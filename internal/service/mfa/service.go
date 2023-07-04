@@ -15,11 +15,14 @@ func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewApplicationPushCredentialResource,
 		NewFIDO2PolicyResource,
+		NewMFAPoliciesResource,
 	}
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewMFAPoliciesDataSource,
+	}
 }
 
 func prepareClient(ctx context.Context, resourceConfig framework.ResourceType) (*mfa.APIClient, error) {

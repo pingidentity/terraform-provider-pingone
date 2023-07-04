@@ -14,11 +14,7 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
     enabled = true
   }
 
-  security_key {
-    enabled = true
-  }
-
-  platform {
+  fido2 {
     enabled = true
   }
 
@@ -33,5 +29,4 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
   email {
     enabled = false
   }
-
 }

@@ -1,0 +1,35 @@
+```release-note:enhancement
+`resource/pingone_mfa_policy`: Support the ability to phase out MFA devices using new `pairing_disabled` parameters for each device type in the policy.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_policy`: The `platform` and `security_key` FIDO device types are deprecated and need to be replaced with the `fido2` device type.  `platform` and `security_key` are no longer configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies.  Existing environments that have not been upgraded to use the latest FIDO2 policies can continue to use the factors to facilitate migration.
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_policy`: Add support for the new `fido2` MFA device type to enable support for passkeys.  The `fido2` device type is only configurable for newly created environments, or existing environments that have been upgraded to use the latest FIDO2 policies.
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_policy`: Supports the ability to define the pairing key lifetime and push limit for mobile applications.
+```
+
+```release-note:new-data-source
+pingone_mfa_policies
+```
+
+```release-note:new-resource
+pingone_mfa_policies
+```
+
+```release-note:new-guide
+Upgrade MFA Policies to use FIDO2 with Passkeys
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.9.0 => v0.9.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.13.0 => v0.14.0
+```
