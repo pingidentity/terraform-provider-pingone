@@ -160,7 +160,7 @@ func resourcePingOneApplicationPushCredentialCreate(ctx context.Context, d *sche
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.ApplicationsApplicationMFAPushCredentialsApi.CreateMFAPushCredential(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).CreateMFAPushCredentialRequest(*mfaPushCredentialRequest).Execute()
+			return apiClient.ApplicationsApplicationMFAPushCredentialsApi.CreateMFAPushCredential(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).MFAPushCredentialRequest(*mfaPushCredentialRequest).Execute()
 		},
 		"CreateMFAPushCredential",
 		sdk.DefaultCustomError,
@@ -177,9 +177,9 @@ func resourcePingOneApplicationPushCredentialCreate(ctx context.Context, d *sche
 	return resourcePingOneApplicationPushCredentialRead(ctx, d, meta)
 }
 
-func expandPushCredentialRequest(d *schema.ResourceData) (*mfa.CreateMFAPushCredentialRequest, diag.Diagnostics) {
+func expandPushCredentialRequest(d *schema.ResourceData) (*mfa.MFAPushCredentialRequest, diag.Diagnostics) {
 
-	mfaPushCredentialRequest := &mfa.CreateMFAPushCredentialRequest{}
+	mfaPushCredentialRequest := &mfa.MFAPushCredentialRequest{}
 	var diags diag.Diagnostics
 
 	if v, ok := d.GetOk("fcm"); ok {
