@@ -1,13 +1,32 @@
 ## 0.17.0 (Unreleased)
 
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework-timeouts` v0.3.1 => v0.4.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.3.1 => v1.3.2 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/hashicorp/terraform-plugin-go` v0.15.0 => v0.17.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/hashicorp/terraform-plugin-mux` v0.10.0 => v0.11.1 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.26.1 => v2.27.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.4 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.7 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.1.0 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.22.0 => v0.23.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.12.0 => v0.13.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.7.1 => v0.8.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.1.0 => v0.2.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.8.0 => v0.9.0 ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+
 ENHANCEMENTS:
 
 * `resource/pingone_notification_template_content`: Add support for P1Verify and P1Credentials notification templates: `email_phone_verification`, `id_verification`, `credential_issued`, `credential_updated`, `digital_wallet_pairing`, `credential_revoked`. ([#428](https://github.com/pingidentity/terraform-provider-pingone/issues/428))
 
 BUG FIXES:
 
+* Global fix for "<<value>> is not a valid Enum<<object>>" errors. ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * `resource/pingone_branding_settings`: Added missing schema validators to prevent misconfiguration of the single-object `logo_image` block. ([#440](https://github.com/pingidentity/terraform-provider-pingone/issues/440))
 * `resource/pingone_branding_theme`: Added missing schema validators to prevent misconfiguration of the single-object `background_image` and `logo` blocks. ([#440](https://github.com/pingidentity/terraform-provider-pingone/issues/440))
+* `resource/pingone_risk_policy`: Fix for "BOT is not a valid EnumPredictorType" error. ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* `resource/pingone_risk_predictor`: Fix for "BOT is not a valid EnumPredictorType" error. ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 
 ## 0.16.0 (19 June 2023)
 
