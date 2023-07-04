@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_risk_policy Resource - terraform-provider-pingone"
-subcategory: "Risk"
+subcategory: "Protect"
 description: |-
   Resource to manage Risk policies in a PingOne environment.
 ---
