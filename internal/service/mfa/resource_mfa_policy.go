@@ -291,7 +291,7 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	var diags diag.Diagnostics
 
-	mfaPolicy, diags := expandMFAPolicy(ctx, managementApiClient, d)
+	mfaPolicy, diags := expandMFAPolicyPost(ctx, managementApiClient, d)
 	if diags.HasError() {
 		return diags
 	}
@@ -300,7 +300,7 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, d.Get("environment_id").(string)).DeviceAuthenticationPolicy(*mfaPolicy).Execute()
+			return apiClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, d.Get("environment_id").(string)).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
 		},
 		"CreateDeviceAuthenticationPolicies",
 		sdk.DefaultCustomError,
@@ -310,9 +310,9 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 		return diags
 	}
 
-	respObject := resp.(*mfa.DeviceAuthenticationPolicy)
+	respObject := resp.(*mfa.DeviceAuthenticationPolicyPost)
 
-	d.SetId(respObject.GetId())
+	d.SetId(respObject.DeviceAuthenticationPolicy.GetId())
 
 	return resourceMFAPolicyRead(ctx, d, meta)
 }
@@ -469,6 +469,10 @@ func resourceMFAPolicyImport(ctx context.Context, d *schema.ResourceData, meta i
 	return []*schema.ResourceData{d}, nil
 }
 
+func expandMFAPolicyPost(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
+	return nil, nil // Resolved in https://github.com/pingidentity/terraform-provider-pingone/pull/437
+}
+
 func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -484,6 +488,7 @@ func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *sc
 		*expandMFAPolicyOfflineDevice(d.Get("email").([]interface{})[0]),
 		*mobile,
 		*expandMFAPolicyTOTPDevice(d.Get("totp").([]interface{})[0]),
+		// Resolved in https://github.com/pingidentity/terraform-provider-pingone/pull/437
 		// *expandMFAPolicyFIDODevice(d.Get("security_key").([]interface{})[0]),
 		// *expandMFAPolicyFIDODevice(d.Get("platform").([]interface{})[0]),
 		false,
@@ -716,18 +721,18 @@ func expandMFAPolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTot
 	return item
 }
 
-func expandMFAPolicyFIDODevice(v interface{}) *mfa.DeviceAuthenticationPolicyFIDODevice {
+// func expandMFAPolicyFIDODevice(v interface{}) *mfa.DeviceAuthenticationPolicyFIDODevice {
 
-	obj := v.(map[string]interface{})
+// 	obj := v.(map[string]interface{})
 
-	item := mfa.NewDeviceAuthenticationPolicyFIDODevice(obj["enabled"].(bool))
+// 	item := mfa.NewDeviceAuthenticationPolicyFIDODevice(obj["enabled"].(bool))
 
-	if v, ok := obj["fido_policy_id"].(string); ok {
-		item.SetFidoPolicyId(v)
-	}
+// 	if v, ok := obj["fido_policy_id"].(string); ok {
+// 		item.SetFidoPolicyId(v)
+// 	}
 
-	return item
-}
+// 	return item
+// }
 
 func flattenMFAPolicyOfflineDevice(c *mfa.DeviceAuthenticationPolicyOfflineDevice) []map[string]interface{} {
 	item := map[string]interface{}{
