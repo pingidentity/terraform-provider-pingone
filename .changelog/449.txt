@@ -1,0 +1,63 @@
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework` v1.3.1 => v1.3.2
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework-timeouts` v0.3.1 => v0.4.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-go` v0.15.0 => v0.17.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-mux` v0.10.0 => v0.11.1
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.26.1 => v2.27.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.8.0 => v0.9.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.1.4 => v0.2.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.1.7 => v0.2.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.1.0 => v0.2.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.22.0 => v0.23.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.12.0 => v0.13.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.7.1 => v0.8.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.1.0 => v0.2.0
+```
+
+```release-note:bug
+Global fix for "<<value>> is not a valid Enum<<object>>" errors.
+```
+
+```release-note:bug
+`resource/pingone_risk_policy`: Fix for "BOT is not a valid EnumPredictorType" error.
+```
+
+```release-note:bug
+`resource/pingone_risk_predictor`: Fix for "BOT is not a valid EnumPredictorType" error.
+```
