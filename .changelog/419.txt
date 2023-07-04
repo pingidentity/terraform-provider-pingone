@@ -1,0 +1,11 @@
+```release-note:new-resource
+pingone_notification_settings
+```
+
+```release-note:new-resource
+pingone_phone_delivery_settings
+```
+
+```release-note:new-data-source
+pingone_phone_delivery_settings_list
+```

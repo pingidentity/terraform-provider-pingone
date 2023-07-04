@@ -13,30 +13,33 @@ import (
 
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewAgreementResource,
 		NewAgreementEnableResource,
-		NewAgreementLocalizationResource,
 		NewAgreementLocalizationEnableResource,
+		NewAgreementLocalizationResource,
 		NewAgreementLocalizationRevisionResource,
+		NewAgreementResource,
 		NewBrandingSettingsResource,
-		NewBrandingThemeResource,
 		NewBrandingThemeDefaultResource,
+		NewBrandingThemeResource,
 		NewEnvironmentResource,
+		NewNotificationPolicyResource,
+		NewNotificationSettingsResource,
+		NewNotificationSettingsEmailResource,
+		NewPhoneDeliverySettingsResource,
 		NewSystemApplicationResource,
 		NewTrustedEmailAddressResource,
-		NewNotificationPolicyResource,
-		NewNotificationSettingsEmailResource,
 	}
 }
 
 func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewEnvironmentDataSource,
-		NewEnvironmentsDataSource,
 		NewAgreementDataSource,
 		NewAgreementLocalizationDataSource,
-		NewTrustedEmailDomainDataSource,
+		NewEnvironmentDataSource,
+		NewEnvironmentsDataSource,
 		NewOrganizationDataSource,
+		NewPhoneDeliverySettingsListDataSource,
+		NewTrustedEmailDomainDataSource,
 	}
 }
 
