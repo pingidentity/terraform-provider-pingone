@@ -50,7 +50,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-* Global fix for "<<value>> is not a valid Enum<<object>>" errors. ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
+* Global fix for "*value* is not a valid Enum*Object*" errors. ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
 * `resource/pingone_branding_settings`: Added missing schema validators to prevent misconfiguration of the single-object `logo_image` block. ([#440](https://github.com/pingidentity/terraform-provider-pingone/issues/440))
 * `resource/pingone_branding_theme`: Added missing schema validators to prevent misconfiguration of the single-object `background_image` and `logo` blocks. ([#440](https://github.com/pingidentity/terraform-provider-pingone/issues/440))
 * `resource/pingone_risk_policy`: Fix for "BOT is not a valid EnumPredictorType" error. ([#449](https://github.com/pingidentity/terraform-provider-pingone/issues/449))
