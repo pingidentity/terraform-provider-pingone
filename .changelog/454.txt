@@ -1,0 +1,8 @@
+```release-note:note
+`resource/pingone_mfa_policy`: Corrected MFA policy upgrade guide link in registry documentation.
+```
+
+```release-note:note
+`resource/pingone_mfa_fido_policy`: Corrected MFA policy upgrade guide link in registry documentation.
+```
+
