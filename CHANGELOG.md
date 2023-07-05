@@ -8,6 +8,7 @@ NOTES:
 ENHANCEMENTS:
 
 * `resource/pingone_application_resource_grant`: Add validation to disallow assignment of the `openid` scope from the `openid` resource to avoid error. ([#457](https://github.com/pingidentity/terraform-provider-pingone/issues/457))
+* `resource/pingone_notification_policy`: Now supports country limit configuration. ([#458](https://github.com/pingidentity/terraform-provider-pingone/issues/458))
 
 ## 0.17.1 (05 July 2023)
 
