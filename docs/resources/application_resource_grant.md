@@ -52,11 +52,9 @@ resource "pingone_application_resource_grant" "foo" {
 
 ### Required
 
-- `application_id` (String) The ID of the application to create the resource grant for.
-
--> The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources.
-- `environment_id` (String) The ID of the environment to create the application resource grant in.
-- `resource_id` (String) The ID of the protected resource associated with this grant.
+- `application_id` (String) The ID of the application to create the resource grant for.  The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to create the application resource grant in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `resource_id` (String) The ID of the protected resource associated with this grant.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `scopes` (Set of String) A list of IDs of the scopes associated with this grant.
 
 ### Read-Only
