@@ -111,6 +111,7 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "DENIED"),
 		),
 	}
 
@@ -122,6 +123,19 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "DENIED"),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccNotificationPolicyConfig_Minimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "name", name),
+			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "NONE"),
 		),
 	}
 
@@ -131,6 +145,22 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 		CheckDestroy:             testAccCheckNotificationPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Full
+			fullStep1,
+			{
+				Config:  testAccNotificationPolicyConfig_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			minimalStep,
+			{
+				Config:  testAccNotificationPolicyConfig_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep1,
+			minimalStep,
+			// Full change
 			fullStep1,
 			fullStep2,
 			fullStep1,
@@ -223,6 +253,102 @@ func TestAccNotificationPolicy_Quotas(t *testing.T) {
 	})
 }
 
+func TestAccNotificationPolicy_CountryLimit(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_notification_policy.%s", resourceName)
+
+	name := resourceName
+
+	countryLimitNone := resource.TestStep{
+		Config: testAccNotificationPolicyConfig_CountryLimitNone(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "NONE"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.delivery_methods.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.countries.#", "0"),
+		),
+	}
+
+	countryLimitAllowed := resource.TestStep{
+		Config: testAccNotificationPolicyConfig_CountryLimitAllowed(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "ALLOWED"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.delivery_methods.#", "2"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.delivery_methods.*", "Voice"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.delivery_methods.*", "SMS"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.countries.#", "5"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.countries.*", "NP"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.countries.*", "HM"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.countries.*", "GQ"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.countries.*", "GE"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.countries.*", "FR"),
+		),
+	}
+
+	countryLimitDenied := resource.TestStep{
+		Config: testAccNotificationPolicyConfig_CountryLimitDenied(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "DENIED"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.delivery_methods.#", "1"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.delivery_methods.*", "Voice"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.countries.#", "3"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.countries.*", "GB"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.countries.*", "NZ"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "country_limit.countries.*", "NO"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNotificationPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Variant 1 New
+			countryLimitNone,
+			{
+				Config:  testAccNotificationPolicyConfig_CountryLimitNone(resourceName, name),
+				Destroy: true,
+			},
+			// Variant 2 New
+			countryLimitAllowed,
+			{
+				Config:  testAccNotificationPolicyConfig_CountryLimitAllowed(resourceName, name),
+				Destroy: true,
+			},
+			// Variant 3 New
+			countryLimitDenied,
+			{
+				Config:  testAccNotificationPolicyConfig_CountryLimitDenied(resourceName, name),
+				Destroy: true,
+			},
+			// Update
+			countryLimitNone,
+			countryLimitAllowed,
+			countryLimitDenied,
+			countryLimitNone,
+			{
+				Config:  testAccNotificationPolicyConfig_CountryLimitNone(resourceName, name),
+				Destroy: true,
+			},
+			// Invalid
+			{
+				Config:      testAccNotificationPolicyConfig_CountryLimit_InvalidCombination(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid argument combination`),
+			},
+			{
+				Config:      testAccNotificationPolicyConfig_CountryLimit_BadCountryCode(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
+			},
+			{
+				Config:  testAccNotificationPolicyConfig_CountryLimitAllowed(resourceName, name),
+				Destroy: true,
+			},
+		},
+	})
+}
+
 func testAccNotificationPolicy_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -252,6 +378,27 @@ resource "pingone_notification_policy" "%[2]s" {
     type  = "ENVIRONMENT"
     total = 10000
   }
+
+  country_limit = {
+    type             = "DENIED"
+    delivery_methods = ["Voice"]
+    countries = [
+      "NO",
+      "GB",
+      "NZ",
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -313,6 +460,107 @@ resource "pingone_notification_policy" "%[2]s" {
     type   = "USER"
     used   = 55
     unused = 45
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CountryLimitNone(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  country_limit = {
+    type = "NONE"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CountryLimitAllowed(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  country_limit = {
+    type = "ALLOWED"
+    countries = [
+      "GQ",
+      "NP",
+      "GE",
+      "FR",
+      "HM",
+    ]
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CountryLimitDenied(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  country_limit = {
+    type             = "DENIED"
+    delivery_methods = ["Voice"]
+    countries = [
+      "NO",
+      "GB",
+      "NZ",
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CountryLimit_InvalidCombination(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  country_limit = {
+    type             = "NONE"
+    delivery_methods = ["Voice"]
+    countries = [
+      "NO",
+      "GB",
+      "NZ",
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CountryLimit_BadCountryCode(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  country_limit = {
+    type             = "ALLOWED"
+    delivery_methods = ["Voice"]
+    countries = [
+      "NO",
+      "GBE",
+      "NZ",
+    ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

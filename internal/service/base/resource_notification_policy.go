@@ -8,18 +8,24 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -32,17 +38,24 @@ type NotificationPolicyResourceModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	Name          types.String `tfsdk:"name"`
 	Default       types.Bool   `tfsdk:"default"`
+	CountryLimit  types.Object `tfsdk:"country_limit"`
 	Quota         types.List   `tfsdk:"quota"`
 	Id            types.String `tfsdk:"id"`
 }
 
-type QuotaModel struct {
+type NotificationPolicyQuotaResourceModel struct {
 	Type types.String `tfsdk:"type"`
 	// To enable when the platform supports individual configuration
 	// DeliveryMethods types.Set    `tfsdk:"delivery_methods"`
 	Total  types.Int64 `tfsdk:"total"`
 	Used   types.Int64 `tfsdk:"used"`
 	Unused types.Int64 `tfsdk:"unused"`
+}
+
+type NotificationPolicyCountryLimitResourceModel struct {
+	Type            types.String `tfsdk:"type"`
+	DeliveryMethods types.Set    `tfsdk:"delivery_methods"`
+	Countries       types.Set    `tfsdk:"countries"`
 }
 
 var (
@@ -55,6 +68,12 @@ var (
 		"total":  types.Int64Type,
 		"used":   types.Int64Type,
 		"unused": types.Int64Type,
+	}
+
+	countryLimitTFObjectTypes = map[string]attr.Type{
+		"type":             types.StringType,
+		"delivery_methods": types.SetType{ElemType: types.StringType},
+		"countries":        types.SetType{ElemType: types.StringType},
 	}
 )
 
@@ -89,14 +108,29 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 		"A boolean to provide an indication of whether this policy is the default notification policy for the environment. If the parameter is not provided, the value used is `false`.",
 	)
 
-	quotaTypeAllowedValues := make([]string, 0)
-	for _, v := range management.AllowedEnumNotificationsPolicyQuotaItemTypeEnumValues {
-		quotaTypeAllowedValues = append(quotaTypeAllowedValues, string(v))
-	}
+	countryLimitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single block object to limit the countries where you can send SMS and voice notifications.",
+	)
+
+	countryLimitTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the kind of limitation being defined.",
+	).AllowedValuesComplex(map[string]string{
+		string(management.ENUMNOTIFICATIONSPOLICYCOUNTRYLIMITTYPE_NONE):    "no limitation is defined",
+		string(management.ENUMNOTIFICATIONSPOLICYCOUNTRYLIMITTYPE_ALLOWED): "allows notifications only for the countries specified in the `countries` parameter",
+		string(management.ENUMNOTIFICATIONSPOLICYCOUNTRYLIMITTYPE_DENIED):  "denies notifications only for the countries specified in the `countries` parameter",
+	})
+
+	countryLimitDeliveryMethodsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The delivery methods that the defined limitation should be applied to. Content of the array can be `SMS`, `Voice`, or both. If the parameter is not provided, the default is `SMS` and `Voice`.",
+	)
+
+	countryLimitCountriesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The countries where the specified methods should be allowed or denied. Use two-letter country codes from ISO 3166-1.  Required when `type` is not `%s`.", string(management.ENUMNOTIFICATIONSPOLICYCOUNTRYLIMITTYPE_NONE)),
+	)
 
 	quotaTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string to specify whether the limit defined is per-user or per environment. Allowed values: `%s`.", strings.Join(quotaTypeAllowedValues, "`, `")),
-	)
+		"A string to specify whether the limit defined is per-user or per environment.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsPolicyQuotaItemTypeEnumValues)
 
 	quotaTotalDescriptionFmt := "The maximum number of notifications allowed per day.  Cannot be set with `used` and `unused`."
 	quotaTotalDescription := framework.SchemaAttributeDescription{
@@ -143,6 +177,76 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 				Description:         defaultDescription.Description,
 				Computed:            true,
 			},
+
+			"country_limit": schema.SingleNestedAttribute{
+				Description:         countryLimitDescription.Description,
+				MarkdownDescription: countryLimitDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					countryLimitTFObjectTypes,
+					map[string]attr.Value{
+						"type":             types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYCOUNTRYLIMITTYPE_NONE)),
+						"delivery_methods": types.SetNull(types.StringType),
+						"countries":        types.SetNull(types.StringType),
+					},
+				)),
+
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Description:         countryLimitTypeDescription.Description,
+						MarkdownDescription: countryLimitTypeDescription.MarkdownDescription,
+						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsPolicyCountryLimitTypeEnumValues)...),
+						},
+					},
+
+					"delivery_methods": schema.SetAttribute{
+						Description:         countryLimitDeliveryMethodsDescription.Description,
+						MarkdownDescription: countryLimitDeliveryMethodsDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtLeast(1),
+							setvalidator.ValueStringsAre(
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsPolicyCountryLimitDeliveryMethodEnumValues)...),
+							),
+							setvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYCOUNTRYLIMITTYPE_NONE)),
+								path.MatchRelative().AtParent().AtName("type"),
+							),
+						},
+					},
+
+					"countries": schema.SetAttribute{
+						Description:         countryLimitCountriesDescription.Description,
+						MarkdownDescription: countryLimitCountriesDescription.MarkdownDescription,
+						Optional:            true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtLeast(1),
+							setvalidator.ValueStringsAre(
+								stringvalidator.RegexMatches(verify.IsTwoCharCountryCode, "must be a valid two character country code"),
+							),
+							setvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYCOUNTRYLIMITTYPE_ALLOWED)),
+								path.MatchRelative().AtParent().AtName("type"),
+							),
+							setvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYCOUNTRYLIMITTYPE_DENIED)),
+								path.MatchRelative().AtParent().AtName("type"),
+							),
+						},
+					},
+				},
+			},
 		},
 
 		Blocks: map[string]schema.Block{
@@ -158,9 +262,10 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 							MarkdownDescription: quotaTypeDescription.MarkdownDescription,
 							Required:            true,
 							Validators: []validator.String{
-								stringvalidator.OneOf(quotaTypeAllowedValues...),
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsPolicyQuotaItemTypeEnumValues)...),
 							},
 						},
+
 						"total": schema.Int64Attribute{
 							Description:         quotaTotalDescription.Description,
 							MarkdownDescription: quotaTotalDescription.MarkdownDescription,
@@ -170,6 +275,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 								int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("unused")),
 							},
 						},
+
 						"used": schema.Int64Attribute{
 							Description:         quotaUsedDescription.Description,
 							MarkdownDescription: quotaUsedDescription.MarkdownDescription,
@@ -179,6 +285,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 								int64validator.AlsoRequires(path.MatchRelative().AtParent().AtName("unused")),
 							},
 						},
+
 						"unused": schema.Int64Attribute{
 							Description:         quotaUnusedDescription.Description,
 							MarkdownDescription: quotaUnusedDescription.MarkdownDescription,
@@ -190,6 +297,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 						},
 					},
 				},
+
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(1),
 				},
@@ -418,7 +526,7 @@ func (r *NotificationPolicyResource) ImportState(ctx context.Context, req resour
 func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*management.NotificationsPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var quotaPlan []QuotaModel
+	var quotaPlan []NotificationPolicyQuotaResourceModel
 	diags.Append(p.Quota.ElementsAs(ctx, &quotaPlan, false)...)
 	if diags.HasError() {
 		return nil, diags
@@ -458,6 +566,40 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 	data := management.NewNotificationsPolicy(p.Name.ValueString(), quotas)
 	data.SetDefault(false)
 
+	if !p.CountryLimit.IsNull() && !p.CountryLimit.IsUnknown() {
+		var countryLimitPlan NotificationPolicyCountryLimitResourceModel
+		diags.Append(p.CountryLimit.As(ctx, &countryLimitPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		var countries []string
+		diags.Append(countryLimitPlan.Countries.ElementsAs(ctx, &countries, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		countryLimit := *management.NewNotificationsPolicyCountryLimit(
+			management.EnumNotificationsPolicyCountryLimitType(countryLimitPlan.Type.ValueString()),
+			countries,
+		)
+
+		if !countryLimitPlan.DeliveryMethods.IsNull() && !countryLimitPlan.DeliveryMethods.IsUnknown() {
+			var deliveryMethods []management.EnumNotificationsPolicyCountryLimitDeliveryMethod
+			diags.Append(countryLimitPlan.DeliveryMethods.ElementsAs(ctx, &deliveryMethods, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			countryLimit.SetDeliveryMethods(deliveryMethods)
+		}
+
+		data.SetCountryLimit(countryLimit)
+	}
+
 	return data, diags
 }
 
@@ -477,9 +619,13 @@ func (p *NotificationPolicyResourceModel) toState(apiObject *management.Notifica
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
-	quota, d := toStateQuota(apiObject.GetQuotas())
+	var d diag.Diagnostics
+
+	p.Quota, d = toStateQuota(apiObject.GetQuotas())
 	diags.Append(d...)
-	p.Quota = quota
+
+	p.CountryLimit, d = toStateCountryLimit(apiObject.GetCountryLimitOk())
+	diags.Append(d...)
 
 	return diags
 }
@@ -496,23 +642,18 @@ func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.Lis
 	for _, v := range quotas {
 
 		// To enable when the platform supports individual configuration
-		// deliveryMethods, d := framework.StringSliceToTF(deliveryMethodsToStringSlice(v.GetDeliveryMethods()))
+		// deliveryMethods, d := framework.EnumSetOkToTF(v.GetDeliveryMethodsOk()))
 		// diags.Append(d...)
 
-		quota := map[string]attr.Value{}
-
-		if v, ok := v.GetTypeOk(); ok {
-			quota["type"] = framework.StringToTF(string(*v))
-		} else {
-			quota["type"] = types.StringNull()
+		quota := map[string]attr.Value{
+			"type":   framework.EnumOkToTF(v.GetTypeOk()),
+			"total":  framework.Int32OkToTF(v.GetTotalOk()),
+			"used":   framework.Int32OkToTF(v.GetClaimedOk()),
+			"unused": framework.Int32OkToTF(v.GetUnclaimedOk()),
 		}
 
 		// To enable when the platform supports individual configuration
 		// "delivery_method": deliveryMethods,
-
-		quota["total"] = framework.Int32OkToTF(v.GetTotalOk())
-		quota["used"] = framework.Int32OkToTF(v.GetClaimedOk())
-		quota["unused"] = framework.Int32OkToTF(v.GetUnclaimedOk())
 
 		flattenedObj, d := types.ObjectValue(quotaTFObjectTypes, quota)
 		diags.Append(d...)
@@ -527,13 +668,22 @@ func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.Lis
 
 }
 
-// To enable when the platform supports individual configuration
-// func deliveryMethodsToStringSlice(methods []management.EnumNotificationsPolicyQuotaDeliveryMethods) []string {
+func toStateCountryLimit(apiObject *management.NotificationsPolicyCountryLimit, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-// 	returnSlice := make([]string, 0)
-// 	for _, v := range methods {
-// 		returnSlice = append(returnSlice, string(v))
-// 	}
+	if !ok || apiObject == nil {
+		return types.ObjectNull(countryLimitTFObjectTypes), diags
+	}
 
-// 	return returnSlice
-// }
+	countryLimitMap := map[string]attr.Value{
+		"type":             framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"delivery_methods": framework.EnumSetOkToTF(apiObject.GetDeliveryMethodsOk()),
+		"countries":        framework.StringSetOkToTF(apiObject.GetCountriesOk()),
+	}
+
+	returnVar, d := types.ObjectValue(countryLimitTFObjectTypes, countryLimitMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+
+}
