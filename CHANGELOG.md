@@ -1,5 +1,11 @@
 ## 0.17.1 (05 July 2023)
 
+NOTES:
+
+* `data-source/pingone_user`: Migrated to plugin framework. ([#453](https://github.com/pingidentity/terraform-provider-pingone/issues/453))
+* `data-source/pingone_users`: Migrated to plugin framework. ([#453](https://github.com/pingidentity/terraform-provider-pingone/issues/453))
+* `resource/pingone_user`: Migrated to plugin framework. ([#453](https://github.com/pingidentity/terraform-provider-pingone/issues/453))
+
 ## 0.17.0 (05 July 2023)
 
 BREAKING CHANGES:
