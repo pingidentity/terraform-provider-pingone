@@ -36,23 +36,6 @@ The upgrade process is irreversable.  Once MFA device policies have been upgrade
 * Old style FIDO policies (configured with the `pingone_mfa_fido_policy` resource) cannot be used.
 * The new FIDO2 policies (configured with the `pingone_mfa_fido2_policy` resource) should be used.
 
-Before example:
-```terraform
-resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
-  environment_id = pingone_environment.my_environment.id
-  name           = "My awesome MFA policy"
-
-  ...
-
-  fido2 {
-    enabled         = true
-    fido2_policy_id = pingone_mfa_fido2_policy.my_awesome_fido_policy.id
-  }
-
-  ...
-}
-```
-
 ## Upgrade Procedure
 
 The following HCL provides an example of how to upgrade MFA device policies in an environment.
