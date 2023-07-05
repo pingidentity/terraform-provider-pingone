@@ -71,7 +71,7 @@ resource "pingone_notification_policy" "user" {
 
 ### Optional
 
-- `country_limit` (Attributes) A single block object to limit the countries where you can send SMS and voice notifications. (see [below for nested schema](#nestedatt--country_limit))
+- `country_limit` (Attributes) A single object to limit the countries where you can send SMS and voice notifications. (see [below for nested schema](#nestedatt--country_limit))
 - `quota` (Block List) A single object block that define the SMS/Voice limits. (see [below for nested schema](#nestedblock--quota))
 
 ### Read-Only

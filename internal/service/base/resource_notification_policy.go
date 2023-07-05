@@ -109,7 +109,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 	)
 
 	countryLimitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block object to limit the countries where you can send SMS and voice notifications.",
+		"A single object to limit the countries where you can send SMS and voice notifications.",
 	)
 
 	countryLimitTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
