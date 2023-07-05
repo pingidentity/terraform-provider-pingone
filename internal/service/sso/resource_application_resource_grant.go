@@ -76,7 +76,7 @@ func (r *ApplicationResourceGrantResource) Schema(ctx context.Context, req resou
 			),
 
 			"scopes": schema.SetAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of IDs of the scopes associated with this grant.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of IDs of the scopes associated with this grant.  When using the `openid` resource, the `openid` scope should not be included.").Description,
 				Required:    true,
 
 				ElementType: types.StringType,
@@ -134,6 +134,12 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Validate the plan
+	resp.Diagnostics.Append(plan.validate(ctx, r.client)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -225,6 +231,12 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Validate the plan
+	resp.Diagnostics.Append(plan.validate(ctx, r.client)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -333,6 +345,77 @@ func (p *ApplicationResourceGrantResourceModel) expand(ctx context.Context) (*ma
 	data := management.NewApplicationResourceGrant(*resource, scopes)
 
 	return data, diags
+}
+
+func (p *ApplicationResourceGrantResourceModel) validate(ctx context.Context, apiClient *management.APIClient) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Check that the `openid` scope from the `openid` resource is not in the list
+	resourceResponse, d := framework.ParseResponse(
+		ctx,
+
+		func() (interface{}, *http.Response, error) {
+			return apiClient.ResourcesApi.ReadOneResource(ctx, p.EnvironmentId.ValueString(), p.ResourceId.ValueString()).Execute()
+		},
+		"ReadOneResource",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+
+	diags.Append(d...)
+	if diags.HasError() {
+		return diags
+	}
+
+	resource := resourceResponse.(*management.Resource)
+	if v, ok := resource.GetNameOk(); ok && *v == "openid" {
+		resourceScopesResponse, d := framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, p.EnvironmentId.ValueString(), p.ResourceId.ValueString()).Execute()
+			},
+			"ReadAllResourceScopes",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+
+		diags.Append(d...)
+		if diags.HasError() {
+			return diags
+		}
+
+		entityArray := resourceScopesResponse.(*management.EntityArray)
+		if resourceScopes, ok := entityArray.Embedded.GetScopesOk(); ok {
+			openidScope := ""
+			for _, resourceScope := range resourceScopes {
+				if resourceScopeName, ok := resourceScope.GetNameOk(); ok && *resourceScopeName == "openid" {
+					openidScope = resourceScope.GetId()
+					break
+				}
+			}
+
+			if openidScope != "" {
+				var scopesPlan []string
+				diags.Append(p.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
+				if diags.HasError() {
+					return diags
+				}
+
+				for _, scope := range scopesPlan {
+					if scope == openidScope {
+						diags.AddError(
+							"Invalid scope",
+							"Cannot create an application resource grant with the `openid` scope.  This scope is automatically applied and should be removed from the `scopes` parameter.",
+						)
+						break
+					}
+				}
+			}
+		}
+	}
+
+	return diags
 }
 
 func (p *ApplicationResourceGrantResourceModel) toState(apiObject *management.ApplicationResourceGrant) diag.Diagnostics {

@@ -3,6 +3,7 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -89,6 +90,20 @@ func TestAccApplicationResourceGrant_OpenIDResource(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexp),
 				),
+			},
+			// Test error catch on update
+			{
+				Config:      testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid scope`),
+			},
+			{
+				Config:  testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
+				Destroy: true,
+			},
+			// Test error catch on from new
+			{
+				Config:      testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid scope`),
 			},
 		},
 	})
@@ -223,6 +238,65 @@ resource "pingone_application_resource_grant" "%[2]s" {
   scopes = [
     data.pingone_resource_scope.%[2]s-1.id,
     data.pingone_resource_scope.%[2]s-2.id,
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
+
+data "pingone_resource_scope" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name = "email"
+}
+
+data "pingone_resource_scope" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name = "profile"
+}
+
+data "pingone_resource_scope" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name = "openid"
+}
+
+resource "pingone_application_resource_grant" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  resource_id = data.pingone_resource.%[2]s.id
+  scopes = [
+    data.pingone_resource_scope.%[2]s-1.id,
+    data.pingone_resource_scope.%[2]s-2.id,
+    data.pingone_resource_scope.%[2]s-3.id,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
