@@ -71,6 +71,7 @@ resource "pingone_notification_policy" "user" {
 
 ### Optional
 
+- `country_limit` (Attributes) A single object to limit the countries where you can send SMS and voice notifications. (see [below for nested schema](#nestedatt--country_limit))
 - `quota` (Block List) A single object block that define the SMS/Voice limits. (see [below for nested schema](#nestedblock--quota))
 
 ### Read-Only
@@ -78,12 +79,25 @@ resource "pingone_notification_policy" "user" {
 - `default` (Boolean) A boolean to provide an indication of whether this policy is the default notification policy for the environment. If the parameter is not provided, the value used is `false`.
 - `id` (String) The ID of this resource.
 
+<a id="nestedatt--country_limit"></a>
+### Nested Schema for `country_limit`
+
+Required:
+
+- `type` (String) A string that specifies the kind of limitation being defined.  Options are `ALLOWED` (allows notifications only for the countries specified in the `countries` parameter), `DENIED` (denies notifications only for the countries specified in the `countries` parameter), `NONE` (no limitation is defined).
+
+Optional:
+
+- `countries` (Set of String) The countries where the specified methods should be allowed or denied. Use two-letter country codes from ISO 3166-1.  Required when `type` is not `NONE`.
+- `delivery_methods` (Set of String) The delivery methods that the defined limitation should be applied to. Content of the array can be `SMS`, `Voice`, or both. If the parameter is not provided, the default is `SMS` and `Voice`.
+
+
 <a id="nestedblock--quota"></a>
 ### Nested Schema for `quota`
 
 Required:
 
-- `type` (String) A string to specify whether the limit defined is per-user or per environment. Allowed values: `USER`, `ENVIRONMENT`.
+- `type` (String) A string to specify whether the limit defined is per-user or per environment.  Options are `ENVIRONMENT`, `USER`.
 
 Optional:
 
