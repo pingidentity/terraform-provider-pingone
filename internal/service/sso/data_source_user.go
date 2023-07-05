@@ -2,146 +2,285 @@ package sso
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func DatasourceUser() *schema.Resource {
-	return &schema.Resource{
+// Types
+type UserDataSource struct {
+	client *management.APIClient
+	region model.RegionMapping
+}
 
+type UserDataSourceModel struct {
+	Id            types.String `tfsdk:"id"`
+	UserId        types.String `tfsdk:"user_id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	Username      types.String `tfsdk:"username"`
+	Email         types.String `tfsdk:"email"`
+	Status        types.String `tfsdk:"status"`
+	PopulationId  types.String `tfsdk:"population_id"`
+}
+
+// Framework interfaces
+var (
+	_ datasource.DataSource = &UserDataSource{}
+)
+
+// New Object
+func NewUserDataSource() datasource.DataSource {
+	return &UserDataSource{}
+}
+
+// Metadata
+func (r *UserDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_user"
+}
+
+// Schema
+func (r *UserDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The enabled status of the user.",
+	).AllowedValues([]string{"ENABLED", "DISABLED"})
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Datasource to read PingOne user data",
+		Description: "Datasource to read PingOne user data.",
 
-		ReadContext: datasourcePingOneUserRead,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"user_id": {
-				Description:      "The ID of the user.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				Computed:         true,
-				ExactlyOneOf:     []string{"user_id", "username", "email"},
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"username": {
-				Description:  "The username of the user.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"user_id", "username", "email"},
-			},
-			"email": {
-				Description:  "The email address of the user.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"user_id", "username", "email"},
-			},
-			"status": {
-				Description: "The enabled status of the user.  Possible values are `ENABLED` or `DISABLED`.",
-				Type:        schema.TypeString,
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the user in."),
+			),
+
+			"user_id": schema.StringAttribute{
+				Description: "The ID of the user.",
+				Optional:    true,
 				Computed:    true,
+
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("user_id"),
+						path.MatchRoot("username"),
+						path.MatchRoot("email"),
+					),
+					verify.P1ResourceIDValidator(),
+				},
 			},
-			"population_id": {
-				Description: "The population ID the user is assigned to.",
-				Type:        schema.TypeString,
+
+			"username": schema.StringAttribute{
+				Description: "The username of the user.",
+				Optional:    true,
+				Computed:    true,
+
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("user_id"),
+						path.MatchRoot("username"),
+						path.MatchRoot("email"),
+					),
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
+			},
+
+			"email": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The email address of the user.").Description,
+				Optional:    true,
+				Computed:    true,
+
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("user_id"),
+						path.MatchRoot("username"),
+						path.MatchRoot("email"),
+					),
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
+			},
+
+			"status": schema.StringAttribute{
+				Description:         statusDescription.Description,
+				MarkdownDescription: statusDescription.MarkdownDescription,
+				Computed:            true,
+			},
+
+			"population_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The population ID the user is assigned to.").Description,
 				Computed:    true,
 			},
 		},
 	}
 }
 
-func datasourcePingOneUserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *UserDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
 
-	var diags diag.Diagnostics
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
 
-	var resp management.User
+		return
+	}
+
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
+	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
+}
+
+func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *UserDataSourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var user management.User
 	var scimFilter string
 
-	if v, ok := d.GetOk("username"); ok {
+	if !data.Username.IsNull() {
 
 		scimFilter = filter.BuildScimFilter(
 			append(make([]interface{}, 0), map[string]interface{}{
 				"name":   "username",
-				"values": []string{v.(string)},
+				"values": []string{data.Username.ValueString()},
 			}), map[string]string{})
 
-	} else if v, ok := d.GetOk("user_id"); ok {
+	} else if !data.UserId.IsNull() {
 
 		scimFilter = filter.BuildScimFilter(
 			append(make([]interface{}, 0), map[string]interface{}{
 				"name":   "id",
-				"values": []string{v.(string)},
+				"values": []string{data.UserId.ValueString()},
 			}), map[string]string{})
 
-	} else if v, ok := d.GetOk("email"); ok {
+	} else if !data.Email.IsNull() {
 
 		scimFilter = filter.BuildScimFilter(
 			append(make([]interface{}, 0), map[string]interface{}{
 				"name":   "email",
-				"values": []string{v.(string)},
+				"values": []string{data.Email.ValueString()},
 			}), map[string]string{})
 
 	} else {
-
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "None of user_id, username or email are set",
-		})
-
-		return diags
-
+		resp.Diagnostics.AddError(
+			"Missing parameter",
+			"Cannot find the requested user. user_id, username or email must be set.",
+		)
+		return
 	}
 
-	respList, diags := sdk.ParseResponse(
+	response, d := framework.ParseResponse(
 		ctx,
 
 		func() (interface{}, *http.Response, error) {
-			return apiClient.UsersApi.ReadAllUsers(ctx, d.Get("environment_id").(string)).Filter(scimFilter).Execute()
+			return r.client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		},
 		"ReadAllUsers",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
-	if diags.HasError() {
-		return diags
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if users, ok := respList.(*management.EntityArray).Embedded.GetUsersOk(); ok && len(users) > 0 && users[0].Id != nil {
+	var responseEnabled interface{}
+	if users, ok := response.(*management.EntityArray).Embedded.GetUsersOk(); ok && len(users) > 0 && users[0].Id != nil {
 
-		resp = users[0]
+		user = users[0]
 
-		d.SetId(resp.GetId())
-		d.Set("user_id", resp.GetId())
-		d.Set("username", resp.GetUsername())
-		d.Set("email", resp.GetEmail())
-		d.Set("status", string(*resp.GetAccount().Status))
-		d.Set("population_id", resp.GetPopulation().Id)
+		responseEnabled, d = framework.ParseResponse(
+			ctx,
+
+			func() (interface{}, *http.Response, error) {
+				return r.client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), user.GetId()).Execute()
+			},
+			"ReadUserEnabled",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+		)
+		resp.Diagnostics.Append(d...)
 
 	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Cannot find user",
-		})
+		resp.Diagnostics.AddError(
+			"Cannot find user",
+			"Cannot find the requested user from the provided values. Please check the user_id, username or email parameters.",
+		)
+		return
+	}
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(&user, responseEnabled.(*management.UserEnabled))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (p *UserDataSourceModel) toState(apiObject *management.User, apiObjectEnabled *management.UserEnabled) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObjectEnabled == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
 
 		return diags
 	}
+
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.UserId = framework.StringOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
+	p.Email = framework.StringOkToTF(apiObject.GetEmailOk())
+
+	if v, ok := apiObjectEnabled.GetEnabledOk(); ok && *v {
+		p.Status = framework.StringToTF("ENABLED")
+	} else {
+		p.Status = framework.StringToTF("DISABLED")
+	}
+
+	p.PopulationId = framework.StringOkToTF(apiObject.Population.GetIdOk())
 
 	return diags
 }

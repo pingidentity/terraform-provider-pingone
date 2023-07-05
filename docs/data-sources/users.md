@@ -43,12 +43,12 @@ data "pingone_users" "example_by_scim_filter" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment that contains the users to filter.
+- `environment_id` (String) The ID of the environment that contains the users to filter.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
-- `data_filter` (Block Set) Individual data filters to apply to the user selection. (see [below for nested schema](#nestedblock--data_filter))
-- `scim_filter` (String) A SCIM filter to apply to the user selection.  A SCIM filter offers the greatest flexibility in filtering users.
+- `data_filter` (Block List) Individual data filters to apply to the user selection.  Allowed attributes to filter: `accountId`, `address.streetAddress`, `address.locality`, `address.region`, `address.postalCode`, `address.countryCode`, `email`, `enabled`, `endDate`, `externalId`, `locale`, `mobilePhone`, `name.formatted`, `name.given`, `name.middle`, `name.family`, `name.honorificPrefix`, `name.honorificSuffix`, `nickname`, `population.id`, `photo.href`, `preferredLanguage`, `primaryPhone`, `startDate`, `timezone`, `title`, `type`, `username`, `memberOfGroups.id` (see [below for nested schema](#nestedblock--data_filter))
+- `scim_filter` (String) A SCIM filter to apply to the user selection.  A SCIM filter offers the greatest flexibility in filtering users.  The SCIM filter can use the following attributes: `accountId`, `address.streetAddress`, `address.locality`, `address.region`, `address.postalCode`, `address.countryCode`, `email`, `enabled`, `endDate`, `externalId`, `locale`, `mobilePhone`, `name.formatted`, `name.given`, `name.middle`, `name.family`, `name.honorificPrefix`, `name.honorificSuffix`, `nickname`, `population.id`, `photo.href`, `preferredLanguage`, `primaryPhone`, `startDate`, `timezone`, `title`, `type`, `username`, `memberOfGroups.id`.
 
 ### Read-Only
 
@@ -60,8 +60,5 @@ data "pingone_users" "example_by_scim_filter" {
 
 Required:
 
-- `values` (Set of String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.
-
-Optional:
-
-- `name` (String) The attribute name to filter on.  Options are `accountId`, `address.streetAddress`, `address.locality`, `address.region`, `address.postalCode`, `address.countryCode`, `email`, `enabled`, `externalId`, `locale`, `mobilePhone`, `name.formatted`, `name.given`, `name.middle`, `name.family`, `name.honorificPrefix`, `name.honorificSuffix`, `nickname`, `population.id`, `photo.href`, `preferredLanguage`, `primaryPhone`, `timezone`, `title`, `type`, `username`, `memberOfGroups.id`.
+- `name` (String) The attribute name to filter on.  Must be one of the following values: `accountId`, `address.streetAddress`, `address.locality`, `address.region`, `address.postalCode`, `address.countryCode`, `email`, `enabled`, `endDate`, `externalId`, `locale`, `mobilePhone`, `name.formatted`, `name.given`, `name.middle`, `name.family`, `name.honorificPrefix`, `name.honorificSuffix`, `nickname`, `population.id`, `photo.href`, `preferredLanguage`, `primaryPhone`, `startDate`, `timezone`, `title`, `type`, `username`, `memberOfGroups.id`.
+- `values` (List of String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.

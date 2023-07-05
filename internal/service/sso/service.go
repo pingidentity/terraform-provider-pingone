@@ -19,6 +19,7 @@ func Resources() []func() resource.Resource {
 		NewPopulationResource,
 		NewResourceAttributeResource,
 		NewSchemaAttributeResource,
+		NewUserResource,
 	}
 }
 
@@ -29,6 +30,8 @@ func DataSources() []func() datasource.DataSource {
 		NewPopulationDataSource,
 		NewPopulationsDataSource,
 		NewSchemaDataSource,
+		NewUserDataSource,
+		NewUsersDataSource,
 	}
 }
 

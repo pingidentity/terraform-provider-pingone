@@ -2,12 +2,12 @@
 page_title: "pingone_user Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne users
+  Resource to create and manage PingOne users.
 ---
 
 # pingone_user (Resource)
 
-Resource to create and manage PingOne users
+Resource to create and manage PingOne users.
 
 ## Example Usage
 
@@ -36,13 +36,13 @@ resource "pingone_user" "foo" {
 ### Required
 
 - `email` (String) The email address of the user.
-- `environment_id` (String) The ID of the environment to create the user in.
+- `environment_id` (String) The ID of the environment to create the user in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `population_id` (String) The population ID to add the user to.
 - `username` (String) The username of the user.
 
 ### Optional
 
-- `status` (String) The enabled status of the user.  Possible values are `ENABLED` or `DISABLED`. Defaults to `ENABLED`.
+- `status` (String) The enabled status of the user.  Options are `DISABLED`, `ENABLED`.  Defaults to `ENABLED`.
 
 ### Read-Only
 
