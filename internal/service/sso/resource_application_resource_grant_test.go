@@ -282,11 +282,11 @@ data "pingone_resource_scope" "%[2]s-2" {
 }
 
 data "pingone_resource_scope" "%[2]s-3" {
-	environment_id = data.pingone_environment.general_test.id
-	resource_id    = data.pingone_resource.%[2]s.id
-  
-	name = "openid"
-  }
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = data.pingone_resource.%[2]s.id
+
+  name = "openid"
+}
 
 resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
