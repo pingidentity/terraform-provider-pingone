@@ -26,7 +26,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.17"
+      version = "~> 0.18"
     }
   }
 }
@@ -52,7 +52,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.17"
+      version = "~> 0.18"
     }
   }
 }
@@ -80,7 +80,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.17"
+      version = "~> 0.18"
     }
   }
 }
