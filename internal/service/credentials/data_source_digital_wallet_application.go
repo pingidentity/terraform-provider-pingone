@@ -161,42 +161,43 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 
 	if !data.DigitalWalletId.IsNull() {
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var response *credentials.DigitalWalletApplication
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.DigitalWalletId.ValueString()).Execute()
 			},
 			"ReadOneDigitalWalletApplication",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		digitalWalletApp = *response.(*credentials.DigitalWalletApplication)
+		digitalWalletApp = *response
 
 	} else if !data.ApplicationId.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *credentials.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllDigitalWalletApplication",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		entityArray := response.(*credentials.EntityArray)
 		if digitalWalletApps, ok := entityArray.Embedded.GetDigitalWalletApplicationsOk(); ok {
 
 			found := false
@@ -222,22 +223,22 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 	} else if !data.Name.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *credentials.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllDigitalWalletApplication",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		entityArray := response.(*credentials.EntityArray)
 		if digitalWalletApps, ok := entityArray.Embedded.GetDigitalWalletApplicationsOk(); ok {
 
 			found := false

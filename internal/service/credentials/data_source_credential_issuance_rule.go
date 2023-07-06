@@ -242,23 +242,24 @@ func (r *CredentialIssuanceRuleDataSource) Read(ctx context.Context, req datasou
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *credentials.CredentialIssuanceRule
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialIssuanceRulesApi.ReadOneCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.CredentialIssuanceRuleId.ValueString()).Execute()
 		},
 		"ReadOneCredentialIssuanceRule",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*credentials.CredentialIssuanceRule))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

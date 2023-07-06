@@ -149,18 +149,20 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 	// Historical:  Pre-EA and initial-EA environments required creation of the issuer profile. Environments created after 2023.05.01 no longer have this requirement.
 	// On 'create' [adding to state], check to see if the profile exists, and if not, create it.  Otherwise, only update the profile, while still adding to TF state.
 	timeoutValue := 5
-	readIssuerProfileResponse, diags := framework.ParseResponseWithCustomTimeout(
+
+	var readIssuerProfileResponse *credentials.CredentialIssuerProfile
+	resp.Diagnostics.Append(framework.ParseResponseWithCustomTimeout(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadCredentialIssuerProfile",
 		framework.CustomErrorResourceNotFoundWarning,
 		credentialIssuerRetryConditions,
+		&readIssuerProfileResponse,
 		time.Duration(timeoutValue)*time.Minute, // 5 mins
-	)
-	resp.Diagnostics.Append(diags...)
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -173,36 +175,36 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 	}
 
 	// Execute a Create or Update depending on existence of credential issuer profile
-	var response interface{}
+	var response *credentials.CredentialIssuerProfile
 	if readIssuerProfileResponse == nil {
 		// create the issuer profile
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 			},
 			"CreateCredentialIssuerProfile",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 	} else {
 		// update existing issuer profile
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 			},
 			"UpdateCredentialIssuerProfile",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -212,7 +214,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*credentials.CredentialIssuerProfile))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -234,19 +236,21 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 
 	// Run the API call
 	timeoutValue := 5
-	response, diags := framework.ParseResponseWithCustomTimeout(
+
+	var response *credentials.CredentialIssuerProfile
+	resp.Diagnostics.Append(framework.ParseResponseWithCustomTimeout(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, data.EnvironmentId.ValueString()).Execute()
 
 		},
 		"ReadCredentialIssuerProfile",
 		framework.CustomErrorResourceNotFoundWarning,
 		credentialIssuerRetryConditions,
+		&response,
 		time.Duration(timeoutValue)*time.Minute, // 5 mins
-	)
-	resp.Diagnostics.Append(diags...)
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -258,7 +262,7 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*credentials.CredentialIssuerProfile))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -286,17 +290,18 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *credentials.CredentialIssuerProfile
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 		},
 		"UpdateCredentialIssuerProfile",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -306,7 +311,7 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*credentials.CredentialIssuerProfile))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 

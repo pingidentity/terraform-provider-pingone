@@ -167,17 +167,18 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *credentials.DigitalWalletApplication
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.DigitalWalletAppsApi.CreateDigitalWalletApp(ctx, plan.EnvironmentId.ValueString()).DigitalWalletApplication(*digitalWalletApplication).Execute()
 		},
 		"CreateDigitalWalletApplication",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -186,7 +187,7 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*credentials.DigitalWalletApplication))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -207,17 +208,18 @@ func (r *DigitalWalletApplicationResource) Read(ctx context.Context, req resourc
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *credentials.DigitalWalletApplication
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneDigitalWalletApplication",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -229,7 +231,7 @@ func (r *DigitalWalletApplicationResource) Read(ctx context.Context, req resourc
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*credentials.DigitalWalletApplication))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -257,17 +259,18 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *credentials.DigitalWalletApplication
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.DigitalWalletAppsApi.UpdateDigitalWalletApp(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).DigitalWalletApplication(*digitalWalletApplication).Execute()
 		},
 		"UpdateDigitalWalletApplication",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -276,7 +279,7 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*credentials.DigitalWalletApplication))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -297,18 +300,18 @@ func (r *DigitalWalletApplicationResource) Delete(ctx context.Context, req resou
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.DigitalWalletAppsApi.DeleteDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteDigitalWalletApplication",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -367,29 +370,29 @@ func confirmParentAppExistsAndIsNative(ctx context.Context, r *DigitalWalletAppl
 	var diags diag.Diagnostics
 
 	// Run the API call
-	resp, diags := framework.ParseResponse(
+	var respObject *management.ReadOneApplication200Response
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.mgmtClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
 		},
 		"ReadOneApplication",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
+		&respObject,
+	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	if resp == nil {
+	if respObject == nil {
 		diags.AddError(
 			"Digital Wallet Parent Application Missing",
 			"Application referenced in `application.id` does not exist",
 		)
 		return nil, diags
 	}
-
-	respObject := resp.(*management.ReadOneApplication200Response)
 
 	// check if oidc
 	if respObject.ApplicationOIDC == nil {

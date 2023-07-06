@@ -354,17 +354,18 @@ func (r *CredentialIssuanceRuleResource) Create(ctx context.Context, req resourc
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *credentials.CredentialIssuanceRule
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialIssuanceRulesApi.CreateCredentialIssuanceRule(ctx, plan.EnvironmentId.ValueString(), plan.CredentialTypeId.ValueString()).CredentialIssuanceRule(*CredentialIssuanceRule).Execute()
 		},
 		"CreateCredentialIssuanceRule",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -373,7 +374,7 @@ func (r *CredentialIssuanceRuleResource) Create(ctx context.Context, req resourc
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*credentials.CredentialIssuanceRule))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -394,17 +395,18 @@ func (r *CredentialIssuanceRuleResource) Read(ctx context.Context, req resource.
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *credentials.CredentialIssuanceRule
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialIssuanceRulesApi.ReadOneCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneCredentialIssuanceRule",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -416,7 +418,7 @@ func (r *CredentialIssuanceRuleResource) Read(ctx context.Context, req resource.
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*credentials.CredentialIssuanceRule))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -444,17 +446,18 @@ func (r *CredentialIssuanceRuleResource) Update(ctx context.Context, req resourc
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *credentials.CredentialIssuanceRule
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialIssuanceRulesApi.UpdateCredentialIssuanceRule(ctx, plan.EnvironmentId.ValueString(), plan.CredentialTypeId.ValueString(), plan.Id.ValueString()).CredentialIssuanceRule(*CredentialIssuanceRule).Execute()
 		},
 		"UpdateCredentialIssuanceRule",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -464,7 +467,7 @@ func (r *CredentialIssuanceRuleResource) Update(ctx context.Context, req resourc
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*credentials.CredentialIssuanceRule))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -485,18 +488,18 @@ func (r *CredentialIssuanceRuleResource) Delete(ctx context.Context, req resourc
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.CredentialIssuanceRulesApi.DeleteCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteCredentialIssuanceRule",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
