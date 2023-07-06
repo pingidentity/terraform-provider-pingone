@@ -2,6 +2,7 @@
 
 NOTES:
 
+* All resources/data sources: SDK response parsing code optimisation. ([#460](https://github.com/pingidentity/terraform-provider-pingone/issues/460))
 * Corrected "Upgrade MFA Policies to use FIDO2 with Passkeys" guide text. ([#455](https://github.com/pingidentity/terraform-provider-pingone/issues/455))
 * `resource/pingone_application_resource_grant`: Migrated to plugin framework. ([#456](https://github.com/pingidentity/terraform-provider-pingone/issues/456))
 
