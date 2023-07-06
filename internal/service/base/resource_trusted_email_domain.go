@@ -61,7 +61,7 @@ func resourceTrustedEmailDomainCreate(ctx context.Context, d *schema.ResourceDat
 	resp, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.TrustedEmailDomainsApi.CreateTrustedEmailDomain(ctx, d.Get("environment_id").(string)).EmailDomain(emailDomain).Execute()
 		},
 		"CreateTrustedEmailDomain",
@@ -88,7 +88,7 @@ func resourceTrustedEmailDomainRead(ctx context.Context, d *schema.ResourceData,
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.TrustedEmailDomainsApi.ReadOneTrustedEmailDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneTrustedEmailDomain",
@@ -120,7 +120,7 @@ func resourceTrustedEmailDomainDelete(ctx context.Context, d *schema.ResourceDat
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.TrustedEmailDomainsApi.DeleteTrustedEmailDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

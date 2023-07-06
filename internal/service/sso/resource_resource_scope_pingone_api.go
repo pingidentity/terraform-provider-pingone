@@ -91,7 +91,7 @@ func resourceResourceScopePingOneAPICreate(ctx context.Context, d *schema.Resour
 		resp, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
 			},
 			"UpdateResourceScope-PingOneAPI-Create",
@@ -104,7 +104,7 @@ func resourceResourceScopePingOneAPICreate(ctx context.Context, d *schema.Resour
 		resp, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceScopesApi.CreateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId()).ResourceScope(*resourceScope).Execute()
 			},
 			"CreateResourceScope-PingOneAPI",
@@ -138,7 +138,7 @@ func resourceResourceScopePingOneAPIRead(ctx context.Context, d *schema.Resource
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).Execute()
 		},
 		"ReadOneResourceScope-PingOneAPI",
@@ -194,7 +194,7 @@ func resourceResourceScopePingOneAPIUpdate(ctx context.Context, d *schema.Resour
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).ResourceScope(*resourceScope).Execute()
 		},
 		"UpdateResourceScope-PingOneAPI",
@@ -231,7 +231,7 @@ func resourceResourceScopePingOneAPIDelete(ctx context.Context, d *schema.Resour
 		_, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).ResourceScope(*resourceScope).Execute()
 			},
 			"UpdateResourceScope-PingOneAPI-Delete",
@@ -246,7 +246,7 @@ func resourceResourceScopePingOneAPIDelete(ctx context.Context, d *schema.Resour
 		_, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				r, err := apiClient.ResourceScopesApi.DeleteResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).Execute()
 				return nil, r, err
 			},

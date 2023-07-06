@@ -211,37 +211,38 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	response, d := framework.ParseResponse(
+	var response *management.EntityArray
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		},
 		"ReadAllUsers",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var responseEnabled interface{}
-	if users, ok := response.(*management.EntityArray).Embedded.GetUsersOk(); ok && len(users) > 0 && users[0].Id != nil {
+	var responseEnabled *management.UserEnabled
+	if users, ok := response.Embedded.GetUsersOk(); ok && len(users) > 0 && users[0].Id != nil {
 
 		user = users[0]
 
-		responseEnabled, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), user.GetId()).Execute()
 			},
 			"ReadUserEnabled",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			&responseEnabled,
+		)...)
 
 	} else {
 		resp.Diagnostics.AddError(
@@ -252,7 +253,7 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&user, responseEnabled.(*management.UserEnabled))...)
+	resp.Diagnostics.Append(data.toState(&user, responseEnabled)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

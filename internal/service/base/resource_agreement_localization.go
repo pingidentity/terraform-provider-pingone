@@ -171,22 +171,23 @@ func (r *AgreementLocalizationResource) Create(ctx context.Context, req resource
 		return
 	}
 
-	language, d := framework.ParseResponse(
+	var language *management.Language
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.LanguagesApi.ReadOneLanguage(ctx, plan.EnvironmentId.ValueString(), plan.LanguageId.ValueString()).Execute()
 		},
 		"ReadOneLanguage",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&language,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if v, ok := language.(*management.Language).GetEnabledOk(); !ok || !*v {
+	if v, ok := language.GetEnabledOk(); !ok || !*v {
 		resp.Diagnostics.AddError(
 			"Invalid langauage parameter",
 			fmt.Sprintf("The language with ID %s needs to be enabled in the environment before it can be assigned to a localized agreement", plan.LanguageId.ValueString()),
@@ -194,23 +195,24 @@ func (r *AgreementLocalizationResource) Create(ctx context.Context, req resource
 		return
 	}
 
-	locale := language.(*management.Language).GetLocale()
+	locale := language.GetLocale()
 
 	// Build the model for the API
 	localization := plan.expand(locale)
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.AgreementLanguage
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementLanguagesResourcesApi.CreateAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).AgreementLanguage(*localization).Execute()
 		},
 		"CreateAgreementLanguage",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -219,7 +221,7 @@ func (r *AgreementLocalizationResource) Create(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.AgreementLanguage))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -240,17 +242,18 @@ func (r *AgreementLocalizationResource) Read(ctx context.Context, req resource.R
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.AgreementLanguage
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneAgreementLanguage",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -262,7 +265,7 @@ func (r *AgreementLocalizationResource) Read(ctx context.Context, req resource.R
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.AgreementLanguage))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -282,22 +285,23 @@ func (r *AgreementLocalizationResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	language, d := framework.ParseResponse(
+	var language *management.Language
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.LanguagesApi.ReadOneLanguage(ctx, plan.EnvironmentId.ValueString(), plan.LanguageId.ValueString()).Execute()
 		},
 		"ReadOneLanguage",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&language,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if v, ok := language.(*management.Language).GetEnabledOk(); !ok || !*v {
+	if v, ok := language.GetEnabledOk(); !ok || !*v {
 		resp.Diagnostics.AddError(
 			"Invalid langauage parameter",
 			fmt.Sprintf("The language with ID %s needs to be enabled in the environment before it can be assigned to a localized agreement", plan.LanguageId.ValueString()),
@@ -305,23 +309,24 @@ func (r *AgreementLocalizationResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	locale := language.(*management.Language).GetLocale()
+	locale := language.GetLocale()
 
 	// Build the model for the API
 	localization := plan.expand(locale)
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.AgreementLanguage
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementLanguagesResourcesApi.UpdateAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.Id.ValueString()).AgreementLanguage(*localization).Execute()
 		},
 		"UpdateAgreementLanguage",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -330,7 +335,7 @@ func (r *AgreementLocalizationResource) Update(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.AgreementLanguage))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -351,18 +356,18 @@ func (r *AgreementLocalizationResource) Delete(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.AgreementLanguagesResourcesApi.DeleteAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteAgreementLanguage",
 		agreementLocalizationDeleteErrorHandler,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

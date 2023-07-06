@@ -246,29 +246,30 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 	// Run the API call
 	var response interface{}
 	if !isCoreAttribute && !isOverriddenAttribute {
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.ResourceAttributesApi.CreateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
 			},
 			"CreateResourceAttribute",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&response,
+		)...)
 	} else {
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), resourceAttribute.GetId()).ResourceAttribute(*resourceAttribute).Execute()
 			},
 			"UpdateResourceAttribute",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&response,
+		)...)
 	}
-	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -298,17 +299,18 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.ResourceAttribute
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ResourceAttributesApi.ReadOneResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneResourceAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -320,7 +322,7 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.ResourceAttribute))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -362,17 +364,18 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.ResourceAttribute
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), plan.Id.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
 		},
 		"UpdateResourceAttribute",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -381,7 +384,7 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.ResourceAttribute))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -402,7 +405,6 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 	}
 
 	// Run the API call
-	var d diag.Diagnostics
 	if data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_PREDEFINED))) || data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
 
 		resourceType, d := data.getResourceType(ctx, r.client)
@@ -463,31 +465,31 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			return
 		}
 
-		_, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).ResourceAttribute(*resourceMapping).Execute()
 			},
 			"UpdateResourceAttribute",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			nil,
+		)...)
 	} else {
 
-		_, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				r, err := r.client.ResourceAttributesApi.DeleteResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).Execute()
 				return nil, r, err
 			},
 			"DeleteResourceAttribute",
 			framework.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			nil,
+		)...)
 	}
 	if resp.Diagnostics.HasError() {
 		return

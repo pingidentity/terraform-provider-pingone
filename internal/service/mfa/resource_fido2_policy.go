@@ -540,17 +540,18 @@ func (r *FIDO2PolicyResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *mfa.FIDO2Policy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.FIDO2PolicyApi.CreateFIDO2Policy(ctx, plan.EnvironmentId.ValueString()).FIDO2Policy(*fido2Policy).Execute()
 		},
 		"CreateFIDO2Policy",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -559,7 +560,7 @@ func (r *FIDO2PolicyResource) Create(ctx context.Context, req resource.CreateReq
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*mfa.FIDO2Policy))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -580,17 +581,18 @@ func (r *FIDO2PolicyResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *mfa.FIDO2Policy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.FIDO2PolicyApi.ReadOneFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneFIDO2Policy",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -602,7 +604,7 @@ func (r *FIDO2PolicyResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*mfa.FIDO2Policy))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -630,17 +632,18 @@ func (r *FIDO2PolicyResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *mfa.FIDO2Policy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.FIDO2PolicyApi.UpdateFIDO2Policy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).FIDO2Policy(*fido2Policy).Execute()
 		},
 		"UpdateFIDO2Policy",
 		framework.DefaultCustomError,
 		nil,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -649,7 +652,7 @@ func (r *FIDO2PolicyResource) Update(ctx context.Context, req resource.UpdateReq
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*mfa.FIDO2Policy))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -670,18 +673,18 @@ func (r *FIDO2PolicyResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.FIDO2PolicyApi.DeleteFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteFIDO2Policy",
 		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	resp.Diagnostics.Append(diags...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

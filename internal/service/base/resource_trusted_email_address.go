@@ -162,17 +162,18 @@ func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.C
 	emailDomainTrustedEmail := plan.expand()
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.EmailDomainTrustedEmail
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
 		},
 		"CreateTrustedEmailAddress",
 		trustedEmailAddressAPIErrors,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -181,7 +182,7 @@ func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.C
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.EmailDomainTrustedEmail))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -202,17 +203,18 @@ func (r *TrustedEmailAddressResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.EmailDomainTrustedEmail
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.TrustedEmailAddressesApi.ReadOneTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneTrustedEmailAddress",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -224,7 +226,7 @@ func (r *TrustedEmailAddressResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.EmailDomainTrustedEmail))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -248,18 +250,18 @@ func (r *TrustedEmailAddressResource) Delete(ctx context.Context, req resource.D
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.TrustedEmailAddressesApi.DeleteTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteTrustedEmailAddress",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

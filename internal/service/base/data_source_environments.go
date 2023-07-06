@@ -115,24 +115,23 @@ func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	filterFunction := func() (interface{}, *http.Response, error) {
+	filterFunction := func() (any, *http.Response, error) {
 		return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(data.ScimFilter.ValueString()).Execute()
 	}
 
-	response, diags := framework.ParseResponse(
+	var entityArray *management.EntityArray
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		filterFunction,
 		"ReadAllEnvironments",
 		framework.DefaultCustomError,
 		nil,
-	)
-	resp.Diagnostics.Append(diags...)
+		&entityArray,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	entityArray := response.(*management.EntityArray)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(entityArray.Embedded.GetEnvironments())...)

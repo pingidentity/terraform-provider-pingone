@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"reflect"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -47,12 +48,12 @@ var (
 	}
 )
 
-func ParseResponse(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable) (interface{}, diag.Diagnostics) {
+func ParseResponse(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable, targetObject any) diag.Diagnostics {
 	defaultTimeout := 10
-	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, customRetryConditions, time.Duration(defaultTimeout)*time.Minute)
+	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, customRetryConditions, targetObject, time.Duration(defaultTimeout)*time.Minute)
 }
 
-func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable, timeout time.Duration) (interface{}, diag.Diagnostics) {
+func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable, targetObject any, timeout time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if customError == nil {
@@ -82,7 +83,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc,
 
 				diags = customError(v)
 				if diags != nil {
-					return nil, diags
+					return diags
 				}
 
 				if details, ok := v.GetDetailsOk(); ok {
@@ -96,32 +97,54 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc,
 
 				diags.AddError(summaryText, detailText)
 
-				return nil, diags
+				return diags
 			}
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 
 			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nFull response body: %+v", requestID, t.Error(), r.Body))
 
-			return nil, diags
+			return diags
 
 		case *url.Error:
 			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s", t.Err.Error()))
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 
-			return nil, diags
+			return diags
 
 		default:
 			tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), fmt.Sprintf("A generic error has occurred.\nError details: %+v", t))
 
-			return nil, diags
+			return diags
 		}
 
 	}
 
-	return resp, diags
+	if targetObject != nil {
+		v := reflect.ValueOf(targetObject)
+		if v.Kind() != reflect.Ptr {
+			diags.AddError(
+				"Invalid target object",
+				"Target object must be a pointer.  This is always a problem with the provider, please raise an issue with the provider maintainers.",
+			)
+			return diags
+		}
+		if !v.Elem().IsValid() {
+			diags.AddError(
+				"Invalid target object",
+				"Target object is not valid.  This is always a problem with the provider, please raise an issue with the provider maintainers.",
+			)
+			return diags
+		}
+
+		if resp != nil {
+			v.Elem().Set(reflect.ValueOf(resp))
+		}
+	}
+
+	return diags
 
 }

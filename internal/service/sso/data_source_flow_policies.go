@@ -135,7 +135,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	if !data.ScimFilter.IsNull() {
 
-		filterFunction = func() (interface{}, *http.Response, error) {
+		filterFunction = func() (any, *http.Response, error) {
 			return r.client.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
@@ -169,7 +169,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 			"scimFilter": scimFilter,
 		})
 
-		filterFunction = func() (interface{}, *http.Response, error) {
+		filterFunction = func() (any, *http.Response, error) {
 			return r.client.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		}
 
@@ -181,20 +181,19 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	response, diags := framework.ParseResponse(
+	var entityArray *management.EntityArray
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		filterFunction,
 		"ReadAllFlowPolicies",
 		framework.DefaultCustomError,
 		nil,
-	)
-	resp.Diagnostics.Append(diags...)
+		&entityArray,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	entityArray := response.(*management.EntityArray)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.Embedded.GetFlowPolicies())...)

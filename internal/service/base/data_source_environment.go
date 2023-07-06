@@ -234,22 +234,21 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *management.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Execute()
 			},
 			"ReadAllEnvironments",
 			framework.DefaultCustomError,
 			retryEnvironmentDefault,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		entityArray := response.(*management.EntityArray)
 
 		if environments, ok := entityArray.Embedded.GetEnvironmentsOk(); ok {
 
@@ -276,22 +275,23 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 	} else if !data.EnvironmentId.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var response *management.Environment
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.EnvironmentsApi.ReadOneEnvironment(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadOneEnvironment",
 			framework.DefaultCustomError,
 			retryEnvironmentDefault,
-		)
-		resp.Diagnostics.Append(diags...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		environment = *response.(*management.Environment)
+		environment = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -301,23 +301,24 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	// The bill of materials
-	billOfMaterialsResponse, d := framework.ParseResponse(
+	var billOfMaterialsResponse *management.BillOfMaterials
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environment.GetId()).Execute()
 		},
 		"ReadOneBillOfMaterials",
 		framework.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
-	)
-	resp.Diagnostics.Append(d...)
+		&billOfMaterialsResponse,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&environment, billOfMaterialsResponse.(*management.BillOfMaterials))...)
+	resp.Diagnostics.Append(data.toState(&environment, billOfMaterialsResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

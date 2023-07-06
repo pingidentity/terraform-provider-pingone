@@ -100,7 +100,7 @@ func resourceCustomDomainSSLCreate(ctx context.Context, d *schema.ResourceData, 
 	resp, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CustomDomainsApi.UpdateDomain(ctx, d.Get("environment_id").(string), d.Get("custom_domain_id").(string)).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_CERTIFICATE_IMPORTJSON).CustomDomainCertificateRequest(customDomainCertificateRequest).Execute()
 		},
 		"UpdateDomain",
@@ -143,7 +143,7 @@ func resourceCustomDomainSSLRead(ctx context.Context, d *schema.ResourceData, me
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CustomDomainsApi.ReadOneDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneDomain",

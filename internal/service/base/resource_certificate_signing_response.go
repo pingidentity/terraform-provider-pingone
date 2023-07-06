@@ -126,7 +126,7 @@ func resourceCertificateSigningResponseCreate(ctx context.Context, d *schema.Res
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CertificateManagementApi.ImportCSRResponse(ctx, d.Get("environment_id").(string), d.Get("key_id").(string)).File(&archive).Execute()
 		},
 		"ImportCSRResponse",
@@ -153,7 +153,7 @@ func resourceCertificateSigningResponseRead(ctx context.Context, d *schema.Resou
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CertificateManagementApi.GetKey(ctx, d.Get("environment_id").(string), d.Id()).Accept(management.ENUMGETKEYACCEPTHEADER_JSON).Execute()
 		},
 		"GetKey",

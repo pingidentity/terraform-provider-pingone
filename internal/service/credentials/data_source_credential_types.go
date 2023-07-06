@@ -109,22 +109,21 @@ func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.Rea
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var entityArray *credentials.EntityArray
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialTypesApi.ReadAllCredentialTypes(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadAllCredentialTypes",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&entityArray,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	entityArray := response.(*credentials.EntityArray)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.GetEmbedded().Items)...)

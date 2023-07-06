@@ -124,7 +124,7 @@ func resourcePingOneGatewayRoleAssignmentCreate(ctx context.Context, d *schema.R
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GatewayRoleAssignmentsApi.CreateGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).RoleAssignment(gatewayRoleAssignment).Execute()
 		},
 		"CreateGatewayRoleAssignment",
@@ -163,7 +163,7 @@ func resourcePingOneGatewayRoleAssignmentRead(ctx context.Context, d *schema.Res
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GatewayRoleAssignmentsApi.ReadOneGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
 		},
 		"ReadOneGatewayRoleAssignment",
@@ -221,7 +221,7 @@ func resourcePingOneGatewayRoleAssignmentDelete(ctx context.Context, d *schema.R
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.GatewayRoleAssignmentsApi.DeleteGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

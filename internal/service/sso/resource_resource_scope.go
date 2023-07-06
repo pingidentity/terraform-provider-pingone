@@ -76,7 +76,7 @@ func resourceResourceScopeCreate(ctx context.Context, d *schema.ResourceData, me
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceScopesApi.CreateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string)).ResourceScope(*resourceScope).Execute()
 		},
 		"CreateResourceScope",
@@ -108,7 +108,7 @@ func resourceResourceScopeRead(ctx context.Context, d *schema.ResourceData, meta
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).Execute()
 		},
 		"ReadOneResourceScope",
@@ -153,7 +153,7 @@ func resourceResourceScopeUpdate(ctx context.Context, d *schema.ResourceData, me
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).ResourceScope(*resourceScope).Execute()
 		},
 		"UpdateResourceScope",
@@ -181,7 +181,7 @@ func resourceResourceScopeDelete(ctx context.Context, d *schema.ResourceData, me
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.ResourceScopesApi.DeleteResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

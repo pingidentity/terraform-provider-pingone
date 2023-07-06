@@ -55,22 +55,21 @@ func (r *FooResource) Configure(ctx context.Context, req resource.ConfigureReque
 
 Once initialised in the Configure method (as above), the SDK can be invoked inside a function using a retry and response parsing wrapper.  Example:
 ```
-	response, diags := framework.ParseResponse(
+	var trustedEmailAddress *management.EmailDomainTrustedEmail
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
 		},
 		"CreateTrustedEmailAddress", // This is an ID used for logging and error output
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&trustedEmailAddress,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	trustedEmailAddress := response.(*management.EmailDomainTrustedEmail)
 ```
 
 The purpose of the response wrapper is to standardise and optionally override API error responses and retry conditions.
@@ -80,6 +79,8 @@ More information about the SDK methods available can be found at:
 * [Go API client for PingOne Authorize](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/authorize)
 * [Go API client for PingOne MFA](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/mfa)
 * [Go API client for PingOne Risk](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/risk)
+* [Go API client for PingOne Credentials](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/credentials)
+* [Go API client for PingOne Verify](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/verify)
 
 ## Custom Errors
 
@@ -87,22 +88,21 @@ The `CustomError` parameter of the `framework.ParseResponse` function allows the
 
 The following shows an implementation where two overrides are in place; one that evaluates the PingOne API details block for specific validation errors based on the environment region, and the second overriding the error message returned based on a string match:
 ```
-	response, diags := framework.ParseResponse(
+	var trustedEmailAddress *management.EmailDomainTrustedEmail
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
 		},
 		"CreateTrustedEmailAddress", // This is an ID used for logging and error output
 		trustedEmailAddressAPIErrors, // This is an overridden error function
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&trustedEmailAddress,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	trustedEmailAddress := response.(*management.EmailDomainTrustedEmail)
 ```
 
 ```
@@ -134,34 +134,35 @@ The `Retryable` parameter of the `framework.ParseResponse` function allows the d
 
 The following example shows a custom retry override to account for bootstrapped role assignment for the Terraform client to be able to create populations, based on string match of the error message:
 ```
-	resp, diags := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
 		},
 		"CreatePopulation",
 		sdk.DefaultCustomError,
 		func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
 
-		if p1error != nil {
-			var err error
+			if p1error != nil {
+				var err error
 
-			// Permissions may not have propagated by this point
-			if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
-				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
-				return true
+				// Permissions may not have propagated by this point
+				if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+					tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+					return true
+				}
+				if err != nil {
+					tflog.Warn(ctx, "Cannot match error string for retry")
+					return false
+				}
+
 			}
-			if err != nil {
-				tflog.Warn(ctx, "Cannot match error string for retry")
-				return false
-			}
 
-		}
-
-		return false
-	},
-	)
+			return false
+		},
+		&population,
+	)...)
 ```
 
 The default value for this parameter is the `sdk.DefaultRetryable` function.  This can be explicitly set (recommended for readability), or the parameter value can be set to `nil`.

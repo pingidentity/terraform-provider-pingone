@@ -468,18 +468,20 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 
 	// Run the API call
 	timeoutValue := 15
-	response, d := framework.ParseResponseWithCustomTimeout(
+
+	var response *credentials.CredentialType
+	resp.Diagnostics.Append(framework.ParseResponseWithCustomTimeout(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialTypesApi.CreateCredentialType(ctx, plan.EnvironmentId.ValueString()).CredentialType(*credentialType).Execute()
 		},
 		"CreateCredentialType",
 		framework.DefaultCustomError,
 		credentialTypeRetryConditions,
+		&response,
 		time.Duration(timeoutValue)*time.Minute, // 15 mins
-	)
-	resp.Diagnostics.Append(d...)
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -488,7 +490,7 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*credentials.CredentialType))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -509,17 +511,18 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *credentials.CredentialType
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialTypesApi.ReadOneCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneCredentialType",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -531,7 +534,7 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*credentials.CredentialType))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -559,17 +562,18 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *credentials.CredentialType
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.CredentialTypesApi.UpdateCredentialType(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CredentialType(*credentialType).Execute()
 		},
 		"UpdateCredentialType",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -578,7 +582,7 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*credentials.CredentialType))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -599,18 +603,18 @@ func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.Delete
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.CredentialTypesApi.DeleteCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteCredentialType",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -397,18 +397,19 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.SchemaAttribute
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), plan.SchemaId.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
 		},
 		"CreateAttribute",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
+		&response,
+	)...)
 
-	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -417,7 +418,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.SchemaAttribute))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -438,17 +439,18 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.SchemaAttribute
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.SchemasApi.ReadOneAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -460,7 +462,7 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.SchemaAttribute))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -488,17 +490,18 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.SchemaAttribute
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), plan.SchemaId.ValueString(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
 		},
 		"UpdateAttributePut",
 		framework.DefaultCustomError,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -507,7 +510,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.SchemaAttribute))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -528,18 +531,18 @@ func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.Delet
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.SchemasApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 
 	if resp.Diagnostics.HasError() {
 		return

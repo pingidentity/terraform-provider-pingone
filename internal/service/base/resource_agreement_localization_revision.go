@@ -206,17 +206,18 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.AgreementLanguageRevision
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.managementClient.AgreementRevisionsResourcesApi.CreateAgreementLanguageRevision(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).AgreementLanguageRevision(*localizationRevision).Execute()
 		},
 		"CreateAgreementLanguageRevision",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -225,7 +226,7 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.AgreementLanguageRevision), localizationRevision.Text)...)
+	resp.Diagnostics.Append(state.toState(response, localizationRevision.Text)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -246,17 +247,18 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.AgreementLanguageRevision
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.managementClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneAgreementLanguageRevision",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -268,7 +270,7 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.AgreementLanguageRevision), data.Text.ValueString())...)
+	resp.Diagnostics.Append(data.toState(response, data.Text.ValueString())...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -292,18 +294,18 @@ func (r *AgreementLocalizationRevisionResource) Delete(ctx context.Context, req 
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.managementClient.AgreementRevisionsResourcesApi.DeleteAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteAgreementLanguageRevision",
 		agreementLocalizationRevisionDeleteErrorHandler,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

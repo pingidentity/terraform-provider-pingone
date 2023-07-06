@@ -78,7 +78,7 @@ func certificateSigningExport(ctx context.Context, apiClient *management.APIClie
 	return sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CertificateManagementApi.ExportCSR(ctx, environmentID, keyID).Accept(exportFileType).Execute()
 		},
 		"ExportCSR",

@@ -1375,31 +1375,32 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Run the API call
-	var response interface{}
+	var response *risk.RiskPredictor
 	if predefinedPredictorId == nil {
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
 			},
 			"CreateRiskPredictor",
 			riskPredictorCreateUpdateCustomErrorHandler,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&response,
+		)...)
 	} else {
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), *predefinedPredictorId).RiskPredictor(*riskPredictor).Execute()
 			},
 			"UpdateRiskPredictor",
 			riskPredictorCreateUpdateCustomErrorHandler,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&response,
+		)...)
 	}
-	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1408,7 +1409,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response.(*risk.RiskPredictor))...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1429,17 +1430,18 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *risk.RiskPredictor
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneRiskPredictor",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1451,7 +1453,7 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(ctx, response.(*risk.RiskPredictor))...)
+	resp.Diagnostics.Append(data.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1479,17 +1481,18 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *risk.RiskPredictor
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPredictor(*riskPredictor).Execute()
 		},
 		"UpdateRiskPredictor",
 		riskPredictorCreateUpdateCustomErrorHandler,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1498,7 +1501,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response.(*risk.RiskPredictor))...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1520,18 +1523,18 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 
 	if data.Deletable.ValueBool() {
 		// Run the API call
-		_, d := framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				r, err := r.client.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 				return nil, r, err
 			},
 			"DeleteRiskAdvancedPredictor",
 			framework.CustomErrorResourceNotFoundWarning,
 			nil,
-		)
-		resp.Diagnostics.Append(d...)
+			nil,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -1540,18 +1543,18 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 		if v, ok := riskservicehelpers.BootstrapPredictorValues[data.CompactName.ValueString()]; ok {
 
 			// Run the API call
-			_, d := framework.ParseResponse(
+			resp.Diagnostics.Append(framework.ParseResponse(
 				ctx,
 
-				func() (interface{}, *http.Response, error) {
+				func() (any, *http.Response, error) {
 					_, r, err := r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).RiskPredictor(v).Execute()
 					return nil, r, err
 				},
 				"UpdateRiskPredictor",
 				framework.CustomErrorResourceNotFoundWarning,
 				nil,
-			)
-			resp.Diagnostics.Append(d...)
+				nil,
+			)...)
 		}
 
 		resp.Diagnostics.AddWarning(
@@ -1604,22 +1607,23 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 	var riskPredictorCommonData *risk.RiskPredictorCommon
 
 	// Check if this is attempting to overwrite an existing predictor.  We'll only allows overwriting where deletable = false
-	response, diags := framework.ParseResponse(
+	var response *risk.EntityArray
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, p.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadAllRiskPredictors",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	diags.Append(diags...)
+		&response,
+	)...)
 	if diags.HasError() {
 		return nil, nil, diags
 	}
 
-	if predictors, ok := response.(*risk.EntityArray).Embedded.GetRiskPredictorsOk(); ok {
+	if predictors, ok := response.Embedded.GetRiskPredictorsOk(); ok {
 
 		for _, predictor := range predictors {
 			predictorObject := predictor.GetActualInstance()

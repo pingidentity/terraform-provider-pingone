@@ -13,7 +13,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 )
 
-type SDKInterfaceFunc func() (interface{}, *http.Response, error)
+type SDKInterfaceFunc func() (any, *http.Response, error)
 type CustomError func(model.P1Error) diag.Diagnostics
 
 var (

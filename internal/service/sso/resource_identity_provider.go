@@ -436,7 +436,7 @@ func resourceIdentityProviderCreate(ctx context.Context, d *schema.ResourceData,
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.IdentityProvidersApi.CreateIdentityProvider(ctx, d.Get("environment_id").(string)).IdentityProvider(*idpRequest).Execute()
 		},
 		"CreateIdentityProvider",
@@ -483,7 +483,7 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneIdentityProvider",
@@ -737,7 +737,7 @@ func resourceIdentityProviderUpdate(ctx context.Context, d *schema.ResourceData,
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.IdentityProvidersApi.UpdateIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).IdentityProvider(*idpRequest).Execute()
 		},
 		"UpdateIdentityProvider",
@@ -760,7 +760,7 @@ func resourceIdentityProviderDelete(ctx context.Context, d *schema.ResourceData,
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.IdentityProvidersApi.DeleteIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

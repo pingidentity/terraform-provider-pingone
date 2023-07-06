@@ -78,7 +78,7 @@ func certificateExport(ctx context.Context, apiClient *management.APIClient, env
 	return sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CertificateManagementApi.GetKey(ctx, environmentID, keyID).Accept(exportFileType).Execute()
 		},
 		"GetKey",

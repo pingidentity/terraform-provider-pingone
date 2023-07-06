@@ -254,17 +254,18 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.ReadOneApplication200Response
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), *applicationId).UpdateApplicationRequest(*updateSystemApplication).Execute()
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -273,7 +274,7 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.ReadOneApplication200Response))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -305,23 +306,24 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.ReadOneApplication200Response
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneApplication",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.ReadOneApplication200Response))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -360,17 +362,18 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.ReadOneApplication200Response
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -379,7 +382,7 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.ReadOneApplication200Response))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -410,17 +413,17 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 	}
 
 	// Run the API call
-	_, d = framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ApplicationsApi.UpdateApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -709,22 +712,21 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 		Refresh: func() (interface{}, string, error) {
 
 			// Run the API call
-			response, d := framework.ParseResponse(
+			var entityArray *management.EntityArray
+			diags.Append(framework.ParseResponse(
 				ctx,
 
-				func() (interface{}, *http.Response, error) {
+				func() (any, *http.Response, error) {
 					return apiClient.ApplicationsApi.ReadAllApplications(ctx, environmentID).Execute()
 				},
 				"ReadAllApplications",
 				framework.DefaultCustomError,
 				sdk.DefaultCreateReadRetryable,
-			)
-			diags.Append(d...)
+				&entityArray,
+			)...)
 			if diags.HasError() {
 				return nil, "err", fmt.Errorf("Error reading applications")
 			}
-
-			entityArray := response.(*management.EntityArray)
 
 			found := false
 

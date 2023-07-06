@@ -140,7 +140,7 @@ func resourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta int
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.SubscriptionsWebhooksApi.CreateSubscription(ctx, d.Get("environment_id").(string)).Subscription(*subscription).Execute()
 		},
 		"CreateSubscription",
@@ -167,7 +167,7 @@ func resourceWebhookRead(ctx context.Context, d *schema.ResourceData, meta inter
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.SubscriptionsWebhooksApi.ReadOneSubscription(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneSubscription",
@@ -218,7 +218,7 @@ func resourceWebhookUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.SubscriptionsWebhooksApi.UpdateSubscription(ctx, d.Get("environment_id").(string), d.Id()).Subscription(*subscription).Execute()
 		},
 		"UpdateSubscription",
@@ -241,7 +241,7 @@ func resourceWebhookDelete(ctx context.Context, d *schema.ResourceData, meta int
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.SubscriptionsWebhooksApi.DeleteSubscription(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

@@ -71,7 +71,7 @@ func resourceGroupNestingCreate(ctx context.Context, d *schema.ResourceData, met
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GroupsApi.CreateGroupNesting(ctx, d.Get("environment_id").(string), d.Get("group_id").(string)).GroupNesting(groupNesting).Execute()
 		},
 		"CreateGroupNesting",
@@ -98,7 +98,7 @@ func resourceGroupNestingRead(ctx context.Context, d *schema.ResourceData, meta 
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GroupsApi.ReadOneGroupNesting(ctx, d.Get("environment_id").(string), d.Get("group_id").(string), d.Id()).Execute()
 		},
 		"ReadOneGroupNesting",
@@ -130,7 +130,7 @@ func resourceGroupNestingDelete(ctx context.Context, d *schema.ResourceData, met
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.GroupsApi.DeleteGroupNesting(ctx, d.Get("environment_id").(string), d.Get("group_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

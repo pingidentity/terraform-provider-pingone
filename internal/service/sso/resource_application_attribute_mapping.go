@@ -287,31 +287,32 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 	}
 
 	// Run the API call
-	var response interface{}
+	var response *management.ApplicationAttributeMapping
 	if !isCoreAttribute {
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
 			},
 			"CreateApplicationAttributeMapping",
 			framework.CustomErrorInvalidValue,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&response,
+		)...)
 	} else {
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationAttributeMapping.GetId()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
 			},
 			"UpdateApplicationAttributeMapping",
 			framework.CustomErrorInvalidValue,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&response,
+		)...)
 	}
-	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -320,7 +321,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.ApplicationAttributeMapping))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -341,17 +342,18 @@ func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.ApplicationAttributeMapping
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneApplicationAttributeMapping",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -363,7 +365,7 @@ func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req reso
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.ApplicationAttributeMapping))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -404,17 +406,18 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.ApplicationAttributeMapping
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
 		},
 		"UpdateApplicationAttributeMapping",
 		framework.CustomErrorInvalidValue,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -423,7 +426,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.ApplicationAttributeMapping))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -444,7 +447,6 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 	}
 
 	// Run the API call
-	var d diag.Diagnostics
 	if data.MappingType.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
 
 		applicationType, d := data.getApplicationType(ctx, r.client)
@@ -470,32 +472,31 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 			return
 		}
 
-		_, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
 			},
 			"UpdateApplicationAttributeMapping",
 			framework.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
-		)
-
-		resp.Diagnostics.Append(d...)
+			nil,
+		)...)
 
 	} else {
-		_, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				r, err := r.client.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 				return nil, r, err
 			},
 			"DeleteApplicationAttributeMapping",
 			framework.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			nil,
+		)...)
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -523,22 +524,21 @@ func (p *ApplicationAttributeMappingResourceModel) getApplicationType(ctx contex
 	var diags diag.Diagnostics
 
 	// Get application type and verify against the set params
-	resp, d := framework.ParseResponse(
+	var respObject *management.ReadOneApplication200Response
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationsApi.ReadOneApplication(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
 		},
 		"ReadOneApplication",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	diags.Append(d...)
+		&respObject,
+	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
-
-	respObject := resp.(*management.ReadOneApplication200Response)
 
 	var applicationType *management.EnumApplicationProtocol
 	if respObject.ApplicationOIDC != nil && respObject.ApplicationOIDC.GetId() != "" {
@@ -651,22 +651,23 @@ func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, a
 
 	if overrideExisting {
 
-		response, diags := framework.ParseResponse(
+		var response *management.EntityArray
+		diags.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ApplicationAttributeMappingApi.ReadAllApplicationAttributeMappings(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
 			},
 			"ReadAllApplicationAttributeMappings",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		diags.Append(diags...)
+			&response,
+		)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if attributes, ok := response.(*management.EntityArray).Embedded.GetAttributesOk(); ok {
+		if attributes, ok := response.Embedded.GetAttributesOk(); ok {
 
 			found := false
 			for _, attribute := range attributes {

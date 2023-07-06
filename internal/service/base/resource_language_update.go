@@ -91,7 +91,7 @@ func resourceLanguageUpdateRead(ctx context.Context, d *schema.ResourceData, met
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneLanguage-Read",
@@ -133,7 +133,7 @@ func resourceLanguageUpdateUpdate(ctx context.Context, d *schema.ResourceData, m
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneLanguage-Update",
@@ -164,7 +164,7 @@ func resourceLanguageUpdateDelete(ctx context.Context, d *schema.ResourceData, m
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneLanguage-Delete",
@@ -197,7 +197,7 @@ func resourceLanguageUpdateDelete(ctx context.Context, d *schema.ResourceData, m
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.LanguagesApi.UpdateLanguage(ctx, d.Get("environment_id").(string), d.Id()).Language(*language).Execute()
 		},
 		"UpdateLanguage-Delete",
@@ -272,7 +272,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
 		},
 		"UpdateLanguage-UpdateSequence1",
@@ -290,7 +290,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 		_, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
 			},
 			"UpdateLanguage-UpdateSequence2",

@@ -175,17 +175,18 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.Population
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOnePopulation",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -197,7 +198,7 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.Population))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -221,17 +222,18 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 	population := plan.expand()
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.Population
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
 		},
 		"UpdatePopulation",
 		framework.DefaultCustomError,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -240,7 +242,7 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.Population))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -261,18 +263,18 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.PopulationsApi.DeletePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeletePopulation",
 		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -341,23 +343,22 @@ func (p *PopulationResourceModel) toState(apiObject *management.Population) diag
 func PingOnePopulationCreate(ctx context.Context, apiClient *management.APIClient, environmentID string, population management.Population) (*management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	response, d := framework.ParseResponse(
+	var returnVar *management.Population
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
 		},
 		"CreatePopulation",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
+		&returnVar,
+	)...)
 
-	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
-
-	returnVar := response.(*management.Population)
 
 	return returnVar, diags
 }

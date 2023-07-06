@@ -181,22 +181,21 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *management.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.AgreementsResourcesApi.ReadAllAgreements(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllAgreements",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		entityArray := response.(*management.EntityArray)
 
 		if agreements, ok := entityArray.Embedded.GetAgreementsOk(); ok {
 
@@ -223,22 +222,23 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 	} else if !data.AgreementId.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var response *management.Agreement
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
 			},
 			"ReadOneAgreement",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		agreement = *response.(*management.Agreement)
+		agreement = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",

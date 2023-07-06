@@ -69,7 +69,7 @@ func resourceSignOnPolicyCreate(ctx context.Context, d *schema.ResourceData, met
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.SignOnPoliciesApi.CreateSignOnPolicy(ctx, d.Get("environment_id").(string)).SignOnPolicy(signOnPolicy).Execute()
 		},
 		"CreateSignOnPolicy",
@@ -96,7 +96,7 @@ func resourceSignOnPolicyRead(ctx context.Context, d *schema.ResourceData, meta 
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.SignOnPoliciesApi.ReadOneSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneSignOnPolicy",
@@ -140,7 +140,7 @@ func resourceSignOnPolicyUpdate(ctx context.Context, d *schema.ResourceData, met
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.SignOnPoliciesApi.UpdateSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).SignOnPolicy(signOnPolicy).Execute()
 		},
 		"UpdateSignOnPolicy",
@@ -163,7 +163,7 @@ func resourceSignOnPolicyDelete(ctx context.Context, d *schema.ResourceData, met
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.SignOnPoliciesApi.DeleteSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

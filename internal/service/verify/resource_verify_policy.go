@@ -1127,17 +1127,18 @@ func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *verify.VerifyPolicy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.VerifyPoliciesApi.CreateVerifyPolicy(ctx, plan.EnvironmentId.ValueString()).VerifyPolicy(*VerifyPolicy).Execute()
 		},
 		"CreateVerifyPolicy",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1146,7 +1147,7 @@ func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRe
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*verify.VerifyPolicy))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1167,17 +1168,18 @@ func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *verify.VerifyPolicy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneVerifyPolicy",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1189,7 +1191,7 @@ func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*verify.VerifyPolicy))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1217,17 +1219,18 @@ func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *verify.VerifyPolicy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.VerifyPoliciesApi.UpdateVerifyPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).VerifyPolicy(*VerifyPolicy).Execute()
 		},
 		"UpdateVerifyPolicy",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -1237,7 +1240,7 @@ func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*verify.VerifyPolicy))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1258,18 +1261,18 @@ func (r *VerifyPolicyResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.VerifyPoliciesApi.DeleteVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteVerifyPolicy",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

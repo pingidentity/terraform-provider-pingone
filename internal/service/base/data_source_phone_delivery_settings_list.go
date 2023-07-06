@@ -108,22 +108,21 @@ func (r *PhoneDeliverySettingsListDataSource) Read(ctx context.Context, req data
 		return
 	}
 
-	response, diags := framework.ParseResponse(
+	var entityArray *management.EntityArray
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.PhoneDeliverySettingsApi.ReadAllPhoneDeliverySettings(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadAllPhoneDeliverySettings",
 		framework.DefaultCustomError,
 		nil,
-	)
-	resp.Diagnostics.Append(diags...)
+		&entityArray,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	entityArray := response.(*management.EntityArray)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(entityArray.Embedded.GetPhoneDeliverySettings())...)

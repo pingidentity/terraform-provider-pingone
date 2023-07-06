@@ -82,7 +82,7 @@ func resourceLanguageCreate(ctx context.Context, d *schema.ResourceData, meta in
 	resp, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.LanguagesApi.CreateLanguage(ctx, d.Get("environment_id").(string)).Language(language).Execute()
 		},
 		"CreateLanguage",
@@ -109,7 +109,7 @@ func resourceLanguageRead(ctx context.Context, d *schema.ResourceData, meta inte
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneLanguage",
@@ -161,7 +161,7 @@ func resourceLanguageDelete(ctx context.Context, d *schema.ResourceData, meta in
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.LanguagesApi.DeleteLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

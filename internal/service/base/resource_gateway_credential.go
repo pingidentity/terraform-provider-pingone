@@ -74,7 +74,7 @@ func resourceGatewayCredentialCreate(ctx context.Context, d *schema.ResourceData
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GatewayCredentialsApi.CreateGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).Execute()
 		},
 		"CreateGatewayCredential",
@@ -102,7 +102,7 @@ func resourceGatewayCredentialRead(ctx context.Context, d *schema.ResourceData, 
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GatewayCredentialsApi.ReadOneGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
 		},
 		"ReadOneGatewayCredential",
@@ -144,7 +144,7 @@ func resourceGatewayCredentialDelete(ctx context.Context, d *schema.ResourceData
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.GatewayCredentialsApi.DeleteGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

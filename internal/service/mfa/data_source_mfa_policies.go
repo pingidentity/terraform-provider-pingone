@@ -109,24 +109,23 @@ func (r *MFAPoliciesDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	filterFunction := func() (interface{}, *http.Response, error) {
+	filterFunction := func() (any, *http.Response, error) {
 		return r.client.DeviceAuthenticationPolicyApi.ReadDeviceAuthenticationPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
 	}
 
-	response, diags := framework.ParseResponse(
+	var entityArray *mfa.EntityArray
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		filterFunction,
 		"ReadDeviceAuthenticationPolicies",
 		framework.DefaultCustomError,
 		nil,
-	)
-	resp.Diagnostics.Append(diags...)
+		&entityArray,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	entityArray := response.(*mfa.EntityArray)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(entityArray.Embedded.GetDeviceAuthenticationPolicies())...)

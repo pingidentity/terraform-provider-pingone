@@ -74,7 +74,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentCreate(ctx context.Context,
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
 		},
 		"CreateSignOnPolicyAssignment",
@@ -101,7 +101,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx context.Context, d
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 		},
 		"ReadOneSignOnPolicyAssignment",
@@ -136,7 +136,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentUpdate(ctx context.Context,
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
 		},
 		"UpdateSignOnPolicyAssignment",
@@ -159,7 +159,7 @@ func resourcePingOneApplicationSignOnPolicyAssignmentDelete(ctx context.Context,
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.ApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

@@ -134,7 +134,7 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	resp, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ImagesApi.CreateImage(ctx, d.Get("environment_id").(string)).ContentType(contentType).ContentDisposition(fmt.Sprintf("attachment; filename=%s", fileName)).File(&archive).Execute()
 		},
 		"CreateImage",
@@ -161,7 +161,7 @@ func resourceImageRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ImagesApi.ReadImage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadImage",
@@ -193,7 +193,7 @@ func resourceImageDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.ImagesApi.DeleteImage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

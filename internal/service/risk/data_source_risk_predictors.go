@@ -16,22 +16,21 @@ import (
 func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.APIClient, environmentID string, predictorCompactNames []string) ([]string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	response, d := framework.ParseResponse(
+	var entityArray *risk.EntityArray
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, environmentID).Execute()
 		},
 		"ReadAllRiskPredictors",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	diags.Append(d...)
+		&entityArray,
+	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
-
-	entityArray := response.(*risk.EntityArray)
 
 	riskPredictorIDs := make(map[string]string)
 

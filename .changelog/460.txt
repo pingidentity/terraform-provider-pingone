@@ -1,0 +1,3 @@
+```release-note:note
+All resources/data sources: SDK response parsing code optimisation.
+```

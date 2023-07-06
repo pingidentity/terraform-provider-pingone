@@ -187,22 +187,21 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *management.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.OrganizationsApi.ReadAllOrganizations(ctx).Execute()
 			},
 			"ReadAllOrganizations",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		entityArray := response.(*management.EntityArray)
 
 		if organizations, ok := entityArray.Embedded.GetOrganizationsOk(); ok {
 
@@ -229,22 +228,23 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	} else if !data.OrganizationId.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var response *management.Organization
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.OrganizationsApi.ReadOneOrganization(ctx, data.OrganizationId.ValueString()).Execute()
 			},
 			"ReadOneOrganization",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		organization = *response.(*management.Organization)
+		organization = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",

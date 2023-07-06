@@ -152,22 +152,21 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *management.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllPopulations",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		entityArray := response.(*management.EntityArray)
 
 		if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
 
@@ -194,22 +193,23 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	} else if !data.PopulationId.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var response *management.Population
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.PopulationId.ValueString()).Execute()
 			},
 			"ReadOnePopulation",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		population = *response.(*management.Population)
+		population = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -268,22 +268,21 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 		Refresh: func() (interface{}, string, error) {
 
 			// Run the API call
-			response, d := framework.ParseResponse(
+			var entityArray *management.EntityArray
+			diags.Append(framework.ParseResponse(
 				ctx,
 
-				func() (interface{}, *http.Response, error) {
+				func() (any, *http.Response, error) {
 					return apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
 				},
 				"ReadAllPopulations-FetchDefaultPopulation",
 				framework.DefaultCustomError,
 				sdk.DefaultCreateReadRetryable,
-			)
-			diags.Append(d...)
+				&entityArray,
+			)...)
 			if diags.HasError() {
 				return nil, "err", fmt.Errorf("Error reading populations")
 			}
-
-			entityArray := response.(*management.EntityArray)
 
 			found := false
 
