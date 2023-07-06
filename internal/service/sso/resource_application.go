@@ -643,7 +643,7 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
 		},
 		"CreateApplication",
@@ -684,7 +684,7 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationsApi.ReadOneApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneApplication",
@@ -707,7 +707,7 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 		respSecret, diags := sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			},
 			"ReadApplicationSecret",
@@ -985,7 +985,7 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
 		},
 		"UpdateApplication",
@@ -1008,7 +1008,7 @@ func resourceApplicationDelete(ctx context.Context, d *schema.ResourceData, meta
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.ApplicationsApi.DeleteApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

@@ -92,7 +92,7 @@ func resourceResourceScopeOpenIDCreate(ctx context.Context, d *schema.ResourceDa
 		resp, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
 			},
 			"UpdateResourceScope-OpenID-Create",
@@ -105,7 +105,7 @@ func resourceResourceScopeOpenIDCreate(ctx context.Context, d *schema.ResourceDa
 		resp, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceScopesApi.CreateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId()).ResourceScope(*resourceScope).Execute()
 			},
 			"CreateResourceScope-OpenID",
@@ -139,7 +139,7 @@ func resourceResourceScopeOpenIDRead(ctx context.Context, d *schema.ResourceData
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).Execute()
 		},
 		"ReadOneResourceScope-OpenID",
@@ -195,7 +195,7 @@ func resourceResourceScopeOpenIDUpdate(ctx context.Context, d *schema.ResourceDa
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).ResourceScope(*resourceScope).Execute()
 		},
 		"UpdateResourceScope-OpenID",
@@ -232,7 +232,7 @@ func resourceResourceScopeOpenIDDelete(ctx context.Context, d *schema.ResourceDa
 		_, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).ResourceScope(*resourceScope).Execute()
 			},
 			"UpdateResourceScope-OpenID-Delete",
@@ -247,7 +247,7 @@ func resourceResourceScopeOpenIDDelete(ctx context.Context, d *schema.ResourceDa
 		_, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				r, err := apiClient.ResourceScopesApi.DeleteResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).Execute()
 				return nil, r, err
 			},

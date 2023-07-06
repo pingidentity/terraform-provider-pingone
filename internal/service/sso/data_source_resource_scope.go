@@ -86,7 +86,7 @@ func datasourcePingOneResourceScopeRead(ctx context.Context, d *schema.ResourceD
 		respList, diags := sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string)).Execute()
 			},
 			"ReadAllResourceScopes",
@@ -125,7 +125,7 @@ func datasourcePingOneResourceScopeRead(ctx context.Context, d *schema.ResourceD
 		resourceResp, diags := sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), v.(string)).Execute()
 			},
 			"ReadOneResourceScope",
@@ -182,7 +182,7 @@ func fetchResourceScopeFromName(ctx context.Context, apiClient *management.APICl
 	respList, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, environmentID, resourceID).Execute()
 		},
 		"ReadAllResourceScopes",

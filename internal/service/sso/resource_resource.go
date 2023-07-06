@@ -125,7 +125,7 @@ func resourceResourceCreate(ctx context.Context, d *schema.ResourceData, meta in
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
 		},
 		"CreateResource",
@@ -174,7 +174,7 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 			respSecret, diags := sdk.ParseResponse(
 				ctx,
 
-				func() (interface{}, *http.Response, error) {
+				func() (any, *http.Response, error) {
 					return apiClient.ResourceClientSecretApi.ReadResourceSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 				},
 				"ReadResourceSecret",
@@ -278,7 +278,7 @@ func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
 		},
 		"UpdateResource",
@@ -301,7 +301,7 @@ func resourceResourceDelete(ctx context.Context, d *schema.ResourceData, meta in
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.ResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
@@ -341,7 +341,7 @@ func fetchResource(ctx context.Context, apiClient *management.APIClient, environ
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourcesApi.ReadOneResource(ctx, environmentID, resourceID).Execute()
 		},
 		"ReadOneResource",
@@ -360,22 +360,21 @@ func fetchResource(ctx context.Context, apiClient *management.APIClient, environ
 func fetchResource_Framework(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) (*management.Resource, frameworkdiag.Diagnostics) {
 	var diags frameworkdiag.Diagnostics
 
-	resp, diags := framework.ParseResponse(
+	var respObject *management.Resource
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourcesApi.ReadOneResource(ctx, environmentID, resourceID).Execute()
 		},
 		"ReadOneResource",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	diags.Append(diags...)
+		&respObject,
+	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
-
-	respObject := resp.(*management.Resource)
 
 	return respObject, diags
 }

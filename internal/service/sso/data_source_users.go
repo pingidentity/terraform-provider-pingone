@@ -166,7 +166,7 @@ func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	if !data.ScimFilter.IsNull() {
 
-		filterFunction = func() (interface{}, *http.Response, error) {
+		filterFunction = func() (any, *http.Response, error) {
 			return r.client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
@@ -204,7 +204,7 @@ func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 			"scimFilter": scimFilter,
 		})
 
-		filterFunction = func() (interface{}, *http.Response, error) {
+		filterFunction = func() (any, *http.Response, error) {
 			return r.client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		}
 
@@ -216,20 +216,19 @@ func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	response, diags := framework.ParseResponse(
+	var entityArray *management.EntityArray
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		filterFunction,
 		"ReadAllUsers",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&entityArray,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	entityArray := response.(*management.EntityArray)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.Embedded.GetUsers())...)

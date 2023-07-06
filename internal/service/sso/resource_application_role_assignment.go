@@ -138,7 +138,7 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
 		},
 		"CreateApplicationRoleAssignment",
@@ -193,7 +193,7 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 		},
 		"ReadOneApplicationRoleAssignment",
@@ -251,7 +251,7 @@ func resourcePingOneApplicationRoleAssignmentDelete(ctx context.Context, d *sche
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.ApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
@@ -291,7 +291,7 @@ func checkApplicationTypeForRoleAssignment(ctx context.Context, apiClient *manag
 	resp, d := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
 		},
 		"ReadOneApplication",

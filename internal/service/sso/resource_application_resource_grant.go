@@ -152,18 +152,18 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.ApplicationResourceGrant
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
 		},
 		"CreateApplicationGrant",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -172,7 +172,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.ApplicationResourceGrant))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -193,17 +193,18 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.ApplicationResourceGrant
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneApplicationGrant",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -215,7 +216,7 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.ApplicationResourceGrant))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -249,17 +250,18 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.ApplicationResourceGrant
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
 		},
 		"UpdateApplicationGrant",
 		framework.DefaultCustomError,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -268,7 +270,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.ApplicationResourceGrant))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -289,18 +291,18 @@ func (r *ApplicationResourceGrantResource) Delete(ctx context.Context, req resou
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.ApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteApplicationGrant",
 		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -351,41 +353,40 @@ func (p *ApplicationResourceGrantResourceModel) validate(ctx context.Context, ap
 	var diags diag.Diagnostics
 
 	// Check that the `openid` scope from the `openid` resource is not in the list
-	resourceResponse, d := framework.ParseResponse(
+	var resource *management.Resource
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourcesApi.ReadOneResource(ctx, p.EnvironmentId.ValueString(), p.ResourceId.ValueString()).Execute()
 		},
 		"ReadOneResource",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-
-	diags.Append(d...)
+		&resource,
+	)...)
 	if diags.HasError() {
 		return diags
 	}
 
-	resource := resourceResponse.(*management.Resource)
 	if v, ok := resource.GetNameOk(); ok && *v == "openid" {
-		resourceScopesResponse, d := framework.ParseResponse(
+		var entityArray *management.EntityArray
+		diags.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, p.EnvironmentId.ValueString(), p.ResourceId.ValueString()).Execute()
 			},
 			"ReadAllResourceScopes",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&entityArray,
+		)...)
 
-		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
 
-		entityArray := resourceScopesResponse.(*management.EntityArray)
 		if resourceScopes, ok := entityArray.Embedded.GetScopesOk(); ok {
 			openidScope := ""
 			for _, resourceScope := range resourceScopes {

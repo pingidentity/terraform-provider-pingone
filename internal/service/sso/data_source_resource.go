@@ -100,7 +100,7 @@ func datasourcePingOneResourceRead(ctx context.Context, d *schema.ResourceData, 
 		resourceResp, diags := sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), v.(string)).Execute()
 			},
 			"ReadOneResource",
@@ -142,7 +142,7 @@ func datasourcePingOneResourceRead(ctx context.Context, d *schema.ResourceData, 
 			respSecret, diags := sdk.ParseResponse(
 				ctx,
 
-				func() (interface{}, *http.Response, error) {
+				func() (any, *http.Response, error) {
 					return apiClient.ResourceClientSecretApi.ReadResourceSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 				},
 				"ReadResourceSecret",
@@ -220,7 +220,7 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 	respList, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourcesApi.ReadAllResources(ctx, environmentID).Execute()
 		},
 		"ReadAllResources",

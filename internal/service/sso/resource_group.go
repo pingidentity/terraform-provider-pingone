@@ -98,7 +98,7 @@ func resourceGroupCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GroupsApi.CreateGroup(ctx, d.Get("environment_id").(string)).Group(group).Execute()
 		},
 		"CreateGroup",
@@ -125,7 +125,7 @@ func resourceGroupRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GroupsApi.ReadOneGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneGroup",
@@ -200,7 +200,7 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GroupsApi.UpdateGroup(ctx, d.Get("environment_id").(string), d.Id()).Group(group).Execute()
 		},
 		"UpdateGroup",
@@ -223,7 +223,7 @@ func resourceGroupDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.GroupsApi.DeleteGroup(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

@@ -166,42 +166,41 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	user, userEnabled := plan.expand()
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var userResponse *management.User
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.UsersApi.CreateUser(ctx, plan.EnvironmentId.ValueString()).User(*user).Execute()
 		},
 		"CreateUser",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
+		&userResponse,
+	)...)
 
-	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	userResponse := response.(*management.User)
-
-	responseEnabled, d := framework.ParseResponse(
+	var responseEnabled *management.UserEnabled
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), userResponse.GetId()).UserEnabled(*userEnabled).Execute()
 		},
 		"UpdateUserEnabled",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-
-	resp.Diagnostics.Append(d...)
+		&responseEnabled,
+	)...)
 
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(userResponse, responseEnabled.(*management.UserEnabled))...)
+	resp.Diagnostics.Append(state.toState(userResponse, responseEnabled)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -222,17 +221,18 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.User
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.UsersApi.ReadUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadUser",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -243,17 +243,18 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	responseEnabled, d := framework.ParseResponse(
+	var responseEnabled *management.UserEnabled
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadUserEnabled",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&responseEnabled,
+	)...)
 
 	// Remove from state if resource is not found
 	if responseEnabled == nil {
@@ -262,7 +263,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.User), responseEnabled.(*management.UserEnabled))...)
+	resp.Diagnostics.Append(data.toState(response, responseEnabled)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -286,39 +287,40 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	user, userEnabled := plan.expand()
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.User
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.UsersApi.UpdateUserPut(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).User(*user).Execute()
 		},
 		"UpdateUserPut",
 		framework.DefaultCustomError,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	responseEnabled, d := framework.ParseResponse(
+	var responseEnabled *management.UserEnabled
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserEnabled(*userEnabled).Execute()
 		},
 		"UpdateUserEnabled",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-
-	resp.Diagnostics.Append(d...)
+		&responseEnabled,
+	)...)
 
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.User), responseEnabled.(*management.UserEnabled))...)
+	resp.Diagnostics.Append(state.toState(response, responseEnabled)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -339,18 +341,18 @@ func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.UsersApi.DeleteUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteUser",
 		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 
 	if resp.Diagnostics.HasError() {
 		return

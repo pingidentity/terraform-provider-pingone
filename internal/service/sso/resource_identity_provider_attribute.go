@@ -216,31 +216,32 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	var response interface{}
+	var response *management.IdentityProviderAttribute
 	if !isCoreAttribute {
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.IdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
 			},
 			"CreateIdentityProviderAttribute",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&response,
+		)...)
 	} else {
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), identityProviderAttribute.GetId()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
 			},
 			"UpdateIdentityProviderAttribute",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&response,
+		)...)
 	}
-	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -249,7 +250,7 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.IdentityProviderAttribute))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -270,17 +271,18 @@ func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.IdentityProviderAttribute
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneIdentityProviderAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -292,7 +294,7 @@ func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resour
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.IdentityProviderAttribute))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -327,17 +329,18 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.IdentityProviderAttribute
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*identityProviderAttributeMapping).Execute()
 		},
 		"UpdateIdentityProviderAttribute",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -346,7 +349,7 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.IdentityProviderAttribute))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -367,7 +370,6 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	var d diag.Diagnostics
 	if data.MappingType.Equal(types.StringValue(string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGTYPE_CORE))) {
 
 		idpType, d := data.getIdentityProviderType(ctx, r.client)
@@ -393,32 +395,32 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 			return
 		}
 
-		_, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).IdentityProviderAttribute(*idpMapping).Execute()
 			},
 			"UpdateIdentityProviderAttribute",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			nil,
+		)...)
 
 	} else {
 
-		_, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				r, err := r.client.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
 				return nil, r, err
 			},
 			"DeleteIdentityProviderAttribute",
 			framework.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			nil,
+		)...)
 
 	}
 	if resp.Diagnostics.HasError() {
@@ -447,22 +449,21 @@ func (p *IdentityProviderAttributeResourceModel) getIdentityProviderType(ctx con
 	var diags diag.Diagnostics
 
 	// Get application type and verify against the set params
-	resp, d := framework.ParseResponse(
+	var respObject *management.IdentityProvider
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
 		},
 		"ReadOneIdentityProvider",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	diags.Append(d...)
+		&respObject,
+	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
-
-	respObject := resp.(*management.IdentityProvider)
 
 	var idpType *management.EnumIdentityProviderExt
 	if respObject.IdentityProviderApple != nil && respObject.IdentityProviderApple.GetId() != "" {
@@ -524,22 +525,23 @@ func (p *IdentityProviderAttributeResourceModel) expand(ctx context.Context, api
 
 	if overrideExisting {
 
-		respList, d := framework.ParseResponse(
+		var respList *management.EntityArray
+		diags.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.IdentityProviderAttributesApi.ReadAllIdentityProviderAttributes(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
 			},
 			"ReadAllIdentityProviderAttributes",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		diags.Append(d...)
+			&respList,
+		)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if idpAttributes, ok := respList.(*management.EntityArray).Embedded.GetAttributesOk(); ok {
+		if idpAttributes, ok := respList.Embedded.GetAttributesOk(); ok {
 
 			found := false
 			for _, idpAttribute := range idpAttributes {

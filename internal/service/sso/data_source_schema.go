@@ -141,22 +141,21 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *management.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.SchemasApi.ReadAllSchemas(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllSchemas",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		entityArray := response.(*management.EntityArray)
 
 		if schemas, ok := entityArray.Embedded.GetSchemasOk(); ok {
 
@@ -183,22 +182,23 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	} else if !data.SchemaId.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var response *management.Schema
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
 			},
 			"ReadOneSchema",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		schema = *response.(*management.Schema)
+		schema = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",

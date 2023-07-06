@@ -1619,7 +1619,6 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
-	diags.Append(diags...)
 	if diags.HasError() {
 		return nil, nil, diags
 	}

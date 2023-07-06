@@ -94,7 +94,7 @@ func datasourcePingOneResourceAttributeRead(ctx context.Context, d *schema.Resou
 		resourceAttrResp, diags := sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.ResourceAttributesApi.ReadOneResourceAttribute(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), v.(string)).Execute()
 			},
 			"ReadOneResourceAttribute",
@@ -145,7 +145,7 @@ func fetchResourceAttributeFromName(ctx context.Context, apiClient *management.A
 	respList, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
 		},
 		"ReadAllResourceAttributes",
@@ -187,22 +187,23 @@ func fetchResourceAttributeFromName_Framework(ctx context.Context, apiClient *ma
 
 	var resp *management.ResourceAttribute
 
-	respList, diags := framework.ParseResponse(
+	var respList *management.EntityArray
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
 		},
 		"ReadAllResourceAttributes",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	diags.Append(diags...)
+		&respList,
+	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	if resourceAttributes, ok := respList.(*management.EntityArray).Embedded.GetAttributesOk(); ok {
+	if resourceAttributes, ok := respList.Embedded.GetAttributesOk(); ok {
 
 		found := false
 		for _, resourceAttribute := range resourceAttributes {
