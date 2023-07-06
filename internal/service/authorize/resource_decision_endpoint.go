@@ -99,7 +99,7 @@ func resourceDecisionEndpointCreate(ctx context.Context, d *schema.ResourceData,
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.PolicyDecisionManagementApi.CreateDecisionEndpoint(ctx, d.Get("environment_id").(string)).DecisionEndpoint(decisionEndpoint).Execute()
 		},
 		"CreateDecisionEndpoint",
@@ -126,7 +126,7 @@ func resourceDecisionEndpointRead(ctx context.Context, d *schema.ResourceData, m
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.PolicyDecisionManagementApi.ReadOneDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneDecisionEndpoint",
@@ -201,7 +201,7 @@ func resourceDecisionEndpointUpdate(ctx context.Context, d *schema.ResourceData,
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.PolicyDecisionManagementApi.UpdateDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).DecisionEndpoint(decisionEndpoint).Execute()
 		},
 		"UpdateDecisionEndpoint",
@@ -224,7 +224,7 @@ func resourceDecisionEndpointDelete(ctx context.Context, d *schema.ResourceData,
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.PolicyDecisionManagementApi.DeleteDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
