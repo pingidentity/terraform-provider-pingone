@@ -640,41 +640,42 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	if !data.VerifyPolicyId.IsNull() {
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var response *verify.VerifyPolicy
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.VerifyPolicyId.ValueString()).Execute()
 			},
 			"ReadOneVerifyPolicy",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		verifyPolicy = *response.(*verify.VerifyPolicy)
+		verifyPolicy = *response
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *verify.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllVerifyPolicies",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		entityArray := response.(*verify.EntityArray)
 		if verifyPolicies, ok := entityArray.Embedded.GetVerifyPoliciesOk(); ok {
 
 			found := false
@@ -698,22 +699,22 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 		}
 	} else if data.Default.ValueBool() {
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *verify.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllVerifyPolicies",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		entityArray := response.(*verify.EntityArray)
 		if verifyPolicies, ok := entityArray.Embedded.GetVerifyPoliciesOk(); ok {
 
 			found := false
