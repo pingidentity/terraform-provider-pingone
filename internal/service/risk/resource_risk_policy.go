@@ -922,33 +922,35 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Run the API call
-	createResponse, d := framework.ParseResponse(
+	var createResponse *risk.RiskPolicySet
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.RiskPoliciesApi.CreateRiskPolicySet(ctx, plan.EnvironmentId.ValueString()).RiskPolicySet(*riskPolicy).Execute()
 		},
 		"CreateRiskPolicySet",
 		riskPolicyCreateUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&createResponse,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// We have to read it back because the API does not return the full state object on create
-	response, d := framework.ParseResponse(
+	var response *risk.RiskPolicySet
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
-			return r.client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), createResponse.(*risk.RiskPolicySet).GetId()).Execute()
+		func() (any, *http.Response, error) {
+			return r.client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), createResponse.GetId()).Execute()
 		},
 		"ReadOneRiskPolicySet",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -957,7 +959,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*risk.RiskPolicySet))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -978,17 +980,18 @@ func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *risk.RiskPolicySet
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneRiskPolicySet",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1000,7 +1003,7 @@ func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*risk.RiskPolicySet))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1028,17 +1031,18 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *risk.RiskPolicySet
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.RiskPoliciesApi.UpdateRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPolicySet(*riskPolicy).Execute()
 		},
 		"UpdateRiskPolicySet",
 		riskPolicyCreateUpdateCustomErrorHandler,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1047,7 +1051,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*risk.RiskPolicySet))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1068,18 +1072,18 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.RiskPoliciesApi.DeleteRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteRiskPolicySet",
 		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
