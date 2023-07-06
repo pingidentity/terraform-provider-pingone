@@ -128,17 +128,18 @@ func (r *BrandingThemeDefaultResource) Create(ctx context.Context, req resource.
 	brandingThemeDefault := plan.expand()
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.BrandingThemeDefault
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, plan.EnvironmentId.ValueString(), plan.BrandingThemeId.ValueString()).BrandingThemeDefault(*brandingThemeDefault).Execute()
 		},
 		"UpdateBrandingThemeDefault",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -147,7 +148,7 @@ func (r *BrandingThemeDefaultResource) Create(ctx context.Context, req resource.
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.BrandingThemeDefault))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -168,17 +169,18 @@ func (r *BrandingThemeDefaultResource) Read(ctx context.Context, req resource.Re
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.BrandingThemeDefault
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.BrandingThemesApi.ReadBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadBrandingThemeDefault",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -190,7 +192,7 @@ func (r *BrandingThemeDefaultResource) Read(ctx context.Context, req resource.Re
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.BrandingThemeDefault))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -241,34 +243,35 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 		)
 
 		// Run the API call
-		response, d := framework.ParseResponse(
+		var response *management.BrandingTheme
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.BrandingThemesApi.CreateBrandingTheme(ctx, data.EnvironmentId.ValueString()).BrandingTheme(*defaultTheme).Execute()
 			},
 			"CreateBrandingTheme",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			&response,
+		)...)
 
-		bootstrapDefaultThemeId = response.(*management.BrandingTheme).Id
+		bootstrapDefaultThemeId = response.Id
 	}
 
 	brandingThemeDefault := management.NewBrandingThemeDefault(true)
 
-	_, d = framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), *bootstrapDefaultThemeId).BrandingThemeDefault(*brandingThemeDefault).Execute()
 		},
 		"UpdateBrandingThemeDefault",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -300,22 +303,23 @@ func (r *BrandingThemeDefaultResource) ImportState(ctx context.Context, req reso
 func (r *BrandingThemeDefaultResource) fetchBootstapDefaultThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string) (*string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	response, diags := framework.ParseResponse(
+	var response *management.EntityArray
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.BrandingThemesApi.ReadBrandingThemes(ctx, environmentID).Execute()
 		},
 		"ReadBrandingThemes",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	diags.Append(diags...)
+		&response,
+	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	if brandingThemes, ok := response.(*management.EntityArray).Embedded.GetThemesOk(); ok {
+	if brandingThemes, ok := response.Embedded.GetThemesOk(); ok {
 
 		for _, brandingTheme := range brandingThemes {
 			if *brandingTheme.GetConfiguration().Name == "Ping Default" {

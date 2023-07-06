@@ -236,17 +236,18 @@ func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsSettingsEmailDeliverySettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsSettingsSMTPApi.UpdateEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsEmailDeliverySettings(*notificationSettings).Execute()
 		},
 		"UpdateEmailNotificationsSettings-Create",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -255,7 +256,7 @@ func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req reso
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.NotificationsSettingsEmailDeliverySettings))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -276,17 +277,18 @@ func (r *NotificationSettingsEmailResource) Read(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsSettingsEmailDeliverySettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsSettingsSMTPApi.ReadEmailNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadEmailNotificationsSettings",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -298,7 +300,7 @@ func (r *NotificationSettingsEmailResource) Read(ctx context.Context, req resour
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.NotificationsSettingsEmailDeliverySettings))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -326,17 +328,18 @@ func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsSettingsEmailDeliverySettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsSettingsSMTPApi.UpdateEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsEmailDeliverySettings(*notificationSettings).Execute()
 		},
 		"UpdateEmailNotificationsSettings-Create",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -345,7 +348,7 @@ func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req reso
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.NotificationsSettingsEmailDeliverySettings))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -366,18 +369,18 @@ func (r *NotificationSettingsEmailResource) Delete(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.NotificationsSettingsSMTPApi.DeleteEmailDeliverySettings(ctx, data.EnvironmentId.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteEmailDeliverySettings",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -77,7 +77,7 @@ func resourceCustomDomainCreate(ctx context.Context, d *schema.ResourceData, met
 	resp, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CustomDomainsApi.CreateDomain(ctx, d.Get("environment_id").(string)).CustomDomain(customDomain).Execute()
 		},
 		"CreateDomain",
@@ -104,7 +104,7 @@ func resourceCustomDomainRead(ctx context.Context, d *schema.ResourceData, meta 
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CustomDomainsApi.ReadOneDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneDomain",
@@ -149,7 +149,7 @@ func resourceCustomDomainDelete(ctx context.Context, d *schema.ResourceData, met
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.CustomDomainsApi.DeleteDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

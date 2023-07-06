@@ -47,7 +47,7 @@ func datasourcePingOneRoleRead(ctx context.Context, d *schema.ResourceData, meta
 
 	respList, diags := sdk.ParseResponse(
 		ctx,
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.RolesApi.ReadAllRoles(ctx).Execute()
 		},
 		"ReadAllRoles",

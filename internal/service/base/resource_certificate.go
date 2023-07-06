@@ -156,7 +156,7 @@ func resourceCertificateCreate(ctx context.Context, d *schema.ResourceData, meta
 	resp, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CertificateManagementApi.CreateCertificateFromFile(ctx, d.Get("environment_id").(string)).ContentType("multipart/form-data").UsageType(d.Get("usage_type").(string)).File(&archive).Execute()
 		},
 		"CreateCertificateFromFile",
@@ -183,7 +183,7 @@ func resourceCertificateRead(ctx context.Context, d *schema.ResourceData, meta i
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CertificateManagementApi.GetCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"GetCertificate",
@@ -229,7 +229,7 @@ func resourceCertificateDelete(ctx context.Context, d *schema.ResourceData, meta
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.CertificateManagementApi.DeleteCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

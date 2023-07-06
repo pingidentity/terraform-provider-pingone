@@ -408,34 +408,33 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// Run the API call
-	environmentResponse, d := framework.ParseResponse(
+	var environmentResponse *management.Environment
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(*environment).Execute()
 		},
 		"CreateEnvironmentActiveLicense",
 		environmentCreateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&environmentResponse,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var billOfMaterials (*management.BillOfMaterials) = nil
-	if v, ok := environmentResponse.(*management.Environment).GetBillOfMaterialsOk(); ok {
+	if v, ok := environmentResponse.GetBillOfMaterialsOk(); ok {
 		billOfMaterials = v
 	}
-
-	environmentId := environmentResponse.(*management.Environment).GetId()
 
 	// Seed a default population.  The platform does this implicitly but we see latencies.  This ensures we have a quick environment provision.
 	defaultPopulationObj := *management.NewPopulation("Default")
 	defaultPopulationObj.SetDescription("Automatically created population.")
 	defaultPopulationObj.SetDefault(true)
 
-	defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.client, environmentId, defaultPopulationObj)
+	defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.client, environmentResponse.GetId(), defaultPopulationObj)
 	if defaultPopulationResponse == nil {
 		resp.Diagnostics.AddWarning(
 			"Cannot seed the default population",
@@ -453,7 +452,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	if defaultPopulationResponse != nil {
 		defaultPopulation = defaultPopulationResponse
 	} else {
-		defaultPopulation, d = sso.FetchDefaultPopulationWithTimeout(ctx, r.client, environmentId, createTimeout)
+		defaultPopulation, d = sso.FetchDefaultPopulationWithTimeout(ctx, r.client, environmentResponse.GetId(), createTimeout)
 		resp.Diagnostics.Append(d...)
 	}
 
@@ -467,21 +466,17 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 				"A default population was expected to be found in the environment after creation, but none was found.  Please report this issue to the provider maintainers.")
 		}
 
-		populationResponseIntf, d := framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
-				return r.client.PopulationsApi.UpdatePopulation(ctx, environmentId, defaultPopulation.GetId()).Population(*population).Execute()
+			func() (any, *http.Response, error) {
+				return r.client.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
 			},
 			"UpdatePopulation",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
-
-		if !resp.Diagnostics.HasError() {
-			populationResponse = populationResponseIntf.(*management.Population)
-		}
+			&populationResponse,
+		)...)
 	}
 	// Deprecated end
 	///////////////////
@@ -490,7 +485,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(environmentResponse.(*management.Environment), billOfMaterials, populationResponse)...)
+	resp.Diagnostics.Append(state.toState(environmentResponse, billOfMaterials, populationResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -511,17 +506,18 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	// Run the API call
-	environmentResponse, d := framework.ParseResponse(
+	var environmentResponse *management.Environment
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.EnvironmentsApi.ReadOneEnvironment(ctx, data.Id.ValueString()).Execute()
 		},
 		"ReadOneEnvironment",
 		framework.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
-	)
-	resp.Diagnostics.Append(d...)
+		&environmentResponse,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -533,17 +529,18 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	// The bill of materials
-	billOfMaterialsResponse, d := framework.ParseResponse(
+	var billOfMaterialsResponse *management.BillOfMaterials
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, data.Id.ValueString()).Execute()
 		},
 		"ReadOneBillOfMaterials",
 		framework.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
-	)
-	resp.Diagnostics.Append(d...)
+		&billOfMaterialsResponse,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -553,28 +550,26 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 	// The default population
 	var populationResponse *management.Population = nil
 	if !data.DefaultPopulationId.IsNull() {
-		populationResponseIntf, d := framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.PopulationsApi.ReadOnePopulation(ctx, data.Id.ValueString(), data.DefaultPopulationId.ValueString()).Execute()
 			},
 			"ReadOnePopulation",
 			framework.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			&populationResponse,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		populationResponse = populationResponseIntf.(*management.Population)
 	}
 	// Deprecated end
 	///////////////////
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(environmentResponse.(*management.Environment), billOfMaterialsResponse.(*management.BillOfMaterials), populationResponse)...)
+	resp.Diagnostics.Append(data.toState(environmentResponse, billOfMaterialsResponse, populationResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -607,85 +602,85 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 		updateEnvironmentTypeRequest := *management.NewUpdateEnvironmentTypeRequest()
 
 		updateEnvironmentTypeRequest.SetType(management.EnumEnvironmentType(plan.Type.ValueString()))
-		_, d := framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.EnvironmentsApi.UpdateEnvironmentType(ctx, plan.Id.ValueString()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
 			},
 			"UpdateEnvironmentType",
 			framework.DefaultCustomError,
 			nil,
-		)
-		resp.Diagnostics.Append(d...)
+			nil,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 	}
 
 	// Run the API call
-	var environmentResponse (interface{})
+	var environmentResponse *management.Environment
 	if !plan.Name.Equal(state.Name) ||
 		!plan.Description.Equal(state.Description) ||
 		!plan.LicenseId.Equal(state.LicenseId) {
 
-		environmentResponse, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.EnvironmentsApi.UpdateEnvironment(ctx, plan.Id.ValueString()).Environment(*environment).Execute()
 			},
 			"UpdateEnvironment",
 			environmentCreateCustomErrorHandler,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			&environmentResponse,
+		)...)
 
 	} else {
-		environmentResponse, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.EnvironmentsApi.ReadOneEnvironment(ctx, plan.Id.ValueString()).Execute()
 			},
 			"ReadOneEnvironment",
 			framework.CustomErrorResourceNotFoundWarning,
 			retryEnvironmentDefault,
-		)
-		resp.Diagnostics.Append(d...)
+			&environmentResponse,
+		)...)
 	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// The bill of materials
-	var billOfMaterialsResponse (interface{})
+	var billOfMaterialsResponse *management.BillOfMaterials
 	if !plan.Services.Equal(state.Services) {
 
-		billOfMaterialsResponse, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.BillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, plan.Id.ValueString()).BillOfMaterials(*environment.BillOfMaterials).Execute()
 			},
 			"UpdateBillOfMaterials",
 			framework.CustomErrorResourceNotFoundWarning,
 			retryEnvironmentDefault,
-		)
-		resp.Diagnostics.Append(d...)
+			&billOfMaterialsResponse,
+		)...)
 
 	} else {
 
-		billOfMaterialsResponse, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, plan.Id.ValueString()).Execute()
 			},
 			"ReadOneBillOfMaterials",
 			framework.CustomErrorResourceNotFoundWarning,
 			retryEnvironmentDefault,
-		)
-		resp.Diagnostics.Append(d...)
+			&billOfMaterialsResponse,
+		)...)
 
 	}
 	if resp.Diagnostics.HasError() {
@@ -715,47 +710,43 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			populationId = state.DefaultPopulationId.ValueString()
 		}
 
-		populationResponseIntf, d := framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.PopulationsApi.UpdatePopulation(ctx, plan.Id.ValueString(), populationId).Population(*population).Execute()
 			},
 			"UpdatePopulation",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			&populationResponse,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		populationResponse = populationResponseIntf.(*management.Population)
 	}
 
 	if populationResponse == nil && population != nil && !state.DefaultPopulationId.IsNull() {
-		populationResponseIntf, d := framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.PopulationsApi.ReadOnePopulation(ctx, state.Id.ValueString(), state.DefaultPopulationId.ValueString()).Execute()
 			},
 			"ReadOnePopulation",
 			framework.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			&populationResponse,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		populationResponse = populationResponseIntf.(*management.Population)
 	}
 	// Deprecated end
 	///////////////////
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(environmentResponse.(*management.Environment), billOfMaterialsResponse.(*management.BillOfMaterials), populationResponse)...)
+	resp.Diagnostics.Append(state.toState(environmentResponse, billOfMaterialsResponse, populationResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -858,55 +849,57 @@ func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.Impo
 func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, environmentId string, forceDelete bool) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	readResponse, d := framework.ParseResponse(
+	var environmentResponse *management.Environment
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentId).Execute()
 		},
 		"ReadOneEnvironment-Delete",
 		framework.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
-	)
-	diags.Append(d...)
+		&environmentResponse,
+	)...)
 	if diags.HasError() {
 		return diags
 	}
 
 	// If we have a production environment, it won't destroy successfully without a switch to "SANDBOX".  We check our provider config for a force delete flag before we do this
-	if readResponse.(*management.Environment).GetType() == management.ENUMENVIRONMENTTYPE_PRODUCTION && forceDelete {
+	if environmentResponse.GetType() == management.ENUMENVIRONMENTTYPE_PRODUCTION && forceDelete {
 
 		updateEnvironmentTypeRequest := *management.NewUpdateEnvironmentTypeRequest()
 		updateEnvironmentTypeRequest.SetType("SANDBOX")
-		_, d := framework.ParseResponse(
+		diags.Append(framework.ParseResponse(
 			ctx,
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environmentId).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
 			},
 			"UpdateEnvironmentType",
 			framework.CustomErrorResourceNotFoundWarning,
 			nil,
-		)
-		diags.Append(d...)
+			nil,
+		)...)
 		if diags.HasError() {
 			return diags
 		}
 
 	}
 
-	_, d = framework.ParseResponse(
+	diags.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environmentId).Execute()
 			return nil, r, err
 		},
 		"DeleteEnvironment",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
+		nil,
+	)...)
 
-	return d
+	return diags
 }
 
 func (p *environmentResourceModel) expand(ctx context.Context, region management.EnumRegionCode) (*management.Environment, *management.Population, diag.Diagnostics) {

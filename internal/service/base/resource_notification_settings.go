@@ -277,17 +277,18 @@ func (r *NotificationSettingsResource) Create(ctx context.Context, req resource.
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsSettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsSettingsApi.UpdateNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettings(*notificationSettings).Execute()
 		},
 		"UpdateNotificationsSettings-Create",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -296,7 +297,7 @@ func (r *NotificationSettingsResource) Create(ctx context.Context, req resource.
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.NotificationsSettings))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -317,17 +318,18 @@ func (r *NotificationSettingsResource) Read(ctx context.Context, req resource.Re
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsSettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsSettingsApi.ReadNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadNotificationsSettings",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -339,7 +341,7 @@ func (r *NotificationSettingsResource) Read(ctx context.Context, req resource.Re
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.NotificationsSettings))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -367,17 +369,18 @@ func (r *NotificationSettingsResource) Update(ctx context.Context, req resource.
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsSettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsSettingsApi.UpdateNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettings(*notificationSettings).Execute()
 		},
 		"UpdateNotificationsSettings-Update",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -386,7 +389,7 @@ func (r *NotificationSettingsResource) Update(ctx context.Context, req resource.
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.NotificationsSettings))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -407,17 +410,17 @@ func (r *NotificationSettingsResource) Delete(ctx context.Context, req resource.
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsSettingsApi.DeleteNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"DeleteNotificationsSettings",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

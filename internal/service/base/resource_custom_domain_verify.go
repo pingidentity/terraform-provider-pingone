@@ -74,7 +74,7 @@ func resourceCustomDomainVerifyCreate(ctx context.Context, d *schema.ResourceDat
 	resp, diags = sdk.ParseResponseWithCustomTimeout(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CustomDomainsApi.UpdateDomain(ctx, d.Get("environment_id").(string), d.Get("custom_domain_id").(string)).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_DOMAIN_NAME_VERIFYJSON).Execute()
 		},
 		"UpdateDomain",
@@ -128,7 +128,7 @@ func resourceCustomDomainVerifyRead(ctx context.Context, d *schema.ResourceData,
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CustomDomainsApi.ReadOneDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneDomain",

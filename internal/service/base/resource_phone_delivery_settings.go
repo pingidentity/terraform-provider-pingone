@@ -998,28 +998,29 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	createResponse, d := framework.ParseResponse(
+	var createResponse *management.NotificationsSettingsPhoneDeliverySettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.PhoneDeliverySettingsApi.CreatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
 		},
 		"CreatePhoneDeliverySettings",
 		phoneDeliverySettingsCreateUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&createResponse,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// If twilio or syniverse, then a numbers set will be returned from the services API calls.  We need to merge with configured numbers set.
-	var response interface{}
+	var response *management.NotificationsSettingsPhoneDeliverySettings
 
 	if !plan.ProviderCustomTwilio.IsNull() && !plan.ProviderCustomTwilio.IsUnknown() ||
 		!plan.ProviderCustomSyniverse.IsNull() && !plan.ProviderCustomSyniverse.IsUnknown() {
 
-		phoneDeliverySettingsId, numbers, d := parsePhoneDeliverySettingsNumbers(createResponse.(*management.NotificationsSettingsPhoneDeliverySettings))
+		phoneDeliverySettingsId, numbers, d := parsePhoneDeliverySettingsNumbers(createResponse)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -1031,17 +1032,17 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 			return
 		}
 
-		response, d = framework.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettingsUpdate).Execute()
 			},
 			"UpdatePhoneDeliverySettings",
 			phoneDeliverySettingsCreateUpdateCustomErrorHandler,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(d...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -1054,7 +1055,7 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response.(*management.NotificationsSettingsPhoneDeliverySettings))...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1075,17 +1076,18 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.NotificationsSettingsPhoneDeliverySettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOnePhoneDeliverySettings",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1097,7 +1099,7 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(ctx, response.(*management.NotificationsSettingsPhoneDeliverySettings))...)
+	resp.Diagnostics.Append(data.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1125,17 +1127,18 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsSettingsPhoneDeliverySettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
 		},
 		"UpdatePhoneDeliverySettings",
 		phoneDeliverySettingsCreateUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1144,7 +1147,7 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response.(*management.NotificationsSettingsPhoneDeliverySettings))...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1165,18 +1168,18 @@ func (r *PhoneDeliverySettingsResource) Delete(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	_, diags := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.PhoneDeliverySettingsApi.DeletePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeletePhoneDeliverySettings",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

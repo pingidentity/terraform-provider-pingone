@@ -80,7 +80,7 @@ func datasourcePingOneLicensesRead(ctx context.Context, d *schema.ResourceData, 
 
 	if v, ok := d.GetOk("scim_filter"); ok {
 
-		filterFunction = func() (interface{}, *http.Response, error) {
+		filterFunction = func() (any, *http.Response, error) {
 			return apiClient.LicensesApi.ReadAllLicenses(ctx, d.Get("organization_id").(string)).Filter(v.(string)).Execute()
 		}
 
@@ -88,7 +88,7 @@ func datasourcePingOneLicensesRead(ctx context.Context, d *schema.ResourceData, 
 
 	if _, ok := d.GetOk("data_filter"); ok {
 
-		filterFunction = func() (interface{}, *http.Response, error) {
+		filterFunction = func() (any, *http.Response, error) {
 			return apiClient.LicensesApi.ReadAllLicenses(ctx, d.Get("organization_id").(string)).Execute()
 		}
 

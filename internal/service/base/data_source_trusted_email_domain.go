@@ -140,22 +140,21 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 	if !data.DomainName.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *management.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.TrustedEmailDomainsApi.ReadAllTrustedEmailDomains(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllTrustedEmailDomains",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		entityArray := response.(*management.EntityArray)
 
 		if emailDomains, ok := entityArray.Embedded.GetEmailDomainsOk(); ok {
 
@@ -182,22 +181,23 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 	} else if !data.EmailDomainId.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var response *management.EmailDomain
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.TrustedEmailDomainsApi.ReadOneTrustedEmailDomain(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString()).Execute()
 			},
 			"ReadOneTrustedEmailDomain",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		emailDomain = *response.(*management.EmailDomain)
+		emailDomain = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",

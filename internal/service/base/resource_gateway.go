@@ -278,7 +278,7 @@ func resourceGatewayCreate(ctx context.Context, d *schema.ResourceData, meta int
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GatewaysApi.CreateGateway(ctx, d.Get("environment_id").(string)).CreateGatewayRequest(*gatewayRequest).Execute()
 		},
 		"CreateGateway",
@@ -311,7 +311,7 @@ func resourceGatewayRead(ctx context.Context, d *schema.ResourceData, meta inter
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GatewaysApi.ReadOneGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneGateway",
@@ -441,7 +441,7 @@ func resourceGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.GatewaysApi.UpdateGateway(ctx, d.Get("environment_id").(string), d.Id()).CreateGatewayRequest(*gatewayRequest).Execute()
 		},
 		"UpdateGateway",
@@ -464,7 +464,7 @@ func resourceGatewayDelete(ctx context.Context, d *schema.ResourceData, meta int
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.GatewaysApi.DeleteGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

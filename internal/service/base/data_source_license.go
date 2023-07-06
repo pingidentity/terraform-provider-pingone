@@ -456,7 +456,7 @@ func datasourcePingOneLicenseRead(ctx context.Context, d *schema.ResourceData, m
 	licenseResp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.LicensesApi.ReadOneLicense(ctx, d.Get("organization_id").(string), d.Get("license_id").(string)).Execute()
 		},
 		"ReadOneLicense",

@@ -68,7 +68,7 @@ func datasourcePingOneTrustedEmailDomainSPFRead(ctx context.Context, d *schema.R
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.TrustedEmailDomainsApi.ReadTrustedEmailDomainSPFStatus(ctx, d.Get("environment_id").(string), d.Get("trusted_email_domain_id").(string)).Execute()
 		},
 		"ReadTrustedEmailDomainSPFStatus",

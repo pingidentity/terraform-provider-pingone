@@ -120,7 +120,7 @@ func datasourcePingOneCertificateRead(ctx context.Context, d *schema.ResourceDat
 		respList, diags := sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.CertificateManagementApi.GetCertificates(ctx, d.Get("environment_id").(string)).Execute()
 			},
 			"GetCertificates",
@@ -161,7 +161,7 @@ func datasourcePingOneCertificateRead(ctx context.Context, d *schema.ResourceDat
 		resp, diags := sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.CertificateManagementApi.GetCertificate(ctx, d.Get("environment_id").(string), v.(string)).Execute()
 			},
 			"GetCertificate",

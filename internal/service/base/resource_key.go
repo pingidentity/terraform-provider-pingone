@@ -190,7 +190,7 @@ func resourceKeyCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		resp, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.CertificateManagementApi.CreateKey(ctx, d.Get("environment_id").(string)).ContentType("multipart/form-data").UsageType(d.Get("usage_type").(string)).File(&archive).Execute()
 			},
 			"CreateKey",
@@ -244,7 +244,7 @@ func resourceKeyCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		resp, diags = sdk.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return apiClient.CertificateManagementApi.CreateKey(ctx, d.Get("environment_id").(string)).Certificate(certificateKey).Execute()
 			},
 			"CreateKey",
@@ -273,7 +273,7 @@ func resourceKeyRead(ctx context.Context, d *schema.ResourceData, meta interface
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CertificateManagementApi.GetKey(ctx, d.Get("environment_id").(string), d.Id()).Accept(management.ENUMGETKEYACCEPTHEADER_JSON).Execute()
 		},
 		"GetKey",
@@ -329,7 +329,7 @@ func resourceKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.CertificateManagementApi.UpdateKey(ctx, d.Get("environment_id").(string), d.Id()).CertificateKeyUpdate(keyUpdate).Execute()
 		},
 		"UpdateKey",
@@ -352,7 +352,7 @@ func resourceKeyDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.CertificateManagementApi.DeleteKey(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},

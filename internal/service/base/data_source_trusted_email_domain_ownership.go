@@ -82,7 +82,7 @@ func datasourcePingOneTrustedEmailDomainOwnershipRead(ctx context.Context, d *sc
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.TrustedEmailDomainsApi.ReadTrustedEmailDomainOwnershipStatus(ctx, d.Get("environment_id").(string), d.Get("trusted_email_domain_id").(string)).Execute()
 		},
 		"ReadTrustedEmailDomainOwnershipStatus",

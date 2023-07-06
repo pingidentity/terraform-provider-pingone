@@ -360,17 +360,18 @@ func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsPolicy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsPoliciesApi.CreateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
 		},
 		"CreateNotificationsPolicy",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -379,7 +380,7 @@ func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.Cr
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.NotificationsPolicy))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -400,17 +401,18 @@ func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.Read
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsPolicy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsPoliciesApi.ReadOneNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneNotificationsPolicy",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -422,7 +424,7 @@ func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.Read
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.NotificationsPolicy))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -450,17 +452,18 @@ func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.Up
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.NotificationsPolicy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.NotificationsPoliciesApi.UpdateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
 		},
 		"UpdateNotificationsPolicy",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -469,7 +472,7 @@ func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.Up
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.NotificationsPolicy))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -490,18 +493,18 @@ func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.De
 	}
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := r.client.NotificationsPoliciesApi.DeleteNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteNotificationsPolicy",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

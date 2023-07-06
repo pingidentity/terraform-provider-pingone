@@ -243,7 +243,7 @@ func resourceNotificationTemplateContentCreate(ctx context.Context, d *schema.Re
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.NotificationsTemplatesApi.CreateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string)).TemplateContent(*templateContent).Execute()
 		},
 		"CreateContent",
@@ -285,7 +285,7 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
 		},
 		"ReadOneContent",
@@ -405,7 +405,7 @@ func resourceNotificationTemplateContentUpdate(ctx context.Context, d *schema.Re
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.NotificationsTemplatesApi.UpdateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).TemplateContent(*templateContent).Execute()
 		},
 		"UpdateContent",
@@ -428,7 +428,7 @@ func resourceNotificationTemplateContentDelete(ctx context.Context, d *schema.Re
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
 			return nil, r, err
 		},

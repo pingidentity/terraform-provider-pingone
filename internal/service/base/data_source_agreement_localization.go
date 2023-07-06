@@ -195,22 +195,21 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 	if !data.DisplayName.IsNull() || !data.Locale.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var entityArray *management.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.AgreementLanguagesResourcesApi.ReadAllAgreementLanguages(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
 			},
 			"ReadAllAgreementLanguages",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&entityArray,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		entityArray := response.(*management.EntityArray)
 
 		if agreementLocalizations, ok := entityArray.Embedded.GetLanguagesOk(); ok {
 
@@ -245,22 +244,23 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 	} else if !data.AgreementLocalizationId.IsNull() {
 
 		// Run the API call
-		response, diags := framework.ParseResponse(
+		var response *management.AgreementLanguage
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
-			func() (interface{}, *http.Response, error) {
+			func() (any, *http.Response, error) {
 				return r.client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).Execute()
 			},
 			"ReadOneAgreementLanguage",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		resp.Diagnostics.Append(diags...)
+			&response,
+		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		agreementLocalization = *response.(*management.AgreementLanguage)
+		agreementLocalization = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",

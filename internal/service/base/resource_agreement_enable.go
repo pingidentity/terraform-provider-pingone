@@ -122,36 +122,38 @@ func (r *AgreementEnableResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	agreementResponse, diags := framework.ParseResponse(
+	var agreementResponse *management.Agreement
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Execute()
 		},
 		"ReadOneAgreement",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&agreementResponse,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
-	agreementEnable := plan.expand(agreementResponse.(*management.Agreement))
+	agreementEnable := plan.expand(agreementResponse)
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.Agreement
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Agreement(*agreementEnable).Execute()
 		},
 		"UpdateAgreement",
 		agreementEnableUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -160,7 +162,7 @@ func (r *AgreementEnableResource) Create(ctx context.Context, req resource.Creat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.Agreement))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -181,17 +183,18 @@ func (r *AgreementEnableResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	// Run the API call
-	response, diags := framework.ParseResponse(
+	var response *management.Agreement
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneAgreement",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -203,7 +206,7 @@ func (r *AgreementEnableResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response.(*management.Agreement))...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -223,36 +226,38 @@ func (r *AgreementEnableResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	agreementResponse, diags := framework.ParseResponse(
+	var agreementResponse *management.Agreement
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Execute()
 		},
 		"ReadOneAgreement",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&agreementResponse,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
-	agreementEnable := plan.expand(agreementResponse.(*management.Agreement))
+	agreementEnable := plan.expand(agreementResponse)
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *management.Agreement
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Agreement(*agreementEnable).Execute()
 		},
 		"UpdateAgreement",
 		agreementEnableUpdateCustomErrorHandler,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -261,7 +266,7 @@ func (r *AgreementEnableResource) Update(ctx context.Context, req resource.Updat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.Agreement))...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -281,37 +286,38 @@ func (r *AgreementEnableResource) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	agreementResponse, diags := framework.ParseResponse(
+	var agreementResponse *management.Agreement
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
 		},
 		"ReadOneAgreement",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(diags...)
+		&agreementResponse,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
 	data.Enabled = types.BoolValue(false)
-	agreementDisable := data.expand(agreementResponse.(*management.Agreement))
+	agreementDisable := data.expand(agreementResponse)
 
 	// Run the API call
-	_, d := framework.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Agreement(*agreementDisable).Execute()
 		},
 		"UpdateAgreement",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		nil,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
