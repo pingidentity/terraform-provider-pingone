@@ -284,7 +284,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			return nil, diags
 		}
 
-		client, err := config.APIClient(ctx)
+		client, err := config.APIClient(ctx, version)
 
 		if err != nil {
 			return nil, diag.FromErr(err)

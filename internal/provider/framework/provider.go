@@ -319,7 +319,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		return
 	}
 
-	apiClient, err := config.APIClient(ctx)
+	apiClient, err := config.APIClient(ctx, p.version)
 	if err != nil {
 		return
 	}
