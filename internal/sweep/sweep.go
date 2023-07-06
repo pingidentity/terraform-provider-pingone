@@ -43,7 +43,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 
 	resp, diags := sdk.ParseResponse(
 		ctx,
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(filter).Execute()
 		},
 		"ReadAllEnvironments",
@@ -112,7 +112,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(environment).Execute()
 		},
 		"CreateEnvironmentActiveLicense",
@@ -148,7 +148,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
 		},
 		"CreatePopulation",
