@@ -125,7 +125,7 @@ func resourceMFASettingsCreate(ctx context.Context, d *schema.ResourceData, meta
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
 		},
 		"UpdateMFASettings",
@@ -152,7 +152,7 @@ func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta i
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.MFASettingsApi.ReadMFASettings(ctx, d.Get("environment_id").(string)).Execute()
 		},
 		"ReadMFASettings",
@@ -206,7 +206,7 @@ func resourceMFASettingsUpdate(ctx context.Context, d *schema.ResourceData, meta
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
 		},
 		"UpdateMFASettings",
@@ -229,7 +229,7 @@ func resourceMFASettingsDelete(ctx context.Context, d *schema.ResourceData, meta
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.MFASettingsApi.ResetMFASettings(ctx, d.Get("environment_id").(string)).Execute()
 		},
 		"ResetMFASettings",

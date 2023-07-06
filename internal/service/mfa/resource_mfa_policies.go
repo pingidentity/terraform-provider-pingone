@@ -153,17 +153,18 @@ func (r *MFAPoliciesResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// Run the API call
-	response, d := framework.ParseResponse(
+	var response *mfa.DeviceAuthenticationPolicyPostResponse
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return r.client.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, plan.EnvironmentId.ValueString()).ContentType(mfa.ENUMDEVICEAUTHENTICATIONPOLICYPOSTCONTENTTYPE_VND_PINGIDENTITY_DEVICE_AUTHENTICATION_POLICY_FIDO2_MIGRATEJSON).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
 		},
 		"CreateDeviceAuthenticationPolicies",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	resp.Diagnostics.Append(d...)
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -172,7 +173,7 @@ func (r *MFAPoliciesResource) Create(ctx context.Context, req resource.CreateReq
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*mfa.DeviceAuthenticationPolicyPostResponse).EntityArray)...)
+	resp.Diagnostics.Append(state.toState(response.EntityArray)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 

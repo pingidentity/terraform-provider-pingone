@@ -98,7 +98,7 @@ func resourceFIDOPolicyCreate(ctx context.Context, d *schema.ResourceData, meta 
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.FIDOPolicyApi.CreateFidoPolicy(ctx, d.Get("environment_id").(string)).FIDOPolicy(*fidoPolicy).Execute()
 		},
 		"CreateFidoPolicy",
@@ -125,7 +125,7 @@ func resourceFIDOPolicyRead(ctx context.Context, d *schema.ResourceData, meta in
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.FIDOPolicyApi.ReadOneFidoPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneFidoPolicy",
@@ -194,7 +194,7 @@ func resourceFIDOPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			return apiClient.FIDOPolicyApi.UpdateFIDOPolicy(ctx, d.Get("environment_id").(string), d.Id()).FIDOPolicy(*fidoPolicy).Execute()
 		},
 		"UpdateFIDOPolicy",
@@ -217,7 +217,7 @@ func resourceFIDOPolicyDelete(ctx context.Context, d *schema.ResourceData, meta 
 	_, diags = sdk.ParseResponse(
 		ctx,
 
-		func() (interface{}, *http.Response, error) {
+		func() (any, *http.Response, error) {
 			r, err := apiClient.FIDOPolicyApi.DeleteFidoPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 			return nil, r, err
 		},
