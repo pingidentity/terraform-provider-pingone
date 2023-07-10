@@ -395,6 +395,29 @@ func ResourceIdentityProvider() *schema.Resource {
 							Required:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
 						},
+						"slo_binding": {
+							Description:      fmt.Sprintf("A string that specifies the binding protocol to be used for the logout response. Options are `%s` and `%s`.  Existing configurations with no data default to `%s`.", string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_REDIRECT), string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_POST), management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_POST),
+							Type:             schema.TypeString,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_REDIRECT), string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_POST)}, false)),
+							Optional:         true,
+							Default:          "HTTP_POST",
+						},
+						"slo_endpoint": {
+							Description: "A string that specifies the logout endpoint URL. This is an optional property. However, if a sloEndpoint logout endpoint URL is not defined, logout actions result in an error.",
+							Type:        schema.TypeString,
+							Optional:    true,
+						},
+						"slo_response_endpoint": {
+							Description: "A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the sloEndpoint property value is used to submit SLO response.",
+							Type:        schema.TypeString,
+							Optional:    true,
+						},
+						"slo_window": {
+							Description:      "An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 24)),
+						},
 					},
 				},
 			},
@@ -1191,6 +1214,26 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 			idpObj.SetSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigningKey(v)))
 		}
 
+		if v1, ok := idp["slo_binding"].(string); ok && v1 != "" {
+			idpObj.SetSloBinding(management.EnumIdentityProviderSAMLSLOBinding(v1))
+		}
+
+		if v1, ok := idp["slo_endpoint"].(string); ok && v1 != "" {
+			idpObj.SetSloEndpoint(v1)
+		}
+
+		if v1, ok := idp["slo_endpoint"].(string); ok && v1 != "" {
+			idpObj.SetSloEndpoint(v1)
+		}
+
+		if v1, ok := idp["slo_response_endpoint"].(string); ok && v1 != "" {
+			idpObj.SetSloResponseEndpoint(v1)
+		}
+
+		if v1, ok := idp["slo_window"].(int); ok {
+			idpObj.SetSloWindow(int32(v1))
+		}
+
 		if v, ok := common.GetDescriptionOk(); ok {
 			idpObj.SetDescription(*v)
 		}
@@ -1289,6 +1332,30 @@ func flattenSAML(idpObject *management.IdentityProviderSAML) []interface{} {
 		item["sp_signing_key_id"] = v.GetKey().Id
 	} else {
 		item["sp_signing_key_id"] = nil
+	}
+
+	if v, ok := idpObject.GetSloBindingOk(); ok {
+		item["slo_binding"] = v
+	} else {
+		item["slo_binding"] = nil
+	}
+
+	if v, ok := idpObject.GetSloEndpointOk(); ok {
+		item["slo_endpoint"] = v
+	} else {
+		item["slo_endpoint"] = nil
+	}
+
+	if v, ok := idpObject.GetSloResponseEndpointOk(); ok {
+		item["slo_response_endpoint"] = v
+	} else {
+		item["slo_response_endpoint"] = nil
+	}
+
+	if v, ok := idpObject.GetSloWindowOk(); ok {
+		item["slo_window"] = v
+	} else {
+		item["slo_window"] = nil
 	}
 
 	items := make([]interface{}, 0)

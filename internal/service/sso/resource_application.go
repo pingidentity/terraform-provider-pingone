@@ -584,6 +584,12 @@ func ResourceApplication() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 						},
+						"slo_window": {
+							Description:      "An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 24)),
+						},
 						"sp_entity_id": {
 							Description: "A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.",
 							Type:        schema.TypeString,
@@ -1519,6 +1525,10 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetSloResponseEndpoint(v1)
 		}
 
+		if v1, ok := samlOptions["slo_window"].(int); ok {
+			application.SetSloWindow(int32(v1))
+		}
+
 		if v1, ok := samlOptions["sp_verification_certificate_ids"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
 			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
 			for _, j := range v1.List() {
@@ -1994,6 +2004,12 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["slo_response_endpoint"] = v
 	} else {
 		item["slo_response_endpoint"] = nil
+	}
+
+	if v, ok := application.GetSloWindowOk(); ok {
+		item["slo_window"] = v
+	} else {
+		item["slo_window"] = nil
 	}
 
 	if v, ok := application.SpVerification.GetCertificatesOk(); ok {
