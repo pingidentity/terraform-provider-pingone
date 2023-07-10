@@ -35,18 +35,135 @@ resource "pingone_user" "foo" {
 
 ### Required
 
-- `email` (String) The email address of the user.
+- `email` (String) A string that specifies the user's email address, which must be provided and valid. For more information about email address formatting, see section 3.4 of [RFC 2822, Internet Message Format](http://www.faqs.org/rfcs/rfc2822.html).
 - `environment_id` (String) The ID of the environment to create the user in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `population_id` (String) The population ID to add the user to.
-- `username` (String) The username of the user.
+- `population_id` (String) The identifier of the population resource associated with the user.
+- `username` (String) A string that specifies the user name, which must be provided and must be unique within an environment. The `username` must either be a well-formed email address or a string. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace
 
 ### Optional
 
-- `status` (String) The enabled status of the user.  Options are `DISABLED`, `ENABLED`.  Defaults to `ENABLED`.
+- `account` (Attributes) A single object that specifies the user's account information. (see [below for nested schema](#nestedatt--account))
+- `address` (Attributes) A single object that specifies the user's address information. (see [below for nested schema](#nestedatt--address))
+- `enabled` (Boolean) A boolean that specifies whether the user is enabled. This attribute is set to `true` by default when the user is created.
+- `external_id` (String) A string that specifies an identifier for the user resource as defined by the provisioning client. This may be explicitly set to null when updating a user to unset it. The externalId attribute simplifies the correlation of the user in PingOne with the user’s account in another system of record. The platform does not use this attribute directly in any way, but it is used by Ping Identity's Data Sync product. It can have a length of no more than 1024 characters.
+- `identity_provider` (Attributes) A single object that specifies the user's identity provider information. (see [below for nested schema](#nestedatt--identity_provider))
+- `locale` (String) A string that specifies the user's default location. This may be explicitly set to null when updating a user to unset it. This is used for purposes of localizing such items as currency, date time format, or numerical representations. If provided, it must be a valid language tag as defined in [RFC 5646](https://www.rfc-editor.org/rfc/rfc5646.html). The following are example tags: `fr`, `en-US`, `es-419`, `az-Arab`, `man-Nkoo-GN`. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
+- `mfa_enabled` (Boolean) A boolean that specifies whether multi-factor authentication is enabled. This attribute is set to `false` by default when the user is created.
+- `mobile_phone` (String) A string that specifies the user's native phone number. This might also match the `primary_phone` attribute. This may be explicitly set to null when updating a user to unset it. Valid phone numbers must have at least one number and a maximum character length of 32.
+- `name` (Attributes) A single object that specifies the user's name information. (see [below for nested schema](#nestedatt--name))
+- `nickname` (String) A string that specifies the user's nickname. This can be explicitly set to null when updating a user to unset it. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
+- `password` (Attributes) A single object that specifies the user's password information. (see [below for nested schema](#nestedatt--password))
+- `photo` (Attributes) (see [below for nested schema](#nestedatt--photo))
+- `preferred_language` (String)
+- `primary_phone` (String)
+- `status` (String, Deprecated) **Deprecation notice**: This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.  The enabled status of the user.  Options are `DISABLED`, `ENABLED`.  Defaults to `ENABLED`.
+- `timezone` (String)
+- `title` (String)
+- `type` (String)
+- `user_lifecycle` (Attributes) A single object that specifies the user's identity lifecycle information. (see [below for nested schema](#nestedatt--user_lifecycle))
+- `verify_status` (String)
 
 ### Read-Only
 
+- `created_at` (String) The time the resource was created.
+- `email_verified` (Boolean) A boolean that specifies whether the user's email is verified. An email address can be verified during account verification. If the email address used to request the verification code is the same as the user,s email at verification time (and the verification code is valid), then the email is verified. The value of this property can be set on user import.
 - `id` (String) The ID of this resource.
+- `updated_at` (String) The time the resource was last updated.
+
+<a id="nestedatt--account"></a>
+### Nested Schema for `account`
+
+Required:
+
+- `can_authenticate` (Boolean) A boolean that specifies whether the user can authenticate. If the value is set to `false`, the account is locked or the user is disabled, and unless specified otherwise in administrative configuration, the user will be unable to authenticate.
+- `status` (String) A string that specifies the the account locked state.  Options are `LOCKED`, `OK`.
+
+Read-Only:
+
+- `locked_at` (String) The time the specified user account was locked. This property might be absent if the account is unlocked or if the account was locked out automatically by failed password attempts.
+
+
+<a id="nestedatt--address"></a>
+### Nested Schema for `address`
+
+Optional:
+
+- `country_code` (String) A string that specifies the country name component. When specified, the value must be in [ISO 3166-1](https://www.iso.org/iso-3166-country-codes.html) "alpha-2" code format. For example, the country codes for the United States and Sweden are `US` and `SE`, respectively. Valid characters consist of two upper-case letters.
+- `locality` (String) A string that specifies the city or locality component of the address. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
+- `postal_code` (String) A string that specifies the ZIP code or postal code component of the address. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 40 characters.
+- `region` (String) A string that specifies the state, province, or region component of the address. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
+- `street_address` (String) A string that specifies the full street address component, which may include house number, street name, P.O. box, and multi-line extended street address information. This attribute may contain newlines. It can have a length of no more than 256 characters.
+
+
+<a id="nestedatt--identity_provider"></a>
+### Nested Schema for `identity_provider`
+
+Optional:
+
+- `id` (String) A string that identifies the external identity provider used to authenticate the user. If not provided, PingOne is the identity provider. This attribute is required if the identity provider is authoritative for just-in-time user provisioning.
+
+Read-Only:
+
+- `type` (String) A string that specifies the type of identity provider used to authenticate the user.  Options are `AMAZON`, `APPLE`, `FACEBOOK`, `GITHUB`, `GOOGLE`, `LINKEDIN`, `MICROSOFT`, `OPENID_CONNECT`, `PAYPAL`, `PING_ONE`, `SAML`, `TWITTER`, `YAHOO`.  The default value of `PING_ONE` is set when a value for `id` is not provided in this object.
+
+
+<a id="nestedatt--name"></a>
+### Nested Schema for `name`
+
+Optional:
+
+- `family` (String) A string that specifies the family name of the user, or Last in most Western languages (for example, `Jensen` given the full name `Ms. Barbara J Jensen, III`). This may be explicitly set to null when updating a name to unset it. Valid characters consist of any Unicode letter, mark (for example, accent, umlaut), space, dot, apostrophe, or hyphen. It can have a length of no more than 256 characters.
+- `formatted` (String) A string that specifies the fully formatted name of the user (for example `Ms. Barbara J Jensen, III`). This can be explicitly set to null when updating a name to unset it. Valid characters consist of any Unicode letter, mark (for example, accent, umlaut), space, dot, apostrophe, or hyphen. It can have a length of no more than 256 characters.
+- `given` (String) A string that specifies the given name of the user, or First in most Western languages (for example, `Barbara` given the full name `Ms. Barbara J Jensen, III`). This may be explicitly set to null when updating a name to unset it. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
+- `honorific_prefix` (String) A string that specifies the honorific prefix(es) of the user, or title in most Western languages (for example, `Ms.` given the full name `Ms. Barbara Jane Jensen, III`). This can be explicitly set to null when updating a name to unset it.
+- `honorific_suffix` (String) A string that specifies the honorific suffix(es) of the user, or suffix in most Western languages (for example, `III` given the full name `Ms. Barbara Jane Jensen, III`). This can be explicitly set to null when updating a name to unset it.
+- `middle` (String) A string that specifies the middle name(s) of the user (for exmple, `Jane` given the full name `Ms. Barbara Jane Jensen, III`). This can be explicitly set to null when updating a name to unset it. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
+
+
+<a id="nestedatt--password"></a>
+### Nested Schema for `password`
+
+Optional:
+
+- `external` (Attributes) (see [below for nested schema](#nestedatt--password--external))
+- `force_change` (String)
+- `initial_value` (String, Sensitive)
+
+<a id="nestedatt--password--external"></a>
+### Nested Schema for `password.external`
+
+Required:
+
+- `gateway` (Attributes) (see [below for nested schema](#nestedatt--password--external--gateway))
+
+<a id="nestedatt--password--external--gateway"></a>
+### Nested Schema for `password.external.gateway`
+
+Optional:
+
+- `correlation_attributes` (Map of String)
+- `id` (String)
+- `type` (String)
+- `user_type_id` (String)
+
+
+
+
+<a id="nestedatt--photo"></a>
+### Nested Schema for `photo`
+
+Required:
+
+- `href` (String)
+
+
+<a id="nestedatt--user_lifecycle"></a>
+### Nested Schema for `user_lifecycle`
+
+Optional:
+
+- `status` (String) A string that specifies the status of the account lifecycle.  Options are `ACCOUNT_OK`, `VERIFICATION_REQUIRED`.  This property value is only allowed to be set when importing a user to set the initial account status. If the initial status is set to `VERIFICATION_REQUIRED` and an email address is provided, a verification email is sent.
+- `suppress_verification_code` (Boolean) A boolean that specifies whether to suppress the verification code when the user is imported and the `status` is set to `VERIFICATION_REQUIRED`. If this property is set to `true`, no verification email is sent to the user. If this property is omitted or set to `false`, a verification email is sent automatically to the user.
 
 ## Import
 

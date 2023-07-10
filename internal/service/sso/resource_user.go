@@ -4,20 +4,24 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -28,13 +32,151 @@ type UserResource struct {
 }
 
 type UserResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Username      types.String `tfsdk:"username"`
-	Email         types.String `tfsdk:"email"`
-	Status        types.String `tfsdk:"status"`
-	PopulationId  types.String `tfsdk:"population_id"`
+	Id                types.String `tfsdk:"id"`
+	EnvironmentId     types.String `tfsdk:"environment_id"`
+	Username          types.String `tfsdk:"username"`
+	Email             types.String `tfsdk:"email"`
+	EmailVerified     types.Bool   `tfsdk:"email_verified"`
+	Status            types.String `tfsdk:"status"`
+	Enabled           types.Bool   `tfsdk:"enabled"`
+	PopulationId      types.String `tfsdk:"population_id"`
+	Account           types.Object `tfsdk:"account"`
+	Address           types.Object `tfsdk:"address"`
+	CreatedAt         types.String `tfsdk:"created_at"`
+	ExternalId        types.String `tfsdk:"external_id"`
+	IdentityProvider  types.Object `tfsdk:"identity_provider"`
+	Lifecycle         types.Object `tfsdk:"user_lifecycle"`
+	Locale            types.String `tfsdk:"locale"`
+	MFAEnabled        types.Bool   `tfsdk:"mfa_enabled"`
+	MobilePhone       types.String `tfsdk:"mobile_phone"`
+	Name              types.Object `tfsdk:"name"`
+	Nickname          types.String `tfsdk:"nickname"`
+	Password          types.Object `tfsdk:"password"`
+	Photo             types.Object `tfsdk:"photo"`
+	PreferredLanguage types.String `tfsdk:"preferred_language"`
+	PrimaryPhone      types.String `tfsdk:"primary_phone"`
+	Timezone          types.String `tfsdk:"timezone"`
+	Title             types.String `tfsdk:"title"`
+	Type              types.String `tfsdk:"type"`
+	UpdatedAt         types.String `tfsdk:"updated_at"`
+	VerifyStatus      types.String `tfsdk:"verify_status"`
 }
+
+type UserAccountResourceModel struct {
+	CanAuthenticate types.Bool   `tfsdk:"can_authenticate"`
+	LockedAt        types.String `tfsdk:"locked_at"`
+	Status          types.String `tfsdk:"status"`
+}
+
+type UserAddressResourceModel struct {
+	CountryCode   types.String `tfsdk:"country_code"`
+	Locality      types.String `tfsdk:"locality"`
+	PostalCode    types.String `tfsdk:"postal_code"`
+	Region        types.String `tfsdk:"region"`
+	StreetAddress types.String `tfsdk:"street_address"`
+}
+
+type UserIdentityProviderResourceModel struct {
+	Id   types.String `tfsdk:"id"`
+	Type types.String `tfsdk:"type"`
+}
+
+type UserLifecycleResourceModel struct {
+	Status                   types.String `tfsdk:"status"`
+	SuppressVerificationCode types.Bool   `tfsdk:"suppress_verification_code"`
+}
+
+type UserNameResourceModel struct {
+	Family          types.String `tfsdk:"family"`
+	Formatted       types.String `tfsdk:"formatted"`
+	Given           types.String `tfsdk:"given"`
+	HonorificPrefix types.String `tfsdk:"honorific_prefix"`
+	HonorificSuffix types.String `tfsdk:"honorific_suffix"`
+	Middle          types.String `tfsdk:"middle"`
+}
+
+type UserPasswordResourceModel struct {
+	ForceChange  types.Bool   `tfsdk:"force_change"`
+	InitialValue types.String `tfsdk:"initial_value"`
+	External     types.Object `tfsdk:"external"`
+}
+
+type UserPasswordExternalResourceModel struct {
+	Gateway types.Object `tfsdk:"gateway"`
+}
+
+type UserPasswordExternalGatewayResourceModel struct {
+	Id                    types.String `tfsdk:"id"`
+	Type                  types.String `tfsdk:"type"`
+	UserTypeId            types.String `tfsdk:"user_type_id"`
+	CorrelationAttributes types.Map    `tfsdk:"correlation_attributes"`
+}
+
+type UserPhotoResourceModel struct {
+	Href types.String `tfsdk:"href"`
+}
+
+var (
+	userAccountTFObjectTypes = map[string]attr.Type{
+		"can_authenticate": types.BoolType,
+		"locked_at":        types.StringType,
+		"status":           types.StringType,
+	}
+
+	userAddressTFObjectTypes = map[string]attr.Type{
+		"country_code":   types.StringType,
+		"locality":       types.StringType,
+		"postal_code":    types.StringType,
+		"region":         types.StringType,
+		"street_address": types.StringType,
+	}
+
+	userIdentityProviderTFObjectTypes = map[string]attr.Type{
+		"id":   types.StringType,
+		"type": types.StringType,
+	}
+
+	userLifecycleTFObjectTypes = map[string]attr.Type{
+		"status":                     types.StringType,
+		"suppress_verification_code": types.BoolType,
+	}
+
+	userNameTFObjectTypes = map[string]attr.Type{
+		"family":           types.StringType,
+		"formatted":        types.StringType,
+		"given":            types.StringType,
+		"honorific_prefix": types.StringType,
+		"honorific_suffix": types.StringType,
+		"middle":           types.StringType,
+	}
+
+	userPasswordTFObjectTypes = map[string]attr.Type{
+		"force_change":  types.BoolType,
+		"initial_value": types.StringType,
+		"external": types.ObjectType{
+			AttrTypes: userPasswordExternalTFObjectTypes,
+		},
+	}
+
+	userPasswordExternalTFObjectTypes = map[string]attr.Type{
+		"gateway": types.ObjectType{
+			AttrTypes: userPasswordExternalGatewayTFObjectTypes,
+		},
+	}
+
+	userPasswordExternalGatewayTFObjectTypes = map[string]attr.Type{
+		"id":           types.StringType,
+		"type":         types.StringType,
+		"user_type_id": types.StringType,
+		"correlation_attributes": types.MapType{
+			ElemType: types.StringType,
+		},
+	}
+
+	userPhotoTFObjectTypes = map[string]attr.Type{
+		"href": types.StringType,
+	}
+)
 
 // Framework interfaces
 var (
@@ -58,9 +200,167 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	const attrMinLength = 1
 
+	const attrUsernameMaxLength = 128
+	const attrAddressLocalityMaxLength = 256
+	const attrAddressPostalCodeMaxLength = 40
+	const attrAddressRegionMaxLength = 256
+	const attrAddressStreetAddressMaxLength = 256
+	const attrExternalIdMaxLength = 1024
+	const attrLocaleMaxLength = 256
+	const attrMobilePhoneMaxLength = 32
+	const attrNameFamilyMaxLength = 256
+	const attrNameFormattedMaxLength = 256
+	const attrNameGivenMaxLength = 256
+	const attrNameMiddleMaxLength = 256
+	const attrNicknameMaxLength = 256
+
+	usernameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the user name, which must be provided and must be unique within an environment. The `username` must either be a well-formed email address or a string. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace",
+	)
+
+	emailDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the user's email address, which must be provided and valid. For more information about email address formatting, see section 3.4 of [RFC 2822, Internet Message Format](http://www.faqs.org/rfcs/rfc2822.html).",
+	)
+
 	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The enabled status of the user.",
+		"**Deprecation notice**: This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.  The enabled status of the user.",
 	).AllowedValues([]string{"ENABLED", "DISABLED"}).DefaultValue("ENABLED")
+
+	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the user is enabled. This attribute is set to `true` by default when the user is created.",
+	)
+
+	accountCanAuthenticateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the user can authenticate. If the value is set to `false`, the account is locked or the user is disabled, and unless specified otherwise in administrative configuration, the user will be unable to authenticate.",
+	)
+
+	accountStatusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the the account locked state.",
+	).AllowedValuesEnum(management.AllowedEnumUserStatusEnumValues)
+
+	addressCountryCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the country name component. When specified, the value must be in [ISO 3166-1](https://www.iso.org/iso-3166-country-codes.html) \"alpha-2\" code format. For example, the country codes for the United States and Sweden are `US` and `SE`, respectively. Valid characters consist of two upper-case letters.",
+	)
+
+	identityProviderTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of identity provider used to authenticate the user.",
+	).AllowedValuesEnum(management.AllowedEnumIdentityProviderEnumValues).AppendMarkdownString(
+		"The default value of `PING_ONE` is set when a value for `id` is not provided in this object.",
+	)
+
+	userLifecycleStatusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the status of the account lifecycle.",
+	).AllowedValuesEnum(management.AllowedEnumUserLifecycleStatusEnumValues).AppendMarkdownString(
+		" This property value is only allowed to be set when importing a user to set the initial account status. If the initial status is set to `VERIFICATION_REQUIRED` and an email address is provided, a verification email is sent.",
+	)
+
+	userLifecycleSuppressVerificationCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether to suppress the verification code when the user is imported and the `status` is set to `VERIFICATION_REQUIRED`. If this property is set to `true`, no verification email is sent to the user. If this property is omitted or set to `false`, a verification email is sent automatically to the user.",
+	)
+
+	localeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the user's default location. This may be explicitly set to null when updating a user to unset it. This is used for purposes of localizing such items as currency, date time format, or numerical representations. If provided, it must be a valid language tag as defined in [RFC 5646](https://www.rfc-editor.org/rfc/rfc5646.html). The following are example tags: `fr`, `en-US`, `es-419`, `az-Arab`, `man-Nkoo-GN`. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.",
+	)
+
+	mfaEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether multi-factor authentication is enabled. This attribute is set to `false` by default when the user is created.",
+	)
+
+	mobilePhoneDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the user's native phone number. This might also match the `primary_phone` attribute. This may be explicitly set to null when updating a user to unset it. Valid phone numbers must have at least one number and a maximum character length of 32.",
+	)
+
+	nameFamilyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the family name of the user, or Last in most Western languages (for example, `Jensen` given the full name `Ms. Barbara J Jensen, III`). This may be explicitly set to null when updating a name to unset it. Valid characters consist of any Unicode letter, mark (for example, accent, umlaut), space, dot, apostrophe, or hyphen. It can have a length of no more than 256 characters.",
+	)
+
+	nameFormattedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the fully formatted name of the user (for example `Ms. Barbara J Jensen, III`). This can be explicitly set to null when updating a name to unset it. Valid characters consist of any Unicode letter, mark (for example, accent, umlaut), space, dot, apostrophe, or hyphen. It can have a length of no more than 256 characters.",
+	)
+
+	nameGivenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the given name of the user, or First in most Western languages (for example, `Barbara` given the full name `Ms. Barbara J Jensen, III`). This may be explicitly set to null when updating a name to unset it. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.",
+	)
+
+	nameHonorificPrefixDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the honorific prefix(es) of the user, or title in most Western languages (for example, `Ms.` given the full name `Ms. Barbara Jane Jensen, III`). This can be explicitly set to null when updating a name to unset it.",
+	)
+
+	nameHonorificSuffixDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the honorific suffix(es) of the user, or suffix in most Western languages (for example, `III` given the full name `Ms. Barbara Jane Jensen, III`). This can be explicitly set to null when updating a name to unset it.",
+	)
+
+	nameMiddleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the middle name(s) of the user (for exmple, `Jane` given the full name `Ms. Barbara Jane Jensen, III`). This can be explicitly set to null when updating a name to unset it. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.",
+	)
+
+	nicknameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the user's nickname. This can be explicitly set to null when updating a user to unset it. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.",
+	)
+
+	passwordForceChangeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	passwordInitialValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	passwordExternalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	passwordExternalGatewayDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	passwordExternalGatewayIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	passwordExternalGatewayTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	passwordExternalGatewayUserTypeIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	passwordExternalGatewayCorrelationAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	photoDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	photoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	preferredLanguageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	primaryPhoneDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	timezoneDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	titleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	verifyStatusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -74,21 +374,32 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			),
 
 			"username": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The username of the user.").Description,
-				Required:    true,
+				Description:         usernameDescription.Description,
+				MarkdownDescription: usernameDescription.MarkdownDescription,
+				Required:            true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.LengthAtMost(attrUsernameMaxLength),
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match the regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+				},
+			},
+
+			"email": schema.StringAttribute{
+				Description:         emailDescription.Description,
+				MarkdownDescription: emailDescription.MarkdownDescription,
+				Required:            true,
 
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
 			},
 
-			"email": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The email address of the user.").Description,
-				Required:    true,
-
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
-				},
+			"email_verified": schema.BoolAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"A boolean that specifies whether the user's email is verified. An email address can be verified during account verification. If the email address used to request the verification code is the same as the user,s email at verification time (and the verification code is valid), then the email is verified. The value of this property can be set on user import.",
+				).Description,
+				Computed: true,
 			},
 
 			"status": schema.StringAttribute{
@@ -96,21 +407,435 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: statusDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
-
-				Default: stringdefault.StaticString("ENABLED"),
+				DeprecationMessage:  "This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.",
 
 				Validators: []validator.String{
 					stringvalidator.OneOf("ENABLED", "DISABLED"),
 				},
 			},
 
+			"enabled": schema.BoolAttribute{
+				Description:         enabledDescription.Description,
+				MarkdownDescription: enabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(true),
+			},
+
 			"population_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The population ID to add the user to.").Description,
-				Required:    true,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"The identifier of the population resource associated with the user.",
+				).Description,
+				Required: true,
 
 				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
 				},
+			},
+
+			"account": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"A single object that specifies the user's account information.",
+				).Description,
+				Optional: true,
+
+				Attributes: map[string]schema.Attribute{
+					"can_authenticate": schema.BoolAttribute{
+						Description:         accountCanAuthenticateDescription.Description,
+						MarkdownDescription: accountCanAuthenticateDescription.MarkdownDescription,
+						Required:            true,
+					},
+
+					"locked_at": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(
+							"The time the specified user account was locked. This property might be absent if the account is unlocked or if the account was locked out automatically by failed password attempts.",
+						).Description,
+						Computed: true,
+					},
+
+					"status": schema.StringAttribute{
+						Description:         accountStatusDescription.Description,
+						MarkdownDescription: accountStatusDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumUserStatusEnumValues)...),
+						},
+					},
+				},
+			},
+
+			"address": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"A single object that specifies the user's address information.",
+				).Description,
+				Optional: true,
+
+				Attributes: map[string]schema.Attribute{
+					"country_code": schema.StringAttribute{
+						Description:         addressCountryCodeDescription.Description,
+						MarkdownDescription: addressCountryCodeDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsTwoCharCountryCode, `must be a valid two character country code`),
+						},
+					},
+
+					"locality": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(
+							"A string that specifies the city or locality component of the address. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.",
+						).Description,
+						Optional: true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+							stringvalidator.LengthAtMost(attrAddressLocalityMaxLength),
+							stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match the regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+						},
+					},
+
+					"postal_code": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(
+							"A string that specifies the ZIP code or postal code component of the address. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 40 characters.",
+						).Description,
+						Optional: true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+							stringvalidator.LengthAtMost(attrAddressPostalCodeMaxLength),
+							stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match the regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+						},
+					},
+
+					"region": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(
+							"A string that specifies the state, province, or region component of the address. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.",
+						).Description,
+						Optional: true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+							stringvalidator.LengthAtMost(attrAddressRegionMaxLength),
+							stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match the regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+						},
+					},
+
+					"street_address": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(
+							"A string that specifies the full street address component, which may include house number, street name, P.O. box, and multi-line extended street address information. This attribute may contain newlines. It can have a length of no more than 256 characters.",
+						).Description,
+						Optional: true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+							stringvalidator.LengthAtMost(attrAddressStreetAddressMaxLength),
+							stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{N}\p{Zs}\p{P}\n\r]*$`), `must match the regex ^[\p{L}\p{M}\p{N}\p{Zs}\p{P}\n\r]*$`),
+						},
+					},
+				},
+			},
+
+			"external_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"A string that specifies an identifier for the user resource as defined by the provisioning client. This may be explicitly set to null when updating a user to unset it. The externalId attribute simplifies the correlation of the user in PingOne with the user’s account in another system of record. The platform does not use this attribute directly in any way, but it is used by Ping Identity's Data Sync product. It can have a length of no more than 1024 characters.",
+				).Description,
+				Optional: true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.LengthAtMost(attrExternalIdMaxLength),
+				},
+			},
+
+			"identity_provider": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"A single object that specifies the user's identity provider information.",
+				).Description,
+				Optional: true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(
+							"A string that identifies the external identity provider used to authenticate the user. If not provided, PingOne is the identity provider. This attribute is required if the identity provider is authoritative for just-in-time user provisioning.",
+						).Description,
+						Optional: true,
+					},
+
+					"type": schema.StringAttribute{
+						Description:         identityProviderTypeDescription.Description,
+						MarkdownDescription: identityProviderTypeDescription.MarkdownDescription,
+						Computed:            true,
+					},
+				},
+			},
+
+			"user_lifecycle": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"A single object that specifies the user's identity lifecycle information.",
+				).Description,
+				Optional: true,
+
+				Attributes: map[string]schema.Attribute{
+					"status": schema.StringAttribute{
+						Description:         userLifecycleStatusDescription.Description,
+						MarkdownDescription: userLifecycleStatusDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumUserLifecycleStatusEnumValues)...),
+						},
+					},
+
+					"suppress_verification_code": schema.BoolAttribute{
+						Description:         userLifecycleSuppressVerificationCodeDescription.Description,
+						MarkdownDescription: userLifecycleSuppressVerificationCodeDescription.MarkdownDescription,
+						Optional:            true,
+					},
+				},
+			},
+
+			"locale": schema.StringAttribute{
+				Description:         localeDescription.Description,
+				MarkdownDescription: localeDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.LengthAtMost(attrLocaleMaxLength),
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match the regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+				},
+			},
+
+			"mfa_enabled": schema.BoolAttribute{
+				Description:         mfaEnabledDescription.Description,
+				MarkdownDescription: mfaEnabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+			},
+
+			"mobile_phone": schema.StringAttribute{
+				Description:         mobilePhoneDescription.Description,
+				MarkdownDescription: mobilePhoneDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.LengthAtMost(attrMobilePhoneMaxLength),
+					stringvalidator.RegexMatches(regexp.MustCompile(`[0-9]+`), `must match have at least one number`),
+				},
+			},
+
+			"name": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"A single object that specifies the user's name information.",
+				).Description,
+				Optional: true,
+
+				Attributes: map[string]schema.Attribute{
+					"family": schema.StringAttribute{
+						Description:         nameFamilyDescription.Description,
+						MarkdownDescription: nameFamilyDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+							stringvalidator.LengthAtMost(attrNameFamilyMaxLength),
+							stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{N}' .-]*$`), `must match regex ^[\p{L}\p{M}\p{N}' .-]*$`),
+						},
+					},
+
+					"formatted": schema.StringAttribute{
+						Description:         nameFormattedDescription.Description,
+						MarkdownDescription: nameFormattedDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+							stringvalidator.LengthAtMost(attrNameFormattedMaxLength),
+							stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{N}' .-]*$`), `must match regex ^[\p{L}\p{M}\p{N}' .-]*$`),
+						},
+					},
+
+					"given": schema.StringAttribute{
+						Description:         nameGivenDescription.Description,
+						MarkdownDescription: nameGivenDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+							stringvalidator.LengthAtMost(attrNameGivenMaxLength),
+							stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+						},
+					},
+
+					"honorific_prefix": schema.StringAttribute{
+						Description:         nameHonorificPrefixDescription.Description,
+						MarkdownDescription: nameHonorificPrefixDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"honorific_suffix": schema.StringAttribute{
+						Description:         nameHonorificSuffixDescription.Description,
+						MarkdownDescription: nameHonorificSuffixDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"middle": schema.StringAttribute{
+						Description:         nameMiddleDescription.Description,
+						MarkdownDescription: nameMiddleDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+							stringvalidator.LengthAtMost(attrNameMiddleMaxLength),
+							stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+						},
+					},
+				},
+			},
+
+			"nickname": schema.StringAttribute{
+				Description:         nicknameDescription.Description,
+				MarkdownDescription: nicknameDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.LengthAtMost(attrNicknameMaxLength),
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+				},
+			},
+
+			"password": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"A single object that specifies the user's password information.",
+				).Description,
+				Optional: true,
+
+				Attributes: map[string]schema.Attribute{
+					"force_change": schema.StringAttribute{
+						Description:         passwordForceChangeDescription.Description,
+						MarkdownDescription: passwordForceChangeDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"initial_value": schema.StringAttribute{
+						Description:         passwordInitialValueDescription.Description,
+						MarkdownDescription: passwordInitialValueDescription.MarkdownDescription,
+						Optional:            true,
+						Sensitive:           true,
+					},
+
+					"external": schema.SingleNestedAttribute{
+						Description:         passwordExternalDescription.Description,
+						MarkdownDescription: passwordExternalDescription.MarkdownDescription,
+						Optional:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"gateway": schema.SingleNestedAttribute{
+								Description:         passwordExternalGatewayDescription.Description,
+								MarkdownDescription: passwordExternalGatewayDescription.MarkdownDescription,
+								Required:            true,
+
+								Attributes: map[string]schema.Attribute{
+									"id": schema.StringAttribute{
+										Description:         passwordExternalGatewayIdDescription.Description,
+										MarkdownDescription: passwordExternalGatewayIdDescription.MarkdownDescription,
+										Optional:            true,
+									},
+
+									"type": schema.StringAttribute{
+										Description:         passwordExternalGatewayTypeDescription.Description,
+										MarkdownDescription: passwordExternalGatewayTypeDescription.MarkdownDescription,
+										Optional:            true,
+									},
+
+									"user_type_id": schema.StringAttribute{
+										Description:         passwordExternalGatewayUserTypeIdDescription.Description,
+										MarkdownDescription: passwordExternalGatewayUserTypeIdDescription.MarkdownDescription,
+										Optional:            true,
+									},
+
+									"correlation_attributes": schema.MapAttribute{
+										Description:         passwordExternalGatewayCorrelationAttributesDescription.Description,
+										MarkdownDescription: passwordExternalGatewayCorrelationAttributesDescription.MarkdownDescription,
+										Optional:            true,
+
+										ElementType: types.StringType,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+
+			"photo": schema.SingleNestedAttribute{
+				Description:         photoDescription.Description,
+				MarkdownDescription: photoDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"href": schema.StringAttribute{
+						Description:         photoHrefDescription.Description,
+						MarkdownDescription: photoHrefDescription.MarkdownDescription,
+						Required:            true,
+					},
+				},
+			},
+
+			"preferred_language": schema.StringAttribute{
+				Description:         preferredLanguageDescription.Description,
+				MarkdownDescription: preferredLanguageDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"primary_phone": schema.StringAttribute{
+				Description:         primaryPhoneDescription.Description,
+				MarkdownDescription: primaryPhoneDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"timezone": schema.StringAttribute{
+				Description:         timezoneDescription.Description,
+				MarkdownDescription: timezoneDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"title": schema.StringAttribute{
+				Description:         titleDescription.Description,
+				MarkdownDescription: titleDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"type": schema.StringAttribute{
+				Description:         typeDescription.Description,
+				MarkdownDescription: typeDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"verify_status": schema.StringAttribute{
+				Description:         verifyStatusDescription.Description,
+				MarkdownDescription: verifyStatusDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"created_at": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"The time the resource was created.",
+				).Description,
+				Computed: true,
+			},
+
+			"updated_at": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"The time the resource was last updated.",
+				).Description,
+				Computed: true,
 			},
 		},
 	}
@@ -163,7 +888,11 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	// Build the model for the API
-	user, userEnabled := plan.expand()
+	user, userEnabled, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var userResponse *management.User
@@ -284,7 +1013,11 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// Build the model for the API
-	user, userEnabled := plan.expand()
+	user, userEnabled, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var response *management.User
@@ -375,7 +1108,8 @@ func (r *UserResource) ImportState(ctx context.Context, req resource.ImportState
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *UserResourceModel) expand() (*management.User, *management.UserEnabled) {
+func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *management.UserEnabled, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	userData := management.NewUser(p.Email.ValueString(), p.Username.ValueString())
 
@@ -389,7 +1123,232 @@ func (p *UserResourceModel) expand() (*management.User, *management.UserEnabled)
 		userEnabledData.SetEnabled(false)
 	}
 
-	return userData, userEnabledData
+	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
+		userEnabledData.SetEnabled(p.Enabled.ValueBool())
+	}
+
+	if !p.Account.IsNull() && !p.Account.IsUnknown() {
+		var plan UserAccountResourceModel
+		diags.Append(p.Account.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, nil, diags
+		}
+
+		v := management.NewUserAccount(
+			plan.CanAuthenticate.ValueBool(),
+			management.EnumUserStatus(plan.Status.ValueString()),
+		)
+
+		userData.SetAccount(*v)
+	}
+
+	if !p.Address.IsNull() && !p.Address.IsUnknown() {
+		var plan UserAddressResourceModel
+		diags.Append(p.Address.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, nil, diags
+		}
+
+		v := management.NewUserAddress()
+
+		if !plan.CountryCode.IsNull() && !plan.CountryCode.IsUnknown() {
+			v.SetCountryCode(plan.CountryCode.ValueString())
+		}
+
+		if !plan.Locality.IsNull() && !plan.Locality.IsUnknown() {
+			v.SetLocality(plan.Locality.ValueString())
+		}
+
+		if !plan.PostalCode.IsNull() && !plan.PostalCode.IsUnknown() {
+			v.SetPostalCode(plan.PostalCode.ValueString())
+		}
+
+		if !plan.Region.IsNull() && !plan.Region.IsUnknown() {
+			v.SetRegion(plan.Region.ValueString())
+		}
+
+		if !plan.StreetAddress.IsNull() && !plan.StreetAddress.IsUnknown() {
+			v.SetStreetAddress(plan.StreetAddress.ValueString())
+		}
+
+		userData.SetAddress(*v)
+	}
+
+	if !p.ExternalId.IsNull() && !p.ExternalId.IsUnknown() {
+		userData.SetExternalId(p.ExternalId.ValueString())
+	}
+
+	if !p.IdentityProvider.IsNull() && !p.IdentityProvider.IsUnknown() {
+		var plan UserIdentityProviderResourceModel
+		diags.Append(p.IdentityProvider.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, nil, diags
+		}
+
+		v := management.NewUserIdentityProvider()
+
+		if !plan.Id.IsNull() && !plan.Id.IsUnknown() {
+			v.SetId(plan.Id.ValueString())
+		}
+
+		userData.SetIdentityProvider(*v)
+	}
+
+	if !p.Lifecycle.IsNull() && !p.Lifecycle.IsUnknown() {
+		var plan UserLifecycleResourceModel
+		diags.Append(p.Lifecycle.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, nil, diags
+		}
+
+		v := management.NewUserLifecycle()
+
+		if !plan.Status.IsNull() && !plan.Status.IsUnknown() {
+			v.SetStatus(management.EnumUserLifecycleStatus(plan.Status.ValueString()))
+		}
+
+		if !plan.SuppressVerificationCode.IsNull() && !plan.SuppressVerificationCode.IsUnknown() {
+			v.SetSuppressVerificationCode(plan.SuppressVerificationCode.ValueBool())
+		}
+
+		userData.SetLifecycle(*v)
+	}
+
+	if !p.Locale.IsNull() && !p.Locale.IsUnknown() {
+		userData.SetLocale(p.Locale.ValueString())
+	}
+
+	if !p.MFAEnabled.IsNull() && !p.MFAEnabled.IsUnknown() {
+		userData.SetMfaEnabled(p.MFAEnabled.ValueBool())
+	}
+
+	if !p.MobilePhone.IsNull() && !p.MobilePhone.IsUnknown() {
+		userData.SetMobilePhone(p.MobilePhone.ValueString())
+	}
+
+	if !p.Name.IsNull() && !p.Name.IsUnknown() {
+		var plan UserNameResourceModel
+		diags.Append(p.Name.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, nil, diags
+		}
+
+		v := management.NewUserName()
+
+		if !plan.Family.IsNull() && !plan.Family.IsUnknown() {
+			v.SetFamily(plan.Family.ValueString())
+		}
+
+		if !plan.Formatted.IsNull() && !plan.Formatted.IsUnknown() {
+			v.SetFormatted(plan.Formatted.ValueString())
+		}
+
+		if !plan.Given.IsNull() && !plan.Given.IsUnknown() {
+			v.SetGiven(plan.Given.ValueString())
+		}
+
+		if !plan.HonorificPrefix.IsNull() && !plan.HonorificPrefix.IsUnknown() {
+			v.SetHonorificPrefix(plan.HonorificPrefix.ValueString())
+		}
+
+		if !plan.HonorificSuffix.IsNull() && !plan.HonorificSuffix.IsUnknown() {
+			v.SetHonorificSuffix(plan.HonorificSuffix.ValueString())
+		}
+
+		if !plan.Middle.IsNull() && !plan.Middle.IsUnknown() {
+			v.SetMiddle(plan.Middle.ValueString())
+		}
+
+		userData.SetName(*v)
+	}
+
+	if !p.Nickname.IsNull() && !p.Nickname.IsUnknown() {
+		userData.SetNickname(p.Nickname.ValueString())
+	}
+
+	if !p.Password.IsNull() && !p.Password.IsUnknown() {
+		var plan UserPasswordResourceModel
+		diags.Append(p.Password.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, nil, diags
+		}
+
+		v := management.NewUserPassword()
+
+		if !plan.ForceChange.IsNull() && !plan.ForceChange.IsUnknown() {
+			v.SetForceChange(plan.ForceChange.ValueBool())
+		}
+
+		if !plan.InitialValue.IsNull() && !plan.InitialValue.IsUnknown() {
+			v.SetValue(plan.InitialValue.ValueString())
+		}
+
+		if !plan.External.IsNull() && !plan.External.IsUnknown() {
+			external := management.NewUserPasswordExternal()
+			v.SetExternal(*external)
+		}
+
+		userData.SetPassword(*v)
+	}
+
+	if !p.Photo.IsNull() && !p.Photo.IsUnknown() {
+		var plan UserPhotoResourceModel
+		diags.Append(p.Photo.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, nil, diags
+		}
+
+		v := management.NewUserPhoto(plan.Href.ValueString())
+
+		userData.SetPhoto(*v)
+	}
+
+	if !p.PreferredLanguage.IsNull() && !p.PreferredLanguage.IsUnknown() {
+		userData.SetPreferredLanguage(p.PreferredLanguage.ValueString())
+	}
+
+	if !p.PrimaryPhone.IsNull() && !p.PrimaryPhone.IsUnknown() {
+		userData.SetPrimaryPhone(p.PrimaryPhone.ValueString())
+	}
+
+	if !p.Timezone.IsNull() && !p.Timezone.IsUnknown() {
+		userData.SetTimezone(p.Timezone.ValueString())
+	}
+
+	if !p.Title.IsNull() && !p.Title.IsUnknown() {
+		userData.SetTitle(p.Title.ValueString())
+	}
+
+	if !p.Type.IsNull() && !p.Type.IsUnknown() {
+		userData.SetType(p.Type.ValueString())
+	}
+
+	if !p.VerifyStatus.IsNull() && !p.VerifyStatus.IsUnknown() {
+		userData.SetVerifyStatus(management.EnumUserVerifyStatus(p.VerifyStatus.ValueString()))
+	}
+
+	return userData, userEnabledData, diags
 }
 
 func (p *UserResourceModel) toState(apiObject *management.User, apiObjectEnabled *management.UserEnabled) diag.Diagnostics {
@@ -408,14 +1367,190 @@ func (p *UserResourceModel) toState(apiObject *management.User, apiObjectEnabled
 	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
 	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
 	p.Email = framework.StringOkToTF(apiObject.GetEmailOk())
+	p.EmailVerified = framework.BoolOkToTF(apiObject.GetEmailVerifiedOk())
+	p.Enabled = framework.BoolOkToTF(apiObjectEnabled.GetEnabledOk())
 
+	// deprecated start
 	if v, ok := apiObjectEnabled.GetEnabledOk(); ok && *v {
 		p.Status = framework.StringToTF("ENABLED")
 	} else {
 		p.Status = framework.StringToTF("DISABLED")
 	}
+	// deprecated end
+
+	var d diag.Diagnostics
 
 	p.PopulationId = framework.StringOkToTF(apiObject.Population.GetIdOk())
+	p.Account, d = p.userAccountOkToTF(apiObject.GetAccountOk())
+	diags = append(diags, d...)
+
+	p.Address, d = p.userAddressOkToTF(apiObject.GetAddressOk())
+	diags = append(diags, d...)
+
+	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
+	p.ExternalId = framework.StringOkToTF(apiObject.GetExternalIdOk())
+	p.IdentityProvider, d = p.userIdentityProviderOkToTF(apiObject.GetIdentityProviderOk())
+	diags = append(diags, d...)
+
+	p.Lifecycle, d = p.userLifecycleOkToTF(apiObject.GetLifecycleOk())
+	diags = append(diags, d...)
+
+	p.Locale = framework.StringOkToTF(apiObject.GetLocaleOk())
+	p.MFAEnabled = framework.BoolOkToTF(apiObject.GetMfaEnabledOk())
+	p.MobilePhone = framework.StringOkToTF(apiObject.GetMobilePhoneOk())
+	p.Name, d = p.userNameOkToTF(apiObject.GetNameOk())
+	diags = append(diags, d...)
+
+	p.Nickname = framework.StringOkToTF(apiObject.GetNicknameOk())
+	p.Password, d = p.userPasswordOkToTF(apiObject.GetPasswordOk())
+	diags = append(diags, d...)
+
+	p.Photo, d = p.photoOkToTF(apiObject.GetPhotoOk())
+	diags = append(diags, d...)
+
+	p.PreferredLanguage = framework.StringOkToTF(apiObject.GetPreferredLanguageOk())
+	p.PrimaryPhone = framework.StringOkToTF(apiObject.GetPrimaryPhoneOk())
+	p.Timezone = framework.StringOkToTF(apiObject.GetTimezoneOk())
+	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
+	p.Type = framework.StringOkToTF(apiObject.GetTypeOk())
+	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+	p.VerifyStatus = framework.EnumOkToTF(apiObject.GetVerifyStatusOk())
 
 	return diags
+}
+
+func (p *UserResourceModel) userAccountOkToTF(apiObject *management.UserAccount, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(userAccountTFObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"can_authenticate": framework.BoolOkToTF(apiObject.GetCanAuthenticateOk()),
+		"locked_at":        framework.TimeOkToTF(apiObject.GetLockedAtOk()),
+		"status":           framework.EnumOkToTF(apiObject.GetStatusOk()),
+	}
+
+	objValue, d := types.ObjectValue(userAccountTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *UserResourceModel) userAddressOkToTF(apiObject *management.UserAddress, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(userAddressTFObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"country_code":   framework.StringOkToTF(apiObject.GetCountryCodeOk()),
+		"locality":       framework.StringOkToTF(apiObject.GetLocalityOk()),
+		"postal_code":    framework.StringOkToTF(apiObject.GetPostalCodeOk()),
+		"region":         framework.StringOkToTF(apiObject.GetRegionOk()),
+		"street_address": framework.StringOkToTF(apiObject.GetStreetAddressOk()),
+	}
+
+	objValue, d := types.ObjectValue(userAddressTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *UserResourceModel) userIdentityProviderOkToTF(apiObject *management.UserIdentityProvider, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(userIdentityProviderTFObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"id":   framework.StringOkToTF(apiObject.GetIdOk()),
+		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
+	}
+
+	objValue, d := types.ObjectValue(userIdentityProviderTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *UserResourceModel) userLifecycleOkToTF(apiObject *management.UserLifecycle, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(userLifecycleTFObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"status":                     framework.EnumOkToTF(apiObject.GetStatusOk()),
+		"suppress_verification_code": framework.BoolOkToTF(apiObject.GetSuppressVerificationCodeOk()),
+	}
+
+	objValue, d := types.ObjectValue(userLifecycleTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *UserResourceModel) userNameOkToTF(apiObject *management.UserName, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(userNameTFObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"family":           framework.StringOkToTF(apiObject.GetFamilyOk()),
+		"formatted":        framework.StringOkToTF(apiObject.GetFormattedOk()),
+		"given":            framework.StringOkToTF(apiObject.GetGivenOk()),
+		"honorific_prefix": framework.StringOkToTF(apiObject.GetHonorificPrefixOk()),
+		"honorific_suffix": framework.StringOkToTF(apiObject.GetHonorificSuffixOk()),
+		"middle":           framework.StringOkToTF(apiObject.GetMiddleOk()),
+	}
+
+	objValue, d := types.ObjectValue(userNameTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *UserResourceModel) userPasswordOkToTF(apiObject *management.UserPassword, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(userPasswordTFObjectTypes), diags
+	}
+
+	externalObject := types.ObjectNull(userPasswordExternalTFObjectTypes)
+
+	objMap := map[string]attr.Value{
+		"force_change":  framework.BoolOkToTF(apiObject.GetForceChangeOk()),
+		"initial_value": framework.StringOkToTF(apiObject.GetValueOk()),
+		"external":      externalObject,
+	}
+
+	objValue, d := types.ObjectValue(userPasswordTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *UserResourceModel) photoOkToTF(apiObject *management.UserPhoto, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(userPhotoTFObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"href": framework.StringOkToTF(apiObject.GetHrefOk()),
+	}
+
+	objValue, d := types.ObjectValue(userPhotoTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return objValue, diags
 }
