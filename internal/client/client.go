@@ -21,6 +21,7 @@ func (c *Config) APIClient(ctx context.Context) (*Client, error) {
 		Region:               c.Region,
 		APIHostnameOverride:  c.APIHostnameOverride,
 		AuthHostnameOverride: c.AuthHostnameOverride,
+		ProxyURL:             c.ProxyURL,
 	}
 
 	client, err := config.APIClient(ctx)

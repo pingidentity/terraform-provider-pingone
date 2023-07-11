@@ -8,5 +8,6 @@ type Config struct {
 	Region               string
 	APIHostnameOverride  *string
 	AuthHostnameOverride *string
+	ProxyURL             *string
 	ForceDelete          bool
 }

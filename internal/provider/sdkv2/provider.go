@@ -69,6 +69,11 @@ func New(version string) func() *schema.Provider {
 					Optional:    true,
 					Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
 				},
+				"http_proxy": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.",
+				},
 				"service_endpoints": {
 					Type:        schema.TypeList,
 					Optional:    true,

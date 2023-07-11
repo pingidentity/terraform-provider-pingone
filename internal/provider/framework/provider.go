@@ -46,6 +46,7 @@ type pingOneProviderModel struct {
 	Region                               types.String `tfsdk:"region"`
 	ServiceEndpoints                     types.List   `tfsdk:"service_endpoints"`
 	ForceDeleteProductionEnvironmentType types.Bool   `tfsdk:"force_delete_production_type"`
+	HTTPProxy                            types.String `tfsdk:"http_proxy"`
 }
 
 type pingOneProviderServiceEndpointsModel struct {
@@ -97,6 +98,10 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 		"Hostname for the PingOne management service API.  Default value can be set with the `PINGONE_API_SERVICE_HOSTNAME` environment variable.",
 	)
 
+	httpProxyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.",
+	)
+
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
@@ -132,6 +137,12 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 			"force_delete_production_type": schema.BoolAttribute{
 				Description:         forceDeleteProductionTypeDescription.Description,
 				MarkdownDescription: forceDeleteProductionTypeDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"http_proxy": schema.StringAttribute{
+				Description:         httpProxyDescription.Description,
+				MarkdownDescription: httpProxyDescription.MarkdownDescription,
 				Optional:            true,
 			},
 		},
