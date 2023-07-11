@@ -1,4 +1,7 @@
 ```release-note:enhancement
 `resource/pingone_application`: Now supports the `saml_option` of `slo_window`.
-`resource/pingone_identity_provider`: Now supports the `saml` configuration options: `slo_binding`, `slo_endpoint`, `slo_response_endpoint` and `slo_window`.
+```
+
+```release-note:enhancement
+`resource/pingone_identity_provider`: Now supports the SAML IdP configuration options: `slo_binding`, `slo_endpoint`, `slo_response_endpoint` and `slo_window`.
 ```

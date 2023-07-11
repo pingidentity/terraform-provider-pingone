@@ -215,8 +215,8 @@ Optional:
 
 - `authentication_request_signed` (Boolean) A boolean that specifies whether the SAML authentication request will be signed when sending to the identity provider. Set this to true if the external IDP is included in an authentication policy to be used by applications that are accessed using a mix of default URLS and custom Domains URLs. Defaults to `false`.
 - `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response. Options are `HTTP_REDIRECT` and `HTTP_POST`.  Existing configurations with no data default to `HTTP_POST`. Defaults to `HTTP_POST`.
-- `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a sloEndpoint logout endpoint URL is not defined, logout actions result in an error.
-- `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the sloEndpoint property value is used to submit SLO response.
+- `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.
+- `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.
 - `sp_signing_key_id` (String) A string that specifies the service provider's signing key ID.
 
