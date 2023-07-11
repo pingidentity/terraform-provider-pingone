@@ -212,6 +212,11 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		ForceDelete:   data.ForceDeleteProductionEnvironmentType.ValueBool(),
 	}
 
+	if !data.HTTPProxy.IsNull() {
+		v := data.HTTPProxy.ValueString()
+		config.ProxyURL = &v
+	}
+
 	if !data.ServiceEndpoints.IsNull() {
 
 		var serviceEndpointsData pingOneProviderServiceEndpointsModel

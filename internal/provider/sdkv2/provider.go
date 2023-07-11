@@ -201,6 +201,10 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			config.ForceDelete = forceDelete
 		}
 
+		if v, ok := d.Get("http_proxy").(string); ok && v != "" {
+			config.ProxyURL = &v
+		}
+
 		if v, ok := d.Get("service_endpoints").([]interface{}); ok && len(v) > 0 && v[0] != nil {
 			if v, ok := d.Get("auth_hostname").(string); ok && v != "" {
 				config.AuthHostnameOverride = &v
