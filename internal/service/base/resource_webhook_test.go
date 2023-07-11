@@ -463,8 +463,8 @@ resource "pingone_webhook" "%[2]s" {
     included_application_ids = [pingone_application.%[3]s-2.id, pingone_application.%[3]s-3.id, pingone_application.%[3]s-1.id]
     included_population_ids  = [pingone_population.%[3]s-2.id, pingone_population.%[3]s-3.id, pingone_population.%[3]s-1.id]
     included_tags            = ["adminIdentityEvent"]
-	ip_address_exposed       = true
-	useragent_exposed        = true	
+    ip_address_exposed       = true
+    useragent_exposed        = true
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -567,8 +567,8 @@ resource "pingone_webhook" "%[2]s" {
     included_action_types    = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
     included_application_ids = [pingone_application.%[3]s-2.id, pingone_application.%[3]s-3.id, pingone_application.%[3]s-1.id]
     included_population_ids  = [pingone_population.%[3]s-2.id, pingone_population.%[3]s-3.id, pingone_population.%[3]s-1.id]
-	ip_address_exposed       = true
-	useragent_exposed        = false	
+    ip_address_exposed       = true
+    useragent_exposed        = false
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -632,8 +632,8 @@ resource "pingone_webhook" "%[2]s" {
     included_action_types    = ["ACCOUNT.LINKED"]
     included_application_ids = [pingone_application.%[3]s-new.id, pingone_application.%[3]s-1.id]
     included_population_ids  = [pingone_population.%[3]s-new.id, pingone_population.%[3]s-1.id]
-	ip_address_exposed       = false
-	useragent_exposed        = true	
+    ip_address_exposed       = false
+    useragent_exposed        = true
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
