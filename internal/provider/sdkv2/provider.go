@@ -164,64 +164,22 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		debugLogMessage := "[v5] Provider parameter %s missing, defaulting to environment variable"
 		if v, ok := d.Get("client_id").(string); ok && v != "" {
 			config.ClientID = v
-		} else {
-			config.ClientID = os.Getenv("PINGONE_CLIENT_ID")
-			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "client_id"), map[string]interface{}{
-				"env_var":       "PINGONE_CLIENT_ID",
-				"env_var_value": config.ClientID,
-			})
 		}
 
 		if v, ok := d.Get("client_secret").(string); ok && v != "" {
 			config.ClientSecret = v
-		} else {
-			config.ClientSecret = os.Getenv("PINGONE_CLIENT_SECRET")
-			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "client_secret"), map[string]interface{}{
-				"env_var": "PINGONE_CLIENT_SECRET",
-				"env_var_value": func() string {
-					if len(config.ClientSecret) > 0 {
-						return "***"
-					}
-					return ""
-
-				}(),
-			})
 		}
 
 		if v, ok := d.Get("environment_id").(string); ok && v != "" {
 			config.EnvironmentID = v
-		} else {
-			config.EnvironmentID = os.Getenv("PINGONE_ENVIRONMENT_ID")
-			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "environment_id"), map[string]interface{}{
-				"env_var":       "PINGONE_ENVIRONMENT_ID",
-				"env_var_value": config.EnvironmentID,
-			})
 		}
 
 		if v, ok := d.Get("api_access_token").(string); ok && v != "" {
 			config.AccessToken = v
-		} else {
-			config.AccessToken = os.Getenv("PINGONE_API_ACCESS_TOKEN")
-			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "api_access_token"), map[string]interface{}{
-				"env_var": "PINGONE_API_ACCESS_TOKEN",
-				"env_var_value": func() string {
-					if len(config.AccessToken) > 0 {
-						return "***"
-					}
-					return ""
-
-				}(),
-			})
 		}
 
 		if v, ok := d.Get("region").(string); ok && v != "" {
 			config.Region = v
-		} else {
-			config.Region = os.Getenv("PINGONE_REGION")
-			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "region"), map[string]interface{}{
-				"env_var":       "PINGONE_REGION",
-				"env_var_value": config.Region,
-			})
 		}
 
 		if v, ok := d.Get("force_delete_production_type").(bool); ok {
@@ -238,7 +196,6 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			config.ForceDelete = forceDelete
 		}
 
-		servicesOverridden := false
 		if v, ok := d.Get("service_endpoints").([]interface{}); ok && len(v) > 0 && v[0] != nil {
 			if v, ok := d.Get("auth_hostname").(string); ok && v != "" {
 				config.AuthHostnameOverride = &v
@@ -247,41 +204,6 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			if v, ok := d.Get("api_hostname").(string); ok && v != "" {
 				config.APIHostnameOverride = &v
 			}
-		} else {
-			if v := os.Getenv("PINGONE_AUTH_SERVICE_HOSTNAME"); v != "" {
-				config.AuthHostnameOverride = &v
-				tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "auth_hostname"), map[string]interface{}{
-					"env_var":       "PINGONE_AUTH_SERVICE_HOSTNAME",
-					"env_var_value": config.AuthHostnameOverride,
-				})
-				servicesOverridden = true
-			}
-
-			if v := os.Getenv("PINGONE_API_SERVICE_HOSTNAME"); v != "" {
-				config.APIHostnameOverride = &v
-				tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "api_hostname"), map[string]interface{}{
-					"env_var":       "PINGONE_API_SERVICE_HOSTNAME",
-					"env_var_value": config.APIHostnameOverride,
-				})
-				servicesOverridden = true
-			}
-		}
-
-		if servicesOverridden && (config.AuthHostnameOverride == nil || config.APIHostnameOverride == nil) {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Required service endpoints not configured.",
-				Detail:   "When overriding service endpoints using environment variables, PINGONE_AUTH_SERVICE_HOSTNAME and PINGONE_API_SERVICE_HOSTNAME are required to be set.",
-			})
-		}
-
-		err := config.Validate()
-		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
-		}
-
-		if diags.HasError() {
-			return nil, diags
 		}
 
 		client, err := config.APIClient(ctx)
