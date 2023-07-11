@@ -94,36 +94,36 @@ func TestAccUser_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUserConfig_Full(resourceName, name, "ENABLED"),
+				Config: testAccUserConfig_Full(resourceName, name, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
 					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 				),
 			},
 			{
-				Config: testAccUserConfig_Full(resourceName, name, "DISABLED"),
+				Config: testAccUserConfig_Full(resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
 					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "status", "DISABLED"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 				),
 			},
 			{
-				Config: testAccUserConfig_Full(resourceName, name, "ENABLED"),
+				Config: testAccUserConfig_Full(resourceName, name, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
 					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 				),
 			},
 		},
@@ -152,18 +152,18 @@ func TestAccUser_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
 					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 				),
 			},
 			{
-				Config: testAccUserConfig_Full(resourceName, name, "DISABLED"),
+				Config: testAccUserConfig_Full(resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
 					resource.TestCheckResourceAttr(resourceFullName, "email", "noreply@pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "status", "DISABLED"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 				),
 			},
 		},
@@ -229,7 +229,7 @@ resource "pingone_user" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccUserConfig_Full(resourceName, name, status string) string {
+func testAccUserConfig_Full(resourceName, name string, userEnabled bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -245,8 +245,8 @@ resource "pingone_user" "%[2]s" {
   username      = "%[3]s"
   email         = "noreply@pingidentity.com"
   population_id = pingone_population.%[2]s.id
-  status        = "%[4]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, status)
+  enabled        = %[4]t
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, userEnabled)
 }
 
 func testAccUserConfig_Minimal(resourceName, name string) string {

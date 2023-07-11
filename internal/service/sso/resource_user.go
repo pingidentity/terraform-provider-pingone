@@ -14,6 +14,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -42,7 +46,6 @@ type UserResourceModel struct {
 	PopulationId      types.String `tfsdk:"population_id"`
 	Account           types.Object `tfsdk:"account"`
 	Address           types.Object `tfsdk:"address"`
-	CreatedAt         types.String `tfsdk:"created_at"`
 	ExternalId        types.String `tfsdk:"external_id"`
 	IdentityProvider  types.Object `tfsdk:"identity_provider"`
 	Lifecycle         types.Object `tfsdk:"user_lifecycle"`
@@ -58,7 +61,6 @@ type UserResourceModel struct {
 	Timezone          types.String `tfsdk:"timezone"`
 	Title             types.String `tfsdk:"title"`
 	Type              types.String `tfsdk:"type"`
-	UpdatedAt         types.String `tfsdk:"updated_at"`
 	VerifyStatus      types.String `tfsdk:"verify_status"`
 }
 
@@ -183,6 +185,7 @@ var (
 	_ resource.Resource                = &UserResource{}
 	_ resource.ResourceWithConfigure   = &UserResource{}
 	_ resource.ResourceWithImportState = &UserResource{}
+	_ resource.ResourceWithModifyPlan  = &UserResource{}
 )
 
 // New Object
@@ -207,12 +210,14 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	const attrAddressStreetAddressMaxLength = 256
 	const attrExternalIdMaxLength = 1024
 	const attrLocaleMaxLength = 256
-	const attrMobilePhoneMaxLength = 32
+	const attrPhoneMaxLength = 32
 	const attrNameFamilyMaxLength = 256
 	const attrNameFormattedMaxLength = 256
 	const attrNameGivenMaxLength = 256
 	const attrNameMiddleMaxLength = 256
 	const attrNicknameMaxLength = 256
+	const attrTitleMaxLength = 256
+	const attrTypeMaxLength = 256
 
 	usernameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the user name, which must be provided and must be unique within an environment. The `username` must either be a well-formed email address or a string. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace",
@@ -299,67 +304,41 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	passwordForceChangeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	passwordInitialValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	passwordExternalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	passwordExternalGatewayDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	passwordExternalGatewayIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
+		"A boolean that specifies whether the user is forced to change the password on the next log in.",
+	).DefaultValue("false")
 
 	passwordExternalGatewayTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	passwordExternalGatewayUserTypeIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	passwordExternalGatewayCorrelationAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
-
-	photoDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
+		"A string that indicates one of the supported gateway types.",
+	).AllowedValuesEnum(management.AllowedEnumGatewayTypeEnumValues)
 
 	photoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"The URI that is a uniform resource locator (as defined in [Section 1.1.3 of RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-1.3)) that points to a resource location representing the user's image. This can be removed from a user by setting the photo attribute to null. If provided, the resource must be a file (for example, a GIF, JPEG, or PNG image file) rather than a web page containing an image. It must be a valid URL that starts with the HTTP or HTTPS scheme.",
 	)
 
 	preferredLanguageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the user's preferred written or spoken languages. This may be explicitly set to null when updating a user to unset it. If provided, the format of the value must be a valid language range and the same as the HTTP `Accept-Language` header field (not including `Accept-Language:` prefix) and is specified in [Section 5.3.5 of RFC 7231](https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.5). For example: `en-US`, `en-gb;q=0.8`, `en;q=0.7`.",
 	)
 
 	primaryPhoneDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the user's primary phone number. This might also match the `mobile_phone` attribute. This may be explicitly set to null when updating a user to unset it. Valid phone numbers must have at least one number and a maximum character length of 32.",
 	)
 
 	timezoneDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the user's time zone. This can be explicitly set to null when updating a user to unset it. If provided, it must conform with the IANA Time Zone database format [RFC 6557](https://www.rfc-editor.org/rfc/rfc6557.html), also known as the \"Olson\" time zone database format [Olson-TZ](https://www.iana.org/time-zones) for example, `America/Los_Angeles`.",
 	)
 
 	titleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the user's title, such as `Vice President`. This can be explicitly set to null when updating a user to unset it. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.",
 	)
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the user's type, which is optional. This can be explicitly set to null when updating a user to unset it. This attribute is organization-specific and has no special meaning within the PingOne platform. It is a free-text field that could have values of (for example) `Contractor`, `Employee`, `Intern`, `Temp`, `External`, and `Unknown`. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.",
 	)
 
 	verifyStatusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that indicates whether ID verification can be done for the user.",
+	).AllowedValuesEnum(management.AllowedEnumUserVerifyStatusEnumValues).AppendMarkdownString(
+		"If the user verification status is `DISABLED`, a new verification status cannot be created for that user until the status is changed to `ENABLED`.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -412,6 +391,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Validators: []validator.String{
 					stringvalidator.OneOf("ENABLED", "DISABLED"),
 				},
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -439,12 +422,27 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					"A single object that specifies the user's account information.",
 				).Description,
 				Optional: true,
+				Computed: true,
+
+				// Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+				// 	o := map[string]attr.Value{
+				// 		"can_authenticate": types.BoolValue(true),
+				// 		"locked_at":        types.StringNull(),
+				// 		"status":           types.StringValue(string(management.ENUMUSERSTATUS_OK)),
+				// 	}
+
+				// 	objValue, d := types.ObjectValue(userAccountTFObjectTypes, o)
+				// 	resp.Diagnostics.Append(d...)
+
+				// 	return objValue
+				// }()),
 
 				Attributes: map[string]schema.Attribute{
 					"can_authenticate": schema.BoolAttribute{
 						Description:         accountCanAuthenticateDescription.Description,
 						MarkdownDescription: accountCanAuthenticateDescription.MarkdownDescription,
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 					},
 
 					"locked_at": schema.StringAttribute{
@@ -554,6 +552,19 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					"A single object that specifies the user's identity provider information.",
 				).Description,
 				Optional: true,
+				Computed: true,
+
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"id":   types.StringNull(),
+						"type": types.StringValue(string(management.ENUMIDENTITYPROVIDER_PING_ONE)),
+					}
+
+					objValue, d := types.ObjectValue(userIdentityProviderTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
 
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
@@ -567,6 +578,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						Description:         identityProviderTypeDescription.Description,
 						MarkdownDescription: identityProviderTypeDescription.MarkdownDescription,
 						Computed:            true,
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 			},
@@ -576,6 +591,19 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					"A single object that specifies the user's identity lifecycle information.",
 				).Description,
 				Optional: true,
+				Computed: true,
+
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					o := map[string]attr.Value{
+						"status":                     framework.StringToTF(string(management.ENUMUSERLIFECYCLESTATUS_ACCOUNT_OK)),
+						"suppress_verification_code": types.BoolNull(),
+					}
+
+					objValue, d := types.ObjectValue(userLifecycleTFObjectTypes, o)
+					resp.Diagnostics.Append(d...)
+
+					return objValue
+				}()),
 
 				Attributes: map[string]schema.Attribute{
 					"status": schema.StringAttribute{
@@ -624,8 +652,8 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.LengthAtMost(attrMobilePhoneMaxLength),
-					stringvalidator.RegexMatches(regexp.MustCompile(`[0-9]+`), `must match have at least one number`),
+					stringvalidator.LengthAtMost(attrPhoneMaxLength),
+					stringvalidator.RegexMatches(regexp.MustCompile(`[0-9]+`), `must have at least one number`),
 				},
 			},
 
@@ -717,53 +745,74 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Optional: true,
 
 				Attributes: map[string]schema.Attribute{
-					"force_change": schema.StringAttribute{
+					"force_change": schema.BoolAttribute{
 						Description:         passwordForceChangeDescription.Description,
 						MarkdownDescription: passwordForceChangeDescription.MarkdownDescription,
 						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
 					},
 
 					"initial_value": schema.StringAttribute{
-						Description:         passwordInitialValueDescription.Description,
-						MarkdownDescription: passwordInitialValueDescription.MarkdownDescription,
-						Optional:            true,
-						Sensitive:           true,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(
+							"A string that specifies the user's initial password value. The string is either in cleartext or pre-encoded format.  This value, if changed by the user, will not be updated from the cloud service.",
+						).Description,
+						Optional:  true,
+						Sensitive: true,
 					},
 
 					"external": schema.SingleNestedAttribute{
-						Description:         passwordExternalDescription.Description,
-						MarkdownDescription: passwordExternalDescription.MarkdownDescription,
-						Optional:            true,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(
+							"A single object that maps the information relevant to the user's password, and its association to external directories.",
+						).Description,
+						Optional: true,
 
 						Attributes: map[string]schema.Attribute{
 							"gateway": schema.SingleNestedAttribute{
-								Description:         passwordExternalGatewayDescription.Description,
-								MarkdownDescription: passwordExternalGatewayDescription.MarkdownDescription,
-								Required:            true,
+								Description: framework.SchemaAttributeDescriptionFromMarkdown(
+									"A single object that contains the external gateway properties. When this is value is specified, the user's password is managed in an external directory.",
+								).Description,
+								Required: true,
 
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
-										Description:         passwordExternalGatewayIdDescription.Description,
-										MarkdownDescription: passwordExternalGatewayIdDescription.MarkdownDescription,
-										Optional:            true,
+										Description: framework.SchemaAttributeDescriptionFromMarkdown(
+											"A string that specifies the UUID of the linked gateway that references the remote directory.  Must be a valid PingOne resource ID.",
+										).Description,
+										Optional: true,
+
+										Validators: []validator.String{
+											verify.P1ResourceIDValidator(),
+										},
 									},
 
 									"type": schema.StringAttribute{
 										Description:         passwordExternalGatewayTypeDescription.Description,
 										MarkdownDescription: passwordExternalGatewayTypeDescription.MarkdownDescription,
 										Optional:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumGatewayTypeEnumValues)...),
+										},
 									},
 
 									"user_type_id": schema.StringAttribute{
-										Description:         passwordExternalGatewayUserTypeIdDescription.Description,
-										MarkdownDescription: passwordExternalGatewayUserTypeIdDescription.MarkdownDescription,
-										Optional:            true,
+										Description: framework.SchemaAttributeDescriptionFromMarkdown(
+											"A string that specifies the UUID of a user type in the list of user types for the LDAP gateway.  Must be a valid PingOne resource ID.",
+										).Description,
+										Optional: true,
+
+										Validators: []validator.String{
+											verify.P1ResourceIDValidator(),
+										},
 									},
 
 									"correlation_attributes": schema.MapAttribute{
-										Description:         passwordExternalGatewayCorrelationAttributesDescription.Description,
-										MarkdownDescription: passwordExternalGatewayCorrelationAttributesDescription.MarkdownDescription,
-										Optional:            true,
+										Description: framework.SchemaAttributeDescriptionFromMarkdown(
+											"A string map that maps the external LDAP directory attributes to PingOne attributes. PingOne uses these values to read the attributes from the external LDAP directory and map them to the corresponding PingOne attributes.",
+										).Description,
+										Optional: true,
 
 										ElementType: types.StringType,
 									},
@@ -775,15 +824,20 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 
 			"photo": schema.SingleNestedAttribute{
-				Description:         photoDescription.Description,
-				MarkdownDescription: photoDescription.MarkdownDescription,
-				Optional:            true,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(
+					"A single object that describes the user's photo information.",
+				).Description,
+				Optional: true,
 
 				Attributes: map[string]schema.Attribute{
 					"href": schema.StringAttribute{
 						Description:         photoHrefDescription.Description,
 						MarkdownDescription: photoHrefDescription.MarkdownDescription,
 						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "must be a valid URL with HTTP or HTTPS"),
+						},
 					},
 				},
 			},
@@ -798,46 +852,110 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description:         primaryPhoneDescription.Description,
 				MarkdownDescription: primaryPhoneDescription.MarkdownDescription,
 				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.LengthAtMost(attrPhoneMaxLength),
+					stringvalidator.RegexMatches(regexp.MustCompile(`[0-9]+`), `must have at least one number`),
+				},
 			},
 
 			"timezone": schema.StringAttribute{
 				Description:         timezoneDescription.Description,
 				MarkdownDescription: timezoneDescription.MarkdownDescription,
 				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile(`^\w+\/\w+$`), `must match regex ^\w+\/\w+$`),
+				},
 			},
 
 			"title": schema.StringAttribute{
 				Description:         titleDescription.Description,
 				MarkdownDescription: titleDescription.MarkdownDescription,
 				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.LengthAtMost(attrTitleMaxLength),
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+				},
 			},
 
 			"type": schema.StringAttribute{
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
 				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.LengthAtMost(attrTypeMaxLength),
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`), `must match regex ^[\p{L}\p{M}\p{Zs}\p{S}\p{N}\p{P}]*$`),
+				},
 			},
 
 			"verify_status": schema.StringAttribute{
 				Description:         verifyStatusDescription.Description,
 				MarkdownDescription: verifyStatusDescription.MarkdownDescription,
 				Optional:            true,
-			},
+				Computed:            true,
 
-			"created_at": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown(
-					"The time the resource was created.",
-				).Description,
-				Computed: true,
-			},
+				Default: stringdefault.StaticString(string(management.ENUMUSERVERIFYSTATUS_NOT_INITIATED)),
 
-			"updated_at": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown(
-					"The time the resource was last updated.",
-				).Description,
-				Computed: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumUserVerifyStatusEnumValues)...),
+				},
 			},
 		},
+	}
+}
+
+func (r *UserResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Destruction plan
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var plan UserResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan.EmailVerified.IsUnknown() {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("email_verified"), types.BoolNull())...)
+	}
+
+	// Deprecated start
+	if !plan.Enabled.IsNull() && !plan.Enabled.IsUnknown() {
+		var statusValue types.String
+		if plan.Enabled.ValueBool() {
+			statusValue = framework.StringToTF("ENABLED")
+		} else {
+			statusValue = framework.StringToTF("DISABLED")
+		}
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("status"), statusValue)...)
+	}
+	// Deprecated end
+
+	if plan.Account.IsNull() || plan.Account.IsUnknown() {
+
+		o := map[string]attr.Value{
+			"can_authenticate": types.BoolValue(true),
+			"locked_at":        types.StringNull(),
+			"status":           types.StringValue(string(management.ENUMUSERSTATUS_OK)),
+		}
+
+		if !plan.Enabled.IsNull() && !plan.Enabled.IsUnknown() {
+			o["can_authenticate"] = plan.Enabled
+		} else {
+			o["can_authenticate"] = types.BoolValue(true)
+		}
+
+		objValue, d := types.ObjectValue(userAccountTFObjectTypes, o)
+		resp.Diagnostics.Append(d...)
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("account"), objValue)...)
 	}
 }
 
@@ -895,7 +1013,8 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	// Run the API call
-	var userResponse *management.User
+	// Create the user
+	var createUserResponse *management.User
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -905,31 +1024,51 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		"CreateUser",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&userResponse,
+		&createUserResponse,
 	)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var responseEnabled *management.UserEnabled
+	// Update the user enabled attribute
+	var updateUserEnabledResponse *management.UserEnabled
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), userResponse.GetId()).UserEnabled(*userEnabled).Execute()
+			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).UserEnabled(*userEnabled).Execute()
 		},
 		"UpdateUserEnabled",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&responseEnabled,
+		&updateUserEnabledResponse,
 	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Read the user object again, as other attributes may have changed following the update API calls
+	var finalUserResponse *management.User
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return r.client.UsersApi.ReadUser(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).Execute()
+		},
+		"ReadUser",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&finalUserResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(userResponse, responseEnabled)...)
+	resp.Diagnostics.Append(state.toState(finalUserResponse /*, updateUserEnabledResponse*/)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -992,7 +1131,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response, responseEnabled)...)
+	resp.Diagnostics.Append(data.toState(response /*, responseEnabled*/)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1020,7 +1159,6 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// Run the API call
-	var response *management.User
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -1030,13 +1168,13 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		"UpdateUserPut",
 		framework.DefaultCustomError,
 		nil,
-		&response,
+		nil,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var responseEnabled *management.UserEnabled
+	var updateUserEnabledResponse *management.UserEnabled
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -1046,14 +1184,33 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		"UpdateUserEnabled",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&responseEnabled,
+		&updateUserEnabledResponse,
 	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var finalUserResponse *management.User
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return r.client.UsersApi.ReadUser(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+		},
+		"ReadUser",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&finalUserResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response, responseEnabled)...)
+	resp.Diagnostics.Append(state.toState(finalUserResponse /*, updateUserEnabledResponse*/)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1185,6 +1342,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 	}
 
 	if !p.IdentityProvider.IsNull() && !p.IdentityProvider.IsUnknown() {
+
 		var plan UserIdentityProviderResourceModel
 		diags.Append(p.IdentityProvider.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
@@ -1194,13 +1352,12 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 			return nil, nil, diags
 		}
 
-		v := management.NewUserIdentityProvider()
-
 		if !plan.Id.IsNull() && !plan.Id.IsUnknown() {
+			v := management.NewUserIdentityProvider()
 			v.SetId(plan.Id.ValueString())
-		}
 
-		userData.SetIdentityProvider(*v)
+			userData.SetIdentityProvider(*v)
+		}
 	}
 
 	if !p.Lifecycle.IsNull() && !p.Lifecycle.IsUnknown() {
@@ -1351,10 +1508,10 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 	return userData, userEnabledData, diags
 }
 
-func (p *UserResourceModel) toState(apiObject *management.User, apiObjectEnabled *management.UserEnabled) diag.Diagnostics {
+func (p *UserResourceModel) toState(apiObject *management.User /*, apiObjectEnabled *management.UserEnabled*/) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if apiObject == nil || apiObjectEnabled == nil {
+	if apiObject == nil /*|| apiObjectEnabled == nil*/ {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -1368,10 +1525,10 @@ func (p *UserResourceModel) toState(apiObject *management.User, apiObjectEnabled
 	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
 	p.Email = framework.StringOkToTF(apiObject.GetEmailOk())
 	p.EmailVerified = framework.BoolOkToTF(apiObject.GetEmailVerifiedOk())
-	p.Enabled = framework.BoolOkToTF(apiObjectEnabled.GetEnabledOk())
+	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 
 	// deprecated start
-	if v, ok := apiObjectEnabled.GetEnabledOk(); ok && *v {
+	if v, ok := apiObject.GetEnabledOk(); ok && *v {
 		p.Status = framework.StringToTF("ENABLED")
 	} else {
 		p.Status = framework.StringToTF("DISABLED")
@@ -1387,7 +1544,6 @@ func (p *UserResourceModel) toState(apiObject *management.User, apiObjectEnabled
 	p.Address, d = p.userAddressOkToTF(apiObject.GetAddressOk())
 	diags = append(diags, d...)
 
-	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.ExternalId = framework.StringOkToTF(apiObject.GetExternalIdOk())
 	p.IdentityProvider, d = p.userIdentityProviderOkToTF(apiObject.GetIdentityProviderOk())
 	diags = append(diags, d...)
@@ -1413,7 +1569,6 @@ func (p *UserResourceModel) toState(apiObject *management.User, apiObjectEnabled
 	p.Timezone = framework.StringOkToTF(apiObject.GetTimezoneOk())
 	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
 	p.Type = framework.StringOkToTF(apiObject.GetTypeOk())
-	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 	p.VerifyStatus = framework.EnumOkToTF(apiObject.GetVerifyStatusOk())
 
 	return diags
