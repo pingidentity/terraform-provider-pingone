@@ -2404,8 +2404,8 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_REDIRECT"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_endpoint", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", "https://www.pingidentity.com"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_endpoint", "https://www.pingidentity.com/sloendpoint"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", "https://www.pingidentity.com/sloresponseendpoint"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
@@ -3676,8 +3676,8 @@ resource "pingone_application" "%[2]s" {
     nameid_format            = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed       = true
     slo_binding              = "HTTP_REDIRECT"
-    slo_endpoint             = "https://www.pingidentity.com"
-    slo_response_endpoint    = "https://www.pingidentity.com"
+    slo_endpoint             = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint    = "https://www.pingidentity.com/sloresponseendpoint"
     slo_window               = 3
 
     // sp_verification_certificate_ids = []

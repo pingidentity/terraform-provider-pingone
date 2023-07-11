@@ -980,8 +980,8 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_binding", "HTTP_REDIRECT"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_endpoint", "https://dummy-slo-endpoint.example.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_response_endpoint", "https://dummy-slo-response-endpoint.example.com"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_endpoint", "https://dummy-slo-endpoint.pingidentity.com"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_response_endpoint", "https://dummy-slo-response-endpoint.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_window", "1"),
 				),
 			},
@@ -1036,8 +1036,8 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_binding", "HTTP_REDIRECT"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_endpoint", "https://dummy-slo-endpoint.example.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_response_endpoint", "https://dummy-slo-response-endpoint.example.com"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_endpoint", "https://dummy-slo-endpoint.pingidentity.com"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_response_endpoint", "https://dummy-slo-response-endpoint.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_window", "1"),
 				),
 			},
@@ -1559,8 +1559,8 @@ resource "pingone_identity_provider" "%[2]s" {
     sso_binding           = "HTTP_POST"
     sso_endpoint          = "https://www.pingidentity.com/sso"
     slo_binding           = "HTTP_REDIRECT"
-    slo_endpoint          = "https://dummy-slo-endpoint.example.com"
-    slo_response_endpoint = "https://dummy-slo-response-endpoint.example.com"
+    slo_endpoint          = "https://dummy-slo-endpoint.pingidentity.com"
+    slo_response_endpoint = "https://dummy-slo-response-endpoint.pingidentity.com"
     slo_window            = 1
   }
 }
