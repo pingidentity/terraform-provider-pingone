@@ -119,6 +119,18 @@ func ResourceWebhook() *schema.Resource {
 								ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMSUBSCRIPTIONFILTERINCLUDEDTAGS_ADMIN_IDENTITY_EVENT)}, false)),
 							},
 						},
+						"ip_address_exposed": {
+							Description: "A boolean that specifies whether the IP address of an actor should be present in the source section of the event.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+						},
+						"useragent_exposed": {
+							Description: "A boolean that specifies whether the User-Agent HTTP header of an event should be present in the source section of the event.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+						},
 					},
 				},
 			},
@@ -348,6 +360,14 @@ func expandWebhookFilterOptions(c []interface{}) (*management.SubscriptionFilter
 		returnVar.SetIncludedTags(objList)
 	}
 
+	if v, ok := obj["ip_address_exposed"]; ok && v != nil {
+		returnVar.SetIpAddressExposed(v.(bool))
+	}
+
+	if v, ok := obj["useragent_exposed"]; ok && v != nil {
+		returnVar.SetUserAgentExposed(v.(bool))
+	}
+
 	return returnVar, diags
 }
 
@@ -388,6 +408,18 @@ func flattenWebhookFilterOptions(subscriptionFilterOptions management.Subscripti
 		}
 
 		item["included_tags"] = list
+	}
+
+	if v, ok := subscriptionFilterOptions.GetIpAddressExposedOk(); ok {
+		item["ip_address_exposed"] = v
+	} else {
+		item["ip_address_exposed"] = nil
+	}
+
+	if v, ok := subscriptionFilterOptions.GetUserAgentExposedOk(); ok {
+		item["useragent_exposed"] = v
+	} else {
+		item["useragent_exposed"] = nil
 	}
 
 	return append(make([]interface{}, 0), item)
