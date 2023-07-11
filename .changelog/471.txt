@@ -1,0 +1,7 @@
+```release-note:note
+Code optimisation with the PingOne client SDK.
+```
+
+```release-note:enhancement
+Added provider parameter to connect to the PingOne API service via HTTP proxy.
+```
