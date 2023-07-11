@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_webhook`: Now supports ip address exposed and useragent exposed in filter option configuration.
+```
