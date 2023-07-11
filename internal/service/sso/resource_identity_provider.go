@@ -1224,10 +1224,6 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 			idpObj.SetSloEndpoint(v1)
 		}
 
-		if v1, ok := idp["slo_endpoint"].(string); ok && v1 != "" {
-			idpObj.SetSloEndpoint(v1)
-		}
-
 		if v1, ok := idp["slo_response_endpoint"].(string); ok && v1 != "" {
 			idpObj.SetSloResponseEndpoint(v1)
 		}
