@@ -424,19 +424,6 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Optional: true,
 				Computed: true,
 
-				// Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
-				// 	o := map[string]attr.Value{
-				// 		"can_authenticate": types.BoolValue(true),
-				// 		"locked_at":        types.StringNull(),
-				// 		"status":           types.StringValue(string(management.ENUMUSERSTATUS_OK)),
-				// 	}
-
-				// 	objValue, d := types.ObjectValue(userAccountTFObjectTypes, o)
-				// 	resp.Diagnostics.Append(d...)
-
-				// 	return objValue
-				// }()),
-
 				Attributes: map[string]schema.Attribute{
 					"can_authenticate": schema.BoolAttribute{
 						Description:         accountCanAuthenticateDescription.Description,
