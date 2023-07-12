@@ -1,0 +1,3 @@
+```release-note:note
+Now sets a provider-specific UserAgent on the SDK client.
+```
