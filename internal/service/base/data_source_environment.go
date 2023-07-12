@@ -233,13 +233,15 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	if !data.Name.IsNull() {
 
+		scimFilter := fmt.Sprintf("name sw \"%s\"", data.Name.ValueString())
+
 		// Run the API call
 		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Execute()
+				return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Execute()
 			},
 			"ReadAllEnvironments",
 			framework.DefaultCustomError,

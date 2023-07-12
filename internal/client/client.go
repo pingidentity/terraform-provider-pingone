@@ -17,14 +17,15 @@ func (c *Config) APIClient(ctx context.Context, version string) (*Client, error)
 	userAgent := fmt.Sprintf("terraform-provider-pingone/%s/go", version)
 
 	config := &pingone.Config{
-		ClientID:             c.ClientID,
-		ClientSecret:         c.ClientSecret,
-		EnvironmentID:        c.EnvironmentID,
-		AccessToken:          c.AccessToken,
+		ClientID:             &c.ClientID,
+		ClientSecret:         &c.ClientSecret,
+		EnvironmentID:        &c.EnvironmentID,
+		AccessToken:          &c.AccessToken,
 		Region:               c.Region,
 		APIHostnameOverride:  c.APIHostnameOverride,
 		AuthHostnameOverride: c.AuthHostnameOverride,
 		UserAgentOverride:    &userAgent,
+		ProxyURL:             c.ProxyURL,
 	}
 
 	client, err := config.APIClient(ctx)
