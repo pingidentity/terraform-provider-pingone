@@ -1228,7 +1228,7 @@ func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*
 			idpObj.SetSloResponseEndpoint(v1)
 		}
 
-		if v1, ok := idp["slo_window"].(int); ok {
+		if v1, ok := idp["slo_window"].(int); ok && v1 > 0 {
 			idpObj.SetSloWindow(int32(v1))
 		}
 

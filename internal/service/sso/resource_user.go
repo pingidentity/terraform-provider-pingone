@@ -60,7 +60,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The enabled status of the user.",
-	).AllowedValues([]string{"ENABLED", "DISABLED"}).DefaultValue("ENABLED")
+	).AllowedValues("ENABLED", "DISABLED").DefaultValue("ENABLED")
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

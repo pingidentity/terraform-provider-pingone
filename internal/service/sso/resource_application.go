@@ -1527,7 +1527,7 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetSloResponseEndpoint(v1)
 		}
 
-		if v1, ok := samlOptions["slo_window"].(int); ok {
+		if v1, ok := samlOptions["slo_window"].(int); ok && v1 > 0 {
 			application.SetSloWindow(int32(v1))
 		}
 
