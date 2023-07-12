@@ -2008,7 +2008,7 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["slo_response_endpoint"] = nil
 	}
 
-	if v, ok := application.GetSloWindowOk(); ok && *v > 0 {
+	if v, ok := application.GetSloWindowOk(); ok {
 		item["slo_window"] = v
 	} else {
 		item["slo_window"] = nil
