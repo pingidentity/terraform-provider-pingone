@@ -254,10 +254,8 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	policyOverrideConditionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of the override condition to evaluate.",
 	).AllowedValues(
-		[]string{
-			string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON),
-			string(risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE),
-		},
+		string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON),
+		string(risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE),
 	)
 
 	policyOverrideConditionEqualsDescription := framework.SchemaAttributeDescriptionFromMarkdown(

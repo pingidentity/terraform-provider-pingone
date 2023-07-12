@@ -31,3 +31,8 @@ func EnumSliceToStringSlice(enum interface{}) []string {
 
 	return s
 }
+
+func EnumSliceToAnySlice(enum interface{}) []any {
+	v := EnumSliceToStringSlice(enum)
+	return StringSliceToAnySlice(v)
+}

@@ -81,10 +81,10 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of system application, used as the primary identifier.",
-	).AllowedValues([]string{
+	).AllowedValues(
 		string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL),
 		string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE),
-	})
+	)
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies the enabled/disabled status of the application.",
@@ -92,9 +92,9 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 
 	accessControlGroupType := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the user role required to access the application. A user is an admin user if they have one or more of the following roles assigned: `Organization Admin`, `Environment Admin`, `Identity Data Admin`, or `Client Application Developer`.",
-	).AllowedValues([]string{
+	).AllowedValues(
 		string(management.ENUMAPPLICATIONACCESSCONTROLTYPE_ADMIN_USERS_ONLY),
-	})
+	)
 
 	accessControlGroupOptionsType := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the group type required to access the application.",
