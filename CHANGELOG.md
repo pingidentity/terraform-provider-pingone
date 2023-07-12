@@ -6,6 +6,20 @@ NOTES:
 * Corrected "Upgrade MFA Policies to use FIDO2 with Passkeys" guide text. ([#455](https://github.com/pingidentity/terraform-provider-pingone/issues/455))
 * `data-source/pingone_environment`: Optimised environment filtering by name. ([#469](https://github.com/pingidentity/terraform-provider-pingone/issues/469))
 * `resource/pingone_application_resource_grant`: Migrated to plugin framework. ([#456](https://github.com/pingidentity/terraform-provider-pingone/issues/456))
+* bump `github.com/hashicorp/terraform-plugin-docs` v0.15.0 => v0.16.0 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/hashicorp/terraform-plugin-framework-timeouts` v0.4.0 => v0.4.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.2.0 => v0.2.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.2.0 => v0.2.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.2.0 => v0.2.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.23.0 => v0.24.0 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.14.0 => v0.15.0 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.8.0 => v0.8.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.2.0 => v0.2.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.9.0 => v0.10.0 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+
+FEATURES:
+
+* **New Resource:** `pingone_key_rotation_policy` ([#466](https://github.com/pingidentity/terraform-provider-pingone/issues/466))
 
 ENHANCEMENTS:
 
