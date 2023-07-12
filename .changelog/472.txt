@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_application`: Resolved error condition if optional `slo_window` value in the `saml_options` block was undefined.
+```
+
+```release-note:bug
+`resource/pingone_identity_provider`: Resolved error condition if optional `slo_window` value in the `saml` block was undefined.
+```
