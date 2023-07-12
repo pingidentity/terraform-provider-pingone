@@ -1527,7 +1527,7 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetSloResponseEndpoint(v1)
 		}
 
-		if v1, ok := samlOptions["slo_window"].(int); ok {
+		if v1, ok := samlOptions["slo_window"].(int); ok && v1 > 0 {
 			application.SetSloWindow(int32(v1))
 		}
 
@@ -2008,7 +2008,7 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["slo_response_endpoint"] = nil
 	}
 
-	if v, ok := application.GetSloWindowOk(); ok {
+	if v, ok := application.GetSloWindowOk(); ok && *v > 0 {
 		item["slo_window"] = v
 	} else {
 		item["slo_window"] = nil
