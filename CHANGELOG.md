@@ -3,6 +3,7 @@
 NOTES:
 
 * All resources/data sources: SDK response parsing code optimisation. ([#460](https://github.com/pingidentity/terraform-provider-pingone/issues/460))
+* Code optimisation with the PingOne client SDK. ([#471](https://github.com/pingidentity/terraform-provider-pingone/issues/471))
 * Corrected "Upgrade MFA Policies to use FIDO2 with Passkeys" guide text. ([#455](https://github.com/pingidentity/terraform-provider-pingone/issues/455))
 * `data-source/pingone_environment`: Optimised environment filtering by name. ([#469](https://github.com/pingidentity/terraform-provider-pingone/issues/469))
 * `resource/pingone_application_resource_grant`: Migrated to plugin framework. ([#456](https://github.com/pingidentity/terraform-provider-pingone/issues/456))
@@ -23,6 +24,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
+* Added provider parameter to connect to the PingOne API service via HTTP proxy. ([#471](https://github.com/pingidentity/terraform-provider-pingone/issues/471))
 * `resource/pingone_application_resource_grant`: Add validation to disallow assignment of the `openid` scope from the `openid` resource to avoid error. ([#457](https://github.com/pingidentity/terraform-provider-pingone/issues/457))
 * `resource/pingone_application`: Now supports the `saml_option` of `slo_window`. ([#468](https://github.com/pingidentity/terraform-provider-pingone/issues/468))
 * `resource/pingone_identity_provider`: Now supports the SAML IdP configuration options: `slo_binding`, `slo_endpoint`, `slo_response_endpoint` and `slo_window`. ([#468](https://github.com/pingidentity/terraform-provider-pingone/issues/468))
