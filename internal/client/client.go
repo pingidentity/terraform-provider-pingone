@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 )
@@ -11,7 +12,9 @@ type Client struct {
 	ForceDelete bool
 }
 
-func (c *Config) APIClient(ctx context.Context) (*Client, error) {
+func (c *Config) APIClient(ctx context.Context, version string) (*Client, error) {
+
+	userAgent := fmt.Sprintf("terraform-provider-pingone/%s/go", version)
 
 	config := &pingone.Config{
 		ClientID:             &c.ClientID,
@@ -21,6 +24,7 @@ func (c *Config) APIClient(ctx context.Context) (*Client, error) {
 		Region:               c.Region,
 		APIHostnameOverride:  c.APIHostnameOverride,
 		AuthHostnameOverride: c.AuthHostnameOverride,
+		UserAgentOverride:    &userAgent,
 		ProxyURL:             c.ProxyURL,
 	}
 

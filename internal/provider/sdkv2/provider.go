@@ -154,13 +154,13 @@ func New(version string) func() *schema.Provider {
 			},
 		}
 
-		p.ConfigureContextFunc = configure(version, p)
+		p.ConfigureContextFunc = configure(version)
 
 		return p
 	}
 }
 
-func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func configure(version string) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		var diags diag.Diagnostics
 		var config client.Config
@@ -215,7 +215,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			}
 		}
 
-		client, err := config.APIClient(ctx)
+		client, err := config.APIClient(ctx, version)
 
 		if err != nil {
 			return nil, diag.FromErr(err)
