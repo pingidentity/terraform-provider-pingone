@@ -1010,7 +1010,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_binding", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_endpoint", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_response_endpoint", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_window", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_window", "0"),
 				),
 			},
 			{

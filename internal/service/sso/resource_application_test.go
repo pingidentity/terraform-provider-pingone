@@ -2457,7 +2457,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_POST"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_endpoint", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
