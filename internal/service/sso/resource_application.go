@@ -568,21 +568,29 @@ func ResourceApplication() *schema.Resource {
 							Default:     false,
 						},
 						"slo_binding": {
-							Description:      fmt.Sprintf("A string that specifies the binding protocol to be used for the logout response. Options are `%s` and `%s`.  Existing configurations with no data default to `%s`.", string(management.ENUMAPPLICATIONSAMLSLOBINDING_REDIRECT), string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST), management.ENUMAPPLICATIONSAMLSLOBINDING_POST),
+							Description:      fmt.Sprintf("A string that specifies the binding protocol to be used for the logout response. Options are `%s` and `%s`.  Existing configurations with no data default to `%s`.", string(management.ENUMAPPLICATIONSAMLSLOBINDING_REDIRECT), string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST), string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST)),
 							Type:             schema.TypeString,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONSAMLSLOBINDING_REDIRECT), string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST)}, false)),
 							Optional:         true,
-							Default:          "HTTP_POST",
+							Default:          string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST),
 						},
 						"slo_endpoint": {
-							Description: "A string that specifies the logout endpoint URL. This is an optional property. However, if a sloEndpoint logout endpoint URL is not defined, logout actions result in an error.",
-							Type:        schema.TypeString,
-							Optional:    true,
+							Description:      "A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
 						},
 						"slo_response_endpoint": {
-							Description: "A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the sloEndpoint property value is used to submit SLO response.",
-							Type:        schema.TypeString,
-							Optional:    true,
+							Description:      "A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
+						},
+						"slo_window": {
+							Description:      "An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 24)),
 						},
 						"sp_entity_id": {
 							Description: "A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.",
@@ -1519,6 +1527,10 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetSloResponseEndpoint(v1)
 		}
 
+		if v1, ok := samlOptions["slo_window"].(int); ok && v1 > 0 {
+			application.SetSloWindow(int32(v1))
+		}
+
 		if v1, ok := samlOptions["sp_verification_certificate_ids"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
 			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
 			for _, j := range v1.List() {
@@ -1994,6 +2006,12 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["slo_response_endpoint"] = v
 	} else {
 		item["slo_response_endpoint"] = nil
+	}
+
+	if v, ok := application.GetSloWindowOk(); ok {
+		item["slo_window"] = v
+	} else {
+		item["slo_window"] = nil
 	}
 
 	if v, ok := application.SpVerification.GetCertificatesOk(); ok {
