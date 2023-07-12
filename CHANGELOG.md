@@ -5,6 +5,7 @@ NOTES:
 * All resources/data sources: SDK response parsing code optimisation. ([#460](https://github.com/pingidentity/terraform-provider-pingone/issues/460))
 * Code optimisation with the PingOne client SDK. ([#471](https://github.com/pingidentity/terraform-provider-pingone/issues/471))
 * Corrected "Upgrade MFA Policies to use FIDO2 with Passkeys" guide text. ([#455](https://github.com/pingidentity/terraform-provider-pingone/issues/455))
+* Now sets a provider-specific UserAgent on the SDK client. ([#474](https://github.com/pingidentity/terraform-provider-pingone/issues/474))
 * `data-source/pingone_environment`: Optimised environment filtering by name. ([#469](https://github.com/pingidentity/terraform-provider-pingone/issues/469))
 * `resource/pingone_application_resource_grant`: Migrated to plugin framework. ([#456](https://github.com/pingidentity/terraform-provider-pingone/issues/456))
 * bump `github.com/hashicorp/terraform-plugin-docs` v0.15.0 => v0.16.0 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
@@ -29,6 +30,7 @@ ENHANCEMENTS:
 * `resource/pingone_application`: Now supports the `saml_option` of `slo_window`. ([#468](https://github.com/pingidentity/terraform-provider-pingone/issues/468))
 * `resource/pingone_identity_provider`: Now supports the SAML IdP configuration options: `slo_binding`, `slo_endpoint`, `slo_response_endpoint` and `slo_window`. ([#468](https://github.com/pingidentity/terraform-provider-pingone/issues/468))
 * `resource/pingone_notification_policy`: Now supports country limit configuration. ([#458](https://github.com/pingidentity/terraform-provider-pingone/issues/458))
+* `resource/pingone_webhook`: Now supports `ip_address_exposed` and `useragent_exposed` in filter options configuration. ([#470](https://github.com/pingidentity/terraform-provider-pingone/issues/470))
 
 ## 0.17.1 (05 July 2023)
 
