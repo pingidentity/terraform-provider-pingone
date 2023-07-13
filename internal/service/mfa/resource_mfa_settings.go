@@ -83,6 +83,22 @@ func ResourceMFASettings() *schema.Resource {
 					},
 				},
 			},
+			"phone_extensions": {
+				Description: "An object that contains phone extension settings.",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Description: "A boolean when set to `true` allows one-time passwords to be delivered via voice to phone numbers that include extensions. Set to `false` to disable support for extensions.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+						},
+					},
+				},
+			},
 			"authentication": {
 				Description: "**This property is deprecated.**  Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource. An object that contains the device selection settings.",
 				Type:        schema.TypeList,
@@ -120,6 +136,10 @@ func resourceMFASettingsCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	if v, ok := d.GetOk("lockout"); ok {
 		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
+	}
+
+	if v, ok := d.GetOk("phone_extensions"); ok {
+		mfaSettings.SetPhoneExtensions(expandMFASettingsPhoneExtensions(v.([]interface{})))
 	}
 
 	resp, diags := sdk.ParseResponse(
@@ -178,6 +198,13 @@ func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta i
 		d.Set("lockout", nil)
 	}
 
+	/*if v, ok := respObject.GetPhoneExtensionsOk(); ok {
+		d.Set("phone_extensions", flattenMFASettingPhoneExtensions(*v))
+	} else {
+		d.Set("phone_extensions", nil)
+	}*/
+	d.Set("phone_extensions", flattenMFASettingPhoneExtensions(respObject.GetPhoneExtensions()))
+
 	if v, ok := respObject.GetAuthenticationOk(); ok {
 		d.Set("authentication", flattenMFASettingAuthentication(*v))
 	} else {
@@ -201,6 +228,10 @@ func resourceMFASettingsUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	if v, ok := d.GetOk("lockout"); ok {
 		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
+	}
+
+	if v, ok := d.GetOk("phone_extensions"); ok {
+		mfaSettings.SetPhoneExtensions(expandMFASettingsPhoneExtensions(v.([]interface{})))
 	}
 
 	_, diags = sdk.ParseResponse(
@@ -278,6 +309,18 @@ func expandMFASettingsLockout(v []interface{}) mfa.MFASettingsLockout {
 	return mfa
 }
 
+func expandMFASettingsPhoneExtensions(v []interface{}) mfa.MFASettingsPhoneExtensions {
+	obj := v[0].(map[string]interface{})
+
+	mfa := *mfa.NewMFASettingsPhoneExtensions()
+
+	if v, ok := obj["enabled"].(bool); ok {
+		mfa.SetEnabled(v)
+	}
+
+	return mfa
+}
+
 func expandMFASettingsAuthentication(v []interface{}) mfa.MFASettingsAuthentication {
 	obj := v[0].(map[string]interface{})
 
@@ -305,4 +348,13 @@ func flattenMFASettingPairing(v mfa.MFASettingsPairing) []map[string]interface{}
 		"max_allowed_devices": v.GetMaxAllowedDevices(),
 		"pairing_key_format":  string(v.GetPairingKeyFormat()),
 	})
+}
+
+func flattenMFASettingPhoneExtensions(v mfa.MFASettingsPhoneExtensions) []map[string]interface{} {
+	c := make([]map[string]interface{}, 0)
+
+	return append(c, map[string]interface{}{
+		"enabled": v.GetEnabled(),
+	})
+
 }
