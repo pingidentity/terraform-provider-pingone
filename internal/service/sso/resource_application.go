@@ -1139,9 +1139,7 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		}
 
 		if v1, ok := oidcOptions["pkce_enforcement"].(string); ok && v1 != "" {
-			if application.GetType() == management.ENUMAPPLICATIONTYPE_WEB_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_NATIVE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_CUSTOM_APP || application.GetType() == management.ENUMAPPLICATIONTYPE_SERVICE {
-				application.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(v1))
-			}
+			application.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(v1))
 		}
 
 		if v1, ok := oidcOptions["redirect_uris"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
