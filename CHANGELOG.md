@@ -21,6 +21,7 @@ NOTES:
 
 FEATURES:
 
+* **New Data Source:** `pingone_user_role_assignments` ([#479](https://github.com/pingidentity/terraform-provider-pingone/issues/479))
 * **New Resource:** `pingone_key_rotation_policy` ([#466](https://github.com/pingidentity/terraform-provider-pingone/issues/466))
 
 ENHANCEMENTS:
@@ -29,6 +30,7 @@ ENHANCEMENTS:
 * `resource/pingone_application_resource_grant`: Add validation to disallow assignment of the `openid` scope from the `openid` resource to avoid error. ([#457](https://github.com/pingidentity/terraform-provider-pingone/issues/457))
 * `resource/pingone_application`: Now supports the `saml_option` of `slo_window`. ([#468](https://github.com/pingidentity/terraform-provider-pingone/issues/468))
 * `resource/pingone_identity_provider`: Now supports the SAML IdP configuration options: `slo_binding`, `slo_endpoint`, `slo_response_endpoint` and `slo_window`. ([#468](https://github.com/pingidentity/terraform-provider-pingone/issues/468))
+* `resource/pingone_mfa_policy`: Now supports `new_device_notification` option. ([#477](https://github.com/pingidentity/terraform-provider-pingone/issues/477))
 * `resource/pingone_notification_policy`: Now supports country limit configuration. ([#458](https://github.com/pingidentity/terraform-provider-pingone/issues/458))
 * `resource/pingone_webhook`: Now supports `ip_address_exposed` and `useragent_exposed` in filter options configuration. ([#470](https://github.com/pingidentity/terraform-provider-pingone/issues/470))
 
