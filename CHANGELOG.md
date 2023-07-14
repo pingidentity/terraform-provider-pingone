@@ -32,6 +32,10 @@ ENHANCEMENTS:
 * `resource/pingone_notification_policy`: Now supports country limit configuration. ([#458](https://github.com/pingidentity/terraform-provider-pingone/issues/458))
 * `resource/pingone_webhook`: Now supports `ip_address_exposed` and `useragent_exposed` in filter options configuration. ([#470](https://github.com/pingidentity/terraform-provider-pingone/issues/470))
 
+BUG FIXES:
+
+* `resource/pingone_application`: Fixed bug where the `pkce_enforcement` parameter wasn't being configured correctly on OIDC worker apps. ([#475](https://github.com/pingidentity/terraform-provider-pingone/issues/475))
+
 ## 0.17.1 (05 July 2023)
 
 NOTES:
