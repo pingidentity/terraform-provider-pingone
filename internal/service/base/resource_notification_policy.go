@@ -15,7 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -82,6 +84,7 @@ var (
 	_ resource.Resource                = &NotificationPolicyResource{}
 	_ resource.ResourceWithConfigure   = &NotificationPolicyResource{}
 	_ resource.ResourceWithImportState = &NotificationPolicyResource{}
+	_ resource.ResourceWithModifyPlan  = &NotificationPolicyResource{}
 )
 
 // New Object
@@ -176,6 +179,10 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 				MarkdownDescription: defaultDescription.MarkdownDescription,
 				Description:         defaultDescription.Description,
 				Computed:            true,
+
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"country_limit": schema.SingleNestedAttribute{
@@ -304,6 +311,35 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 			},
 		},
 	}
+}
+
+// ModifyPlan
+func (r *NotificationPolicyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+
+	var plan *NotificationPolicyCountryLimitResourceModel
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("country_limit"), &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan == nil {
+		return
+	}
+
+	if !plan.Type.IsNull() && !plan.Type.IsUnknown() && plan.DeliveryMethods.IsUnknown() {
+
+		if plan.Type.Equal(types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYCOUNTRYLIMITTYPE_NONE))) {
+			resp.Plan.SetAttribute(ctx, path.Root("country_limit").AtName("delivery_methods"), types.SetNull(types.StringType))
+		} else {
+			setObj, d := types.SetValueFrom(ctx, types.StringType, []string{"Voice", "SMS"})
+			resp.Diagnostics.Append(d...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+			resp.Plan.SetAttribute(ctx, path.Root("country_limit").AtName("delivery_methods"), setObj)
+		}
+	}
+
 }
 
 func (r *NotificationPolicyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
