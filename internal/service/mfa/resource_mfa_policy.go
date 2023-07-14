@@ -466,12 +466,17 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 	respObject := resp.(*mfa.DeviceAuthenticationPolicy)
 
 	d.Set("name", respObject.GetName())
-	d.Set("new_device_notification", respObject.GetNewDeviceNotification())
 
 	if v, ok := respObject.GetAuthenticationOk(); ok {
 		d.Set("device_selection", v.GetDeviceSelection())
 	} else {
 		d.Set("device_selection", nil)
+	}
+
+	if v, ok := respObject.GetNewDeviceNotificationOk(); ok {
+		d.Set("new_device_notification", string(*v))
+	} else {
+		d.Set("new_device_notification", nil)
 	}
 
 	if v, ok := respObject.GetSmsOk(); ok {
