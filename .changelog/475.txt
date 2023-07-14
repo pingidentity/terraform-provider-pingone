@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_application`: Fixed bug where the `pkce_enforcement` parameter wasn't being configured correctly on OIDC worker apps.
+```
