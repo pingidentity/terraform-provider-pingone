@@ -168,7 +168,7 @@ func TestAccMFAPolicy_SMS_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 		},
@@ -226,7 +226,7 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 			{
@@ -284,7 +284,7 @@ func TestAccMFAPolicy_Voice_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 		},
@@ -322,7 +322,7 @@ func TestAccMFAPolicy_Voice_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 		},
@@ -360,7 +360,7 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 			{
@@ -380,7 +380,7 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 			{
@@ -400,7 +400,7 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 		},
@@ -476,7 +476,7 @@ func TestAccMFAPolicy_Email_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 		},
@@ -534,7 +534,7 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 			{
@@ -742,7 +742,7 @@ func TestAccMFAPolicy_Mobile_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 		},
@@ -852,7 +852,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 			{
@@ -961,6 +961,7 @@ func TestAccMFAPolicy_Totp_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 		},
@@ -996,6 +997,7 @@ func TestAccMFAPolicy_Totp_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 		},
@@ -1031,6 +1033,7 @@ func TestAccMFAPolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 			{
@@ -1048,6 +1051,7 @@ func TestAccMFAPolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 			{
@@ -1065,6 +1069,7 @@ func TestAccMFAPolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 		},
@@ -1098,7 +1103,7 @@ func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 		},
@@ -1132,7 +1137,7 @@ func TestAccMFAPolicy_FIDO2_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 		},
@@ -1166,7 +1171,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 			{
@@ -1182,7 +1187,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 			{
@@ -1198,7 +1203,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 		},
@@ -1472,7 +1477,7 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 			{
@@ -1487,7 +1492,7 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 			{
@@ -1502,7 +1507,7 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 			{
@@ -1512,7 +1517,7 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "EMAIL_THEN_SMS"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
 			},
 			{
@@ -1522,7 +1527,7 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
 		},
@@ -1653,7 +1658,7 @@ resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  new_device_notification = "NONE"
+  new_device_notification = "SMS_THEN_EMAIL"
 
   sms {
     enabled = false
@@ -2536,6 +2541,8 @@ resource "pingone_mfa_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
+  new_device_notification = "SMS_THEN_EMAIL"
+
   sms {
     enabled = false
   }
@@ -2650,7 +2657,7 @@ resource "pingone_mfa_policy" "%[2]s" {
   name           = "%[3]s"
 
   device_selection        = "PROMPT_TO_SELECT"
-  new_device_notification = "NONE"
+  new_device_notification = "SMS_THEN_EMAIL"
 
   sms {
     enabled = false
