@@ -1,4 +1,4 @@
-## 0.18.1 (Unreleased)
+## 0.18.1 (18 July 2023)
 
 NOTES:
 
