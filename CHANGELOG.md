@@ -1,5 +1,14 @@
 ## 0.18.1 (Unreleased)
 
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-mux` v0.11.1 => v0.11.2 ([#481](https://github.com/pingidentity/terraform-provider-pingone/issues/481))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.0 => v0.10.1 ([#483](https://github.com/pingidentity/terraform-provider-pingone/issues/483))
+
+BUG FIXES:
+
+* Fixed provider parameter error "Invalid parameter format.  Expected URL with https scheme" when attempting to override service hostnames. ([#483](https://github.com/pingidentity/terraform-provider-pingone/issues/483))
+
 ## 0.18.0 (17 July 2023)
 
 NOTES:
