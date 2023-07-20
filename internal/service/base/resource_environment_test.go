@@ -538,10 +538,6 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   type       = "%[3]s"
   license_id = "%[4]s"
-  default_population {
-  }
-  service {
-  }
 }`, resourceName, name, environmentType, licenseID)
 }
 
@@ -552,10 +548,6 @@ resource "pingone_environment" "%[1]s" {
   type       = "%[3]s"
   region     = "%[4]s"
   license_id = "%[5]s"
-  default_population {
-  }
-  service {
-  }
 }`, resourceName, name, environmentType, region, licenseID)
 }
 
