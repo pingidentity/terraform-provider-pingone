@@ -1,0 +1,3 @@
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-mux` v0.11.1 => v0.11.2
+```

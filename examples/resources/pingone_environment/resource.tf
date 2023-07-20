@@ -4,11 +4,6 @@ resource "pingone_environment" "my_environment" {
   type        = "SANDBOX"
   license_id  = var.license_id
 
-  default_population {
-    name        = "My Population"
-    description = "My new population for users"
-  }
-
   service {
     type = "SSO"
   }
