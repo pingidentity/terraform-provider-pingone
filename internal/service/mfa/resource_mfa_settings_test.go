@@ -42,7 +42,7 @@ func TestAccMFASettings_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
 					// resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
 				),
@@ -76,7 +76,7 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.max_allowed_devices", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "DEFAULT_TO_FIRST"),
 				),
@@ -92,7 +92,7 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "DEFAULT_TO_FIRST"),
 				),
@@ -128,7 +128,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
 					// resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
 				),
@@ -142,7 +142,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.max_allowed_devices", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "DEFAULT_TO_FIRST"),
 				),
@@ -158,7 +158,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.#", "1"),
 					// resource.TestCheckResourceAttr(resourceFullName, "authentication.0.device_selection", "PROMPT_TO_SELECT"),
 				),
@@ -184,9 +184,7 @@ resource "pingone_mfa_settings" "%[3]s" {
     duration_seconds = 8
   }
 
-  phone_extensions {
-    enabled = true
-  }
+  phone_extensions_enabled = true
 
   //   authentication {
   //     device_selection = "PROMPT_TO_SELECT"
