@@ -2,6 +2,7 @@
 
 NOTES:
 
+* `data-source/pingone_population`: Optimised finding populations by name for environments with large numbers of populations present. ([#487](https://github.com/pingidentity/terraform-provider-pingone/issues/487))
 * `resource/pingone_environment`: Corrected documentation and examples to denote optional nature of the `default_population` block. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
 
 BUG FIXES:
