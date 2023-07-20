@@ -1,5 +1,14 @@
 ## 0.19.0 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_environment`: Corrected documentation and examples to denote optional nature of the `default_population` block. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
+
+BUG FIXES:
+
+* `resource/pingone_environment`: Fix errors that occur if the `service` block is left undefined. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
+* `resource/pingone_environment`: Fix for intermittent error stating the default population couldn't be updated on environment creation. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
+
 ## 0.18.1 (18 July 2023)
 
 NOTES:
