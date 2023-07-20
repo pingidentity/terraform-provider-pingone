@@ -47,7 +47,7 @@ resource "pingone_environment" "my_environment" {
 
 ### Optional
 
-- `default_population` (Block List) The environment's default population. (see [below for nested schema](#nestedblock--default_population))
+- `default_population` (Block List, Deprecated) **Deprecation Message** The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The environment's default population. (see [below for nested schema](#nestedblock--default_population))
 - `description` (String) A description of the environment.
 - `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default can be set with the `PINGONE_REGION` environment variable.
 - `service` (Block Set) The services to enable in the environment.  Defaults to `SSO`. (see [below for nested schema](#nestedblock--service))
@@ -57,7 +57,7 @@ resource "pingone_environment" "my_environment" {
 
 ### Read-Only
 
-- `default_population_id` (String) The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population.
+- `default_population_id` (String, Deprecated) **Deprecation Message** The `default_population_id` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population.
 - `id` (String) The ID of this resource.
 - `organization_id` (String) The ID of the PingOne organization tenant to which the environment belongs.
 
