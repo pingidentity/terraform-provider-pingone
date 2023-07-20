@@ -250,7 +250,7 @@ func (p *PopulationDataSourceModel) toState(apiObject *management.Population) di
 }
 
 func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Population, diag.Diagnostics) {
-	defaultTimeout := 5 * time.Second
+	defaultTimeout := 30 * time.Second
 	return FetchDefaultPopulationWithTimeout(ctx, apiClient, environmentID, defaultTimeout)
 }
 
@@ -309,7 +309,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 		},
 		Timeout:                   timeout,
 		Delay:                     1 * time.Second,
-		MinTimeout:                30 * time.Second,
+		MinTimeout:                5 * time.Second,
 		ContinuousTargetOccurence: 2,
 	}
 	population, err := stateConf.WaitForState()
@@ -317,7 +317,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 	if err != nil {
 		diags.AddWarning(
 			"Cannot find default population",
-			fmt.Sprintf("The default population for environment %s cannot be found", environmentID),
+			fmt.Sprintf("The default population for environment %s cannot be found: %s", environmentID, err),
 		)
 
 		return nil, diags

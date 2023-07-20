@@ -145,6 +145,14 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 		"**Deprecation Message** The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The environment's default population.",
 	)
 
+	defaultPopulationNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The name of the environment's default population.",
+	).DefaultValue("Default")
+
+	serviceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The services to enable in the environment.",
+	).DefaultValue("SSO")
+
 	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("The service type to enable in the environment.  Valid options are `%s`.  Defaults to `SSO`.", strings.Join(model.ProductsSelectableList(), "`, `")),
 	)
@@ -214,7 +222,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"license_id": schema.StringAttribute{
-				Description: "An ID of a valid license to apply to the environment.",
+				Description: "An ID of a valid license to apply to the environment.  Must be a valid PingOne resource ID.",
 				Required:    true,
 				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
@@ -265,10 +273,12 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Description: "The name of the environment's default population.",
-							Optional:    true,
-							Computed:    true,
-							Default:     stringdefault.StaticString("Default"),
+							Description:         defaultPopulationNameDescription.Description,
+							MarkdownDescription: defaultPopulationNameDescription.MarkdownDescription,
+							// DeprecationMessage: "The `default_population.name` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This parameter will be removed in the next major version of the provider.",
+							Optional: true,
+							Computed: true,
+							Default:  stringdefault.StaticString("Default"),
 						},
 
 						"description": schema.StringAttribute{
@@ -286,7 +296,8 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			///////////////////
 
 			"service": schema.SetNestedBlock{
-				Description: "The services to enable in the environment.",
+				Description:         serviceDescription.Description,
+				MarkdownDescription: serviceDescription.MarkdownDescription,
 
 				NestedObject: schema.NestedBlockObject{
 
@@ -379,13 +390,13 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		resp.Diagnostics.AddAttributeWarning(
 			path.Root("default_population"),
 			"State change warning",
-			"The deprecated default population configuration on the \"pingone_environment\" resource will be removed from state, but will not be removed from the platform.  Use the \"pingone_population_default\" resource to manage this configuration going forward.",
+			"The default population configuration on the \"pingone_environment\" resource will be removed from state, but will not be removed from the platform.",
 		)
 
 		resp.Diagnostics.AddAttributeWarning(
 			path.Root("default_population_id"),
 			"State change warning",
-			"The deprecated default population configuration on the \"pingone_environment\" resource will be removed from state, the \"default_population_id\" will no longer carry the default population's ID.  Use the \"pingone_population_default\" resource to manage this configuration going forward.",
+			"The default population configuration on the \"pingone_environment\" resource will be removed from state, the \"default_population_id\" will no longer carry the default population's ID.",
 		)
 	}
 
@@ -394,6 +405,36 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 	}
 	// Deprecated end
 	///////////////////
+
+	var servicePlan []environmentServiceModel
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("service"), &servicePlan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if len(servicePlan) == 0 {
+
+		serviceDefaultMap := map[string]attr.Value{
+			"type":        framework.StringToTF("SSO"),
+			"console_url": types.StringNull(),
+			"bookmark":    types.SetNull(types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}),
+		}
+
+		serviceDefault, d := types.SetValue(
+			types.ObjectType{AttrTypes: environmentServiceTFObjectTypes},
+			append(
+				make([]attr.Value, 0),
+				types.ObjectValueMust(environmentServiceTFObjectTypes, serviceDefaultMap),
+			),
+		)
+
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("service"), serviceDefault)...)
+	}
 
 }
 

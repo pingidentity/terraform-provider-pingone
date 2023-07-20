@@ -1,0 +1,11 @@
+```release-note:bug
+`resource/pingone_environment`: Fix errors that occur if the `service` block is left undefined.
+```
+
+```release-note:bug
+`resource/pingone_environment`: Fix for intermittent error stating the default population couldn't be updated on environment creation.
+```
+
+```release-note:note
+`resource/pingone_environment`: Corrected documentation and examples to denote optional nature of the `default_population` block.
+```
