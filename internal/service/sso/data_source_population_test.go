@@ -83,11 +83,11 @@ func TestAccPopulationDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccPopulationDataSourceConfig_NotFoundByName(resourceName),
-				ExpectError: regexp.MustCompile(`Cannot find population from name`),
+				ExpectError: regexp.MustCompile(`Population not found`),
 			},
 			{
 				Config:      testAccPopulationDataSourceConfig_NotFoundByID(resourceName),
-				ExpectError: regexp.MustCompile("Error when calling `ReadOnePopulation`: The request could not be completed. The requested resource was not found."),
+				ExpectError: regexp.MustCompile("Population not found"),
 			},
 		},
 	})
