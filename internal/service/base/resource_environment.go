@@ -102,6 +102,7 @@ var (
 	_ resource.Resource                = &EnvironmentResource{}
 	_ resource.ResourceWithConfigure   = &EnvironmentResource{}
 	_ resource.ResourceWithImportState = &EnvironmentResource{}
+	_ resource.ResourceWithModifyPlan  = &EnvironmentResource{}
 )
 
 // New Object
@@ -134,6 +135,14 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
+	)
+
+	defaultPopulationIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Message** The `default_population_id` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population.",
+	)
+
+	defaultPopulationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Message** The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The environment's default population.",
 	)
 
 	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -232,9 +241,10 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			///////////////////
 			// Deprecated start
 			"default_population_id": schema.StringAttribute{
-				Description: "The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population.",
-				Computed:    true,
-				// DeprecationMessage: "The `default_population_id` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
+				Description:         defaultPopulationIdDescription.Description,
+				MarkdownDescription: defaultPopulationIdDescription.MarkdownDescription,
+				Computed:            true,
+				DeprecationMessage:  "The `default_population_id` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -247,24 +257,23 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			///////////////////
 			// Deprecated start
 			"default_population": schema.ListNestedBlock{
-				Description: "The environment's default population.",
-				// DeprecationMessage: "The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This block will be removed in the next major version of the provider.",
+				Description:         defaultPopulationDescription.Description,
+				MarkdownDescription: defaultPopulationDescription.MarkdownDescription,
+				DeprecationMessage:  "The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This block will be removed in the next major version of the provider.",
 
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
 							Description: "The name of the environment's default population.",
-							// DeprecationMessage: "The `default_population.name` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This parameter will be removed in the next major version of the provider.",
-							Optional: true,
-							Computed: true,
-							Default:  stringdefault.StaticString("Default"),
+							Optional:    true,
+							Computed:    true,
+							Default:     stringdefault.StaticString("Default"),
 						},
 
 						"description": schema.StringAttribute{
 							Description: "A description to apply to the environment's default population.",
-							// DeprecationMessage: "The `default_population.description` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This parameter will be removed in the next major version of the provider.",
-							Optional: true,
+							Optional:    true,
 						},
 					},
 				},
@@ -342,6 +351,50 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			}),
 		},
 	}
+}
+
+// ModifyPlan
+func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+
+	// Destruction plan
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	///////////////////
+	// Deprecated start
+	var plan []environmentDefaultPopulationModel
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("default_population"), &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state []environmentDefaultPopulationModel
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("default_population"), &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if len(state) > 0 && len(plan) == 0 {
+		resp.Diagnostics.AddAttributeWarning(
+			path.Root("default_population"),
+			"State change warning",
+			"The deprecated default population configuration on the \"pingone_environment\" resource will be removed from state, but will not be removed from the platform.  Use the \"pingone_population_default\" resource to manage this configuration going forward.",
+		)
+
+		resp.Diagnostics.AddAttributeWarning(
+			path.Root("default_population_id"),
+			"State change warning",
+			"The deprecated default population configuration on the \"pingone_environment\" resource will be removed from state, the \"default_population_id\" will no longer carry the default population's ID.  Use the \"pingone_population_default\" resource to manage this configuration going forward.",
+		)
+	}
+
+	if len(plan) == 0 {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("default_population_id"), types.StringNull())...)
+	}
+	// Deprecated end
+	///////////////////
+
 }
 
 func (r *EnvironmentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -429,54 +482,53 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		billOfMaterials = v
 	}
 
-	// Seed a default population.  The platform does this implicitly but we see latencies.  This ensures we have a quick environment provision.
-	defaultPopulationObj := *management.NewPopulation("Default")
-	defaultPopulationObj.SetDescription("Automatically created population.")
-	defaultPopulationObj.SetDefault(true)
-
-	defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.client, environmentResponse.GetId(), defaultPopulationObj)
-	if defaultPopulationResponse == nil {
-		resp.Diagnostics.AddWarning(
-			"Cannot seed the default population",
-			"The default population cannot be seeded explicitly by the provider.  Relying on the implicit environment bootstrapping service for creation.",
-		)
-	}
-
 	///////////////////
 	// Deprecated start
-	// Population
-
-	var defaultPopulation *management.Population
-
-	// Save some processing if we already seeded our population
-	if defaultPopulationResponse != nil {
-		defaultPopulation = defaultPopulationResponse
-	} else {
-		defaultPopulation, d = sso.FetchDefaultPopulationWithTimeout(ctx, r.client, environmentResponse.GetId(), createTimeout)
-		resp.Diagnostics.Append(d...)
-	}
-
 	var populationResponse *management.Population = nil
-
 	if population != nil {
+		// Seed a default population.  The platform does this implicitly but we see latencies.  This ensures we have a quick environment provision.
+		defaultPopulationObj := *management.NewPopulation("Default")
+		defaultPopulationObj.SetDescription("Automatically created population.")
+		defaultPopulationObj.SetDefault(true)
 
-		if defaultPopulation == nil {
-			resp.Diagnostics.AddError(
-				"Default population not found.",
-				"A default population was expected to be found in the environment after creation, but none was found.  Please report this issue to the provider maintainers.")
+		defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.client, environmentResponse.GetId(), defaultPopulationObj)
+		if defaultPopulationResponse == nil {
+			resp.Diagnostics.AddWarning(
+				"Cannot seed the default population",
+				"The default population cannot be seeded explicitly by the provider.  Relying on the implicit environment bootstrapping service for creation.",
+			)
 		}
 
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
+		var defaultPopulation *management.Population
 
-			func() (any, *http.Response, error) {
-				return r.client.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
-			},
-			"UpdatePopulation",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&populationResponse,
-		)...)
+		// Save some processing if we already seeded our population
+		if defaultPopulationResponse != nil {
+			defaultPopulation = defaultPopulationResponse
+		} else {
+			defaultPopulation, d = sso.FetchDefaultPopulationWithTimeout(ctx, r.client, environmentResponse.GetId(), createTimeout)
+			resp.Diagnostics.Append(d...)
+		}
+
+		if population != nil {
+
+			if defaultPopulation == nil {
+				resp.Diagnostics.AddError(
+					"Default population not found.",
+					"A default population was expected to be found in the environment after creation, but none was found.  Please report this issue to the provider maintainers.")
+			}
+
+			resp.Diagnostics.Append(framework.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					return r.client.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
+				},
+				"UpdatePopulation",
+				framework.DefaultCustomError,
+				sdk.DefaultCreateReadRetryable,
+				&populationResponse,
+			)...)
+		}
 	}
 	// Deprecated end
 	///////////////////
@@ -691,6 +743,13 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	// Deprecated start
 	var populationResponse *management.Population = nil
 
+	if plan.DefaultPopulation.IsNull() && !state.DefaultPopulation.IsNull() && population == nil {
+		resp.Diagnostics.AddWarning(
+			"Default population removed from state",
+			"The default population has been removed from state, but has not been removed from the platform.  Please use the `pingone_population_default` resource to manage the default population going forward.",
+		)
+	}
+
 	if !plan.DefaultPopulation.Equal(state.DefaultPopulation) && population != nil {
 
 		var populationId string
@@ -821,25 +880,6 @@ func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.Impo
 	if len(attributes) == 2 {
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("default_population_id"), attributes[1])...)
 	}
-
-	if len(attributes) == 1 {
-		population, d := sso.FetchDefaultPopulation(ctx, r.client, attributes[0])
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		if population == nil {
-			resp.Diagnostics.AddError(
-				"Default population not found",
-				"The Default population is not found in the environment.  Either ensure a population is configured to be the default, or you use the \"environment_id/population_id\" import ID pattern.",
-			)
-			return
-		}
-
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("default_population_id"), population.GetId())...)
-	}
-
 	// Deprecated end
 	///////////////////
 

@@ -160,8 +160,8 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "solution"),
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
 			resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
@@ -366,8 +366,8 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
@@ -538,8 +538,6 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   type       = "%[3]s"
   license_id = "%[4]s"
-  default_population {
-  }
   service {
   }
 }`, resourceName, name, environmentType, licenseID)
@@ -552,8 +550,6 @@ resource "pingone_environment" "%[1]s" {
   type       = "%[3]s"
   region     = "%[4]s"
   license_id = "%[5]s"
-  default_population {
-  }
   service {
   }
 }`, resourceName, name, environmentType, region, licenseID)
