@@ -556,7 +556,7 @@ func testAccEnvironmentConfig_MinimalWithType(resourceName, name, environmentTyp
 	return fmt.Sprintf(`
 resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
-  type = "%[3]s"
+  type       = "%[3]s"
   license_id = "%[4]s"
 }`, resourceName, name, environmentType, licenseID)
 }
