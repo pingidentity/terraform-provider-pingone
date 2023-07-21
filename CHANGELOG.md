@@ -5,6 +5,10 @@ NOTES:
 * `data-source/pingone_population`: Optimised finding populations by name for environments with large numbers of populations present. ([#487](https://github.com/pingidentity/terraform-provider-pingone/issues/487))
 * `resource/pingone_environment`: Corrected documentation and examples to denote optional nature of the `default_population` block. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
 
+ENHANCEMENTS:
+
+* `resource/pingone_mfa_settings`: Now supports `phone_extensions_enabled` option. ([#489](https://github.com/pingidentity/terraform-provider-pingone/issues/489))
+
 BUG FIXES:
 
 * `resource/pingone_environment`: Fix errors that occur if the `service` block is left undefined. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
