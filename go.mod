@@ -1,5 +1,7 @@
 module github.com/pingidentity/terraform-provider-pingone
 
+replace github.com/patrickcping/pingone-go-sdk-v2/verify => ../../../pingone-go-sdk-v2/verify
+
 go 1.20
 
 require (
@@ -25,7 +27,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.2.1
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.47.0
-	golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
+	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 )
 
 require github.com/rivo/uniseg v0.2.0 // indirect
