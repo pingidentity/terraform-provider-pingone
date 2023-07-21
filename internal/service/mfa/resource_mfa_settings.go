@@ -38,6 +38,12 @@ func ResourceMFASettings() *schema.Resource {
 				ForceNew:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 			},
+			"phone_extensions_enabled": {
+				Description: "A boolean when set to `true` allows one-time passwords to be delivered via voice to phone numbers that include extensions. Set to `false` to disable support for extensions.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
 			"pairing": {
 				Description: "An object that contains pairing settings.",
 				Type:        schema.TypeList,
@@ -122,6 +128,10 @@ func resourceMFASettingsCreate(ctx context.Context, d *schema.ResourceData, meta
 		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
 	}
 
+	if v, ok := d.GetOk("phone_extensions_enabled"); ok {
+		mfaSettings.SetPhoneExtensions(expandMFASettingsPhoneExtensions(v))
+	}
+
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
@@ -178,6 +188,12 @@ func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta i
 		d.Set("lockout", nil)
 	}
 
+	if v, ok := respObject.GetPhoneExtensionsOk(); ok {
+		d.Set("phone_extensions_enabled", v.GetEnabled())
+	} else {
+		d.Set("phone_extensions_enabled", nil)
+	}
+
 	if v, ok := respObject.GetAuthenticationOk(); ok {
 		d.Set("authentication", flattenMFASettingAuthentication(*v))
 	} else {
@@ -201,6 +217,10 @@ func resourceMFASettingsUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	if v, ok := d.GetOk("lockout"); ok {
 		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
+	}
+
+	if v, ok := d.GetOk("phone_extensions_enabled"); ok {
+		mfaSettings.SetPhoneExtensions(expandMFASettingsPhoneExtensions(v))
 	}
 
 	_, diags = sdk.ParseResponse(
@@ -274,6 +294,13 @@ func expandMFASettingsLockout(v []interface{}) mfa.MFASettingsLockout {
 	if v, ok := obj["duration_seconds"].(int); ok && v > 0 {
 		mfa.SetDurationSeconds(int32(v))
 	}
+
+	return mfa
+}
+
+func expandMFASettingsPhoneExtensions(v interface{}) mfa.MFASettingsPhoneExtensions {
+	mfa := *mfa.NewMFASettingsPhoneExtensions()
+	mfa.SetEnabled(v.(bool))
 
 	return mfa
 }

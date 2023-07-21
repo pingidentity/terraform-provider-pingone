@@ -11,4 +11,6 @@ resource "pingone_mfa_settings" "mfa_settings" {
     duration_seconds = 600
   }
 
+  phone_extensions_enabled = true
+
 }
