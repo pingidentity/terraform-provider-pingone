@@ -1,7 +1,5 @@
 module github.com/pingidentity/terraform-provider-pingone
 
-replace github.com/patrickcping/pingone-go-sdk-v2/verify => ../../../pingone-go-sdk-v2/verify
-
 go 1.20
 
 require (
