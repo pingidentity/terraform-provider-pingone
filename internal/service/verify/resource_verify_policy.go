@@ -29,6 +29,7 @@ import (
 	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
+	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -122,7 +123,7 @@ type voiceModel struct {
 
 type textDependentModel struct {
 	Samples  types.Int64  `tfsdk:"samples"`
-	PhraseId types.String `tfsdk:"phrase_id"`
+	PhraseId types.String `tfsdk:"voice_phrase_id"`
 }
 
 type referenceDataModel struct {
@@ -198,8 +199,8 @@ var (
 	}
 
 	textDependentServiceTFObjectTypes = map[string]attr.Type{
-		"samples":   types.Int64Type,
-		"phrase_id": types.StringType,
+		"samples":         types.Int64Type,
+		"voice_phrase_id": types.StringType,
 	}
 
 	referenceDataServiceTFObjectTypes = map[string]attr.Type{
@@ -277,6 +278,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	const defaultTransactionTimeUnit = verify.ENUMTIMEUNIT_MINUTES
 
 	const defaultVoiceSamples = 3
+	// P1 Platform does not set a traditional UUID as the default phrase ID value
+	const defaultVoicePhraseId = "exceptional_experiences"
 
 	defaultCreateMfaDevice := new(bool)
 	*defaultCreateMfaDevice = false
@@ -1136,8 +1139,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"samples":   framework.Int32ToTF(defaultVoiceSamples),
-						"phrase_id": framework.StringToTF(string("exceptional_experiences")),
+						"samples":         framework.Int32ToTF(defaultVoiceSamples),
+						"voice_phrase_id": framework.StringToTF(defaultVoicePhraseId),
 					}
 					textDependentObjValue, d := types.ObjectValue(textDependentServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
@@ -1206,12 +1209,15 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 									int64validator.Between(attrMinVoiceSamples, attrMaxVoiceSamples),
 								},
 							},
-							"phrase_id": schema.StringAttribute{
-								Description: "	Identifier (UUID) of the voice phrase to use.",
+							"voice_phrase_id": schema.StringAttribute{
+								Description: "For a customer-defined phrase, the identifier (UUID) of the voice phrase to use. For pre-defined phrases, a string value.",
 								Required:    true,
-								//Validators: []validator.String{
-								//	validation.P1ResourceIDValidator(),
-								//},
+								Validators: []validator.String{
+									stringvalidator.Any(
+										validation.P1ResourceIDValidator(),
+										stringvalidator.RegexMatches(regexp.MustCompile(defaultVoicePhraseId), "Unexpected error with the pre-defined, default value. Please report this issue to the provider maintainers."),
+									),
+								},
 							},
 						},
 					},
@@ -2306,8 +2312,8 @@ func (p *verifyPolicyResourceModel) toStateVoice(apiObject *verify.VoiceConfigur
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"samples":   framework.Int32OkToTF(v.GetSamplesOk()),
-			"phrase_id": framework.StringToTF(v.GetPhrase().Id),
+			"samples":         framework.Int32OkToTF(v.GetSamplesOk()),
+			"voice_phrase_id": framework.StringToTF(v.GetPhrase().Id),
 		}
 		objValue, d := types.ObjectValue(textDependentServiceTFObjectTypes, o)
 		diags.Append(d...)

@@ -401,8 +401,8 @@ Optional:
 
 Required:
 
-- `phrase_id` (String) Identifier (UUID) of the voice phrase to use.
 - `samples` (Number) Number of voice samples to collect. The allowed range is `3 - 5`
+- `voice_phrase_id` (String) For a customer-defined phrase, the identifier (UUID) of the voice phrase to use. For pre-defined phrases, a string value.
 
 ## Import
 

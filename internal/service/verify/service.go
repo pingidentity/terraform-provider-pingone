@@ -16,6 +16,7 @@ func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewVerifyPolicyResource,
 		NewVoicePhraseResource,
+		NewVoicePhraseContentResource,
 	}
 }
 

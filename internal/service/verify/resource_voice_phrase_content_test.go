@@ -13,7 +13,7 @@ import (
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckVoicePhraseDestroy(s *terraform.State) error {
+func testAccCheckVoicePhraseContentsDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -27,7 +27,7 @@ func testAccCheckVoicePhraseDestroy(s *terraform.State) error {
 	mgmtApiClient := p1Client.API.ManagementAPIClient
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_voice_phrase" {
+		if rs.Type != "pingone_voice_phrase_content" {
 			continue
 		}
 
@@ -46,7 +46,7 @@ func testAccCheckVoicePhraseDestroy(s *terraform.State) error {
 			return err
 		}
 
-		body, r, err := apiClient.VoicePhrasesApi.ReadOneVoicePhrase(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]).Execute()
+		body, r, err := apiClient.VoicePhraseContentsApi.ReadOneVoicePhraseContent(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["voice_phrase_id"], rs.Primary.Attributes["id"]).Execute()
 
 		if err != nil {
 
@@ -62,17 +62,17 @@ func testAccCheckVoicePhraseDestroy(s *terraform.State) error {
 			return err
 		}
 
-		return fmt.Errorf("PingOne Voice Phrase %s still exists", rs.Primary.ID)
+		return fmt.Errorf("PingOne Voice Phrase Content %s still exists", rs.Primary.ID)
 	}
 
 	return nil
 }
 
-func TestAccVoicePhrase_NewEnv(t *testing.T) {
+func TestAccVoicePhraseContent_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_voice_phrase.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_voice_phrase_content.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -83,11 +83,11 @@ func TestAccVoicePhrase_NewEnv(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVoicePhraseDestroy,
+		CheckDestroy:             testAccCheckVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVoicePhraseConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Config: testAccVoicePhraseContentConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 				),
@@ -96,11 +96,11 @@ func TestAccVoicePhrase_NewEnv(t *testing.T) {
 	})
 }
 
-func TestAccVoicePhrase_Full(t *testing.T) {
+func TestAccVoicePhraseContent_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_voice_phrase.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_voice_phrase_content.%s", resourceName)
 
 	name := acctest.ResourceNameGen()
 	updatedName := acctest.ResourceNameGen()
@@ -108,18 +108,23 @@ func TestAccVoicePhrase_Full(t *testing.T) {
 	environmentName := acctest.ResourceNameGenEnvironment()
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	initialVoicePhrase := resource.ComposeTestCheckFunc(
+	initialVoicePhraseContent := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
-		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestMatchResourceAttr(resourceFullName, "voice_phrase_id", validation.P1ResourceIDRegexp),
+		resource.TestCheckResourceAttr(resourceFullName, "locale", "en"),
+		resource.TestCheckResourceAttr(resourceFullName, "content", "Watch your thoughts; they become words. Watch your words; they become actions. "+
+			"Watch your actions; they become habits. Watch your habits; they become character. Watch your character; it becomes your destiny."),
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
 
-	updatedVoicePhrase := resource.ComposeTestCheckFunc(
+	updatedVoicePhraseContent := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
-		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
+		resource.TestCheckResourceAttr(resourceFullName, "locale", "en"),
+		resource.TestCheckResourceAttr(resourceFullName, "content", "Don't underestimate the importance you can have because history has shown us that "+
+			"courage can be contagious and hope can take on a life of its own."),
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -131,70 +136,88 @@ func TestAccVoicePhrase_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVoicePhrase_Initial(environmentName, licenseID, resourceName, name),
-				Check:  initialVoicePhrase,
+				Config: testAccVoicePhraseContent_Initial(environmentName, licenseID, resourceName, name),
+				Check:  initialVoicePhraseContent,
 			},
 			{
-				Config:  testAccVoicePhrase_Initial(environmentName, licenseID, resourceName, name),
+				Config:  testAccVoicePhraseContent_Initial(environmentName, licenseID, resourceName, name),
 				Destroy: true,
 			},
 			{
-				Config: testAccVoicePhrase_Update(environmentName, licenseID, resourceName, updatedName),
-				Check:  updatedVoicePhrase,
+				Config: testAccVoicePhraseContent_Update(environmentName, licenseID, resourceName, updatedName),
+				Check:  updatedVoicePhraseContent,
 			},
 			{
-				Config:  testAccVoicePhrase_Update(environmentName, licenseID, resourceName, updatedName),
+				Config:  testAccVoicePhraseContent_Update(environmentName, licenseID, resourceName, updatedName),
 				Destroy: true,
 			},
 			// changes
 			{
-				Config: testAccVoicePhrase_Initial(environmentName, licenseID, resourceName, name),
-				Check:  initialVoicePhrase,
+				Config: testAccVoicePhraseContent_Initial(environmentName, licenseID, resourceName, name),
+				Check:  initialVoicePhraseContent,
 			},
 			{
-				Config: testAccVoicePhrase_Update(environmentName, licenseID, resourceName, updatedName),
-				Check:  updatedVoicePhrase,
+				Config: testAccVoicePhraseContent_Update(environmentName, licenseID, resourceName, updatedName),
+				Check:  updatedVoicePhraseContent,
 			},
 			{
-				Config: testAccVoicePhrase_Initial(environmentName, licenseID, resourceName, name),
-				Check:  initialVoicePhrase,
+				Config: testAccVoicePhraseContent_Initial(environmentName, licenseID, resourceName, name),
+				Check:  initialVoicePhraseContent,
 			},
 		},
 	})
 }
 
-func testAccVoicePhraseConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+func testAccVoicePhraseContentConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
+}
 
-  depends_on = [pingone_environment.%[2]s]
+resource "pingone_voice_phrase_content" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  voice_phrase_id = pingone_voice_phrase.%[3]s.id
+  locale = "en"
+  content = "Progress is the attraction that moves humanity."
+
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccVoicePhrase_Initial(environmentName, licenseID, resourceName, name string) string {
+func testAccVoicePhraseContent_Initial(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
+}
 
-  depends_on = [pingone_environment.%[2]s]
+resource "pingone_voice_phrase_content" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  voice_phrase_id = pingone_voice_phrase.%[3]s.id
+  locale = "en"
+  content = "Watch your thoughts; they become words. Watch your words; they become actions. Watch your actions; they become habits. Watch your habits; they become character. Watch your character; it becomes your destiny."
+
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccVoicePhrase_Update(environmentName, licenseID, resourceName, name string) string {
+func testAccVoicePhraseContent_Update(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
+}
 
-  depends_on = [pingone_environment.%[2]s]
+resource "pingone_voice_phrase_content" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  voice_phrase_id = pingone_voice_phrase.%[3]s.id
+  locale = "en"
+  content = "Don't underestimate the importance you can have because history has shown us that courage can be contagious and hope can take on a life of its own."
+
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
