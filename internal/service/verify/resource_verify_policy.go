@@ -1652,10 +1652,6 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 	// Top-level arguments
 	data.SetId(p.Id.ValueString())
 
-	environment := verify.NewObjectEnvironment()
-	environment.SetId(p.EnvironmentId.ValueString())
-	data.SetEnvironment(*environment)
-
 	if !p.Name.IsNull() && !p.Name.IsUnknown() {
 		data.SetName(p.Name.ValueString())
 	}
