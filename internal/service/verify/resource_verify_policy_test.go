@@ -157,7 +157,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "HIGH"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.samples", "4"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.phrase_id", "exceptional_experiences"),
+		resource.TestMatchResourceAttr(resourceFullName, "voice.text_dependent.phrase_id", validation.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.retain_original_recordings", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
@@ -387,6 +387,11 @@ func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name str
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_voice_phrase" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+	name = "%[4]s"
+}
+
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
@@ -408,7 +413,7 @@ resource "pingone_verify_policy" "%[3]s" {
 
   email = {
     verify = "REQUIRED"
-    create_mfa_device : true
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "4"
@@ -432,7 +437,7 @@ resource "pingone_verify_policy" "%[3]s" {
 
   phone = {
     verify = "REQUIRED"
-    create_mfa_device : true
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "2"
@@ -478,7 +483,8 @@ resource "pingone_verify_policy" "%[3]s" {
 	
     text_dependent = {
 		samples  = "4"
-		phrase_id = "exceptional_experiences"
+		phrase_id = pingone_voice_phrase.%[3]s.id
+		//phrase_id = "exceptional_experiences"
     }
 
     reference_data = {
@@ -534,7 +540,7 @@ resource "pingone_verify_policy" "%[3]s" {
 
   email = {
     verify = "REQUIRED"
-    create_mfa_device : true
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "4"

@@ -52,8 +52,8 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   }
 
   email = {
-    verify = "REQUIRED"
-    create_mfa_device : true
+    verify            = "REQUIRED"
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "5"
@@ -76,8 +76,8 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   }
 
   phone = {
-    verify = "REQUIRED"
-    create_mfa_device : true
+    verify            = "REQUIRED"
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "5"

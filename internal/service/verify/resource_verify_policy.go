@@ -2333,8 +2333,8 @@ func (p *verifyPolicyResourceModel) toStateVoice(apiObject *verify.VoiceConfigur
 	objValue, d := types.ObjectValue(voiceServiceTFObjectTypes, map[string]attr.Value{
 		"verify":               framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"enrollment":           framework.BoolOkToTF(apiObject.GetEnrollmentOk()),
-		"comparison_threshold": framework.EnumOkToTF(apiObject.GetComparison().Threshold, ok), // TODO: Review
-		"liveness_threshold":   framework.EnumOkToTF(apiObject.GetLiveness().Threshold, ok),   // TODO: Review
+		"comparison_threshold": framework.EnumOkToTF(apiObject.GetComparison().Threshold, ok),
+		"liveness_threshold":   framework.EnumOkToTF(apiObject.GetLiveness().Threshold, ok),
 		"text_dependent":       textDependent,
 		"reference_data":       referenceData,
 	})
