@@ -5,3 +5,7 @@
 ```release-note:enhancement
 `resource/pingone_voice_phrase`: New resource enabling management of `voice_phrase`, a prerequisite and counterpart to `voice` configuration within a `pingone_verify_policy`.
 ```
+
+```release-note:enhancement
+`resource/pingone_voice_phrase_content`: New resource associated with `pingone_voice_phrase` used to define the voice enrollment or verification requirements associated with a `verify_policy`.
+```
