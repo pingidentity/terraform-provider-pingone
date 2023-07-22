@@ -136,7 +136,7 @@ func (r *VoicePhraseResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// Build the model for the API
-	VoicePhrase, d := plan.expand(ctx)
+	VoicePhrase, d := plan.expand()
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -228,7 +228,7 @@ func (r *VoicePhraseResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// Build the model for the API
-	VoicePhrase, d := plan.expand(ctx)
+	VoicePhrase, d := plan.expand()
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -310,7 +310,7 @@ func (r *VoicePhraseResource) ImportState(ctx context.Context, req resource.Impo
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *voicePhraseResourceModel) expand(ctx context.Context) (*verify.VoicePhrase, diag.Diagnostics) {
+func (p *voicePhraseResourceModel) expand() (*verify.VoicePhrase, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := verify.NewVoicePhrase(p.DisplayName.ValueString())

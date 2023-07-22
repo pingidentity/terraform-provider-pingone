@@ -169,7 +169,7 @@ func testAccVoicePhraseConfig_NewEnv(environmentName, licenseID, resourceName, n
 
 resource "pingone_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name        = "%[4]s"
+  name           = "%[4]s"
 
   depends_on = [pingone_environment.%[2]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -180,10 +180,10 @@ func testAccVoicePhrase_Initial(environmentName, licenseID, resourceName, name s
 	%[1]s
 
 resource "pingone_voice_phrase" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-	name = "%[4]s"
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
 
-	depends_on = [pingone_environment.%[2]s]
+  depends_on = [pingone_environment.%[2]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -192,9 +192,9 @@ func testAccVoicePhrase_Update(environmentName, licenseID, resourceName, name st
 	%[1]s
 
 resource "pingone_voice_phrase" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-	name = "%[4]s"
-	
-	depends_on = [pingone_environment.%[2]s]
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+
+  depends_on = [pingone_environment.%[2]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

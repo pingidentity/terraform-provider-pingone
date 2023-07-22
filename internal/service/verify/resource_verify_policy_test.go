@@ -388,8 +388,8 @@ func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name str
 	%[1]s
 
 resource "pingone_voice_phrase" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
-	name = "%[4]s"
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
 }
 
 resource "pingone_verify_policy" "%[3]s" {
@@ -412,7 +412,7 @@ resource "pingone_verify_policy" "%[3]s" {
   }
 
   email = {
-    verify = "REQUIRED"
+    verify            = "REQUIRED"
     create_mfa_device = true
     otp = {
       attempts = {
@@ -436,7 +436,7 @@ resource "pingone_verify_policy" "%[3]s" {
   }
 
   phone = {
-    verify = "REQUIRED"
+    verify            = "REQUIRED"
     create_mfa_device = true
     otp = {
       attempts = {
@@ -476,21 +476,21 @@ resource "pingone_verify_policy" "%[3]s" {
   }
 
   voice = {
-	verify = "REQUIRED"
-	enrollment = true
-	comparison_threshold = "HIGH"
-	liveness_threshold = "MEDIUM"
-	
+    verify               = "REQUIRED"
+    enrollment           = true
+    comparison_threshold = "HIGH"
+    liveness_threshold   = "MEDIUM"
+
     text_dependent = {
-		samples  = "4"
-		phrase_id = pingone_voice_phrase.%[3]s.id
-		//phrase_id = "exceptional_experiences"
+      samples   = "4"
+      phrase_id = pingone_voice_phrase.%[3]s.id
+      //phrase_id = "exceptional_experiences"
     }
 
     reference_data = {
-		retain_original_recordings = true
-		update_on_reenrollment = true
-		update_on_verification = true
+      retain_original_recordings = true
+      update_on_reenrollment     = true
+      update_on_verification     = true
     }
   }
 
@@ -539,7 +539,7 @@ resource "pingone_verify_policy" "%[3]s" {
   }
 
   email = {
-    verify = "REQUIRED"
+    verify            = "REQUIRED"
     create_mfa_device = true
     otp = {
       attempts = {
@@ -599,20 +599,20 @@ resource "pingone_verify_policy" "%[3]s" {
   }
 
   voice = {
-	verify = "OPTIONAL"
-	enrollment = false
-	comparison_threshold = "LOW"
-	liveness_threshold = "LOW"
-	
+    verify               = "OPTIONAL"
+    enrollment           = false
+    comparison_threshold = "LOW"
+    liveness_threshold   = "LOW"
+
     text_dependent = {
-		samples  = "5"
-		phrase_id = "exceptional_experiences"
+      samples   = "5"
+      phrase_id = "exceptional_experiences"
     }
 
     reference_data = {
-		retain_original_recordings = false
-		update_on_reenrollment = false
-		update_on_verification = false
+      retain_original_recordings = false
+      update_on_reenrollment     = false
+      update_on_verification     = false
     }
   }
 
