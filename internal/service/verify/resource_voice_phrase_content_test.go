@@ -132,7 +132,7 @@ func TestAccVoicePhraseContent_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVoicePhraseDestroy,
+		CheckDestroy:             testAccCheckVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -178,10 +178,10 @@ resource "pingone_voice_phrase" "%[3]s" {
 }
 
 resource "pingone_voice_phrase_content" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id  = pingone_environment.%[2]s.id
   voice_phrase_id = pingone_voice_phrase.%[3]s.id
-  locale = "en"
-  content = "Progress is the attraction that moves humanity."
+  locale          = "en"
+  content         = "Progress is the attraction that moves humanity."
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -196,10 +196,10 @@ resource "pingone_voice_phrase" "%[3]s" {
 }
 
 resource "pingone_voice_phrase_content" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id  = pingone_environment.%[2]s.id
   voice_phrase_id = pingone_voice_phrase.%[3]s.id
-  locale = "en"
-  content = "Watch your thoughts; they become words. Watch your words; they become actions. Watch your actions; they become habits. Watch your habits; they become character. Watch your character; it becomes your destiny."
+  locale          = "en"
+  content         = "Watch your thoughts; they become words. Watch your words; they become actions. Watch your actions; they become habits. Watch your habits; they become character. Watch your character; it becomes your destiny."
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -214,10 +214,10 @@ resource "pingone_voice_phrase" "%[3]s" {
 }
 
 resource "pingone_voice_phrase_content" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id  = pingone_environment.%[2]s.id
   voice_phrase_id = pingone_voice_phrase.%[3]s.id
-  locale = "en"
-  content = "Don't underestimate the importance you can have because history has shown us that courage can be contagious and hope can take on a life of its own."
+  locale          = "en"
+  content         = "Don't underestimate the importance you can have because history has shown us that courage can be contagious and hope can take on a life of its own."
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

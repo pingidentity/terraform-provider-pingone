@@ -9,3 +9,11 @@
 ```release-note:enhancement
 `resource/pingone_voice_phrase_content`: New resource associated with `pingone_voice_phrase` used to define the voice enrollment or verification requirements associated with a `verify_policy`.
 ```
+
+```release-note:enhancement
+`datasource/pingone_voice_phrase`: New datasource to find voice phrase by `voice_phrase_id` or `name`.
+```
+
+```release-note:enhancement
+`datasource/pingone_voice_phrase_content`: New datasource to find voice phrase content by `voice_phrase_content_id`.
+```

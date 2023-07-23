@@ -482,7 +482,7 @@ resource "pingone_verify_policy" "%[3]s" {
     liveness_threshold   = "MEDIUM"
 
     text_dependent = {
-      samples   = "4"
+      samples         = "4"
       voice_phrase_id = pingone_voice_phrase.%[3]s.id
     }
 
@@ -604,7 +604,7 @@ resource "pingone_verify_policy" "%[3]s" {
     liveness_threshold   = "LOW"
 
     text_dependent = {
-      samples   = "5"
+      samples         = "5"
       voice_phrase_id = "exceptional_experiences"
     }
 

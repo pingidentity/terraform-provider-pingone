@@ -311,7 +311,7 @@ resource "pingone_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 }
-	
+
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
@@ -329,7 +329,7 @@ resource "pingone_verify_policy" "%[3]s" {
     liveness_threshold   = "HIGH"
 
     text_dependent = {
-      samples   = "5"
+      samples         = "5"
       voice_phrase_id = pingone_voice_phrase.%[3]s.id
     }
 
@@ -338,7 +338,7 @@ resource "pingone_verify_policy" "%[3]s" {
       update_on_reenrollment     = false
       update_on_verification     = false
     }
-  }  
+  }
 
   depends_on = [pingone_environment.%[2]s]
 }
