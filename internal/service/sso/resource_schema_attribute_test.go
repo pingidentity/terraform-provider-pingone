@@ -112,6 +112,7 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", description),
@@ -129,6 +130,7 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
@@ -370,6 +372,7 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", description),
@@ -387,6 +390,7 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
@@ -497,15 +501,8 @@ func testAccSchemaAttributeConfig_NewEnv(environmentName, licenseID, resourceNam
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  schema_id      = data.pingone_schema.%[4]s.id
 
   name = "%[4]s"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -515,15 +512,9 @@ func testAccSchemaAttributeConfig_StringFull(resourceName, name string, unique, 
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
+  schema_name    = "User"
 
   name         = "%[3]s"
   display_name = "Attribute %[3]s"
@@ -539,15 +530,8 @@ func testAccSchemaAttributeConfig_StringMinimal(resourceName, name string) strin
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
 
   name = "%[3]s"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -557,15 +541,9 @@ func testAccSchemaAttributeConfig_JSONFull(resourceName, name string, unique, mu
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
+  schema_name    = "User"
 
   name         = "%[3]s"
   display_name = "Attribute %[3]s"
@@ -581,15 +559,8 @@ func testAccSchemaAttributeConfig_JSONMinimal(resourceName, name string) string 
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
 
   name = "%[3]s"
   type = "JSON"
@@ -600,15 +571,8 @@ func testAccSchemaAttributeConfig_EnumeratedValues(resourceName, name, attrType 
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
 
   name = "%[3]s"
   type = "%[4]s"
@@ -647,15 +611,8 @@ func testAccSchemaAttributeConfig_RegexValidation(resourceName, name, attrType s
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
 
   name = "%[3]s"
   type = "%[4]s"
