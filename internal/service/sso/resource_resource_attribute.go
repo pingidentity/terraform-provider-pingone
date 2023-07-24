@@ -35,6 +35,7 @@ type ResourceAttributeResourceModel struct {
 	Id              types.String `tfsdk:"id"`
 	EnvironmentId   types.String `tfsdk:"environment_id"`
 	ResourceId      types.String `tfsdk:"resource_id"`
+	ResourceName    types.String `tfsdk:"resource_name"`
 	Name            types.String `tfsdk:"name"`
 	Type            types.String `tfsdk:"type"`
 	Value           types.String `tfsdk:"value"`
@@ -80,6 +81,14 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 
 	const attrMinLength = 1
 
+	resourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.  The ID of the resource to assign the resource attribute to.",
+	).ExactlyOneOf([]string{"resource_id", "resource_name"}).AppendMarkdownString("Must be a valid PingOne resource ID.").RequiresReplace()
+
+	resourceNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The name of the resource to assign the resource attribute to.  The built-in OpenID Connect resource name is `openid`.",
+	).ExactlyOneOf([]string{"resource_id", "resource_name"}).RequiresReplace()
+
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the name of the resource attribute to map a value for. When the resource's type property is `OPENID_CONNECT`, the following are reserved names and cannot be used: %s.  The resource will also override the default configured values for a resource, rather than creating new attributes.  For resources of type `CUSTOM`, the `sub` name is overridden.  For resources of type `OPENID_CONNECT`, the following names are overridden: %s.", verify.IllegalOIDCAttributeNameString(), verify.OverrideOIDCAttributeNameString()),
 	)
@@ -111,9 +120,43 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the resource attribute in."),
 			),
 
-			"resource_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the resource to assign the resource attribute to."),
-			),
+			"resource_id": schema.StringAttribute{
+				Description:         resourceIdDescription.Description,
+				MarkdownDescription: resourceIdDescription.MarkdownDescription,
+				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.",
+				Optional:            true,
+				Computed:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("resource_id"),
+						path.MatchRoot("resource_name"),
+					),
+				},
+			},
+
+			"resource_name": schema.StringAttribute{
+				Description:         resourceNameDescription.Description,
+				MarkdownDescription: resourceNameDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("resource_id"),
+						path.MatchRoot("resource_name"),
+					),
+				},
+			},
 
 			"name": schema.StringAttribute{
 				Description:         nameDescription.Description,
