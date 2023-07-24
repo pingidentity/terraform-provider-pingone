@@ -56,7 +56,7 @@ func (r *VerifyPoliciesDataSource) Schema(ctx context.Context, req datasource.Sc
 			),
 
 			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of credential types that have been successfully retrieved.",
+				Description: "The list of resulting IDs of verify policies that have been successfully retrieved.",
 			}),
 		},
 	}
