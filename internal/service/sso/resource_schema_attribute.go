@@ -113,11 +113,11 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 
 	schemaIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute can be removed (the resource will default to the `User` schema), or the `schema_name` parameter can be defined instead.  The ID of the schema to apply the schema attribute to.",
-	).AppendMarkdownString("Must be a valid PingOne resource ID.")
+	).AppendMarkdownString("Must be a valid PingOne resource ID.").ConflictsWith([]string{"schema_name"})
 
 	schemaNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of the schema to apply the schema attribute to.",
-	).AllowedValues(schemaName).DefaultValue(schemaName)
+	).AllowedValues(schemaName).DefaultValue(schemaName).ConflictsWith([]string{"schema_id"})
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Indicates whether or not the attribute is enabled.",
@@ -175,6 +175,13 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(
+						path.MatchRoot("schema_id"),
+						path.MatchRoot("schema_name"),
+					),
+				},
 			},
 
 			"schema_name": schema.StringAttribute{
@@ -187,6 +194,10 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(schemaName),
+					stringvalidator.ConflictsWith(
+						path.MatchRoot("schema_id"),
+						path.MatchRoot("schema_name"),
+					),
 				},
 			},
 
