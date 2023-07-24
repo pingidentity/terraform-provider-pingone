@@ -75,12 +75,12 @@ resource "pingone_credential_issuance_rule" "my_credential_issuance_rule" {
 
 - `automation` (Attributes) Contains a list of actions, as key names, and the update method for each action. (see [below for nested schema](#nestedatt--automation))
 - `credential_type_id` (String) Identifier (UUID) of the credential type with which this credential issuance rule is associated.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `digital_wallet_application_id` (String) Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet.
 - `environment_id` (String) PingOne environment identifier (UUID) in which the credential issuance rule exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `status` (String) Status of the credential issuance rule. Can be `ACTIVE` or `DISABLED`.
 
 ### Optional
 
+- `digital_wallet_application_id` (String) Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet. If present, digital wallet pairing automatically starts when a user matches the credential issuance rule.
 - `filter` (Attributes) Contains one and only one filter (`group_ids`, `population_ids`, or `scim`) that selects the users to which the credential issuance rule applies. A filter must be defined if the issuance rule `status` is `ACTIVE`. (see [below for nested schema](#nestedatt--filter))
 - `notification` (Attributes) Contains notification information. When this property is supplied, the information within is used to create a custom notification. (see [below for nested schema](#nestedatt--notification))
 
