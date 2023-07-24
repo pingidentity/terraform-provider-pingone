@@ -11,6 +11,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
+* `resource/pingone_credential_issuance_rule`: Corrected `digital_wallet_application_id` from `REQUIRED` to `OPTIONAL` per API specification. ([#490](https://github.com/pingidentity/terraform-provider-pingone/issues/490))
 * `resource/pingone_environment`: Fix errors that occur if the `service` block is left undefined. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
 * `resource/pingone_environment`: Fix for intermittent error stating the default population couldn't be updated on environment creation. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
 
