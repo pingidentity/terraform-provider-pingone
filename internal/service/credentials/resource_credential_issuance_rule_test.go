@@ -335,9 +335,9 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.general_test.id
-  credential_type_id            = resource.pingone_credential_type.%[2]s.id
-  status                        = "ACTIVE"
+  environment_id     = data.pingone_environment.general_test.id
+  credential_type_id = resource.pingone_credential_type.%[2]s.id
+  status             = "ACTIVE"
 
   filter = {
     scim = "address.countryCode eq \"NG\""
@@ -382,9 +382,9 @@ resource "pingone_credential_type" "%[2]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.general_test.id
-  credential_type_id            = resource.pingone_credential_type.%[2]s.id
-  status                        = "DISABLED"
+  environment_id     = data.pingone_environment.general_test.id
+  credential_type_id = resource.pingone_credential_type.%[2]s.id
+  status             = "DISABLED"
 
   automation = {
     issue  = "PERIODIC"
