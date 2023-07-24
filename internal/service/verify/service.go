@@ -26,6 +26,7 @@ func DataSources() []func() datasource.DataSource {
 		NewVerifyPoliciesDataSource,
 		NewVoicePhraseDataSource,
 		NewVoicePhraseContentDataSource,
+		NewVoicePhraseContentsDataSource,
 	}
 }
 
