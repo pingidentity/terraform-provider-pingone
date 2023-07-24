@@ -32,6 +32,7 @@ import (
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -177,6 +178,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				},
 
 				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
 					stringvalidator.ConflictsWith(
 						path.MatchRoot("schema_id"),
 						path.MatchRoot("schema_name"),
@@ -191,6 +193,10 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				Default: stringdefault.StaticString(schemaName),
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(schemaName),
