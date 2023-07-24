@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_mfa_settings`: Now supports `phone_extensions_enabled` option.
+```
