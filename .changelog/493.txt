@@ -1,0 +1,11 @@
+```release-note:note
+`resource/pingone_schema_attribute`: Deprecated the `schema_id` parameter in favour of the optional `schema_name` parameter to avoid dependency on the `pingone_schema` data-source.  The `schema_id` parameter will be made read-only in a future release.
+```
+
+```release-note:note
+`data-source/pingone_resource`: Migrated to plugin framework.
+```
+
+```release-note:note
+`resource/pingone_resource_attribute`: Deprecated the `resource_id` parameter in favour of the `resource_name` parameter to avoid dependency on the `pingone_resource` data-source.  The `resource_id` parameter will be made read-only in a future release.
+```
