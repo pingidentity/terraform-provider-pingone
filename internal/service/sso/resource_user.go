@@ -229,7 +229,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"**Deprecation notice**: This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.  The enabled status of the user.",
-	).AllowedValues([]string{"ENABLED", "DISABLED"}).DefaultValue("ENABLED")
+	).AllowedValues("ENABLED", "DISABLED").DefaultValue("ENABLED")
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the user is enabled. This attribute is set to `true` by default when the user is created.",

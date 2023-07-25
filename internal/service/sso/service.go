@@ -30,6 +30,7 @@ func DataSources() []func() datasource.DataSource {
 		NewFlowPolicyDataSource,
 		NewPopulationDataSource,
 		NewPopulationsDataSource,
+		NewResourceDataSource,
 		NewSchemaDataSource,
 		NewUserDataSource,
 		NewUsersDataSource,

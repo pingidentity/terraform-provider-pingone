@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      PINGONE_TESTING_PROVIDER_VERSION: test
       PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_CLIENT_ID }}
       PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_CLIENT_SECRET }}
       PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_ENVIRONMENT_ID }}

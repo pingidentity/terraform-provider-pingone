@@ -19,6 +19,7 @@ import (
 	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -148,72 +149,57 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	var population management.Population
+	var scimFilter string
 
 	if !data.Name.IsNull() {
 
-		// Run the API call
-		var entityArray *management.EntityArray
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				return r.client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Execute()
-			},
-			"ReadAllPopulations",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&entityArray,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
-
-			found := false
-			for _, populationItem := range populations {
-
-				if populationItem.GetName() == data.Name.ValueString() {
-					population = populationItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find population from name",
-					fmt.Sprintf("The population %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
-		}
+		scimFilter = filter.BuildScimFilter(
+			append(make([]interface{}, 0), map[string]interface{}{
+				"name":   "name",
+				"values": []string{data.Name.ValueString()},
+			}), map[string]string{})
 
 	} else if !data.PopulationId.IsNull() {
 
-		// Run the API call
-		var response *management.Population
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
+		scimFilter = filter.BuildScimFilter(
+			append(make([]interface{}, 0), map[string]interface{}{
+				"name":   "id",
+				"values": []string{data.PopulationId.ValueString()},
+			}), map[string]string{})
 
-			func() (any, *http.Response, error) {
-				return r.client.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.PopulationId.ValueString()).Execute()
-			},
-			"ReadOnePopulation",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&response,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		population = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
 			"Cannot find the requested population. population_id or name must be set.",
+		)
+		return
+	}
+
+	// Run the API call
+	var entityArray *management.EntityArray
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return r.client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+		},
+		"ReadAllPopulations",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&entityArray,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok && len(populations) > 0 && populations[0].Id != nil {
+
+		population = populations[0]
+
+	} else {
+		resp.Diagnostics.AddError(
+			"Population not found",
+			fmt.Sprintf("The population with the specified population_id or name cannot be found in environment %s.", data.EnvironmentId.String()),
 		)
 		return
 	}
@@ -250,7 +236,7 @@ func (p *PopulationDataSourceModel) toState(apiObject *management.Population) di
 }
 
 func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Population, diag.Diagnostics) {
-	defaultTimeout := 5 * time.Second
+	defaultTimeout := 30 * time.Second
 	return FetchDefaultPopulationWithTimeout(ctx, apiClient, environmentID, defaultTimeout)
 }
 
@@ -309,7 +295,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 		},
 		Timeout:                   timeout,
 		Delay:                     1 * time.Second,
-		MinTimeout:                30 * time.Second,
+		MinTimeout:                5 * time.Second,
 		ContinuousTargetOccurence: 2,
 	}
 	population, err := stateConf.WaitForState()
@@ -317,7 +303,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 	if err != nil {
 		diags.AddWarning(
 			"Cannot find default population",
-			fmt.Sprintf("The default population for environment %s cannot be found", environmentID),
+			fmt.Sprintf("The default population for environment %s cannot be found: %s", environmentID, err),
 		)
 
 		return nil, diags

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -41,14 +42,40 @@ func (r SchemaAttributeDescription) Clean(removeTrailingStop bool) SchemaAttribu
 	return r
 }
 
-func (r SchemaAttributeDescription) DefaultValue(defaultValue string) SchemaAttributeDescription {
-	return r.AppendStringValue("Defaults to", defaultValue)
+func (r SchemaAttributeDescription) DefaultValue(defaultValue any) SchemaAttributeDescription {
+	var defaultValueString string
+	switch v := defaultValue.(type) {
+	case string:
+		defaultValueString = v
+	case int:
+		defaultValueString = strconv.Itoa(v)
+	default:
+		defaultValueString = "DOC ERROR: Unknown default type"
+	}
+	return r.AppendStringValue("Defaults to", defaultValueString)
 }
 
-func (r SchemaAttributeDescription) AllowedValues(allowedValues []string) SchemaAttributeDescription {
-	sort.Strings(allowedValues)
+func (r SchemaAttributeDescription) AllowedValues(allowedValues ...any) SchemaAttributeDescription {
 
-	return r.AppendSliceValues("Options are", allowedValues)
+	allowedValuesParsed := make([]string, 0)
+	for _, allowedValue := range allowedValues {
+		switch v := allowedValue.(type) {
+		case string:
+			allowedValuesParsed = append(allowedValuesParsed, v)
+		case int:
+			allowedValuesParsed = append(allowedValuesParsed, strconv.Itoa(v))
+		case int32:
+			allowedValuesParsed = append(allowedValuesParsed, strconv.Itoa(int(v)))
+		case int64:
+			allowedValuesParsed = append(allowedValuesParsed, strconv.FormatInt(v, 10))
+		default:
+			allowedValuesParsed = append(allowedValuesParsed, fmt.Sprintf("DOC ERROR: Unknown allowed value type: %s", v))
+		}
+	}
+
+	sort.Strings(allowedValuesParsed)
+
+	return r.AppendSliceValues("Options are", allowedValuesParsed)
 }
 
 func (r SchemaAttributeDescription) AllowedValuesComplex(allowedValuesMap map[string]string) SchemaAttributeDescription {
@@ -63,7 +90,7 @@ func (r SchemaAttributeDescription) AllowedValuesComplex(allowedValuesMap map[st
 }
 
 func (r SchemaAttributeDescription) AllowedValuesEnum(allowedValuesEnumSlice interface{}) SchemaAttributeDescription {
-	return r.AllowedValues(utils.EnumSliceToStringSlice(allowedValuesEnumSlice))
+	return r.AllowedValues(utils.EnumSliceToAnySlice(allowedValuesEnumSlice)...)
 }
 
 func (r SchemaAttributeDescription) ConflictsWith(fieldPaths []string) SchemaAttributeDescription {

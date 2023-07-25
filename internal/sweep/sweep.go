@@ -29,8 +29,16 @@ func SweepClient(ctx context.Context) (*client.Client, error) {
 		ForceDelete:   true,
 	}
 
-	return config.APIClient(ctx)
+	return config.APIClient(ctx, getProviderTestingVersion())
 
+}
+
+func getProviderTestingVersion() string {
+	returnVar := "dev"
+	if v := os.Getenv("PINGONE_TESTING_PROVIDER_VERSION"); v != "" {
+		returnVar = v
+	}
+	return returnVar
 }
 
 func FetchTaggedEnvironments(ctx context.Context, apiClient *management.APIClient) ([]management.Environment, error) {

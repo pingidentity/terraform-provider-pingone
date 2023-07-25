@@ -22,6 +22,7 @@ func Resources() []func() resource.Resource {
 		NewBrandingThemeDefaultResource,
 		NewBrandingThemeResource,
 		NewEnvironmentResource,
+		NewKeyRotationPolicyResource,
 		NewNotificationPolicyResource,
 		NewNotificationSettingsResource,
 		NewNotificationSettingsEmailResource,
@@ -40,6 +41,7 @@ func DataSources() []func() datasource.DataSource {
 		NewOrganizationDataSource,
 		NewPhoneDeliverySettingsListDataSource,
 		NewTrustedEmailDomainDataSource,
+		NewUserRoleAssignmentsDataSource,
 	}
 }
 

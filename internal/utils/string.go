@@ -21,3 +21,11 @@ func RandStringFromCharSet(strlen int, charSet string) (string, error) {
 func RandIntRange(max int) (*big.Int, error) {
 	return rand.Int(rand.Reader, big.NewInt(int64(max)))
 }
+
+func StringSliceToAnySlice(v []string) []any {
+	var result []interface{}
+	for _, s := range v {
+		result = append(result, s)
+	}
+	return result
+}

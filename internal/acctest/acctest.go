@@ -36,13 +36,13 @@ var Provider *schema.Provider
 var ProtoV6ProviderFactories map[string]func() (tfprotov6.ProviderServer, error) = protoV6ProviderFactoriesInit(context.Background(), "pingone")
 
 func init() {
-	Provider = sdkv2.New("dev")()
+	Provider = sdkv2.New(getProviderTestingVersion())()
 
 	// Always allocate a new provider instance each invocation, otherwise gRPC
 	// ProviderConfigure() can overwrite configuration during concurrent testing.
 	ProviderFactories = map[string]func() (*schema.Provider, error){
 		"pingone": func() (*schema.Provider, error) {
-			provider := sdkv2.New("acctest")()
+			provider := sdkv2.New(getProviderTestingVersion())()
 
 			if provider == nil {
 				return nil, fmt.Errorf("Cannot initiate provider factory")
@@ -58,7 +58,7 @@ func protoV6ProviderFactoriesInit(ctx context.Context, providerNames ...string) 
 	for _, name := range providerNames {
 
 		factories[name] = func() (tfprotov6.ProviderServer, error) {
-			providerServerFactory, err := provider.ProviderServerFactoryV6(ctx, "acctest")
+			providerServerFactory, err := provider.ProviderServerFactoryV6(ctx, getProviderTestingVersion())
 
 			if err != nil {
 				return nil, err
@@ -69,6 +69,14 @@ func protoV6ProviderFactoriesInit(ctx context.Context, providerNames ...string) 
 	}
 
 	return factories
+}
+
+func getProviderTestingVersion() string {
+	returnVar := "dev"
+	if v := os.Getenv("PINGONE_TESTING_PROVIDER_VERSION"); v != "" {
+		returnVar = v
+	}
+	return returnVar
 }
 
 type TestData struct {
@@ -323,7 +331,7 @@ func TestClient(ctx context.Context) (*client.Client, error) {
 		ForceDelete:   false,
 	}
 
-	return config.APIClient(ctx)
+	return config.APIClient(ctx, getProviderTestingVersion())
 
 }
 

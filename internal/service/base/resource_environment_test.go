@@ -150,7 +150,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	region := os.Getenv("PINGONE_REGION")
 
 	minimalStep := resource.TestStep{
-		Config: testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, licenseID),
+		Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
@@ -160,8 +160,8 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "solution"),
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
 			resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
@@ -189,7 +189,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 	resourceName := acctest.ResourceNameGenEnvironment()
 
 	name := resourceName
-	environmentType := "SANDBOX"
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	region := "NorthAmerica"
 
@@ -204,7 +204,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
+				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
 				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the organization tenant.  Allowed regions: \[%s\].`, model.FindRegionByName(os.Getenv("PINGONE_REGION")).Region)),
 			},
 		},
@@ -218,7 +218,7 @@ func TestAccEnvironment_DeleteProductionEnvironmentProtection(t *testing.T) {
 	//resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
 	name := resourceName
-	environmentType := "SANDBOX"
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	region := os.Getenv("PINGONE_REGION")
 
@@ -231,7 +231,7 @@ func TestAccEnvironment_DeleteProductionEnvironmentProtection(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
+				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
 				ExpectError: regexp.MustCompile(`Not defined`),
 			},
 		},
@@ -245,7 +245,7 @@ func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
 	// resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
 	name := resourceName
-	environmentType := "SANDBOX"
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	region := os.Getenv("PINGONE_REGION")
 
@@ -258,7 +258,7 @@ func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID),
+				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
 				ExpectError: regexp.MustCompile(`Not defined`),
 			},
 		},
@@ -324,19 +324,19 @@ func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
+				Config: testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
 				),
 			},
 			{
-				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "PRODUCTION", licenseID),
+				Config: testAccEnvironmentConfig_MinimalWithType(resourceName, name, "PRODUCTION", licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "type", "PRODUCTION"),
 				),
 			},
 			{
-				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
+				Config: testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
 				),
@@ -364,10 +364,10 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccEnvironmentConfig_Minimal(resourceName, name, "SANDBOX", licenseID),
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", "Default"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
@@ -461,6 +461,18 @@ func TestAccEnvironment_Services(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "9"), // check they can be modified upward
 				),
 			},
+			{
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"), // check they can be defaulted
+				),
+			},
+			{
+				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services3),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "service.#", "9"), // check they can be un-defaulted
+				),
+			},
 		},
 	})
 }
@@ -532,31 +544,30 @@ resource "pingone_environment" "%[1]s" {
 }`, resourceName, name, licenseID, populationName)
 }
 
-func testAccEnvironmentConfig_Minimal(resourceName, name, environmentType, licenseID string) string {
+func testAccEnvironmentConfig_Minimal(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+}`, resourceName, name, licenseID)
+}
+
+func testAccEnvironmentConfig_MinimalWithType(resourceName, name, environmentType, licenseID string) string {
 	return fmt.Sprintf(`
 resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   type       = "%[3]s"
   license_id = "%[4]s"
-  default_population {
-  }
-  service {
-  }
 }`, resourceName, name, environmentType, licenseID)
 }
 
-func testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, environmentType, region, licenseID string) string {
+func testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID string) string {
 	return fmt.Sprintf(`
 resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
-  type       = "%[3]s"
-  region     = "%[4]s"
-  license_id = "%[5]s"
-  default_population {
-  }
-  service {
-  }
-}`, resourceName, name, environmentType, region, licenseID)
+  region     = "%[3]s"
+  license_id = "%[4]s"
+}`, resourceName, name, region, licenseID)
 }
 
 func composeServices(services []string) string {

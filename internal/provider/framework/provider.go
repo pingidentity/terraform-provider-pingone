@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -47,6 +46,7 @@ type pingOneProviderModel struct {
 	Region                               types.String `tfsdk:"region"`
 	ServiceEndpoints                     types.List   `tfsdk:"service_endpoints"`
 	ForceDeleteProductionEnvironmentType types.Bool   `tfsdk:"force_delete_production_type"`
+	HTTPProxy                            types.String `tfsdk:"http_proxy"`
 }
 
 type pingOneProviderServiceEndpointsModel struct {
@@ -98,6 +98,10 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 		"Hostname for the PingOne management service API.  Default value can be set with the `PINGONE_API_SERVICE_HOSTNAME` environment variable.",
 	)
 
+	httpProxyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.",
+	)
+
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
@@ -133,6 +137,12 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 			"force_delete_production_type": schema.BoolAttribute{
 				Description:         forceDeleteProductionTypeDescription.Description,
 				MarkdownDescription: forceDeleteProductionTypeDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"http_proxy": schema.StringAttribute{
+				Description:         httpProxyDescription.Description,
+				MarkdownDescription: httpProxyDescription.MarkdownDescription,
 				Optional:            true,
 			},
 		},
@@ -180,57 +190,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	// Set the defaults
 	tflog.Info(ctx, "[v6] Provider setting defaults..")
 	debugLogMessage := "[v6] Provider parameter %s missing, defaulting to environment variable"
-	if data.ClientID.IsNull() {
-		data.ClientID = basetypes.NewStringValue(os.Getenv("PINGONE_CLIENT_ID"))
-		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "client_id"), map[string]interface{}{
-			"env_var":       "PINGONE_CLIENT_ID",
-			"env_var_value": data.ClientID.String(),
-		})
-	}
-
-	if data.ClientSecret.IsNull() {
-		data.ClientSecret = basetypes.NewStringValue(os.Getenv("PINGONE_CLIENT_SECRET"))
-		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "client_secret"), map[string]interface{}{
-			"env_var": "PINGONE_CLIENT_SECRET",
-			"env_var_value": func() string {
-				if len(data.ClientSecret.ValueString()) > 0 {
-					return "***"
-				}
-				return ""
-
-			}(),
-		})
-	}
-
-	if data.EnvironmentID.IsNull() {
-		data.EnvironmentID = basetypes.NewStringValue(os.Getenv("PINGONE_ENVIRONMENT_ID"))
-		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "environment_id"), map[string]interface{}{
-			"env_var":       "PINGONE_ENVIRONMENT_ID",
-			"env_var_value": data.EnvironmentID.String(),
-		})
-	}
-
-	if data.APIAccessToken.IsNull() {
-		data.APIAccessToken = basetypes.NewStringValue(os.Getenv("PINGONE_API_ACCESS_TOKEN"))
-		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "api_access_token"), map[string]interface{}{
-			"env_var": "PINGONE_API_ACCESS_TOKEN",
-			"env_var_value": func() string {
-				if len(data.APIAccessToken.ValueString()) > 0 {
-					return "***"
-				}
-				return ""
-
-			}(),
-		})
-	}
-
-	if data.Region.IsNull() {
-		data.Region = basetypes.NewStringValue(os.Getenv("PINGONE_REGION"))
-		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "region"), map[string]interface{}{
-			"env_var":       "PINGONE_REGION",
-			"env_var_value": data.Region.String(),
-		})
-	}
 
 	if data.ForceDeleteProductionEnvironmentType.IsNull() {
 		v, err := strconv.ParseBool(os.Getenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE"))
@@ -253,7 +212,11 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		ForceDelete:   data.ForceDeleteProductionEnvironmentType.ValueBool(),
 	}
 
-	servicesOverridden := false
+	if !data.HTTPProxy.IsNull() {
+		v := data.HTTPProxy.ValueString()
+		config.ProxyURL = &v
+	}
+
 	if !data.ServiceEndpoints.IsNull() {
 
 		var serviceEndpointsData pingOneProviderServiceEndpointsModel
@@ -272,54 +235,13 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			config.APIHostnameOverride = &v
 		}
 
-	} else {
-		if v := os.Getenv("PINGONE_AUTH_SERVICE_HOSTNAME"); v != "" {
-			config.AuthHostnameOverride = &v
-			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "auth_hostname"), map[string]interface{}{
-				"env_var":       "PINGONE_AUTH_SERVICE_HOSTNAME",
-				"env_var_value": config.AuthHostnameOverride,
-			})
-			servicesOverridden = true
-		}
-
-		if v := os.Getenv("PINGONE_API_SERVICE_HOSTNAME"); v != "" {
-			config.APIHostnameOverride = &v
-			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "api_hostname"), map[string]interface{}{
-				"env_var":       "PINGONE_API_SERVICE_HOSTNAME",
-				"env_var_value": config.APIHostnameOverride,
-			})
-			servicesOverridden = true
-		}
-	}
-
-	if servicesOverridden && (config.AuthHostnameOverride == nil || *config.AuthHostnameOverride == "") {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("service_endpoints").AtName("auth_hostname"),
-			"Required service endpoints not configured.",
-			"When overriding service endpoints using environment variables, PINGONE_AUTH_SERVICE_HOSTNAME and PINGONE_API_SERVICE_HOSTNAME are required to be set.",
-		)
-	}
-
-	if servicesOverridden && (config.APIHostnameOverride == nil || *config.APIHostnameOverride == "") {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("service_endpoints").AtName("api_hostname"),
-			"Required service endpoints not configured.",
-			"When overriding service endpoints using environment variables, PINGONE_AUTH_SERVICE_HOSTNAME and PINGONE_API_SERVICE_HOSTNAME are required to be set.",
-		)
-	}
-
-	err := config.Validate()
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Parameter validation error",
-			fmt.Sprintf("%s", err))
 	}
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	apiClient, err := config.APIClient(ctx)
+	apiClient, err := config.APIClient(ctx, p.version)
 	if err != nil {
 		return
 	}

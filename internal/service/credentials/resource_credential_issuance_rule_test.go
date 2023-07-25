@@ -102,7 +102,7 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckNoResourceAttr(resourceFullName, "digital_wallet_application_id"),
 			resource.TestCheckResourceAttr(resourceFullName, "filter.scim", "address.countryCode eq \"NG\""),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.revoke", "PERIODIC"),
@@ -117,7 +117,7 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckNoResourceAttr(resourceFullName, "digital_wallet_application_id"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.%", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.revoke", "PERIODIC"),
@@ -176,11 +176,6 @@ func TestAccCredentialIssuanceRule_InvalidConfigs(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCredentialIssuanceRule_InvalidCredentialTypeID(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Missing required argument"),
-				Destroy:     true,
-			},
-			{
-				Config:      testAccCredentialIssuanceRule_InvalidDigitalWalletID(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Missing required argument"),
 				Destroy:     true,
 			},
@@ -339,38 +334,10 @@ resource "pingone_credential_type" "%[2]s" {
   }
 }
 
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  enabled        = true
-
-  oidc_options {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-
-    mobile_app {
-      bundle_id                = "com.pingidentity.ios_%[3]s"
-      package_name             = "com.pingidentity.android_%[3]s"
-      passcode_refresh_seconds = 30
-    }
-  }
-}
-
-resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  application_id = resource.pingone_application.%[2]s.id
-  name           = "%[3]s"
-  app_open_url   = "https://www.example.com"
-
-  depends_on = [resource.pingone_application.%[2]s]
-}
-
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.general_test.id
-  credential_type_id            = resource.pingone_credential_type.%[2]s.id
-  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
-  status                        = "ACTIVE"
+  environment_id     = data.pingone_environment.general_test.id
+  credential_type_id = resource.pingone_credential_type.%[2]s.id
+  status             = "ACTIVE"
 
   filter = {
     scim = "address.countryCode eq \"NG\""
@@ -414,38 +381,10 @@ resource "pingone_credential_type" "%[2]s" {
   }
 }
 
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  enabled        = true
-
-  oidc_options {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-
-    mobile_app {
-      bundle_id                = "com.pingidentity.ios_%[3]s"
-      package_name             = "com.pingidentity.android_%[3]s"
-      passcode_refresh_seconds = 30
-    }
-  }
-}
-
-resource "pingone_digital_wallet_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  application_id = resource.pingone_application.%[2]s.id
-  name           = "%[3]s"
-  app_open_url   = "https://www.example.com"
-
-  depends_on = [resource.pingone_application.%[2]s]
-}
-
 resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id                = data.pingone_environment.general_test.id
-  credential_type_id            = resource.pingone_credential_type.%[2]s.id
-  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[2]s.id
-  status                        = "DISABLED"
+  environment_id     = data.pingone_environment.general_test.id
+  credential_type_id = resource.pingone_credential_type.%[2]s.id
+  status             = "DISABLED"
 
   automation = {
     issue  = "PERIODIC"
@@ -503,46 +442,6 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
     update = "PERIODIC"
   }
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccCredentialIssuanceRule_InvalidDigitalWalletID(resourceName, name string) string {
-	return fmt.Sprintf(`
-	%[1]s
-resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "%[3]s"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-  metadata = {
-    name               = "%[3]s"
-    description        = "%[3]s Example Description"
-    bg_opacity_percent = 100
-    card_color         = "#000000"
-    text_color         = "#eff0f1"
-    fields = [
-      {
-        type       = "Alphanumeric Text"
-        title      = "Example Field"
-        value      = "Demo"
-        is_visible = false
-      },
-    ]
-  }
-}
-resource "pingone_credential_issuance_rule" "%[2]s" {
-  environment_id     = data.pingone_environment.general_test.id
-  credential_type_id = resource.pingone_credential_type.%[2]s.id
-  status             = "DISABLED"
-  filter = {
-    scim = "address.countryCode eq \"CA\""
-  }
-  automation = {
-    issue  = "PERIODIC"
-    revoke = "PERIODIC"
-    update = "PERIODIC"
-  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

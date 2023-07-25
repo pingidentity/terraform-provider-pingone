@@ -1,15 +1,73 @@
-## 0.18.0 (Unreleased)
+## 0.19.0 (Unreleased)
+
+NOTES:
+
+* `data-source/pingone_population`: Optimised finding populations by name for environments with large numbers of populations present. ([#487](https://github.com/pingidentity/terraform-provider-pingone/issues/487))
+* `data-source/pingone_resource`: Migrated to plugin framework. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
+* `resource/pingone_environment`: Corrected documentation and examples to denote optional nature of the `default_population` block. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
+* `resource/pingone_resource_attribute`: Deprecated the `resource_id` parameter in favour of the `resource_name` parameter to avoid dependency on the `pingone_resource` data-source.  The `resource_id` parameter will be made read-only in a future release. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
+* `resource/pingone_schema_attribute`: Deprecated the `schema_id` parameter in favour of the optional `schema_name` parameter to avoid dependency on the `pingone_schema` data-source.  The `schema_id` parameter will be made read-only in a future release. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
+
+ENHANCEMENTS:
+
+* `resource/pingone_mfa_settings`: Now supports `phone_extensions_enabled` option. ([#489](https://github.com/pingidentity/terraform-provider-pingone/issues/489))
+
+BUG FIXES:
+
+* `resource/pingone_credential_issuance_rule`: Corrected `digital_wallet_application_id` from `REQUIRED` to `OPTIONAL` per API specification. ([#490](https://github.com/pingidentity/terraform-provider-pingone/issues/490))
+* `resource/pingone_environment`: Fix errors that occur if the `service` block is left undefined. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
+* `resource/pingone_environment`: Fix for intermittent error stating the default population couldn't be updated on environment creation. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
+
+## 0.18.1 (18 July 2023)
+
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-mux` v0.11.1 => v0.11.2 ([#481](https://github.com/pingidentity/terraform-provider-pingone/issues/481))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.0 => v0.10.1 ([#483](https://github.com/pingidentity/terraform-provider-pingone/issues/483))
+
+BUG FIXES:
+
+* Fixed provider parameter error "Invalid parameter format.  Expected URL with https scheme" when attempting to override service hostnames. ([#483](https://github.com/pingidentity/terraform-provider-pingone/issues/483))
+
+## 0.18.0 (17 July 2023)
 
 NOTES:
 
 * All resources/data sources: SDK response parsing code optimisation. ([#460](https://github.com/pingidentity/terraform-provider-pingone/issues/460))
+* Code optimisation with the PingOne client SDK. ([#471](https://github.com/pingidentity/terraform-provider-pingone/issues/471))
 * Corrected "Upgrade MFA Policies to use FIDO2 with Passkeys" guide text. ([#455](https://github.com/pingidentity/terraform-provider-pingone/issues/455))
+* Now sets a provider-specific UserAgent on the SDK client. ([#474](https://github.com/pingidentity/terraform-provider-pingone/issues/474))
+* `data-source/pingone_environment`: Optimised environment filtering by name. ([#469](https://github.com/pingidentity/terraform-provider-pingone/issues/469))
 * `resource/pingone_application_resource_grant`: Migrated to plugin framework. ([#456](https://github.com/pingidentity/terraform-provider-pingone/issues/456))
+* bump `github.com/hashicorp/terraform-plugin-docs` v0.15.0 => v0.16.0 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/hashicorp/terraform-plugin-framework-timeouts` v0.4.0 => v0.4.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.2.0 => v0.2.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.2.0 => v0.2.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.2.0 => v0.2.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.23.0 => v0.24.0 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.14.0 => v0.15.0 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.8.0 => v0.8.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.2.0 => v0.2.1 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.9.0 => v0.10.0 ([#473](https://github.com/pingidentity/terraform-provider-pingone/issues/473))
+
+FEATURES:
+
+* **New Data Source:** `pingone_user_role_assignments` ([#479](https://github.com/pingidentity/terraform-provider-pingone/issues/479))
+* **New Resource:** `pingone_key_rotation_policy` ([#466](https://github.com/pingidentity/terraform-provider-pingone/issues/466))
 
 ENHANCEMENTS:
 
+* Added provider parameter to connect to the PingOne API service via HTTP proxy. ([#471](https://github.com/pingidentity/terraform-provider-pingone/issues/471))
 * `resource/pingone_application_resource_grant`: Add validation to disallow assignment of the `openid` scope from the `openid` resource to avoid error. ([#457](https://github.com/pingidentity/terraform-provider-pingone/issues/457))
+* `resource/pingone_application`: Now supports the `saml_option` of `slo_window`. ([#468](https://github.com/pingidentity/terraform-provider-pingone/issues/468))
+* `resource/pingone_identity_provider`: Now supports the SAML IdP configuration options: `slo_binding`, `slo_endpoint`, `slo_response_endpoint` and `slo_window`. ([#468](https://github.com/pingidentity/terraform-provider-pingone/issues/468))
+* `resource/pingone_mfa_policy`: Now supports `new_device_notification` option. ([#477](https://github.com/pingidentity/terraform-provider-pingone/issues/477))
 * `resource/pingone_notification_policy`: Now supports country limit configuration. ([#458](https://github.com/pingidentity/terraform-provider-pingone/issues/458))
+* `resource/pingone_webhook`: Now supports `ip_address_exposed` and `useragent_exposed` in filter options configuration. ([#470](https://github.com/pingidentity/terraform-provider-pingone/issues/470))
+
+BUG FIXES:
+
+* `resource/pingone_application`: Fixed bug where the `pkce_enforcement` parameter wasn't being configured correctly on OIDC worker apps. ([#475](https://github.com/pingidentity/terraform-provider-pingone/issues/475))
 
 ## 0.17.1 (05 July 2023)
 

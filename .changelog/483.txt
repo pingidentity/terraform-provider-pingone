@@ -1,0 +1,7 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.0 => v0.10.1
+```
+
+```release-note:bug
+Fixed provider parameter error "Invalid parameter format.  Expected URL with https scheme" when attempting to override service hostnames.
+```

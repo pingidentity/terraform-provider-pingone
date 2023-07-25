@@ -54,6 +54,13 @@ func ResourceMFAPolicy() *schema.Resource {
 				Default:          string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST),
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT), string(mfa.ENUMMFADEVICEPOLICYSELECTION_ALWAYS_PROMPT_TO_SELECT)}, false)),
 			},
+			"new_device_notification": {
+				Description:      fmt.Sprintf("A string that defines whether a user should be notified if a new authentication method has been added to their account. Options are `%s` (the default), `%s` and `%s`.", string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_EMAIL_THEN_SMS), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_SMS_THEN_EMAIL)),
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_EMAIL_THEN_SMS), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_SMS_THEN_EMAIL)}, false)),
+			},
 			"sms": {
 				Description: "SMS OTP authentication policy settings.",
 				Type:        schema.TypeList,
@@ -466,6 +473,12 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 		d.Set("device_selection", nil)
 	}
 
+	if v, ok := respObject.GetNewDeviceNotificationOk(); ok {
+		d.Set("new_device_notification", string(*v))
+	} else {
+		d.Set("new_device_notification", nil)
+	}
+
 	if v, ok := respObject.GetSmsOk(); ok {
 		d.Set("sms", flattenMFAPolicyOfflineDevice(v))
 	} else {
@@ -653,6 +666,10 @@ func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *sc
 
 	if v, ok := d.GetOk("device_selection"); ok {
 		item.SetAuthentication(*mfa.NewDeviceAuthenticationPolicyAuthentication(mfa.EnumMFADevicePolicySelection(v.(string))))
+	}
+
+	if v, ok := d.GetOk("new_device_notification"); ok {
+		item.SetNewDeviceNotification(mfa.EnumMFADevicePolicyNewDeviceNotification(v.(string)))
 	}
 
 	return item, diags

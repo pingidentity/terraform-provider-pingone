@@ -156,8 +156,8 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 			),
 
 			"digital_wallet_application_id": schema.StringAttribute{
-				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet.",
-				Required:    true,
+				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet. If present, digital wallet pairing automatically starts when a user matches the credential issuance rule.",
+				Optional:    true,
 				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
 				},
@@ -585,7 +585,7 @@ func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*cred
 		}
 	}
 
-	// buuild issuance rule object with required attributes
+	// build issuance rule object with required attributes
 	data := credentials.NewCredentialIssuanceRule(*credentialIssuanceRuleAutomation, credentials.EnumCredentialIssuanceRuleStatus(p.Status.ValueString()))
 
 	// set the filter details
@@ -599,8 +599,10 @@ func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*cred
 	}
 
 	// set the digital wallet application
-	application := credentials.NewCredentialIssuanceRuleDigitalWalletApplication(p.DigitalWalletApplicationId.ValueString())
-	data.SetDigitalWalletApplication(*application)
+	if !p.DigitalWalletApplicationId.IsNull() && !p.DigitalWalletApplicationId.IsUnknown() {
+		application := credentials.NewCredentialIssuanceRuleDigitalWalletApplication(p.DigitalWalletApplicationId.ValueString())
+		data.SetDigitalWalletApplication(*application)
+	}
 
 	return data, diags
 }
@@ -725,9 +727,12 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	// core issuance rule attributes
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
 	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.GetId())
 	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
+
+	if v, ok := apiObject.GetDigitalWalletApplicationOk(); ok {
+		p.DigitalWalletApplicationId = framework.StringToTF(v.GetId())
+	}
 
 	// automation object
 	if v, ok := apiObject.GetAutomationOk(); ok {
