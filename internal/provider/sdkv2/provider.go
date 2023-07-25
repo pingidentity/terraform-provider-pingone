@@ -109,7 +109,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_trusted_email_domain_spf":       base.DatasourceTrustedEmailDomainSPF(),
 
 				"pingone_password_policy":    sso.DatasourcePasswordPolicy(),
-				"pingone_resource":           sso.DatasourceResource(),
 				"pingone_resource_attribute": sso.DatasourceResourceAttribute(),
 				"pingone_resource_scope":     sso.DatasourceResourceScope(),
 			},
