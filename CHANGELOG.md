@@ -3,7 +3,10 @@
 NOTES:
 
 * `data-source/pingone_population`: Optimised finding populations by name for environments with large numbers of populations present. ([#487](https://github.com/pingidentity/terraform-provider-pingone/issues/487))
+* `data-source/pingone_resource`: Migrated to plugin framework. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
 * `resource/pingone_environment`: Corrected documentation and examples to denote optional nature of the `default_population` block. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
+* `resource/pingone_resource_attribute`: Deprecated the `resource_id` parameter in favour of the `resource_name` parameter to avoid dependency on the `pingone_resource` data-source.  The `resource_id` parameter will be made read-only in a future release. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
+* `resource/pingone_schema_attribute`: Deprecated the `schema_id` parameter in favour of the optional `schema_name` parameter to avoid dependency on the `pingone_schema` data-source.  The `schema_id` parameter will be made read-only in a future release. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
 
 ENHANCEMENTS:
 
