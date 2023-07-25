@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -265,52 +264,52 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	resourceType, d := plan.getResourceType(ctx, r.client)
+	resourceResponse, d := plan.getResource(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	_, isCoreAttribute := plan.isCoreAttribute(*resourceType)
-	isOverriddenAttribute := plan.isOverriddenAttribute(*resourceType)
+	_, isCoreAttribute := plan.isCoreAttribute(resourceResponse.GetType())
+	isOverriddenAttribute := plan.isOverriddenAttribute(resourceResponse.GetType())
 
-	resp.Diagnostics.Append(plan.validate(*resourceType)...)
+	resp.Diagnostics.Append(plan.validate(resourceResponse.GetType())...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
-	resourceAttribute, d := plan.expand(ctx, r.client, *resourceType, isCoreAttribute || isOverriddenAttribute)
+	resourceAttribute, d := plan.expand(ctx, r.client, resourceResponse.GetType(), isCoreAttribute || isOverriddenAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Run the API call
-	var response interface{}
+	var resourceAttributeResponse *management.ResourceAttribute
 	if !isCoreAttribute && !isOverriddenAttribute {
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ResourceAttributesApi.CreateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
+				return r.client.ResourceAttributesApi.CreateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId()).ResourceAttribute(*resourceAttribute).Execute()
 			},
 			"CreateResourceAttribute",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&resourceAttributeResponse,
 		)...)
 	} else {
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), resourceAttribute.GetId()).ResourceAttribute(*resourceAttribute).Execute()
+				return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), resourceAttribute.GetId()).ResourceAttribute(*resourceAttribute).Execute()
 			},
 			"UpdateResourceAttribute",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&resourceAttributeResponse,
 		)...)
 	}
 	if resp.Diagnostics.HasError() {
@@ -321,7 +320,7 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response.(*management.ResourceAttribute))...)
+	resp.Diagnostics.Append(state.toState(resourceAttributeResponse, resourceResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -341,8 +340,14 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
+	resourceResponse, d := data.getResource(ctx, r.client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Run the API call
-	var response *management.ResourceAttribute
+	var resourceAttributeResponse *management.ResourceAttribute
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -352,20 +357,20 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 		"ReadOneResourceAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-		&response,
+		&resourceAttributeResponse,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Remove from state if resource is not found
-	if response == nil {
+	if resourceAttributeResponse == nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(resourceAttributeResponse, resourceResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -385,39 +390,39 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	resourceType, d := plan.getResourceType(ctx, r.client)
+	resourceResponse, d := plan.getResource(ctx, r.client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	_, isCoreAttribute := plan.isCoreAttribute(*resourceType)
-	isOverriddenAttribute := plan.isOverriddenAttribute(*resourceType)
+	_, isCoreAttribute := plan.isCoreAttribute(resourceResponse.GetType())
+	isOverriddenAttribute := plan.isOverriddenAttribute(resourceResponse.GetType())
 
-	resp.Diagnostics.Append(plan.validate(*resourceType)...)
+	resp.Diagnostics.Append(plan.validate(resourceResponse.GetType())...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
-	resourceAttribute, d := plan.expand(ctx, r.client, *resourceType, isCoreAttribute || isOverriddenAttribute)
+	resourceAttribute, d := plan.expand(ctx, r.client, resourceResponse.GetType(), isCoreAttribute || isOverriddenAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Run the API call
-	var response *management.ResourceAttribute
+	var resourceAttributeResponse *management.ResourceAttribute
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), plan.Id.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
+			return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), plan.Id.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
 		},
 		"UpdateResourceAttribute",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&response,
+		&resourceAttributeResponse,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -427,7 +432,7 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(resourceAttributeResponse, resourceResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -447,14 +452,14 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
+	resource, d := data.getResource(ctx, r.client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Run the API call
 	if data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_PREDEFINED))) || data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
-
-		resourceType, d := data.getResourceType(ctx, r.client)
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
 
 		// defaults
 		var resourceMapping *management.ResourceAttribute
@@ -490,7 +495,7 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 
 		} else if data.Type.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
 
-			coreAttributeData, ok := data.isCoreAttribute(*resourceType)
+			coreAttributeData, ok := data.isCoreAttribute(resource.GetType())
 			if !ok {
 				resp.Diagnostics.AddError(
 					"Core attribute mismatch error",
@@ -502,7 +507,7 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			data.Value = framework.StringToTF(coreAttributeData.defaultValue)
 		}
 
-		resourceMapping, d = data.expand(ctx, r.client, *resourceType, true)
+		resourceMapping, d = data.expand(ctx, r.client, resource.GetType(), true)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -512,7 +517,7 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).ResourceAttribute(*resourceMapping).Execute()
+				return r.client.ResourceAttributesApi.UpdateResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceAttribute(*resourceMapping).Execute()
 			},
 			"UpdateResourceAttribute",
 			framework.DefaultCustomError,
@@ -525,7 +530,7 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.client.ResourceAttributesApi.DeleteResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).Execute()
+				r, err := r.client.ResourceAttributesApi.DeleteResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
 				return nil, r, err
 			},
 			"DeleteResourceAttribute",
@@ -556,16 +561,27 @@ func (r *ResourceAttributeResource) ImportState(ctx context.Context, req resourc
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
 }
 
-func (p *ResourceAttributeResourceModel) getResourceType(ctx context.Context, apiClient *management.APIClient) (*management.EnumResourceType, diag.Diagnostics) {
+func (p *ResourceAttributeResourceModel) getResource(ctx context.Context, apiClient *management.APIClient) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	respObject, d := fetchResource_Framework(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString())
+	var resource *management.Resource
+	var d diag.Diagnostics
+	if !p.ResourceId.IsNull() && !p.ResourceId.IsUnknown() {
+		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString())
+	}
+
+	if !p.ResourceName.IsNull() && !p.ResourceName.IsUnknown() {
+		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString())
+	}
+
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	return respObject.GetType().Ptr(), diags
+	p.ResourceId = framework.StringOkToTF(resource.GetIdOk())
+
+	return resource, diags
 }
 
 func (p *ResourceAttributeResourceModel) validate(resourceType management.EnumResourceType) diag.Diagnostics {
@@ -669,10 +685,10 @@ func (p *ResourceAttributeResourceModel) expand(ctx context.Context, apiClient *
 	return data, diags
 }
 
-func (p *ResourceAttributeResourceModel) toState(apiObject *management.ResourceAttribute) diag.Diagnostics {
+func (p *ResourceAttributeResourceModel) toState(apiObject *management.ResourceAttribute, resourceApiObject *management.Resource) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
+	if apiObject == nil || resourceApiObject == nil {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -681,20 +697,14 @@ func (p *ResourceAttributeResourceModel) toState(apiObject *management.ResourceA
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.ResourceId = framework.StringOkToTF(resourceApiObject.GetIdOk())
+	p.ResourceName = framework.StringOkToTF(resourceApiObject.GetNameOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Value = framework.StringOkToTF(apiObject.GetValueOk())
-	p.Type = ResourceAttributeTypeOkToTF(apiObject.GetTypeOk())
+	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
 	p.IDTokenEnabled = framework.BoolOkToTF(apiObject.GetIdTokenOk())
 	p.UserinfoEnabled = framework.BoolOkToTF(apiObject.GetUserInfoOk())
 
 	return diags
-}
-
-func ResourceAttributeTypeOkToTF(v *management.EnumResourceAttributeType, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(string(*v))
-	}
 }
