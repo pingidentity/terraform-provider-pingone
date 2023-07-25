@@ -229,43 +229,45 @@ func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	var resourceClientSecret *management.ResourceSecret
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
+	if resource.GetType() == management.ENUMRESOURCETYPE_CUSTOM {
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
 
-		func() (any, *http.Response, error) {
-			return r.client.ResourceClientSecretApi.ReadResourceSecret(ctx, data.EnvironmentId.ValueString(), resource.GetId()).Execute()
-		},
-		"ReadResourceSecret",
-		framework.CustomErrorResourceNotFoundWarning,
-		func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+			func() (any, *http.Response, error) {
+				return r.client.ResourceClientSecretApi.ReadResourceSecret(ctx, data.EnvironmentId.ValueString(), resource.GetId()).Execute()
+			},
+			"ReadResourceSecret",
+			framework.CustomErrorResourceNotFoundWarning,
+			func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
-			// The secret may take a short time to propagate
-			if r.StatusCode == 404 && resource.GetType() == management.ENUMRESOURCETYPE_CUSTOM {
-				tflog.Warn(ctx, "Resource secret not found, available for retry")
-				return true
-			}
-
-			if p1error != nil {
-				var err error
-
-				// Permissions may not have propagated by this point
-				if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
-					tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+				// The secret may take a short time to propagate
+				if r.StatusCode == 404 {
+					tflog.Warn(ctx, "Resource secret not found, available for retry")
 					return true
 				}
-				if err != nil {
-					tflog.Warn(ctx, "Cannot match error string for retry")
-					return false
+
+				if p1error != nil {
+					var err error
+
+					// Permissions may not have propagated by this point
+					if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+						tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+						return true
+					}
+					if err != nil {
+						tflog.Warn(ctx, "Cannot match error string for retry")
+						return false
+					}
+
 				}
 
-			}
-
-			return false
-		},
-		&resourceClientSecret,
-	)...)
-	if resp.Diagnostics.HasError() {
-		return
+				return false
+			},
+			&resourceClientSecret,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
 	// Save updated data into Terraform state
