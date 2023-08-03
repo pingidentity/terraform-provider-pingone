@@ -14,6 +14,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
+* Fixed bug when attempting to override service hostnames with the `service_endpoints` block in provider configuration. ([#498](https://github.com/pingidentity/terraform-provider-pingone/issues/498))
 * `resource/pingone_credential_issuance_rule`: Corrected `digital_wallet_application_id` from `REQUIRED` to `OPTIONAL` per API specification. ([#490](https://github.com/pingidentity/terraform-provider-pingone/issues/490))
 * `resource/pingone_environment`: Fix errors that occur if the `service` block is left undefined. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
 * `resource/pingone_environment`: Fix for intermittent error stating the default population couldn't be updated on environment creation. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
