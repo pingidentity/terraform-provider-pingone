@@ -16,7 +16,7 @@ func testAccCheckMFASettingsDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func testAccGetMFASettingsIDs(resourceName string, environmentID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -24,33 +24,34 @@ func testAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *stri
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
 		*environmentID = rs.Primary.Attributes["environment_id"]
 
 		return nil
 	}
 }
 
-func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
+func TestAccMFASettings_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_settings.%s", resourceName)
 
-	name := resourceName
+	environmentName := acctest.ResourceNameGenEnvironment()
 
-	var resourceID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var environmentID string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             testAccCheckMFASettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
-				Check:  testAccGetMFAPolicyIDs(resourceFullName, &environmentID, &resourceID),
+				Config: testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName),
+				Check:  testAccGetMFASettingsIDs(resourceFullName, &environmentID),
 			},
 			// Replan after removal preconfig
 			{
@@ -64,13 +65,13 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 
 					apiClient := p1Client.API.MFAAPIClient
 
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
+					if environmentID == "" {
+						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s", environmentID)
 					}
 
-					_, err = apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, environmentID, resourceID).Execute()
+					_, _, err = apiClient.MFASettingsApi.ResetMFASettings(ctx, environmentID).Execute()
 					if err != nil {
-						t.Fatalf("Failed to delete MFA Policy: %v", err)
+						t.Fatalf("Failed to reset MFA settings: %v", err)
 					}
 				},
 				RefreshState:       true,

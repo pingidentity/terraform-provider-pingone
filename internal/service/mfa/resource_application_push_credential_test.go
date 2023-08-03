@@ -68,7 +68,7 @@ func testAccCheckApplicationPushCredentialDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func testAccGetApplicationPushCredentialIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -77,32 +77,33 @@ func testAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *stri
 		}
 
 		*resourceID = rs.Primary.ID
+		*applicationID = rs.Primary.Attributes["application_id"]
 		*environmentID = rs.Primary.Attributes["environment_id"]
 
 		return nil
 	}
 }
 
-func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
+func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_application_push_credential.%s", resourceName)
 
 	name := resourceName
 
-	var resourceID, environmentID string
+	var resourceID, applicationID, environmentID string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
-				Check:  testAccGetMFAPolicyIDs(resourceFullName, &environmentID, &resourceID),
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
+				Check:  testAccGetApplicationPushCredentialIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -117,12 +118,12 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 					apiClient := p1Client.API.MFAAPIClient
 
 					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
+						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Application ID: %s, Resource ID: %s", environmentID, applicationID, resourceID)
 					}
 
-					_, err = apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, environmentID, resourceID).Execute()
+					_, err = apiClient.ApplicationsApplicationMFAPushCredentialsApi.DeleteMFAPushCredential(ctx, environmentID, applicationID, resourceID).Execute()
 					if err != nil {
-						t.Fatalf("Failed to delete MFA Policy: %v", err)
+						t.Fatalf("Failed to delete MFA Application push credential: %v", err)
 					}
 				},
 				RefreshState:       true,
