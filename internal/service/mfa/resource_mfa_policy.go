@@ -451,7 +451,7 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 			return apiClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
 		},
 		"ReadOneDeviceAuthenticationPolicy",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
