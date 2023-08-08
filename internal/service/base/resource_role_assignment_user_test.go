@@ -151,6 +151,32 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
 				),
 			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Organisation(resourceName, name, "DaVinci Admin", organisationID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "scope_organization_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "scope_environment_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+				),
+			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Organisation(resourceName, name, "DaVinci Admin Read Only", organisationID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "scope_organization_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "scope_environment_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+				),
+			},
 		},
 	})
 }
@@ -184,6 +210,32 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 			},
 			{
 				Config: testAccRoleAssignmentUserConfig_Environment(resourceName, name, "Environment Admin"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "scope_organization_id", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+				),
+			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Environment(resourceName, name, "DaVinci Admin"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "scope_organization_id", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+				),
+			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Environment(resourceName, name, "DaVinci Admin Read Only"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
