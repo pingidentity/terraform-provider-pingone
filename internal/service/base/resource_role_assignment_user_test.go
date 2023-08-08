@@ -67,6 +67,71 @@ func testAccCheckRoleAssignmentUserDestroy(s *terraform.State) error {
 	return nil
 }
 
+func testAccGetRoleAssignmentUserIDs(resourceName string, environmentID, userID, resourceID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", resourceName)
+		}
+
+		*resourceID = rs.Primary.ID
+		*userID = rs.Primary.Attributes["user_id"]
+		*environmentID = rs.Primary.Attributes["environment_id"]
+
+		return nil
+	}
+}
+
+func TestAccRoleAssignmentUser_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_role_assignment_user.%s", resourceName)
+
+	name := resourceName
+
+	var resourceID, userID, environmentID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRoleAssignmentUserDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccRoleAssignmentUserConfig_Population(resourceName, name, "Identity Data Admin"),
+				Check:  testAccGetRoleAssignmentUserIDs(resourceFullName, &environmentID, &userID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || userID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, user ID or resource ID cannot be determined. Environment ID: %s, User ID: %s, Resource ID: %s", environmentID, userID, resourceID)
+					}
+
+					_, err = apiClient.UserRoleAssignmentsApi.DeleteUserRoleAssignment(ctx, environmentID, userID, resourceID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete user role assignment: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccRoleAssignmentUser_Population(t *testing.T) {
 	t.Parallel()
 

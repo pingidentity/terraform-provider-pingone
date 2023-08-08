@@ -66,6 +66,75 @@ func testAccCheckAgreementLocalizationDestroy(s *terraform.State) error {
 	return nil
 }
 
+func testAccGetAgreementLocalizationIDs(resourceName string, environmentID, agreementID, resourceID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", resourceName)
+		}
+
+		*resourceID = rs.Primary.ID
+		*agreementID = rs.Primary.Attributes["agreement_id"]
+		*environmentID = rs.Primary.Attributes["environment_id"]
+
+		return nil
+	}
+}
+
+func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_agreement_localization.%s", resourceName)
+
+	name := resourceName
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var resourceID, agreementID, environmentID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckAgreementLocalizationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Check:  testAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || agreementID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, agreement ID or resource ID cannot be determined. Environment ID: %s, Agreement ID: %s, Resource ID: %s", environmentID, agreementID, resourceID)
+					}
+
+					_, err = apiClient.AgreementLanguagesResourcesApi.DeleteAgreementLanguage(ctx, environmentID, agreementID, resourceID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete agreement localisation: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccAgreementLocalization_Full(t *testing.T) {
 	t.Parallel()
 

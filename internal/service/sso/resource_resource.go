@@ -147,15 +147,26 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	var diags diag.Diagnostics
 
-	respObject, diags := fetchResource(ctx, apiClient, d.Get("environment_id").(string), d.Id())
+	resp, diags := sdk.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+		},
+		"ReadOneResource",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
 	if diags.HasError() {
 		return diags
 	}
 
-	if respObject == nil {
+	if resp == nil {
 		d.SetId("")
 		return nil
 	}
+
+	respObject := resp.(*management.Resource)
 
 	d.Set("name", respObject.GetName())
 

@@ -68,6 +68,74 @@ func testAccCheckKeyDestroy(s *terraform.State) error {
 	return nil
 }
 
+func testAccGetKeyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", resourceName)
+		}
+
+		*resourceID = rs.Primary.ID
+		*environmentID = rs.Primary.Attributes["environment_id"]
+
+		return nil
+	}
+}
+
+func TestAccKey_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_key.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var resourceID, environmentID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckKeyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Check:  testAccGetKeyIDs(resourceFullName, &environmentID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
+					}
+
+					_, err = apiClient.CertificateManagementApi.DeleteKey(ctx, environmentID, resourceID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete Key: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccKey_Full(t *testing.T) {
 	t.Parallel()
 

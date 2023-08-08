@@ -65,6 +65,71 @@ func testAccCheckApplicationFlowPolicyAssignmentDestroy(s *terraform.State) erro
 	return nil
 }
 
+func testAccGetApplicationFlowPolicyAssignmentIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", resourceName)
+		}
+
+		*resourceID = rs.Primary.ID
+		*applicationID = rs.Primary.Attributes["application_id"]
+		*environmentID = rs.Primary.Attributes["environment_id"]
+
+		return nil
+	}
+}
+
+func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_flow_policy_assignment.%s", resourceName)
+
+	name := resourceName
+
+	var resourceID, applicationID, environmentID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
+				Check:  testAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || applicationID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, application ID or resource ID cannot be determined. Environment ID: %s, Application ID: %s, Resource ID: %s", environmentID, applicationID, resourceID)
+					}
+
+					_, err = apiClient.ApplicationFlowPolicyAssignmentsApi.DeleteFlowPolicyAssignment(ctx, environmentID, applicationID, resourceID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete Application flow policy assignment: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	t.Parallel()
 

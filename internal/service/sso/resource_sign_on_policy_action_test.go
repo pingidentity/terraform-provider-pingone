@@ -67,6 +67,71 @@ func testAccCheckSignOnPolicyActionDestroy(s *terraform.State) error {
 	return nil
 }
 
+func testAccGetSignOnPolicyActionIDs(resourceName string, environmentID, signOnPolicyID, resourceID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", resourceName)
+		}
+
+		*resourceID = rs.Primary.ID
+		*signOnPolicyID = rs.Primary.Attributes["sign_on_policy_id"]
+		*environmentID = rs.Primary.Attributes["environment_id"]
+
+		return nil
+	}
+}
+
+func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s-3", resourceName)
+
+	name := resourceName
+
+	var resourceID, signOnPolicyID, environmentID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
+				Check:  testAccGetSignOnPolicyActionIDs(resourceFullName, &environmentID, &signOnPolicyID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || signOnPolicyID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, sign-on policy ID or resource ID cannot be determined. Environment ID: %s, Sign-on policy ID: %s, Resource ID: %s", environmentID, signOnPolicyID, resourceID)
+					}
+
+					_, err = apiClient.SignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, environmentID, signOnPolicyID, resourceID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete sign-on policy action: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 	t.Parallel()
 
