@@ -67,7 +67,7 @@ func testAccCheckTrustedEmailAddressDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func testAccGetTrustedEmailAddressIDs(resourceName string, environmentID, emailDomainID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -76,32 +76,34 @@ func testAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *stri
 		}
 
 		*resourceID = rs.Primary.ID
+		*emailDomainID = rs.Primary.Attributes["email_domain_id"]
 		*environmentID = rs.Primary.Attributes["environment_id"]
 
 		return nil
 	}
 }
 
-func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
+func TestAccTrustedEmailAddress_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_trusted_email_address.%s", resourceName)
 
-	name := resourceName
+	verifiedDomain := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN")
+	emailAddress := fmt.Sprintf("%s@%s", resourceName, verifiedDomain)
 
-	var resourceID, environmentID string
+	var resourceID, emailDomainID, environmentID string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             testAccCheckTrustedEmailAddressDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
-				Check:  testAccGetMFAPolicyIDs(resourceFullName, &environmentID, &resourceID),
+				Config: testAccTrustedEmailAddressConfig_New_DomainVerified(resourceName, verifiedDomain, emailAddress),
+				Check:  testAccGetTrustedEmailAddressIDs(resourceFullName, &environmentID, &emailDomainID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -113,15 +115,15 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 						t.Fatalf("Failed to get API client: %v", err)
 					}
 
-					apiClient := p1Client.API.MFAAPIClient
+					apiClient := p1Client.API.ManagementAPIClient
 
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
+					if environmentID == "" || emailDomainID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, email domain ID or resource ID cannot be determined. Environment ID: %s, Email Domain ID: %s, Resource ID: %s", environmentID, emailDomainID, resourceID)
 					}
 
-					_, err = apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, environmentID, resourceID).Execute()
+					_, err = apiClient.TrustedEmailAddressesApi.DeleteTrustedEmailAddress(ctx, environmentID, emailDomainID, resourceID).Execute()
 					if err != nil {
-						t.Fatalf("Failed to delete MFA Policy: %v", err)
+						t.Fatalf("Failed to delete trusted email address: %v", err)
 					}
 				},
 				RefreshState:       true,
