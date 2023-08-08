@@ -1,5 +1,9 @@
 ## 0.19.1 (Unreleased)
 
+BUG FIXES:
+
+* `resource/pingone_resource`: Fixed blocking error on plan when OpenID resource is removed outside of Terraform. ([#501](https://github.com/pingidentity/terraform-provider-pingone/issues/501))
+
 ## 0.19.0 (08 August 2023)
 
 NOTES:
