@@ -7,6 +7,15 @@ NOTES:
 * `resource/pingone_environment`: Corrected documentation and examples to denote optional nature of the `default_population` block. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
 * `resource/pingone_resource_attribute`: Deprecated the `resource_id` parameter in favour of the `resource_name` parameter to avoid dependency on the `pingone_resource` data-source.  The `resource_id` parameter will be made read-only in a future release. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
 * `resource/pingone_schema_attribute`: Deprecated the `schema_id` parameter in favour of the optional `schema_name` parameter to avoid dependency on the `pingone_schema` data-source.  The `schema_id` parameter will be made read-only in a future release. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` v0.10.0 => v0.11.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.3.2 => v1.3.4 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.2.1 => v0.3.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.2.1 => v0.3.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.24.0 => v0.25.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.15.0 => v0.16.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.8.1 => v0.9.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.2.1 => v0.3.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.1 => v0.10.2 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
 
 ENHANCEMENTS:
 
@@ -18,6 +27,7 @@ BUG FIXES:
 * `resource/pingone_credential_issuance_rule`: Corrected `digital_wallet_application_id` from `REQUIRED` to `OPTIONAL` per API specification. ([#490](https://github.com/pingidentity/terraform-provider-pingone/issues/490))
 * `resource/pingone_environment`: Fix errors that occur if the `service` block is left undefined. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
 * `resource/pingone_environment`: Fix for intermittent error stating the default population couldn't be updated on environment creation. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
+* `resource/pingone_mfa_policy`: Fixed blocking error on plan when MFA device policy is removed outside of Terraform. ([#500](https://github.com/pingidentity/terraform-provider-pingone/issues/500))
 
 ## 0.18.1 (18 July 2023)
 
