@@ -116,7 +116,7 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 
 					apiClient := p1Client.API.ManagementAPIClient
 
-					if environmentID == "" || resourceID == "" {
+					if environmentID == "" || applicationID == "" || resourceID == "" {
 						t.Fatalf("One of environment ID, application ID or resource ID cannot be determined. Environment ID: %s, Application ID: %s, Resource ID: %s", environmentID, applicationID, resourceID)
 					}
 

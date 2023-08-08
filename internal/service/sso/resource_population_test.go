@@ -59,7 +59,7 @@ func testAccCheckPopulationDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func testAccGetPopulationIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -74,11 +74,11 @@ func testAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *stri
 	}
 }
 
-func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
+func TestAccPopulation_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_population.%s", resourceName)
 
 	name := resourceName
 
@@ -87,13 +87,13 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             testAccCheckPopulationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
-				Check:  testAccGetMFAPolicyIDs(resourceFullName, &environmentID, &resourceID),
+				Config: testAccPopulationConfig_Minimal(resourceName, name),
+				Check:  testAccGetPopulationIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -105,15 +105,15 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 						t.Fatalf("Failed to get API client: %v", err)
 					}
 
-					apiClient := p1Client.API.MFAAPIClient
+					apiClient := p1Client.API.ManagementAPIClient
 
 					if environmentID == "" || resourceID == "" {
 						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
 					}
 
-					_, err = apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, environmentID, resourceID).Execute()
+					_, err = apiClient.PopulationsApi.DeletePopulation(ctx, environmentID, resourceID).Execute()
 					if err != nil {
-						t.Fatalf("Failed to delete MFA Policy: %v", err)
+						t.Fatalf("Failed to delete population: %v", err)
 					}
 				},
 				RefreshState:       true,
