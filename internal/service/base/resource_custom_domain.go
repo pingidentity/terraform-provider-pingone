@@ -5,180 +5,313 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceCustomDomain() *schema.Resource {
-	return &schema.Resource{
+// Types
+type CustomDomainResource struct {
+	client *management.APIClient
+	region model.RegionMapping
+}
 
+type CustomDomainResourceModel struct {
+	Id                   types.String `tfsdk:"id"`
+	EnvironmentId        types.String `tfsdk:"environment_id"`
+	DomainName           types.String `tfsdk:"domain_name"`
+	Status               types.String `tfsdk:"status"`
+	CanonicalName        types.String `tfsdk:"canonical_name"`
+	CertificateExpiresAt types.String `tfsdk:"certificate_expires_at"`
+}
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &CustomDomainResource{}
+	_ resource.ResourceWithConfigure   = &CustomDomainResource{}
+	_ resource.ResourceWithImportState = &CustomDomainResource{}
+)
+
+// New Object
+func NewCustomDomainResource() resource.Resource {
+	return &CustomDomainResource{}
+}
+
+// Metadata
+func (r *CustomDomainResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_custom_domain"
+}
+
+// Schema
+func (r *CustomDomainResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	domainNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).",
+	)
+
+	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the status of the custom domain.",
+	).AllowedValuesEnum(management.AllowedEnumCustomDomainStatusEnumValues)
+
+	const attrMinLength = 2
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne Custom Domains.",
+		Description: framework.SchemaDescriptionFromMarkdown("Resource to create and manage PingOne Custom Domains.").Description,
 
-		CreateContext: resourceCustomDomainCreate,
-		ReadContext:   resourceCustomDomainRead,
-		DeleteContext: resourceCustomDomainDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceCustomDomainImport,
-		},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to associate the custom domain with."),
+			),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the certificate in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+			"domain_name": schema.StringAttribute{
+				MarkdownDescription: domainNameDescription.MarkdownDescription,
+				Description:         domainNameDescription.Description,
+				Required:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.RegexMatches(verify.IsHostname, "Value must be a valid domain name"),
+				},
 			},
-			"domain_name": {
-				Type:             schema.TypeString,
-				Description:      "A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).",
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+
+			"status": schema.StringAttribute{
+				MarkdownDescription: statusDescription.MarkdownDescription,
+				Description:         statusDescription.Description,
+				Computed:            true,
 			},
-			"status": {
-				Type:        schema.TypeString,
-				Description: fmt.Sprintf("A string that specifies the status of the custom domain. Options are `%s`, `%s` and `%s`.", string(management.ENUMCUSTOMDOMAINSTATUS_ACTIVE), string(management.ENUMCUSTOMDOMAINSTATUS_VERIFICATION_REQUIRED), string(management.ENUMCUSTOMDOMAINSTATUS_SSL_CERTIFICATE_REQUIRED)),
+
+			"canonical_name": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the domain name that should be used as the value of the CNAME record in the customer's DNS.").Description,
 				Computed:    true,
 			},
-			"canonical_name": {
-				Type:        schema.TypeString,
-				Description: "A string that specifies the domain name that should be used as the value of the CNAME record in the customer’s DNS.",
-				Computed:    true,
-			},
-			"certificate_expires_at": {
-				Type:        schema.TypeString,
-				Description: "The time when the certificate expires.  If this property is not present, it indicates that an SSL certificate has not been setup for this custom domain.",
+
+			"certificate_expires_at": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The time when the certificate expires.  If this property is not present, it indicates that an SSL certificate has not been setup for this custom domain.").Description,
 				Computed:    true,
 			},
 		},
 	}
 }
 
-func resourceCustomDomainCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *CustomDomainResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
 
-	var diags diag.Diagnostics
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
 
-	var resp interface{}
+		return
+	}
 
-	customDomain := *management.NewCustomDomain(d.Get("domain_name").(string))
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
 
-	resp, diags = sdk.ParseResponse(
+		return
+	}
+
+	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
+}
+
+func (r *CustomDomainResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state CustomDomainResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	customDomain := plan.expand()
+
+	// Run the API call
+	var response *management.CustomDomain
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.CustomDomainsApi.CreateDomain(ctx, d.Get("environment_id").(string)).CustomDomain(customDomain).Execute()
+			return r.client.CustomDomainsApi.CreateDomain(ctx, plan.EnvironmentId.ValueString()).CustomDomain(*customDomain).Execute()
 		},
 		"CreateDomain",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.CustomDomain)
+	// Create the state to save
+	state = plan
 
-	d.SetId(respObject.GetId())
-
-	return resourceCustomDomainRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceCustomDomainRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *CustomDomainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *CustomDomainResourceModel
 
-	var diags diag.Diagnostics
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.CustomDomain
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.CustomDomainsApi.ReadOneDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return r.client.CustomDomainsApi.ReadOneDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneDomain",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.CustomDomain)
-
-	d.Set("domain_name", respObject.GetDomainName())
-	d.Set("status", string(respObject.GetStatus()))
-
-	if v, ok := respObject.GetCanonicalNameOk(); ok {
-		d.Set("canonical_name", v)
-	} else {
-		d.Set("canonical_name", nil)
-	}
-
-	if v, ok := respObject.GetCertificateOk(); ok {
-		d.Set("certificate_expires_at", v.GetExpiresAt().Format(time.RFC3339))
-	} else {
-		d.Set("certificate_expires_at", nil)
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceCustomDomainDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *CustomDomainResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+}
 
-	var diags diag.Diagnostics
+func (r *CustomDomainResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *CustomDomainResourceModel
 
-	_, diags = sdk.ParseResponse(
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.CustomDomainsApi.DeleteDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			r, err := r.client.CustomDomainsApi.DeleteDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteDomain",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
 		nil,
-	)
-	if diags.HasError() {
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func (r *CustomDomainResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	splitLength := 2
+	attributes := strings.SplitN(req.ID, "/", splitLength)
+
+	if len(attributes) != splitLength {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/custom_domain_id\"", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+}
+
+func (p *CustomDomainResourceModel) expand() *management.CustomDomain {
+	data := management.NewCustomDomain(p.DomainName.ValueString())
+
+	return data
+}
+
+func (p *CustomDomainResourceModel) toState(apiObject *management.CustomDomain) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
 		return diags
 	}
 
-	return diags
-}
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.DomainName = framework.StringOkToTF(apiObject.GetDomainNameOk())
+	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
+	p.CanonicalName = framework.StringOkToTF(apiObject.GetCanonicalNameOk())
 
-func resourceCustomDomainImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
-
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/customDomainID\"", d.Id())
+	if v, ok := apiObject.GetCertificateOk(); ok {
+		p.CertificateExpiresAt = framework.TimeOkToTF(v.GetExpiresAtOk())
+	} else {
+		p.CertificateExpiresAt = types.StringNull()
 	}
 
-	environmentID, customDomainID := attributes[0], attributes[1]
-
-	d.Set("environment_id", environmentID)
-
-	d.SetId(customDomainID)
-
-	resourceCustomDomainRead(ctx, d, meta)
-
-	return []*schema.ResourceData{d}, nil
+	return diags
 }
