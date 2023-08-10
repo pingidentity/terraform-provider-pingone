@@ -26,10 +26,7 @@ import (
 )
 
 // Types
-type AgreementLocalizationRevisionResource struct {
-	managementClient *management.APIClient
-	region           model.RegionMapping
-}
+type AgreementLocalizationRevisionResource serviceClientType
 
 type AgreementLocalizationRevisionResourceModel struct {
 	Id                      types.String `tfsdk:"id"`
@@ -178,14 +175,13 @@ func (r *AgreementLocalizationRevisionResource) Configure(ctx context.Context, r
 		return
 	}
 
-	r.managementClient = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state AgreementLocalizationRevisionResourceModel
 
-	if r.managementClient == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -211,7 +207,7 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.managementClient.AgreementRevisionsResourcesApi.CreateAgreementLanguageRevision(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).AgreementLanguageRevision(*localizationRevision).Execute()
+			return r.Client.AgreementRevisionsResourcesApi.CreateAgreementLanguageRevision(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).AgreementLanguageRevision(*localizationRevision).Execute()
 		},
 		"CreateAgreementLanguageRevision",
 		framework.DefaultCustomError,
@@ -233,7 +229,7 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *AgreementLocalizationRevisionResourceModel
 
-	if r.managementClient == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -252,7 +248,7 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.managementClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneAgreementLanguageRevision",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -280,7 +276,7 @@ func (r *AgreementLocalizationRevisionResource) Update(ctx context.Context, req 
 func (r *AgreementLocalizationRevisionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *AgreementLocalizationRevisionResourceModel
 
-	if r.managementClient == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -298,7 +294,7 @@ func (r *AgreementLocalizationRevisionResource) Delete(ctx context.Context, req 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.managementClient.AgreementRevisionsResourcesApi.DeleteAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.AgreementRevisionsResourcesApi.DeleteAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteAgreementLanguageRevision",

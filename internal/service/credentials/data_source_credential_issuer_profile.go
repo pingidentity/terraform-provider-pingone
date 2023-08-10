@@ -17,10 +17,7 @@ import (
 )
 
 // Types
-type CredentialIssuerProfileDataSource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type CredentialIssuerProfileDataSource serviceClientType
 
 type CredentialIssuerProfileDataSourceModel struct {
 	Id                    types.String `tfsdk:"id"`
@@ -109,14 +106,13 @@ func (r *CredentialIssuerProfileDataSource) Configure(ctx context.Context, req d
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *CredentialIssuerProfileDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *CredentialIssuerProfileDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -135,7 +131,7 @@ func (r *CredentialIssuerProfileDataSource) Read(ctx context.Context, req dataso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.Client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadCredentialIssuerProfile",
 		framework.DefaultCustomError,

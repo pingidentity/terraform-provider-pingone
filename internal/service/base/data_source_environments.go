@@ -11,15 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
 // Types
-type EnvironmentsDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type EnvironmentsDataSource serviceClientType
 
 type EnvironmentsDataSourceModel struct {
 	Id         types.String `tfsdk:"id"`
@@ -95,14 +91,13 @@ func (r *EnvironmentsDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *EnvironmentsDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -116,7 +111,7 @@ func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	filterFunction := func() (any, *http.Response, error) {
-		return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(data.ScimFilter.ValueString()).Execute()
+		return r.Client.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(data.ScimFilter.ValueString()).Execute()
 	}
 
 	var entityArray *management.EntityArray

@@ -21,10 +21,7 @@ import (
 )
 
 // Types
-type CustomDomainSSLResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type CustomDomainSSLResource serviceClientType
 
 type CustomDomainSSLResourceModel struct {
 	Id                              types.String `tfsdk:"id"`
@@ -163,14 +160,13 @@ func (r *CustomDomainSSLResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *CustomDomainSSLResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CustomDomainSSLResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -192,7 +188,7 @@ func (r *CustomDomainSSLResource) Create(ctx context.Context, req resource.Creat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CustomDomainsApi.UpdateDomain(ctx, plan.EnvironmentId.ValueString(), plan.CustomDomainId.ValueString()).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_CERTIFICATE_IMPORTJSON).CustomDomainCertificateRequest(*customDomainSSL).Execute()
+			return r.Client.CustomDomainsApi.UpdateDomain(ctx, plan.EnvironmentId.ValueString(), plan.CustomDomainId.ValueString()).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_CERTIFICATE_IMPORTJSON).CustomDomainCertificateRequest(*customDomainSSL).Execute()
 		},
 		"UpdateDomain",
 		func(error model.P1Error) diag.Diagnostics {
@@ -231,7 +227,7 @@ func (r *CustomDomainSSLResource) Create(ctx context.Context, req resource.Creat
 func (r *CustomDomainSSLResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CustomDomainSSLResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -250,7 +246,7 @@ func (r *CustomDomainSSLResource) Read(ctx context.Context, req resource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CustomDomainsApi.ReadOneDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.CustomDomainsApi.ReadOneDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneDomain",
 		framework.CustomErrorResourceNotFoundWarning,

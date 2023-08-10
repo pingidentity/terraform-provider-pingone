@@ -34,10 +34,7 @@ import (
 )
 
 // Types
-type PhoneDeliverySettingsResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type PhoneDeliverySettingsResource serviceClientType
 
 type PhoneDeliverySettingsResourceModel struct {
 	Id                      types.String `tfsdk:"id"`
@@ -970,14 +967,13 @@ func (r *PhoneDeliverySettingsResource) Configure(ctx context.Context, req resou
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1003,7 +999,7 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.PhoneDeliverySettingsApi.CreatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
+			return r.Client.PhoneDeliverySettingsApi.CreatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
 		},
 		"CreatePhoneDeliverySettings",
 		phoneDeliverySettingsCreateUpdateCustomErrorHandler,
@@ -1036,7 +1032,7 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettingsUpdate).Execute()
+				return r.Client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettingsUpdate).Execute()
 			},
 			"UpdatePhoneDeliverySettings",
 			phoneDeliverySettingsCreateUpdateCustomErrorHandler,
@@ -1062,7 +1058,7 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *PhoneDeliverySettingsResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1081,7 +1077,7 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOnePhoneDeliverySettings",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1106,7 +1102,7 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1132,7 +1128,7 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
+			return r.Client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
 		},
 		"UpdatePhoneDeliverySettings",
 		phoneDeliverySettingsCreateUpdateCustomErrorHandler,
@@ -1154,7 +1150,7 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 func (r *PhoneDeliverySettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *PhoneDeliverySettingsResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1172,7 +1168,7 @@ func (r *PhoneDeliverySettingsResource) Delete(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.PhoneDeliverySettingsApi.DeletePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.PhoneDeliverySettingsApi.DeletePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeletePhoneDeliverySettings",

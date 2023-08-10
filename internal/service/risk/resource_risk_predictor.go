@@ -42,10 +42,7 @@ import (
 )
 
 // Types
-type RiskPredictorResource struct {
-	client *risk.APIClient
-	region model.RegionMapping
-}
+type RiskPredictorResource serviceClientType
 
 type riskPredictorResourceModel struct {
 	Id                           types.String `tfsdk:"id"`
@@ -1347,14 +1344,13 @@ func (r *RiskPredictorResource) Configure(ctx context.Context, req resource.Conf
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state riskPredictorResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1368,7 +1364,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Build the model for the API
-	riskPredictor, predefinedPredictorId, d := plan.expand(ctx, r.client)
+	riskPredictor, predefinedPredictorId, d := plan.expand(ctx, r.Client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1381,7 +1377,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
+				return r.Client.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
 			},
 			"CreateRiskPredictor",
 			riskPredictorCreateUpdateCustomErrorHandler,
@@ -1393,7 +1389,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), *predefinedPredictorId).RiskPredictor(*riskPredictor).Execute()
+				return r.Client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), *predefinedPredictorId).RiskPredictor(*riskPredictor).Execute()
 			},
 			"UpdateRiskPredictor",
 			riskPredictorCreateUpdateCustomErrorHandler,
@@ -1416,7 +1412,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *riskPredictorResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1435,7 +1431,7 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneRiskPredictor",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1460,7 +1456,7 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state riskPredictorResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1474,7 +1470,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Build the model for the API
-	riskPredictor, _, d := plan.expand(ctx, r.client)
+	riskPredictor, _, d := plan.expand(ctx, r.Client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1486,7 +1482,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPredictor(*riskPredictor).Execute()
+			return r.Client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPredictor(*riskPredictor).Execute()
 		},
 		"UpdateRiskPredictor",
 		riskPredictorCreateUpdateCustomErrorHandler,
@@ -1508,7 +1504,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *riskPredictorResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1527,7 +1523,7 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.client.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+				r, err := r.Client.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 				return nil, r, err
 			},
 			"DeleteRiskAdvancedPredictor",
@@ -1547,7 +1543,7 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 				ctx,
 
 				func() (any, *http.Response, error) {
-					_, r, err := r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).RiskPredictor(v).Execute()
+					_, r, err := r.Client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).RiskPredictor(v).Execute()
 					return nil, r, err
 				},
 				"UpdateRiskPredictor",

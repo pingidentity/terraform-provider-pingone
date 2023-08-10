@@ -12,16 +12,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type AgreementLocalizationEnableResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type AgreementLocalizationEnableResource serviceClientType
 
 type AgreementLocalizationEnableResourceModel struct {
 	Id                      types.String `tfsdk:"id"`
@@ -106,14 +102,13 @@ func (r *AgreementLocalizationEnableResource) Configure(ctx context.Context, req
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *AgreementLocalizationEnableResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state AgreementLocalizationEnableResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -131,7 +126,7 @@ func (r *AgreementLocalizationEnableResource) Create(ctx context.Context, req re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).Execute()
+			return r.Client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).Execute()
 		},
 		"ReadOneAgreementLanguage",
 		framework.DefaultCustomError,
@@ -151,7 +146,7 @@ func (r *AgreementLocalizationEnableResource) Create(ctx context.Context, req re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementLanguagesResourcesApi.UpdateAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).AgreementLanguage(*agreementLocalizationEnable).Execute()
+			return r.Client.AgreementLanguagesResourcesApi.UpdateAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).AgreementLanguage(*agreementLocalizationEnable).Execute()
 		},
 		"UpdateAgreementLanguage",
 		framework.DefaultCustomError,
@@ -173,7 +168,7 @@ func (r *AgreementLocalizationEnableResource) Create(ctx context.Context, req re
 func (r *AgreementLocalizationEnableResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *AgreementLocalizationEnableResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -192,7 +187,7 @@ func (r *AgreementLocalizationEnableResource) Read(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).Execute()
+			return r.Client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).Execute()
 		},
 		"ReadOneAgreementLanguage",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -217,7 +212,7 @@ func (r *AgreementLocalizationEnableResource) Read(ctx context.Context, req reso
 func (r *AgreementLocalizationEnableResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state AgreementLocalizationEnableResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -235,7 +230,7 @@ func (r *AgreementLocalizationEnableResource) Update(ctx context.Context, req re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).Execute()
+			return r.Client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).Execute()
 		},
 		"ReadOneAgreementLanguage",
 		framework.DefaultCustomError,
@@ -255,7 +250,7 @@ func (r *AgreementLocalizationEnableResource) Update(ctx context.Context, req re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementLanguagesResourcesApi.UpdateAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).AgreementLanguage(*agreementLanguageEnable).Execute()
+			return r.Client.AgreementLanguagesResourcesApi.UpdateAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).AgreementLanguage(*agreementLanguageEnable).Execute()
 		},
 		"UpdateAgreementLanguage",
 		framework.DefaultCustomError,
@@ -277,7 +272,7 @@ func (r *AgreementLocalizationEnableResource) Update(ctx context.Context, req re
 func (r *AgreementLocalizationEnableResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *AgreementLocalizationEnableResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -295,7 +290,7 @@ func (r *AgreementLocalizationEnableResource) Delete(ctx context.Context, req re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).Execute()
+			return r.Client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).Execute()
 		},
 		"ReadOneAgreementLanguage",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -315,7 +310,7 @@ func (r *AgreementLocalizationEnableResource) Delete(ctx context.Context, req re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementLanguagesResourcesApi.UpdateAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).AgreementLanguage(*agreementDisable).Execute()
+			return r.Client.AgreementLanguagesResourcesApi.UpdateAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).AgreementLanguage(*agreementDisable).Execute()
 		},
 		"UpdateAgreementLanguage",
 		framework.CustomErrorResourceNotFoundWarning,

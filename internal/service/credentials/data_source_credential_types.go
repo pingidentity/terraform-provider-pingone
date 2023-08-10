@@ -10,16 +10,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type CredentialTypesDataSource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type CredentialTypesDataSource serviceClientType
 
 type CredentialTypesDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -88,14 +84,13 @@ func (r *CredentialTypesDataSource) Configure(ctx context.Context, req datasourc
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *CredentialTypesDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -114,7 +109,7 @@ func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.Rea
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialTypesApi.ReadAllCredentialTypes(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.Client.CredentialTypesApi.ReadAllCredentialTypes(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadAllCredentialTypes",
 		framework.DefaultCustomError,

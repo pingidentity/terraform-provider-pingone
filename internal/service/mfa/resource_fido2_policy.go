@@ -21,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
@@ -31,10 +30,7 @@ import (
 )
 
 // Types
-type FIDO2PolicyResource struct {
-	client *mfa.APIClient
-	region model.RegionMapping
-}
+type FIDO2PolicyResource serviceClientType
 
 type FIDO2PolicyResourceModel struct {
 	Id                            types.String `tfsdk:"id"`
@@ -512,14 +508,13 @@ func (r *FIDO2PolicyResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *FIDO2PolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state FIDO2PolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -545,7 +540,7 @@ func (r *FIDO2PolicyResource) Create(ctx context.Context, req resource.CreateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.FIDO2PolicyApi.CreateFIDO2Policy(ctx, plan.EnvironmentId.ValueString()).FIDO2Policy(*fido2Policy).Execute()
+			return r.Client.FIDO2PolicyApi.CreateFIDO2Policy(ctx, plan.EnvironmentId.ValueString()).FIDO2Policy(*fido2Policy).Execute()
 		},
 		"CreateFIDO2Policy",
 		framework.DefaultCustomError,
@@ -567,7 +562,7 @@ func (r *FIDO2PolicyResource) Create(ctx context.Context, req resource.CreateReq
 func (r *FIDO2PolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *FIDO2PolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -586,7 +581,7 @@ func (r *FIDO2PolicyResource) Read(ctx context.Context, req resource.ReadRequest
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.FIDO2PolicyApi.ReadOneFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.FIDO2PolicyApi.ReadOneFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneFIDO2Policy",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -611,7 +606,7 @@ func (r *FIDO2PolicyResource) Read(ctx context.Context, req resource.ReadRequest
 func (r *FIDO2PolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state FIDO2PolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -637,7 +632,7 @@ func (r *FIDO2PolicyResource) Update(ctx context.Context, req resource.UpdateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.FIDO2PolicyApi.UpdateFIDO2Policy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).FIDO2Policy(*fido2Policy).Execute()
+			return r.Client.FIDO2PolicyApi.UpdateFIDO2Policy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).FIDO2Policy(*fido2Policy).Execute()
 		},
 		"UpdateFIDO2Policy",
 		framework.DefaultCustomError,
@@ -659,7 +654,7 @@ func (r *FIDO2PolicyResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *FIDO2PolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *FIDO2PolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -677,7 +672,7 @@ func (r *FIDO2PolicyResource) Delete(ctx context.Context, req resource.DeleteReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.FIDO2PolicyApi.DeleteFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.FIDO2PolicyApi.DeleteFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteFIDO2Policy",

@@ -20,10 +20,7 @@ import (
 )
 
 // Types
-type EnvironmentDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type EnvironmentDataSource serviceClientType
 
 type EnvironmentDataSourceModel struct {
 	Id             types.String `tfsdk:"id"`
@@ -209,14 +206,13 @@ func (r *EnvironmentDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *EnvironmentDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -241,7 +237,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Execute()
+				return r.Client.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Execute()
 			},
 			"ReadAllEnvironments",
 			framework.DefaultCustomError,
@@ -282,7 +278,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.EnvironmentsApi.ReadOneEnvironment(ctx, data.EnvironmentId.ValueString()).Execute()
+				return r.Client.EnvironmentsApi.ReadOneEnvironment(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadOneEnvironment",
 			framework.DefaultCustomError,
@@ -308,7 +304,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environment.GetId()).Execute()
+			return r.Client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environment.GetId()).Execute()
 		},
 		"ReadOneBillOfMaterials",
 		framework.CustomErrorResourceNotFoundWarning,

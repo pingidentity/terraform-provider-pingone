@@ -13,17 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type SchemaDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type SchemaDataSource serviceClientType
 
 type SchemaDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -116,14 +112,13 @@ func (r *SchemaDataSource) Configure(ctx context.Context, req datasource.Configu
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *SchemaDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -141,7 +136,7 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if !data.Name.IsNull() {
 
 		var d diag.Diagnostics
-		schema, d = fetchSchemaFromName(ctx, r.client, data.EnvironmentId.ValueString(), data.Name.ValueString())
+		schema, d = fetchSchemaFromName(ctx, r.Client, data.EnvironmentId.ValueString(), data.Name.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -155,7 +150,7 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+				return r.Client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
 			},
 			"ReadOneSchema",
 			framework.DefaultCustomError,

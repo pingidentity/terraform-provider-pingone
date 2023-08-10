@@ -23,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
@@ -35,7 +34,6 @@ import (
 type VerifyPolicyResource struct {
 	client     *verify.APIClient
 	mgmtClient *management.APIClient
-	region     model.RegionMapping
 }
 
 type verifyPolicyResourceModel struct {
@@ -1100,7 +1098,6 @@ func (r *VerifyPolicyResource) Configure(ctx context.Context, req resource.Confi
 
 	r.mgmtClient = preparedMgmtClient
 	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

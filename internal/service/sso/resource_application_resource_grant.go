@@ -14,17 +14,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type ApplicationResourceGrantResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type ApplicationResourceGrantResource serviceClientType
 
 type ApplicationResourceGrantResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -118,14 +114,13 @@ func (r *ApplicationResourceGrantResource) Configure(ctx context.Context, req re
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationResourceGrantResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -139,7 +134,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 	}
 
 	// Validate the plan
-	resp.Diagnostics.Append(plan.validate(ctx, r.client)...)
+	resp.Diagnostics.Append(plan.validate(ctx, r.Client)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -157,7 +152,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+			return r.Client.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
 		},
 		"CreateApplicationGrant",
 		framework.DefaultCustomError,
@@ -179,7 +174,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationResourceGrantResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -198,7 +193,7 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.ApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneApplicationGrant",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -223,7 +218,7 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ApplicationResourceGrantResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -237,7 +232,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 	}
 
 	// Validate the plan
-	resp.Diagnostics.Append(plan.validate(ctx, r.client)...)
+	resp.Diagnostics.Append(plan.validate(ctx, r.Client)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -255,7 +250,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+			return r.Client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
 		},
 		"UpdateApplicationGrant",
 		framework.DefaultCustomError,
@@ -277,7 +272,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 func (r *ApplicationResourceGrantResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationResourceGrantResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -295,7 +290,7 @@ func (r *ApplicationResourceGrantResource) Delete(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.ApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.ApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteApplicationGrant",

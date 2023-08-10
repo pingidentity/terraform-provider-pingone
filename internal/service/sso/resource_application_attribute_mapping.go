@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -25,10 +24,7 @@ import (
 )
 
 // Types
-type ApplicationAttributeMappingResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type ApplicationAttributeMappingResource serviceClientType
 
 type ApplicationAttributeMappingResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
@@ -244,14 +240,13 @@ func (r *ApplicationAttributeMappingResource) Configure(ctx context.Context, req
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationAttributeMappingResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -266,7 +261,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 
 	var d diag.Diagnostics
 
-	applicationType, d := plan.getApplicationType(ctx, r.client)
+	applicationType, d := plan.getApplicationType(ctx, r.Client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -280,7 +275,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, r.client, isCoreAttribute)
+	applicationAttributeMapping, d := plan.expand(ctx, r.Client, isCoreAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -293,7 +288,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+				return r.Client.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
 			},
 			"CreateApplicationAttributeMapping",
 			framework.CustomErrorInvalidValue,
@@ -305,7 +300,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationAttributeMapping.GetId()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+				return r.Client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationAttributeMapping.GetId()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
 			},
 			"UpdateApplicationAttributeMapping",
 			framework.CustomErrorInvalidValue,
@@ -328,7 +323,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationAttributeMappingResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -347,7 +342,7 @@ func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneApplicationAttributeMapping",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -372,7 +367,7 @@ func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req reso
 func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ApplicationAttributeMappingResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -385,7 +380,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 		return
 	}
 
-	applicationType, d := plan.getApplicationType(ctx, r.client)
+	applicationType, d := plan.getApplicationType(ctx, r.Client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -399,7 +394,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, r.client, isCoreAttribute)
+	applicationAttributeMapping, d := plan.expand(ctx, r.Client, isCoreAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -411,7 +406,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+			return r.Client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
 		},
 		"UpdateApplicationAttributeMapping",
 		framework.CustomErrorInvalidValue,
@@ -433,7 +428,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationAttributeMappingResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -449,7 +444,7 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 	// Run the API call
 	if data.MappingType.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
 
-		applicationType, d := data.getApplicationType(ctx, r.client)
+		applicationType, d := data.getApplicationType(ctx, r.Client)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -466,7 +461,7 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 
 		data.Value = framework.StringToTF(coreAttributeData.defaultValue)
 
-		applicationAttributeMapping, d := data.expand(ctx, r.client, true)
+		applicationAttributeMapping, d := data.expand(ctx, r.Client, true)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -476,7 +471,7 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+				return r.Client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
 			},
 			"UpdateApplicationAttributeMapping",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -489,7 +484,7 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.client.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+				r, err := r.Client.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 				return nil, r, err
 			},
 			"DeleteApplicationAttributeMapping",

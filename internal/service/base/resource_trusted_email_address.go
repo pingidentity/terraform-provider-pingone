@@ -22,10 +22,7 @@ import (
 )
 
 // Types
-type TrustedEmailAddressResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type TrustedEmailAddressResource serviceClientType
 
 type TrustedEmailAddressResourceModel struct {
 	EmailDomainId types.String `tfsdk:"email_domain_id"`
@@ -138,14 +135,13 @@ func (r *TrustedEmailAddressResource) Configure(ctx context.Context, req resourc
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state TrustedEmailAddressResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -167,7 +163,7 @@ func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.C
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
+			return r.Client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
 		},
 		"CreateTrustedEmailAddress",
 		trustedEmailAddressAPIErrors,
@@ -189,7 +185,7 @@ func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.C
 func (r *TrustedEmailAddressResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *TrustedEmailAddressResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -208,7 +204,7 @@ func (r *TrustedEmailAddressResource) Read(ctx context.Context, req resource.Rea
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.TrustedEmailAddressesApi.ReadOneTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.TrustedEmailAddressesApi.ReadOneTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneTrustedEmailAddress",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -236,7 +232,7 @@ func (r *TrustedEmailAddressResource) Update(ctx context.Context, req resource.U
 func (r *TrustedEmailAddressResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *TrustedEmailAddressResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -254,7 +250,7 @@ func (r *TrustedEmailAddressResource) Delete(ctx context.Context, req resource.D
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.TrustedEmailAddressesApi.DeleteTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.TrustedEmailAddressesApi.DeleteTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteTrustedEmailAddress",

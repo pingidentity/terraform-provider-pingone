@@ -12,16 +12,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type UserRoleAssignmentsDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type UserRoleAssignmentsDataSource serviceClientType
 
 type UserRoleAssignmentsDataSourceModel struct {
 	Id              types.String `tfsdk:"id"`
@@ -154,14 +150,13 @@ func (r *UserRoleAssignmentsDataSource) Configure(ctx context.Context, req datas
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *UserRoleAssignmentsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *UserRoleAssignmentsDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -180,7 +175,7 @@ func (r *UserRoleAssignmentsDataSource) Read(ctx context.Context, req datasource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UserRoleAssignmentsApi.ReadUserRoleAssignments(ctx, data.EnvironmentId.ValueString(), data.UserId.ValueString()).Execute()
+			return r.Client.UserRoleAssignmentsApi.ReadUserRoleAssignments(ctx, data.EnvironmentId.ValueString(), data.UserId.ValueString()).Execute()
 		},
 		"ReadUserRoleAssignments",
 		framework.DefaultCustomError,

@@ -14,16 +14,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type BrandingThemeDefaultResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type BrandingThemeDefaultResource serviceClientType
 
 type brandingThemeDefaultResourceModel struct {
 	Id              types.String `tfsdk:"id"`
@@ -104,14 +100,13 @@ func (r *BrandingThemeDefaultResource) Configure(ctx context.Context, req resour
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *BrandingThemeDefaultResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state brandingThemeDefaultResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -133,7 +128,7 @@ func (r *BrandingThemeDefaultResource) Create(ctx context.Context, req resource.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, plan.EnvironmentId.ValueString(), plan.BrandingThemeId.ValueString()).BrandingThemeDefault(*brandingThemeDefault).Execute()
+			return r.Client.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, plan.EnvironmentId.ValueString(), plan.BrandingThemeId.ValueString()).BrandingThemeDefault(*brandingThemeDefault).Execute()
 		},
 		"UpdateBrandingThemeDefault",
 		framework.DefaultCustomError,
@@ -155,7 +150,7 @@ func (r *BrandingThemeDefaultResource) Create(ctx context.Context, req resource.
 func (r *BrandingThemeDefaultResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *brandingThemeDefaultResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -174,7 +169,7 @@ func (r *BrandingThemeDefaultResource) Read(ctx context.Context, req resource.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.BrandingThemesApi.ReadBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.BrandingThemesApi.ReadBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadBrandingThemeDefault",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -202,7 +197,7 @@ func (r *BrandingThemeDefaultResource) Update(ctx context.Context, req resource.
 func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *brandingThemeDefaultResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -215,7 +210,7 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 		return
 	}
 
-	bootstrapDefaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, r.client, data.EnvironmentId.ValueString())
+	bootstrapDefaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, r.Client, data.EnvironmentId.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -248,7 +243,7 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.BrandingThemesApi.CreateBrandingTheme(ctx, data.EnvironmentId.ValueString()).BrandingTheme(*defaultTheme).Execute()
+				return r.Client.BrandingThemesApi.CreateBrandingTheme(ctx, data.EnvironmentId.ValueString()).BrandingTheme(*defaultTheme).Execute()
 			},
 			"CreateBrandingTheme",
 			framework.DefaultCustomError,
@@ -265,7 +260,7 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), *bootstrapDefaultThemeId).BrandingThemeDefault(*brandingThemeDefault).Execute()
+			return r.Client.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), *bootstrapDefaultThemeId).BrandingThemeDefault(*brandingThemeDefault).Execute()
 		},
 		"UpdateBrandingThemeDefault",
 		framework.DefaultCustomError,
@@ -290,7 +285,7 @@ func (r *BrandingThemeDefaultResource) ImportState(ctx context.Context, req reso
 		return
 	}
 
-	defaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, r.client, attributes[0])
+	defaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, r.Client, attributes[0])
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return

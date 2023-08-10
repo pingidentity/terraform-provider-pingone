@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -26,7 +25,6 @@ import (
 type DigitalWalletApplicationResource struct {
 	client     *credentials.APIClient
 	mgmtClient *management.APIClient
-	region     model.RegionMapping
 }
 
 type DigitalWalletApplicationResourceModel struct {
@@ -140,7 +138,6 @@ func (r *DigitalWalletApplicationResource) Configure(ctx context.Context, req re
 
 	r.mgmtClient = preparedMgmtClient
 	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

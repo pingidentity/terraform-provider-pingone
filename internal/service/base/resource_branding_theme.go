@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -27,10 +26,7 @@ import (
 )
 
 // Types
-type BrandingThemeResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type BrandingThemeResource serviceClientType
 
 type brandingThemeResourceModel struct {
 	Id                   types.String `tfsdk:"id"`
@@ -333,14 +329,13 @@ func (r *BrandingThemeResource) Configure(ctx context.Context, req resource.Conf
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state brandingThemeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -366,7 +361,7 @@ func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.BrandingThemesApi.CreateBrandingTheme(ctx, plan.EnvironmentId.ValueString()).BrandingTheme(*brandingTheme).Execute()
+			return r.Client.BrandingThemesApi.CreateBrandingTheme(ctx, plan.EnvironmentId.ValueString()).BrandingTheme(*brandingTheme).Execute()
 		},
 		"CreateBrandingTheme",
 		framework.DefaultCustomError,
@@ -388,7 +383,7 @@ func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateR
 func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *brandingThemeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -407,7 +402,7 @@ func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadReque
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.BrandingThemesApi.ReadOneBrandingTheme(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.BrandingThemesApi.ReadOneBrandingTheme(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneBrandingTheme",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -432,7 +427,7 @@ func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadReque
 func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state brandingThemeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -458,7 +453,7 @@ func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.BrandingThemesApi.UpdateBrandingTheme(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).BrandingTheme(*brandingTheme).Execute()
+			return r.Client.BrandingThemesApi.UpdateBrandingTheme(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).BrandingTheme(*brandingTheme).Execute()
 		},
 		"UpdateBrandingTheme",
 		framework.DefaultCustomError,
@@ -480,7 +475,7 @@ func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateR
 func (r *BrandingThemeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *brandingThemeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -498,7 +493,7 @@ func (r *BrandingThemeResource) Delete(ctx context.Context, req resource.DeleteR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.BrandingThemesApi.DeleteBrandingTheme(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.BrandingThemesApi.DeleteBrandingTheme(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteBrandingTheme",

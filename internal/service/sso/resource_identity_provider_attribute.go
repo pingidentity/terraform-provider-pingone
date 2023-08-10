@@ -15,16 +15,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type IdentityProviderAttributeResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type IdentityProviderAttributeResource serviceClientType
 
 type IdentityProviderAttributeResourceModel struct {
 	Id                 types.String `tfsdk:"id"`
@@ -181,14 +177,13 @@ func (r *IdentityProviderAttributeResource) Configure(ctx context.Context, req r
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state IdentityProviderAttributeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -209,7 +204,7 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 	}
 
 	// Build the model for the API
-	identityProviderAttribute, d := plan.expand(ctx, r.client, isCoreAttribute)
+	identityProviderAttribute, d := plan.expand(ctx, r.Client, isCoreAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -222,7 +217,7 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.IdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
+				return r.Client.IdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
 			},
 			"CreateIdentityProviderAttribute",
 			framework.DefaultCustomError,
@@ -234,7 +229,7 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), identityProviderAttribute.GetId()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
+				return r.Client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), identityProviderAttribute.GetId()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
 			},
 			"UpdateIdentityProviderAttribute",
 			framework.DefaultCustomError,
@@ -257,7 +252,7 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *IdentityProviderAttributeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -276,7 +271,7 @@ func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneIdentityProviderAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -301,7 +296,7 @@ func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resour
 func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state IdentityProviderAttributeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -322,7 +317,7 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 	}
 
 	// Build the model for the API
-	identityProviderAttributeMapping, d := plan.expand(ctx, r.client, isCoreAttribute)
+	identityProviderAttributeMapping, d := plan.expand(ctx, r.Client, isCoreAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -334,7 +329,7 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*identityProviderAttributeMapping).Execute()
+			return r.Client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*identityProviderAttributeMapping).Execute()
 		},
 		"UpdateIdentityProviderAttribute",
 		framework.DefaultCustomError,
@@ -356,7 +351,7 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *IdentityProviderAttributeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -372,7 +367,7 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 	// Run the API call
 	if data.MappingType.Equal(types.StringValue(string(management.ENUMIDENTITYPROVIDERATTRIBUTEMAPPINGTYPE_CORE))) {
 
-		idpType, d := data.getIdentityProviderType(ctx, r.client)
+		idpType, d := data.getIdentityProviderType(ctx, r.Client)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -389,7 +384,7 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 
 		data.Value = framework.StringToTF(coreAttributeData.defaults[*idpType])
 
-		idpMapping, d := data.expand(ctx, r.client, true)
+		idpMapping, d := data.expand(ctx, r.Client, true)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -399,7 +394,7 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).IdentityProviderAttribute(*idpMapping).Execute()
+				return r.Client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).IdentityProviderAttribute(*idpMapping).Execute()
 			},
 			"UpdateIdentityProviderAttribute",
 			framework.DefaultCustomError,
@@ -413,7 +408,7 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.client.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
+				r, err := r.Client.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
 				return nil, r, err
 			},
 			"DeleteIdentityProviderAttribute",

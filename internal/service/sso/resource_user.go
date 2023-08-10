@@ -15,17 +15,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type UserResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type UserResource serviceClientType
 
 type UserResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -142,14 +138,13 @@ func (r *UserResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state UserResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -171,7 +166,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.CreateUser(ctx, plan.EnvironmentId.ValueString()).User(*user).Execute()
+			return r.Client.UsersApi.CreateUser(ctx, plan.EnvironmentId.ValueString()).User(*user).Execute()
 		},
 		"CreateUser",
 		framework.DefaultCustomError,
@@ -188,7 +183,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), userResponse.GetId()).UserEnabled(*userEnabled).Execute()
+			return r.Client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), userResponse.GetId()).UserEnabled(*userEnabled).Execute()
 		},
 		"UpdateUserEnabled",
 		framework.DefaultCustomError,
@@ -207,7 +202,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *UserResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -226,7 +221,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.ReadUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.UsersApi.ReadUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadUser",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -248,7 +243,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadUserEnabled",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -270,7 +265,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state UserResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -292,7 +287,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.UpdateUserPut(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).User(*user).Execute()
+			return r.Client.UsersApi.UpdateUserPut(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).User(*user).Execute()
 		},
 		"UpdateUserPut",
 		framework.DefaultCustomError,
@@ -308,7 +303,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserEnabled(*userEnabled).Execute()
+			return r.Client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserEnabled(*userEnabled).Execute()
 		},
 		"UpdateUserEnabled",
 		framework.DefaultCustomError,
@@ -327,7 +322,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *UserResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -345,7 +340,7 @@ func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.UsersApi.DeleteUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.UsersApi.DeleteUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteUser",

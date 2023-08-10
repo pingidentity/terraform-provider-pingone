@@ -14,17 +14,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type PopulationResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type PopulationResource serviceClientType
 
 type PopulationResourceModel struct {
 	Id               types.String `tfsdk:"id"`
@@ -119,14 +115,13 @@ func (r *PopulationResource) Configure(ctx context.Context, req resource.Configu
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PopulationResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -143,7 +138,7 @@ func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequ
 	population := plan.expand()
 
 	// Run the API call
-	response, d := PingOnePopulationCreate(ctx, r.client, plan.EnvironmentId.ValueString(), *population)
+	response, d := PingOnePopulationCreate(ctx, r.Client, plan.EnvironmentId.ValueString(), *population)
 
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
@@ -161,7 +156,7 @@ func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *PopulationResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -180,7 +175,7 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOnePopulation",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -205,7 +200,7 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PopulationResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -227,7 +222,7 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
+			return r.Client.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
 		},
 		"UpdatePopulation",
 		framework.DefaultCustomError,
@@ -249,7 +244,7 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *PopulationResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -267,7 +262,7 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.PopulationsApi.DeletePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.PopulationsApi.DeletePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeletePopulation",

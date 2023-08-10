@@ -14,17 +14,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type MFAPoliciesResource struct {
-	client *mfa.APIClient
-	region model.RegionMapping
-}
+type MFAPoliciesResource serviceClientType
 
 type MFAPoliciesResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -125,14 +121,13 @@ func (r *MFAPoliciesResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *MFAPoliciesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state MFAPoliciesResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -158,7 +153,7 @@ func (r *MFAPoliciesResource) Create(ctx context.Context, req resource.CreateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, plan.EnvironmentId.ValueString()).ContentType(mfa.ENUMDEVICEAUTHENTICATIONPOLICYPOSTCONTENTTYPE_VND_PINGIDENTITY_DEVICE_AUTHENTICATION_POLICY_FIDO2_MIGRATEJSON).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
+			return r.Client.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, plan.EnvironmentId.ValueString()).ContentType(mfa.ENUMDEVICEAUTHENTICATIONPOLICYPOSTCONTENTTYPE_VND_PINGIDENTITY_DEVICE_AUTHENTICATION_POLICY_FIDO2_MIGRATEJSON).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
 		},
 		"CreateDeviceAuthenticationPolicies",
 		framework.DefaultCustomError,

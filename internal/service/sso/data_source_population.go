@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -26,10 +25,7 @@ import (
 )
 
 // Types
-type PopulationDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type PopulationDataSource serviceClientType
 
 type PopulationDataSourceModel struct {
 	Description      types.String `tfsdk:"description"`
@@ -128,14 +124,13 @@ func (r *PopulationDataSource) Configure(ctx context.Context, req datasource.Con
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *PopulationDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -181,7 +176,7 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return r.Client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		},
 		"ReadAllPopulations",
 		framework.DefaultCustomError,

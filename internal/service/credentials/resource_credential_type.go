@@ -29,10 +29,7 @@ import (
 )
 
 // Types
-type CredentialTypeResource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type CredentialTypeResource serviceClientType
 
 type CredentialTypeResourceModel struct {
 	Id                 types.String `tfsdk:"id"`
@@ -439,14 +436,13 @@ func (r *CredentialTypeResource) Configure(ctx context.Context, req resource.Con
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *CredentialTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CredentialTypeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -474,7 +470,7 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialTypesApi.CreateCredentialType(ctx, plan.EnvironmentId.ValueString()).CredentialType(*credentialType).Execute()
+			return r.Client.CredentialTypesApi.CreateCredentialType(ctx, plan.EnvironmentId.ValueString()).CredentialType(*credentialType).Execute()
 		},
 		"CreateCredentialType",
 		framework.DefaultCustomError,
@@ -497,7 +493,7 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CredentialTypeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -516,7 +512,7 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialTypesApi.ReadOneCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.CredentialTypesApi.ReadOneCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneCredentialType",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -541,7 +537,7 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 func (r *CredentialTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state CredentialTypeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -567,7 +563,7 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialTypesApi.UpdateCredentialType(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CredentialType(*credentialType).Execute()
+			return r.Client.CredentialTypesApi.UpdateCredentialType(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CredentialType(*credentialType).Execute()
 		},
 		"UpdateCredentialType",
 		framework.DefaultCustomError,
@@ -589,7 +585,7 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *CredentialTypeResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -607,7 +603,7 @@ func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.Delete
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.CredentialTypesApi.DeleteCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.CredentialTypesApi.DeleteCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteCredentialType",
