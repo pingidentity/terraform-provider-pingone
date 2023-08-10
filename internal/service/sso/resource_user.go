@@ -14,7 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -22,7 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -31,16 +33,16 @@ import (
 
 // Types
 type UserResource struct {
-	client *management.APIClient
-	region model.RegionMapping
+	client    *management.APIClient
+	mfaClient *mfa.APIClient
 }
 
 type UserResourceModel struct {
-	Id                types.String `tfsdk:"id"`
-	EnvironmentId     types.String `tfsdk:"environment_id"`
-	Username          types.String `tfsdk:"username"`
-	Email             types.String `tfsdk:"email"`
-	EmailVerified     types.Bool   `tfsdk:"email_verified"`
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	Username      types.String `tfsdk:"username"`
+	Email         types.String `tfsdk:"email"`
+	//EmailVerified     types.Bool   `tfsdk:"email_verified"`
 	Status            types.String `tfsdk:"status"`
 	Enabled           types.Bool   `tfsdk:"enabled"`
 	PopulationId      types.String `tfsdk:"population_id"`
@@ -253,15 +255,19 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"The default value of `PING_ONE` is set when a value for `id` is not provided in this object.",
 	)
 
+	userLifecycleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the user's identity lifecycle information.",
+	).RequiresReplace()
+
 	userLifecycleStatusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the status of the account lifecycle.",
 	).AllowedValuesEnum(management.AllowedEnumUserLifecycleStatusEnumValues).AppendMarkdownString(
 		" This property value is only allowed to be set when importing a user to set the initial account status. If the initial status is set to `VERIFICATION_REQUIRED` and an email address is provided, a verification email is sent.",
-	)
+	).RequiresReplace()
 
 	userLifecycleSuppressVerificationCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether to suppress the verification code when the user is imported and the `status` is set to `VERIFICATION_REQUIRED`. If this property is set to `true`, no verification email is sent to the user. If this property is omitted or set to `false`, a verification email is sent automatically to the user.",
-	)
+	).RequiresReplace()
 
 	localeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the user's default location. This may be explicitly set to null when updating a user to unset it. This is used for purposes of localizing such items as currency, date time format, or numerical representations. If provided, it must be a valid language tag as defined in [RFC 5646](https://www.rfc-editor.org/rfc/rfc5646.html). The following are example tags: `fr`, `en-US`, `es-419`, `az-Arab`, `man-Nkoo-GN`. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.",
@@ -339,7 +345,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A string that indicates whether ID verification can be done for the user.",
 	).AllowedValuesEnum(management.AllowedEnumUserVerifyStatusEnumValues).AppendMarkdownString(
 		"If the user verification status is `DISABLED`, a new verification status cannot be created for that user until the status is changed to `ENABLED`.",
-	)
+	).RequiresReplace()
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -374,12 +380,16 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				},
 			},
 
-			"email_verified": schema.BoolAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown(
-					"A boolean that specifies whether the user's email is verified. An email address can be verified during account verification. If the email address used to request the verification code is the same as the user,s email at verification time (and the verification code is valid), then the email is verified. The value of this property can be set on user import.",
-				).Description,
-				Computed: true,
-			},
+			// "email_verified": schema.BoolAttribute{
+			// 	Description: framework.SchemaAttributeDescriptionFromMarkdown(
+			// 		"A boolean that specifies whether the user's email is verified. An email address can be verified during account verification. If the email address used to request the verification code is the same as the user,s email at verification time (and the verification code is valid), then the email is verified. The value of this property can be set on user import.",
+			// 	).Description,
+			// 	Computed: true,
+
+			// 	PlanModifiers: []planmodifier.Bool{
+			// 		boolplanmodifier.UseStateForUnknown(),
+			// 	},
+			// },
 
 			"status": schema.StringAttribute{
 				Description:         statusDescription.Description,
@@ -408,7 +418,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 			"population_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown(
-					"The identifier of the population resource associated with the user.",
+					"The identifier of the population resource associated with the user.  Must be a valid PingOne resource ID.",
 				).Description,
 				Required: true,
 
@@ -574,11 +584,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 
 			"user_lifecycle": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown(
-					"A single object that specifies the user's identity lifecycle information.",
-				).Description,
-				Optional: true,
-				Computed: true,
+				Description:         userLifecycleDescription.Description,
+				MarkdownDescription: userLifecycleDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
@@ -601,13 +610,25 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumUserLifecycleStatusEnumValues)...),
 						},
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
 					},
 
 					"suppress_verification_code": schema.BoolAttribute{
 						Description:         userLifecycleSuppressVerificationCodeDescription.Description,
 						MarkdownDescription: userLifecycleSuppressVerificationCodeDescription.MarkdownDescription,
 						Optional:            true,
+
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.RequiresReplace(),
+						},
 					},
+				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
 				},
 			},
 
@@ -892,6 +913,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumUserVerifyStatusEnumValues)...),
 				},
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 		},
 	}
@@ -909,9 +934,9 @@ func (r *UserResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		return
 	}
 
-	if plan.EmailVerified.IsUnknown() {
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("email_verified"), types.BoolNull())...)
-	}
+	// if plan.EmailVerified.IsUnknown() {
+	// 	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("email_verified"), types.BoolNull())...)
+	// }
 
 	// Deprecated start
 	if !plan.Enabled.IsNull() && !plan.Enabled.IsUnknown() {
@@ -972,8 +997,18 @@ func (r *UserResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
+	preparedMFAClient, err := prepareMFAClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"MFA Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
 	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.mfaClient = preparedMFAClient
 }
 
 func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -993,7 +1028,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	// Build the model for the API
-	user, userEnabled, d := plan.expand(ctx)
+	user, userEnabled, userMFAEnabled, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1034,6 +1069,23 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	// Update the MFA enabled attribute
+	var updateUserMfaEnabledResponse *mfa.UserMFAEnabled
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return r.mfaClient.EnableUsersMFAApi.UpdateUserMFAEnabled(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).UserMFAEnabled(*userMFAEnabled).Execute()
+		},
+		"UpdateUserMFAEnabled",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&updateUserMfaEnabledResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Read the user object again, as other attributes may have changed following the update API calls
 	var finalUserResponse *management.User
 	resp.Diagnostics.Append(framework.ParseResponse(
@@ -1055,7 +1107,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(finalUserResponse /*, updateUserEnabledResponse*/)...)
+	resp.Diagnostics.Append(state.toState(ctx, finalUserResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1118,7 +1170,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response /*, responseEnabled*/)...)
+	resp.Diagnostics.Append(data.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1139,7 +1191,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// Build the model for the API
-	user, userEnabled, d := plan.expand(ctx)
+	user, userEnabled, userMFAEnabled, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1177,6 +1229,23 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
+	// Update the MFA enabled attribute
+	var updateUserMfaEnabledResponse *mfa.UserMFAEnabled
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return r.mfaClient.EnableUsersMFAApi.UpdateUserMFAEnabled(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserMFAEnabled(*userMFAEnabled).Execute()
+		},
+		"UpdateUserMFAEnabled",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&updateUserMfaEnabledResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var finalUserResponse *management.User
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
@@ -1197,7 +1266,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(finalUserResponse /*, updateUserEnabledResponse*/)...)
+	resp.Diagnostics.Append(state.toState(ctx, finalUserResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1252,7 +1321,7 @@ func (r *UserResource) ImportState(ctx context.Context, req resource.ImportState
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *management.UserEnabled, diag.Diagnostics) {
+func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *management.UserEnabled, *mfa.UserMFAEnabled, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	userData := management.NewUser(p.Email.ValueString(), p.Username.ValueString())
@@ -1278,7 +1347,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, nil, nil, diags
 		}
 
 		v := management.NewUserAccount(
@@ -1296,7 +1365,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, nil, nil, diags
 		}
 
 		v := management.NewUserAddress()
@@ -1336,7 +1405,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, nil, nil, diags
 		}
 
 		if !plan.Id.IsNull() && !plan.Id.IsUnknown() {
@@ -1354,7 +1423,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, nil, nil, diags
 		}
 
 		v := management.NewUserLifecycle()
@@ -1374,10 +1443,6 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 		userData.SetLocale(p.Locale.ValueString())
 	}
 
-	if !p.MFAEnabled.IsNull() && !p.MFAEnabled.IsUnknown() {
-		userData.SetMfaEnabled(p.MFAEnabled.ValueBool())
-	}
-
 	if !p.MobilePhone.IsNull() && !p.MobilePhone.IsUnknown() {
 		userData.SetMobilePhone(p.MobilePhone.ValueString())
 	}
@@ -1389,7 +1454,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, nil, nil, diags
 		}
 
 		v := management.NewUserName()
@@ -1432,7 +1497,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, nil, nil, diags
 		}
 
 		v := management.NewUserPassword()
@@ -1460,7 +1525,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, nil, nil, diags
 		}
 
 		v := management.NewUserPhoto(plan.Href.ValueString())
@@ -1492,10 +1557,12 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 		userData.SetVerifyStatus(management.EnumUserVerifyStatus(p.VerifyStatus.ValueString()))
 	}
 
-	return userData, userEnabledData, diags
+	userMFAEnabledData := mfa.NewUserMFAEnabled(p.MFAEnabled.ValueBool())
+
+	return userData, userEnabledData, userMFAEnabledData, diags
 }
 
-func (p *UserResourceModel) toState(apiObject *management.User /*, apiObjectEnabled *management.UserEnabled*/) diag.Diagnostics {
+func (p *UserResourceModel) toState(ctx context.Context, apiObject *management.User) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil /*|| apiObjectEnabled == nil*/ {
@@ -1511,7 +1578,7 @@ func (p *UserResourceModel) toState(apiObject *management.User /*, apiObjectEnab
 	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
 	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
 	p.Email = framework.StringOkToTF(apiObject.GetEmailOk())
-	p.EmailVerified = framework.BoolOkToTF(apiObject.GetEmailVerifiedOk())
+	//p.EmailVerified = framework.BoolOkToTF(apiObject.GetEmailVerifiedOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 
 	// deprecated start
@@ -1535,7 +1602,8 @@ func (p *UserResourceModel) toState(apiObject *management.User /*, apiObjectEnab
 	p.IdentityProvider, d = p.userIdentityProviderOkToTF(apiObject.GetIdentityProviderOk())
 	diags = append(diags, d...)
 
-	p.Lifecycle, d = p.userLifecycleOkToTF(apiObject.GetLifecycleOk())
+	lifecycle, lifecycleOk := apiObject.GetLifecycleOk()
+	p.Lifecycle, d = p.userLifecycleOkToTF(ctx, lifecycle, lifecycleOk)
 	diags = append(diags, d...)
 
 	p.Locale = framework.StringOkToTF(apiObject.GetLocaleOk())
@@ -1545,7 +1613,9 @@ func (p *UserResourceModel) toState(apiObject *management.User /*, apiObjectEnab
 	diags = append(diags, d...)
 
 	p.Nickname = framework.StringOkToTF(apiObject.GetNicknameOk())
-	p.Password, d = p.userPasswordOkToTF(apiObject.GetPasswordOk())
+
+	password, passwordOk := apiObject.GetPasswordOk()
+	p.Password, d = p.userPasswordOkToTF(ctx, password, passwordOk)
 	diags = append(diags, d...)
 
 	p.Photo, d = p.photoOkToTF(apiObject.GetPhotoOk())
@@ -1619,16 +1689,25 @@ func (p *UserResourceModel) userIdentityProviderOkToTF(apiObject *management.Use
 	return objValue, diags
 }
 
-func (p *UserResourceModel) userLifecycleOkToTF(apiObject *management.UserLifecycle, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *UserResourceModel) userLifecycleOkToTF(ctx context.Context, apiObject *management.UserLifecycle, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(userLifecycleTFObjectTypes), diags
 	}
 
+	var plan UserLifecycleResourceModel
+	diags.Append(p.Lifecycle.As(ctx, &plan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return types.ObjectNull(userLifecycleTFObjectTypes), diags
+	}
+
 	objMap := map[string]attr.Value{
 		"status":                     framework.EnumOkToTF(apiObject.GetStatusOk()),
-		"suppress_verification_code": framework.BoolOkToTF(apiObject.GetSuppressVerificationCodeOk()),
+		"suppress_verification_code": plan.SuppressVerificationCode,
 	}
 
 	objValue, d := types.ObjectValue(userLifecycleTFObjectTypes, objMap)
@@ -1659,18 +1738,28 @@ func (p *UserResourceModel) userNameOkToTF(apiObject *management.UserName, ok bo
 	return objValue, diags
 }
 
-func (p *UserResourceModel) userPasswordOkToTF(apiObject *management.UserPassword, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *UserResourceModel) userPasswordOkToTF(ctx context.Context, apiObject *management.UserPassword, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil {
+	// The API object might be nil even though the plan is not.  We need to fill the state from the plan if it is
+	if (!ok || apiObject == nil) && p.Password.IsNull() {
+		return types.ObjectNull(userPasswordTFObjectTypes), diags
+	}
+
+	var plan UserPasswordResourceModel
+	diags.Append(p.Password.As(ctx, &plan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
 		return types.ObjectNull(userPasswordTFObjectTypes), diags
 	}
 
 	externalObject := types.ObjectNull(userPasswordExternalTFObjectTypes)
 
 	objMap := map[string]attr.Value{
-		"force_change":  framework.BoolOkToTF(apiObject.GetForceChangeOk()),
-		"initial_value": framework.StringOkToTF(apiObject.GetValueOk()),
+		"force_change":  plan.ForceChange,
+		"initial_value": plan.InitialValue,
 		"external":      externalObject,
 	}
 

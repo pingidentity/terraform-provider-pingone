@@ -9,6 +9,8 @@ description: |-
 
 Resource to create and manage PingOne users.
 
+!> This resource is designed to support the creation of non-human users for testing and demo purposes, and is not designed for user migration activities.  Bulk user migration can be performed using the [PingOne User Import Tool](https://github.com/pingidentity/pingone-user-import-tool).
+
 ## Example Usage
 
 ```terraform
@@ -37,7 +39,7 @@ resource "pingone_user" "foo" {
 
 - `email` (String) A string that specifies the user's email address, which must be provided and valid. For more information about email address formatting, see section 3.4 of [RFC 2822, Internet Message Format](http://www.faqs.org/rfcs/rfc2822.html).
 - `environment_id` (String) The ID of the environment to create the user in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `population_id` (String) The identifier of the population resource associated with the user.
+- `population_id` (String) The identifier of the population resource associated with the user.  Must be a valid PingOne resource ID.
 - `username` (String) A string that specifies the user name, which must be provided and must be unique within an environment. The `username` must either be a well-formed email address or a string. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace
 
 ### Optional
@@ -60,12 +62,11 @@ resource "pingone_user" "foo" {
 - `timezone` (String) A string that specifies the user's time zone. This can be explicitly set to null when updating a user to unset it. If provided, it must conform with the IANA Time Zone database format [RFC 6557](https://www.rfc-editor.org/rfc/rfc6557.html), also known as the "Olson" time zone database format [Olson-TZ](https://www.iana.org/time-zones) for example, `America/Los_Angeles`.
 - `title` (String) A string that specifies the user's title, such as `Vice President`. This can be explicitly set to null when updating a user to unset it. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
 - `type` (String) A string that specifies the user's type, which is optional. This can be explicitly set to null when updating a user to unset it. This attribute is organization-specific and has no special meaning within the PingOne platform. It is a free-text field that could have values of (for example) `Contractor`, `Employee`, `Intern`, `Temp`, `External`, and `Unknown`. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
-- `user_lifecycle` (Attributes) A single object that specifies the user's identity lifecycle information. (see [below for nested schema](#nestedatt--user_lifecycle))
-- `verify_status` (String) A string that indicates whether ID verification can be done for the user.  Options are `DISABLED`, `ENABLED`, `NOT_INITIATED`.  If the user verification status is `DISABLED`, a new verification status cannot be created for that user until the status is changed to `ENABLED`.
+- `user_lifecycle` (Attributes) A single object that specifies the user's identity lifecycle information.  This field is immutable and will trigger a replace plan if changed. (see [below for nested schema](#nestedatt--user_lifecycle))
+- `verify_status` (String) A string that indicates whether ID verification can be done for the user.  Options are `DISABLED`, `ENABLED`, `NOT_INITIATED`.  If the user verification status is `DISABLED`, a new verification status cannot be created for that user until the status is changed to `ENABLED`.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
-- `email_verified` (Boolean) A boolean that specifies whether the user's email is verified. An email address can be verified during account verification. If the email address used to request the verification code is the same as the user,s email at verification time (and the verification code is valid), then the email is verified. The value of this property can be set on user import.
 - `id` (String) The ID of this resource.
 
 <a id="nestedatt--account"></a>
@@ -163,8 +164,8 @@ Required:
 
 Optional:
 
-- `status` (String) A string that specifies the status of the account lifecycle.  Options are `ACCOUNT_OK`, `VERIFICATION_REQUIRED`.  This property value is only allowed to be set when importing a user to set the initial account status. If the initial status is set to `VERIFICATION_REQUIRED` and an email address is provided, a verification email is sent.
-- `suppress_verification_code` (Boolean) A boolean that specifies whether to suppress the verification code when the user is imported and the `status` is set to `VERIFICATION_REQUIRED`. If this property is set to `true`, no verification email is sent to the user. If this property is omitted or set to `false`, a verification email is sent automatically to the user.
+- `status` (String) A string that specifies the status of the account lifecycle.  Options are `ACCOUNT_OK`, `VERIFICATION_REQUIRED`.  This property value is only allowed to be set when importing a user to set the initial account status. If the initial status is set to `VERIFICATION_REQUIRED` and an email address is provided, a verification email is sent.  This field is immutable and will trigger a replace plan if changed.
+- `suppress_verification_code` (Boolean) A boolean that specifies whether to suppress the verification code when the user is imported and the `status` is set to `VERIFICATION_REQUIRED`. If this property is set to `true`, no verification email is sent to the user. If this property is omitted or set to `false`, a verification email is sent automatically to the user.  This field is immutable and will trigger a replace plan if changed.
 
 ## Import
 
