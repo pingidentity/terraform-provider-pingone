@@ -32,6 +32,7 @@ func Resources() []func() resource.Resource {
 		NewPhoneDeliverySettingsResource,
 		NewSystemApplicationResource,
 		NewTrustedEmailAddressResource,
+		NewTrustedEmailDomainResource,
 	}
 }
 
