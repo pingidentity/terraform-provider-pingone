@@ -29,6 +29,7 @@ func Resources() []func() resource.Resource {
 		NewPhoneDeliverySettingsResource,
 		NewSystemApplicationResource,
 		NewTrustedEmailAddressResource,
+		NewWebhookResource,
 	}
 }
 
