@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -33,8 +34,9 @@ import (
 
 // Types
 type VerifyPolicyResource struct {
-	client *verify.APIClient
-	region model.RegionMapping
+	client     *verify.APIClient
+	mgmtClient *management.APIClient
+	region     model.RegionMapping
 }
 
 type verifyPolicyResourceModel struct {
@@ -1280,7 +1282,7 @@ func (r *VerifyPolicyResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
+	preparedClient, err := prepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -1290,6 +1292,18 @@ func (r *VerifyPolicyResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
+	// management client is used to perform checks for the prerequisite native application
+	preparedMgmtClient, err := prepareMgmtClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
+	r.mgmtClient = preparedMgmtClient
 	r.client = preparedClient
 	r.region = resourceConfig.Client.API.Region
 }

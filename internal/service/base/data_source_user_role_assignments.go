@@ -144,7 +144,7 @@ func (r *UserRoleAssignmentsDataSource) Configure(ctx context.Context, req datas
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
+	preparedClient, err := prepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

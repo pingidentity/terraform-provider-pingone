@@ -198,7 +198,7 @@ func (r *NotificationSettingsEmailResource) Configure(ctx context.Context, req r
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
+	preparedClient, err := prepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

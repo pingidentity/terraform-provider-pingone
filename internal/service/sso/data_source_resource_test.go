@@ -65,10 +65,10 @@ func TestAccResourceDataSource_ByNameSystem(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "openid"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "OPENID_CONNECT"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "audience"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "access_token_validity_seconds"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "introspect_endpoint_auth_method"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "client_secret"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "audience", ""),
+					resource.TestCheckResourceAttr(dataSourceFullName, "access_token_validity_seconds", "0"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "introspect_endpoint_auth_method", ""),
+					resource.TestCheckResourceAttr(dataSourceFullName, "client_secret", ""),
 				),
 			},
 		},
@@ -122,7 +122,7 @@ func TestAccResourceDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccResourceDataSourceConfig_NotFoundByName(resourceName),
-				ExpectError: regexp.MustCompile("Cannot find resource from name"),
+				ExpectError: regexp.MustCompile("Cannot find resource doesnotexist"),
 			},
 			{
 				Config:      testAccResourceDataSourceConfig_NotFoundByID(resourceName),

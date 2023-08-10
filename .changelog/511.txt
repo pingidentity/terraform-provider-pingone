@@ -1,3 +1,0 @@
-```release-note:note
-Code optimisation for all resources and data sources to remove duplicate service client code.
-```

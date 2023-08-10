@@ -28,8 +28,8 @@ resource "pingone_custom_domain_verify" "my_custom_domain" {
 
 ### Required
 
-- `custom_domain_id` (String) The ID of the custom domain to verify.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `environment_id` (String) The ID of the environment to verify the custom domain in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `custom_domain_id` (String) The ID of the custom domain to verify.
+- `environment_id` (String) The ID of the environment to create the certificate in.
 
 ### Optional
 
@@ -39,11 +39,11 @@ resource "pingone_custom_domain_verify" "my_custom_domain" {
 
 - `domain_name` (String) A string that specifies the domain name in use.
 - `id` (String) The ID of this resource.
-- `status` (String) A string that specifies the status of the custom domain.  Options are `ACTIVE`, `SSL_CERTIFICATE_REQUIRED`, `VERIFICATION_REQUIRED`.
+- `status` (String) A string that specifies the status of the custom domain. Options are `ACTIVE`, `VERIFICATION_REQUIRED` and `SSL_CERTIFICATE_REQUIRED`.
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+- `create` (String)

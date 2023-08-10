@@ -8,17 +8,9 @@ resource "pingone_resource" "my_resource" {
   name = "My resource"
 }
 
-resource "pingone_resource_attribute" "my_custom_resource_attribute" {
+resource "pingone_resource_attribute" "my_resource_attribute" {
   environment_id = pingone_environment.my_environment.id
-  resource_name  = pingone_resource.my_resource.name
-
-  name  = "example_attribute"
-  value = "$${user.name.family}"
-}
-
-resource "pingone_resource_attribute" "my_openid_connect_resource_attribute" {
-  environment_id = pingone_environment.my_environment.id
-  resource_name  = "openid"
+  resource_id    = pingone_resource.my_resource.id
 
   name  = "example_attribute"
   value = "$${user.name.family}"

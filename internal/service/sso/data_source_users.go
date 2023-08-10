@@ -132,7 +132,7 @@ func (r *UsersDataSource) Configure(ctx context.Context, req datasource.Configur
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
+	preparedClient, err := prepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

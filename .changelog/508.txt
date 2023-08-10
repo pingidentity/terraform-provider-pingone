@@ -1,3 +1,0 @@
-```release-note:note
-`resource/pingone_trusted_email_domain`: Migrated to plugin framework.
-```

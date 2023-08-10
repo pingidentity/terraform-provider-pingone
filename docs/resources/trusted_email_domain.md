@@ -29,7 +29,7 @@ resource "pingone_trusted_email_domain" "my_custom_email_domain" {
 ### Required
 
 - `domain_name` (String) A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).
-- `environment_id` (String) The ID of the environment to add the trusted email domain in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to create the certificate in.
 
 ### Read-Only
 

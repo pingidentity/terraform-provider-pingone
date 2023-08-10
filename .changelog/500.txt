@@ -1,3 +1,0 @@
-```release-note:bug
-`resource/pingone_mfa_policy`: Fixed blocking error on plan when MFA device policy is removed outside of Terraform.
-```

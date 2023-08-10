@@ -29,14 +29,14 @@ resource "pingone_custom_domain" "my_custom_domain" {
 ### Required
 
 - `domain_name` (String) A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).
-- `environment_id` (String) The ID of the environment to associate the custom domain with.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to create the certificate in.
 
 ### Read-Only
 
-- `canonical_name` (String) A string that specifies the domain name that should be used as the value of the CNAME record in the customer's DNS.
+- `canonical_name` (String) A string that specifies the domain name that should be used as the value of the CNAME record in the customer’s DNS.
 - `certificate_expires_at` (String) The time when the certificate expires.  If this property is not present, it indicates that an SSL certificate has not been setup for this custom domain.
 - `id` (String) The ID of this resource.
-- `status` (String) A string that specifies the status of the custom domain.  Options are `ACTIVE`, `SSL_CERTIFICATE_REQUIRED`, `VERIFICATION_REQUIRED`.
+- `status` (String) A string that specifies the status of the custom domain. Options are `ACTIVE`, `VERIFICATION_REQUIRED` and `SSL_CERTIFICATE_REQUIRED`.
 
 ## Import
 

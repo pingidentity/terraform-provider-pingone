@@ -105,7 +105,7 @@ func (r *TrustedEmailDomainDataSource) Configure(ctx context.Context, req dataso
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
+	preparedClient, err := prepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

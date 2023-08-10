@@ -237,7 +237,7 @@ func (r *KeyRotationPolicyResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
+	preparedClient, err := prepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

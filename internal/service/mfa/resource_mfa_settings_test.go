@@ -1,7 +1,6 @@
 package mfa_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -14,71 +13,6 @@ import (
 
 func testAccCheckMFASettingsDestroy(s *terraform.State) error {
 	return nil
-}
-
-func testAccGetMFASettingsIDs(resourceName string, environmentID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
-
-func TestAccMFASettings_RemovalDrift(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_settings.%s", resourceName)
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	var environmentID string
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFASettingsDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName),
-				Check:  testAccGetMFASettingsIDs(resourceFullName, &environmentID),
-			},
-			// Replan after removal preconfig
-			{
-				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.MFAAPIClient
-
-					if environmentID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s", environmentID)
-					}
-
-					_, _, err = apiClient.MFASettingsApi.ResetMFASettings(ctx, environmentID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to reset MFA settings: %v", err)
-					}
-				},
-				RefreshState:       true,
-				ExpectNonEmptyPlan: true,
-			},
-		},
-	})
 }
 
 func TestAccMFASettings_Full(t *testing.T) {

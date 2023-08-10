@@ -19,7 +19,6 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -118,7 +117,7 @@ func (r *DigitalWalletApplicationResource) Configure(ctx context.Context, req re
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
+	preparedClient, err := prepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -129,7 +128,7 @@ func (r *DigitalWalletApplicationResource) Configure(ctx context.Context, req re
 	}
 
 	// management client is used to perform checks for the prerequisite native application
-	preparedMgmtClient, err := sso.PrepareClient(ctx, resourceConfig)
+	preparedMgmtClient, err := prepareMgmtClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

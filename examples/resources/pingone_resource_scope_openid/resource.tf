@@ -2,9 +2,15 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
+data "pingone_resource" "openid" {
+  environment_id = pingone_environment.my_environment.id
+
+  name = "openid"
+}
+
 resource "pingone_resource_attribute" "my_resource_attribute" {
   environment_id = pingone_environment.my_environment.id
-  resource_name  = "openid"
+  resource_id    = data.pingone_resource.openid.id
 
   name  = "exampleAttribute"
   value = "$${user.name.given}"

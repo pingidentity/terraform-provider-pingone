@@ -50,8 +50,9 @@ type pingOneProviderModel struct {
 }
 
 type pingOneProviderServiceEndpointsModel struct {
-	AuthHostname types.String `tfsdk:"auth_hostname"`
-	APIHostname  types.String `tfsdk:"api_hostname"`
+	AuthHostname          types.String `tfsdk:"auth_hostname"`
+	APIHostname           types.String `tfsdk:"api_hostname"`
+	AgreementMgmtHostname types.String `tfsdk:"agreement_management_hostname"`
 }
 
 func (p *pingOneProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -218,22 +219,20 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	if !data.ServiceEndpoints.IsNull() {
 
-		var serviceEndpointsData []pingOneProviderServiceEndpointsModel
+		var serviceEndpointsData pingOneProviderServiceEndpointsModel
 		resp.Diagnostics.Append(data.ServiceEndpoints.ElementsAs(ctx, &serviceEndpointsData, false)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if len(serviceEndpointsData) > 0 {
-			if !serviceEndpointsData[0].AuthHostname.IsNull() {
-				v := serviceEndpointsData[0].AuthHostname.ValueString()
-				config.AuthHostnameOverride = &v
-			}
+		if !serviceEndpointsData.AuthHostname.IsNull() {
+			v := serviceEndpointsData.AuthHostname.ValueString()
+			config.AuthHostnameOverride = &v
+		}
 
-			if !serviceEndpointsData[0].APIHostname.IsNull() {
-				v := serviceEndpointsData[0].APIHostname.ValueString()
-				config.APIHostnameOverride = &v
-			}
+		if !serviceEndpointsData.APIHostname.IsNull() {
+			v := serviceEndpointsData.APIHostname.ValueString()
+			config.APIHostnameOverride = &v
 		}
 
 	}

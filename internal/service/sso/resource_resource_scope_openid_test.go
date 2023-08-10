@@ -77,71 +77,6 @@ func testAccCheckResourceScopeOpenIDDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetResourceScopeOpenIDIDs(resourceName string, environmentID, openidResourceID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*openidResourceID = rs.Primary.Attributes["resource_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
-
-func TestAccResourceScopeOpenID_RemovalDrift(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_resource_scope_openid.%s", resourceName)
-
-	name := resourceName
-
-	var resourceID, openidResourceID, environmentID string
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopeOpenIDDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccResourceScopeOpenIDConfig_Minimal(resourceName, name),
-				Check:  testAccGetResourceScopeOpenIDIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
-			},
-			// Replan after removal preconfig
-			{
-				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || openidResourceID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, OpenID Resource ID: %s, Resource ID: %s", environmentID, openidResourceID, resourceID)
-					}
-
-					_, err = apiClient.ResourceScopesApi.DeleteResourceScope(ctx, environmentID, openidResourceID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete OIDC resource scope: %v", err)
-					}
-				},
-				RefreshState:       true,
-				ExpectNonEmptyPlan: true,
-			},
-		},
-	})
-}
-
 func TestAccResourceScopeOpenID_Full(t *testing.T) {
 	t.Parallel()
 
@@ -318,9 +253,15 @@ func testAccResourceScopeOpenIDConfig_Full(resourceName, attributeName, scopeNam
 	return fmt.Sprintf(`
 		%[1]s
 
+data "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "openid"
+}
+
 resource "pingone_resource_attribute" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name  = "openid"
+  resource_id    = data.pingone_resource.%[2]s.id
 
   name  = "%[3]s-1"
   value = "$${user.name.given}"
@@ -328,7 +269,7 @@ resource "pingone_resource_attribute" "%[2]s-1" {
 
 resource "pingone_resource_attribute" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name  = "openid"
+  resource_id    = data.pingone_resource.%[2]s.id
 
   name  = "%[3]s-2"
   value = "$${user.name.family}"
@@ -336,7 +277,7 @@ resource "pingone_resource_attribute" "%[2]s-2" {
 
 resource "pingone_resource_attribute" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name  = "openid"
+  resource_id    = data.pingone_resource.%[2]s.id
 
   name  = "%[3]s-3"
   value = "$${user.email}"
@@ -371,9 +312,15 @@ func testAccResourceScopeOpenIDConfig_OverridePredefined(environmentName, licens
 	return fmt.Sprintf(`
 		%[1]s
 
+data "pingone_resource" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name = "openid"
+}
+
 resource "pingone_resource_attribute" "%[3]s-1" {
   environment_id = pingone_environment.%[2]s.id
-  resource_name  = "openid"
+  resource_id    = data.pingone_resource.%[3]s.id
 
   name  = "%[4]s-1"
   value = "$${user.name.given}"
@@ -381,7 +328,7 @@ resource "pingone_resource_attribute" "%[3]s-1" {
 
 resource "pingone_resource_attribute" "%[3]s-2" {
   environment_id = pingone_environment.%[2]s.id
-  resource_name  = "openid"
+  resource_id    = data.pingone_resource.%[3]s.id
 
   name  = "%[4]s-2"
   value = "$${user.name.family}"
@@ -389,7 +336,7 @@ resource "pingone_resource_attribute" "%[3]s-2" {
 
 resource "pingone_resource_attribute" "%[3]s-3" {
   environment_id = pingone_environment.%[2]s.id
-  resource_name  = "openid"
+  resource_id    = data.pingone_resource.%[3]s.id
 
   name  = "%[4]s-3"
   value = "$${user.email}"
