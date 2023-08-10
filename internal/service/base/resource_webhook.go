@@ -163,7 +163,9 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a valid HTTPS URL to which event messages are sent.").Description,
 				Required:    true,
 
-				Validators: []validator.String{},
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Must be a valid HTTPS URL"),
+				},
 			},
 
 			"http_endpoint_headers": schema.MapAttribute{
