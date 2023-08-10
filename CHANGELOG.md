@@ -2,6 +2,7 @@
 
 NOTES:
 
+* Code optimisation for all resources and data sources to remove duplicate service client code. ([#511](https://github.com/pingidentity/terraform-provider-pingone/issues/511))
 * `resource/pingone_custom_domain_ssl`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_custom_domain_verify`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_custom_domain`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
