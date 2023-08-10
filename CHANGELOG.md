@@ -1,5 +1,11 @@
 ## 0.19.1 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_custom_domain_ssl`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
+* `resource/pingone_custom_domain_verify`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
+* `resource/pingone_custom_domain`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
+
 BUG FIXES:
 
 * `resource/pingone_resource`: Fixed blocking error on plan when OpenID resource is removed outside of Terraform. ([#501](https://github.com/pingidentity/terraform-provider-pingone/issues/501))
