@@ -21,6 +21,7 @@ func Resources() []func() resource.Resource {
 		NewBrandingSettingsResource,
 		NewBrandingThemeDefaultResource,
 		NewBrandingThemeResource,
+		NewCustomDomainResource,
 		NewEnvironmentResource,
 		NewKeyRotationPolicyResource,
 		NewNotificationPolicyResource,

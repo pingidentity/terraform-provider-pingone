@@ -1,0 +1,4 @@
+```release-note:note
+`resource/pingone_custom_domain`: Migrated to plugin framework.
+```
+
