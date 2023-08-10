@@ -5,6 +5,7 @@ NOTES:
 * `resource/pingone_custom_domain_ssl`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_custom_domain_verify`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_custom_domain`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
+* `resource/pingone_trusted_email_domain`: Migrated to plugin framework. ([#508](https://github.com/pingidentity/terraform-provider-pingone/issues/508))
 
 BUG FIXES:
 
