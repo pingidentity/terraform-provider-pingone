@@ -106,7 +106,7 @@ func (r *SchemaDataSource) Configure(ctx context.Context, req datasource.Configu
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -136,47 +136,15 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	var schema management.Schema
+	var schema *management.Schema
 
 	if !data.Name.IsNull() {
 
-		// Run the API call
-		var entityArray *management.EntityArray
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				return r.client.SchemasApi.ReadAllSchemas(ctx, data.EnvironmentId.ValueString()).Execute()
-			},
-			"ReadAllSchemas",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&entityArray,
-		)...)
+		var d diag.Diagnostics
+		schema, d = fetchSchemaFromName(ctx, r.client, data.EnvironmentId.ValueString(), data.Name.ValueString())
+		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
-		}
-
-		if schemas, ok := entityArray.Embedded.GetSchemasOk(); ok {
-
-			found := false
-			for _, schemaItem := range schemas {
-
-				if schemaItem.GetName() == data.Name.ValueString() {
-					schema = schemaItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find schema from name",
-					fmt.Sprintf("The schema %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
 		}
 
 	} else if !data.SchemaId.IsNull() {
@@ -198,7 +166,7 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			return
 		}
 
-		schema = *response
+		schema = response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -208,7 +176,7 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&schema)...)
+	resp.Diagnostics.Append(data.toState(schema)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -230,4 +198,51 @@ func (p *SchemaDataSourceModel) toState(apiObject *management.Schema) diag.Diagn
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	return diags
+}
+
+func fetchSchemaFromName(ctx context.Context, apiClient *management.APIClient, environmentId string, schemaName string) (*management.Schema, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var schema management.Schema
+
+	// Run the API call
+	var entityArray *management.EntityArray
+	diags.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return apiClient.SchemasApi.ReadAllSchemas(ctx, environmentId).Execute()
+		},
+		"ReadAllSchemas",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&entityArray,
+	)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if schemas, ok := entityArray.Embedded.GetSchemasOk(); ok {
+
+		found := false
+		for _, schemaItem := range schemas {
+
+			if schemaItem.GetName() == schemaName {
+				schema = schemaItem
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			diags.AddError(
+				"Cannot find schema from name",
+				fmt.Sprintf("The schema %s for environment %s cannot be found", schemaName, environmentId),
+			)
+			return nil, diags
+		}
+
+	}
+
+	return &schema, diags
 }

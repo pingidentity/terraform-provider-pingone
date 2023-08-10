@@ -882,7 +882,7 @@ func (r *RiskPolicyResource) Configure(ctx context.Context, req resource.Configu
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -15,7 +14,6 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -149,15 +147,26 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	var diags diag.Diagnostics
 
-	respObject, diags := fetchResource(ctx, apiClient, d.Get("environment_id").(string), d.Id())
+	resp, diags := sdk.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+		},
+		"ReadOneResource",
+		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+	)
 	if diags.HasError() {
 		return diags
 	}
 
-	if respObject == nil {
+	if resp == nil {
 		d.SetId("")
 		return nil
 	}
+
+	respObject := resp.(*management.Resource)
 
 	d.Set("name", respObject.GetName())
 
@@ -357,28 +366,6 @@ func fetchResource(ctx context.Context, apiClient *management.APIClient, environ
 	return respObject, diags
 }
 
-func fetchResource_Framework(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) (*management.Resource, frameworkdiag.Diagnostics) {
-	var diags frameworkdiag.Diagnostics
-
-	var respObject *management.Resource
-	diags.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadOneResource(ctx, environmentID, resourceID).Execute()
-		},
-		"ReadOneResource",
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&respObject,
-	)...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return respObject, diags
-}
-
 func getResourceType(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) (management.EnumResourceType, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -391,9 +378,56 @@ func getResourceType(ctx context.Context, apiClient *management.APIClient, envir
 }
 
 func getPingOneAPIResource(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Resource, diag.Diagnostics) {
-	return fetchResourceFromName(ctx, apiClient, environmentID, "PingOne API")
+	return fetchResourceFromNameSDKv2(ctx, apiClient, environmentID, "PingOne API")
 }
 
 func getOpenIDResource(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Resource, diag.Diagnostics) {
-	return fetchResourceFromName(ctx, apiClient, environmentID, "openid")
+	return fetchResourceFromNameSDKv2(ctx, apiClient, environmentID, "openid")
+}
+
+// Deprecated: use fetchResourceFromName when converting to plugin framework
+func fetchResourceFromNameSDKv2(ctx context.Context, apiClient *management.APIClient, environmentID, resourceName string) (*management.Resource, diag.Diagnostics) {
+
+	var resp *management.Resource
+
+	respList, diags := sdk.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return apiClient.ResourcesApi.ReadAllResources(ctx, environmentID).Execute()
+		},
+		"ReadAllResources",
+		sdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+	)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if resources, ok := respList.(*management.EntityArray).Embedded.GetResourcesOk(); ok {
+
+		found := false
+		for _, resource := range resources {
+
+			resource := resource // fix for exportloopref lint
+
+			if resource.GetName() == resourceName {
+				resp = &resource
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Cannot find resource %s", resourceName),
+			})
+
+			return nil, diags
+		}
+
+	}
+
+	return resp, diags
 }

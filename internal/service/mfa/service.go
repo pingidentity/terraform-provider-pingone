@@ -25,13 +25,13 @@ func DataSources() []func() datasource.DataSource {
 	}
 }
 
-func prepareClient(ctx context.Context, resourceConfig framework.ResourceType) (*mfa.APIClient, error) {
+func PrepareClient(ctx context.Context, resourceConfig framework.ResourceType) (*mfa.APIClient, error) {
 
 	if resourceConfig.Client.API == nil || resourceConfig.Client.API.MFAAPIClient == nil {
-		return nil, fmt.Errorf("Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return nil, fmt.Errorf("Expected the PingOne \"mfa\" client, got nil.  Please report this issue to the provider maintainers.")
 	}
 
-	tflog.Info(ctx, "PingOne provider client init successful")
+	tflog.Info(ctx, "PingOne provider \"mfa\" client init successful")
 
 	return resourceConfig.Client.API.MFAAPIClient, nil
 

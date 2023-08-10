@@ -1,0 +1,4 @@
+```release-note:note
+`data-source/pingone_role`: Add DaVinci roles to the documentation examples.
+```
+

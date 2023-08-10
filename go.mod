@@ -8,24 +8,24 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-changelog v0.0.0-20220419201213-5edfc0d651d8
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
-	github.com/hashicorp/terraform-plugin-framework v1.3.2
+	github.com/hashicorp/terraform-plugin-framework v1.3.4
 	github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1
-	github.com/hashicorp/terraform-plugin-framework-validators v0.10.0
+	github.com/hashicorp/terraform-plugin-framework-validators v0.11.0
 	github.com/hashicorp/terraform-plugin-go v0.18.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-mux v0.11.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.27.0
 	github.com/katbyte/terrafmt v0.5.2
-	github.com/patrickcping/pingone-go-sdk-v2 v0.10.1
-	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.2.1
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.2.1
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.24.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.15.0
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.8.1
-	github.com/patrickcping/pingone-go-sdk-v2/verify v0.2.1
+	github.com/patrickcping/pingone-go-sdk-v2 v0.10.2
+	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.3.0
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.3.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.25.0
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.16.0
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.9.0
+	github.com/patrickcping/pingone-go-sdk-v2/verify v0.3.0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.47.0
-	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
+	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b
 )
 
 require github.com/rivo/uniseg v0.2.0 // indirect
@@ -274,15 +274,15 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230224173230-c95f2b4c22f2 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.11.0 // indirect
-	golang.org/x/net v0.12.0 // indirect
-	golang.org/x/oauth2 v0.10.0 // indirect
+	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/oauth2 v0.11.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/tools v0.10.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.126.0 // indirect

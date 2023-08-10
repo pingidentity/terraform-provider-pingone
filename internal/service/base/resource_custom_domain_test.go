@@ -67,6 +67,72 @@ func testAccCheckCustomDomainDestroy(s *terraform.State) error {
 	return nil
 }
 
+func testAccGetCustomDomainIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", resourceName)
+		}
+
+		*resourceID = rs.Primary.ID
+		*environmentID = rs.Primary.Attributes["environment_id"]
+
+		return nil
+	}
+}
+
+func TestAccCustomDomain_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var resourceID, environmentID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckCustomDomainDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
+				Check:  testAccGetCustomDomainIDs(resourceFullName, &environmentID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
+					}
+
+					_, err = apiClient.CustomDomainsApi.DeleteDomain(ctx, environmentID, resourceID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete custom domain: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccCustomDomain_Full(t *testing.T) {
 	t.Parallel()
 
@@ -91,7 +157,7 @@ func TestAccCustomDomain_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "domain_name", "terraformdev.ping-eng.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "VERIFICATION_REQUIRED"),
 					resource.TestMatchResourceAttr(resourceFullName, "canonical_name", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[0-9a-zA-Z]+\.pingone.[a-z]+\.$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "certificate_expires_at", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "certificate_expires_at"),
 				),
 			},
 		},

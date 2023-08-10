@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_resource`: Fixed blocking error on plan when OpenID resource is removed outside of Terraform.
+```

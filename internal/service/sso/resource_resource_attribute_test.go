@@ -67,6 +67,71 @@ func testAccCheckResourceAttributeDestroy(s *terraform.State) error {
 	return nil
 }
 
+func testAccGetResourceAttributeIDs(resourceName string, environmentID, oidcResourceID, resourceID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", resourceName)
+		}
+
+		*resourceID = rs.Primary.ID
+		*oidcResourceID = rs.Primary.Attributes["resource_id"]
+		*environmentID = rs.Primary.Attributes["environment_id"]
+
+		return nil
+	}
+}
+
+func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_resource_attribute.%s", resourceName)
+
+	name := resourceName
+
+	var resourceID, oidcResourceID, environmentID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckResourceAttributeDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccResourceAttributeConfig_OIDC_Custom_Minimal(resourceName, name),
+				Check:  testAccGetResourceAttributeIDs(resourceFullName, &environmentID, &oidcResourceID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || oidcResourceID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s,OIDC Resource ID: %s, Resource ID: %s", environmentID, oidcResourceID, resourceID)
+					}
+
+					_, err = apiClient.ResourceAttributesApi.DeleteResourceAttribute(ctx, environmentID, oidcResourceID, resourceID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete resource attribute: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccResourceAttribute_OIDC_Custom(t *testing.T) {
 	t.Parallel()
 
@@ -81,6 +146,7 @@ func TestAccResourceAttribute_OIDC_Custom(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "resource_name", "openid"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
 			resource.TestCheckResourceAttr(resourceFullName, "id_token_enabled", "true"),
@@ -95,6 +161,7 @@ func TestAccResourceAttribute_OIDC_Custom(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "resource_name", "openid"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.given}"),
 			resource.TestCheckResourceAttr(resourceFullName, "id_token_enabled", "true"),
@@ -182,6 +249,7 @@ func TestAccResourceAttribute_OIDC_Predefined(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "resource_name", "openid"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", fmt.Sprintf("${user.%s}", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "id_token_enabled", "true"),
@@ -216,6 +284,7 @@ func TestAccResourceAttribute_Custom(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "resource_name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
@@ -277,6 +346,7 @@ func TestAccResourceAttribute_Custom_CoreAttribute(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+			resource.TestCheckResourceAttr(resourceFullName, "resource_name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "CORE"),
@@ -342,15 +412,9 @@ func testAccResourceAttributeConfig_OIDC_Custom_Full(resourceName, name string) 
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "openid"
-}
-
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
+  resource_name  = "openid"
 
   name  = "%[3]s"
   value = "$${user.email}"
@@ -364,15 +428,9 @@ func testAccResourceAttributeConfig_OIDC_Custom_Minimal(resourceName, name strin
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "openid"
-}
-
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
+  resource_name  = "openid"
 
   name  = "%[3]s"
   value = "$${user.name.given}"
@@ -383,15 +441,9 @@ func testAccResourceAttributeConfig_OIDC_Expression(resourceName, name string) s
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "openid"
-}
-
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
+  resource_name  = "openid"
 
   name  = "%[3]s"
   value = "$${user.name.given + ', ' + user.name.family}"
@@ -402,15 +454,9 @@ func testAccResourceAttributeConfig_OIDC_ReservedAttributeName(resourceName, nam
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "openid"
-}
-
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
+  resource_name  = "openid"
 
   name  = "aud"
   value = "$${'test'}"
@@ -421,15 +467,8 @@ func testAccResourceAttributeConfig_OIDC_Predefined_Full(environmentName, licens
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  schema_id      = data.pingone_schema.%[3]s.id
 
   name         = "%[4]s"
   display_name = "My Attribute"
@@ -440,15 +479,9 @@ resource "pingone_schema_attribute" "%[3]s" {
   multivalued = false
 }
 
-data "pingone_resource" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-
-  name = "openid"
-}
-
 resource "pingone_resource_attribute" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  resource_id    = data.pingone_resource.%[3]s.id
+  resource_name  = "openid"
 
   name  = "email"
   value = "$${user.%[4]s}"
@@ -470,7 +503,7 @@ resource "pingone_resource" "%[2]s" {
 
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
+  resource_name  = pingone_resource.%[2]s.name
 
   name  = "%[3]s"
   value = "$${user.email}"
@@ -489,7 +522,7 @@ resource "pingone_resource" "%[2]s" {
 
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
+  resource_name  = pingone_resource.%[2]s.name
 
   name  = "%[3]s"
   value = "$${user.name.given + ', ' + user.name.family}"
@@ -508,7 +541,7 @@ resource "pingone_resource" "%[2]s" {
 
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
+  resource_name  = pingone_resource.%[2]s.name
 
   name  = "sub"
   value = "$${user.email}"
@@ -527,7 +560,7 @@ resource "pingone_resource" "%[2]s" {
 
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
+  resource_name  = pingone_resource.%[2]s.name
 
   name  = "sub"
   value = "$${user.name.given + ', ' + user.name.family}"
@@ -546,7 +579,7 @@ resource "pingone_resource" "%[2]s" {
 
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
+  resource_name  = pingone_resource.%[2]s.name
 
   name  = "%[3]s"
   value = "$${user.email}"
@@ -560,15 +593,9 @@ func testAccResourceAttributeConfig_BadResource(resourceName, name string) strin
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "PingOne API"
-}
-
 resource "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
+  resource_name  = "PingOne API"
 
   name  = "%[3]s"
   value = "$${user.email}"

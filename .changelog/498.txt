@@ -1,0 +1,3 @@
+```release-note:bug
+Fixed bug when attempting to override service hostnames with the `service_endpoints` block in provider configuration.
+```

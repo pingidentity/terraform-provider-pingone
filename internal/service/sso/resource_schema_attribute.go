@@ -32,6 +32,7 @@ import (
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -40,7 +41,7 @@ type SchemaAttributeResource struct {
 	region model.RegionMapping
 }
 
-type SchemaAttributeResourceModel struct {
+type SchemaAttributeResourceModelV1 struct {
 	Id               types.String `tfsdk:"id"`
 	EnvironmentId    types.String `tfsdk:"environment_id"`
 	Description      types.String `tfsdk:"description"`
@@ -53,6 +54,7 @@ type SchemaAttributeResourceModel struct {
 	RegexValidation  types.Object `tfsdk:"regex_validation"`
 	Required         types.Bool   `tfsdk:"required"`
 	SchemaId         types.String `tfsdk:"schema_id"`
+	SchemaName       types.String `tfsdk:"schema_name"`
 	SchemaType       types.String `tfsdk:"schema_type"`
 	Type             types.String `tfsdk:"type"`
 	Unique           types.Bool   `tfsdk:"unique"`
@@ -88,9 +90,10 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &SchemaAttributeResource{}
-	_ resource.ResourceWithConfigure   = &SchemaAttributeResource{}
-	_ resource.ResourceWithImportState = &SchemaAttributeResource{}
+	_ resource.Resource                 = &SchemaAttributeResource{}
+	_ resource.ResourceWithConfigure    = &SchemaAttributeResource{}
+	_ resource.ResourceWithImportState  = &SchemaAttributeResource{}
+	_ resource.ResourceWithUpgradeState = &SchemaAttributeResource{}
 )
 
 // New Object
@@ -107,6 +110,15 @@ func (r *SchemaAttributeResource) Metadata(ctx context.Context, req resource.Met
 func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
+	const schemaName = "User"
+
+	schemaIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute can be removed (the resource will default to the `User` schema), or the `schema_name` parameter can be defined instead.  The ID of the schema to apply the schema attribute to.",
+	).AppendMarkdownString("Must be a valid PingOne resource ID.").ConflictsWith([]string{"schema_name"})
+
+	schemaNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The name of the schema to apply the schema attribute to.",
+	).AllowedValues(schemaName).DefaultValue(schemaName).ConflictsWith([]string{"schema_id"})
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Indicates whether or not the attribute is enabled.",
@@ -141,6 +153,9 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne schema attributes.",
 
@@ -151,9 +166,46 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the schema attribute in."),
 			),
 
-			"schema_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the schema to apply the schema attribute to."),
-			),
+			"schema_id": schema.StringAttribute{
+				Description:         schemaIdDescription.Description,
+				MarkdownDescription: schemaIdDescription.MarkdownDescription,
+				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute can be removed (the resource will default to the `User` schema), or the `schema_name` parameter can be defined instead.",
+				Optional:            true,
+				Computed:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+
+				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
+					stringvalidator.ConflictsWith(
+						path.MatchRoot("schema_id"),
+						path.MatchRoot("schema_name"),
+					),
+				},
+			},
+
+			"schema_name": schema.StringAttribute{
+				Description:         schemaNameDescription.Description,
+				MarkdownDescription: schemaNameDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: stringdefault.StaticString(schemaName),
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(schemaName),
+					stringvalidator.ConflictsWith(
+						path.MatchRoot("schema_id"),
+						path.MatchRoot("schema_name"),
+					),
+				},
+			},
 
 			"name": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The system name of the schema attribute.").Description,
@@ -327,17 +379,29 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 			"required": schema.BoolAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the attribute is required.").Description,
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"ldap_attribute": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The unique identifier for the LDAP attribute.").Description,
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"schema_type": schema.StringAttribute{
 				Description:         schemaTypeDescription.Description,
 				MarkdownDescription: schemaTypeDescription.MarkdownDescription,
 				Computed:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -359,7 +423,7 @@ func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -374,7 +438,7 @@ func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.Co
 }
 
 func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state SchemaAttributeResourceModel
+	var plan, state SchemaAttributeResourceModelV1
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -385,6 +449,13 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Get the schema ID
+	schema, d := fetchSchemaFromName(ctx, r.client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -402,7 +473,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), plan.SchemaId.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
+			return r.client.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), schema.GetId()).SchemaAttribute(*schemaAttribute).Execute()
 		},
 		"CreateAttribute",
 		framework.DefaultCustomError,
@@ -423,7 +494,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 }
 
 func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *SchemaAttributeResourceModel
+	var data *SchemaAttributeResourceModelV1
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -467,7 +538,7 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 }
 
 func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state SchemaAttributeResourceModel
+	var plan, state SchemaAttributeResourceModelV1
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -478,6 +549,13 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Get the schema ID
+	schema, d := fetchSchemaFromName(ctx, r.client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -495,7 +573,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), plan.SchemaId.ValueString(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
+			return r.client.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), schema.GetId(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
 		},
 		"UpdateAttributePut",
 		framework.DefaultCustomError,
@@ -515,7 +593,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 }
 
 func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *SchemaAttributeResourceModel
+	var data *SchemaAttributeResourceModelV1
 
 	if r.client == nil {
 		resp.Diagnostics.AddError(
@@ -565,7 +643,7 @@ func (r *SchemaAttributeResource) ImportState(ctx context.Context, req resource.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *SchemaAttributeResourceModel) expand(ctx context.Context, action string) (*management.SchemaAttribute, diag.Diagnostics) {
+func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action string) (*management.SchemaAttribute, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	attrType := p.Type.ValueString()
@@ -674,7 +752,7 @@ func (p *SchemaAttributeResourceModel) expand(ctx context.Context, action string
 	return &data, diags
 }
 
-func (p *SchemaAttributeResourceModel) toState(apiObject *management.SchemaAttribute) diag.Diagnostics {
+func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAttribute) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
