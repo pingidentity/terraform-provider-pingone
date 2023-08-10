@@ -1,6 +1,7 @@
 package base_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -13,6 +14,73 @@ import (
 
 func testAccCheckNotificationSettingsDestroy(s *terraform.State) error {
 	return nil
+}
+
+func testAccGetNotificationSettingsIDs(resourceName string, resourceID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", resourceName)
+		}
+
+		*resourceID = rs.Primary.ID
+
+		return nil
+	}
+}
+
+func TestAccNotificationSettings_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_notification_settings.%s", resourceName)
+
+	name := resourceName
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var resourceID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNotificationSettingsDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccNotificationSettingsConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Check:  testAccGetNotificationSettingsIDs(resourceFullName, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if resourceID == "" {
+						t.Fatalf("Resource ID cannot be determined. Resource ID: %s", resourceID)
+					}
+
+					_, _, err = apiClient.NotificationsSettingsApi.DeleteNotificationsSettings(ctx, resourceID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete notification settings: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccNotificationSettings_Full(t *testing.T) {

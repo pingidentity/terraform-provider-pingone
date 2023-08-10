@@ -6,150 +6,278 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceTrustedEmailDomain() *schema.Resource {
-	return &schema.Resource{
+// Types
+type TrustedEmailDomainResource struct {
+	client *management.APIClient
+}
 
+type TrustedEmailDomainResourceModel struct {
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	DomainName    types.String `tfsdk:"domain_name"`
+}
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &TrustedEmailDomainResource{}
+	_ resource.ResourceWithConfigure   = &TrustedEmailDomainResource{}
+	_ resource.ResourceWithImportState = &TrustedEmailDomainResource{}
+)
+
+// New Object
+func NewTrustedEmailDomainResource() resource.Resource {
+	return &TrustedEmailDomainResource{}
+}
+
+// Metadata
+func (r *TrustedEmailDomainResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_trusted_email_domain"
+}
+
+// Schema
+func (r *TrustedEmailDomainResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	domainNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).",
+	)
+
+	const attrMinLength = 2
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne Trusted Email Domains.",
+		Description: framework.SchemaDescriptionFromMarkdown("Resource to create and manage PingOne Trusted Email Domains.").Description,
 
-		CreateContext: resourceTrustedEmailDomainCreate,
-		ReadContext:   resourceTrustedEmailDomainRead,
-		DeleteContext: resourceTrustedEmailDomainDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceTrustedEmailDomainImport,
-		},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to add the trusted email domain in."),
+			),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the certificate in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"domain_name": {
-				Type:             schema.TypeString,
-				Description:      "A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).",
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+			"domain_name": schema.StringAttribute{
+				MarkdownDescription: domainNameDescription.MarkdownDescription,
+				Description:         domainNameDescription.Description,
+				Required:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.RegexMatches(verify.IsHostname, "Value must be a valid domain name"),
+				},
 			},
 		},
 	}
 }
 
-func resourceTrustedEmailDomainCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *TrustedEmailDomainResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
 
-	var diags diag.Diagnostics
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
 
-	var resp interface{}
+		return
+	}
 
-	emailDomain := *management.NewEmailDomain(d.Get("domain_name").(string))
+	preparedClient, err := prepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
 
-	resp, diags = sdk.ParseResponse(
+		return
+	}
+
+	r.client = preparedClient
+}
+
+func (r *TrustedEmailDomainResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state TrustedEmailDomainResourceModel
+
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	emailDomain := plan.expand()
+
+	// Run the API call
+	var response *management.EmailDomain
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.TrustedEmailDomainsApi.CreateTrustedEmailDomain(ctx, d.Get("environment_id").(string)).EmailDomain(emailDomain).Execute()
+			return r.client.TrustedEmailDomainsApi.CreateTrustedEmailDomain(ctx, plan.EnvironmentId.ValueString()).EmailDomain(*emailDomain).Execute()
 		},
 		"CreateTrustedEmailDomain",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.EmailDomain)
+	// Create the state to save
+	state = plan
 
-	d.SetId(respObject.GetId())
-
-	return resourceTrustedEmailDomainRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceTrustedEmailDomainRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *TrustedEmailDomainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *TrustedEmailDomainResourceModel
 
-	var diags diag.Diagnostics
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.EmailDomain
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.TrustedEmailDomainsApi.ReadOneTrustedEmailDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return r.client.TrustedEmailDomainsApi.ReadOneTrustedEmailDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneTrustedEmailDomain",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.EmailDomain)
-
-	d.Set("domain_name", respObject.GetDomainName())
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceTrustedEmailDomainDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *TrustedEmailDomainResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+}
 
-	var diags diag.Diagnostics
+func (r *TrustedEmailDomainResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *TrustedEmailDomainResourceModel
 
-	_, diags = sdk.ParseResponse(
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.TrustedEmailDomainsApi.DeleteTrustedEmailDomain(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			r, err := r.client.TrustedEmailDomainsApi.DeleteTrustedEmailDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteTrustedEmailDomain",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
 		nil,
-	)
-	if diags.HasError() {
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func (r *TrustedEmailDomainResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	splitLength := 2
+	attributes := strings.SplitN(req.ID, "/", splitLength)
+
+	if len(attributes) != splitLength {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/email_domain_id\"", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+}
+
+func (p *TrustedEmailDomainResourceModel) expand() *management.EmailDomain {
+	data := management.NewEmailDomain(p.DomainName.ValueString())
+
+	return data
+}
+
+func (p *TrustedEmailDomainResourceModel) toState(apiObject *management.EmailDomain) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
 		return diags
 	}
 
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.DomainName = framework.StringOkToTF(apiObject.GetDomainNameOk())
+
 	return diags
-}
-
-func resourceTrustedEmailDomainImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
-
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/trustedEmailDomainID\"", d.Id())
-	}
-
-	environmentID, trustedEmailDomainID := attributes[0], attributes[1]
-
-	d.Set("environment_id", environmentID)
-
-	d.SetId(trustedEmailDomainID)
-
-	resourceTrustedEmailDomainRead(ctx, d, meta)
-
-	return []*schema.ResourceData{d}, nil
 }

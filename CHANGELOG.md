@@ -1,12 +1,35 @@
-## 0.19.0 (Unreleased)
+## 0.19.1 (Unreleased)
+
+NOTES:
+
+* `resource/pingone_custom_domain_ssl`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
+* `resource/pingone_custom_domain_verify`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
+* `resource/pingone_custom_domain`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
+* `resource/pingone_trusted_email_domain`: Migrated to plugin framework. ([#508](https://github.com/pingidentity/terraform-provider-pingone/issues/508))
+
+BUG FIXES:
+
+* `resource/pingone_resource`: Fixed blocking error on plan when OpenID resource is removed outside of Terraform. ([#501](https://github.com/pingidentity/terraform-provider-pingone/issues/501))
+
+## 0.19.0 (08 August 2023)
 
 NOTES:
 
 * `data-source/pingone_population`: Optimised finding populations by name for environments with large numbers of populations present. ([#487](https://github.com/pingidentity/terraform-provider-pingone/issues/487))
 * `data-source/pingone_resource`: Migrated to plugin framework. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
+* `data-source/pingone_role`: Add DaVinci roles to the documentation examples. ([#496](https://github.com/pingidentity/terraform-provider-pingone/issues/496))
 * `resource/pingone_environment`: Corrected documentation and examples to denote optional nature of the `default_population` block. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
 * `resource/pingone_resource_attribute`: Deprecated the `resource_id` parameter in favour of the `resource_name` parameter to avoid dependency on the `pingone_resource` data-source.  The `resource_id` parameter will be made read-only in a future release. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
 * `resource/pingone_schema_attribute`: Deprecated the `schema_id` parameter in favour of the optional `schema_name` parameter to avoid dependency on the `pingone_schema` data-source.  The `schema_id` parameter will be made read-only in a future release. ([#493](https://github.com/pingidentity/terraform-provider-pingone/issues/493))
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` v0.10.0 => v0.11.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.3.2 => v1.3.4 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.2.1 => v0.3.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.2.1 => v0.3.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.24.0 => v0.25.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.15.0 => v0.16.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.8.1 => v0.9.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.2.1 => v0.3.0 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.1 => v0.10.2 ([#504](https://github.com/pingidentity/terraform-provider-pingone/issues/504))
 
 ENHANCEMENTS:
 
@@ -14,9 +37,11 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
+* Fixed bug when attempting to override service hostnames with the `service_endpoints` block in provider configuration. ([#498](https://github.com/pingidentity/terraform-provider-pingone/issues/498))
 * `resource/pingone_credential_issuance_rule`: Corrected `digital_wallet_application_id` from `REQUIRED` to `OPTIONAL` per API specification. ([#490](https://github.com/pingidentity/terraform-provider-pingone/issues/490))
 * `resource/pingone_environment`: Fix errors that occur if the `service` block is left undefined. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
 * `resource/pingone_environment`: Fix for intermittent error stating the default population couldn't be updated on environment creation. ([#486](https://github.com/pingidentity/terraform-provider-pingone/issues/486))
+* `resource/pingone_mfa_policy`: Fixed blocking error on plan when MFA device policy is removed outside of Terraform. ([#500](https://github.com/pingidentity/terraform-provider-pingone/issues/500))
 
 ## 0.18.1 (18 July 2023)
 

@@ -118,9 +118,6 @@ func New(version string) func() *schema.Provider {
 
 				"pingone_certificate":                   base.ResourceCertificate(),
 				"pingone_certificate_signing_response":  base.ResourceCertificateSigningResponse(),
-				"pingone_custom_domain":                 base.ResourceCustomDomain(),
-				"pingone_custom_domain_verify":          base.ResourceCustomDomainVerify(),
-				"pingone_custom_domain_ssl":             base.ResourceCustomDomainSSL(),
 				"pingone_gateway":                       base.ResourceGateway(),
 				"pingone_gateway_credential":            base.ResourceGatewayCredential(),
 				"pingone_gateway_role_assignment":       base.ResourceGatewayRoleAssignment(),
@@ -130,7 +127,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_language_update":               base.ResourceLanguageUpdate(),
 				"pingone_notification_template_content": base.ResourceNotificationTemplateContent(),
 				"pingone_role_assignment_user":          base.ResourceRoleAssignmentUser(),
-				"pingone_trusted_email_domain":          base.ResourceTrustedEmailDomain(),
 				"pingone_webhook":                       base.ResourceWebhook(),
 
 				"pingone_application":                           sso.ResourceApplication(),

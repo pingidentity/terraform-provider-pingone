@@ -69,6 +69,22 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 				),
 			},
+			{
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "DaVinci Admin"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", "DaVinci Admin"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+				),
+			},
+			{
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "DaVinci Admin Read Only"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", "DaVinci Admin Read Only"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+				),
+			},
 		},
 	})
 }
