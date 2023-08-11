@@ -52,8 +52,8 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   }
 
   email = {
-    verify = "REQUIRED"
-    create_mfa_device : true
+    verify            = "REQUIRED"
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "5"
@@ -76,8 +76,8 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   }
 
   phone = {
-    verify = "REQUIRED"
-    create_mfa_device : true
+    verify            = "REQUIRED"
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "5"
@@ -132,6 +132,7 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 - `liveness` (Attributes) Defines the verification requirements to inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask. (see [below for nested schema](#nestedatt--liveness))
 - `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
 - `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
+- `voice` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--voice))
 
 ### Read-Only
 
@@ -367,6 +368,41 @@ Required:
     - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
     - Defaults to `30 MINUTES`.
 - `time_unit` (String) Time unit of transaction timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+
+
+
+<a id="nestedatt--voice"></a>
+### Nested Schema for `voice`
+
+Required:
+
+- `comparison_threshold` (String) Comparison threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
+- `enrollment` (Boolean) Controls if the transaction performs voice enrollment (`TRUE`) or voice verification (`FALSE`).
+- `liveness_threshold` (String) Liveness threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
+- `verify` (String) Controls the verification requirements for a Voice verification.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
+
+Optional:
+
+- `reference_data` (Attributes) Object for configuration of text dependent voice verification. (see [below for nested schema](#nestedatt--voice--reference_data))
+- `text_dependent` (Attributes) Object for configuration of text dependent voice verification. (see [below for nested schema](#nestedatt--voice--text_dependent))
+
+<a id="nestedatt--voice--reference_data"></a>
+### Nested Schema for `voice.reference_data`
+
+Optional:
+
+- `retain_original_recordings` (Boolean) Controls if the service stores the original voice recordings.
+- `update_on_reenrollment` (Boolean) Controls updates to user's voice reference data (voice recordings) upon user re-enrollment. If `TRUE`, new data adds to existing data. If `FALSE`, new data replaces existing data.
+- `update_on_verification` (Boolean) Controls updates to user's voice reference data (voice recordings) upon user verification. If `TRUE`, new data adds to existing data. If `FALSE`, new voice recordings are not retained as reference data.
+
+
+<a id="nestedatt--voice--text_dependent"></a>
+### Nested Schema for `voice.text_dependent`
+
+Required:
+
+- `samples` (Number) Number of voice samples to collect. The allowed range is `3 - 5`
+- `voice_phrase_id` (String) For a customer-defined phrase, the identifier (UUID) of the voice phrase to use. For pre-defined phrases, a string value.
 
 ## Import
 

@@ -56,7 +56,7 @@ func (r *VerifyPoliciesDataSource) Schema(ctx context.Context, req datasource.Sc
 			),
 
 			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of credential types that have been successfully retrieved.",
+				Description: "The list of resulting IDs of verify policies that have been successfully retrieved.",
 			}),
 		},
 	}
@@ -78,7 +78,7 @@ func (r *VerifyPoliciesDataSource) Configure(ctx context.Context, req datasource
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
+	preparedClient, err := prepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
