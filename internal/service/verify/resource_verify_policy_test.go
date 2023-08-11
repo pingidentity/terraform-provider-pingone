@@ -387,7 +387,7 @@ func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name str
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_voice_phrase" "%[3]s" {
+resource "pingone_verify_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 }
@@ -483,7 +483,7 @@ resource "pingone_verify_policy" "%[3]s" {
 
     text_dependent = {
       samples         = "4"
-      voice_phrase_id = pingone_voice_phrase.%[3]s.id
+      voice_phrase_id = pingone_verify_voice_phrase.%[3]s.id
     }
 
     reference_data = {

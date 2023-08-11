@@ -2,22 +2,22 @@
 `resource/pingone_verify_policy`: Now supports `voice` configuration option enabling voice verification.
 ```
 
-```release-note:enhancement
-`resource/pingone_voice_phrase`: New resource enabling management of `voice_phrase`, a prerequisite and counterpart to `voice` configuration within a `pingone_verify_policy`.
+```release-note:new-resource
+pingone_voice_phrase
 ```
 
-```release-note:enhancement
-`resource/pingone_voice_phrase_content`: New resource associated with `pingone_voice_phrase` used to define the voice enrollment or verification requirements associated with a `verify_policy`.
+```release-note:new-resource
+pingone_verify_voice_phrase_content
 ```
 
-```release-note:enhancement
-`datasource/pingone_voice_phrase`: New datasource to find voice phrase by `voice_phrase_id` or `name`.
+```release-note:new-data-source
+pingone_verify_voice_phrase
 ```
 
-```release-note:enhancement
-`datasource/pingone_voice_phrase_content`: New datasource to find voice phrase content by `voice_phrase_content_id`.
+```release-note:new-data-source
+pingone_verify_voice_phrase_content
 ```
 
-```release-note:enhancement
-`datasource/pingone_voice_phrase_contents`: New datasource to retrieve a list of voice phrase contents by `voice_phrase_content_id`.
+```release-note:new-data-source
+pingone_verify_voice_phrase_contents
 ```

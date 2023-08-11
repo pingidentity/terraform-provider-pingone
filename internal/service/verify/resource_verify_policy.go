@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
@@ -281,14 +280,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	// P1 Platform does not set a traditional UUID as the default phrase ID value
 	const defaultVoicePhraseId = "exceptional_experiences"
 
-	defaultCreateMfaDevice := new(bool)
-	*defaultCreateMfaDevice = false
-
-	defaultBoolFalse := new(bool)
-	*defaultBoolFalse = false
-
-	defaultBoolTrue := new(bool)
-	*defaultBoolTrue = true
+	const defaultBoolFalse = false
+	const defaultBoolTrue = true
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Specifies whether this is the environment's default verify policy.",
@@ -458,16 +451,12 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 				Computed:    true,
 
-				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
-					o := map[string]attr.Value{
-						"verify": framework.StringToTF(string(defaultVerify)),
-					}
-
-					objValue, d := types.ObjectValue(governmentIdServiceTFObjectTypes, o)
-					resp.Diagnostics.Append(d...)
-
-					return objValue
-				}()),
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					governmentIdServiceTFObjectTypes,
+					map[string]attr.Value{
+						"verify": types.StringValue(string(defaultVerify)),
+					},
+				)),
 
 				Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
@@ -488,17 +477,13 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 				Computed:    true,
 
-				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
-					o := map[string]attr.Value{
-						"verify":    framework.StringToTF(string(defaultVerify)),
-						"threshold": framework.StringToTF(string(defaultThreshold)),
-					}
-
-					objValue, d := types.ObjectValue(facialComparisonServiceTFObjectTypes, o)
-					resp.Diagnostics.Append(d...)
-
-					return objValue
-				}()),
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					facialComparisonServiceTFObjectTypes,
+					map[string]attr.Value{
+						"verify":    types.StringValue(string(defaultVerify)),
+						"threshold": types.StringValue(string(defaultThreshold)),
+					},
+				)),
 
 				Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
@@ -527,17 +512,13 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 				Computed:    true,
 
-				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
-					o := map[string]attr.Value{
-						"verify":    framework.StringToTF(string(defaultVerify)),
-						"threshold": framework.StringToTF(string(defaultThreshold)),
-					}
-
-					objValue, d := types.ObjectValue(livenessServiceTFObjectTypes, o)
-					resp.Diagnostics.Append(d...)
-
-					return objValue
-				}()),
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					livenessServiceTFObjectTypes,
+					map[string]attr.Value{
+						"verify":    types.StringValue(string(defaultVerify)),
+						"threshold": types.StringValue(string(defaultThreshold)),
+					},
+				)),
 
 				Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
@@ -568,34 +549,34 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"count": framework.Int32ToTF(defaultOTPAttemptsCount),
+						"count": types.Int64Value(defaultOTPAttemptsCount),
 					}
 					attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(defaultOTPEmailDuration),
-						"time_unit": framework.StringToTF(string(defaultOTPEmailTimeUnit)),
+						"duration":  types.Int64Value(defaultOTPEmailDuration),
+						"time_unit": types.StringValue(string(defaultOTPEmailTimeUnit)),
 					}
 					lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"template_name": framework.StringToTF(defaultNotificationTemplate),
+						"template_name": types.StringValue(defaultNotificationTemplate),
 						"variant_name":  types.StringNull(),
 					}
 					notificationObjValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(defaultOTPCooldownDuration),
-						"time_unit": framework.StringToTF(string(defaultOTPCooldownTimeUnit)),
+						"duration":  types.Int64Value(defaultOTPCooldownDuration),
+						"time_unit": types.StringValue(string(defaultOTPCooldownTimeUnit)),
 					}
 					cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"count":    framework.Int32ToTF(defaultOTPDeliveryCount),
+						"count":    types.Int64Value(defaultOTPDeliveryCount),
 						"cooldown": cooldownObjValue,
 					}
 					deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
@@ -611,8 +592,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"verify":            framework.StringToTF(string(defaultVerify)),
-						"create_mfa_device": framework.BoolOkToTF(defaultCreateMfaDevice, true),
+						"verify":            types.StringValue(string(defaultVerify)),
+						"create_mfa_device": types.BoolValue(defaultBoolFalse),
 						"otp":               otpObjValue,
 					}
 					objValue, d := types.ObjectValue(deviceServiceTFObjectTypes, o)
@@ -626,7 +607,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						Description: "When enabled, PingOne Verify registers the email address with PingOne MFA as a verified MFA device.",
 						Optional:    true,
 						Computed:    true,
-						Default:     booldefault.StaticBool(*defaultCreateMfaDevice),
+						Default:     booldefault.StaticBool(defaultBoolFalse),
 					},
 					"otp": schema.SingleNestedAttribute{
 						Description: "SMS/Voice/Email one-time password (OTP) configuration.",
@@ -735,17 +716,13 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Optional:    true,
 								Computed:    true,
 
-								Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
-									o := map[string]attr.Value{
-										"template_name": framework.StringToTF(defaultNotificationTemplate),
+								Default: objectdefault.StaticValue(types.ObjectValueMust(
+									otpNotificationServiceTFObjectTypes,
+									map[string]attr.Value{
+										"template_name": types.StringValue(defaultNotificationTemplate),
 										"variant_name":  types.StringNull(),
-									}
-
-									objValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
-									resp.Diagnostics.Append(d...)
-
-									return objValue
-								}()),
+									},
+								)),
 
 								Attributes: map[string]schema.Attribute{
 									"template_name": schema.StringAttribute{
@@ -785,34 +762,34 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"count": framework.Int32ToTF(defaultOTPAttemptsCount),
+						"count": types.Int64Value(defaultOTPAttemptsCount),
 					}
 					attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(defaultOTPPhoneDuration),
-						"time_unit": framework.StringToTF(string(defaultOTPPhoneTimeUnit)),
+						"duration":  types.Int64Value(defaultOTPPhoneDuration),
+						"time_unit": types.StringValue(string(defaultOTPPhoneTimeUnit)),
 					}
 					lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"template_name": framework.StringToTF(defaultNotificationTemplate),
+						"template_name": types.StringValue(defaultNotificationTemplate),
 						"variant_name":  types.StringNull(),
 					}
 					notificationObjValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(defaultOTPCooldownDuration),
-						"time_unit": framework.StringToTF(string(defaultOTPCooldownTimeUnit)),
+						"duration":  types.Int64Value(defaultOTPCooldownDuration),
+						"time_unit": types.StringValue(string(defaultOTPCooldownTimeUnit)),
 					}
 					cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"count":    framework.Int32ToTF(defaultOTPDeliveryCount),
+						"count":    types.Int64Value(defaultOTPDeliveryCount),
 						"cooldown": cooldownObjValue,
 					}
 					deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
@@ -828,8 +805,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"verify":            framework.StringToTF(string(defaultVerify)),
-						"create_mfa_device": framework.BoolOkToTF(defaultCreateMfaDevice, true),
+						"verify":            types.StringValue(string(defaultVerify)),
+						"create_mfa_device": types.BoolValue(defaultBoolFalse),
 						"otp":               otpObjValue,
 					}
 					objValue, d := types.ObjectValue(deviceServiceTFObjectTypes, o)
@@ -843,7 +820,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						Description: "When enabled, PingOne Verify registers the mobile phone with PingOne MFA as a verified MFA device.",
 						Optional:    true,
 						Computed:    true,
-						Default:     booldefault.StaticBool(*defaultCreateMfaDevice),
+						Default:     booldefault.StaticBool(defaultBoolFalse),
 					},
 					"otp": schema.SingleNestedAttribute{
 						Description: "SMS/Voice/Email one-time password (OTP) configuration.",
@@ -952,17 +929,13 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Optional:    true,
 								Computed:    true,
 
-								Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
-									o := map[string]attr.Value{
-										"template_name": framework.StringToTF(defaultNotificationTemplate),
+								Default: objectdefault.StaticValue(types.ObjectValueMust(
+									otpNotificationServiceTFObjectTypes,
+									map[string]attr.Value{
+										"template_name": types.StringValue(defaultNotificationTemplate),
 										"variant_name":  types.StringNull(),
-									}
-
-									objValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
-									resp.Diagnostics.Append(d...)
-
-									return objValue
-								}()),
+									},
+								)),
 
 								Attributes: map[string]schema.Attribute{
 									"template_name": schema.StringAttribute{
@@ -1003,14 +976,14 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
 						"duration":  framework.Int32ToTF(defaultTransactionDuration),
-						"time_unit": framework.StringToTF(string(defaultTransactionTimeUnit)),
+						"time_unit": framework.EnumOkToTF(defaultTransactionTimeUnit, true),
 					}
 					timeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
 						"duration":  framework.Int32ToTF(defaultTransactionDataCollectionDuration),
-						"time_unit": framework.StringToTF(string(defaultTransactionTimeUnit)),
+						"time_unit": framework.EnumOkToTF(defaultTransactionTimeUnit, true),
 					}
 					dataCollectionTimeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
@@ -1139,25 +1112,25 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"samples":         framework.Int32ToTF(defaultVoiceSamples),
-						"voice_phrase_id": framework.StringToTF(defaultVoicePhraseId),
+						"samples":         types.Int64Value(defaultVoiceSamples),
+						"voice_phrase_id": types.StringValue(defaultVoicePhraseId),
 					}
 					textDependentObjValue, d := types.ObjectValue(textDependentServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"retain_original_recordings": framework.BoolOkToTF(defaultBoolFalse, true),
-						"update_on_reenrollment":     framework.BoolOkToTF(defaultBoolTrue, true),
-						"update_on_verification":     framework.BoolOkToTF(defaultBoolTrue, true),
+						"retain_original_recordings": types.BoolValue(defaultBoolFalse),
+						"update_on_reenrollment":     types.BoolValue(defaultBoolTrue),
+						"update_on_verification":     types.BoolValue(defaultBoolTrue),
 					}
 					referenceDataObjValue, d := types.ObjectValue(referenceDataServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					objValue, d := types.ObjectValue(voiceServiceTFObjectTypes, map[string]attr.Value{
-						"verify":               framework.StringToTF(string(defaultVerify)),
-						"enrollment":           framework.BoolOkToTF(defaultBoolFalse, true),
-						"comparison_threshold": framework.StringToTF(string(defaultThreshold)),
-						"liveness_threshold":   framework.StringToTF(string(defaultThreshold)),
+						"verify":               types.StringValue(string(defaultVerify)),
+						"enrollment":           types.BoolValue(defaultBoolFalse),
+						"comparison_threshold": types.StringValue(string(defaultThreshold)),
+						"liveness_threshold":   types.StringValue(string(defaultThreshold)),
 						"text_dependent":       textDependentObjValue,
 						"reference_data":       referenceDataObjValue,
 					})
@@ -1656,43 +1629,12 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 	}
 
 	// Top-level arguments
-	data.SetId(p.Id.ValueString())
-
 	if !p.Name.IsNull() && !p.Name.IsUnknown() {
 		data.SetName(p.Name.ValueString())
 	}
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		data.SetDescription(p.Description.ValueString())
-	}
-
-	if !p.CreatedAt.IsNull() && !p.CreatedAt.IsUnknown() {
-		createdAt, err := time.Parse(time.RFC3339, p.CreatedAt.ValueString())
-		if err != nil {
-			diags.AddError(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected createdAt value: %s. Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetCreatedAt(createdAt)
-	}
-
-	if !p.UpdatedAt.IsNull() && !p.UpdatedAt.IsUnknown() {
-		updatedAt, err := time.Parse(time.RFC3339, p.UpdatedAt.ValueString())
-		if err != nil {
-			diags.AddError(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected updatedAt value: %s. Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetUpdatedAt(updatedAt)
-
-		if data == nil {
-			diags.AddError(
-				"Unexpected Value",
-				"Verify Policy object was unexpectedly null on expansion. Please report this to the provider maintainers.",
-			)
-		}
 	}
 
 	// Verify policies managed via TF currently cannot be set to the default policy due to a potential lock situation or state management problem.
@@ -2101,7 +2043,7 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectUnknown(governmentIdDataSourceServiceTFObjectTypes), diags
+		return types.ObjectNull(governmentIdDataSourceServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(governmentIdServiceTFObjectTypes, map[string]attr.Value{
@@ -2115,8 +2057,8 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 func (p *verifyPolicyResourceModel) toStateFacialComparison(apiObject *verify.FacialComparisonConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectUnknown(facialComparisonServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectNull(facialComparisonServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(facialComparisonServiceTFObjectTypes, map[string]attr.Value{
@@ -2131,8 +2073,8 @@ func (p *verifyPolicyResourceModel) toStateFacialComparison(apiObject *verify.Fa
 func (p *verifyPolicyResourceModel) toStateLiveness(apiObject *verify.LivenessConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectUnknown(livenessServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectNull(livenessServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(livenessServiceTFObjectTypes, map[string]attr.Value{
@@ -2147,8 +2089,8 @@ func (p *verifyPolicyResourceModel) toStateLiveness(apiObject *verify.LivenessCo
 func (p *verifyPolicyResourceModel) toStateTransaction(apiObject *verify.TransactionConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectUnknown(transactionServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectNull(transactionServiceTFObjectTypes), diags
 	}
 
 	transactionTimeout := types.ObjectNull(genericTimeoutServiceTFObjectTypes)
@@ -2207,8 +2149,8 @@ func (p *verifyPolicyResourceModel) toStateTransaction(apiObject *verify.Transac
 func (p *verifyPolicyResourceModel) toStateDevice(apiObject *verify.OTPDeviceConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectUnknown(deviceServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectNull(deviceServiceTFObjectTypes), diags
 	}
 
 	otp := types.ObjectNull(otpServiceTFObjectTypes)
@@ -2303,8 +2245,8 @@ func (p *verifyPolicyResourceModel) toStateDevice(apiObject *verify.OTPDeviceCon
 func (p *verifyPolicyResourceModel) toStateVoice(apiObject *verify.VoiceConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectUnknown(voiceServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectNull(voiceServiceTFObjectTypes), diags
 	}
 
 	textDependent := types.ObjectNull(textDependentServiceTFObjectTypes)
@@ -2336,11 +2278,27 @@ func (p *verifyPolicyResourceModel) toStateVoice(apiObject *verify.VoiceConfigur
 		referenceData = objValue
 	}
 
+	comparisonThreshold := types.StringNull()
+	if v, ok := apiObject.GetComparisonOk(); ok {
+		if t, ok := v.GetThresholdOk(); ok {
+			comparisonThreshold = types.StringValue(utils.EnumToString(t))
+		}
+
+	}
+
+	livenessThreshold := types.StringNull()
+	if v, ok := apiObject.GetLivenessOk(); ok {
+		if t, ok := v.GetThresholdOk(); ok {
+			livenessThreshold = types.StringValue(utils.EnumToString(t))
+		}
+
+	}
+
 	objValue, d := types.ObjectValue(voiceServiceTFObjectTypes, map[string]attr.Value{
 		"verify":               framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"enrollment":           framework.BoolOkToTF(apiObject.GetEnrollmentOk()),
-		"comparison_threshold": framework.EnumOkToTF(apiObject.GetComparison().Threshold, ok),
-		"liveness_threshold":   framework.EnumOkToTF(apiObject.GetLiveness().Threshold, ok),
+		"comparison_threshold": comparisonThreshold,
+		"liveness_threshold":   livenessThreshold,
 		"text_dependent":       textDependent,
 		"reference_data":       referenceData,
 	})

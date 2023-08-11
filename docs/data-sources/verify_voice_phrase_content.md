@@ -1,18 +1,18 @@
 ---
-page_title: "pingone_voice_phrase_content Data Source - terraform-provider-pingone"
+page_title: "pingone_verify_voice_phrase_content Data Source - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
   Data source to find PingOne Voice Phrase Contents by its Voice Phrase Content Id for a speicific PingOne Voice Phrase Id.
 ---
 
-# pingone_voice_phrase_content (Data Source)
+# pingone_verify_voice_phrase_content (Data Source)
 
 Data source to find PingOne Voice Phrase Contents by its Voice Phrase Content Id for a speicific PingOne Voice Phrase Id.
 
 ## Example Usage
 
 ```terraform
-data "pingone_voice_phrase_content" "find_by_id_example" {
+data "pingone_verify_voice_phrase_content" "find_by_id_example" {
   environment_id          = var.environment_id
   voice_phrase_id         = var.voice_phrase_id
   voice_phrase_content_id = var.voice_phrase_content_id

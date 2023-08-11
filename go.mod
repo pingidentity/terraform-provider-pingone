@@ -22,7 +22,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.24.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.15.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.8.1
-	github.com/patrickcping/pingone-go-sdk-v2/verify v0.2.1
+	github.com/patrickcping/pingone-go-sdk-v2/verify v0.3.0
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.47.0
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1

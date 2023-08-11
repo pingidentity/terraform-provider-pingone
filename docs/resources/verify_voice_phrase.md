@@ -1,12 +1,12 @@
 ---
-page_title: "pingone_voice_phrase Resource - terraform-provider-pingone"
+page_title: "pingone_verify_voice_phrase Resource - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
   Resource to configure the requirements to manage the named container for voice_phrase_contents. The named container is a prerequisite to manage specific voice phrase contents.
   A voice_phrase is a container with a name. The actual phrases to speak are in contents, where the content has a locale and the phrase to speak written in the language required by the locale.
 ---
 
-# pingone_voice_phrase (Resource)
+# pingone_verify_voice_phrase (Resource)
 
 Resource to configure the requirements to manage the named container for `voice_phrase_contents`. The named container is a prerequisite to manage specific voice phrase contents.
 
@@ -19,9 +19,16 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
-resource "pingone_voice_phrase" "my_verify_voice_phrase" {
+resource "pingone_verify_voice_phrase" "my_verify_voice_phrase" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Verify Voice Phrase for my Verify Policy"
+}
+
+resource "pingone_verify_voice_phrase_content" "my_verify_voice_phrase_content" {
+  environment_id  = pingone_environment.my_environment.id
+  voice_phrase_id = pingone_voice_phrase.my_verify_voice_phrase.id
+  locale          = "en"
+  content         = "My voice content to be used in voice enrollment or verification."
 }
 ```
 

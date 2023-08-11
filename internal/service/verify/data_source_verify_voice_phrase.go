@@ -46,7 +46,7 @@ func NewVoicePhraseDataSource() datasource.DataSource {
 
 // Metadata
 func (r *VoicePhraseDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_voice_phrase"
+	resp.TypeName = req.ProviderTypeName + "_verify_voice_phrase"
 }
 
 func (r *VoicePhraseDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {

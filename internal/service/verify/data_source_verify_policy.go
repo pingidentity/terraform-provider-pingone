@@ -917,7 +917,7 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectUnknown(governmentIdDataSourceServiceTFObjectTypes), diags
+		return types.ObjectNull(governmentIdDataSourceServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(governmentIdDataSourceServiceTFObjectTypes, map[string]attr.Value{
@@ -932,7 +932,7 @@ func (p *verifyPolicyDataSourceModel) toStateFacialComparison(apiObject *verify.
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectUnknown(facialComparisonDataSourceServiceTFObjectTypes), diags
+		return types.ObjectNull(facialComparisonDataSourceServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(facialComparisonDataSourceServiceTFObjectTypes, map[string]attr.Value{
@@ -948,7 +948,7 @@ func (p *verifyPolicyDataSourceModel) toStateLiveness(apiObject *verify.Liveness
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectUnknown(livenessDataSourceServiceTFObjectTypes), diags
+		return types.ObjectNull(livenessDataSourceServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(livenessDataSourceServiceTFObjectTypes, map[string]attr.Value{
@@ -964,7 +964,7 @@ func (p *verifyPolicyDataSourceModel) toStateTransaction(apiObject *verify.Trans
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectUnknown(transactionDataSourceServiceTFObjectTypes), diags
+		return types.ObjectNull(transactionDataSourceServiceTFObjectTypes), diags
 	}
 
 	transactionTimeout := types.ObjectNull(genericTimeoutDataSourceServiceTFObjectTypes)
@@ -1024,7 +1024,7 @@ func (p *verifyPolicyDataSourceModel) toStateDevice(apiObject *verify.OTPDeviceC
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectUnknown(deviceDataSourceServiceTFObjectTypes), diags
+		return types.ObjectNull(deviceDataSourceServiceTFObjectTypes), diags
 	}
 
 	otp := types.ObjectNull(otpDataSourceServiceTFObjectTypes)
@@ -1119,8 +1119,8 @@ func (p *verifyPolicyDataSourceModel) toStateDevice(apiObject *verify.OTPDeviceC
 func (p *verifyPolicyDataSourceModel) toStateVoice(apiObject *verify.VoiceConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		return types.ObjectUnknown(voiceDataSourceServiceTFObjectTypes), diags
+	if !ok || apiObject == nil {
+		return types.ObjectNull(voiceDataSourceServiceTFObjectTypes), diags
 	}
 
 	textDependent := types.ObjectNull(textDependentDataSourceServiceTFObjectTypes)

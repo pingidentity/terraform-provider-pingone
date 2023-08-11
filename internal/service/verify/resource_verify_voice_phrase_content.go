@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -52,7 +51,7 @@ func NewVoicePhraseContentResource() resource.Resource {
 
 // Metadata
 func (r *VoicePhraseContentResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_voice_phrase_content"
+	resp.TypeName = req.ProviderTypeName + "_verify_voice_phrase_content"
 }
 
 func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -60,8 +59,8 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
-	// P1 Platform does not set a traditional UUID as the default phrase ID value
-	const defaultVoicePhraseId = "exceptional_experiences"
+	// P1 Platform does not set a traditional UUID for its default phrase IDs
+	const defaultVoicePhraseIds = "(exceptional_experiences|pingone_davinci_nocode)"
 
 	phraseIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"For a customer-defined phrase, the identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration. For pre-defined phrases, a string value.",
@@ -73,8 +72,7 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to configure the voice enrollment or verification requirements when configuring a `verify_policy` for voice verification.\n\n" +
-			"A `voice_phrase_id` is obtained by configuring the `voice_phrase` container with a name. The actual phrases to speak are defined in the `voice_phrase_contents` configuration, where the content has a locale and the phrase to speak, written in the language required by the locale.",
+		Description: "Resource to configure the phrases to speak during voice verification enrollment or validation.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -90,7 +88,7 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 				Validators: []validator.String{
 					stringvalidator.Any(
 						validation.P1ResourceIDValidator(),
-						stringvalidator.RegexMatches(regexp.MustCompile(defaultVoicePhraseId), "Unexpected error with the pre-defined, default value. Please report this issue to the provider maintainers."),
+						stringvalidator.RegexMatches(regexp.MustCompile(defaultVoicePhraseIds), "Must contain a valid voice phrase identifier (UUID) or a permitted default voice phrase id."),
 					),
 				},
 			},
@@ -172,7 +170,7 @@ func (r *VoicePhraseContentResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	// Build the model for the API
-	VoicePhraseContent, d := plan.expand()
+	voicePhraseContent, d := plan.expand()
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -184,7 +182,7 @@ func (r *VoicePhraseContentResource) Create(ctx context.Context, req resource.Cr
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.VoicePhraseContentsApi.CreateVoicePhraseContent(ctx, plan.EnvironmentId.ValueString(), plan.VoicePhraseId.ValueString()).VoicePhraseContents(*VoicePhraseContent).Execute()
+			return r.client.VoicePhraseContentsApi.CreateVoicePhraseContent(ctx, plan.EnvironmentId.ValueString(), plan.VoicePhraseId.ValueString()).VoicePhraseContents(*voicePhraseContent).Execute()
 		},
 		"CreateVoicePhraseContent",
 		framework.DefaultCustomError,
@@ -264,7 +262,7 @@ func (r *VoicePhraseContentResource) Update(ctx context.Context, req resource.Up
 	}
 
 	// Build the model for the API
-	VoicePhraseContent, d := plan.expand()
+	voicePhraseContent, d := plan.expand()
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -276,7 +274,7 @@ func (r *VoicePhraseContentResource) Update(ctx context.Context, req resource.Up
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.VoicePhraseContentsApi.UpdateVoicePhraseContent(ctx, plan.EnvironmentId.ValueString(), plan.VoicePhraseId.ValueString(), plan.Id.ValueString()).VoicePhraseContents(*VoicePhraseContent).Execute()
+			return r.client.VoicePhraseContentsApi.UpdateVoicePhraseContent(ctx, plan.EnvironmentId.ValueString(), plan.VoicePhraseId.ValueString(), plan.Id.ValueString()).VoicePhraseContents(*voicePhraseContent).Execute()
 		},
 		"UpdateVoicePhraseContent",
 		framework.DefaultCustomError,
@@ -351,8 +349,12 @@ func (p *voicePhraseContentResourceModel) expand() (*verify.VoicePhraseContents,
 	var diags diag.Diagnostics
 
 	data := verify.NewVoicePhraseContentsWithDefaults()
-
-	data.SetId(p.Id.ValueString())
+	if data == nil {
+		diags.AddError(
+			"Unexpected Error on Expand",
+			"Cannot expand new voice phrase content with defaults.  Please report this to the provider maintainers.",
+		)
+	}
 
 	if !p.VoicePhraseId.IsNull() && !p.VoicePhraseId.IsUnknown() {
 		data.SetVoicePhrase(*verify.NewVoicePhraseContentsVoicePhrase(p.VoicePhraseId.ValueString()))
@@ -364,35 +366,6 @@ func (p *voicePhraseContentResourceModel) expand() (*verify.VoicePhraseContents,
 
 	if !p.Locale.IsNull() && !p.Locale.IsUnknown() {
 		data.SetLocale(p.Locale.ValueString())
-	}
-
-	if !p.CreatedAt.IsNull() && !p.CreatedAt.IsUnknown() {
-		createdAt, err := time.Parse(time.RFC3339, p.CreatedAt.ValueString())
-		if err != nil {
-			diags.AddError(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected createdAt value: %s. Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetCreatedAt(createdAt)
-	}
-
-	if !p.UpdatedAt.IsNull() && !p.UpdatedAt.IsUnknown() {
-		updatedAt, err := time.Parse(time.RFC3339, p.UpdatedAt.ValueString())
-		if err != nil {
-			diags.AddError(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected updatedAt value: %s. Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetUpdatedAt(updatedAt)
-
-		if data == nil {
-			diags.AddError(
-				"Unexpected Value",
-				"Verify Policy object was unexpectedly null on expansion. Please report this to the provider maintainers.",
-			)
-		}
 	}
 
 	return data, diags

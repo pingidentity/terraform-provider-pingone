@@ -1,16 +1,13 @@
 ---
-page_title: "pingone_voice_phrase_content Resource - terraform-provider-pingone"
+page_title: "pingone_verify_voice_phrase_content Resource - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
-  Resource to configure the voice enrollment or verification requirements when configuring a verify_policy for voice verification.
-  A voice_phrase_id is obtained by configuring the voice_phrase container with a name. The actual phrases to speak are defined in the voice_phrase_contents configuration, where the content has a locale and the phrase to speak, written in the language required by the locale.
+  Resource to configure the phrases to speak during voice verification enrollment or validation.
 ---
 
-# pingone_voice_phrase_content (Resource)
+# pingone_verify_voice_phrase_content (Resource)
 
-Resource to configure the voice enrollment or verification requirements when configuring a `verify_policy` for voice verification.
-
-A `voice_phrase_id` is obtained by configuring the `voice_phrase` container with a name. The actual phrases to speak are defined in the `voice_phrase_contents` configuration, where the content has a locale and the phrase to speak, written in the language required by the locale.
+Resource to configure the phrases to speak during voice verification enrollment or validation.
 
 ## Example Usage
 
@@ -19,12 +16,12 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
-resource "pingone_voice_phrase" "my_verify_voice_phrase" {
+resource "pingone_verify_voice_phrase" "my_verify_voice_phrase" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Verify Voice Phrase for my Verify Policy"
 }
 
-resource "pingone_voice_phrase_content" {
+resource "pingone_verify_voice_phrase_content" "my_verify_voice_phrase_content" {
   environment_id  = pingone_environment.my_environment.id
   voice_phrase_id = pingone_voice_phrase.my_verify_voice_phrase.id
   locale          = "en"
@@ -53,5 +50,5 @@ resource "pingone_voice_phrase_content" {
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_voice_phrase.example <environment_id>/<voice_phrase_id>
+$ terraform import pingone_voice_phrase.example <environment_id>/<voice_phrase_id>/<voice_phrase_content_id>
 ```

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -48,7 +47,7 @@ func NewVoicePhraseResource() resource.Resource {
 
 // Metadata
 func (r *VoicePhraseResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_voice_phrase"
+	resp.TypeName = req.ProviderTypeName + "_verify_voice_phrase"
 }
 
 func (r *VoicePhraseResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -136,7 +135,7 @@ func (r *VoicePhraseResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// Build the model for the API
-	VoicePhrase, d := plan.expand()
+	voicePhrase, d := plan.expand()
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -148,7 +147,7 @@ func (r *VoicePhraseResource) Create(ctx context.Context, req resource.CreateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.VoicePhrasesApi.CreateVoicePhrase(ctx, plan.EnvironmentId.ValueString()).VoicePhrase(*VoicePhrase).Execute()
+			return r.client.VoicePhrasesApi.CreateVoicePhrase(ctx, plan.EnvironmentId.ValueString()).VoicePhrase(*voicePhrase).Execute()
 		},
 		"CreateVoicePhrase",
 		framework.DefaultCustomError,
@@ -228,7 +227,7 @@ func (r *VoicePhraseResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// Build the model for the API
-	VoicePhrase, d := plan.expand()
+	voicePhrase, d := plan.expand()
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -240,7 +239,7 @@ func (r *VoicePhraseResource) Update(ctx context.Context, req resource.UpdateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.VoicePhrasesApi.UpdateVoicePhrase(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).VoicePhrase(*VoicePhrase).Execute()
+			return r.client.VoicePhrasesApi.UpdateVoicePhrase(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).VoicePhrase(*voicePhrase).Execute()
 		},
 		"UpdateVoicePhrase",
 		framework.DefaultCustomError,
@@ -314,36 +313,11 @@ func (p *voicePhraseResourceModel) expand() (*verify.VoicePhrase, diag.Diagnosti
 	var diags diag.Diagnostics
 
 	data := verify.NewVoicePhrase(p.DisplayName.ValueString())
-
-	data.SetId(p.Id.ValueString())
-
-	if !p.CreatedAt.IsNull() && !p.CreatedAt.IsUnknown() {
-		createdAt, err := time.Parse(time.RFC3339, p.CreatedAt.ValueString())
-		if err != nil {
-			diags.AddError(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected createdAt value: %s. Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetCreatedAt(createdAt)
-	}
-
-	if !p.UpdatedAt.IsNull() && !p.UpdatedAt.IsUnknown() {
-		updatedAt, err := time.Parse(time.RFC3339, p.UpdatedAt.ValueString())
-		if err != nil {
-			diags.AddError(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected updatedAt value: %s. Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetUpdatedAt(updatedAt)
-
-		if data == nil {
-			diags.AddError(
-				"Unexpected Value",
-				"Verify Policy object was unexpectedly null on expansion. Please report this to the provider maintainers.",
-			)
-		}
+	if data == nil {
+		diags.AddError(
+			"Unexpected Error on Expand",
+			"Cannot expand new voice phrase.  Please report this to the provider maintainers.",
+		)
 	}
 
 	return data, diags
