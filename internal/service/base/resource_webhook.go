@@ -295,7 +295,12 @@ func expandWebhook(d *schema.ResourceData) (*management.Subscription, diag.Diagn
 	if v, ok := d.GetOk("http_endpoint_headers"); ok {
 		obj := v.(map[string]interface{})
 
-		httpEndpoint.SetHeaders(obj)
+		headers := make(map[string]string)
+		for k, v := range obj {
+			headers[k] = v.(string)
+		}
+
+		httpEndpoint.SetHeaders(headers)
 	}
 
 	filterOptions, diags := expandWebhookFilterOptions(d.Get("filter_options").([]interface{}))
