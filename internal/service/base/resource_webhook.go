@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -19,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -29,7 +29,6 @@ import (
 // Types
 type WebhookResource struct {
 	client *management.APIClient
-	region model.RegionMapping
 }
 
 type WebhookResourceModel struct {
@@ -164,7 +163,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Required:    true,
 
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Must be a valid HTTPS URL"),
+					stringvalidator.RegexMatches(regexp.MustCompile(`^https:\/\/.*`), "Must be a valid HTTPS URL"),
 				},
 			},
 
@@ -309,7 +308,7 @@ func (r *WebhookResource) Configure(ctx context.Context, req resource.ConfigureR
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -320,7 +319,6 @@ func (r *WebhookResource) Configure(ctx context.Context, req resource.ConfigureR
 	}
 
 	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -528,7 +526,10 @@ func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscrip
 		httpEndpoint.SetHeaders(headersPlan)
 	}
 
-		httpEndpoint.SetHeaders(obj)
+	var filterOptionsPlan []WebookFilterOptionsModel
+	diags.Append(p.FilterOptions.ElementsAs(ctx, &filterOptionsPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
 	}
 
 	var filterOptions *management.SubscriptionFilterOptions
