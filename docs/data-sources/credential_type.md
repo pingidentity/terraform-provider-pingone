@@ -30,10 +30,14 @@ data "pingone_credential_type" "example_by_id" {
 
 - `card_design_template` (String) An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.
 - `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
+- `created_at` (String) Date and time the object was created.
 - `description` (String) A description of the credential type.
 - `id` (String) The ID of this resource.
+- `issuer_id` (String) Identifier (UUID) of the credential issuer.
 - `metadata` (Attributes) An object that contains the names, data types, and other metadata related to the credentia (see [below for nested schema](#nestedatt--metadata))
+- `revoke_on_delete` (Boolean) Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.
 - `title` (String) Title of the credential.
+- `updated_at` (String) Date and time the object was updated. Can be null.
 
 <a id="nestedatt--metadata"></a>
 ### Nested Schema for `metadata`

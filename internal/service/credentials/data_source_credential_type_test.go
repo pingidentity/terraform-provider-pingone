@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
@@ -30,12 +31,16 @@ func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "credential_type_id"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "issuer_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "title", resourceFullName, "title"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "card_type", resourceFullName, "card_type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "card_design_template", resourceFullName, "card_design_template"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "metadata.%", resourceFullName, "metadata.%"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "metadata.fields.%", resourceFullName, "metadata.fields.%"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "revoke_on_delete", "false"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "created_at", verify.RFC3339Regexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "updated_at", verify.RFC3339Regexp),
 				),
 			},
 			{
@@ -98,6 +103,7 @@ resource "pingone_credential_type" "%[2]s" {
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+  revoke_on_delete     = false
 
   metadata = {
     name               = "%[3]s"

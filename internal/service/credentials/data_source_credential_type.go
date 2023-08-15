@@ -25,12 +25,16 @@ type CredentialTypeDataSource struct {
 type CredentialTypeDataSourceModel struct {
 	Id                 types.String `tfsdk:"id"`
 	EnvironmentId      types.String `tfsdk:"environment_id"`
+	IssuerId           types.String `tfsdk:"issuer_id"`
 	CredentialTypeId   types.String `tfsdk:"credential_type_id"`
 	Title              types.String `tfsdk:"title"`
 	Description        types.String `tfsdk:"description"`
 	CardType           types.String `tfsdk:"card_type"`
 	CardDesignTemplate types.String `tfsdk:"card_design_template"`
 	Metadata           types.Object `tfsdk:"metadata"`
+	RevokeOnDelete     types.Bool   `tfsdk:"revoke_on_delete"`
+	CreatedAt          types.String `tfsdk:"created_at"`
+	UpdatedAt          types.String `tfsdk:"updated_at"`
 }
 
 type MetadataDataSourceModel struct {
@@ -111,6 +115,11 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 				framework.SchemaAttributeDescriptionFromMarkdown("Identifier (UUID) associated with the credential type."),
 			),
 
+			"issuer_id": schema.StringAttribute{
+				Description: "Identifier (UUID) of the credential issuer.",
+				Computed:    true,
+			},
+
 			"title": schema.StringAttribute{
 				Description: "Title of the credential.",
 				Computed:    true,
@@ -128,6 +137,11 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 
 			"card_design_template": schema.StringAttribute{
 				Description: "An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.",
+				Computed:    true,
+			},
+
+			"revoke_on_delete": schema.BoolAttribute{
+				Description: "Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.",
 				Computed:    true,
 			},
 
@@ -213,6 +227,16 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 						},
 					},
 				},
+			},
+
+			"created_at": schema.StringAttribute{
+				Description: "Date and time the object was created.",
+				Computed:    true,
+			},
+
+			"updated_at": schema.StringAttribute{
+				Description: "Date and time the object was updated. Can be null.",
+				Computed:    true,
 			},
 		},
 	}
@@ -301,10 +325,19 @@ func (p *CredentialTypeDataSourceModel) toState(apiObject *credentials.Credentia
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.CredentialTypeId = framework.StringToTF(apiObject.GetId())
+	p.IssuerId = framework.StringToTF(*apiObject.GetIssuer().Id)
 	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.CardType = framework.StringOkToTF(apiObject.GetCardTypeOk())
 	p.CardDesignTemplate = framework.StringOkToTF(apiObject.GetCardDesignTemplateOk())
+	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
+	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+
+	revokeOnDelete := types.BoolValue(false)
+	if v, ok := apiObject.GetOnDeleteOk(); ok {
+		revokeOnDelete = framework.BoolOkToTF(v.GetRevokeIssuedCredentialsOk())
+	}
+	p.RevokeOnDelete = revokeOnDelete
 
 	// credential metadata
 	metadata, d := toStateMetadataDataSource(apiObject.GetMetadataOk())

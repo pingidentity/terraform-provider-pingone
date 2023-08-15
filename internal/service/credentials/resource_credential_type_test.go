@@ -195,6 +195,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "issuer_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "title", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "VerifiedEmployee"),
@@ -214,6 +215,9 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.title", "displayName"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.attribute", "name.formatted"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.is_visible", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "revoke_on_delete", "true"),
+			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
+			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
@@ -229,6 +233,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "issuer_id", verify.P1ResourceIDRegexp),
 			resource.TestCheckResourceAttr(resourceFullName, "title", updatedName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", updatedName)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "DemonstrationCard"),
@@ -240,11 +245,13 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.type", "Issued Timestamp"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.title", "timestamp"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.is_visible", "false"),
-
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.columns"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.bg_opacity_percent"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.card_color"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.text_color"),
+			resource.TestCheckResourceAttr(resourceFullName, "revoke_on_delete", "false"),
+			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
+			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
@@ -428,6 +435,7 @@ resource "pingone_credential_type" "%[2]s" {
   description          = "%[3]s Example Description"
   card_type            = "VerifiedEmployee"
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><image href=\"$${backgroundImage}\" opacity=\"$${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><image href=\"$${logoImage}\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+  revoke_on_delete     = true
 
   metadata = {
     name               = "%[3]s"
@@ -497,7 +505,7 @@ resource "pingone_credential_type" "%[2]s" {
   description          = "%[3]s Example Description"
   card_type            = "DemonstrationCard"
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-
+  revoke_on_delete     = false
   metadata = {
     name = "%[3]s"
 

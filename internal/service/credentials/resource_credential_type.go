@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -37,11 +37,15 @@ type CredentialTypeResource struct {
 type CredentialTypeResourceModel struct {
 	Id                 types.String `tfsdk:"id"`
 	EnvironmentId      types.String `tfsdk:"environment_id"`
-	Title              types.String `tfsdk:"title"`
-	Description        types.String `tfsdk:"description"`
+	IssuerId           types.String `tfsdk:"issuer_id"`
 	CardType           types.String `tfsdk:"card_type"`
 	CardDesignTemplate types.String `tfsdk:"card_design_template"`
+	Description        types.String `tfsdk:"description"`
 	Metadata           types.Object `tfsdk:"metadata"`
+	RevokeOnDelete     types.Bool   `tfsdk:"revoke_on_delete"`
+	Title              types.String `tfsdk:"title"`
+	CreatedAt          types.String `tfsdk:"created_at"`
+	UpdatedAt          types.String `tfsdk:"updated_at"`
 }
 
 type MetadataModel struct {
@@ -113,7 +117,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMinLength = 1
 	const attrMinColumns = 1
 	const attrMaxColumns = 3
-	const attrDefaultVersion = 5
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
 	const imageMaxSize = 50000
@@ -124,6 +127,14 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 	credentialDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A description of the credential type. This value aligns to `${cardSubtitle}` in the `card_design_template`.",
+	)
+
+	issuerIdDescriptipion := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The identifier (UUID) of the issuer of the credential, which is the `id` of the `credential_issuer_profile` defined in the `environment`.",
+	)
+
+	revokeOnDeleteDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.",
 	)
 
 	fieldsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -157,6 +168,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential type exists."),
 			),
+
+			"issuer_id": schema.StringAttribute{
+				Description:         issuerIdDescriptipion.Description,
+				MarkdownDescription: issuerIdDescriptipion.MarkdownDescription,
+				Computed:            true,
+			},
 
 			"title": schema.StringAttribute{
 				Description:         titleDescription.Description,
@@ -210,6 +227,14 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile(`^<svg.*>[\s\S]*<\/svg>\s*$`), "expected value to contain a valid PingOne Credentials SVG card template."),
 				},
+			},
+
+			"revoke_on_delete": schema.BoolAttribute{
+				Description:         revokeOnDeleteDescription.Description,
+				MarkdownDescription: revokeOnDeleteDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
 			},
 
 			"metadata": schema.SingleNestedAttribute{
@@ -333,19 +358,9 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							),
 						},
 					},
-					//fix
 					"version": schema.Int64Attribute{
 						Description: "Number version of this credential.",
 						Computed:    true,
-						Default:     int64default.StaticInt64(attrDefaultVersion),
-						// P1Creds has a limitation within the EarlyRelease.
-						// To resolve, we will compute the "version" argument with a value of "5";
-						// the same value set by the P1 admin console until resolved.
-						// Below are the actual settings to use once fixed.
-						// Optional: true,
-						// Validators: []validator.Int64{
-						// int64validator.AtLeast(attrMinVersion),
-						//},
 					},
 
 					"fields": schema.ListNestedAttribute{
@@ -408,6 +423,16 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						},
 					},
 				},
+			},
+
+			"created_at": schema.StringAttribute{
+				Description: "Date and time the object was created.",
+				Computed:    true,
+			},
+
+			"updated_at": schema.StringAttribute{
+				Description: "Date and time the object was updated. Can be null.",
+				Computed:    true,
 			},
 		},
 	}
@@ -661,8 +686,21 @@ func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.
 	}
 
 	data := credentials.NewCredentialType(p.CardDesignTemplate.ValueString(), *credentialTypeMetaData, p.Title.ValueString())
-	data.SetDescription(p.Description.ValueString())
-	data.SetCardType(p.CardType.ValueString())
+
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
+
+	if !p.CardType.IsNull() && !p.CardType.IsUnknown() {
+		data.SetCardType(p.CardType.ValueString())
+	}
+
+	if !p.RevokeOnDelete.IsNull() && !p.RevokeOnDelete.IsUnknown() {
+		onDeleteObject := credentials.NewCredentialTypeOnDelete()
+		onDeleteObject.SetRevokeIssuedCredentials(p.RevokeOnDelete.ValueBool())
+
+		data.SetOnDelete(*onDeleteObject)
+	}
 
 	return data, diags
 }
@@ -777,10 +815,19 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 	// credential attributes
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.IssuerId = framework.StringToTF(*apiObject.GetIssuer().Id)
 	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.CardType = framework.StringOkToTF(apiObject.GetCardTypeOk())
 	p.CardDesignTemplate = framework.StringOkToTF(apiObject.GetCardDesignTemplateOk())
+	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
+	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+
+	revokeOnDelete := types.BoolValue(false)
+	if v, ok := apiObject.GetOnDeleteOk(); ok {
+		revokeOnDelete = framework.BoolOkToTF(v.GetRevokeIssuedCredentialsOk())
+	}
+	p.RevokeOnDelete = revokeOnDelete
 
 	// credential metadata
 	metadata, d := toStateMetadata(apiObject.GetMetadataOk())
