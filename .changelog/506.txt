@@ -1,0 +1,11 @@
+```release-note:note
+`resource/pingone_custom_domain`: Migrated to plugin framework.
+```
+
+```release-note:note
+`resource/pingone_custom_domain_verify`: Migrated to plugin framework.
+```
+
+```release-note:note
+`resource/pingone_custom_domain_ssl`: Migrated to plugin framework.
+```

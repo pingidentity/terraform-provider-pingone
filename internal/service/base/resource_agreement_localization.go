@@ -141,7 +141,7 @@ func (r *AgreementLocalizationResource) Configure(ctx context.Context, req resou
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

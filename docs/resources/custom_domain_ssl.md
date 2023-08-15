@@ -40,18 +40,18 @@ resource "pingone_custom_domain_ssl" "my_custom_domain" {
 
 ### Required
 
-- `certificate_pem_file` (String) A string that specifies the PEM-encoded certificate to import. The certificate must not be expired, must not be self signed and the domain must match one of the subject alternative name (SAN) values on the certificate.
-- `custom_domain_id` (String) The ID of the custom domain to set SSL settings for.
-- `environment_id` (String) The ID of the environment to create the certificate in.
-- `private_key_pem_file` (String, Sensitive) A string that specifies the PEM-encoded, unencrypted private key that matches the certificate's public key.
+- `certificate_pem_file` (String) A string that specifies the PEM-encoded certificate to import. The certificate must not be expired, must not be self signed and the domain must match one of the subject alternative name (SAN) values on the certificate.  This field is immutable and will trigger a replace plan if changed.
+- `custom_domain_id` (String) The ID of the custom domain to set SSL settings for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to configure custom domain SSL in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `private_key_pem_file` (String, Sensitive) A string that specifies the PEM-encoded, unencrypted private key that matches the certificate's public key.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
-- `intermediate_certificates_pem_file` (String) A string that specifies the PEM-encoded certificate chain.
+- `intermediate_certificates_pem_file` (String) A string that specifies the PEM-encoded certificate chain.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
 - `certificate_expires_at` (String) The time when the certificate expires.  If this property is not present, it indicates that an SSL certificate has not been setup for this custom domain.
 - `domain_name` (String) A string that specifies the domain name in use.
 - `id` (String) The ID of this resource.
-- `status` (String) A string that specifies the status of the custom domain. Options are `ACTIVE`, `VERIFICATION_REQUIRED` and `SSL_CERTIFICATE_REQUIRED`.
+- `status` (String) A string that specifies the status of the custom domain.  Options are `ACTIVE`, `SSL_CERTIFICATE_REQUIRED`, `VERIFICATION_REQUIRED`.

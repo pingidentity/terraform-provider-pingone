@@ -528,10 +528,7 @@ func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscrip
 		httpEndpoint.SetHeaders(headersPlan)
 	}
 
-	var filterOptionsPlan []WebookFilterOptionsModel
-	diags.Append(p.FilterOptions.ElementsAs(ctx, &filterOptionsPlan, false)...)
-	if diags.HasError() {
-		return nil, diags
+		httpEndpoint.SetHeaders(obj)
 	}
 
 	var filterOptions *management.SubscriptionFilterOptions
