@@ -174,9 +174,23 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	const defaultTransactionDataCollectionDuration = 15
 	const defaultTransactionTimeUnit = verify.ENUMTIMEUNIT_MINUTES
 
+	dataSourceExactlyOneOfRelativePaths := []string{
+		"verify_policy_id",
+		"name",
+		"default",
+	}
+
+	verifyPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Identifier (UUID) associated with the verify policy.",
+	).ExactlyOneOf(dataSourceExactlyOneOfRelativePaths)
+
+	nametDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Name of the verification policy displayed in PingOne Admin UI.",
+	).ExactlyOneOf(dataSourceExactlyOneOfRelativePaths)
+
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Set value to `true` to return the default verify policy. There is only one default policy per environment.",
-	)
+	).ExactlyOneOf(dataSourceExactlyOneOfRelativePaths)
 
 	governmentIdVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Controls Government ID verification requirements.",
@@ -306,8 +320,9 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 			),
 
 			"verify_policy_id": schema.StringAttribute{
-				Description: "Identifier (UUID) associated with the verify policy.",
-				Optional:    true,
+				Description:         verifyPolicyIdDescription.Description,
+				MarkdownDescription: verifyPolicyIdDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("name"),
@@ -318,8 +333,9 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 			},
 
 			"name": schema.StringAttribute{
-				Description: "Name of the verification policy displayed in PingOne Admin UI.",
-				Optional:    true,
+				Description:         nametDescription.Description,
+				MarkdownDescription: nametDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("verify_policy_id"),
@@ -671,7 +687,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						},
 					},
 					"reference_data": schema.SingleNestedAttribute{
-						Description: "Object for configuration of text dependent voice verification.",
+						Description: "Object for configuration of voice recording reference data.",
 						Computed:    true,
 
 						Attributes: map[string]schema.Attribute{
@@ -723,7 +739,7 @@ func (r *VerifyPolicyDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

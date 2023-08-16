@@ -2,7 +2,6 @@ package verify_test
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -20,13 +19,10 @@ func TestAccVerifyVoicePhraseDataSource_All(t *testing.T) {
 	name := acctest.ResourceNameGen()
 	updatedName := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	findByID := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
-		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "display_name", name),
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -34,7 +30,7 @@ func TestAccVerifyVoicePhraseDataSource_All(t *testing.T) {
 	findByName := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
-		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
+		resource.TestCheckResourceAttr(resourceFullName, "display_name", updatedName),
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -46,19 +42,19 @@ func TestAccVerifyVoicePhraseDataSource_All(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVerifyVoicePhrase_FindByID(environmentName, licenseID, resourceName, name),
+				Config: testAccVerifyVoicePhrase_FindByID(resourceName, name),
 				Check:  findByID,
 			},
 			{
-				Config:  testAccVerifyVoicePhrase_FindByID(environmentName, licenseID, resourceName, name),
+				Config:  testAccVerifyVoicePhrase_FindByID(resourceName, name),
 				Destroy: true,
 			},
 			{
-				Config: testAccVerifyVoicePhrase_FindByName(environmentName, licenseID, resourceName, updatedName),
+				Config: testAccVerifyVoicePhrase_FindByName(resourceName, updatedName),
 				Check:  findByName,
 			},
 			{
-				Config:  testAccVerifyVoicePhrase_FindByName(environmentName, licenseID, resourceName, updatedName),
+				Config:  testAccVerifyVoicePhrase_FindByName(resourceName, updatedName),
 				Destroy: true,
 			},
 		},
@@ -72,9 +68,6 @@ func TestAccVerifyVoicePhraseDataSource_FailureChecks(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -82,70 +75,70 @@ func TestAccVerifyVoicePhraseDataSource_FailureChecks(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccVerifyVoicePhrase_FindByIDFail(environmentName, licenseID, resourceName, name),
+				Config:      testAccVerifyVoicePhrase_FindByIDFail(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Error when calling `ReadOneVoicePhrase`: voicePhrase could not be found"),
 			},
 			{
-				Config:      testAccVerifyVoicePhrase_FindByNameFail(environmentName, licenseID, resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Cannot find voice phrase from name"),
+				Config:      testAccVerifyVoicePhrase_FindByNameFail(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Cannot find voice phrase from display name"),
 			},
 		},
 	})
 }
 
-func testAccVerifyVoicePhrase_FindByID(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyVoicePhrase_FindByID(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_verify_voice_phrase" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+resource "pingone_verify_voice_phrase" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  display_name   = "%[3]s"
 }
 
-data "pingone_verify_voice_phrase" "%[3]s" {
-  environment_id  = pingone_environment.%[2]s.id
-  voice_phrase_id = pingone_verify_voice_phrase.%[3]s.id
+data "pingone_verify_voice_phrase" "%[2]s" {
+  environment_id  = data.pingone_environment.general_test.id
+  voice_phrase_id = pingone_verify_voice_phrase.%[2]s.id
 
-  depends_on = [pingone_verify_voice_phrase.%[3]s]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+  depends_on = [pingone_verify_voice_phrase.%[2]s]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyVoicePhrase_FindByName(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyVoicePhrase_FindByName(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_verify_voice_phrase" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+resource "pingone_verify_voice_phrase" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  display_name   = "%[3]s"
 }
 
-data "pingone_verify_voice_phrase" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+data "pingone_verify_voice_phrase" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  display_name   = "%[3]s"
 
-  depends_on = [pingone_verify_voice_phrase.%[3]s]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+  depends_on = [pingone_verify_voice_phrase.%[2]s]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyVoicePhrase_FindByIDFail(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyVoicePhrase_FindByIDFail(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 data "pingone_verify_voice_phrase" "%[3]s" {
-  environment_id  = pingone_environment.%[2]s.id
+  environment_id  = data.pingone_environment.general_test.id
   voice_phrase_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyVoicePhrase_FindByNameFail(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyVoicePhrase_FindByNameFail(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-data "pingone_verify_voice_phrase" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+data "pingone_verify_voice_phrase" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  display_name   = "%[3]s"
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

@@ -17,11 +17,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -33,9 +34,8 @@ import (
 
 // Types
 type VerifyPolicyResource struct {
-	client     *verify.APIClient
-	mgmtClient *management.APIClient
-	region     model.RegionMapping
+	client *verify.APIClient
+	region model.RegionMapping
 }
 
 type verifyPolicyResourceModel struct {
@@ -413,7 +413,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"- Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.\n" +
 			"- Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.\n" +
 			"- Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.\n" +
-			"- Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n\n ",
+			"- Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n" +
+			"- Voice - Compare a voice recording to a previously submitted reference voice recording.\n\n ",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -1195,7 +1196,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						},
 					},
 					"reference_data": schema.SingleNestedAttribute{
-						Description: "Object for configuration of text dependent voice verification.",
+						Description: "Object for configuration of voice recording reference data.",
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
@@ -1229,6 +1230,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the verify policy was created.",
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"updated_at": schema.StringAttribute{
@@ -1255,7 +1260,7 @@ func (r *VerifyPolicyResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -1265,18 +1270,6 @@ func (r *VerifyPolicyResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
-	// management client is used to perform checks for the prerequisite native application
-	preparedMgmtClient, err := prepareMgmtClient(ctx, resourceConfig)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
-		)
-
-		return
-	}
-
-	r.mgmtClient = preparedMgmtClient
 	r.client = preparedClient
 	r.region = resourceConfig.Client.API.Region
 }

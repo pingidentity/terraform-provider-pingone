@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -28,7 +30,7 @@ type VoicePhraseResource struct {
 type voicePhraseResourceModel struct {
 	Id            types.String `tfsdk:"id"`
 	EnvironmentId types.String `tfsdk:"environment_id"`
-	DisplayName   types.String `tfsdk:"name"`
+	DisplayName   types.String `tfsdk:"display_name"`
 	CreatedAt     types.String `tfsdk:"created_at"`
 	UpdatedAt     types.String `tfsdk:"updated_at"`
 }
@@ -67,7 +69,7 @@ func (r *VoicePhraseResource) Schema(ctx context.Context, req resource.SchemaReq
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the verify voice phrase exists."),
 			),
 
-			"name": schema.StringAttribute{
+			"display_name": schema.StringAttribute{
 				Description: "Name of the voice phrase container displayed in PingOne Admin UI or other administrative interface managing the container.",
 				Required:    true,
 				Validators: []validator.String{
@@ -78,6 +80,10 @@ func (r *VoicePhraseResource) Schema(ctx context.Context, req resource.SchemaReq
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the verify phrase was created.",
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"updated_at": schema.StringAttribute{
@@ -104,7 +110,7 @@ func (r *VoicePhraseResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

@@ -37,9 +37,9 @@ data "pingone_verify_policy" "find_default_policy_example" {
 
 ### Optional
 
-- `default` (Boolean) Set value to `true` to return the default verify policy. There is only one default policy per environment.
-- `name` (String) Name of the verification policy displayed in PingOne Admin UI.
-- `verify_policy_id` (String) Identifier (UUID) associated with the verify policy.
+- `default` (Boolean) Set value to `true` to return the default verify policy. There is only one default policy per environment.  At least one of the following must be defined: `verify_policy_id`, `name`, `default`.
+- `name` (String) Name of the verification policy displayed in PingOne Admin UI.  At least one of the following must be defined: `verify_policy_id`, `name`, `default`.
+- `verify_policy_id` (String) Identifier (UUID) associated with the verify policy.  At least one of the following must be defined: `verify_policy_id`, `name`, `default`.
 
 ### Read-Only
 
@@ -275,7 +275,7 @@ Read-Only:
 - `comparison_threshold` (String) Comparison threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
 - `enrollment` (Boolean) Controls if the transaction performs voice enrollment (`TRUE`) or voice verification (`FALSE`).
 - `liveness_threshold` (String) Liveness threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
-- `reference_data` (Attributes) Object for configuration of text dependent voice verification. (see [below for nested schema](#nestedatt--voice--reference_data))
+- `reference_data` (Attributes) Object for configuration of voice recording reference data. (see [below for nested schema](#nestedatt--voice--reference_data))
 - `text_dependent` (Attributes) Object for configuration of text dependent voice verification. (see [below for nested schema](#nestedatt--voice--text_dependent))
 - `verify` (String) Controls the verification requirements for a Voice verification.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
 

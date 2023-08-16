@@ -29,7 +29,7 @@ type voicePhraseDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	VoicePhraseId types.String `tfsdk:"voice_phrase_id"`
-	DisplayName   types.String `tfsdk:"name"`
+	DisplayName   types.String `tfsdk:"display_name"`
 	CreatedAt     types.String `tfsdk:"created_at"`
 	UpdatedAt     types.String `tfsdk:"updated_at"`
 }
@@ -54,6 +54,19 @@ func (r *VoicePhraseDataSource) Schema(ctx context.Context, req datasource.Schem
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
+	dataSourceExactlyOneOfRelativePaths := []string{
+		"voice_phrase_id",
+		"display_name",
+	}
+
+	voicePhraseIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Identifier (UUID) associated with the voice phrase.",
+	).ExactlyOneOf(dataSourceExactlyOneOfRelativePaths)
+
+	displayNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Name of the voice phrase container displayed in PingOne Admin UI or other administrative interface managing the container.",
+	).ExactlyOneOf(dataSourceExactlyOneOfRelativePaths)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to find a PingOne Voice Phrase by its Voice Phrase Id or Name.",
@@ -66,19 +79,21 @@ func (r *VoicePhraseDataSource) Schema(ctx context.Context, req datasource.Schem
 			),
 
 			"voice_phrase_id": schema.StringAttribute{
-				Description: "Identifier (UUID) associated with the voice phrase.",
-				Optional:    true,
+				Description:         voicePhraseIdDescription.Description,
+				MarkdownDescription: voicePhraseIdDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("name"),
+						path.MatchRelative().AtParent().AtName("display_name"),
 					),
 					validation.P1ResourceIDValidator(),
 				},
 			},
 
-			"name": schema.StringAttribute{
-				Description: "Name of the voice phrase container displayed in PingOne Admin UI or other administrative interface managing the container.",
-				Optional:    true,
+			"display_name": schema.StringAttribute{
+				Description:         displayNameDescription.Description,
+				MarkdownDescription: displayNameDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("voice_phrase_id"),
@@ -116,7 +131,7 @@ func (r *VoicePhraseDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -201,8 +216,8 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 			if !found {
 				resp.Diagnostics.AddError(
-					"Cannot find voice phrase from name",
-					fmt.Sprintf("The voice phrase name %s for environment %s cannot be found", data.DisplayName.String(), data.EnvironmentId.String()),
+					"Cannot find voice phrase from display name",
+					fmt.Sprintf("The voice phrase display name %s for environment %s cannot be found", data.DisplayName.String(), data.EnvironmentId.String()),
 				)
 				return
 			}
@@ -210,7 +225,7 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
-			"Cannot find the requested PingOne Voice Phrase: voice_phrase_id or name argument must be set.",
+			"Cannot find the requested PingOne Voice Phrase: voice_phrase_id or display name argument must be set.",
 		)
 		return
 	}

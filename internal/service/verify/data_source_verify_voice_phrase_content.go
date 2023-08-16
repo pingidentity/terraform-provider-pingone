@@ -68,7 +68,7 @@ func (r *VoicePhraseContentDataSource) Schema(ctx context.Context, req datasourc
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data source to find PingOne Voice Phrase Contents by its Voice Phrase Content Id for a speicific PingOne Voice Phrase Id.",
+		Description: "Data source to find PingOne Voice Phrase Contents by its Voice Phrase Content Id for a specific PingOne Voice Phrase Id.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -137,7 +137,7 @@ func (r *VoicePhraseContentDataSource) Configure(ctx context.Context, req dataso
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

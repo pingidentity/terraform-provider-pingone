@@ -172,7 +172,7 @@ func TestAccVerifyVoicePhrase_Full(t *testing.T) {
 	initialVoicePhrase := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
-		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "display_name", name),
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -180,7 +180,7 @@ func TestAccVerifyVoicePhrase_Full(t *testing.T) {
 	updatedVoicePhrase := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
-		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
+		resource.TestCheckResourceAttr(resourceFullName, "display_name", updatedName),
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -230,7 +230,7 @@ func testAccVerifyVoicePhraseConfig_NewEnv(environmentName, licenseID, resourceN
 
 resource "pingone_verify_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+  display_name   = "%[4]s"
 
   depends_on = [pingone_environment.%[2]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -242,7 +242,7 @@ func testAccVerifyVoicePhrase_Full(resourceName, name string) string {
 
 resource "pingone_verify_voice_phrase" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  display_name   = "%[3]s"
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

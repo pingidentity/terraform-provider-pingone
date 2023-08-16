@@ -82,7 +82,7 @@ func testAccVerifyVoicePhraseContent_FindByID(environmentName, licenseID, resour
 
 resource "pingone_verify_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+  display_name   = "%[4]s"
 }
 
 resource "pingone_verify_voice_phrase_content" "%[3]s" {
@@ -105,7 +105,7 @@ func testAccVerifyVoicePhraseContent_FindByIDFail(environmentName, licenseID, re
 
 resource "pingone_verify_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+  display_name   = "%[4]s"
 }
 
 data "pingone_verify_voice_phrase_content" "%[3]s" {

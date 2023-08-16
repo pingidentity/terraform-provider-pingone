@@ -55,7 +55,7 @@ func testAccVerifyVoicePhraseContents_NoFilter(environmentName, licenseID, resou
 
 resource "pingone_verify_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+  display_name   = "%[4]s"
 }
 
 resource "pingone_verify_voice_phrase_content" "%[3]s-1" {

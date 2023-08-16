@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -64,7 +66,7 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 
 	phraseIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"For a customer-defined phrase, the identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration. For pre-defined phrases, a string value.",
-	)
+	).RequiresReplace()
 
 	contentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The phrase a user must speak as part of the voice enrollment or verification. The phrase must be written in the language and character set required by the language specified in the `locale` property.",
@@ -85,6 +87,9 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 				Description:         phraseIdDescription.Description,
 				MarkdownDescription: phraseIdDescription.MarkdownDescription,
 				Required:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 				Validators: []validator.String{
 					stringvalidator.Any(
 						validation.P1ResourceIDValidator(),
@@ -113,6 +118,10 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the verify phrase content was created.",
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"updated_at": schema.StringAttribute{
@@ -139,7 +148,7 @@ func (r *VoicePhraseContentResource) Configure(ctx context.Context, req resource
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -341,8 +350,8 @@ func (r *VoicePhraseContentResource) ImportState(ctx context.Context, req resour
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("voice_phrase_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("voice_phrase_id"), attributes[1])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
 }
 
 func (p *voicePhraseContentResourceModel) expand() (*verify.VoicePhraseContents, diag.Diagnostics) {

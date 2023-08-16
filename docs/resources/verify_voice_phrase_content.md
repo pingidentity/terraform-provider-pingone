@@ -18,7 +18,7 @@ resource "pingone_environment" "my_environment" {
 
 resource "pingone_verify_voice_phrase" "my_verify_voice_phrase" {
   environment_id = pingone_environment.my_environment.id
-  name           = "My Awesome Verify Voice Phrase for my Verify Policy"
+  display_name   = "My Awesome Verify Voice Phrase for my Verify Policy"
 }
 
 resource "pingone_verify_voice_phrase_content" "my_verify_voice_phrase_content" {
@@ -37,7 +37,7 @@ resource "pingone_verify_voice_phrase_content" "my_verify_voice_phrase_content" 
 - `content` (String) The phrase a user must speak as part of the voice enrollment or verification. The phrase must be written in the language and character set required by the language specified in the `locale` property.
 - `environment_id` (String) PingOne environment identifier (UUID) in which the verify voice phrase exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `locale` (String) Language localization requirement for the voice phrase contents.
-- `voice_phrase_id` (String) For a customer-defined phrase, the identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration. For pre-defined phrases, a string value.
+- `voice_phrase_id` (String) For a customer-defined phrase, the identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration. For pre-defined phrases, a string value.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 

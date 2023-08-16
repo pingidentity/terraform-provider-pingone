@@ -309,7 +309,7 @@ func testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, na
 	%[1]s
 resource "pingone_verify_voice_phrase" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+  display_name   = "%[4]s"
 }
 
 resource "pingone_verify_policy" "%[3]s" {
