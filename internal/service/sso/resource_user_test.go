@@ -582,10 +582,10 @@ resource "pingone_user" "%[2]s" {
   primary_phone = "555-6832"
 
   name = {
-    family      = "Simpson"
+    family           = "Simpson"
     formatted        = "Mr. Homer Jay Simpson Jr."
-    given       = "Homer"
-    middle      = "Jay"
+    given            = "Homer"
+    middle           = "Jay"
     honorific_prefix = "Mr."
     honorific_suffix = "Jr."
   }
@@ -664,10 +664,10 @@ resource "pingone_user" "%[2]s" {
   primary_phone = "555-6832"
 
   name = {
-    family      = "Simpson"
+    family           = "Simpson"
     formatted        = "Mr. Homer Jay Simpson Jr."
-    given       = "Homer"
-    middle      = "Jay"
+    given            = "Homer"
+    middle           = "Jay"
     honorific_prefix = "Mr."
     honorific_suffix = "Jr."
   }
