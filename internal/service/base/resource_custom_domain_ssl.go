@@ -57,6 +57,18 @@ func (r *CustomDomainSSLResource) Metadata(ctx context.Context, req resource.Met
 // Schema
 func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
+	certificatePemFileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PEM-encoded certificate to import. The certificate must not be expired, must not be self signed and the domain must match one of the subject alternative name (SAN) values on the certificate.",
+	).RequiresReplace()
+
+	intermediateCertificatesPemFileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PEM-encoded certificate chain.",
+	).RequiresReplace()
+
+	privateKeyPemFileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PEM-encoded, unencrypted private key that matches the certificate's public key.",
+	).RequiresReplace()
+
 	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the status of the custom domain.",
 	).AllowedValuesEnum(management.AllowedEnumCustomDomainStatusEnumValues)
@@ -79,8 +91,9 @@ func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.Schem
 			),
 
 			"certificate_pem_file": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the PEM-encoded certificate to import. The certificate must not be expired, must not be self signed and the domain must match one of the subject alternative name (SAN) values on the certificate. This field is immutable and will trigger a replace plan if changed.").Description,
-				Required:    true,
+				Description:         certificatePemFileDescription.Description,
+				MarkdownDescription: certificatePemFileDescription.MarkdownDescription,
+				Required:            true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -92,8 +105,9 @@ func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.Schem
 			},
 
 			"intermediate_certificates_pem_file": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the PEM-encoded certificate chain. This field is immutable and will trigger a replace plan if changed.").Description,
-				Optional:    true,
+				Description:         intermediateCertificatesPemFileDescription.Description,
+				MarkdownDescription: intermediateCertificatesPemFileDescription.MarkdownDescription,
+				Optional:            true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -105,9 +119,10 @@ func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.Schem
 			},
 
 			"private_key_pem_file": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the PEM-encoded, unencrypted private key that matches the certificate's public key. This field is immutable and will trigger a replace plan if changed.").Description,
-				Required:    true,
-				Sensitive:   true,
+				Description:         privateKeyPemFileDescription.Description,
+				MarkdownDescription: privateKeyPemFileDescription.MarkdownDescription,
+				Required:            true,
+				Sensitive:           true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -153,7 +168,7 @@ func (r *CustomDomainSSLResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

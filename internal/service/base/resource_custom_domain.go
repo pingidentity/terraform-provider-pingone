@@ -128,7 +128,7 @@ func (r *CustomDomainResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

@@ -1,14 +1,21 @@
-## 0.19.1 (Unreleased)
+## 0.19.1 (16 August 2023)
 
 NOTES:
 
+* Code optimisation for all resources and data sources to remove duplicate service client code. ([#511](https://github.com/pingidentity/terraform-provider-pingone/issues/511))
 * `resource/pingone_custom_domain_ssl`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_custom_domain_verify`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_custom_domain`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_trusted_email_domain`: Migrated to plugin framework. ([#508](https://github.com/pingidentity/terraform-provider-pingone/issues/508))
+* `resource/pingone_webhook`: Migrated to plugin framework. ([#505](https://github.com/pingidentity/terraform-provider-pingone/issues/505))
+* bump `github.com/golangci/golangci-lint` v1.53.3 => v1.54.1 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.3.0 => v0.3.1 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.25.0 => v0.26.0 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.2 => v0.10.3 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
 
 BUG FIXES:
 
+* `data-source/pingone_credential_types` Fixed panic error when retrieving credential types. ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
 * `resource/pingone_resource`: Fixed blocking error on plan when OpenID resource is removed outside of Terraform. ([#501](https://github.com/pingidentity/terraform-provider-pingone/issues/501))
 
 ## 0.19.0 (08 August 2023)
