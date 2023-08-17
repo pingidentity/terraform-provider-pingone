@@ -30,10 +30,30 @@ func TestAccUserDataSource_ByNameFull(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "user_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(dataSourceFullName, "username", name),
-					resource.TestCheckResourceAttr(dataSourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
-					resource.TestCheckResourceAttr(dataSourceFullName, "status", "ENABLED"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "population_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "username", resourceFullName, "username"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "email", resourceFullName, "email"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "email_verified", resourceFullName, "email_verified"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "population_id", resourceFullName, "population_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "enabled", resourceFullName, "enabled"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "status", resourceFullName, "status"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "account", resourceFullName, "account"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "address", resourceFullName, "address"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "external_id", resourceFullName, "external_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "identity_provider", resourceFullName, "identity_provider"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "user_lifecycle", resourceFullName, "user_lifecycle"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "locale", resourceFullName, "locale"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "mfa_enabled", resourceFullName, "mfa_enabled"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "mobile_phone", resourceFullName, "mobile_phone"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "nickname", resourceFullName, "nickname"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "password", resourceFullName, "password"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "photo", resourceFullName, "photo"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "preferred_language", resourceFullName, "preferred_language"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "primary_phone", resourceFullName, "primary_phone"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "timezone", resourceFullName, "timezone"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "title", resourceFullName, "title"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "verify_status", resourceFullName, "verify_status"),
 				),
 			},
 		},
@@ -60,10 +80,30 @@ func TestAccUserDataSource_ByEmailFull(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "user_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(dataSourceFullName, "username", name),
-					resource.TestCheckResourceAttr(dataSourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
-					resource.TestCheckResourceAttr(dataSourceFullName, "status", "ENABLED"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "population_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "username", resourceFullName, "username"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "email", resourceFullName, "email"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "email_verified", resourceFullName, "email_verified"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "population_id", resourceFullName, "population_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "enabled", resourceFullName, "enabled"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "status", resourceFullName, "status"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "account", resourceFullName, "account"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "address", resourceFullName, "address"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "external_id", resourceFullName, "external_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "identity_provider", resourceFullName, "identity_provider"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "user_lifecycle", resourceFullName, "user_lifecycle"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "locale", resourceFullName, "locale"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "mfa_enabled", resourceFullName, "mfa_enabled"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "mobile_phone", resourceFullName, "mobile_phone"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "nickname", resourceFullName, "nickname"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "password", resourceFullName, "password"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "photo", resourceFullName, "photo"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "preferred_language", resourceFullName, "preferred_language"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "primary_phone", resourceFullName, "primary_phone"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "timezone", resourceFullName, "timezone"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "title", resourceFullName, "title"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "verify_status", resourceFullName, "verify_status"),
 				),
 			},
 		},
@@ -90,10 +130,30 @@ func TestAccUserDataSource_ByIDFull(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "user_id", verify.P1ResourceIDRegexp),
-					resource.TestCheckResourceAttr(dataSourceFullName, "username", name),
-					resource.TestCheckResourceAttr(dataSourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
-					resource.TestCheckResourceAttr(dataSourceFullName, "status", "ENABLED"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "population_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "username", resourceFullName, "username"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "email", resourceFullName, "email"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "email_verified", resourceFullName, "email_verified"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "population_id", resourceFullName, "population_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "enabled", resourceFullName, "enabled"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "status", resourceFullName, "status"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "account", resourceFullName, "account"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "address", resourceFullName, "address"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "external_id", resourceFullName, "external_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "identity_provider", resourceFullName, "identity_provider"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "user_lifecycle", resourceFullName, "user_lifecycle"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "locale", resourceFullName, "locale"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "mfa_enabled", resourceFullName, "mfa_enabled"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "mobile_phone", resourceFullName, "mobile_phone"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "nickname", resourceFullName, "nickname"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "password", resourceFullName, "password"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "photo", resourceFullName, "photo"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "preferred_language", resourceFullName, "preferred_language"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "primary_phone", resourceFullName, "primary_phone"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "timezone", resourceFullName, "timezone"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "title", resourceFullName, "title"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "verify_status", resourceFullName, "verify_status"),
 				),
 			},
 		},
@@ -126,20 +186,6 @@ func testAccUserDataSourceConfig_ByNameFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-}
-
-resource "pingone_user" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  username      = "%[3]s"
-  email         = "%[3]s@pingidentity.com"
-  population_id = pingone_population.%[2]s.id
-}
-
 data "pingone_user" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
@@ -148,26 +194,12 @@ data "pingone_user" "%[2]s" {
   depends_on = [
     pingone_user.%[2]s,
   ]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, testAccUserConfig_Full(resourceName, name), resourceName, name)
 }
 
 func testAccUserDataSourceConfig_ByEmailFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
-
-resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-}
-
-resource "pingone_user" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  username      = "%[3]s"
-  email         = "%[3]s@pingidentity.com"
-  population_id = pingone_population.%[2]s.id
-}
 
 data "pingone_user" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -177,32 +209,18 @@ data "pingone_user" "%[2]s" {
   depends_on = [
     pingone_user.%[2]s,
   ]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, testAccUserConfig_Full(resourceName, name), resourceName, name)
 }
 
 func testAccUserDataSourceConfig_ByIDFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-}
-
-resource "pingone_user" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  username      = "%[3]s"
-  email         = "%[3]s@pingidentity.com"
-  population_id = pingone_population.%[2]s.id
-}
-
 data "pingone_user" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   user_id = pingone_user.%[2]s.id
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, testAccUserConfig_Full(resourceName, name), resourceName, name)
 }
 
 func testAccUserDataSourceConfig_NotFoundByName(resourceName string) string {
