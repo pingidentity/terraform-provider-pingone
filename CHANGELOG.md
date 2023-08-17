@@ -1,5 +1,10 @@
 ## 0.20.0 (Unreleased)
 
+ENHANCEMENTS:
+
+* `data-source/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
+* `resource/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
+
 ## 0.19.1 (16 August 2023)
 
 NOTES:
