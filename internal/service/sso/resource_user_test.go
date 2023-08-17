@@ -297,8 +297,8 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "address.region", "Who knows"),
 			resource.TestCheckResourceAttr(resourceFullName, "address.street_address", "742 Evergreen Terrace"),
 			resource.TestCheckResourceAttr(resourceFullName, "external_id", "12345678-id"),
-			resource.TestMatchResourceAttr(resourceFullName, "identity_provider.id", verify.P1ResourceIDRegexp),
-			resource.TestCheckResourceAttr(resourceFullName, "identity_provider.type", "LINKEDIN"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "identity_provider.id"),
+			resource.TestCheckResourceAttr(resourceFullName, "identity_provider.type", "PING_ONE"),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", "es-419"),
 			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "mobile_phone", "+1 555-4796"),
@@ -652,10 +652,6 @@ resource "pingone_user" "%[2]s" {
   }
 
   external_id = "12345678-id"
-
-  identity_provider = {
-    id = pingone_identity_provider.%[2]s.id
-  }
 
   locale      = "es-419"
   mfa_enabled = false

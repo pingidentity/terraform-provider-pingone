@@ -27,6 +27,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	mfaservice "github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -569,6 +570,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 							"A string that identifies the external identity provider used to authenticate the user. If not provided, PingOne is the identity provider. This attribute is required if the identity provider is authoritative for just-in-time user provisioning.",
 						).Description,
 						Optional: true,
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
 					},
 
 					"type": schema.StringAttribute{
@@ -997,7 +1002,7 @@ func (r *UserResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	preparedMFAClient, err := prepareMFAClient(ctx, resourceConfig)
+	preparedMFAClient, err := mfaservice.PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"MFA Client not initialized",
@@ -1028,7 +1033,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	// Build the model for the API
-	user, userEnabled, userMFAEnabled, d := plan.expand(ctx)
+	user, userEnabled, userMFAEnabled, d := plan.expand(ctx, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1191,7 +1196,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// Build the model for the API
-	user, userEnabled, userMFAEnabled, d := plan.expand(ctx)
+	user, userEnabled, userMFAEnabled, d := plan.expand(ctx, true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1321,7 +1326,7 @@ func (r *UserResource) ImportState(ctx context.Context, req resource.ImportState
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *management.UserEnabled, *mfa.UserMFAEnabled, diag.Diagnostics) {
+func (p *UserResourceModel) expand(ctx context.Context, isUpdate bool) (*management.User, *management.UserEnabled, *mfa.UserMFAEnabled, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	userData := management.NewUser(p.Email.ValueString(), p.Username.ValueString())
@@ -1397,7 +1402,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 		userData.SetExternalId(p.ExternalId.ValueString())
 	}
 
-	if !p.IdentityProvider.IsNull() && !p.IdentityProvider.IsUnknown() {
+	if !isUpdate && !p.IdentityProvider.IsNull() && !p.IdentityProvider.IsUnknown() {
 
 		var plan UserIdentityProviderResourceModel
 		diags.Append(p.IdentityProvider.As(ctx, &plan, basetypes.ObjectAsOptions{
@@ -1565,7 +1570,7 @@ func (p *UserResourceModel) expand(ctx context.Context) (*management.User, *mana
 func (p *UserResourceModel) toState(ctx context.Context, apiObject *management.User) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if apiObject == nil /*|| apiObjectEnabled == nil*/ {
+	if apiObject == nil {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -1696,18 +1701,23 @@ func (p *UserResourceModel) userLifecycleOkToTF(ctx context.Context, apiObject *
 		return types.ObjectNull(userLifecycleTFObjectTypes), diags
 	}
 
-	var plan UserLifecycleResourceModel
-	diags.Append(p.Lifecycle.As(ctx, &plan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if diags.HasError() {
-		return types.ObjectNull(userLifecycleTFObjectTypes), diags
+	suppressVerificationCode := types.BoolNull()
+	if !p.Lifecycle.IsNull() && !p.Lifecycle.IsUnknown() {
+		var plan *UserLifecycleResourceModel
+		diags.Append(p.Lifecycle.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return types.ObjectNull(userLifecycleTFObjectTypes), diags
+		}
+
+		suppressVerificationCode = plan.SuppressVerificationCode
 	}
 
 	objMap := map[string]attr.Value{
 		"status":                     framework.EnumOkToTF(apiObject.GetStatusOk()),
-		"suppress_verification_code": plan.SuppressVerificationCode,
+		"suppress_verification_code": suppressVerificationCode,
 	}
 
 	objValue, d := types.ObjectValue(userLifecycleTFObjectTypes, objMap)
@@ -1746,7 +1756,7 @@ func (p *UserResourceModel) userPasswordOkToTF(ctx context.Context, apiObject *m
 		return types.ObjectNull(userPasswordTFObjectTypes), diags
 	}
 
-	var plan UserPasswordResourceModel
+	var plan *UserPasswordResourceModel
 	diags.Append(p.Password.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
