@@ -2,12 +2,12 @@
 page_title: "pingone_user Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne users.
+  Resource to create and manage a PingOne user in an environment.
 ---
 
 # pingone_user (Resource)
 
-Resource to create and manage PingOne users.
+Resource to create and manage a PingOne user in an environment.
 
 !> This resource is designed to support the creation of non-human users for testing and demo purposes, and is not designed for user migration activities.  Bulk user migration can be performed using the [PingOne User Import Tool](https://github.com/pingidentity/pingone-user-import-tool).
 
@@ -38,7 +38,7 @@ resource "pingone_user" "foo" {
 ### Required
 
 - `email` (String) A string that specifies the user's email address, which must be provided and valid. For more information about email address formatting, see section 3.4 of [RFC 2822, Internet Message Format](http://www.faqs.org/rfcs/rfc2822.html).
-- `environment_id` (String) The ID of the environment to create the user in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to manage the user in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `population_id` (String) The identifier of the population resource associated with the user.  Must be a valid PingOne resource ID.
 - `username` (String) A string that specifies the user name, which must be provided and must be unique within an environment. The `username` must either be a well-formed email address or a string. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace
 
@@ -47,10 +47,10 @@ resource "pingone_user" "foo" {
 - `account` (Attributes) A single object that specifies the user's account information. (see [below for nested schema](#nestedatt--account))
 - `address` (Attributes) A single object that specifies the user's address information. (see [below for nested schema](#nestedatt--address))
 - `enabled` (Boolean) A boolean that specifies whether the user is enabled. This attribute is set to `true` by default when the user is created.
-- `external_id` (String) A string that specifies an identifier for the user resource as defined by the provisioning client. This may be explicitly set to null when updating a user to unset it. The externalId attribute simplifies the correlation of the user in PingOne with the user’s account in another system of record. The platform does not use this attribute directly in any way, but it is used by Ping Identity's Data Sync product. It can have a length of no more than 1024 characters.
+- `external_id` (String) A string that specifies an identifier for the user resource as defined by the provisioning client. This may be explicitly set to null when updating a user to unset it. The external id attribute simplifies the correlation of the user in PingOne with the user's account in another system of record. The platform does not use this attribute directly in any way, but it is used by Ping Identity's Data Sync product. It can have a length of no more than 1024 characters.
 - `identity_provider` (Attributes) A single object that specifies the user's identity provider information. (see [below for nested schema](#nestedatt--identity_provider))
 - `locale` (String) A string that specifies the user's default location. This may be explicitly set to null when updating a user to unset it. This is used for purposes of localizing such items as currency, date time format, or numerical representations. If provided, it must be a valid language tag as defined in [RFC 5646](https://www.rfc-editor.org/rfc/rfc5646.html). The following are example tags: `fr`, `en-US`, `es-419`, `az-Arab`, `man-Nkoo-GN`. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
-- `mfa_enabled` (Boolean) A boolean that specifies whether multi-factor authentication is enabled. This attribute is set to `false` by default when the user is created.
+- `mfa_enabled` (Boolean) A boolean that specifies whether multi-factor authentication is enabled.  Defaults to `DOC ERROR: Unknown default type`.
 - `mobile_phone` (String) A string that specifies the user's native phone number. This might also match the `primary_phone` attribute. This may be explicitly set to null when updating a user to unset it. Valid phone numbers must have at least one number and a maximum character length of 32.
 - `name` (Attributes) A single object that specifies the user's name information. (see [below for nested schema](#nestedatt--name))
 - `nickname` (String) A string that specifies the user's nickname. This can be explicitly set to null when updating a user to unset it. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace. It can have a length of no more than 256 characters.
@@ -102,7 +102,7 @@ Optional:
 
 Optional:
 
-- `id` (String) A string that identifies the external identity provider used to authenticate the user. If not provided, PingOne is the identity provider. This attribute is required if the identity provider is authoritative for just-in-time user provisioning.
+- `id` (String) A string that identifies the external identity provider used to authenticate the user. If not provided, PingOne is the identity provider. This attribute is required if the identity provider is authoritative for just-in-time user provisioning.  This field is immutable and will trigger a replace plan if changed.
 
 Read-Only:
 
@@ -129,7 +129,7 @@ Optional:
 
 - `external` (Attributes) A single object that maps the information relevant to the user's password, and its association to external directories. (see [below for nested schema](#nestedatt--password--external))
 - `force_change` (Boolean) A boolean that specifies whether the user is forced to change the password on the next log in.  Defaults to `false`.
-- `initial_value` (String, Sensitive) A string that specifies the user's initial password value. The string is either in cleartext or pre-encoded format.  This value, if changed by the user, will not be updated from the cloud service.
+- `initial_value` (String, Sensitive) A string that specifies the user's initial password value. The string is either in cleartext or pre-encoded format.  User passwords cannot be extracted from the platfom.  This value, if defined or changed on the PingOne service by an identity administrator or the user account's owner, will not be refreshed in the Terraform state.
 
 <a id="nestedatt--password--external"></a>
 ### Nested Schema for `password.external`

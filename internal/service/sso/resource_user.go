@@ -250,6 +250,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A string that specifies the country name component. When specified, the value must be in [ISO 3166-1](https://www.iso.org/iso-3166-country-codes.html) \"alpha-2\" code format. For example, the country codes for the United States and Sweden are `US` and `SE`, respectively. Valid characters consist of two upper-case letters.",
 	)
 
+	identityProviderIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that identifies the external identity provider used to authenticate the user. If not provided, PingOne is the identity provider. This attribute is required if the identity provider is authoritative for just-in-time user provisioning.",
+	).RequiresReplace()
+
 	identityProviderTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of identity provider used to authenticate the user.",
 	).AllowedValuesEnum(management.AllowedEnumIdentityProviderEnumValues).AppendMarkdownString(
@@ -275,8 +279,8 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	mfaEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether multi-factor authentication is enabled. This attribute is set to `false` by default when the user is created.",
-	)
+		"A boolean that specifies whether multi-factor authentication is enabled.",
+	).DefaultValue(false)
 
 	mobilePhoneDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the user's native phone number. This might also match the `primary_phone` attribute. This may be explicitly set to null when updating a user to unset it. Valid phone numbers must have at least one number and a maximum character length of 32.",
@@ -350,13 +354,13 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne users.",
+		Description: "Resource to create and manage a PingOne user in an environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the user in."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to manage the user in."),
 			),
 
 			"username": schema.StringAttribute{
@@ -535,7 +539,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 			"external_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown(
-					"A string that specifies an identifier for the user resource as defined by the provisioning client. This may be explicitly set to null when updating a user to unset it. The externalId attribute simplifies the correlation of the user in PingOne with the user’s account in another system of record. The platform does not use this attribute directly in any way, but it is used by Ping Identity's Data Sync product. It can have a length of no more than 1024 characters.",
+					"A string that specifies an identifier for the user resource as defined by the provisioning client. This may be explicitly set to null when updating a user to unset it. The external id attribute simplifies the correlation of the user in PingOne with the user's account in another system of record. The platform does not use this attribute directly in any way, but it is used by Ping Identity's Data Sync product. It can have a length of no more than 1024 characters.",
 				).Description,
 				Optional: true,
 
@@ -566,10 +570,9 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown(
-							"A string that identifies the external identity provider used to authenticate the user. If not provided, PingOne is the identity provider. This attribute is required if the identity provider is authoritative for just-in-time user provisioning.",
-						).Description,
-						Optional: true,
+						Description:         identityProviderIdDescription.Description,
+						MarkdownDescription: identityProviderIdDescription.MarkdownDescription,
+						Optional:            true,
 
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplace(),
@@ -769,7 +772,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 					"initial_value": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown(
-							"A string that specifies the user's initial password value. The string is either in cleartext or pre-encoded format.  This value, if changed by the user, will not be updated from the cloud service.",
+							"A string that specifies the user's initial password value. The string is either in cleartext or pre-encoded format.  User passwords cannot be extracted from the platfom.  This value, if defined or changed on the PingOne service by an identity administrator or the user account's owner, will not be refreshed in the Terraform state.",
 						).Description,
 						Optional:  true,
 						Sensitive: true,
