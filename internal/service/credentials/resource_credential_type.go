@@ -318,7 +318,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 								path.MatchRoot("card_design_template"),
 							),
 							customstringvalidator.RegexMatchesPathValue(
-								regexp.MustCompile("logoImage"),
+								regexp.MustCompile(`\${logoImage}`),
 								"The metadata.logo_image argument is defined but the card_design_template does not have a ${logoImage} element.",
 								path.MatchRoot("card_design_template"),
 							),
