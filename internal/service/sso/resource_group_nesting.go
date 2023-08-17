@@ -117,6 +117,7 @@ func resourceGroupNestingRead(ctx context.Context, d *schema.ResourceData, meta 
 	respObject := resp.(*management.GroupNesting)
 
 	d.Set("type", respObject.GetType())
+	d.Set("nested_group_id", respObject.GetId())
 
 	return diags
 }

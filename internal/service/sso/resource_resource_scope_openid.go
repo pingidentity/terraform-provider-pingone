@@ -272,7 +272,7 @@ func resourceResourceScopeOpenIDImport(ctx context.Context, d *schema.ResourceDa
 		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/resourceScopeID\"", d.Id())
 	}
 
-	environmentID, resourceScopeID := attributes[0], attributes[2]
+	environmentID, resourceScopeID := attributes[0], attributes[1]
 
 	d.Set("environment_id", environmentID)
 	d.SetId(resourceScopeID)

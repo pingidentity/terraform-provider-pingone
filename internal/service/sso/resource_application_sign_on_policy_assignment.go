@@ -121,6 +121,12 @@ func resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx context.Context, d
 
 	d.Set("priority", respObject.GetPriority())
 
+	if v, ok := respObject.GetSignOnPolicyOk(); ok {
+		d.Set("sign_on_policy_id", v.GetId())
+	} else {
+		d.Set("sign_on_policy_id", nil)
+	}
+
 	return diags
 }
 

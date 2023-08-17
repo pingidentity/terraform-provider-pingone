@@ -1,3 +1,27 @@
 ```release-note:bug
-`resource/pingone_mfa_settings` Fixed `Not Found` error when attempting to import resource state.
+`resource/pingone_mfa_settings`: Fixed `Not Found` error when attempting to import resource state.
+```
+
+```release-note:bug
+`resource/pingone_resource_scope_pingone_api`: Fixed panic error when attempting to import resource state.
+```
+
+```release-note:bug
+`resource/pingone_resource_scope_openid`: Fixed panic error when attempting to import resource state.
+```
+
+```release-note:bug
+`resource/pingone_resource_schema_attribute`: Fixed undefined response type error when attempting to import resource state.
+```
+
+```release-note:bug
+`resource/pingone_application_sign_on_policy_assignment`: Fixed missing `sign_on_policy_id` parameter value when attempting to import resource state.
+```
+
+```release-note:bug
+`resource/pingone_schema_attribute`: Fixed missing `schema_name` parameter value when attempting to import resource state.
+```
+
+```release-note:bug
+`resource/pingone_group_nesting`: Fixed missing `nested_group_id` parameter value when attempting to import resource state.
 ```
