@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_mfa_settings` Fixed `Not Found` error when attempting to import resource state.
+```
