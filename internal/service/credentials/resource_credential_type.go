@@ -17,6 +17,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -119,7 +121,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMaxColumns = 3
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
-	const imageMaxSize = 50000
 
 	titleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTitle}` in the `card_design_template`.",
@@ -135,7 +136,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 	revokeOnDeleteDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.",
-	)
+	).DefaultValue(booldefault.StaticBool(true))
 
 	fieldsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`.",
@@ -243,24 +244,21 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 				Attributes: map[string]schema.Attribute{
 					"background_image": schema.StringAttribute{
-						Description: "A base64 encoded image of the background to show in the credential. The value must include a Content-type prefix, such as data:image/png;base64.",
-						Optional:    true,
+						Description: "The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.",
+						Required:    true,
 						Validators: []validator.String{
-							stringvalidator.LengthAtMost(imageMaxSize),
-							// Required until P1Creds follows the standard PingOne image handling capability.
-							// Attempts of other stop-gap mechanisms to detect and update Content-Type yielded inconsistent results.
-							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must include Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
-							customstringvalidator.IsBase64Encoded(),
-							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
-								regexp.MustCompile(`\${backgroundImage}`),
-								"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.",
-								path.MatchRoot("card_design_template"),
-							),
-							customstringvalidator.RegexMatchesPathValue(
-								regexp.MustCompile(`\${backgroundImage}`),
-								"The metadata.background_image argument is defined but the card_design_template does not have a ${backgroundImage} element.",
-								path.MatchRoot("card_design_template"),
-							),
+							//stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidator.LengthAtMost(0),
+							//customstringvalidator.IsRequiredIfRegexMatchesPathValue(
+							//	regexp.MustCompile(`\${backgroundImage}`),
+							//	"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.",
+							//	path.MatchRoot("card_design_template"),
+							//),
+							//customstringvalidator.RegexMatchesPathValue(
+							//	regexp.MustCompile(`\${backgroundImage}`),
+							//	"The metadata.background_image argument is defined but the card_design_template does not have a ${backgroundImage} element.",
+							//	path.MatchRoot("card_design_template"),
+							//),
 						},
 					},
 
@@ -309,21 +307,18 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					},
 
 					"logo_image": schema.StringAttribute{
-						Description: "A base64 encoded image of the logo to show in the credential. The value must include a Content-type prefix, such as data:image/png;base64.",
+						Description: "The URL or fully qualified path to the image file used for the credential logo.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 25 KB.",
 						Optional:    true,
+
 						Validators: []validator.String{
-							stringvalidator.LengthAtMost(imageMaxSize),
-							// Required until P1Creds follows the standard PingOne image handling capability.
-							// Attempts of other stop-gap mechanisms to detect and update Content-Type yielded inconsistent results.
-							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must include Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
-							customstringvalidator.IsBase64Encoded(),
-							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
+							//stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							/*customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
-								"The metadata.card_color argument is required because the ${logoImage} element is defined in the card_design_template.",
+								"The metadata.logo_image argument is required because the ${logoImage} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
-							),
+							),*/
 							customstringvalidator.RegexMatchesPathValue(
-								regexp.MustCompile(`\${logoImage}`),
+								regexp.MustCompile("logoImage"),
 								"The metadata.logo_image argument is defined but the card_design_template does not have a ${logoImage} element.",
 								path.MatchRoot("card_design_template"),
 							),
@@ -428,6 +423,10 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the object was created.",
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"updated_at": schema.StringAttribute{
@@ -823,7 +822,7 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 
-	revokeOnDelete := types.BoolValue(false)
+	revokeOnDelete := types.BoolNull()
 	if v, ok := apiObject.GetOnDeleteOk(); ok {
 		revokeOnDelete = framework.BoolOkToTF(v.GetRevokeIssuedCredentialsOk())
 	}

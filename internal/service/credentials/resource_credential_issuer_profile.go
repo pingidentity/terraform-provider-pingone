@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -82,6 +84,10 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the issuer profile was created.",
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"updated_at": schema.StringAttribute{
@@ -345,33 +351,11 @@ func (p *CredentialIssuerProfileResourceModel) expand() (*credentials.Credential
 
 	data.SetApplicationInstance(*applicationInstanceId)
 
-	if !p.CreatedAt.IsNull() && !p.CreatedAt.IsUnknown() {
-		createdAt, err := time.Parse(time.RFC3339, p.CreatedAt.ValueString())
-		if err != nil {
-			diags.AddWarning(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected createdAt value: %s.  Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetCreatedAt(createdAt)
-	}
-
-	if !p.UpdatedAt.IsNull() && !p.UpdatedAt.IsUnknown() {
-		updatedAt, err := time.Parse(time.RFC3339, p.UpdatedAt.ValueString())
-		if err != nil {
-			diags.AddWarning(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected updatedAt value: %s.  Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetUpdatedAt(updatedAt)
-
-		if data == nil {
-			diags.AddWarning(
-				"Unexpected Value",
-				"Credential Issuer Profile object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
-			)
-		}
+	if data == nil {
+		diags.AddWarning(
+			"Unexpected Value",
+			"Credential Issuer Profile object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
+		)
 	}
 
 	return data, diags
@@ -392,7 +376,7 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.ApplicationInstanceId = framework.StringToTF(*apiObject.GetApplicationInstance().Id)
-	p.CreatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 

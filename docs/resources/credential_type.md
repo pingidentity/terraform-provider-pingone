@@ -101,7 +101,7 @@ resource "pingone_credential_type" "verifiedemployee" {
 
 - `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
 - `description` (String) A description of the credential type. This value aligns to `${cardSubtitle}` in the `card_design_template`.
-- `revoke_on_delete` (Boolean) A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.
+- `revoke_on_delete` (Boolean) A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.  Defaults to `DOC ERROR: Unknown default type`.
 
 ### Read-Only
 
@@ -115,16 +115,16 @@ resource "pingone_credential_type" "verifiedemployee" {
 
 Required:
 
+- `background_image` (String) The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.
 - `fields` (Attributes List) In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`. (see [below for nested schema](#nestedatt--metadata--fields))
 
 Optional:
 
-- `background_image` (String) A base64 encoded image of the background to show in the credential. The value must include a Content-type prefix, such as data:image/png;base64.
 - `bg_opacity_percent` (Number) A numnber indicating the percent opacity of the background image in the credential. High percentage opacity may make text on the credential difficult to read.
 - `card_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential.
 - `columns` (Number) Indicates a number (between 1-3) of columns to display visible fields on the credential.
 - `description` (String) Description of the credential.
-- `logo_image` (String) A base64 encoded image of the logo to show in the credential. The value must include a Content-type prefix, such as data:image/png;base64.
+- `logo_image` (String) The URL or fully qualified path to the image file used for the credential logo.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 25 KB.
 - `name` (String) Name of the credential.
 - `text_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential text.
 
