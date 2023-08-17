@@ -151,7 +151,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 
 				Attributes: map[string]schema.Attribute{
 					"background_image": schema.StringAttribute{
-						Description: "A base64 encoded image of the background to show in the credential.",
+						Description: "URL or fully qualified path to the image file used for the credential background.",
 						Computed:    true,
 					},
 
@@ -176,7 +176,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 					},
 
 					"logo_image": schema.StringAttribute{
-						Description: "A base64 encoded image of the logo to show in the credential.",
+						Description: "URL or fully qualified path to the image file used for the credential logo.",
 						Computed:    true,
 					},
 
@@ -200,7 +200,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Description: "Identifier of the field formatted as “<fields.type> -> <fields.title>.",
+									Description: "Identifier of the field object.",
 									Computed:    true,
 								},
 								"type": schema.StringAttribute{
@@ -333,7 +333,7 @@ func (p *CredentialTypeDataSourceModel) toState(apiObject *credentials.Credentia
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 
-	revokeOnDelete := types.BoolValue(false)
+	revokeOnDelete := types.BoolNull()
 	if v, ok := apiObject.GetOnDeleteOk(); ok {
 		revokeOnDelete = framework.BoolOkToTF(v.GetRevokeIssuedCredentialsOk())
 	}

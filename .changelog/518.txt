@@ -7,5 +7,5 @@ data-source/pingone_credential_type: Now supports `revoke_on_delete`, `issuer_id
 ```
 
 ```release-note:note
-resource/pingone_credential_type: Improved the `credential_type` documentation example. Corrected the placement of `card_design_template` within the example, and clarified how to define a content-type for the `background_image` and `logo_image` arguments.
+resource/pingone_credential_type: Improved the `credential_type` documentation example. Corrected the placement of `card_design_template` within the example, and clarified the usage of `pingone_image` resource to assign the `background_image` and `logo_image` values.
 ```

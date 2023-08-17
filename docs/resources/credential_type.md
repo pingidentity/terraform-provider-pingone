@@ -19,21 +19,42 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
+resource "pingone_image" "verifiedemployee-background_image" {
+  environment_id    = pingone_environment.my_environment.id
+  image_file_base64 = filebase64("./images/verifiedemployee_background.png")
+}
+
+resource "pingone_image" "verifiedemployee-logo_image" {
+  environment_id    = pingone_environment.my_environment.id
+  image_file_base64 = filebase64("./images/verifiedemployee_logo.png")
+}
+
 resource "pingone_credential_type" "verifiedemployee" {
-  environment_id       = pingone_environment.my_environment.id
-  title                = "VerifiedEmployee"
-  description          = "Demo Proof of Employment"
-  card_type            = "VerifiedEmployee"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><image href=\"$${backgroundImage}\" opacity=\"$${bgOpacityPercent}\" height=\"301\" rx=\"10\" ry=\"10\" width=\"589\" x=\"75\" y=\"160\"></image><image href=\"$${logoImage}\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-  revoke_on_delete     = false
+  environment_id   = pingone_environment.my_environment.id
+  title            = "VerifiedEmployee"
+  description      = "Demo Proof of Employment"
+  card_type        = "VerifiedEmployee"
+  revoke_on_delete = true
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="$${bgOpacityPercent}"></rect>
+<image href="$${backgroundImage}" opacity="$${bgOpacityPercent}" height="301" rx="10" ry="10" width="589" x="75" y="160"></image>
+<image href="$${logoImage}" x="42" y="43" height="90px" width="90px"></image>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke="$${textColor}"></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text fill="$${textColor}" font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>  
+EOT
 
   metadata = {
     name               = "VerifiedEmployee"
     description        = "Demo Proof of Employment"
     bg_opacity_percent = 100
 
-    background_image = "data:image/png;base64,${filebase64("./images/verifiedemployee_background.png")}"
-    logo_image       = "data:image/png;base64,${filebase64("./images/verifiedemployee_logo.png")}"
+    background_image = pingone_image.verifiedemployee-background_image.uploaded_image[0].href
+    logo_image       = pingone_image.verifiedemployee-logo_image.uploaded_image[0].href
 
     card_color = "#ffffff"
     text_color = "#000000"
@@ -101,7 +122,7 @@ resource "pingone_credential_type" "verifiedemployee" {
 
 - `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
 - `description` (String) A description of the credential type. This value aligns to `${cardSubtitle}` in the `card_design_template`.
-- `revoke_on_delete` (Boolean) A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.  Defaults to `DOC ERROR: Unknown default type`.
+- `revoke_on_delete` (Boolean) A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.  Defaults to `true`.
 
 ### Read-Only
 
@@ -115,11 +136,11 @@ resource "pingone_credential_type" "verifiedemployee" {
 
 Required:
 
-- `background_image` (String) The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.
 - `fields` (Attributes List) In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`. (see [below for nested schema](#nestedatt--metadata--fields))
 
 Optional:
 
+- `background_image` (String) The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.
 - `bg_opacity_percent` (Number) A numnber indicating the percent opacity of the background image in the credential. High percentage opacity may make text on the credential difficult to read.
 - `card_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential.
 - `columns` (Number) Indicates a number (between 1-3) of columns to display visible fields on the credential.

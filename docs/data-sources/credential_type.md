@@ -44,13 +44,13 @@ data "pingone_credential_type" "example_by_id" {
 
 Read-Only:
 
-- `background_image` (String) A base64 encoded image of the background to show in the credential.
+- `background_image` (String) URL or fully qualified path to the image file used for the credential background.
 - `bg_opacity_percent` (Number) Percent opacity of the background image in the credential.
 - `card_color` (String) Color to show on the credential.
 - `columns` (Number) Number of columns to organize the fields displayed on the credential.
 - `description` (String) Description of the credential.
 - `fields` (Attributes List) Array of objects representing the credential fields. (see [below for nested schema](#nestedatt--metadata--fields))
-- `logo_image` (String) A base64 encoded image of the logo to show in the credential.
+- `logo_image` (String) URL or fully qualified path to the image file used for the credential logo.
 - `name` (String) Name of the credential.
 - `text_color` (String) Color of the text to show on the credential.
 - `version` (Number) Version of this credential.
@@ -61,7 +61,7 @@ Read-Only:
 Read-Only:
 
 - `attribute` (String) Name of the PingOne Directory attribute. Present if field.type is Directory Attribute.
-- `id` (String) Identifier of the field formatted as “<fields.type> -> <fields.title>.
+- `id` (String) Identifier of the field object.
 - `is_visible` (Boolean) Specifies whether the field should be visible to viewers of the credential.
 - `title` (String) Descriptive text when showing the field.
 - `type` (String) Type of data in the field.

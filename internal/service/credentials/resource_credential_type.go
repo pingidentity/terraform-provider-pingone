@@ -28,6 +28,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -136,7 +137,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 	revokeOnDeleteDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.",
-	).DefaultValue(booldefault.StaticBool(true))
+	).DefaultValue("true")
 
 	fieldsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`.",
@@ -245,20 +246,19 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				Attributes: map[string]schema.Attribute{
 					"background_image": schema.StringAttribute{
 						Description: "The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.",
-						Required:    true,
+						Optional:    true,
 						Validators: []validator.String{
-							//stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
-							stringvalidator.LengthAtMost(0),
-							//customstringvalidator.IsRequiredIfRegexMatchesPathValue(
-							//	regexp.MustCompile(`\${backgroundImage}`),
-							//	"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.",
-							//	path.MatchRoot("card_design_template"),
-							//),
-							//customstringvalidator.RegexMatchesPathValue(
-							//	regexp.MustCompile(`\${backgroundImage}`),
-							//	"The metadata.background_image argument is defined but the card_design_template does not have a ${backgroundImage} element.",
-							//	path.MatchRoot("card_design_template"),
-							//),
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
+								regexp.MustCompile(`\${backgroundImage}`),
+								"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.",
+								path.MatchRoot("card_design_template"),
+							),
+							customstringvalidator.RegexMatchesPathValue(
+								regexp.MustCompile(`\${backgroundImage}`),
+								"The metadata.background_image argument is defined but the card_design_template does not have a ${backgroundImage} element.",
+								path.MatchRoot("card_design_template"),
+							),
 						},
 					},
 
@@ -311,12 +311,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 
 						Validators: []validator.String{
-							//stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
-							/*customstringvalidator.IsRequiredIfRegexMatchesPathValue(
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
 								"The metadata.logo_image argument is required because the ${logoImage} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
-							),*/
+							),
 							customstringvalidator.RegexMatchesPathValue(
 								regexp.MustCompile("logoImage"),
 								"The metadata.logo_image argument is defined but the card_design_template does not have a ${logoImage} element.",

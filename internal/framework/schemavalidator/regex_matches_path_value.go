@@ -62,8 +62,10 @@ func (v RegexMatchesPathValueValidator) MarkdownDescription(ctx context.Context)
 
 // Validate runs the main validation logic of the validator, reading configuration data out of `req` and updating `resp` with diagnostics.
 func (v RegexMatchesPathValueValidator) Validate(ctx context.Context, req RegexMatchesPathValueValidatorRequest, resp *RegexMatchesPathValueValidatorResponse) {
-	// If the value is unknown or null, there is nothing to validate.
-	if req.ConfigValue.IsUnknown() || req.ConfigValue.IsNull() {
+	// If the value is null, there is nothing to validate. This validator
+	// is only concerned if the source value has been set. The value's
+	// content is not used in the validation decision.
+	if req.ConfigValue.IsNull() {
 		return
 	}
 

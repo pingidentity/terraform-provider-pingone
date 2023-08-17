@@ -174,11 +174,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 	}
 
 	// Build the model for the Create API call
-	CredentialIssuerProfile, d := plan.expand()
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	CredentialIssuerProfile := plan.expand()
 
 	// Execute a Create or Update depending on existence of credential issuer profile
 	var response *credentials.CredentialIssuerProfile
@@ -289,11 +285,7 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 	}
 
 	// Build the model for the API
-	CredentialIssuerProfile, d := plan.expand()
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	CredentialIssuerProfile := plan.expand()
 
 	// Run the API call
 	var response *credentials.CredentialIssuerProfile
@@ -341,8 +333,7 @@ func (r *CredentialIssuerProfileResource) ImportState(ctx context.Context, req r
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
 }
 
-func (p *CredentialIssuerProfileResourceModel) expand() (*credentials.CredentialIssuerProfile, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *CredentialIssuerProfileResourceModel) expand() *credentials.CredentialIssuerProfile {
 
 	data := credentials.NewCredentialIssuerProfile(p.Name.ValueString())
 
@@ -351,14 +342,7 @@ func (p *CredentialIssuerProfileResourceModel) expand() (*credentials.Credential
 
 	data.SetApplicationInstance(*applicationInstanceId)
 
-	if data == nil {
-		diags.AddWarning(
-			"Unexpected Value",
-			"Credential Issuer Profile object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
-		)
-	}
-
-	return data, diags
+	return data
 }
 
 func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.CredentialIssuerProfile) diag.Diagnostics {
