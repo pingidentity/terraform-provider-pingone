@@ -76,65 +76,6 @@ func testAccCheckCredentialIssuerProfilePassthrough(s *terraform.State) error {
 	return nil
 }*/
 
-func TestAccCredentialIssuerProfile_Import(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_credential_issuer_profile.%s", resourceName)
-
-	name := resourceName
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
-			},
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/credential_issuer_profile_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "/",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/credential_issuer_profile_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/credential_issuer_profile_id".`),
-			},
-		},
-	})
-}
-
 func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 	t.Parallel()
 
@@ -194,6 +135,22 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 			initialProfile,
 			updatedProfile,
 			initialProfile,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
 				Destroy: true,
@@ -224,6 +181,49 @@ func TestAccCredentialIssuerProfile_InvalidConfig(t *testing.T) {
 			{
 				Config:      testAccCredentialIssuerProfileInvalidConfig_InvalidName(environmentName, licenseID, resourceName, ""),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Length"),
+			},
+		},
+	})
+}
+
+func TestAccCredentialIssuerProfile_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_credential_issuer_profile.%s", resourceName)
+
+	name := resourceName
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/credential_issuer_profile_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/credential_issuer_profile_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/credential_issuer_profile_id".`),
 			},
 		},
 	})

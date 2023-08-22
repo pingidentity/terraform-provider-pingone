@@ -135,64 +135,6 @@ func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccDigitalWalletApplication_Import(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_digital_wallet_application.%s", resourceName)
-
-	name := resourceName
-
-	appOpenUrl := "https://www.example.com/appopen"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
-			},
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/digital_wallet_application_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "/",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/digital_wallet_application_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/digital_wallet_application_id".`),
-			},
-		},
-	})
-}
-
 func TestAccDigitalWalletApplication_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -275,6 +217,22 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 			// changes
 			fullStep,
 			updateStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
 				Destroy: true,
@@ -338,6 +296,48 @@ func TestAccDigitalWalletApplication_InvalidAppOpenUrl(t *testing.T) {
 			{
 				Config:      testAccDigitalWalletApplication_InvalidAppOpenUrl(resourceName, name, appOpenUrl),
 				ExpectError: regexp.MustCompile("Error: Error when calling `CreateDigitalWalletApplication`: Validation Error : \\[appOpenUrl must be a valid URL\\]"),
+			},
+		},
+	})
+}
+
+func TestAccDigitalWalletApplication_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_digital_wallet_application.%s", resourceName)
+
+	name := resourceName
+
+	appOpenUrl := "https://www.example.com/appopen"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/digital_wallet_application_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/digital_wallet_application_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/digital_wallet_application_id".`),
 			},
 		},
 	})
