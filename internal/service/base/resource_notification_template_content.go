@@ -305,6 +305,12 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 
 	if respObject.TemplateContentEmail != nil && respObject.TemplateContentEmail.GetId() != "" {
 
+		if v, ok := respObject.TemplateContentEmail.GetLocaleOk(); ok {
+			d.Set("locale", *v)
+		} else {
+			d.Set("locale", nil)
+		}
+
 		if v, ok := respObject.TemplateContentEmail.GetDefaultOk(); ok {
 			d.Set("default", v)
 		} else {
@@ -323,6 +329,12 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 		d.Set("voice", nil)
 
 	} else if respObject.TemplateContentPush != nil && respObject.TemplateContentPush.GetId() != "" {
+
+		if v, ok := respObject.TemplateContentPush.GetLocaleOk(); ok {
+			d.Set("locale", *v)
+		} else {
+			d.Set("locale", nil)
+		}
 
 		if v, ok := respObject.TemplateContentPush.GetDefaultOk(); ok {
 			d.Set("default", v)
@@ -343,6 +355,12 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 
 	} else if respObject.TemplateContentSMS != nil && respObject.TemplateContentSMS.GetId() != "" {
 
+		if v, ok := respObject.TemplateContentSMS.GetLocaleOk(); ok {
+			d.Set("locale", *v)
+		} else {
+			d.Set("locale", nil)
+		}
+
 		if v, ok := respObject.TemplateContentSMS.GetDefaultOk(); ok {
 			d.Set("default", v)
 		} else {
@@ -361,6 +379,12 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 		d.Set("voice", nil)
 
 	} else if respObject.TemplateContentVoice != nil && respObject.TemplateContentVoice.GetId() != "" {
+
+		if v, ok := respObject.TemplateContentVoice.GetLocaleOk(); ok {
+			d.Set("locale", *v)
+		} else {
+			d.Set("locale", nil)
+		}
 
 		if v, ok := respObject.TemplateContentVoice.GetDefaultOk(); ok {
 			d.Set("default", v)

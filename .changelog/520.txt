@@ -34,3 +34,6 @@
 `resource/pingone_language_update`: Fixed missing `language_id` parameter value when attempting to import resource state.
 ```
 
+```release-note:bug
+`resource/pingone_notification_template_content`: Fixed missing `locale` parameter value when attempting to import resource state.
+```
