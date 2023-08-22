@@ -133,62 +133,6 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Import(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
-			},
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/mfa_device_policy_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "/",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/mfa_device_policy_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/mfa_device_policy_id".`),
-			},
-		},
-	})
-}
-
 func TestAccMFAPolicy_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -252,6 +196,22 @@ func TestAccMFAPolicy_SMS_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -407,6 +367,22 @@ func TestAccMFAPolicy_Voice_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -560,6 +536,22 @@ func TestAccMFAPolicy_Email_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -770,6 +762,22 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -790,12 +798,12 @@ func TestAccMFAPolicy_Mobile_IntegrityDetectionErrors(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name),
 				// Integrity detection (`mobile.application.integrity_detection`) has no effect when the MFAPolicy resource has integrity detection disabled
-				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) has no effect when the MFAPolicy resource has integrity detection disabled"),
+				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) has no effect when the Application resource has integrity detection disabled"),
 			},
 			{
 				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name),
 				// Integrity detection (`mobile.application.integrity_detection`) must be set when the MFAPolicy resource has integrity detection enabled
-				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) must be set when the MFAPolicy resource has integrity detection enabled"),
+				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) must be set when the Application resource has integrity detection enabled"),
 			},
 		},
 	})
@@ -815,20 +823,20 @@ func TestAccMFAPolicy_Mobile_BadMFAPolicyErrors(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccMFAPolicyConfig_MobileBadMFAPolicyError_1(resourceName, name),
-				ExpectError: regexp.MustCompile("MFAPolicy referenced in `mobile.application.id` does not exist"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` does not exist"),
 			},
 			{
-				Config:      testAccMFAPolicyConfig_MobileBadMFAPolicyError_2(resourceName, name),
-				ExpectError: regexp.MustCompile("MFAPolicy referenced in `mobile.application.id` is not of type OIDC"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` is not of type OIDC"),
 			},
 			{
-				Config:      testAccMFAPolicyConfig_MobileBadMFAPolicyError_3(resourceName, name),
-				ExpectError: regexp.MustCompile("MFAPolicy referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type"),
 			},
 			{
-				Config:      testAccMFAPolicyConfig_MobileBadMFAPolicyError_4(resourceName, name),
-				ExpectError: regexp.MustCompile("MFAPolicy referenced in `mobile.application.id` does not contain mobile application configuration"),
+				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name),
+				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` does not contain mobile application configuration"),
 			},
 		},
 	})
@@ -1084,6 +1092,22 @@ func TestAccMFAPolicy_Totp_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -1225,6 +1249,22 @@ func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1649,6 +1689,46 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccMFAPolicy_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/mfa_device_policy_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/mfa_device_policy_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/mfa_device_policy_id".`),
 			},
 		},
 	})
@@ -2364,7 +2444,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileBadMFAPolicyError_1(resourceName, name string) string {
+func testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2416,7 +2496,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileBadMFAPolicyError_2(resourceName, name string) string {
+func testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2483,7 +2563,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileBadMFAPolicyError_3(resourceName, name string) string {
+func testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2551,7 +2631,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileBadMFAPolicyError_4(resourceName, name string) string {
+func testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
