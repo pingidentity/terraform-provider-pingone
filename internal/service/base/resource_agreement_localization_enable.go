@@ -383,7 +383,6 @@ func (p *AgreementLocalizationEnableResourceModel) toState(apiObject *management
 	}
 
 	p.Id = framework.StringToTF(apiObject.GetId())
-	p.AgreementId = framework.StringToTF(*apiObject.GetAgreement().Id)
 	p.AgreementLocalizationId = framework.StringToTF(apiObject.GetId())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 

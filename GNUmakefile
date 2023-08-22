@@ -65,7 +65,6 @@ providerlint:
 	@tfproviderlintx \
 		-c 1 \
 		-AT001.ignored-filename-suffixes=_data_source_test.go \
-		-AT002=false \
 		-XR004=false \
 		-XS002=false \
 		./internal/provider/... ./internal/service/...

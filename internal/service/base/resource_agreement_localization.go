@@ -267,7 +267,7 @@ func (r *AgreementLocalizationResource) Read(ctx context.Context, req resource.R
 	var language *management.Language
 	if data.LanguageId.IsNull() || data.LanguageId.IsUnknown() {
 		var d diag.Diagnostics
-		language, d = findLanguageByLocale_Framework(ctx, r.client, data.EnvironmentId.ValueString(), data.Locale.ValueString())
+		language, d = findLanguageByLocale_Framework(ctx, r.client, data.EnvironmentId.ValueString(), response.GetLocale())
 		resp.Diagnostics.Append(d...)
 	} else {
 		resp.Diagnostics.Append(framework.ParseResponse(

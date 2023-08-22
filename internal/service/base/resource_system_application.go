@@ -294,17 +294,6 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	if !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL))) && !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE))) {
-		resp.Diagnostics.AddError(
-			"Invalid application type",
-			fmt.Sprintf("Application type not supported.  Type found: %s, expected one of: %s, %s.", data.Type.ValueString(), string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL), string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE)),
-		)
-
-		resp.State.RemoveResource(ctx)
-
-		return
-	}
-
 	// Run the API call
 	var response *management.ReadOneApplication200Response
 	resp.Diagnostics.Append(framework.ParseResponse(
@@ -324,6 +313,18 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response)...)
+
+	if !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL))) && !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE))) {
+		resp.Diagnostics.AddError(
+			"Invalid application type",
+			fmt.Sprintf("Application type not supported.  Type found: %s, expected one of: %s, %s.", data.Type.ValueString(), string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL), string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE)),
+		)
+
+		resp.State.RemoveResource(ctx)
+
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

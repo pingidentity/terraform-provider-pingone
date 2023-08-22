@@ -37,3 +37,11 @@
 ```release-note:bug
 `resource/pingone_notification_template_content`: Fixed missing `locale` parameter value when attempting to import resource state.
 ```
+
+```release-note:bug
+`resource/pingone_system_application`: Fixed validation error when attempting to import resource state.
+```
+
+```release-note:bug
+`resource/pingone_agreement_localization_revision`: Fixed `Cannot import non-existent remote object` error when attempting to import resource state.
+```
