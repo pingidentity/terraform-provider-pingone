@@ -25,3 +25,8 @@
 ```release-note:bug
 `resource/pingone_group_nesting`: Fixed missing `nested_group_id` parameter value when attempting to import resource state.
 ```
+
+```release-note:bug
+`resource/pingone_agreement_localization`: Fixed missing `language_id` parameter value when attempting to import resource state.
+```
+

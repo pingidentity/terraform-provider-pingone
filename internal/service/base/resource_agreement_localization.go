@@ -221,7 +221,7 @@ func (r *AgreementLocalizationResource) Create(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, language)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -264,8 +264,30 @@ func (r *AgreementLocalizationResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
+	var language *management.Language
+	if data.LanguageId.IsNull() || data.LanguageId.IsUnknown() {
+		var d diag.Diagnostics
+		language, d = findLanguageByLocale_Framework(ctx, r.client, data.EnvironmentId.ValueString(), data.Locale.ValueString())
+		resp.Diagnostics.Append(d...)
+	} else {
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				return r.client.LanguagesApi.ReadOneLanguage(ctx, data.EnvironmentId.ValueString(), data.LanguageId.ValueString()).Execute()
+			},
+			"ReadOneLanguage",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+			&language,
+		)...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(response, language)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -335,7 +357,7 @@ func (r *AgreementLocalizationResource) Update(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, language)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -428,7 +450,7 @@ func (p *AgreementLocalizationResourceModel) expand(locale string) *management.A
 	return data
 }
 
-func (p *AgreementLocalizationResourceModel) toState(apiObject *management.AgreementLanguage) diag.Diagnostics {
+func (p *AgreementLocalizationResourceModel) toState(apiObject *management.AgreementLanguage, languageApiObject *management.Language) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -442,6 +464,7 @@ func (p *AgreementLocalizationResourceModel) toState(apiObject *management.Agree
 
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.AgreementId = framework.StringToTF(*apiObject.GetAgreement().Id)
+	p.LanguageId = framework.StringOkToTF(languageApiObject.GetIdOk())
 	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.Locale = framework.StringOkToTF(apiObject.GetLocaleOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
