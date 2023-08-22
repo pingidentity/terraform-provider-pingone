@@ -109,6 +109,7 @@ func resourceLanguageUpdateRead(ctx context.Context, d *schema.ResourceData, met
 
 	respObject := resp.(*management.Language)
 
+	d.Set("language_id", respObject.GetId())
 	d.Set("locale", respObject.GetLocale())
 	d.Set("enabled", respObject.GetEnabled())
 	d.Set("default", respObject.GetDefault())
