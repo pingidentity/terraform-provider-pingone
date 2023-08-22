@@ -59,7 +59,7 @@ func TestAccNotificationSettingsEmail_Full(t *testing.T) {
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return fmt.Sprintf("%s", rs.Primary.ID), nil
+						return rs.Primary.ID, nil
 					}
 				}(),
 				ImportState:       true,

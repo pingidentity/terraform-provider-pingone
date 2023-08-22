@@ -165,7 +165,7 @@ func TestAccNotificationSettings_Full(t *testing.T) {
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return fmt.Sprintf("%s", rs.Primary.Attributes["environment_id"]), nil
+						return rs.Primary.Attributes["environment_id"], nil
 					}
 				}(),
 				ImportState:       true,

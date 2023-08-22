@@ -134,67 +134,6 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccApplicationPushCredential_Import(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_application_push_credential.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
-			},
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					"fcm.#",
-					"fcm.0.%",
-					"fcm.0.key",
-				},
-			},
-			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/push_credential_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "/",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/push_credential_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/push_credential_id".`),
-			},
-		},
-	})
-}
-
 func TestAccApplicationPushCredential_FCM(t *testing.T) {
 	t.Parallel()
 
@@ -246,6 +185,27 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 				Config: testAccApplicationPushCredentialConfig_FCMHTTPV1(resourceName, name, firebaseCredentials),
 				Check:  fullFCMCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"fcm.#",
+					"fcm.0.%",
+					"fcm.0.google_service_account_credentials",
+				},
+			},
 		},
 	})
 }
@@ -286,6 +246,29 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"apns.#",
+					"apns.0.%",
+					"apns.0.key",
+					"apns.0.team_id",
+					"apns.0.token_signing_key",
+				},
+			},
 		},
 	})
 }
@@ -325,6 +308,28 @@ func TestAccApplicationPushCredential_HMS(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"hms.#",
+					"hms.0.%",
+					"hms.0.client_id",
+					"hms.0.client_secret",
+				},
 			},
 		},
 	})
@@ -376,6 +381,46 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccApplicationPushCredential_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_application_push_credential.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/push_credential_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/push_credential_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/push_credential_id".`),
 			},
 		},
 	})
