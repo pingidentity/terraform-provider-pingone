@@ -334,11 +334,11 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "voice.enrollment", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "LOW"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "LOW"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.samples", "5"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.samples", "3"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.voice_phrase_id", "exceptional_experiences"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.retain_original_recordings", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
 
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
@@ -431,6 +431,7 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 		},
 	})
 }
+
 func testAccVerifyPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -670,19 +671,7 @@ resource "pingone_verify_policy" "%[3]s" {
     comparison_threshold = "LOW"
     liveness_threshold   = "LOW"
 
-    text_dependent = {
-      samples         = "5"
-      voice_phrase_id = "exceptional_experiences"
-    }
-
-    reference_data = {
-      retain_original_recordings = false
-      update_on_reenrollment     = false
-      update_on_verification     = false
-    }
   }
-
-  depends_on = [pingone_environment.%[2]s]
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -719,8 +708,6 @@ resource "pingone_verify_policy" "%[3]s" {
   phone = {}
 
   voice = {}
-
-  depends_on = [pingone_environment.%[2]s]
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

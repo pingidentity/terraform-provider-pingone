@@ -69,7 +69,7 @@ func (r *VoicePhraseDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data source to find a PingOne Voice Phrase by its Voice Phrase Id or Name.",
+		Description: "Data source to find a PingOne Verify Voice Phrase by its Voice Phrase Id or Name.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),

@@ -320,9 +320,12 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	)
 
 	voiceTexttDependentSamplesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Number of voice samples to collect. The allowed range is `%d - %d`", attrMinVoiceSamples, attrMaxVoiceSamples),
+		fmt.Sprintf("Number of voice samples to collect. The allowed range is `%d - %d`.", attrMinVoiceSamples, attrMaxVoiceSamples),
 	)
 
+	voicePhraseIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The identifier (UUID) of a defined `voice_phrase` to associate with the policy.",
+	)
 	voiceComparisonThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Comparison threshold requirements.",
 	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues).DefaultValue(string(defaultThreshold))
@@ -405,10 +408,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to configure the requirements to verify a user, including the parameters for verification, such as the number of one-time password (OTP) attempts and OTP expiration.\n\n" +
-			"A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. " +
+		Description: "Resource to configure the requirements to verify a user, including the parameters for verification.\n\n" +
+			"A verify policy defines which of the following one or more checks are performed for a verification transaction and configures the parameters of each check. " +
 			"If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.\n\n" +
-			"Verify policies can perform any of five checks:\n" +
+			"Verify policies can perform any of the following checks:\n" +
 			"- Government identity document - Validate a government-issued identity document, which includes a photograph.\n" +
 			"- Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.\n" +
 			"- Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.\n" +
@@ -1173,6 +1176,15 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"text_dependent": schema.SingleNestedAttribute{
 						Description: "Object for configuration of text dependent voice verification.",
 						Optional:    true,
+						Computed:    true,
+
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							textDependentServiceTFObjectTypes,
+							map[string]attr.Value{
+								"samples":         types.Int64Value(defaultVoiceSamples),
+								"voice_phrase_id": types.StringValue(defaultVoicePhraseId),
+							},
+						)),
 
 						Attributes: map[string]schema.Attribute{
 							"samples": schema.Int64Attribute{
@@ -1184,12 +1196,12 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								},
 							},
 							"voice_phrase_id": schema.StringAttribute{
-								Description: "For a customer-defined phrase, the identifier (UUID) of the voice phrase to use. For pre-defined phrases, a string value.",
-								Required:    true,
+								Description:         voicePhraseIdDescription.Description,
+								MarkdownDescription: voicePhraseIdDescription.MarkdownDescription,
+								Required:            true,
 								Validators: []validator.String{
 									stringvalidator.Any(
 										validation.P1ResourceIDValidator(),
-										stringvalidator.RegexMatches(regexp.MustCompile(defaultVoicePhraseId), "Unexpected error with the pre-defined, default value. Please report this issue to the provider maintainers."),
 									),
 								},
 							},
@@ -1198,6 +1210,17 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"reference_data": schema.SingleNestedAttribute{
 						Description: "Object for configuration of voice recording reference data.",
 						Optional:    true,
+
+						Computed: true,
+
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							referenceDataServiceTFObjectTypes,
+							map[string]attr.Value{
+								"retain_original_recordings": types.BoolValue(defaultBoolFalse),
+								"update_on_reenrollment":     types.BoolValue(defaultBoolTrue),
+								"update_on_verification":     types.BoolValue(defaultBoolTrue),
+							},
+						)),
 
 						Attributes: map[string]schema.Attribute{
 							"retain_original_recordings": schema.BoolAttribute{
@@ -2058,8 +2081,8 @@ func (p *verifyPolicyResourceModel) toStateFacialComparison(apiObject *verify.Fa
 		"verify":    framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"threshold": framework.EnumOkToTF(apiObject.GetThresholdOk()),
 	})
-	diags.Append(d...)
 
+	diags.Append(d...)
 	return objValue, diags
 }
 

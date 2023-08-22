@@ -2,12 +2,12 @@
 page_title: "pingone_verify_voice_phrase_content Data Source - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
-  Data source to find PingOne Voice Phrase Contents by its Voice Phrase Content Id for a specific PingOne Voice Phrase Id.
+  Data source to find PingOne Verify Voice Phrase Contents from a specified PingOne Verify Voice Phrase.
 ---
 
 # pingone_verify_voice_phrase_content (Data Source)
 
-Data source to find PingOne Voice Phrase Contents by its Voice Phrase Content Id for a specific PingOne Voice Phrase Id.
+Data source to find PingOne Verify Voice Phrase Contents from a specified PingOne Verify Voice Phrase.
 
 ## Example Usage
 
@@ -26,11 +26,11 @@ data "pingone_verify_voice_phrase_content" "find_by_id_example" {
 
 - `environment_id` (String) PingOne environment identifier (UUID) in which the verify voice phrase exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `voice_phrase_content_id` (String) Identifier (UUID) associated with the voice phrase content.
-- `voice_phrase_id` (String) For a customer-defined phrase, the identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration. For pre-defined phrases, a string value.
+- `voice_phrase_id` (String) The identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration.
 
 ### Read-Only
 
-- `content` (String) The phrase a user must speak as part of the voice enrollment or verification. The phrase must be written in the language and character set required by the language specified in the `locale` property.
+- `content` (String) The phrase a user must speak during voice enrollment or verification. The phrase must be written in the language and character set required by the language specified in the `locale` property.
 - `created_at` (String) Date and time the verify phrase content was created.
 - `id` (String) The ID of this resource.
 - `locale` (String) Language localization requirement for the voice phrase contents.

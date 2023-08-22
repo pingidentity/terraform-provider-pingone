@@ -26,7 +26,7 @@ resource "pingone_verify_voice_phrase" "my_verify_voice_phrase" {
 
 resource "pingone_verify_voice_phrase_content" "my_verify_voice_phrase_content" {
   environment_id  = pingone_environment.my_environment.id
-  voice_phrase_id = pingone_voice_phrase.my_verify_voice_phrase.id
+  voice_phrase_id = pingone_verify_voice_phrase.my_verify_voice_phrase.id
   locale          = "en"
   content         = "My voice content to be used in voice enrollment or verification."
 }
@@ -51,5 +51,5 @@ resource "pingone_verify_voice_phrase_content" "my_verify_voice_phrase_content" 
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_voice_phrase.example <environment_id>/<voice_phrase_id>
+$ terraform import pingone_verify_voice_phrase.example <environment_id>/<voice_phrase_id>
 ```

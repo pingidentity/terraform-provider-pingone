@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -54,21 +53,17 @@ func (r *VoicePhraseContentDataSource) Metadata(ctx context.Context, req datasou
 func (r *VoicePhraseContentDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
 	// schema descriptions and validation settings
-
-	// P1 Platform does not set a traditional UUID for its default phrase IDs
-	const defaultVoicePhraseIds = "(exceptional_experiences|pingone_davinci_nocode)"
-
 	phraseIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"For a customer-defined phrase, the identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration. For pre-defined phrases, a string value.",
+		"The identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration.",
 	)
 
 	contentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The phrase a user must speak as part of the voice enrollment or verification. The phrase must be written in the language and character set required by the language specified in the `locale` property.",
+		"The phrase a user must speak during voice enrollment or verification. The phrase must be written in the language and character set required by the language specified in the `locale` property.",
 	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data source to find PingOne Voice Phrase Contents by its Voice Phrase Content Id for a specific PingOne Voice Phrase Id.",
+		Description: "Data source to find PingOne Verify Voice Phrase Contents from a specified PingOne Verify Voice Phrase.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -92,7 +87,6 @@ func (r *VoicePhraseContentDataSource) Schema(ctx context.Context, req datasourc
 				Validators: []validator.String{
 					stringvalidator.Any(
 						validation.P1ResourceIDValidator(),
-						stringvalidator.RegexMatches(regexp.MustCompile(defaultVoicePhraseIds), "Must contain a valid voice phrase identifier (UUID) or a permitted default voice phrase id."),
 					),
 				},
 			},

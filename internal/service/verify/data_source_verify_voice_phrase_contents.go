@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -50,17 +49,13 @@ func (r *VoicePhraseContentsDataSource) Metadata(ctx context.Context, req dataso
 func (r *VoicePhraseContentsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
 	// schema descriptions and validation settings
-
-	// P1 Platform does not set a traditional UUID as the default phrase ID value
-	const defaultVoicePhraseId = "exceptional_experiences"
-
 	phraseIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"For a customer-defined phrase, the identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration. For pre-defined phrases, a string value.",
+		"The identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration.",
 	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data source to retrieve a list of PingOne Voice Phrase Contents. Filtering the list by SCIM or data filter currently is not supported.",
+		Description: "Data source to retrieve a list of PingOne Verify Voice Phrase Contents. Filtering the list by SCIM or data filter currently is not supported.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -76,13 +71,12 @@ func (r *VoicePhraseContentsDataSource) Schema(ctx context.Context, req datasour
 				Validators: []validator.String{
 					stringvalidator.Any(
 						validation.P1ResourceIDValidator(),
-						stringvalidator.RegexMatches(regexp.MustCompile(defaultVoicePhraseId), "Unexpected error with the pre-defined, default value. Please report this issue to the provider maintainers."),
 					),
 				},
 			},
 
 			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of voice phrase contents that have been successfully retrieved.",
+				Description: "The list of resulting voice phrase content IDs that have been successfully retrieved.",
 			}),
 		},
 	}

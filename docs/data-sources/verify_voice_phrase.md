@@ -2,12 +2,12 @@
 page_title: "pingone_verify_voice_phrase Data Source - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
-  Data source to find a PingOne Voice Phrase by its Voice Phrase Id or Name.
+  Data source to find a PingOne Verify Voice Phrase by its Voice Phrase Id or Name.
 ---
 
 # pingone_verify_voice_phrase (Data Source)
 
-Data source to find a PingOne Voice Phrase by its Voice Phrase Id or Name.
+Data source to find a PingOne Verify Voice Phrase by its Voice Phrase Id or Name.
 
 ## Example Usage
 

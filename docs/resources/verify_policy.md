@@ -2,9 +2,9 @@
 page_title: "pingone_verify_policy Resource - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
-  Resource to configure the requirements to verify a user, including the parameters for verification, such as the number of one-time password (OTP) attempts and OTP expiration.
-  A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
-  Verify policies can perform any of five checks:
+  Resource to configure the requirements to verify a user, including the parameters for verification.
+  A verify policy defines which of the following one or more checks are performed for a verification transaction and configures the parameters of each check. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
+  Verify policies can perform any of the following checks:
   - Government identity document - Validate a government-issued identity document, which includes a photograph.
   - Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
   - Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
@@ -15,11 +15,11 @@ description: |-
 
 # pingone_verify_policy (Resource)
 
-Resource to configure the requirements to verify a user, including the parameters for verification, such as the number of one-time password (OTP) attempts and OTP expiration.
+Resource to configure the requirements to verify a user, including the parameters for verification.
 
-A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
+A verify policy defines which of the following one or more checks are performed for a verification transaction and configures the parameters of each check. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
 
-Verify policies can perform any of five checks:
+Verify policies can perform any of the following checks:
 - Government identity document - Validate a government-issued identity document, which includes a photograph.
 - Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
 - Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
@@ -41,7 +41,7 @@ resource "pingone_verify_voice_phrase" "my_verify_voice_phrase" {
 
 resource "pingone_verify_voice_phrase_content" "my_verify_voice_phrase_content" {
   environment_id  = pingone_environment.my_environment.id
-  voice_phrase_id = pingone_voice_phrase.my_verify_voice_phrase.id
+  voice_phrase_id = pingone_verify_voice_phrase.my_verify_voice_phrase.id
   locale          = "en"
   content         = "My voice content to be used in voice enrollment or verification."
 }
@@ -118,7 +118,7 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 
     text_dependent = {
       samples         = "5"
-      voice_phrase_id = pingone_voice_phrase.my_verify_voice_phrase.id
+      voice_phrase_id = pingone_verify_voice_phrase.my_verify_voice_phrase.id
     }
 
     reference_data = {
@@ -433,8 +433,8 @@ Optional:
 
 Required:
 
-- `samples` (Number) Number of voice samples to collect. The allowed range is `3 - 5`
-- `voice_phrase_id` (String) For a customer-defined phrase, the identifier (UUID) of the voice phrase to use. For pre-defined phrases, a string value.
+- `samples` (Number) Number of voice samples to collect. The allowed range is `3 - 5`.
+- `voice_phrase_id` (String) The identifier (UUID) of a defined `voice_phrase` to associate with the policy.
 
 ## Import
 

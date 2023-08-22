@@ -2,12 +2,12 @@
 page_title: "pingone_verify_voice_phrase_contents Data Source - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
-  Data source to retrieve a list of PingOne Voice Phrase Contents. Filtering the list by SCIM or data filter currently is not supported.
+  Data source to retrieve a list of PingOne Verify Voice Phrase Contents. Filtering the list by SCIM or data filter currently is not supported.
 ---
 
 # pingone_verify_voice_phrase_contents (Data Source)
 
-Data source to retrieve a list of PingOne Voice Phrase Contents. Filtering the list by SCIM or data filter currently is not supported.
+Data source to retrieve a list of PingOne Verify Voice Phrase Contents. Filtering the list by SCIM or data filter currently is not supported.
 
 ## Example Usage
 
@@ -25,9 +25,9 @@ data "pingone_verify_voice_phrase_contents" "find_by_id_example" {
 ### Required
 
 - `environment_id` (String) PingOne environment identifier (UUID) in which the verify voice phrase exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `voice_phrase_id` (String) For a customer-defined phrase, the identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration. For pre-defined phrases, a string value.
+- `voice_phrase_id` (String) The identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `ids` (List of String) The list of resulting IDs of voice phrase contents that have been successfully retrieved.
+- `ids` (List of String) The list of resulting voice phrase content IDs that have been successfully retrieved.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -61,11 +60,8 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
-	// P1 Platform does not set a traditional UUID for its default phrase IDs
-	const defaultVoicePhraseIds = "(exceptional_experiences|pingone_davinci_nocode)"
-
 	phraseIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"For a customer-defined phrase, the identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration. For pre-defined phrases, a string value.",
+		"The identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration.",
 	).RequiresReplace()
 
 	contentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -93,7 +89,6 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 				Validators: []validator.String{
 					stringvalidator.Any(
 						validation.P1ResourceIDValidator(),
-						stringvalidator.RegexMatches(regexp.MustCompile(defaultVoicePhraseIds), "Must contain a valid voice phrase identifier (UUID) or a permitted default voice phrase id."),
 					),
 				},
 			},
