@@ -2943,6 +2943,10 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 			}
 
 			o["condition"] = types.StringValue(string(jsonString))
+
+			if compositeConditionJSON.IsNull() || compositeConditionJSON.IsUnknown() {
+				o["condition_json"] = o["condition"]
+			}
 		}
 
 		objValue, d := types.ObjectValue(predictorCompositionTFObjectTypes, o)

@@ -45,3 +45,7 @@
 ```release-note:bug
 `resource/pingone_agreement_localization_revision`: Fixed `Cannot import non-existent remote object` error when attempting to import resource state.
 ```
+
+```release-note:bug
+`resource/pingone_risk_predictor`: Fixed missing `predictor_composite.composition.condition_json` parameter value when attempting to import resource state.
+```
