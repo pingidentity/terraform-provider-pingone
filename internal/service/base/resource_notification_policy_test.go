@@ -152,7 +152,7 @@ func TestAccNotificationPolicy_NewEnv(t *testing.T) {
 			{
 				Config: testAccNotificationPolicy_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -170,8 +170,8 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 	fullStep1 := resource.TestStep{
 		Config: testAccNotificationPolicyConfig_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),
@@ -182,8 +182,8 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 	fullStep2 := resource.TestStep{
 		Config: testAccNotificationPolicyConfig_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),
@@ -194,8 +194,8 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccNotificationPolicyConfig_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "0"),

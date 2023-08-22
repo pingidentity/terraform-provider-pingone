@@ -154,8 +154,8 @@ func TestAccMFAPolicy_NewEnv(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 				),
 			},
@@ -701,7 +701,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.otp_failure_cooldown_timeunit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^true$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^100$`),
@@ -720,7 +720,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^false$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -737,7 +737,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -905,7 +905,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.otp_failure_cooldown_timeunit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^true$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^100$`),
@@ -924,7 +924,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^false$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -941,7 +941,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -995,7 +995,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.otp_failure_cooldown_timeunit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^true$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^100$`),
@@ -1014,7 +1014,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^false$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -1031,7 +1031,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -1244,7 +1244,7 @@ func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1328,7 +1328,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1360,7 +1360,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1394,7 +1394,7 @@ func TestAccMFAPolicy_SecurityKey_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1458,7 +1458,7 @@ func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1484,7 +1484,7 @@ func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1517,7 +1517,7 @@ func TestAccMFAPolicy_Platform_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -1582,7 +1582,7 @@ func TestAccMFAPolicy_Platform_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
@@ -1608,7 +1608,7 @@ func TestAccMFAPolicy_Platform_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -1633,8 +1633,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
@@ -1648,8 +1648,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1663,8 +1663,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1673,8 +1673,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
@@ -1683,8 +1683,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),

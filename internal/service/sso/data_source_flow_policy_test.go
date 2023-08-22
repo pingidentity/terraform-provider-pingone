@@ -31,13 +31,13 @@ func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccFlowPolicyDataSourceConfig_ByIDFull(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1DVResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "name", regexp.MustCompile(`^Test Flow Policy( 2)?$`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "davinci_application.#", "1"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "davinci_application.0.id", verify.P1DVResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "davinci_application.0.id", verify.P1DVResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "davinci_application.0.name", regexp.MustCompile(`^Test Application( 2)?$`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "trigger.#", "1"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "trigger.0.type", "AUTHENTICATION"),

@@ -143,9 +143,9 @@ func TestAccTrustedEmailAddress_Full(t *testing.T) {
 	emailAddress := fmt.Sprintf("%s@%s", resourceName, verifiedDomain)
 
 	check := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "email_domain_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "email_domain_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "email_address", emailAddress),
 		resource.TestCheckResourceAttr(resourceFullName, "status", "VERIFICATION_REQUIRED"),
 	)

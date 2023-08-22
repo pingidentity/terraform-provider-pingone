@@ -152,8 +152,8 @@ func TestAccCustomDomain_Full(t *testing.T) {
 			{
 				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "domain_name", "terraformdev.ping-eng.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "VERIFICATION_REQUIRED"),
 					resource.TestMatchResourceAttr(resourceFullName, "canonical_name", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[0-9a-zA-Z]+\.pingone.[a-z]+\.$`)),

@@ -193,8 +193,8 @@ func TestAccCredentialType_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "title", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "VerifiedEmployee"),
@@ -227,8 +227,8 @@ func TestAccCredentialType_Full(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "title", updatedName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", updatedName)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "DemonstrationCard"),

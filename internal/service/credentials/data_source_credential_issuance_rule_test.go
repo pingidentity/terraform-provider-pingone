@@ -28,11 +28,11 @@ func TestAccCredentialIssuanceRuleDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccCredentialIssuanceRuleDataSource_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "credential_issuance_rule_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "credential_type_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "credential_issuance_rule_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "automation.%", resourceFullName, "automation.%"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "filter.%", resourceFullName, "filter.%"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "filter.scim", "accountId eq \"12345\" or accountId eq \"98765\" or (address.countryCode eq \"US\")"),

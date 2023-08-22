@@ -157,8 +157,8 @@ func TestAccKey_Full(t *testing.T) {
 			{
 				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "3072"),
@@ -297,8 +297,8 @@ func TestAccKey_Minimal(t *testing.T) {
 			{
 				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "EC"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "256"),
@@ -339,8 +339,8 @@ func TestAccKey_PKCS12(t *testing.T) {
 			{
 				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "terraform"),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "4096"),
@@ -359,8 +359,8 @@ func TestAccKey_PKCS12(t *testing.T) {
 			{
 				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "terraform"),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "4096"),
@@ -403,8 +403,8 @@ func TestAccKey_Change(t *testing.T) {
 			{
 				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "3072"),
@@ -429,8 +429,8 @@ func TestAccKey_Change(t *testing.T) {
 			{
 				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "EC"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "256"),
@@ -449,8 +449,8 @@ func TestAccKey_Change(t *testing.T) {
 			{
 				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "terraform"),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "4096"),
@@ -469,8 +469,8 @@ func TestAccKey_Change(t *testing.T) {
 			{
 				Config: testAccKeyConfig_Full(environmentName, licenseID, resourceName, name, "ENCRYPTION", false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(resourceFullName, "key_length", "3072"),

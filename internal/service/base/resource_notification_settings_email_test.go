@@ -29,8 +29,8 @@ func TestAccNotificationSettingsEmail_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccNotificationSettingsEmailConfig_Full(environmentName, licenseID, resourceName),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "host", "smtp-example.pingidentity.com"),
 			resource.TestCheckResourceAttr(resourceFullName, "port", "25"),
 			resource.TestCheckResourceAttr(resourceFullName, "protocol", "SMTPS"),

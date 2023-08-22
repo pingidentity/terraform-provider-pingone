@@ -150,8 +150,8 @@ func TestAccImage_PNG(t *testing.T) {
 			{
 				Config: testAccImageConfig_Image(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.width", "901"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.height", "901"),
@@ -200,8 +200,8 @@ func TestAccImage_JPG(t *testing.T) {
 			{
 				Config: testAccImageConfig_Image(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.width", "901"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.height", "901"),
@@ -231,8 +231,8 @@ func TestAccImage_GIF(t *testing.T) {
 			{
 				Config: testAccImageConfig_Image(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.width", "901"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.height", "901"),

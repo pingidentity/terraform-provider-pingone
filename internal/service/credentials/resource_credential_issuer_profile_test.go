@@ -91,9 +91,9 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 	initialProfile := resource.TestStep{
 		Config: testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_instance_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_instance_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
 			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
@@ -103,9 +103,9 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 	updatedProfile := resource.TestStep{
 		Config: testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, updatedName),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_instance_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_instance_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
 			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
 			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),

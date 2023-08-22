@@ -142,10 +142,10 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	singleStep := resource.TestStep{
 		Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
 		),
 	}
@@ -153,10 +153,10 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	singleStepChange := resource.TestStep{
 		Config: testAccApplicationFlowPolicyAssignmentConfig_Change(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
 		),
 	}
@@ -164,15 +164,15 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	multipleStep := resource.TestStep{
 		Config: testAccApplicationFlowPolicyAssignmentConfig_Multiple(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "priority", "2"),
-			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "application_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "flow_policy_id", verify.P1DVResourceIDRegexp),
+			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "priority", "1"),
 		),
 	}
@@ -237,10 +237,10 @@ func TestAccApplicationFlowPolicyAssignment_SystemApplication(t *testing.T) {
 			{
 				Config: testAccApplicationFlowPolicyAssignmentConfig_SystemApplication(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
 				),
 			},

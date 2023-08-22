@@ -175,9 +175,9 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "app_open_url", appOpenUrl),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		),
@@ -189,9 +189,9 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 	updateStep := resource.TestStep{
 		Config: testAccDigitalWalletApplication_Full(resourceName, updatedName, updatedAppOpenUrl),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "app_open_url", updatedAppOpenUrl),
 			resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
 		),

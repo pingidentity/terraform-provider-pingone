@@ -36,7 +36,7 @@ func TestAccSystemApplication_NewEnv(t *testing.T) {
 			{
 				Config: testAccSystemApplicationConfig_NewEnv(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -52,21 +52,21 @@ func TestAccSystemApplication_Portal(t *testing.T) {
 	applicationType := string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL)
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", applicationType),
 		resource.TestCheckResourceAttr(resourceFullName, "name", "PingOne Application Portal"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "2"),
-		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ALL_GROUPS"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", applicationType),
 		resource.TestCheckResourceAttr(resourceFullName, "name", "PingOne Application Portal"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -139,21 +139,21 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 	applicationType := string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE)
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", applicationType),
 		resource.TestCheckResourceAttr(resourceFullName, "name", "PingOne Self-Service - MyAccount"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "2"),
-		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ALL_GROUPS"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", applicationType),
 		resource.TestCheckResourceAttr(resourceFullName, "name", "PingOne Self-Service - MyAccount"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),

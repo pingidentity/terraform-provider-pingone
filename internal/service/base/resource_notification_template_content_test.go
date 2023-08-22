@@ -151,8 +151,8 @@ func TestAccNotificationTemplateContent_OverrideDefaultLocale(t *testing.T) {
 	locale := "en"
 
 	check := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "template_name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -216,8 +216,8 @@ func TestAccNotificationTemplateContent_NewLocale(t *testing.T) {
 	locale := "en-GB"
 
 	check := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "template_name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -291,8 +291,8 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 	variant := "My New Variant"
 
 	check := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "template_name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),

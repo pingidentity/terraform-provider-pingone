@@ -99,16 +99,16 @@ func TestAccNotificationSettings_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccNotificationSettingsConfig_Full(environmentName, licenseID, resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "delivery_mode", "ALL"),
 			resource.TestCheckResourceAttr(resourceFullName, "provider_fallback_chain.#", "2"),
-			resource.TestMatchResourceAttr(resourceFullName, "provider_fallback_chain.0", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "provider_fallback_chain.0", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "provider_fallback_chain.1", "PINGONE_TWILIO"),
 			resource.TestCheckResourceAttr(resourceFullName, "allowed_list.#", "3"),
-			resource.TestMatchResourceAttr(resourceFullName, "allowed_list.0.user_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "allowed_list.1.user_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "allowed_list.2.user_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "allowed_list.0.user_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "allowed_list.1.user_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "allowed_list.2.user_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 			resource.TestCheckResourceAttr(resourceFullName, "from.email_address", "noreply@pingidentity.com"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "from.name"),
@@ -120,8 +120,8 @@ func TestAccNotificationSettings_Full(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccNotificationSettingsConfig_Minimal(environmentName, licenseID, resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "delivery_mode", "ALL"),
 			resource.TestCheckResourceAttr(resourceFullName, "provider_fallback_chain.#", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "allowed_list.#", "0"),

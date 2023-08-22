@@ -143,16 +143,16 @@ func TestAccApplicationAttributeMapping_OIDC(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccApplicationAttributeMappingConfig_OIDC_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_scopes.#", "3"),
-			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.0", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.1", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.2", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.0", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.1", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.2", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_id_token_enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_userinfo_enabled", "false"),
 		),
@@ -161,14 +161,14 @@ func TestAccApplicationAttributeMapping_OIDC(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_scopes.#", "1"),
-			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.0", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.0", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_id_token_enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_userinfo_enabled", "true"),
 		),
@@ -263,14 +263,14 @@ func TestAccApplicationAttributeMapping_OIDC_UserInfo(t *testing.T) {
 			{
 				Config: testAccApplicationAttributeMappingConfig_OIDC_UserInfoChange(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_scopes.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_scopes.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_id_token_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_userinfo_enabled", "false"),
 				),
@@ -327,9 +327,9 @@ func TestAccApplicationAttributeMapping_SAML(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccApplicationAttributeMappingConfig_SAML_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
@@ -340,9 +340,9 @@ func TestAccApplicationAttributeMapping_SAML(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccApplicationAttributeMappingConfig_SAML_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
@@ -461,9 +461,9 @@ func TestAccApplicationAttributeMapping_Core_OIDC(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccApplicationAttributeMappingConfig_Core_OIDC(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
@@ -474,9 +474,9 @@ func TestAccApplicationAttributeMapping_Core_OIDC(t *testing.T) {
 	coreAttrNameAppTypeStep := resource.TestStep{
 		Config: testAccApplicationAttributeMappingConfig_Core_OIDC_SAML_Name(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "saml_subject"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
@@ -529,9 +529,9 @@ func TestAccApplicationAttributeMapping_Core_SAML(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccApplicationAttributeMappingConfig_Core_SAML_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "saml_subject"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
@@ -543,9 +543,9 @@ func TestAccApplicationAttributeMapping_Core_SAML(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccApplicationAttributeMappingConfig_Core_SAML_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "saml_subject"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
@@ -557,9 +557,9 @@ func TestAccApplicationAttributeMapping_Core_SAML(t *testing.T) {
 	coreAttrNameAppTypeStep := resource.TestStep{
 		Config: testAccApplicationAttributeMappingConfig_Core_SAML_OIDC_Name(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${user.email}"),
@@ -653,9 +653,9 @@ func TestAccApplicationAttributeMapping_Core_Expression(t *testing.T) {
 			{
 				Config: testAccApplicationAttributeMappingConfig_Core_Expression(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "sub"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "value", "${user.name.given + ', ' + user.name.family}"),

@@ -42,11 +42,11 @@ func TestAccBrandingSettings_Full(t *testing.T) {
 			{
 				Config: testAccBrandingSettingsConfig_Full(environmentName, licenseID, resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
@@ -89,8 +89,8 @@ func TestAccBrandingSettings_Minimal1(t *testing.T) {
 			{
 				Config: testAccBrandingSettingsConfig_Minimal1(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "0"),
 				),
@@ -120,8 +120,8 @@ func TestAccBrandingSettings_Minimal2(t *testing.T) {
 			{
 				Config: testAccBrandingSettingsConfig_Minimal2(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "0"),
 				),
@@ -152,11 +152,11 @@ func TestAccBrandingSettings_Minimal3(t *testing.T) {
 			{
 				Config: testAccBrandingSettingsConfig_Minimal3(environmentName, licenseID, resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
@@ -188,19 +188,19 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 			{
 				Config: testAccBrandingSettingsConfig_Full(environmentName, licenseID, resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 			{
 				Config: testAccBrandingSettingsConfig_Minimal1(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "0"),
 				),
@@ -208,8 +208,8 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 			{
 				Config: testAccBrandingSettingsConfig_Minimal2(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "0"),
 				),
@@ -217,22 +217,22 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 			{
 				Config: testAccBrandingSettingsConfig_Minimal3(environmentName, licenseID, resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 			{
 				Config: testAccBrandingSettingsConfig_Full(environmentName, licenseID, resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},

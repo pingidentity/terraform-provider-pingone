@@ -174,9 +174,9 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -192,9 +192,9 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
@@ -260,7 +260,7 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_EnumeratedValues(resourceName, name, "STRING"),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enumerated_values.#", "6"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
 				"value":       "value1",
@@ -293,7 +293,7 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "enumerated_values"),
 		),
 	}
@@ -351,7 +351,7 @@ func TestAccSchemaAttribute_StringRegexValidation(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_RegexValidation(resourceName, name, "STRING"),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "regex_validation.pattern", "^[a-zA-Z0-9]*$"),
 			resource.TestCheckResourceAttr(resourceFullName, "regex_validation.requirements", "Did you hear about the cow that aced all her tests?  She was outstanding in her field."),
 			resource.TestCheckResourceAttr(resourceFullName, "regex_validation.values_pattern_should_match.#", "2"),
@@ -366,7 +366,7 @@ func TestAccSchemaAttribute_StringRegexValidation(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "regex_validation"),
 		),
 	}
@@ -431,7 +431,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
@@ -440,7 +440,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
@@ -449,7 +449,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
@@ -458,7 +458,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
@@ -482,9 +482,9 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, true),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -500,9 +500,9 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_JSONMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
@@ -607,7 +607,7 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
@@ -616,7 +616,7 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),

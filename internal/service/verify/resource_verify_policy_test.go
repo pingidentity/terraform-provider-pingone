@@ -157,7 +157,7 @@ func TestAccVerifyPolicy_NewEnv(t *testing.T) {
 			{
 				Config: testAccVerifyPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -177,8 +177,8 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	fullPolicy := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("Description for %s", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -224,8 +224,8 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 	)
 
 	minimalPolicy := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
 		resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("Description for %s", updatedName)),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -269,8 +269,8 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 	)
 
 	updateTimeUnitsPolicy := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
 		resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("Timeunit Policy Update Description for %s", updatedName)),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),

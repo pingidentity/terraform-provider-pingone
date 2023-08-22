@@ -144,10 +144,10 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccCredentialIssuanceRule_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "ON_DEMAND"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.revoke", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.update", "ON_DEMAND"),
@@ -164,9 +164,9 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccCredentialIssuanceRule_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "digital_wallet_application_id"),
 			resource.TestCheckResourceAttr(resourceFullName, "filter.scim", "address.countryCode eq \"NG\""),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),
@@ -179,9 +179,9 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	disabledStep := resource.TestStep{
 		Config: testAccCredentialIssuanceRule_Disabled(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "digital_wallet_application_id"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.%", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),

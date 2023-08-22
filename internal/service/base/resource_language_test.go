@@ -152,8 +152,8 @@ func TestAccLanguage_Full(t *testing.T) {
 			{
 				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "de-DE"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "German (Germany)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "de-DE"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -164,8 +164,8 @@ func TestAccLanguage_Full(t *testing.T) {
 			{
 				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "cy-GB"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "Welsh (United Kingdom)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "cy-GB"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -176,8 +176,8 @@ func TestAccLanguage_Full(t *testing.T) {
 			{
 				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "fr-FR"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "French (France)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -224,8 +224,8 @@ func TestAccLanguage_Change(t *testing.T) {
 			{
 				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "fr-FR"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "French (France)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -236,8 +236,8 @@ func TestAccLanguage_Change(t *testing.T) {
 			{
 				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "fr-FR"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "French (France)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
@@ -248,8 +248,8 @@ func TestAccLanguage_Change(t *testing.T) {
 			{
 				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "fr-FR"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "French (France)"),
 					resource.TestCheckResourceAttr(resourceFullName, "locale", "fr-FR"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),

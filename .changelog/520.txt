@@ -53,3 +53,7 @@
 ```release-note:bug
 `resource/pingone_application_attribute_mapping`: Fixed missing `saml_subject_nameformat` parameter value when attempting to import resource state.
 ```
+
+```release-note:note
+Optimised code to import resource state for every resource.
+```

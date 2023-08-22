@@ -27,9 +27,9 @@ func TestAccUserDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccUserDataSourceConfig_ByNameFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "user_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "username", resourceFullName, "username"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "email", resourceFullName, "email"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "email_verified", resourceFullName, "email_verified"),
@@ -77,9 +77,9 @@ func TestAccUserDataSource_ByEmailFull(t *testing.T) {
 			{
 				Config: testAccUserDataSourceConfig_ByEmailFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "user_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "username", resourceFullName, "username"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "email", resourceFullName, "email"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "email_verified", resourceFullName, "email_verified"),
@@ -127,9 +127,9 @@ func TestAccUserDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccUserDataSourceConfig_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "user_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "username", resourceFullName, "username"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "email", resourceFullName, "email"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "email_verified", resourceFullName, "email_verified"),
