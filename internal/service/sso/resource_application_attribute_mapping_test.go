@@ -132,62 +132,6 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccApplicationAttributeMapping_Import(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
-			},
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/attribute_mapping_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "/",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/attribute_mapping_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat/badformat",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/attribute_mapping_id".`),
-			},
-		},
-	})
-}
-
 func TestAccApplicationAttributeMapping_OIDC(t *testing.T) {
 	t.Parallel()
 
@@ -260,12 +204,44 @@ func TestAccApplicationAttributeMapping_OIDC(t *testing.T) {
 			fullStep,
 			minimalStep,
 			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccApplicationAttributeMappingConfig_OIDC_UserInfoChange(resourceName, name),
 				Destroy: true,
 			},
 			// Expression
 			expressionStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -298,6 +274,22 @@ func TestAccApplicationAttributeMapping_OIDC_UserInfo(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_id_token_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_userinfo_enabled", "false"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -393,12 +385,44 @@ func TestAccApplicationAttributeMapping_SAML(t *testing.T) {
 			fullStep,
 			minimalStep,
 			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccApplicationAttributeMappingConfig_SAML_Full(resourceName, name),
 				Destroy: true,
 			},
 			// Expression
 			expressionStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			// Bad parameters
 			invalidParameterStep,
 		},
@@ -468,6 +492,22 @@ func TestAccApplicationAttributeMapping_Core_OIDC(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccApplicationAttributeMappingConfig_Core_OIDC(resourceName, name),
 				Destroy: true,
@@ -546,9 +586,25 @@ func TestAccApplicationAttributeMapping_Core_SAML(t *testing.T) {
 				Destroy: true,
 			},
 			// Change
-			minimalStep,
 			fullStep,
 			minimalStep,
+			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccApplicationAttributeMappingConfig_Core_SAML_Minimal(resourceName, name),
 				Destroy: true,
@@ -606,6 +662,22 @@ func TestAccApplicationAttributeMapping_Core_Expression(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -630,6 +702,46 @@ func TestAccApplicationAttributeMapping_SystemApplication(t *testing.T) {
 			{
 				Config:      testAccApplicationAttributeMappingConfig_SystemApplication(environmentName, licenseID, resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid parameter value - Unmappable application type`),
+			},
+		},
+	})
+}
+
+func TestAccApplicationAttributeMapping_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_attribute_mapping.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/attribute_mapping_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/attribute_mapping_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id/attribute_mapping_id".`),
 			},
 		},
 	})

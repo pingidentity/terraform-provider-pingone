@@ -762,6 +762,8 @@ func (p *ApplicationAttributeMappingResourceModel) toState(apiObject *management
 	p.OIDCIDTokenEnabled = framework.BoolOkToTF(apiObject.GetIdTokenOk())
 	p.OIDCUserinfoEnabled = framework.BoolOkToTF(apiObject.GetUserInfoOk())
 
+	p.SAMLSubjectNameformat = framework.StringOkToTF(apiObject.GetNameFormatOk())
+
 	return diags
 }
 

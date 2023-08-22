@@ -132,62 +132,6 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccSignOnPolicyAction_Import(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s-3", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
-			},
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/sign_on_policy_id/sign_on_policy_action_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "/",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/sign_on_policy_id/sign_on_policy_action_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat/badformat",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/sign_on_policy_id/sign_on_policy_action_id".`),
-			},
-		},
-	})
-}
-
 func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 	t.Parallel()
 
@@ -266,6 +210,22 @@ func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "login.0.recovery_enabled", "false"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -311,6 +271,22 @@ func TestAccSignOnPolicyAction_LoginAction_Gateway(t *testing.T) {
 			withGateway,
 			withoutGateway,
 			withGateway,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			//Errors
 			{
 				Config:      testAccSignOnPolicyActionConfig_LoginFullWithNewUserProvisioningWrongGateway(resourceName, name),
@@ -404,6 +380,22 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.identity_provider_id", verify.P1ResourceIDRegexp),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -491,6 +483,22 @@ func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "identity_provider.0.pass_user_context", "true"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -543,6 +551,22 @@ func TestAccSignOnPolicyAction_AgreementAction(t *testing.T) {
 			fullStep,
 			minimalStep,
 			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -632,6 +656,22 @@ func TestAccSignOnPolicyAction_ProgressiveProfilingAction(t *testing.T) {
 					}),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -658,6 +698,22 @@ func TestAccSignOnPolicyAction_PingIDAction(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", verify.P1ResourceIDRegexp),
 					resource.TestCheckResourceAttr(resourceFullName, "pingid.#", "1"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -687,6 +743,22 @@ func TestAccSignOnPolicyAction_PingIDWinLoginPasswordlessAction(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.0.unique_user_attribute_name", "username"),
 					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.0.offline_mode_enabled", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -775,6 +847,22 @@ func TestAccSignOnPolicyAction_ConditionsSignOnOlderThanSingle(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.last_sign_on_older_than_seconds", "3600"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -818,6 +906,22 @@ func TestAccSignOnPolicyAction_ConditionsMemberOfPopulation(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_is_member_of_any_population_id.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "conditions.0.user_is_member_of_any_population_id.0", verify.P1ResourceIDRegexp),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -920,6 +1024,22 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleString(t *test
 					}),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -972,6 +1092,22 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleBool(t *testin
 						"value_boolean":       strconv.FormatBool(attributeValue),
 					}),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1047,6 +1183,22 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 					}),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -1116,6 +1268,22 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -1162,6 +1330,22 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeMultiple(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -1204,6 +1388,22 @@ func TestAccSignOnPolicyAction_ConditionsIPHighRisk(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_reputation_high_risk", "true"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -1245,6 +1445,22 @@ func TestAccSignOnPolicyAction_ConditionsGeovelocity(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.geovelocity_anomaly_detected", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1289,6 +1505,22 @@ func TestAccSignOnPolicyAction_ConditionsAnonymousNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "0"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1338,6 +1570,22 @@ func TestAccSignOnPolicyAction_ConditionsAnonymousNetworkWithAllowed(t *testing.
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -1385,6 +1633,62 @@ func TestAccSignOnPolicyAction_ConditionsCompound(t *testing.T) {
 			// 		resource.TestCheckResourceAttr(resourceFullName, "conditions.0.user_attribute_equals.#", "2"),
 			// 	),
 			// },
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccSignOnPolicyAction_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s-3", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckSignOnPolicyActionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/sign_on_policy_id/sign_on_policy_action_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/sign_on_policy_id/sign_on_policy_action_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/sign_on_policy_id/sign_on_policy_action_id".`),
+			},
 		},
 	})
 }

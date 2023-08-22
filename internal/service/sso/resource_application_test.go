@@ -133,62 +133,6 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccApplication_Import(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
-			},
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "/",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id".`),
-			},
-		},
-	})
-}
-
 func TestAccApplication_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -288,6 +232,22 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -592,6 +552,22 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -907,6 +883,22 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 			withKerberosTestStep,
 			withoutKerberosTestStep,
 			withKerberosTestStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
 				Destroy: true,
@@ -1015,6 +1007,22 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			withMobileTestStepFull,
 			withoutMobileTestStep,
 			withMobileTestStepFull,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name),
 				Destroy: true,
@@ -1226,6 +1234,22 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1539,6 +1563,22 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1854,6 +1894,22 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -2137,6 +2193,22 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -2533,6 +2605,22 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -2697,6 +2785,22 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -2766,6 +2870,46 @@ func TestAccApplication_Enabled(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id".`),
 			},
 		},
 	})

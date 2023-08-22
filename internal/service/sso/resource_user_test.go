@@ -116,62 +116,6 @@ func TestAccUser_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccUser_Import(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_user.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckUserDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccUserConfig_Minimal(resourceName, name),
-			},
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/user_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "/",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/user_id".`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/user_id".`),
-			},
-		},
-	})
-}
-
 func TestAccUser_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -322,6 +266,28 @@ func TestAccUser_All(t *testing.T) {
 			fullTest,
 			minimalTest,
 			fullTest,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"password.%",
+					"password.force_change",
+					"password.initial_value",
+					"user_lifecycle.suppress_verification_code",
+				},
+			},
 		},
 	})
 }
@@ -557,6 +523,46 @@ func TestAccUser_ChangeUsernameAndEmail(t *testing.T) {
 			fullTest,
 			minimalTest,
 			fullTest,
+		},
+	})
+}
+
+func TestAccUser_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_user.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckUserDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccUserConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/user_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/user_id".`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/user_id".`),
+			},
 		},
 	})
 }

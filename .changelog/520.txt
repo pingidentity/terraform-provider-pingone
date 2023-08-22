@@ -49,3 +49,7 @@
 ```release-note:bug
 `resource/pingone_risk_predictor`: Fixed missing `predictor_composite.composition.condition_json` parameter value when attempting to import resource state.
 ```
+
+```release-note:bug
+`resource/pingone_application_attribute_mapping`: Fixed missing `saml_subject_nameformat` parameter value when attempting to import resource state.
+```
