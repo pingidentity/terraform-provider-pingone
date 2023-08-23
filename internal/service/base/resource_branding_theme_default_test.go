@@ -100,10 +100,10 @@ func testAccBrandingThemeDefaultConfig_Full(environmentName, licenseID, resource
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_branding_theme" "%[2]s" {
+resource "pingone_branding_theme" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  name     = "%[2]s"
+  name     = "%[4]s"
   template = "split"
 
   background_color   = "#FF00F0"
@@ -116,9 +116,9 @@ resource "pingone_branding_theme" "%[2]s" {
 
 }
 
-resource "pingone_branding_theme_default" "%[2]s" {
+resource "pingone_branding_theme_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  branding_theme_id = pingone_branding_theme.%[2]s.id
+  branding_theme_id = pingone_branding_theme.%[3]s.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
