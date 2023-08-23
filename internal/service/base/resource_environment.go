@@ -896,7 +896,7 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 
 func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
-	compiledRegexString := fmt.Sprintf(`%s|^%s\/%s$`, verify.P1DVResourceIDRegexpFullString.String(), verify.P1ResourceIDRegexp.String(), verify.P1ResourceIDRegexp.String())
+	compiledRegexString := fmt.Sprintf(`%s|^%s\/%s$`, verify.P1ResourceIDRegexpFullString.String(), verify.P1ResourceIDRegexp.String(), verify.P1ResourceIDRegexp.String())
 	m, err := regexp.MatchString(compiledRegexString, req.ID)
 	if err != nil {
 		resp.Diagnostics.AddError(

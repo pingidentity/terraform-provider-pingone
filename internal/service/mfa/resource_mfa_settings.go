@@ -278,6 +278,7 @@ func resourceMFASettingsImport(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	d.SetId(attributes["environment_id"])
+	d.Set("environment_id", attributes["environment_id"])
 
 	resourceMFASettingsRead(ctx, d, meta)
 

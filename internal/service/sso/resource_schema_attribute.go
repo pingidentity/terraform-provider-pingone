@@ -650,6 +650,10 @@ func (r *SchemaAttributeResource) ImportState(ctx context.Context, req resource.
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
+			Label:  "schema_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
 			Label:     "schema_attribute_id",
 			Regexp:    verify.P1ResourceIDRegexp,
 			PrimaryID: true,
