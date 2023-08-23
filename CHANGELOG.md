@@ -4,6 +4,8 @@ NOTES:
 
 * Code optimisation for all resources and data sources to remove redundant code. ([#507](https://github.com/pingidentity/terraform-provider-pingone/issues/507))
 * Optimised code and add input validation to import resource state for every resource. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_credential_issuer_profile`: Removal of redundant code. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
+* `resource/pingone_credential_type`: Improved the `credential_type` documentation example. Corrected the placement of `card_design_template` within the example, and clarified the usage of `pingone_image` resource to assign the `background_image` and `logo_image` values. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
 * bump `github.com/hashicorp/terraform-plugin-framework` v1.3.4 => v1.3.5 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.3.1 => v0.4.0 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.3 => v0.10.4 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
@@ -18,7 +20,9 @@ FEATURES:
 
 ENHANCEMENTS:
 
+* `data-source/pingone_credential_type`: Now supports `revoke_on_delete`, `issuer_id`, `created_at`, and `updated_at` in the datasource response. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
 * `data-source/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
+* `resource/pingone_credential_type`: Now supports `revoke_on_delete` configuration option. Read only attributes `issuer_id`, `created_at`, and `updated_at` are available in state. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
 * `resource/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
 * `resource/pingone_verify_policy`: Now supports `voice` configuration option enabling voice verification. ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
 
@@ -31,6 +35,7 @@ BUG FIXES:
 * `resource/pingone_application_attribute_mapping`: Fixed missing `saml_subject_nameformat` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
 * `resource/pingone_application_sign_on_policy_assignment`: Fixed missing `sign_on_policy_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
 * `resource/pingone_branding_theme_default`: Fixed error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_credential_issuer_profile`: Corrected `created_at` attribute value. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
 * `resource/pingone_group_nesting`: Fixed missing `nested_group_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
 * `resource/pingone_language_update`: Fixed missing `language_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
 * `resource/pingone_mfa_settings`: Fixed `Not Found` error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
