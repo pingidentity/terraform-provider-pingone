@@ -54,6 +54,10 @@
 `resource/pingone_application_attribute_mapping`: Fixed missing `saml_subject_nameformat` parameter value when attempting to import resource state.
 ```
 
+```release-note:bug
+`resource/pingone_application_attribute_mapping`: Fixed `Provider produced inconsistent result after apply` error when attempting to remove the previously configured `saml_subject_nameformat` parameter value from the `saml_subject` core attribute.
+```
+
 ```release-note:note
 Optimised code to import resource state for every resource.
 ```

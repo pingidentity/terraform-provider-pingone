@@ -715,6 +715,8 @@ func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, a
 
 		if !p.SAMLSubjectNameformat.IsNull() {
 			data.SetNameFormat(p.SAMLSubjectNameformat.ValueString())
+		} else {
+			data.NameFormat = nil
 		}
 
 	} else {
