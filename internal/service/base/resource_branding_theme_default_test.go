@@ -48,7 +48,7 @@ func TestAccBrandingThemeDefault_Full(t *testing.T) {
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return rs.Primary.ID, nil
+						return rs.Primary.Attributes["environment_id"], nil
 					}
 				}(),
 				ImportState:       true,

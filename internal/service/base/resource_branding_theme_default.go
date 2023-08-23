@@ -297,17 +297,34 @@ func (r *BrandingThemeDefaultResource) ImportState(ctx context.Context, req reso
 		return
 	}
 
-	defaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, r.client, attributes["environment_id"])
+	defaultThemeId, d := r.fetchDefaultThemeId(ctx, r.client, attributes["environment_id"])
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	if defaultThemeId == nil {
+		resp.Diagnostics.AddError(
+			"Default theme not found",
+			"Unable to find the default theme for the environment.",
+		)
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("branding_theme_id"), defaultThemeId)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), defaultThemeId)...)
 }
 
 func (r *BrandingThemeDefaultResource) fetchBootstapDefaultThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string) (*string, diag.Diagnostics) {
+	return r.fetchThemeId(ctx, apiClient, environmentID, true)
+}
+
+func (r *BrandingThemeDefaultResource) fetchDefaultThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string) (*string, diag.Diagnostics) {
+	return r.fetchThemeId(ctx, apiClient, environmentID, false)
+}
+
+func (r *BrandingThemeDefaultResource) fetchThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string, bootstrapDefault bool) (*string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var response *management.EntityArray
@@ -329,7 +346,12 @@ func (r *BrandingThemeDefaultResource) fetchBootstapDefaultThemeId(ctx context.C
 	if brandingThemes, ok := response.Embedded.GetThemesOk(); ok {
 
 		for _, brandingTheme := range brandingThemes {
-			if *brandingTheme.GetConfiguration().Name == "Ping Default" {
+			if bootstrapDefault && *brandingTheme.GetConfiguration().Name == "Ping Default" {
+				defaultThemeId := brandingTheme.GetId()
+				return &defaultThemeId, diags
+			}
+
+			if !bootstrapDefault && brandingTheme.GetDefault() {
 				defaultThemeId := brandingTheme.GetId()
 				return &defaultThemeId, diags
 			}
