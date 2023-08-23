@@ -13,17 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type AgreementDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type AgreementDataSource serviceClientType
 
 type AgreementDataSourceModel struct {
 	Id                    types.String  `tfsdk:"id"`
@@ -156,14 +152,13 @@ func (r *AgreementDataSource) Configure(ctx context.Context, req datasource.Conf
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *AgreementDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -186,7 +181,7 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.AgreementsResourcesApi.ReadAllAgreements(ctx, data.EnvironmentId.ValueString()).Execute()
+				return r.Client.AgreementsResourcesApi.ReadAllAgreements(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllAgreements",
 			framework.DefaultCustomError,
@@ -227,7 +222,7 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+				return r.Client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
 			},
 			"ReadOneAgreement",
 			framework.DefaultCustomError,

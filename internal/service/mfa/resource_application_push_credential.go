@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	listplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listplanmodifier"
 	stringplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringplanmodifier"
@@ -27,10 +26,7 @@ import (
 )
 
 // Types
-type ApplicationPushCredentialResource struct {
-	client *mfa.APIClient
-	region model.RegionMapping
-}
+type ApplicationPushCredentialResource serviceClientType
 
 type applicationPushCredentialResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -314,14 +310,13 @@ func (r *ApplicationPushCredentialResource) Configure(ctx context.Context, req r
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *ApplicationPushCredentialResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state applicationPushCredentialResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -347,7 +342,7 @@ func (r *ApplicationPushCredentialResource) Create(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApplicationMFAPushCredentialsApi.CreateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
+			return r.Client.ApplicationsApplicationMFAPushCredentialsApi.CreateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
 		},
 		"CreateMFAPushCredential",
 		framework.DefaultCustomError,
@@ -369,7 +364,7 @@ func (r *ApplicationPushCredentialResource) Create(ctx context.Context, req reso
 func (r *ApplicationPushCredentialResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *applicationPushCredentialResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -388,7 +383,7 @@ func (r *ApplicationPushCredentialResource) Read(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApplicationMFAPushCredentialsApi.ReadOneMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.ApplicationsApplicationMFAPushCredentialsApi.ReadOneMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneMFAPushCredential",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -413,7 +408,7 @@ func (r *ApplicationPushCredentialResource) Read(ctx context.Context, req resour
 func (r *ApplicationPushCredentialResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state applicationPushCredentialResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -439,7 +434,7 @@ func (r *ApplicationPushCredentialResource) Update(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApplicationMFAPushCredentialsApi.UpdateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
+			return r.Client.ApplicationsApplicationMFAPushCredentialsApi.UpdateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
 		},
 		"UpdateMFAPushCredential",
 		framework.DefaultCustomError,
@@ -461,7 +456,7 @@ func (r *ApplicationPushCredentialResource) Update(ctx context.Context, req reso
 func (r *ApplicationPushCredentialResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *applicationPushCredentialResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -479,7 +474,7 @@ func (r *ApplicationPushCredentialResource) Delete(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.ApplicationsApplicationMFAPushCredentialsApi.DeleteMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.ApplicationsApplicationMFAPushCredentialsApi.DeleteMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteMFAPushCredential",

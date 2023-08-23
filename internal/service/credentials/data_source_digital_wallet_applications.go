@@ -10,16 +10,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type DigitalWalletApplicationsDataSource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type DigitalWalletApplicationsDataSource serviceClientType
 
 type DigitalWalletApplicationsDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -89,14 +85,13 @@ func (r *DigitalWalletApplicationsDataSource) Configure(ctx context.Context, req
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *DigitalWalletApplicationsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *DigitalWalletApplicationsDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -115,7 +110,7 @@ func (r *DigitalWalletApplicationsDataSource) Read(ctx context.Context, req data
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.Client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadAllDigitalWalletApplications",
 		framework.DefaultCustomError,

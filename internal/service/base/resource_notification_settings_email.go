@@ -16,17 +16,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type NotificationSettingsEmailResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type NotificationSettingsEmailResource serviceClientType
 
 type NotificationSettingsEmailResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -208,14 +204,13 @@ func (r *NotificationSettingsEmailResource) Configure(ctx context.Context, req r
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state NotificationSettingsEmailResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -241,7 +236,7 @@ func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsSettingsSMTPApi.UpdateEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsEmailDeliverySettings(*notificationSettings).Execute()
+			return r.Client.NotificationsSettingsSMTPApi.UpdateEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsEmailDeliverySettings(*notificationSettings).Execute()
 		},
 		"UpdateEmailNotificationsSettings-Create",
 		framework.DefaultCustomError,
@@ -263,7 +258,7 @@ func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req reso
 func (r *NotificationSettingsEmailResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *NotificationSettingsEmailResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -282,7 +277,7 @@ func (r *NotificationSettingsEmailResource) Read(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsSettingsSMTPApi.ReadEmailNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.Client.NotificationsSettingsSMTPApi.ReadEmailNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadEmailNotificationsSettings",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -307,7 +302,7 @@ func (r *NotificationSettingsEmailResource) Read(ctx context.Context, req resour
 func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state NotificationSettingsEmailResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -333,7 +328,7 @@ func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsSettingsSMTPApi.UpdateEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsEmailDeliverySettings(*notificationSettings).Execute()
+			return r.Client.NotificationsSettingsSMTPApi.UpdateEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsEmailDeliverySettings(*notificationSettings).Execute()
 		},
 		"UpdateEmailNotificationsSettings-Create",
 		framework.DefaultCustomError,
@@ -355,7 +350,7 @@ func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req reso
 func (r *NotificationSettingsEmailResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *NotificationSettingsEmailResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -373,7 +368,7 @@ func (r *NotificationSettingsEmailResource) Delete(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.NotificationsSettingsSMTPApi.DeleteEmailDeliverySettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			r, err := r.Client.NotificationsSettingsSMTPApi.DeleteEmailDeliverySettings(ctx, data.EnvironmentId.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteEmailDeliverySettings",

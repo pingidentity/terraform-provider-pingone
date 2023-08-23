@@ -19,10 +19,7 @@ import (
 )
 
 // Types
-type AgreementEnableResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type AgreementEnableResource serviceClientType
 
 type AgreementEnableResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -102,14 +99,13 @@ func (r *AgreementEnableResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *AgreementEnableResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state AgreementEnableResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -127,7 +123,7 @@ func (r *AgreementEnableResource) Create(ctx context.Context, req resource.Creat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Execute()
+			return r.Client.AgreementsResourcesApi.ReadOneAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Execute()
 		},
 		"ReadOneAgreement",
 		framework.DefaultCustomError,
@@ -147,7 +143,7 @@ func (r *AgreementEnableResource) Create(ctx context.Context, req resource.Creat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Agreement(*agreementEnable).Execute()
+			return r.Client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Agreement(*agreementEnable).Execute()
 		},
 		"UpdateAgreement",
 		agreementEnableUpdateCustomErrorHandler,
@@ -169,7 +165,7 @@ func (r *AgreementEnableResource) Create(ctx context.Context, req resource.Creat
 func (r *AgreementEnableResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *AgreementEnableResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -188,7 +184,7 @@ func (r *AgreementEnableResource) Read(ctx context.Context, req resource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneAgreement",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -213,7 +209,7 @@ func (r *AgreementEnableResource) Read(ctx context.Context, req resource.ReadReq
 func (r *AgreementEnableResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state AgreementEnableResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -231,7 +227,7 @@ func (r *AgreementEnableResource) Update(ctx context.Context, req resource.Updat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Execute()
+			return r.Client.AgreementsResourcesApi.ReadOneAgreement(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).Execute()
 		},
 		"ReadOneAgreement",
 		framework.DefaultCustomError,
@@ -251,7 +247,7 @@ func (r *AgreementEnableResource) Update(ctx context.Context, req resource.Updat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Agreement(*agreementEnable).Execute()
+			return r.Client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Agreement(*agreementEnable).Execute()
 		},
 		"UpdateAgreement",
 		agreementEnableUpdateCustomErrorHandler,
@@ -273,7 +269,7 @@ func (r *AgreementEnableResource) Update(ctx context.Context, req resource.Updat
 func (r *AgreementEnableResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *AgreementEnableResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -291,7 +287,7 @@ func (r *AgreementEnableResource) Delete(ctx context.Context, req resource.Delet
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+			return r.Client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
 		},
 		"ReadOneAgreement",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -311,7 +307,7 @@ func (r *AgreementEnableResource) Delete(ctx context.Context, req resource.Delet
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Agreement(*agreementDisable).Execute()
+			return r.Client.AgreementsResourcesApi.UpdateAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Agreement(*agreementDisable).Execute()
 		},
 		"UpdateAgreement",
 		framework.CustomErrorResourceNotFoundWarning,

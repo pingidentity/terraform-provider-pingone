@@ -31,7 +31,6 @@ import (
 type AgreementLocalizationRevisionResource struct {
 	managementClient          *management.APIClient
 	agreementManagementClient *agreementmanagement.APIClient
-	region                    model.RegionMapping
 }
 
 type AgreementLocalizationRevisionResourceModel struct {
@@ -194,7 +193,6 @@ func (r *AgreementLocalizationRevisionResource) Configure(ctx context.Context, r
 	}
 
 	r.agreementManagementClient = agreementManagementPreparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

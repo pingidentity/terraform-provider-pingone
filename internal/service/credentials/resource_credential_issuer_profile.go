@@ -23,10 +23,7 @@ import (
 )
 
 // Types
-type CredentialIssuerProfileResource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type CredentialIssuerProfileResource serviceClientType
 
 type CredentialIssuerProfileResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
@@ -126,14 +123,13 @@ func (r *CredentialIssuerProfileResource) Configure(ctx context.Context, req res
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CredentialIssuerProfileResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -155,7 +151,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).Execute()
+			return r.Client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadCredentialIssuerProfile",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -182,7 +178,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+				return r.Client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 			},
 			"CreateCredentialIssuerProfile",
 			framework.DefaultCustomError,
@@ -198,7 +194,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+				return r.Client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 			},
 			"UpdateCredentialIssuerProfile",
 			framework.DefaultCustomError,
@@ -221,7 +217,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CredentialIssuerProfileResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -242,7 +238,7 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.Client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, data.EnvironmentId.ValueString()).Execute()
 
 		},
 		"ReadCredentialIssuerProfile",
@@ -269,7 +265,7 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state CredentialIssuerProfileResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -295,7 +291,7 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+			return r.Client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 		},
 		"UpdateCredentialIssuerProfile",
 		framework.DefaultCustomError,

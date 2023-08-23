@@ -23,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
@@ -35,10 +34,7 @@ import (
 )
 
 // Types
-type SchemaAttributeResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type SchemaAttributeResource serviceClientType
 
 type SchemaAttributeResourceModelV1 struct {
 	Id               types.String `tfsdk:"id"`
@@ -432,14 +428,13 @@ func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state SchemaAttributeResourceModelV1
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -453,7 +448,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Get the schema ID
-	schema, d := fetchSchemaFromName(ctx, r.client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
+	schema, d := fetchSchemaFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -472,7 +467,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), schema.GetId()).SchemaAttribute(*schemaAttribute).Execute()
+			return r.Client.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), schema.GetId()).SchemaAttribute(*schemaAttribute).Execute()
 		},
 		"CreateAttribute",
 		framework.DefaultCustomError,
@@ -495,7 +490,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *SchemaAttributeResourceModelV1
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -514,7 +509,7 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SchemasApi.ReadOneAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.SchemasApi.ReadOneAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -536,7 +531,7 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+			return r.Client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
 		},
 		"ReadOneSchema",
 		framework.DefaultCustomError,
@@ -555,7 +550,7 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state SchemaAttributeResourceModelV1
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -569,7 +564,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Get the schema ID
-	schema, d := fetchSchemaFromName(ctx, r.client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
+	schema, d := fetchSchemaFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -588,7 +583,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), schema.GetId(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
+			return r.Client.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), schema.GetId(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
 		},
 		"UpdateAttributePut",
 		framework.DefaultCustomError,
@@ -610,7 +605,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *SchemaAttributeResourceModelV1
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -628,7 +623,7 @@ func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.Delet
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.SchemasApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.SchemasApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteAttribute",

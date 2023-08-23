@@ -9,17 +9,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type VerifyPoliciesDataSource struct {
-	client *verify.APIClient
-	region model.RegionMapping
-}
+type VerifyPoliciesDataSource serviceClientType
 
 type verifyPoliciesDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -88,14 +84,13 @@ func (r *VerifyPoliciesDataSource) Configure(ctx context.Context, req datasource
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *VerifyPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *verifyPoliciesDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -114,7 +109,7 @@ func (r *VerifyPoliciesDataSource) Read(ctx context.Context, req datasource.Read
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.Client.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadAllVerifyPolicies",
 		framework.DefaultCustomError,

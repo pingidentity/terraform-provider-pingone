@@ -23,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -31,10 +30,7 @@ import (
 )
 
 // Types
-type SystemApplicationResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type SystemApplicationResource serviceClientType
 
 type systemApplicationResourceModel struct {
 	Id                        types.String `tfsdk:"id"`
@@ -218,14 +214,13 @@ func (r *SystemApplicationResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *SystemApplicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state systemApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -248,7 +243,7 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// Build the model for the API
-	updateSystemApplication, applicationId, d := plan.expand(ctx, r.client)
+	updateSystemApplication, applicationId, d := plan.expand(ctx, r.Client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -260,7 +255,7 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), *applicationId).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			return r.Client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), *applicationId).UpdateApplicationRequest(*updateSystemApplication).Execute()
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,
@@ -282,7 +277,7 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *systemApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -301,7 +296,7 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneApplication",
 		framework.DefaultCustomError,
@@ -332,7 +327,7 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 func (r *SystemApplicationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state systemApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -357,7 +352,7 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Build the model for the API
-	updateSystemApplication, _, d := plan.expand(ctx, r.client)
+	updateSystemApplication, _, d := plan.expand(ctx, r.Client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -369,7 +364,7 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			return r.Client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,
@@ -391,7 +386,7 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *systemApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -408,7 +403,7 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 	data.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
 	data.AccessControlRoleType = types.StringNull()
 
-	updateSystemApplication, _, d := data.expand(ctx, r.client)
+	updateSystemApplication, _, d := data.expand(ctx, r.Client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -419,7 +414,7 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApi.UpdateApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			return r.Client.ApplicationsApi.UpdateApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,

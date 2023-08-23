@@ -38,10 +38,7 @@ import (
 )
 
 // Types
-type RiskPolicyResource struct {
-	client *risk.APIClient
-	region model.RegionMapping
-}
+type RiskPolicyResource serviceClientType
 
 type riskPolicyResourceModel struct {
 	Id                  types.String `tfsdk:"id"`
@@ -892,14 +889,13 @@ func (r *RiskPolicyResource) Configure(ctx context.Context, req resource.Configu
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state riskPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -913,7 +909,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Build the model for the API
-	riskPolicy, d := plan.expand(ctx, r.client)
+	riskPolicy, d := plan.expand(ctx, r.Client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -925,7 +921,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.RiskPoliciesApi.CreateRiskPolicySet(ctx, plan.EnvironmentId.ValueString()).RiskPolicySet(*riskPolicy).Execute()
+			return r.Client.RiskPoliciesApi.CreateRiskPolicySet(ctx, plan.EnvironmentId.ValueString()).RiskPolicySet(*riskPolicy).Execute()
 		},
 		"CreateRiskPolicySet",
 		riskPolicyCreateUpdateCustomErrorHandler,
@@ -942,7 +938,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), createResponse.GetId()).Execute()
+			return r.Client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), createResponse.GetId()).Execute()
 		},
 		"ReadOneRiskPolicySet",
 		framework.DefaultCustomError,
@@ -964,7 +960,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *riskPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -983,7 +979,7 @@ func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneRiskPolicySet",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1008,7 +1004,7 @@ func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state riskPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1022,7 +1018,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Build the model for the API
-	riskPolicy, d := plan.expand(ctx, r.client)
+	riskPolicy, d := plan.expand(ctx, r.Client)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1034,7 +1030,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.RiskPoliciesApi.UpdateRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPolicySet(*riskPolicy).Execute()
+			return r.Client.RiskPoliciesApi.UpdateRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPolicySet(*riskPolicy).Execute()
 		},
 		"UpdateRiskPolicySet",
 		riskPolicyCreateUpdateCustomErrorHandler,
@@ -1056,7 +1052,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *riskPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1074,7 +1070,7 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.RiskPoliciesApi.DeleteRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.RiskPoliciesApi.DeleteRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteRiskPolicySet",

@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -23,10 +22,7 @@ import (
 )
 
 // Types
-type UserDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type UserDataSource serviceClientType
 
 type UserDataSourceModel struct {
 	Id                types.String `tfsdk:"id"`
@@ -616,14 +612,13 @@ func (r *UserDataSource) Configure(ctx context.Context, req datasource.Configure
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *UserDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -676,7 +671,7 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return r.Client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		},
 		"ReadAllUsers",
 		framework.DefaultCustomError,
@@ -696,7 +691,7 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), user.GetId()).Execute()
+				return r.Client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), user.GetId()).Execute()
 			},
 			"ReadUserEnabled",
 			framework.DefaultCustomError,

@@ -13,16 +13,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type TrustedEmailDomainDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type TrustedEmailDomainDataSource serviceClientType
 
 type TrustedEmailDomainDataSourceModel struct {
 	DomainName    types.String `tfsdk:"domain_name"`
@@ -115,14 +111,13 @@ func (r *TrustedEmailDomainDataSource) Configure(ctx context.Context, req dataso
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *TrustedEmailDomainDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -145,7 +140,7 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.TrustedEmailDomainsApi.ReadAllTrustedEmailDomains(ctx, data.EnvironmentId.ValueString()).Execute()
+				return r.Client.TrustedEmailDomainsApi.ReadAllTrustedEmailDomains(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllTrustedEmailDomains",
 			framework.DefaultCustomError,
@@ -186,7 +181,7 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.TrustedEmailDomainsApi.ReadOneTrustedEmailDomain(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString()).Execute()
+				return r.Client.TrustedEmailDomainsApi.ReadOneTrustedEmailDomain(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString()).Execute()
 			},
 			"ReadOneTrustedEmailDomain",
 			framework.DefaultCustomError,

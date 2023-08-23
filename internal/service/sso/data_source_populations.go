@@ -11,17 +11,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type PopulationsDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type PopulationsDataSource serviceClientType
 
 type PopulationsDataSourceModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
@@ -111,14 +107,13 @@ func (r *PopulationsDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *PopulationsDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -136,7 +131,7 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if !data.ScimFilter.IsNull() {
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
+			return r.Client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
 	} else if !data.DataFilter.IsNull() {
@@ -170,7 +165,7 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		})
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return r.Client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		}
 
 	} else {

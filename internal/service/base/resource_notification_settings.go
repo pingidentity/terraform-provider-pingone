@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -27,10 +26,7 @@ import (
 )
 
 // Types
-type NotificationSettingsResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type NotificationSettingsResource serviceClientType
 
 type NotificationSettingsResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
@@ -248,14 +244,13 @@ func (r *NotificationSettingsResource) Configure(ctx context.Context, req resour
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *NotificationSettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state NotificationSettingsResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -281,7 +276,7 @@ func (r *NotificationSettingsResource) Create(ctx context.Context, req resource.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsSettingsApi.UpdateNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettings(*notificationSettings).Execute()
+			return r.Client.NotificationsSettingsApi.UpdateNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettings(*notificationSettings).Execute()
 		},
 		"UpdateNotificationsSettings-Create",
 		framework.DefaultCustomError,
@@ -303,7 +298,7 @@ func (r *NotificationSettingsResource) Create(ctx context.Context, req resource.
 func (r *NotificationSettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *NotificationSettingsResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -322,7 +317,7 @@ func (r *NotificationSettingsResource) Read(ctx context.Context, req resource.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsSettingsApi.ReadNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.Client.NotificationsSettingsApi.ReadNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadNotificationsSettings",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -347,7 +342,7 @@ func (r *NotificationSettingsResource) Read(ctx context.Context, req resource.Re
 func (r *NotificationSettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state NotificationSettingsResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -373,7 +368,7 @@ func (r *NotificationSettingsResource) Update(ctx context.Context, req resource.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsSettingsApi.UpdateNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettings(*notificationSettings).Execute()
+			return r.Client.NotificationsSettingsApi.UpdateNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettings(*notificationSettings).Execute()
 		},
 		"UpdateNotificationsSettings-Update",
 		framework.DefaultCustomError,
@@ -395,7 +390,7 @@ func (r *NotificationSettingsResource) Update(ctx context.Context, req resource.
 func (r *NotificationSettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *NotificationSettingsResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -413,7 +408,7 @@ func (r *NotificationSettingsResource) Delete(ctx context.Context, req resource.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsSettingsApi.DeleteNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.Client.NotificationsSettingsApi.DeleteNotificationsSettings(ctx, data.EnvironmentId.ValueString()).Execute()
 		},
 		"DeleteNotificationsSettings",
 		framework.CustomErrorResourceNotFoundWarning,

@@ -13,17 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type ApplicationFlowPolicyAssignmentResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type ApplicationFlowPolicyAssignmentResource serviceClientType
 
 type ApplicationFlowPolicyAssignmentResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -113,14 +109,13 @@ func (r *ApplicationFlowPolicyAssignmentResource) Configure(ctx context.Context,
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *ApplicationFlowPolicyAssignmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationFlowPolicyAssignmentResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -142,7 +137,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Create(ctx context.Context, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationFlowPolicyAssignmentsApi.CreateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			return r.Client.ApplicationFlowPolicyAssignmentsApi.CreateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
 		},
 		"CreateFlowPolicyAssignment",
 		framework.DefaultCustomError,
@@ -164,7 +159,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Create(ctx context.Context, re
 func (r *ApplicationFlowPolicyAssignmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationFlowPolicyAssignmentResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -183,7 +178,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Read(ctx context.Context, req 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationFlowPolicyAssignmentsApi.ReadOneFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.ApplicationFlowPolicyAssignmentsApi.ReadOneFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneFlowPolicyAssignment",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -208,7 +203,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Read(ctx context.Context, req 
 func (r *ApplicationFlowPolicyAssignmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ApplicationFlowPolicyAssignmentResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -230,7 +225,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Update(ctx context.Context, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationFlowPolicyAssignmentsApi.UpdateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			return r.Client.ApplicationFlowPolicyAssignmentsApi.UpdateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
 		},
 		"UpdateFlowPolicyAssignment",
 		framework.DefaultCustomError,
@@ -252,7 +247,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Update(ctx context.Context, re
 func (r *ApplicationFlowPolicyAssignmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationFlowPolicyAssignmentResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -270,7 +265,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Delete(ctx context.Context, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.ApplicationFlowPolicyAssignmentsApi.DeleteFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.ApplicationFlowPolicyAssignmentsApi.DeleteFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteFlowPolicyAssignment",

@@ -455,7 +455,6 @@ func (r *EnvironmentResource) Configure(ctx context.Context, req resource.Config
 	}
 
 	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

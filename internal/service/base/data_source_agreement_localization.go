@@ -13,17 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type AgreementLocalizationDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type AgreementLocalizationDataSource serviceClientType
 
 type AgreementLocalizationDataSourceModel struct {
 	Id                      types.String `tfsdk:"id"`
@@ -170,14 +166,13 @@ func (r *AgreementLocalizationDataSource) Configure(ctx context.Context, req dat
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *AgreementLocalizationDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -200,7 +195,7 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.AgreementLanguagesResourcesApi.ReadAllAgreementLanguages(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+				return r.Client.AgreementLanguagesResourcesApi.ReadAllAgreementLanguages(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
 			},
 			"ReadAllAgreementLanguages",
 			framework.DefaultCustomError,
@@ -249,7 +244,7 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).Execute()
+				return r.Client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).Execute()
 			},
 			"ReadOneAgreementLanguage",
 			framework.DefaultCustomError,
@@ -269,7 +264,7 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 		return
 	}
 
-	languageResponse, _ := findLanguageByLocale(ctx, r.client, data.EnvironmentId.ValueString(), agreementLocalization.GetLocale())
+	languageResponse, _ := findLanguageByLocale(ctx, r.Client, data.EnvironmentId.ValueString(), agreementLocalization.GetLocale())
 
 	if languageResponse == nil {
 		resp.Diagnostics.AddError(
