@@ -444,7 +444,7 @@ func (r *EnvironmentResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -894,6 +894,25 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+
+	compiledRegexString := fmt.Sprintf(`%s|^%s\/%s$`, verify.P1ResourceIDRegexpFullString.String(), verify.P1ResourceIDRegexp.String(), verify.P1ResourceIDRegexp.String())
+	m, err := regexp.MatchString(compiledRegexString, req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Cannot verify import ID regex: %s", err),
+		)
+		return
+	}
+
+	if !m {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Invalid import ID specified (\"%s\").  The ID should be in the format \"environment_id\" or the deprecated form \"environment_id/population_id\" and must match regex: %s", req.ID, compiledRegexString),
+		)
+		return
+	}
+
 	maxSplitLength := 2 // deprecated
 	minSplitLength := 1
 	attributes := strings.SplitN(req.ID, "/", maxSplitLength)

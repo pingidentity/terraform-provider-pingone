@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -235,7 +234,7 @@ func (r *NotificationSettingsResource) Configure(ctx context.Context, req resour
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -422,19 +421,26 @@ func (r *NotificationSettingsResource) Delete(ctx context.Context, req resource.
 }
 
 func (r *NotificationSettingsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 1
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:     "environment_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes["environment_id"])...)
 }
 
 func (p *NotificationSettingsResourceModel) expand(ctx context.Context) (*management.NotificationsSettings, diag.Diagnostics) {

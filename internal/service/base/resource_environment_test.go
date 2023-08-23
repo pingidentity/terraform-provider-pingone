@@ -128,15 +128,15 @@ func TestAccEnvironment_Full(t *testing.T) {
 
 		Config: testAccEnvironmentConfig_Full(resourceName, fmt.Sprintf("%s-1", name), region, licenseID, populationName),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", fmt.Sprintf("%s-1", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
 			resource.TestCheckResourceAttr(resourceFullName, "region", region),
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
-			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
-			resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 			resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", "Test population"),
 			resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
@@ -161,15 +161,15 @@ func TestAccEnvironment_Full(t *testing.T) {
 
 		Config: testAccEnvironmentConfig_Full(resourceName, fmt.Sprintf("%s-2", name), region, licenseID, populationName),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", fmt.Sprintf("%s-2", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
 			resource.TestCheckResourceAttr(resourceFullName, "region", region),
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
-			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
-			resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 			resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", "Test population"),
 			resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
@@ -199,6 +199,22 @@ func TestAccEnvironment_Full(t *testing.T) {
 			fullStepVariant1,
 			fullStepVariant2,
 			fullStepVariant1,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return rs.Primary.ID, nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -217,14 +233,14 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", environmentType),
 			resource.TestCheckResourceAttr(resourceFullName, "region", region),
 			resource.TestCheckNoResourceAttr(resourceFullName, "solution"),
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
-			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
@@ -350,9 +366,9 @@ func TestAccEnvironment_NonPopulationServices(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_NonPopulationServices(resourceName, name, licenseID, populationName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
@@ -445,7 +461,7 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, region, licenseID, populationName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", populationName),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", "Test population"),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
@@ -468,7 +484,7 @@ func TestAccEnvironment_ServiceAndPopulationSwitching(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_NonPopulationServices(resourceName, name, licenseID, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
@@ -537,6 +553,37 @@ func TestAccEnvironment_Services(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "service.#", "9"), // check they can be un-defaulted
 				),
+			},
+		},
+	})
+}
+
+func TestAccEnvironment_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckEnvironmentDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
+			},
+			// Errors
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

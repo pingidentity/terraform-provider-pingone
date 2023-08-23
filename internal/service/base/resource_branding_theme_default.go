@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -16,6 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -90,7 +90,7 @@ func (r *BrandingThemeDefaultResource) Configure(ctx context.Context, req resour
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -274,28 +274,52 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 }
 
 func (r *BrandingThemeDefaultResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 1
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:     "environment_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	defaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, r.Client, attributes[0])
+	defaultThemeId, d := r.fetchDefaultThemeId(ctx, r.Client, attributes["environment_id"])
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
+	if defaultThemeId == nil {
+		resp.Diagnostics.AddError(
+			"Default theme not found",
+			"Unable to find the default theme for the environment.",
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("branding_theme_id"), defaultThemeId)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), defaultThemeId)...)
 }
 
 func (r *BrandingThemeDefaultResource) fetchBootstapDefaultThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string) (*string, diag.Diagnostics) {
+	return r.fetchThemeId(ctx, apiClient, environmentID, true)
+}
+
+func (r *BrandingThemeDefaultResource) fetchDefaultThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string) (*string, diag.Diagnostics) {
+	return r.fetchThemeId(ctx, apiClient, environmentID, false)
+}
+
+func (r *BrandingThemeDefaultResource) fetchThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string, bootstrapDefault bool) (*string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var response *management.EntityArray
@@ -317,7 +341,12 @@ func (r *BrandingThemeDefaultResource) fetchBootstapDefaultThemeId(ctx context.C
 	if brandingThemes, ok := response.Embedded.GetThemesOk(); ok {
 
 		for _, brandingTheme := range brandingThemes {
-			if *brandingTheme.GetConfiguration().Name == "Ping Default" {
+			if bootstrapDefault && *brandingTheme.GetConfiguration().Name == "Ping Default" {
+				defaultThemeId := brandingTheme.GetId()
+				return &defaultThemeId, diags
+			}
+
+			if !bootstrapDefault && brandingTheme.GetDefault() {
 				defaultThemeId := brandingTheme.GetId()
 				return &defaultThemeId, diags
 			}

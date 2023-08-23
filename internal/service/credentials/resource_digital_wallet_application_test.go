@@ -175,9 +175,9 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "app_open_url", appOpenUrl),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		),
@@ -189,9 +189,9 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 	updateStep := resource.TestStep{
 		Config: testAccDigitalWalletApplication_Full(resourceName, updatedName, updatedAppOpenUrl),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "app_open_url", updatedAppOpenUrl),
 			resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
 		),
@@ -217,6 +217,22 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 			// changes
 			fullStep,
 			updateStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
 				Destroy: true,
@@ -280,6 +296,48 @@ func TestAccDigitalWalletApplication_InvalidAppOpenUrl(t *testing.T) {
 			{
 				Config:      testAccDigitalWalletApplication_InvalidAppOpenUrl(resourceName, name, appOpenUrl),
 				ExpectError: regexp.MustCompile("Error: Error when calling `CreateDigitalWalletApplication`: Validation Error : \\[appOpenUrl must be a valid URL\\]"),
+			},
+		},
+	})
+}
+
+func TestAccDigitalWalletApplication_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_digital_wallet_application.%s", resourceName)
+
+	name := resourceName
+
+	appOpenUrl := "https://www.example.com/appopen"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

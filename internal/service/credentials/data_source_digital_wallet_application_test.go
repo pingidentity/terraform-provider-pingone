@@ -27,10 +27,10 @@ func TestAccDigitalWalletApplicationDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccDigitalWalletApplicationDataSource_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 					resource.TestCheckResourceAttr(dataSourceFullName, "app_open_url", fmt.Sprintf("https://www.example.com/%s", name)),
 				),
@@ -56,10 +56,10 @@ func TestAccDigitalWalletApplicationDataSource_ByApplicationIDFull(t *testing.T)
 			{
 				Config: testAccDigitalWalletApplicationDataSource_ByApplicationIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 					resource.TestCheckResourceAttr(dataSourceFullName, "app_open_url", fmt.Sprintf("https://www.example.com/%s", name)),
 				),
@@ -85,10 +85,10 @@ func TestAccDigitalWalletApplicationDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccDigitalWalletApplicationDataSource_ByNameFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 					resource.TestCheckResourceAttr(dataSourceFullName, "app_open_url", fmt.Sprintf("https://www.example.com/%s", name)),
 				),

@@ -123,7 +123,7 @@ func (r *DigitalWalletApplicationDataSource) Configure(ctx context.Context, req 
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",

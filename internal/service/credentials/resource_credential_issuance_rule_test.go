@@ -144,10 +144,10 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccCredentialIssuanceRule_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "ON_DEMAND"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.revoke", "PERIODIC"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.update", "ON_DEMAND"),
@@ -164,9 +164,9 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccCredentialIssuanceRule_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "digital_wallet_application_id"),
 			resource.TestCheckResourceAttr(resourceFullName, "filter.scim", "address.countryCode eq \"NG\""),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),
@@ -179,9 +179,9 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	disabledStep := resource.TestStep{
 		Config: testAccCredentialIssuanceRule_Disabled(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "credential_type_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "digital_wallet_application_id"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.%", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "automation.issue", "PERIODIC"),
@@ -222,6 +222,22 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			fullStep,
 			disabledStep,
 			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["credential_type_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -278,6 +294,46 @@ func TestAccCredentialIssuanceRule_InvalidConfigs(t *testing.T) {
 				Config:      testAccCredentialIssuanceRule_InvalidNotificationTemplateAttribute(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
 				Destroy:     true,
+			},
+		},
+	})
+}
+
+func TestAccCredentialIssuanceRule_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_credential_issuance_rule.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckCredentialIssuanceRuleDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccCredentialIssuanceRule_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

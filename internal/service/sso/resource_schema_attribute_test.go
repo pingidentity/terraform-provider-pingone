@@ -174,9 +174,9 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -192,9 +192,9 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
@@ -229,6 +229,22 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 			fullCheck,
 			minimalCheck,
 			fullCheck,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["schema_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -244,7 +260,7 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_EnumeratedValues(resourceName, name, "STRING"),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enumerated_values.#", "6"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
 				"value":       "value1",
@@ -277,7 +293,7 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "enumerated_values"),
 		),
 	}
@@ -304,6 +320,22 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 			fullCheck,
 			minimalCheck,
 			fullCheck,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["schema_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -319,7 +351,7 @@ func TestAccSchemaAttribute_StringRegexValidation(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_RegexValidation(resourceName, name, "STRING"),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "regex_validation.pattern", "^[a-zA-Z0-9]*$"),
 			resource.TestCheckResourceAttr(resourceFullName, "regex_validation.requirements", "Did you hear about the cow that aced all her tests?  She was outstanding in her field."),
 			resource.TestCheckResourceAttr(resourceFullName, "regex_validation.values_pattern_should_match.#", "2"),
@@ -334,7 +366,7 @@ func TestAccSchemaAttribute_StringRegexValidation(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "regex_validation"),
 		),
 	}
@@ -361,6 +393,22 @@ func TestAccSchemaAttribute_StringRegexValidation(t *testing.T) {
 			fullCheck,
 			minimalCheck,
 			fullCheck,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["schema_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -383,7 +431,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
@@ -392,7 +440,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
@@ -401,7 +449,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
@@ -410,7 +458,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
@@ -434,9 +482,9 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, true),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
@@ -452,9 +500,9 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_JSONMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
@@ -489,6 +537,22 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 			fullCheck,
 			minimalCheck,
 			fullCheck,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["schema_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -543,7 +607,7 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
@@ -552,11 +616,51 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccSchemaAttribute_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_schema_attribute.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckSchemaAttributeDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

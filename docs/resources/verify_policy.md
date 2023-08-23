@@ -2,34 +2,48 @@
 page_title: "pingone_verify_policy Resource - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
-  Resource to configure the requirements to verify a user, including the parameters for verification, such as the number of one-time password (OTP) attempts and OTP expiration.
-  A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
-  Verify policies can perform any of five checks:
+  Resource to configure the requirements to verify a user, including the parameters for verification.
+  A verify policy defines which of the following one or more checks are performed for a verification transaction and configures the parameters of each check. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
+  Verify policies can perform any of the following checks:
   - Government identity document - Validate a government-issued identity document, which includes a photograph.
   - Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
   - Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
   - Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
   - Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
+  - Voice - Compare a voice recording to a previously submitted reference voice recording.
 ---
 
 # pingone_verify_policy (Resource)
 
-Resource to configure the requirements to verify a user, including the parameters for verification, such as the number of one-time password (OTP) attempts and OTP expiration.
+Resource to configure the requirements to verify a user, including the parameters for verification.
 
-A verify policy defines which of the following five checks are performed for a verification transaction and configures the parameters of each check. The checks can be either required or optional. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
+A verify policy defines which of the following one or more checks are performed for a verification transaction and configures the parameters of each check. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
 
-Verify policies can perform any of five checks:
+Verify policies can perform any of the following checks:
 - Government identity document - Validate a government-issued identity document, which includes a photograph.
 - Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.
 - Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
 - Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
 - Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
+- Voice - Compare a voice recording to a previously submitted reference voice recording.
 
 ## Example Usage
 
 ```terraform
 resource "pingone_environment" "my_environment" {
   # ...
+}
+
+resource "pingone_verify_voice_phrase" "my_verify_voice_phrase" {
+  environment_id = pingone_environment.my_environment.id
+  display_name   = "My Verify Voice Phrase for my Verify Policy"
+}
+
+resource "pingone_verify_voice_phrase_content" "my_verify_voice_phrase_content" {
+  environment_id  = pingone_environment.my_environment.id
+  voice_phrase_id = pingone_verify_voice_phrase.my_verify_voice_phrase.id
+  locale          = "en"
+  content         = "My voice content to be used in voice enrollment or verification."
 }
 
 resource "pingone_verify_policy" "my_verify_everything_policy" {
@@ -52,8 +66,8 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   }
 
   email = {
-    verify = "REQUIRED"
-    create_mfa_device : true
+    verify            = "REQUIRED"
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "5"
@@ -76,8 +90,8 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   }
 
   phone = {
-    verify = "REQUIRED"
-    create_mfa_device : true
+    verify            = "REQUIRED"
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "5"
@@ -93,6 +107,24 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
           time_unit = "SECONDS"
         }
       }
+    }
+  }
+
+  voice = {
+    verify               = "OPTIONAL"
+    enrollment           = false
+    comparison_threshold = "LOW"
+    liveness_threshold   = "LOW"
+
+    text_dependent = {
+      samples         = "5"
+      voice_phrase_id = pingone_verify_voice_phrase.my_verify_voice_phrase.id
+    }
+
+    reference_data = {
+      retain_original_recordings = false
+      update_on_reenrollment     = false
+      update_on_verification     = false
     }
   }
 
@@ -132,6 +164,7 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 - `liveness` (Attributes) Defines the verification requirements to inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask. (see [below for nested schema](#nestedatt--liveness))
 - `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
 - `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
+- `voice` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--voice))
 
 ### Read-Only
 
@@ -367,6 +400,41 @@ Required:
     - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
     - Defaults to `30 MINUTES`.
 - `time_unit` (String) Time unit of transaction timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+
+
+
+<a id="nestedatt--voice"></a>
+### Nested Schema for `voice`
+
+Required:
+
+- `comparison_threshold` (String) Comparison threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
+- `enrollment` (Boolean) Controls if the transaction performs voice enrollment (`TRUE`) or voice verification (`FALSE`).
+- `liveness_threshold` (String) Liveness threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
+- `verify` (String) Controls the verification requirements for a Voice verification.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
+
+Optional:
+
+- `reference_data` (Attributes) Object for configuration of voice recording reference data. (see [below for nested schema](#nestedatt--voice--reference_data))
+- `text_dependent` (Attributes) Object for configuration of text dependent voice verification. (see [below for nested schema](#nestedatt--voice--text_dependent))
+
+<a id="nestedatt--voice--reference_data"></a>
+### Nested Schema for `voice.reference_data`
+
+Optional:
+
+- `retain_original_recordings` (Boolean) Controls if the service stores the original voice recordings.
+- `update_on_reenrollment` (Boolean) Controls updates to user's voice reference data (voice recordings) upon user re-enrollment. If `TRUE`, new data adds to existing data. If `FALSE`, new data replaces existing data.
+- `update_on_verification` (Boolean) Controls updates to user's voice reference data (voice recordings) upon user verification. If `TRUE`, new data adds to existing data. If `FALSE`, new voice recordings are not retained as reference data.
+
+
+<a id="nestedatt--voice--text_dependent"></a>
+### Nested Schema for `voice.text_dependent`
+
+Required:
+
+- `samples` (Number) Number of voice samples to collect. The allowed range is `3 - 5`.
+- `voice_phrase_id` (String) The identifier (UUID) of a defined `voice_phrase` to associate with the policy.
 
 ## Import
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -419,7 +418,7 @@ func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -484,7 +483,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, schema)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -527,8 +526,24 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
+	var schemaResponse *management.Schema
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return r.client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+		},
+		"ReadOneSchema",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&schemaResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(response, schemaResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -583,7 +598,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, schema)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -623,19 +638,41 @@ func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.Delet
 }
 
 func (r *SchemaAttributeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "schema_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "schema_attribute_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/schema_attribute_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action string) (*management.SchemaAttribute, diag.Diagnostics) {
@@ -747,7 +784,7 @@ func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action stri
 	return &data, diags
 }
 
-func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAttribute) diag.Diagnostics {
+func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAttribute, schemaApiObject *management.Schema) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -779,6 +816,7 @@ func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAtt
 
 	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
 	p.SchemaId = framework.StringOkToTF(apiObject.Schema.GetIdOk())
+	p.SchemaName = framework.StringOkToTF(schemaApiObject.GetNameOk())
 	p.SchemaType = framework.EnumOkToTF(apiObject.GetSchemaTypeOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
 	p.Unique = framework.BoolOkToTF(apiObject.GetUniqueOk())

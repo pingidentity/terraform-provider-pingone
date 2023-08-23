@@ -29,8 +29,8 @@ func TestAccOrganizationDataSource_Full(t *testing.T) {
 	domainTld := model.FindRegionByName(os.Getenv("PINGONE_REGION")).URLSuffix
 
 	testCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "organization_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "name", organizationName),
 		resource.TestMatchResourceAttr(dataSourceFullName, "description", regexp.MustCompile(`^[a-zA-Z0-9 -_\\.]*$`)),
 		resource.TestCheckResourceAttr(dataSourceFullName, "type", "INTERNAL"),

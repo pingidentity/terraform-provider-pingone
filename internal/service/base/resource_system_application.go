@@ -26,6 +26,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -203,7 +204,7 @@ func (r *SystemApplicationResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -289,17 +290,6 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	if !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL))) && !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE))) {
-		resp.Diagnostics.AddError(
-			"Invalid application type",
-			fmt.Sprintf("Application type not supported.  Type found: %s, expected one of: %s, %s.", data.Type.ValueString(), string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL), string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE)),
-		)
-
-		resp.State.RemoveResource(ctx)
-
-		return
-	}
-
 	// Run the API call
 	var response *management.ReadOneApplication200Response
 	resp.Diagnostics.Append(framework.ParseResponse(
@@ -319,6 +309,18 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response)...)
+
+	if !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL))) && !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE))) {
+		resp.Diagnostics.AddError(
+			"Invalid application type",
+			fmt.Sprintf("Application type not supported.  Type found: %s, expected one of: %s, %s.", data.Type.ValueString(), string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL), string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE)),
+		)
+
+		resp.State.RemoveResource(ctx)
+
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -425,19 +427,37 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 }
 
 func (r *SystemApplicationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "application_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/application_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *management.APIClient) (*management.UpdateApplicationRequest, *string, diag.Diagnostics) {

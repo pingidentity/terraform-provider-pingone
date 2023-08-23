@@ -31,9 +31,9 @@ func TestAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(t *testing.T) 
 			{
 				Config: testAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "application_instance_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "application_instance_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 					resource.TestMatchResourceAttr(dataSourceFullName, "created_at", verify.RFC3339Regexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "updated_at", verify.RFC3339Regexp),

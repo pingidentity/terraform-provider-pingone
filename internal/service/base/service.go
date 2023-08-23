@@ -36,6 +36,8 @@ func Resources() []func() resource.Resource {
 		NewPhoneDeliverySettingsResource,
 		NewSystemApplicationResource,
 		NewTrustedEmailAddressResource,
+		NewTrustedEmailDomainResource,
+		NewWebhookResource,
 	}
 }
 
@@ -52,13 +54,13 @@ func DataSources() []func() datasource.DataSource {
 	}
 }
 
-func prepareClient(ctx context.Context, resourceConfig framework.ResourceType) (*management.APIClient, error) {
+func PrepareClient(ctx context.Context, resourceConfig framework.ResourceType) (*management.APIClient, error) {
 
 	if resourceConfig.Client.API == nil || resourceConfig.Client.API.ManagementAPIClient == nil {
-		return nil, fmt.Errorf("Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return nil, fmt.Errorf("Expected the PingOne \"management\" client, got nil.  Please report this issue to the provider maintainers.")
 	}
 
-	tflog.Info(ctx, "PingOne provider client init successful")
+	tflog.Info(ctx, "PingOne provider \"management\" client init successful")
 
 	return resourceConfig.Client.API.ManagementAPIClient, nil
 

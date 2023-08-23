@@ -152,7 +152,7 @@ func TestAccKeyRotationPolicy_NewEnv(t *testing.T) {
 			{
 				Config: testAccKeyRotationPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -171,12 +171,12 @@ func TestAccKeyRotationPolicy_All(t *testing.T) {
 	fullTest := resource.TestStep{
 		Config: testAccKeyRotationPolicyConfig_Full(resourceName, nameFull),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", nameFull),
 			resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
-			resource.TestMatchResourceAttr(resourceFullName, "current_key_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "next_key_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "current_key_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "next_key_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", nameFull)),
 			resource.TestCheckResourceAttr(resourceFullName, "key_length", "3072"),
 			resource.TestCheckResourceAttr(resourceFullName, "rotation_period", "31"),
@@ -190,12 +190,12 @@ func TestAccKeyRotationPolicy_All(t *testing.T) {
 	minimalTest := resource.TestStep{
 		Config: testAccKeyRotationPolicyConfig_Minimal(resourceName, nameMin),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", nameMin),
 			resource.TestCheckResourceAttr(resourceFullName, "algorithm", "RSA"),
-			resource.TestMatchResourceAttr(resourceFullName, "current_key_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "next_key_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "current_key_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "next_key_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "subject_dn", fmt.Sprintf("CN=%s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US", nameMin)),
 			resource.TestCheckResourceAttr(resourceFullName, "key_length", "2048"),
 			resource.TestCheckResourceAttr(resourceFullName, "rotation_period", "90"),
@@ -214,6 +214,22 @@ func TestAccKeyRotationPolicy_All(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			fullTest,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccKeyRotationPolicyConfig_Full(resourceName, nameFull),
 				Destroy: true,
@@ -225,6 +241,46 @@ func TestAccKeyRotationPolicy_All(t *testing.T) {
 				Destroy: true,
 			},
 			// Update
+		},
+	})
+}
+
+func TestAccKeyRotationPolicy_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_key_rotation_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckKeyRotationPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccKeyRotationPolicyConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
 		},
 	})
 }

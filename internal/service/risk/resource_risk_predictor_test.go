@@ -159,7 +159,7 @@ func TestAccRiskPredictor_NewEnv(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -175,8 +175,8 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 	name := resourceName
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", fmt.Sprintf("%s1", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "description", "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."),
@@ -187,8 +187,8 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", fmt.Sprintf("%s1", name)),
 		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
@@ -300,6 +300,22 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 				Config: testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
 				Check:  fullCheck1,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
 				Destroy: true,
@@ -375,6 +391,22 @@ func TestAccRiskPredictor_Anonymous_Network(t *testing.T) {
 				Config: testAccRiskPredictorConfig_Anonymous_Network_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -410,6 +442,22 @@ func TestAccRiskPredictor_Anonymous_Network_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_Anonymous_Network_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -477,6 +525,22 @@ func TestAccRiskPredictor_Geovelocity(t *testing.T) {
 				Config: testAccRiskPredictorConfig_Geovelocity_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -512,6 +576,22 @@ func TestAccRiskPredictor_Geovelocity_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_Geovelocity_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -579,6 +659,22 @@ func TestAccRiskPredictor_IP_Reputation(t *testing.T) {
 				Config: testAccRiskPredictorConfig_IPReputation_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -614,6 +710,22 @@ func TestAccRiskPredictor_IP_Reputation_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_IP_Reputation_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -692,6 +804,22 @@ func TestAccRiskPredictor_CustomMap_BetweenRanges(t *testing.T) {
 				Config: testAccRiskPredictorConfig_CustomMap_BetweenRanges_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -768,6 +896,22 @@ func TestAccRiskPredictor_CustomMap_IPRanges(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_CustomMap_IPRanges_Full(resourceName, name),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -846,6 +990,22 @@ func TestAccRiskPredictor_CustomMap_StringList(t *testing.T) {
 				Config: testAccRiskPredictorConfig_CustomMap_StringList_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -914,6 +1074,22 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name, activationAt),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -950,6 +1126,22 @@ func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_NewDevice_OverwriteUndeletable(resourceName, name, compactName, activationAt),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1018,6 +1210,22 @@ func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
 				Config: testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -1052,6 +1260,22 @@ func TestAccRiskPredictor_UserLocationAnomaly_OverwriteUndeletable(t *testing.T)
 			{
 				Config: testAccRiskPredictorConfig_UserLocationAnomaly_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1118,6 +1342,22 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full(resourceName, name),
 				Check:  byUserCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full(resourceName, name),
 				Destroy: true,
@@ -1126,6 +1366,22 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full(resourceName, name),
 				Check:  byIPCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full(resourceName, name),
@@ -1214,6 +1470,22 @@ func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Destroy: true,
@@ -1222,6 +1494,22 @@ func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactNameByIP),
 				Check:  byIPCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactNameByIP),
@@ -1275,6 +1563,22 @@ func TestAccRiskPredictor_UserRiskBehavior(t *testing.T) {
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full(resourceName, name),
 				Check:  byUserCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full(resourceName, name),
 				Destroy: true,
@@ -1283,6 +1587,22 @@ func TestAccRiskPredictor_UserRiskBehavior(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full(resourceName, name),
 				Check:  byOrgCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full(resourceName, name),
@@ -1342,6 +1662,22 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Destroy: true,
@@ -1350,6 +1686,22 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactNameByOrg),
 				Check:  byOrgCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactNameByOrg),
@@ -1367,6 +1719,46 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccRiskPredictorConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

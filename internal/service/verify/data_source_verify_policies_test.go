@@ -22,14 +22,14 @@ func TestAccVerifyPoliciesDataSource_NoFilter(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	findVerifyPolicies := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "5"), // includes environment default policy
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.3", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.4", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.3", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.4", validation.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{

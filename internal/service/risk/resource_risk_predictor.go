@@ -1334,7 +1334,7 @@ func (r *RiskPredictorResource) Configure(ctx context.Context, req resource.Conf
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
@@ -1561,19 +1561,37 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 }
 
 func (r *RiskPredictorResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "risk_predictor_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/risk_predictor_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func riskPredictorCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
@@ -2939,6 +2957,10 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 			}
 
 			o["condition"] = types.StringValue(string(jsonString))
+
+			if compositeConditionJSON.IsNull() || compositeConditionJSON.IsUnknown() {
+				o["condition_json"] = o["condition"]
+			}
 		}
 
 		objValue, d := types.ObjectValue(predictorCompositionTFObjectTypes, o)
