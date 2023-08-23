@@ -14,6 +14,8 @@ import (
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewVerifyPolicyResource,
+		NewVoicePhraseResource,
+		NewVoicePhraseContentResource,
 	}
 }
 
@@ -21,6 +23,9 @@ func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewVerifyPolicyDataSource,
 		NewVerifyPoliciesDataSource,
+		NewVoicePhraseDataSource,
+		NewVoicePhraseContentDataSource,
+		NewVoicePhraseContentsDataSource,
 	}
 }
 

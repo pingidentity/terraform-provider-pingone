@@ -37,9 +37,9 @@ data "pingone_verify_policy" "find_default_policy_example" {
 
 ### Optional
 
-- `default` (Boolean) Set value to `true` to return the default verify policy. There is only one default policy per environment.
-- `name` (String) Name of the verification policy displayed in PingOne Admin UI.
-- `verify_policy_id` (String) Identifier (UUID) associated with the verify policy.
+- `default` (Boolean) Set value to `true` to return the default verify policy. There is only one default policy per environment.  At least one of the following must be defined: `verify_policy_id`, `name`, `default`.
+- `name` (String) Name of the verification policy displayed in PingOne Admin UI.  At least one of the following must be defined: `verify_policy_id`, `name`, `default`.
+- `verify_policy_id` (String) Identifier (UUID) associated with the verify policy.  At least one of the following must be defined: `verify_policy_id`, `name`, `default`.
 
 ### Read-Only
 
@@ -53,6 +53,7 @@ data "pingone_verify_policy" "find_default_policy_example" {
 - `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
 - `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
 - `updated_at` (String) Date and time the verify policy was updated. Can be null.
+- `voice` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--voice))
 
 <a id="nestedatt--email"></a>
 ### Nested Schema for `email`
@@ -263,3 +264,35 @@ Read-Only:
     - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
     - Defaults to `30 MINUTES`.
 - `time_unit` (String) Time unit of transaction timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+
+
+
+<a id="nestedatt--voice"></a>
+### Nested Schema for `voice`
+
+Read-Only:
+
+- `comparison_threshold` (String) Comparison threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
+- `enrollment` (Boolean) Controls if the transaction performs voice enrollment (`TRUE`) or voice verification (`FALSE`).
+- `liveness_threshold` (String) Liveness threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
+- `reference_data` (Attributes) Object for configuration of voice recording reference data. (see [below for nested schema](#nestedatt--voice--reference_data))
+- `text_dependent` (Attributes) Object for configuration of text dependent voice verification. (see [below for nested schema](#nestedatt--voice--text_dependent))
+- `verify` (String) Controls the verification requirements for a Voice verification.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
+
+<a id="nestedatt--voice--reference_data"></a>
+### Nested Schema for `voice.reference_data`
+
+Read-Only:
+
+- `retain_original_recordings` (Boolean) Controls if the service stores the original voice recordings.
+- `update_on_reenrollment` (Boolean) Controls updates to user's voice reference data (voice recordings) upon user re-enrollment. If `TRUE`, new data adds to existing data. If `FALSE`, new data replaces existing data.
+- `update_on_verification` (Boolean) Controls updates to user's voice reference data (voice recordings) upon user verification. If `TRUE`, new data adds to existing data. If `FALSE`, new voice recordings are not retained as reference data.
+
+
+<a id="nestedatt--voice--text_dependent"></a>
+### Nested Schema for `voice.text_dependent`
+
+Read-Only:
+
+- `samples` (Number) Number of voice samples to collect. The allowed range is `3 - 5`
+- `voice_phrase_id` (String) Identifier (UUID) of the voice phrase to use.

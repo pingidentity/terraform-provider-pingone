@@ -1,0 +1,23 @@
+```release-note:enhancement
+`resource/pingone_verify_policy`: Now supports `voice` configuration option enabling voice verification.
+```
+
+```release-note:new-resource
+pingone_verify_voice_phrase
+```
+
+```release-note:new-resource
+pingone_verify_voice_phrase_content
+```
+
+```release-note:new-data-source
+pingone_verify_voice_phrase
+```
+
+```release-note:new-data-source
+pingone_verify_voice_phrase_content
+```
+
+```release-note:new-data-source
+pingone_verify_voice_phrase_contents
+```
