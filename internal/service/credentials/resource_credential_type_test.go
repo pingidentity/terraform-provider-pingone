@@ -193,8 +193,8 @@ func TestAccCredentialType_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "title", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "VerifiedEmployee"),
@@ -227,8 +227,8 @@ func TestAccCredentialType_Full(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "title", updatedName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", updatedName)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "DemonstrationCard"),
@@ -257,8 +257,8 @@ func TestAccCredentialType_Full(t *testing.T) {
 			// full - new
 			fullStep,
 			{
-				Config: testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
-				//Destroy: true,
+				Config:  testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
+				Destroy: true,
 			},
 			// minimal - new
 			minimalStep,
@@ -270,6 +270,22 @@ func TestAccCredentialType_Full(t *testing.T) {
 			fullStep,
 			minimalStep,
 			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			// clear
 			{
 				Config:  testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
@@ -387,6 +403,46 @@ func TestAccCredentialType_CardDesignTemplate(t *testing.T) {
 				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoTextColor(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
 				Destroy:     true,
+			},
+		},
+	})
+}
+
+func TestAccCredentialType_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_credential_type.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccCredentialTypeConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

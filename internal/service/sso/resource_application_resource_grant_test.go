@@ -148,13 +148,29 @@ func TestAccApplicationResourceGrant_OpenIDResource(t *testing.T) {
 			{
 				Config: testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			// Test error catch on update
 			{
@@ -191,14 +207,30 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 			{
 				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexpFullString),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -221,36 +253,76 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 			{
 				Config: testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
 				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
 				Config: testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
 				),
+			},
+		},
+	})
+}
+
+func TestAccApplicationResourceGrant_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_resource_grant.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

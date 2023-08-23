@@ -159,16 +159,32 @@ func TestAccResourceScopeOpenID_Full(t *testing.T) {
 			{
 				Config: testAccResourceScopeOpenIDConfig_Full(resourceName, name, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.2", verify.P1ResourceIDRegexpFullString),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -191,9 +207,9 @@ func TestAccResourceScopeOpenID_Minimal(t *testing.T) {
 			{
 				Config: testAccResourceScopeOpenIDConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "0"),
@@ -220,23 +236,23 @@ func TestAccResourceScopeOpenID_Change(t *testing.T) {
 			{
 				Config: testAccResourceScopeOpenIDConfig_Full(resourceName, name, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.2", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
 				Config: testAccResourceScopeOpenIDConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					//resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "0"),
@@ -245,15 +261,15 @@ func TestAccResourceScopeOpenID_Change(t *testing.T) {
 			{
 				Config: testAccResourceScopeOpenIDConfig_Full(resourceName, name, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.2", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -279,15 +295,31 @@ func TestAccResourceScopeOpenID_OverridePredefined(t *testing.T) {
 			{
 				Config: testAccResourceScopeOpenIDConfig_OverridePredefined(environmentName, licenseID, resourceName, "email"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.2", verify.P1ResourceIDRegexpFullString),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -297,6 +329,7 @@ func TestAccResourceScopeOpenID_InvalidParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_resource_scope_openid.%s", resourceName)
 
 	name := resourceName
 
@@ -309,6 +342,28 @@ func TestAccResourceScopeOpenID_InvalidParameters(t *testing.T) {
 			{
 				Config:      testAccResourceScopeOpenIDConfig_Full(resourceName, name, "email"),
 				ExpectError: regexp.MustCompile("The scope `email` is an existing platform scope.  The description cannot be changed."),
+			},
+			// Configure
+			{
+				Config: testAccResourceScopeOpenIDConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_scope_id" and must match regex: .*`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_scope_id" and must match regex: .*`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_scope_id" and must match regex: .*`),
 			},
 		},
 	})

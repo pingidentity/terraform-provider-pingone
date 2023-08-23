@@ -1,4 +1,36 @@
-## 0.19.1 (Unreleased)
+## 0.20.0 (Unreleased)
+
+NOTES:
+
+* Optimised code and add input validation to import resource state for every resource. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
+* `resource/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
+
+BUG FIXES:
+
+* `resource/pingone_agreement_localization_enable`: Fixed error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_agreement_localization_revision`: Fixed `Cannot import non-existent remote object` error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_agreement_localization`: Fixed missing `language_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_application_attribute_mapping`: Fixed `Provider produced inconsistent result after apply` error when attempting to remove the previously configured `saml_subject_nameformat` parameter value from the `saml_subject` core attribute. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_application_attribute_mapping`: Fixed missing `saml_subject_nameformat` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_application_sign_on_policy_assignment`: Fixed missing `sign_on_policy_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_branding_theme_default`: Fixed error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_group_nesting`: Fixed missing `nested_group_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_language_update`: Fixed missing `language_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_mfa_settings`: Fixed `Not Found` error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_notification_template_content`: Fixed missing `locale` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_phone_delivery_settings`: Fixed `Value Conversion Error` error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_resource_schema_attribute`: Fixed undefined response type error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_resource_scope_openid`: Fixed panic error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_resource_scope_pingone_api`: Fixed panic error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_risk_predictor`: Fixed missing `predictor_composite.composition.condition_json` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_schema_attribute`: Fixed missing `schema_name` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_system_application`: Fixed validation error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+
+## 0.19.1 (16 August 2023)
 
 NOTES:
 
@@ -7,9 +39,15 @@ NOTES:
 * `resource/pingone_custom_domain_verify`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_custom_domain`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_trusted_email_domain`: Migrated to plugin framework. ([#508](https://github.com/pingidentity/terraform-provider-pingone/issues/508))
+* `resource/pingone_webhook`: Migrated to plugin framework. ([#505](https://github.com/pingidentity/terraform-provider-pingone/issues/505))
+* bump `github.com/golangci/golangci-lint` v1.53.3 => v1.54.1 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.3.0 => v0.3.1 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.25.0 => v0.26.0 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.2 => v0.10.3 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
 
 BUG FIXES:
 
+* `data-source/pingone_credential_types` Fixed panic error when retrieving credential types. ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
 * `resource/pingone_resource`: Fixed blocking error on plan when OpenID resource is removed outside of Terraform. ([#501](https://github.com/pingidentity/terraform-provider-pingone/issues/501))
 
 ## 0.19.0 (08 August 2023)

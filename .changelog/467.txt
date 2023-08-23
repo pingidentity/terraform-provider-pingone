@@ -1,0 +1,7 @@
+```release-note:enhancement
+`data-source/pingone_user` Enhance the user schema with the full attribute model.
+```
+
+```release-note:enhancement
+`resource/pingone_user` Enhance the user schema with the full attribute model.
+```

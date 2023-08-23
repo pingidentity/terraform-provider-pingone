@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 
@@ -82,10 +83,10 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 	dateVariant2 := time.Now().In(time.UTC).Add(time.Hour * time.Duration(2))
 
 	variant1 := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "agreement_id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "agreement_localization_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "agreement_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "agreement_localization_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "content_type", "text/html"),
 		resource.TestMatchResourceAttr(resourceFullName, "effective_at", verify.RFC3339Regexp),
 		resource.TestCheckNoResourceAttr(resourceFullName, "not_valid_after"),
@@ -94,10 +95,10 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 	)
 
 	variant2 := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "agreement_id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "agreement_localization_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "agreement_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "agreement_localization_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "content_type", "text/plain"),
 		resource.TestCheckResourceAttr(resourceFullName, "effective_at", dateVariant2.Format(time.RFC3339)),
 		resource.TestCheckNoResourceAttr(resourceFullName, "not_valid_after"),
@@ -137,6 +138,66 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 			{
 				Config: testAccAgreementLocalizationRevisionConfig_Variant2(environmentName, licenseID, resourceName, name, dateVariant2),
 				Check:  variant2,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["agreement_id"], rs.Primary.Attributes["agreement_localization_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccAgreementLocalizationRevision_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_agreement_localization_revision.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckAgreementLocalizationRevisionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat/badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

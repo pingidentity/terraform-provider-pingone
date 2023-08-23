@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func ResourceSignOnPolicyAction() *schema.Resource {
@@ -379,19 +380,30 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceSignOnPolicyActionImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 3
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/signOnPolicyID/policyActionID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "sign_on_policy_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "sign_on_policy_action_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, signOnPolicyID, policyActionID := attributes[0], attributes[1], attributes[2]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.Set("sign_on_policy_id", signOnPolicyID)
-
-	d.SetId(policyActionID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.Set("sign_on_policy_id", attributes["sign_on_policy_id"])
+	d.SetId(attributes["sign_on_policy_action_id"])
 
 	resourceSignOnPolicyActionRead(ctx, d, meta)
 

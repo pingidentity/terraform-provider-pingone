@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -18,6 +17,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -221,7 +221,7 @@ func (r *AgreementLocalizationResource) Create(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, language)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -264,8 +264,30 @@ func (r *AgreementLocalizationResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
+	var language *management.Language
+	if data.LanguageId.IsNull() || data.LanguageId.IsUnknown() {
+		var d diag.Diagnostics
+		language, d = findLanguageByLocale_Framework(ctx, r.client, data.EnvironmentId.ValueString(), response.GetLocale())
+		resp.Diagnostics.Append(d...)
+	} else {
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				return r.client.LanguagesApi.ReadOneLanguage(ctx, data.EnvironmentId.ValueString(), data.LanguageId.ValueString()).Execute()
+			},
+			"ReadOneLanguage",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+			&language,
+		)...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(response, language)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -335,7 +357,7 @@ func (r *AgreementLocalizationResource) Update(ctx context.Context, req resource
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, language)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -374,20 +396,41 @@ func (r *AgreementLocalizationResource) Delete(ctx context.Context, req resource
 }
 
 func (r *AgreementLocalizationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 3
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "agreement_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "agreement_localization_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/agreement_id/agreement_localization_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("agreement_id"), attributes[1])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *AgreementLocalizationResourceModel) expand(locale string) *management.AgreementLanguage {
@@ -428,7 +471,7 @@ func (p *AgreementLocalizationResourceModel) expand(locale string) *management.A
 	return data
 }
 
-func (p *AgreementLocalizationResourceModel) toState(apiObject *management.AgreementLanguage) diag.Diagnostics {
+func (p *AgreementLocalizationResourceModel) toState(apiObject *management.AgreementLanguage, languageApiObject *management.Language) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -442,6 +485,7 @@ func (p *AgreementLocalizationResourceModel) toState(apiObject *management.Agree
 
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.AgreementId = framework.StringToTF(*apiObject.GetAgreement().Id)
+	p.LanguageId = framework.StringOkToTF(languageApiObject.GetIdOk())
 	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.Locale = framework.StringOkToTF(apiObject.GetLocaleOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())

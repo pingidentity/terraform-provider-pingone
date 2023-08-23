@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -13,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -245,18 +245,25 @@ func resourceCertificateDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceCertificateImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/certificateID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "certificate_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, certificateID := attributes[0], attributes[1]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-
-	d.SetId(certificateID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["certificate_id"])
 
 	resourceCertificateRead(ctx, d, meta)
 

@@ -26,11 +26,11 @@ func TestAccFlowPoliciesDataSource_BySCIMFilter(t *testing.T) {
 			{
 				Config: testAccFlowPoliciesDataSourceConfig_BySCIMFilter(resourceName, `(trigger.type eq \"AUTHENTICATION\")`, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "2"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1DVResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1DVResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1DVResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1DVResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -54,11 +54,11 @@ func TestAccFlowPoliciesDataSource_ByDataFilter(t *testing.T) {
 			{
 				Config: testAccFlowPoliciesDataSourceConfig_ByDataFilter1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "2"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1DVResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1DVResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1DVResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1DVResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -80,8 +80,8 @@ func TestAccFlowPoliciesDataSource_NotFound(t *testing.T) {
 			{
 				Config: testAccFlowPoliciesDataSourceConfig_NotFound(resourceName, `(trigger.type eq \"NOTAUTHENTICATION\")`),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "0"),
 				),
 			},

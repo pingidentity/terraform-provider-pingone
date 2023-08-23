@@ -157,7 +157,7 @@ func TestAccPhoneDeliverySettings_NewEnv(t *testing.T) {
 			{
 				Config: testAccPhoneDeliverySettingsConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -184,8 +184,8 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 	number := os.Getenv("PINGONE_TWILIO_NUMBER")
 
 	check := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_TWILIO"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom_twilio.sid", twilioSID),
@@ -218,6 +218,29 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 			{
 				Config: testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken, number),
 				Check:  check,
+			},
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"provider_custom_twilio.auth_token",
+					"provider_custom_twilio.selected_numbers.#",
+					"provider_custom_twilio.selected_numbers.0.%",
+					"provider_custom_twilio.selected_numbers.0.number",
+					"provider_custom_twilio.selected_numbers.0.selected",
+					"provider_custom_twilio.selected_numbers.0.type",
+				},
 			},
 			{
 				Config:  testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken, number),
@@ -255,8 +278,8 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 	number := os.Getenv("PINGONE_SYNIVERSE_NUMBER")
 
 	check := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_SYNIVERSE"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_twilio"),
@@ -290,13 +313,36 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 				Check:  check,
 			},
 			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"provider_custom_syniverse.auth_token",
+					"provider_custom_syniverse.selected_numbers.#",
+					"provider_custom_syniverse.selected_numbers.0.%",
+					"provider_custom_syniverse.selected_numbers.0.number",
+					"provider_custom_syniverse.selected_numbers.0.selected",
+					"provider_custom_syniverse.selected_numbers.0.type",
+				},
+			},
+			{
 				Config:  testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken, number),
 				Destroy: true,
 			},
 			// Errors
 			{
 				Config:      testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, "unknownauthtoken", number),
-				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
+				ExpectError: regexp.MustCompile(`Authentication Error`),
 			},
 		},
 	})
@@ -315,8 +361,8 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_PROVIDER"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
 
@@ -408,8 +454,8 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_PROVIDER"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
 
@@ -469,6 +515,68 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 			{
 				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
 				Check:  fullCheck,
+			},
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"provider_custom.authentication.password",
+				},
+			},
+		},
+	})
+}
+
+func TestAccPhoneDeliverySettings_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_phone_delivery_settings.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckPhoneDeliverySettingsDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccPhoneDeliverySettingsConfig_NewEnv(environmentName, licenseID, resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

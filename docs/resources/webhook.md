@@ -40,17 +40,17 @@ resource "pingone_webhook" "my_webhook" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the webhook in.
-- `filter_options` (Block List, Min: 1, Max: 1) A block that specifies the PingOne platform event filters to be included to trigger this webhook. (see [below for nested schema](#nestedblock--filter_options))
-- `format` (String) A string that specifies one of the supported webhook formats. Options are `ACTIVITY`, `SPLUNK`, and `NEWRELIC`.
+- `environment_id` (String) The ID of the environment to create the webhook in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `format` (String) A string that specifies one of the supported webhook formats.  Options are `ACTIVITY`, `NEWRELIC`, `SPLUNK`.
 - `http_endpoint_url` (String) A string that specifies a valid HTTPS URL to which event messages are sent.
 - `name` (String) A string that specifies the webhook name.
 
 ### Optional
 
-- `enabled` (Boolean) A boolean that specifies whether a created or updated webhook should be active or suspended. A suspended state (`"enabled":false`) accumulates all matched events, but these events are not delivered until the webhook becomes active again (`"enabled":true`). For suspended webhooks, events accumulate for a maximum of two weeks. Events older than two weeks are deleted. Restarted webhooks receive the saved events (up to two weeks from the restart date). Defaults to `false`.
+- `enabled` (Boolean) A boolean that specifies whether a created or updated webhook should be active or suspended. A suspended state (`"enabled":false`) accumulates all matched events, but these events are not delivered until the webhook becomes active again (`"enabled":true`). For suspended webhooks, events accumulate for a maximum of two weeks. Events older than two weeks are deleted. Restarted webhooks receive the saved events (up to two weeks from the restart date).  Defaults to `false`.
+- `filter_options` (Block List) A block that specifies the PingOne platform event filters to be included to trigger this webhook. (see [below for nested schema](#nestedblock--filter_options))
 - `http_endpoint_headers` (Map of String) A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source.
-- `verify_tls_certificates` (Boolean) A boolean that specifies whether a certificates should be verified. If this property's value is set to `false`, then all certificates are trusted. (Setting this property's value to false introduces a security risk.) Defaults to `true`.
+- `verify_tls_certificates` (Boolean) A boolean that specifies whether a certificates should be verified. If this property's value is set to `false`, then all certificates are trusted. (Setting this property's value to false introduces a security risk.).  Defaults to `true`.
 
 ### Read-Only
 
@@ -67,11 +67,11 @@ Refer to the [PingOne API Reference - Subscription Action Types](https://apidocs
 
 Optional:
 
-- `included_application_ids` (Set of String) An array that specifies the list of applications (by ID) whose events are monitored by the webhook (maximum of 10 IDs in the array). If a list of applications is not provided, events are monitored for all applications in the environment.
-- `included_population_ids` (Set of String) An array that specifies the list of populations (by ID) whose events are monitored by the webhook (maximum of 10 IDs in the array). This property matches events for users in the specified populations, as opposed to events generated in which the user in one of the populations is the actor.
-- `included_tags` (Set of String) An array of tags that events must have to be monitored by the webhook. If tags are not specified, all events are monitored. Currently, the available tags are `adminIdentityEvent`. Identifies the event as the action of an administrator on other administrators.
-- `ip_address_exposed` (Boolean) A boolean that specifies whether the IP address of an actor should be present in the source section of the event. Defaults to `false`.
-- `useragent_exposed` (Boolean) A boolean that specifies whether the User-Agent HTTP header of an event should be present in the source section of the event. Defaults to `false`.
+- `included_application_ids` (Set of String) An array that specifies the list of applications (by ID) whose events are monitored by the webhook (maximum of 10 IDs in the array). If a list of applications is not provided, events are monitored for all applications in the environment.  Values must be valid PingOne resource IDs.
+- `included_population_ids` (Set of String) An array that specifies the list of populations (by ID) whose events are monitored by the webhook (maximum of 10 IDs in the array). This property matches events for users in the specified populations, as opposed to events generated in which the user in one of the populations is the actor.  Values must be valid PingOne resource IDs.
+- `included_tags` (Set of String) An array of tags that events must have to be monitored by the webhook. If tags are not specified, all events are monitored.  Options are `adminIdentityEvent` (Identifies the event as the action of an administrator on other administrators).
+- `ip_address_exposed` (Boolean) A boolean that specifies whether the IP address of an actor should be present in the source section of the event.  Defaults to `false`.
+- `useragent_exposed` (Boolean) A boolean that specifies whether the User-Agent HTTP header of an event should be present in the source section of the event.  Defaults to `false`.
 
 ## Import
 

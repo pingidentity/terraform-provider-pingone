@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -1186,19 +1185,37 @@ func (r *PhoneDeliverySettingsResource) Delete(ctx context.Context, req resource
 }
 
 func (r *PhoneDeliverySettingsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "phone_delivery_settings_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/agreement_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func phoneDeliverySettingsCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
@@ -1529,7 +1546,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 	var d diag.Diagnostics
 
 	if p.ProviderType.Equal(types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_PROVIDER))) {
-		var providerPlan PhoneDeliverySettingsProviderCustomResourceModel
+		var providerPlan *PhoneDeliverySettingsProviderCustomResourceModel
 		diags.Append(p.ProviderCustom.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1545,7 +1562,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 	}
 
 	if p.ProviderType.Equal(types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_TWILIO))) {
-		var providerPlan PhoneDeliverySettingsProviderCustomTwilioResourceModel
+		var providerPlan *PhoneDeliverySettingsProviderCustomTwilioResourceModel
 		diags.Append(p.ProviderCustomTwilio.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1561,7 +1578,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 	}
 
 	if p.ProviderType.Equal(types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSPROVIDER_SYNIVERSE))) {
-		var providerPlan PhoneDeliverySettingsProviderCustomSyniverseResourceModel
+		var providerPlan *PhoneDeliverySettingsProviderCustomSyniverseResourceModel
 		diags.Append(p.ProviderCustomSyniverse.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1579,7 +1596,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 	return diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustom(ctx context.Context, planData PhoneDeliverySettingsProviderCustomResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustom) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustom(ctx context.Context, planData *PhoneDeliverySettingsProviderCustomResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustom) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1592,13 +1609,16 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 
 	var d diag.Diagnostics
 
-	var authenticationPlan PhoneDeliverySettingsProviderCustomAuthenticationResourceModel
-	diags.Append(planData.Authentication.As(ctx, &authenticationPlan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if diags.HasError() {
-		return types.ObjectNull(customTFObjectTypes), diags
+	var authenticationPlan *PhoneDeliverySettingsProviderCustomAuthenticationResourceModel
+
+	if planData != nil {
+		diags.Append(planData.Authentication.As(ctx, &authenticationPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return types.ObjectNull(customTFObjectTypes), diags
+		}
 	}
 
 	authentication, ok := apiObject.GetAuthenticationOk()
@@ -1626,19 +1646,26 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	return objValue, diags
 }
 
-func phoneDeliverySettingsCustomAuthenticationOkToTF(planData PhoneDeliverySettingsProviderCustomAuthenticationResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustomAllOfAuthentication, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func phoneDeliverySettingsCustomAuthenticationOkToTF(planData *PhoneDeliverySettingsProviderCustomAuthenticationResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustomAllOfAuthentication, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(customAuthenticationTFObjectTypes), diags
 	}
 
-	returnVar, d := types.ObjectValue(customAuthenticationTFObjectTypes, map[string]attr.Value{
+	objMap := map[string]attr.Value{
 		"method":     framework.EnumOkToTF(apiObject.GetMethodOk()),
-		"password":   planData.Password,
-		"auth_token": planData.AuthToken,
+		"password":   types.StringNull(),
+		"auth_token": types.StringNull(),
 		"username":   framework.StringOkToTF(apiObject.GetUsernameOk()),
-	})
+	}
+
+	if planData != nil {
+		objMap["password"] = planData.Password
+		objMap["auth_token"] = planData.AuthToken
+	}
+
+	returnVar, d := types.ObjectValue(customAuthenticationTFObjectTypes, objMap)
 	diags.Append(d...)
 
 	return returnVar, diags
@@ -1712,7 +1739,7 @@ func phoneDeliverySettingsCustomRequestsOkToTF(apiObject []management.Notificati
 	return returnVar, diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomTwilio(ctx context.Context, planData PhoneDeliverySettingsProviderCustomTwilioResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomTwilio(ctx context.Context, planData *PhoneDeliverySettingsProviderCustomTwilioResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1721,7 +1748,11 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 
 	objMap := map[string]attr.Value{
 		"sid":        framework.StringOkToTF(apiObject.GetSidOk()),
-		"auth_token": planData.AuthToken,
+		"auth_token": types.StringNull(),
+	}
+
+	if planData != nil {
+		objMap["auth_token"] = planData.AuthToken
 	}
 
 	var d diag.Diagnostics
@@ -1730,7 +1761,13 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(numbers, ok)
 	diags.Append(d...)
 
-	objMap["selected_numbers"], d = phoneDeliverySettingsTwilioSyniverseSelectedNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
+	selectedNumbers := types.SetNull(types.ObjectType{AttrTypes: customSelectedNumbersTFObjectTypes})
+
+	if planData != nil {
+		selectedNumbers = planData.SelectedNumbers
+	}
+
+	objMap["selected_numbers"], d = phoneDeliverySettingsTwilioSyniverseSelectedNumbersOkToTF(ctx, selectedNumbers, numbers, ok)
 	diags.Append(d...)
 
 	objValue, d := types.ObjectValue(twilioTFObjectTypes, objMap)
@@ -1739,7 +1776,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	return objValue, diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomSyniverse(ctx context.Context, planData PhoneDeliverySettingsProviderCustomSyniverseResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomSyniverse(ctx context.Context, planData *PhoneDeliverySettingsProviderCustomSyniverseResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1747,7 +1784,11 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	}
 
 	objMap := map[string]attr.Value{
-		"auth_token": planData.AuthToken,
+		"auth_token": types.StringNull(),
+	}
+
+	if planData != nil {
+		objMap["auth_token"] = planData.AuthToken
 	}
 
 	var d diag.Diagnostics
@@ -1756,7 +1797,13 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	objMap["service_numbers"], d = phoneDeliverySettingsTwilioSyniverseNumbersOkToTF(numbers, ok)
 	diags.Append(d...)
 
-	objMap["selected_numbers"], d = phoneDeliverySettingsTwilioSyniverseSelectedNumbersOkToTF(ctx, planData.SelectedNumbers, numbers, ok)
+	selectedNumbers := types.SetNull(types.ObjectType{AttrTypes: customSelectedNumbersTFObjectTypes})
+
+	if planData != nil {
+		selectedNumbers = planData.SelectedNumbers
+	}
+
+	objMap["selected_numbers"], d = phoneDeliverySettingsTwilioSyniverseSelectedNumbersOkToTF(ctx, selectedNumbers, numbers, ok)
 	diags.Append(d...)
 
 	objValue, d := types.ObjectValue(syniverseTFObjectTypes, objMap)

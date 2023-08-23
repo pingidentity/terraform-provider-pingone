@@ -28,9 +28,9 @@ func TestAccResourceDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccResourceDataSourceConfig_ByNameFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
@@ -59,9 +59,9 @@ func TestAccResourceDataSource_ByNameSystem(t *testing.T) {
 			{
 				Config: testAccResourceDataSourceConfig_ByNameSystem(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "openid"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "OPENID_CONNECT"),
@@ -93,9 +93,9 @@ func TestAccResourceDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccResourceDataSourceConfig_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),

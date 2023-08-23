@@ -29,8 +29,8 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 	defaultPolicyDescription := "Default Verify Policy based on Environment Capabilities"
 
 	findByID := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 		resource.TestCheckResourceAttr(dataSourceFullName, "description", name),
 		resource.TestCheckResourceAttr(dataSourceFullName, "default", "false"),
@@ -86,8 +86,8 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 	)
 
 	findByName := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "name", updatedName),
 		resource.TestCheckResourceAttr(dataSourceFullName, "description", updatedName),
 		resource.TestCheckResourceAttr(dataSourceFullName, "default", "false"),
@@ -141,8 +141,8 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 	)
 
 	findDefault := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "name", defaultPolicyName),
 		resource.TestCheckResourceAttr(dataSourceFullName, "description", defaultPolicyDescription),
 		resource.TestCheckResourceAttr(dataSourceFullName, "default", "true"),
