@@ -35,8 +35,8 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccLicenseDataSourceConfig_ByIDFull(resourceName, organizationID, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "license_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "license_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "INTERNAL"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "package", "INTERNAL"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "status", "ACTIVE"),

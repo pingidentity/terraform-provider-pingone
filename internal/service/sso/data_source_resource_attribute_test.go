@@ -25,9 +25,9 @@ func TestAccResourceAttributeDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccResourceAttributeDataSourceConfig_ByNameFull(resourceName, "address.region"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "address.region"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "PREDEFINED"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "value", "${user.address.region}"),
@@ -54,9 +54,9 @@ func TestAccResourceAttributeDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccResourceAttributeDataSourceConfig_ByIDFull(resourceName, "address.region"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "address.region"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "PREDEFINED"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "value", "${user.address.region}"),

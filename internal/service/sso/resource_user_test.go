@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -154,12 +155,12 @@ func TestAccUser_All(t *testing.T) {
 	fullTest := resource.TestStep{
 		Config: testAccUserConfig_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "username", name),
 			resource.TestCheckResourceAttr(resourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
 			//resource.TestCheckNoResourceAttr(resourceFullName, "email_verified"),
-			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "status", "DISABLED"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "false"),
@@ -171,7 +172,7 @@ func TestAccUser_All(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "address.region", "Who knows"),
 			resource.TestCheckResourceAttr(resourceFullName, "address.street_address", "742 Evergreen Terrace"),
 			resource.TestCheckResourceAttr(resourceFullName, "external_id", "12345678-id"),
-			resource.TestMatchResourceAttr(resourceFullName, "identity_provider.id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "identity_provider.id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "identity_provider.type", "LINKEDIN"),
 			resource.TestCheckResourceAttr(resourceFullName, "user_lifecycle.status", "VERIFICATION_REQUIRED"),
 			resource.TestCheckResourceAttr(resourceFullName, "user_lifecycle.suppress_verification_code", "true"),
@@ -201,12 +202,12 @@ func TestAccUser_All(t *testing.T) {
 	minimalTest := resource.TestStep{
 		Config: testAccUserConfig_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "username", name),
 			resource.TestCheckResourceAttr(resourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
 			//resource.TestCheckNoResourceAttr(resourceFullName, "email_verified"),
-			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "true"),
@@ -265,6 +266,28 @@ func TestAccUser_All(t *testing.T) {
 			fullTest,
 			minimalTest,
 			fullTest,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"password.%",
+					"password.force_change",
+					"password.initial_value",
+					"user_lifecycle.suppress_verification_code",
+				},
+			},
 		},
 	})
 }
@@ -280,12 +303,12 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 	fullTest := resource.TestStep{
 		Config: testAccUserConfig_FullWithoutReplaceParams(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "username", name),
 			resource.TestCheckResourceAttr(resourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
 			//resource.TestCheckNoResourceAttr(resourceFullName, "email_verified"),
-			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "status", "DISABLED"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "false"),
@@ -324,12 +347,12 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 	minimalTest := resource.TestStep{
 		Config: testAccUserConfig_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "username", name),
 			resource.TestCheckResourceAttr(resourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
 			//resource.TestCheckNoResourceAttr(resourceFullName, "email_verified"),
-			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "true"),
@@ -406,22 +429,22 @@ func TestAccUser_ChangePopulation(t *testing.T) {
 			{
 				Config: testAccUserConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
 					resource.TestCheckResourceAttr(resourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
-					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 				),
 			},
 			{
 				Config: testAccUserConfig_CustomPopulation(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
 					resource.TestCheckResourceAttr(resourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
-					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 				),
 			},
@@ -500,6 +523,46 @@ func TestAccUser_ChangeUsernameAndEmail(t *testing.T) {
 			fullTest,
 			minimalTest,
 			fullTest,
+		},
+	})
+}
+
+func TestAccUser_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_user.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckUserDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccUserConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
 		},
 	})
 }

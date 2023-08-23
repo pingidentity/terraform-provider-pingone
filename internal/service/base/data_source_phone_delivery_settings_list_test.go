@@ -31,9 +31,9 @@ func TestAccPhoneDeliverySettingsListDataSource_ByAll(t *testing.T) {
 			{
 				Config: testAccPhoneDeliverySettingsListDataSourceConfig_ByAll(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "1"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -59,7 +59,7 @@ func TestAccPhoneDeliverySettingsListDataSource_NotFound(t *testing.T) {
 			{
 				Config: testAccPhoneDeliverySettingsListDataSourceConfig_NotFound(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "0"),
 				),
 			},
