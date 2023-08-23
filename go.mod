@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-changelog v0.0.0-20220419201213-5edfc0d651d8
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
-	github.com/hashicorp/terraform-plugin-framework v1.3.4
+	github.com/hashicorp/terraform-plugin-framework v1.3.5
 	github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.11.0
 	github.com/hashicorp/terraform-plugin-go v0.18.0
@@ -16,10 +16,10 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.11.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.27.0
 	github.com/katbyte/terrafmt v0.5.2
-	github.com/patrickcping/pingone-go-sdk-v2 v0.10.3
+	github.com/patrickcping/pingone-go-sdk-v2 v0.10.4
 	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.2.1
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.3.0
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.3.1
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.4.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.26.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.16.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.9.0
@@ -76,6 +76,7 @@ require (
 	github.com/breml/errchkjson v0.3.1 // indirect
 	github.com/butuzov/ireturn v0.2.0 // indirect
 	github.com/butuzov/mirror v1.1.0 // indirect
+	github.com/ccojocar/zxcvbn-go v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/charithe/durationcheck v0.0.10 // indirect
 	github.com/chavacava/garif v0.0.0-20230227094218-b8c73b2037b8 // indirect
@@ -123,7 +124,7 @@ require (
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
-	github.com/gookit/color v1.5.3 // indirect
+	github.com/gookit/color v1.5.4 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20230610083614-0e73809eb601 // indirect
 	github.com/gostaticanalysis/analysisutil v0.7.1 // indirect
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
@@ -194,7 +195,6 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moricho/tparallel v0.3.1 // indirect
 	github.com/nakabonne/nestif v0.3.1 // indirect
-	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
 	github.com/nishanths/exhaustive v0.11.0 // indirect
 	github.com/nishanths/predeclared v0.2.2 // indirect
 	github.com/nunnatsa/ginkgolinter v0.13.3 // indirect
@@ -220,7 +220,7 @@ require (
 	github.com/sanposhiho/wastedassign/v2 v2.0.7 // indirect
 	github.com/sashamelentyev/interfacebloat v1.1.0 // indirect
 	github.com/sashamelentyev/usestdlibvars v1.23.0 // indirect
-	github.com/securego/gosec/v2 v2.16.0 // indirect
+	github.com/securego/gosec/v2 v2.17.0 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shazow/go-diff v0.0.0-20160112020656-b6b7b6733b8c // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
