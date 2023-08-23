@@ -4,10 +4,19 @@ NOTES:
 
 * Optimised code and add input validation to import resource state for every resource. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
 
+FEATURES:
+
+* **New Data Source:** `pingone_verify_voice_phrase` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+* **New Data Source:** `pingone_verify_voice_phrase_content` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+* **New Data Source:** `pingone_verify_voice_phrase_contents` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+* **New Resource:** `pingone_verify_voice_phrase` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+* **New Resource:** `pingone_verify_voice_phrase_content` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+
 ENHANCEMENTS:
 
 * `data-source/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
 * `resource/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
+* `resource/pingone_verify_policy`: Now supports `voice` configuration option enabling voice verification. ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
 
 BUG FIXES:
 
