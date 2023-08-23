@@ -592,7 +592,7 @@ func resourceMFAPolicyImport(ctx context.Context, d *schema.ResourceData, meta i
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:  "mfa_policy_id",
+			Label:  "mfa_device_policy_id",
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 	}
@@ -603,7 +603,7 @@ func resourceMFAPolicyImport(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	d.Set("environment_id", attributes["environment_id"])
-	d.SetId(attributes["mfa_policy_id"])
+	d.SetId(attributes["mfa_device_policy_id"])
 
 	resourceMFAPolicyRead(ctx, d, meta)
 
