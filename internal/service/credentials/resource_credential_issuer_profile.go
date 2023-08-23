@@ -170,7 +170,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 	}
 
 	// Build the model for the Create API call
-	CredentialIssuerProfile := plan.expand()
+	credentialIssuerProfile := plan.expand()
 
 	// Execute a Create or Update depending on existence of credential issuer profile
 	var response *credentials.CredentialIssuerProfile
@@ -180,7 +180,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+				return r.Client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*credentialIssuerProfile).Execute()
 			},
 			"CreateCredentialIssuerProfile",
 			framework.DefaultCustomError,
@@ -196,7 +196,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+				return r.Client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*credentialIssuerProfile).Execute()
 			},
 			"UpdateCredentialIssuerProfile",
 			framework.DefaultCustomError,
