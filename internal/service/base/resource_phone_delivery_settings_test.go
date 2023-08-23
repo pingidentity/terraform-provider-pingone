@@ -233,6 +233,14 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"provider_custom_twilio.auth_token",
+					"provider_custom_twilio.selected_numbers.#",
+					"provider_custom_twilio.selected_numbers.0.%",
+					"provider_custom_twilio.selected_numbers.0.number",
+					"provider_custom_twilio.selected_numbers.0.selected",
+					"provider_custom_twilio.selected_numbers.0.type",
+				},
 			},
 			{
 				Config:  testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken, number),
@@ -318,6 +326,14 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"provider_custom_syniverse.auth_token",
+					"provider_custom_syniverse.selected_numbers.#",
+					"provider_custom_syniverse.selected_numbers.0.%",
+					"provider_custom_syniverse.selected_numbers.0.number",
+					"provider_custom_syniverse.selected_numbers.0.selected",
+					"provider_custom_syniverse.selected_numbers.0.type",
+				},
 			},
 			{
 				Config:  testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken, number),
@@ -326,7 +342,7 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 			// Errors
 			{
 				Config:      testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, "unknownauthtoken", number),
-				ExpectError: regexp.MustCompile(`uhhm, that didn't work`),
+				ExpectError: regexp.MustCompile(`Authentication Error`),
 			},
 		},
 	})
@@ -514,6 +530,9 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"provider_custom.authentication.password",
+				},
 			},
 		},
 	})

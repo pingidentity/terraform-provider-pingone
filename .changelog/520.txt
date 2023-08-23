@@ -62,6 +62,10 @@
 `resource/pingone_branding_theme_default`: Fixed error when attempting to import resource state.
 ```
 
+```release-note:bug
+`resource/pingone_phone_delivery_settings`: Fixed `Value Conversion Error` error when attempting to import resource state.
+```
+
 ```release-note:note
 Optimised code and add input validation to import resource state for every resource.
 ```
