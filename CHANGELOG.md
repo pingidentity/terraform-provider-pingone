@@ -4,6 +4,9 @@ NOTES:
 
 * Code optimisation for all resources and data sources to remove redundant code. ([#507](https://github.com/pingidentity/terraform-provider-pingone/issues/507))
 * Optimised code and add input validation to import resource state for every resource. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.3.4 => v1.3.5 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.3.1 => v0.4.0 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.3 => v0.10.4 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
 
 FEATURES:
 
