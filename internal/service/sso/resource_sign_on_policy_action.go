@@ -1060,9 +1060,9 @@ func buildAttributeEqualsCondition(v []attributeEquality, tfSchemaAttribute stri
 				SignOnPolicyActionCommonConditionOr: &management.SignOnPolicyActionCommonConditionOr{
 					Or: conditionList,
 				},
-			}, nil
+			}, diags
 
-		} else {
+		} else if len(v) == 1 {
 
 			return &management.SignOnPolicyActionCommonConditionOrOrInner{
 				SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
@@ -1071,7 +1071,9 @@ func buildAttributeEqualsCondition(v []attributeEquality, tfSchemaAttribute stri
 						String: v[0].attributeValueString,
 					}),
 				},
-			}, nil
+			}, diags
+		} else {
+			return nil, diags
 		}
 	}
 
