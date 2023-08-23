@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -20,10 +19,7 @@ import (
 )
 
 // Types
-type VoicePhraseDataSource struct {
-	client *verify.APIClient
-	region model.RegionMapping
-}
+type VoicePhraseDataSource serviceClientType
 
 type voicePhraseDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -141,14 +137,13 @@ func (r *VoicePhraseDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *voicePhraseDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -171,7 +166,7 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.VoicePhrasesApi.ReadOneVoicePhrase(ctx, data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString()).Execute()
+				return r.Client.VoicePhrasesApi.ReadOneVoicePhrase(ctx, data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString()).Execute()
 			},
 			"ReadOneVoicePhrase",
 			framework.DefaultCustomError,
@@ -191,7 +186,7 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.VoicePhrasesApi.ReadAllVoicePhrases(ctx, data.EnvironmentId.ValueString()).Execute()
+				return r.Client.VoicePhrasesApi.ReadAllVoicePhrases(ctx, data.EnvironmentId.ValueString()).Execute()
 			},
 			"ReadAllVoicePhrases",
 			framework.DefaultCustomError,

@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -19,10 +18,7 @@ import (
 )
 
 // Types
-type VoicePhraseContentsDataSource struct {
-	client *verify.APIClient
-	region model.RegionMapping
-}
+type VoicePhraseContentsDataSource serviceClientType
 
 type voicePhraseContentsDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -108,14 +104,13 @@ func (r *VoicePhraseContentsDataSource) Configure(ctx context.Context, req datas
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *VoicePhraseContentsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *voicePhraseContentsDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -134,7 +129,7 @@ func (r *VoicePhraseContentsDataSource) Read(ctx context.Context, req datasource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.VoicePhraseContentsApi.ReadAllVoicePhraseContents(ctx, data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString()).Execute()
+			return r.Client.VoicePhraseContentsApi.ReadAllVoicePhraseContents(ctx, data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString()).Execute()
 		},
 		"ReadAllVoicePhraseContents",
 		framework.DefaultCustomError,

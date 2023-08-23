@@ -22,7 +22,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
@@ -32,10 +31,7 @@ import (
 )
 
 // Types
-type VerifyPolicyResource struct {
-	client *verify.APIClient
-	region model.RegionMapping
-}
+type VerifyPolicyResource serviceClientType
 
 type verifyPolicyResourceModel struct {
 	Id               types.String `tfsdk:"id"`
@@ -1292,13 +1288,13 @@ func (r *VerifyPolicyResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
-	r.client = preparedClient
+	r.Client = preparedClient
 }
 
 func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state verifyPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1324,7 +1320,7 @@ func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRe
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.VerifyPoliciesApi.CreateVerifyPolicy(ctx, plan.EnvironmentId.ValueString()).VerifyPolicy(*VerifyPolicy).Execute()
+			return r.Client.VerifyPoliciesApi.CreateVerifyPolicy(ctx, plan.EnvironmentId.ValueString()).VerifyPolicy(*VerifyPolicy).Execute()
 		},
 		"CreateVerifyPolicy",
 		framework.DefaultCustomError,
@@ -1346,7 +1342,7 @@ func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRe
 func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *verifyPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1365,7 +1361,7 @@ func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadReques
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneVerifyPolicy",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1390,7 +1386,7 @@ func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadReques
 func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state verifyPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1416,7 +1412,7 @@ func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.VerifyPoliciesApi.UpdateVerifyPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).VerifyPolicy(*VerifyPolicy).Execute()
+			return r.Client.VerifyPoliciesApi.UpdateVerifyPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).VerifyPolicy(*VerifyPolicy).Execute()
 		},
 		"UpdateVerifyPolicy",
 		framework.DefaultCustomError,
@@ -1439,7 +1435,7 @@ func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *VerifyPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *verifyPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1457,7 +1453,7 @@ func (r *VerifyPolicyResource) Delete(ctx context.Context, req resource.DeleteRe
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.VerifyPoliciesApi.DeleteVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.VerifyPoliciesApi.DeleteVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteVerifyPolicy",
