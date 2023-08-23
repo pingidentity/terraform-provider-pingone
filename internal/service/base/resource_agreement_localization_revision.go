@@ -18,17 +18,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	agreementmanagementservice "github.com/pingidentity/terraform-provider-pingone/internal/service/agreementmanagement"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type AgreementLocalizationRevisionResource struct {
-	managementClient *management.APIClient
-	region           model.RegionMapping
+	managementClient          *management.APIClient
+	agreementManagementClient *agreementmanagement.APIClient
 }
 
 type AgreementLocalizationRevisionResourceModel struct {
@@ -179,7 +181,18 @@ func (r *AgreementLocalizationRevisionResource) Configure(ctx context.Context, r
 	}
 
 	r.managementClient = preparedClient
-	r.region = resourceConfig.Client.API.Region
+
+	agreementManagementPreparedClient, err := agreementmanagementservice.PrepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
+	r.agreementManagementClient = agreementManagementPreparedClient
 }
 
 func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -269,8 +282,31 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 		return
 	}
 
+	var agreementText string
+	if !data.Text.IsNull() {
+		agreementText = data.Text.ValueString()
+	} else {
+		var agreementTextResponse *agreementmanagement.AgreementRevisionText
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				return r.agreementManagementClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
+			},
+			"ReadOneAgreementLanguageRevision",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+			&agreementTextResponse,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		agreementText = agreementTextResponse.GetData()
+	}
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response, data.Text.ValueString())...)
+	resp.Diagnostics.Append(data.toState(response, agreementText)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -312,21 +348,45 @@ func (r *AgreementLocalizationRevisionResource) Delete(ctx context.Context, req 
 }
 
 func (r *AgreementLocalizationRevisionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 4
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "agreement_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "agreement_localization_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "agreement_localization_revision_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/agreement_id/agreement_localization_id/agreement_localization_revision_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("agreement_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("agreement_localization_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.AgreementLanguageRevision, diag.Diagnostics) {

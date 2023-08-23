@@ -29,8 +29,8 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 	defaultPolicyDescription := "Default Verify Policy based on Environment Capabilities"
 
 	findByID := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 		resource.TestCheckResourceAttr(dataSourceFullName, "description", name),
 		resource.TestCheckResourceAttr(dataSourceFullName, "default", "false"),
@@ -65,6 +65,16 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "phone.otp.notification.template_name", "email_phone_verification"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "phone.otp.notification.variant_name", "variant23_b"),
 
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.verify", "DISABLED"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.enrollment", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.comparison_threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.liveness_threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.text_dependent.samples", "3"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.text_dependent.voice_phrase_id", "exceptional_experiences"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.reference_data.retain_original_recordings", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.reference_data.update_on_verification", "true"),
+
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.timeout.duration", "27"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.data_collection.timeout.duration", "12"),
@@ -76,8 +86,8 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 	)
 
 	findByName := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "name", updatedName),
 		resource.TestCheckResourceAttr(dataSourceFullName, "description", updatedName),
 		resource.TestCheckResourceAttr(dataSourceFullName, "default", "false"),
@@ -110,6 +120,16 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "phone.otp.deliveries.cooldown.time_unit", "SECONDS"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "phone.otp.notification.template_name", "email_phone_verification"),
 
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.verify", "REQUIRED"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.enrollment", "true"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.comparison_threshold", "HIGH"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.liveness_threshold", "HIGH"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.text_dependent.samples", "5"),
+		resource.TestMatchResourceAttr(dataSourceFullName, "voice.text_dependent.voice_phrase_id", validation.P1ResourceIDRegexp),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.reference_data.retain_original_recordings", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.reference_data.update_on_reenrollment", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "voice.reference_data.update_on_verification", "false"),
+
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.timeout.duration", "30"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.data_collection.timeout.duration", "15"),
@@ -121,8 +141,8 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 	)
 
 	findDefault := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "name", defaultPolicyName),
 		resource.TestCheckResourceAttr(dataSourceFullName, "description", defaultPolicyDescription),
 		resource.TestCheckResourceAttr(dataSourceFullName, "default", "true"),
@@ -287,6 +307,11 @@ data "pingone_verify_policy" "%[3]s" {
 func testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
+resource "pingone_verify_voice_phrase" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  display_name   = "%[4]s"
+}
+
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
@@ -295,6 +320,24 @@ resource "pingone_verify_policy" "%[3]s" {
   liveness = {
     verify    = "REQUIRED"
     threshold = "LOW"
+  }
+
+  voice = {
+    verify               = "REQUIRED"
+    enrollment           = true
+    comparison_threshold = "HIGH"
+    liveness_threshold   = "HIGH"
+
+    text_dependent = {
+      samples         = "5"
+      voice_phrase_id = pingone_verify_voice_phrase.%[3]s.id
+    }
+
+    reference_data = {
+      retain_original_recordings = false
+      update_on_reenrollment     = false
+      update_on_verification     = false
+    }
   }
 
   depends_on = [pingone_environment.%[2]s]

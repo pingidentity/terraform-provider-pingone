@@ -157,7 +157,7 @@ func TestAccVerifyPolicy_NewEnv(t *testing.T) {
 			{
 				Config: testAccVerifyPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -177,8 +177,8 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	fullPolicy := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("Description for %s", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -219,13 +219,23 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection_only", "false"),
 
+		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "REQUIRED"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.enrollment", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "HIGH"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.samples", "4"),
+		resource.TestMatchResourceAttr(resourceFullName, "voice.text_dependent.voice_phrase_id", validation.P1ResourceIDRegexp),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.retain_original_recordings", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
+
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
 
 	minimalPolicy := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
 		resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("Description for %s", updatedName)),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -264,13 +274,23 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection_only", "false"),
 
+		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "DISABLED"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.enrollment", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.samples", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.voice_phrase_id", "exceptional_experiences"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.retain_original_recordings", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
+
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
 
 	updateTimeUnitsPolicy := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
 		resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("Timeunit Policy Update Description for %s", updatedName)),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -309,6 +329,16 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.duration", "423"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.time_unit", "SECONDS"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection_only", "true"),
+
+		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "OPTIONAL"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.enrollment", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.samples", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.voice_phrase_id", "exceptional_experiences"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.retain_original_recordings", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
 
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
@@ -353,6 +383,22 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 				Config: testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name),
 				Check:  fullPolicy,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -384,7 +430,8 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 					`(.*Inappropriate value for attribute \"facial_comparison\".*)` +
 					`(.*Inappropriate value for attribute \"liveness\".*)` +
 					`(.*Inappropriate value for attribute \"email\".*)` +
-					`(.*Inappropriate value for attribute \"phone\".*)`),
+					`(.*Inappropriate value for attribute \"phone\".*)` +
+					`(.*Inappropriate value for attribute \"voice\".*)`),
 				Destroy: true,
 			},
 			{
@@ -400,6 +447,50 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 		},
 	})
 }
+
+func TestAccVerifyPolicy_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_verify_policy.%s", resourceName)
+
+	updatedName := acctest.ResourceNameGen()
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, updatedName),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+		},
+	})
+}
+
 func testAccVerifyPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -423,6 +514,11 @@ func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name str
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_verify_voice_phrase" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  display_name   = "%[4]s"
+}
+
 resource "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
@@ -443,8 +539,8 @@ resource "pingone_verify_policy" "%[3]s" {
   }
 
   email = {
-    verify = "REQUIRED"
-    create_mfa_device : true
+    verify            = "REQUIRED"
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "4"
@@ -467,8 +563,8 @@ resource "pingone_verify_policy" "%[3]s" {
   }
 
   phone = {
-    verify = "REQUIRED"
-    create_mfa_device : true
+    verify            = "REQUIRED"
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "2"
@@ -504,6 +600,24 @@ resource "pingone_verify_policy" "%[3]s" {
     }
 
     data_collection_only = false
+  }
+
+  voice = {
+    verify               = "REQUIRED"
+    enrollment           = true
+    comparison_threshold = "HIGH"
+    liveness_threshold   = "MEDIUM"
+
+    text_dependent = {
+      samples         = "4"
+      voice_phrase_id = pingone_verify_voice_phrase.%[3]s.id
+    }
+
+    reference_data = {
+      retain_original_recordings = true
+      update_on_reenrollment     = true
+      update_on_verification     = true
+    }
   }
 
   depends_on = [pingone_environment.%[2]s]
@@ -551,8 +665,8 @@ resource "pingone_verify_policy" "%[3]s" {
   }
 
   email = {
-    verify = "REQUIRED"
-    create_mfa_device : true
+    verify            = "REQUIRED"
+    create_mfa_device = true
     otp = {
       attempts = {
         count = "4"
@@ -610,7 +724,13 @@ resource "pingone_verify_policy" "%[3]s" {
     data_collection_only = true
   }
 
-  depends_on = [pingone_environment.%[2]s]
+  voice = {
+    verify               = "OPTIONAL"
+    enrollment           = false
+    comparison_threshold = "LOW"
+    liveness_threshold   = "LOW"
+
+  }
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
@@ -646,7 +766,7 @@ resource "pingone_verify_policy" "%[3]s" {
 
   phone = {}
 
-  depends_on = [pingone_environment.%[2]s]
+  voice = {}
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

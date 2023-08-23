@@ -32,8 +32,8 @@ func TestAccCertificateDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "terraform"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "key_length", "4096"),
@@ -74,8 +74,8 @@ func TestAccCertificateDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccCertificateDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "terraform"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "algorithm", "RSA"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "key_length", "4096"),

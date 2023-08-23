@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -16,16 +15,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type AgreementResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type AgreementResource serviceClientType
 
 type AgreementResourceModel struct {
 	Id                  types.String  `tfsdk:"id"`
@@ -124,14 +120,13 @@ func (r *AgreementResource) Configure(ctx context.Context, req resource.Configur
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *AgreementResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state AgreementResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -153,7 +148,7 @@ func (r *AgreementResource) Create(ctx context.Context, req resource.CreateReque
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.CreateAgreement(ctx, plan.EnvironmentId.ValueString()).Agreement(*createAgreement).Execute()
+			return r.Client.AgreementsResourcesApi.CreateAgreement(ctx, plan.EnvironmentId.ValueString()).Agreement(*createAgreement).Execute()
 		},
 		"CreateAgreement",
 		framework.DefaultCustomError,
@@ -175,7 +170,7 @@ func (r *AgreementResource) Create(ctx context.Context, req resource.CreateReque
 func (r *AgreementResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *AgreementResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -194,7 +189,7 @@ func (r *AgreementResource) Read(ctx context.Context, req resource.ReadRequest, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneAgreement",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -219,7 +214,7 @@ func (r *AgreementResource) Read(ctx context.Context, req resource.ReadRequest, 
 func (r *AgreementResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state AgreementResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -241,7 +236,7 @@ func (r *AgreementResource) Update(ctx context.Context, req resource.UpdateReque
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Agreement(*agreement).Execute()
+			return r.Client.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Agreement(*agreement).Execute()
 		},
 		"UpdateAgreement",
 		framework.DefaultCustomError,
@@ -263,7 +258,7 @@ func (r *AgreementResource) Update(ctx context.Context, req resource.UpdateReque
 func (r *AgreementResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *AgreementResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -281,7 +276,7 @@ func (r *AgreementResource) Delete(ctx context.Context, req resource.DeleteReque
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.AgreementsResourcesApi.DeleteAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.AgreementsResourcesApi.DeleteAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteAgreement",
@@ -295,19 +290,37 @@ func (r *AgreementResource) Delete(ctx context.Context, req resource.DeleteReque
 }
 
 func (r *AgreementResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "agreement_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/agreement_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *AgreementResourceModel) expand() *management.Agreement {

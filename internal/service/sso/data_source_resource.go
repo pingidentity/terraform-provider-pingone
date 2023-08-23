@@ -22,10 +22,7 @@ import (
 )
 
 // Types
-type ResourceDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type ResourceDataSource serviceClientType
 
 type ResourceDataSourceModel struct {
 	Id                           types.String `tfsdk:"id"`
@@ -180,14 +177,13 @@ func (r *ResourceDataSource) Configure(ctx context.Context, req datasource.Confi
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *ResourceDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -205,7 +201,7 @@ func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if !data.Name.IsNull() {
 
 		var d diag.Diagnostics
-		resource, d = fetchResourceFromName(ctx, r.client, data.EnvironmentId.ValueString(), data.Name.ValueString())
+		resource, d = fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), data.Name.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -214,7 +210,7 @@ func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	} else if !data.ResourceId.IsNull() {
 
 		var d diag.Diagnostics
-		resource, d = fetchResourceFromID(ctx, r.client, data.EnvironmentId.ValueString(), data.ResourceId.ValueString())
+		resource, d = fetchResourceFromID(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceId.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -234,7 +230,7 @@ func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ResourceClientSecretApi.ReadResourceSecret(ctx, data.EnvironmentId.ValueString(), resource.GetId()).Execute()
+				return r.Client.ResourceClientSecretApi.ReadResourceSecret(ctx, data.EnvironmentId.ValueString(), resource.GetId()).Execute()
 			},
 			"ReadResourceSecret",
 			framework.CustomErrorResourceNotFoundWarning,

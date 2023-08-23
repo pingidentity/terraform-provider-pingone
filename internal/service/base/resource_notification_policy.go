@@ -22,7 +22,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -31,10 +30,7 @@ import (
 )
 
 // Types
-type NotificationPolicyResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type NotificationPolicyResource serviceClientType
 
 type NotificationPolicyResourceModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
@@ -368,14 +364,13 @@ func (r *NotificationPolicyResource) Configure(ctx context.Context, req resource
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state NotificationPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -401,7 +396,7 @@ func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.Cr
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsPoliciesApi.CreateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
+			return r.Client.NotificationsPoliciesApi.CreateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
 		},
 		"CreateNotificationsPolicy",
 		framework.DefaultCustomError,
@@ -423,7 +418,7 @@ func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.Cr
 func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *NotificationPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -442,7 +437,7 @@ func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.Read
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsPoliciesApi.ReadOneNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.NotificationsPoliciesApi.ReadOneNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneNotificationsPolicy",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -467,7 +462,7 @@ func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.Read
 func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state NotificationPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -493,7 +488,7 @@ func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.Up
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsPoliciesApi.UpdateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
+			return r.Client.NotificationsPoliciesApi.UpdateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
 		},
 		"UpdateNotificationsPolicy",
 		framework.DefaultCustomError,
@@ -515,7 +510,7 @@ func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.Up
 func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *NotificationPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -533,7 +528,7 @@ func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.De
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.NotificationsPoliciesApi.DeleteNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.NotificationsPoliciesApi.DeleteNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteNotificationsPolicy",
@@ -547,19 +542,37 @@ func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.De
 }
 
 func (r *NotificationPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "notification_policy_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/notification_policy_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*management.NotificationsPolicy, diag.Diagnostics) {

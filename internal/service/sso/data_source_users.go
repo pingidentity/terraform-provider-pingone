@@ -12,17 +12,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type UsersDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type UsersDataSource serviceClientType
 
 type UsersDataSourceModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
@@ -142,14 +138,13 @@ func (r *UsersDataSource) Configure(ctx context.Context, req datasource.Configur
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *UsersDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -167,7 +162,7 @@ func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	if !data.ScimFilter.IsNull() {
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
+			return r.Client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
 	} else if !data.DataFilter.IsNull() {
@@ -205,7 +200,7 @@ func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		})
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return r.Client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		}
 
 	} else {

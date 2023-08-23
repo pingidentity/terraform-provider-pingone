@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -265,17 +265,25 @@ func resourceResourceScopeOpenIDDelete(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceResourceScopeOpenIDImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/resourceScopeID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "resource_scope_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, resourceScopeID := attributes[0], attributes[2]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.SetId(resourceScopeID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["resource_scope_id"])
 
 	resourceResourceScopeOpenIDRead(ctx, d, meta)
 

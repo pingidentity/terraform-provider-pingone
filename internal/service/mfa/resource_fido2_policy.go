@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -21,20 +20,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	listvalidatormfa "github.com/pingidentity/terraform-provider-pingone/internal/service/mfa/listvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type FIDO2PolicyResource struct {
-	client *mfa.APIClient
-	region model.RegionMapping
-}
+type FIDO2PolicyResource serviceClientType
 
 type FIDO2PolicyResourceModel struct {
 	Id                            types.String `tfsdk:"id"`
@@ -512,14 +508,13 @@ func (r *FIDO2PolicyResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *FIDO2PolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state FIDO2PolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -545,7 +540,7 @@ func (r *FIDO2PolicyResource) Create(ctx context.Context, req resource.CreateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.FIDO2PolicyApi.CreateFIDO2Policy(ctx, plan.EnvironmentId.ValueString()).FIDO2Policy(*fido2Policy).Execute()
+			return r.Client.FIDO2PolicyApi.CreateFIDO2Policy(ctx, plan.EnvironmentId.ValueString()).FIDO2Policy(*fido2Policy).Execute()
 		},
 		"CreateFIDO2Policy",
 		framework.DefaultCustomError,
@@ -567,7 +562,7 @@ func (r *FIDO2PolicyResource) Create(ctx context.Context, req resource.CreateReq
 func (r *FIDO2PolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *FIDO2PolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -586,7 +581,7 @@ func (r *FIDO2PolicyResource) Read(ctx context.Context, req resource.ReadRequest
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.FIDO2PolicyApi.ReadOneFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return r.Client.FIDO2PolicyApi.ReadOneFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneFIDO2Policy",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -611,7 +606,7 @@ func (r *FIDO2PolicyResource) Read(ctx context.Context, req resource.ReadRequest
 func (r *FIDO2PolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state FIDO2PolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -637,7 +632,7 @@ func (r *FIDO2PolicyResource) Update(ctx context.Context, req resource.UpdateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.FIDO2PolicyApi.UpdateFIDO2Policy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).FIDO2Policy(*fido2Policy).Execute()
+			return r.Client.FIDO2PolicyApi.UpdateFIDO2Policy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).FIDO2Policy(*fido2Policy).Execute()
 		},
 		"UpdateFIDO2Policy",
 		framework.DefaultCustomError,
@@ -659,7 +654,7 @@ func (r *FIDO2PolicyResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *FIDO2PolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *FIDO2PolicyResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -677,7 +672,7 @@ func (r *FIDO2PolicyResource) Delete(ctx context.Context, req resource.DeleteReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.FIDO2PolicyApi.DeleteFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			r, err := r.Client.FIDO2PolicyApi.DeleteFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 			return nil, r, err
 		},
 		"DeleteFIDO2Policy",
@@ -691,19 +686,37 @@ func (r *FIDO2PolicyResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 func (r *FIDO2PolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "fido2_policy_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/fido2_policy_id/\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *FIDO2PolicyResourceModel) expand(ctx context.Context) (*mfa.FIDO2Policy, diag.Diagnostics) {

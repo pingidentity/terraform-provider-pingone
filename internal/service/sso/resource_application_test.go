@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
@@ -169,7 +168,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -181,15 +180,15 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -198,7 +197,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WEB_APP"),
@@ -222,7 +221,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "80000"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -232,6 +231,22 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -254,8 +269,8 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -281,7 +296,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -304,7 +319,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -316,8 +331,8 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -343,7 +358,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -357,15 +372,15 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -374,7 +389,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WEB_APP"),
@@ -398,7 +413,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "80000"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -412,8 +427,8 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -439,7 +454,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -462,7 +477,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -474,15 +489,15 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -491,7 +506,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "NATIVE_APP"),
@@ -509,7 +524,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
@@ -537,6 +552,22 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -558,8 +589,8 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -582,7 +613,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
@@ -614,7 +645,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -626,15 +657,15 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -643,7 +674,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "NATIVE_APP"),
@@ -661,7 +692,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
@@ -692,8 +723,8 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -716,7 +747,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
@@ -739,15 +770,15 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullNative(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -756,7 +787,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "NATIVE_APP"),
@@ -774,7 +805,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
@@ -818,7 +849,7 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 		Config: testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.certificate_based_authentication.#", "1"),
-			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.certificate_based_authentication.0.key_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.certificate_based_authentication.0.key_id", verify.P1ResourceIDRegexpFullString),
 		),
 	}
 
@@ -851,6 +882,22 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 			withKerberosTestStep,
 			withoutKerberosTestStep,
 			withKerberosTestStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
 				Destroy: true,
@@ -959,6 +1006,22 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			withMobileTestStepFull,
 			withoutMobileTestStep,
 			withMobileTestStepFull,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name),
 				Destroy: true,
@@ -1103,7 +1166,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1115,15 +1178,15 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -1132,7 +1195,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "CUSTOM_APP"),
@@ -1160,7 +1223,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "80000"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1170,6 +1233,22 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1192,8 +1271,8 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalCustom(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -1216,7 +1295,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1239,7 +1318,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1251,15 +1330,15 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -1268,7 +1347,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "CUSTOM_APP"),
@@ -1296,7 +1375,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "80000"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1310,8 +1389,8 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalCustom(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -1334,7 +1413,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1348,15 +1427,15 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -1365,7 +1444,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "CUSTOM_APP"),
@@ -1393,7 +1472,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "80000"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1416,7 +1495,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1428,15 +1507,15 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -1445,7 +1524,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SERVICE"),
@@ -1473,7 +1552,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "80000"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1483,6 +1562,22 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1505,8 +1600,8 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalService(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -1532,7 +1627,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1555,7 +1650,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1567,15 +1662,15 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -1584,7 +1679,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SERVICE"),
@@ -1612,7 +1707,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "80000"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1626,8 +1721,8 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalService(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -1653,7 +1748,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1667,15 +1762,15 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullService(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -1684,7 +1779,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SERVICE"),
@@ -1712,7 +1807,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "80000"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1735,7 +1830,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1747,15 +1842,15 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -1764,7 +1859,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SINGLE_PAGE_APP"),
@@ -1787,7 +1882,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1797,6 +1892,22 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1819,8 +1930,8 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -1845,7 +1956,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1868,7 +1979,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1880,8 +1991,8 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -1906,7 +2017,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1920,15 +2031,15 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -1937,7 +2048,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 						"groups.#": "1",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "SINGLE_PAGE_APP"),
@@ -1960,7 +2071,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -1974,8 +2085,8 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -2000,7 +2111,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -2023,7 +2134,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.png")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.png")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -2035,15 +2146,15 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -2052,8 +2163,8 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 						"groups.#": "2",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
-						"groups.1": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
+						"groups.1": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WORKER"),
@@ -2071,7 +2182,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -2081,6 +2192,22 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -2103,8 +2230,8 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -2129,7 +2256,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -2152,7 +2279,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.png")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.png")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -2164,8 +2291,8 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -2190,7 +2317,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -2204,15 +2331,15 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test OIDC app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -2221,8 +2348,8 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 						"groups.#": "2",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
-						"groups.1": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
+						"groups.1": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.type", "WORKER"),
@@ -2240,7 +2367,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -2254,8 +2381,8 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -2280,7 +2407,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -2420,7 +2547,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -2432,15 +2559,15 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_SAML_Full(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test SAML app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
@@ -2449,8 +2576,8 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 						"groups.#": "2",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
-						"groups.1": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
+						"groups.1": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "1"),
@@ -2461,10 +2588,10 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", ""),
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_REDIRECT"),
@@ -2476,6 +2603,22 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -2498,8 +2641,8 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_SAML_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -2514,7 +2657,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "false"),
@@ -2542,7 +2685,7 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 	signingKeyNotSet := resource.TestStep{
 		Config: testAccApplicationConfig_SAML_SigningKeyNotSet(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 		),
 	}
@@ -2550,20 +2693,20 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 	signingKeyIDAttr := resource.TestStep{
 		Config: testAccApplicationConfig_SAML_SigningKeyIDAttr(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", ""),
-			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
 		),
 	}
 
 	signingKeyBlock := resource.TestStep{
 		Config: testAccApplicationConfig_SAML_SigningKeyBlock(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", "SHA384withECDSA"),
-			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
 		),
 	}
 
@@ -2605,7 +2748,7 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -2617,13 +2760,13 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_ExternalLinkFull(resourceName, name, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test external link app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]string{
@@ -2631,8 +2774,8 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 						"groups.#": "2",
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "access_control_group_options.*", map[string]*regexp.Regexp{
-						"groups.0": verify.P1ResourceIDRegexp,
-						"groups.1": verify.P1ResourceIDRegexp,
+						"groups.0": verify.P1ResourceIDRegexpFullString,
+						"groups.1": verify.P1ResourceIDRegexpFullString,
 					}),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
@@ -2640,6 +2783,22 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.0.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -2662,8 +2821,8 @@ func TestAccApplication_ExternalLinkMinimal(t *testing.T) {
 			{
 				Config: testAccApplicationConfig_ExternalLinkMinimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
@@ -2710,6 +2869,46 @@ func TestAccApplication_Enabled(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id" and must match regex: .*`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id" and must match regex: .*`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/application_id" and must match regex: .*`),
 			},
 		},
 	})

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -22,13 +21,11 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type CredentialIssuerProfileResource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type CredentialIssuerProfileResource serviceClientType
 
 type CredentialIssuerProfileResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
@@ -132,14 +129,13 @@ func (r *CredentialIssuerProfileResource) Configure(ctx context.Context, req res
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CredentialIssuerProfileResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -161,7 +157,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).Execute()
+			return r.Client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).Execute()
 		},
 		"ReadCredentialIssuerProfile",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -184,7 +180,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+				return r.Client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 			},
 			"CreateCredentialIssuerProfile",
 			framework.DefaultCustomError,
@@ -200,7 +196,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+				return r.Client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 			},
 			"UpdateCredentialIssuerProfile",
 			framework.DefaultCustomError,
@@ -223,7 +219,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CredentialIssuerProfileResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -244,7 +240,7 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, data.EnvironmentId.ValueString()).Execute()
+			return r.Client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, data.EnvironmentId.ValueString()).Execute()
 
 		},
 		"ReadCredentialIssuerProfile",
@@ -271,7 +267,7 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state CredentialIssuerProfileResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -293,7 +289,7 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+			return r.Client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
 		},
 		"UpdateCredentialIssuerProfile",
 		framework.DefaultCustomError,
@@ -318,19 +314,37 @@ func (r *CredentialIssuerProfileResource) Delete(ctx context.Context, req resour
 }
 
 func (r *CredentialIssuerProfileResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "credential_issuer_profile_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/credential_issuer_profile_id/\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *CredentialIssuerProfileResourceModel) expand() *credentials.CredentialIssuerProfile {

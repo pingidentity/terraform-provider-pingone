@@ -11,6 +11,10 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
+type serviceClientType struct {
+	Client *management.APIClient
+}
+
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewAgreementEnableResource,
@@ -33,6 +37,7 @@ func Resources() []func() resource.Resource {
 		NewSystemApplicationResource,
 		NewTrustedEmailAddressResource,
 		NewTrustedEmailDomainResource,
+		NewWebhookResource,
 	}
 }
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,6 +13,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -585,17 +585,25 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceMFAPolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/mfaPolicyID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "mfa_device_policy_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, mfaPolicyID := attributes[0], attributes[1]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.SetId(mfaPolicyID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["mfa_device_policy_id"])
 
 	resourceMFAPolicyRead(ctx, d, meta)
 

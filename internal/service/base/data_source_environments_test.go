@@ -30,11 +30,11 @@ func TestAccEnvironmentsDataSource_BySCIMFilter(t *testing.T) {
 			{
 				Config: testAccEnvironmentsDataSourceConfig_BySCIMFilter(resourceName, name, licenseID, fmt.Sprintf(`(name sw \"%s\")`, name)),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "3"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -56,7 +56,7 @@ func TestAccEnvironmentsDataSource_NotFound(t *testing.T) {
 			{
 				Config: testAccEnvironmentsDataSourceConfig_NotFound(resourceName, fmt.Sprintf(`(organization.id eq \"%s\")`, uuid.New().String())),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "0"),
 				),
 			},

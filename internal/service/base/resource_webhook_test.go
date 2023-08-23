@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -176,8 +177,8 @@ func TestAccWebhook_Full(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -191,18 +192,33 @@ func TestAccWebhook_Full(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_tags.*", "adminIdentityEvent"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.ip_address_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.useragent_exposed", "true"),
 				),
+			},
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -225,8 +241,8 @@ func TestAccWebhook_Minimal(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -265,8 +281,8 @@ func TestAccWebhook_Change(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -280,13 +296,13 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_tags.*", "adminIdentityEvent"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.ip_address_exposed", "true"),
@@ -296,8 +312,8 @@ func TestAccWebhook_Change(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -318,8 +334,8 @@ func TestAccWebhook_Change(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
@@ -333,13 +349,13 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_tags.*", "adminIdentityEvent"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.ip_address_exposed", "true"),
@@ -350,7 +366,7 @@ func TestAccWebhook_Change(t *testing.T) {
 	})
 }
 
-func TestAccWebhook_Applications(t *testing.T) {
+func TestAccWebhook_Webhooks(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -368,17 +384,17 @@ func TestAccWebhook_Applications(t *testing.T) {
 				Config: testAccWebhookConfig_Profile1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
 				Config: testAccWebhookConfig_Profile2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -403,18 +419,58 @@ func TestAccWebhook_Populations(t *testing.T) {
 				Config: testAccWebhookConfig_Profile1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
 				Config: testAccWebhookConfig_Profile2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
 				),
+			},
+		},
+	})
+}
+
+func TestAccWebhook_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_webhook.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckWebhookDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccWebhookConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

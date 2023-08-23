@@ -11,9 +11,15 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
+type serviceClientType struct {
+	Client *verify.APIClient
+}
+
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewVerifyPolicyResource,
+		NewVoicePhraseResource,
+		NewVoicePhraseContentResource,
 	}
 }
 
@@ -21,6 +27,9 @@ func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewVerifyPolicyDataSource,
 		NewVerifyPoliciesDataSource,
+		NewVoicePhraseDataSource,
+		NewVoicePhraseContentDataSource,
+		NewVoicePhraseContentsDataSource,
 	}
 }
 

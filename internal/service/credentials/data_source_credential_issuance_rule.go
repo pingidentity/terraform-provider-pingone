@@ -12,16 +12,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type CredentialIssuanceRuleDataSource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type CredentialIssuanceRuleDataSource serviceClientType
 
 type CredentialIssuanceRuleDataSourceModel struct {
 	Id                         types.String `tfsdk:"id"`
@@ -221,14 +217,13 @@ func (r *CredentialIssuanceRuleDataSource) Configure(ctx context.Context, req da
 		return
 	}
 
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
+	r.Client = preparedClient
 }
 
 func (r *CredentialIssuanceRuleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *CredentialIssuanceRuleDataSourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -247,7 +242,7 @@ func (r *CredentialIssuanceRuleDataSource) Read(ctx context.Context, req datasou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialIssuanceRulesApi.ReadOneCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.CredentialIssuanceRuleId.ValueString()).Execute()
+			return r.Client.CredentialIssuanceRulesApi.ReadOneCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.CredentialIssuanceRuleId.ValueString()).Execute()
 		},
 		"ReadOneCredentialIssuanceRule",
 		framework.DefaultCustomError,
