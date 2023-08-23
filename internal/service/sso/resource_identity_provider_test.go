@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
@@ -169,7 +168,7 @@ func TestAccIdentityProvider_Full(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -238,7 +237,7 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1052,7 +1051,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
@@ -169,10 +168,10 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 
 	name := resourceName
 
-	logoData, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	logoData, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	logo := base64.StdEncoding.EncodeToString(logoData)
 
-	backgroundData, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-background.jpg")
+	backgroundData, _ := os.ReadFile("../../acctest/test_assets/image/image-background.jpg")
 	background := base64.StdEncoding.EncodeToString(backgroundData)
 
 	resource.Test(t, resource.TestCase{
@@ -273,10 +272,10 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 
 	name := resourceName
 
-	logoData, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	logoData, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	logo := base64.StdEncoding.EncodeToString(logoData)
 
-	backgroundData, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-background.jpg")
+	backgroundData, _ := os.ReadFile("../../acctest/test_assets/image/image-background.jpg")
 	background := base64.StdEncoding.EncodeToString(backgroundData)
 
 	resource.Test(t, resource.TestCase{

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
@@ -169,7 +168,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -320,7 +319,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -478,7 +477,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -646,7 +645,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1167,7 +1166,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1319,7 +1318,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1496,7 +1495,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1651,7 +1650,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1831,7 +1830,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -1980,7 +1979,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -2135,7 +2134,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.png")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.png")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -2280,7 +2279,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.png")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.png")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -2548,7 +2547,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -2749,7 +2748,7 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{

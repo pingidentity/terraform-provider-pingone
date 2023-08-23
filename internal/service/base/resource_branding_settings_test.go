@@ -3,7 +3,6 @@ package base_test
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
@@ -30,7 +29,7 @@ func TestAccBrandingSettings_Full(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -140,7 +139,7 @@ func TestAccBrandingSettings_Minimal3(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
@@ -176,7 +175,7 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 
 	name := resourceName
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
