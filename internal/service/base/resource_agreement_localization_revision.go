@@ -18,17 +18,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	agreementmanagementservice "github.com/pingidentity/terraform-provider-pingone/internal/service/agreementmanagement"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type AgreementLocalizationRevisionResource struct {
-	managementClient *management.APIClient
-	region           model.RegionMapping
+	managementClient          *management.APIClient
+	agreementManagementClient *agreementmanagement.APIClient
+	region                    model.RegionMapping
 }
 
 type AgreementLocalizationRevisionResourceModel struct {
@@ -179,6 +182,18 @@ func (r *AgreementLocalizationRevisionResource) Configure(ctx context.Context, r
 	}
 
 	r.managementClient = preparedClient
+
+	agreementManagementPreparedClient, err := agreementmanagementservice.PrepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
+
+		return
+	}
+
+	r.agreementManagementClient = agreementManagementPreparedClient
 	r.region = resourceConfig.Client.API.Region
 }
 
@@ -269,8 +284,31 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 		return
 	}
 
+	var agreementText string
+	if !data.Text.IsNull() {
+		agreementText = data.Text.ValueString()
+	} else {
+		var agreementTextResponse *agreementmanagement.AgreementRevisionText
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				return r.agreementManagementClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
+			},
+			"ReadOneAgreementLanguageRevision",
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+			&agreementTextResponse,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		agreementText = agreementTextResponse.GetData()
+	}
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response, data.Text.ValueString())...)
+	resp.Diagnostics.Append(data.toState(response, agreementText)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
