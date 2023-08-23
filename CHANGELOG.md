@@ -2,6 +2,7 @@
 
 NOTES:
 
+* Code optimisation for all resources and data sources to remove redundant code. ([#507](https://github.com/pingidentity/terraform-provider-pingone/issues/507))
 * Optimised code and add input validation to import resource state for every resource. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
 
 FEATURES:
