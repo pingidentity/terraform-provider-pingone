@@ -6,6 +6,7 @@ NOTES:
 * Optimised code and add input validation to import resource state for every resource. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
 * `resource/pingone_credential_issuer_profile`: Removal of redundant code. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
 * `resource/pingone_credential_type`: Improved the `credential_type` documentation example. Corrected the placement of `card_design_template` within the example, and clarified the usage of `pingone_image` resource to assign the `background_image` and `logo_image` values. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
+* `resource/pingone_sign_on_policy_action`: Fix potential "slice out of bounds" issues. ([#525](https://github.com/pingidentity/terraform-provider-pingone/issues/525))
 * bump `github.com/hashicorp/terraform-plugin-framework` v1.3.4 => v1.3.5 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.3.1 => v0.4.0 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.3 => v0.10.4 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
