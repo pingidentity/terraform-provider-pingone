@@ -2,6 +2,7 @@ package base_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -23,6 +24,10 @@ func TestAccBrandingThemeDefault_Full(t *testing.T) {
 
 	name := resourceName
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -30,7 +35,7 @@ func TestAccBrandingThemeDefault_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBrandingThemeDefaultConfig_Full(resourceName, name),
+				Config: testAccBrandingThemeDefaultConfig_Full(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -66,6 +71,10 @@ func TestAccBrandingThemeDefault_BadParameters(t *testing.T) {
 
 	name := resourceName
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -74,7 +83,7 @@ func TestAccBrandingThemeDefault_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccBrandingThemeDefaultConfig_Full(resourceName, name),
+				Config: testAccBrandingThemeDefaultConfig_Full(environmentName, licenseID, resourceName, name),
 			},
 			// Errors
 			{
@@ -87,12 +96,12 @@ func TestAccBrandingThemeDefault_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccBrandingThemeDefaultConfig_Full(resourceName, name string) string {
+func testAccBrandingThemeDefaultConfig_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_branding_theme" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[2]s.id
 
   name     = "%[2]s"
   template = "split"
@@ -108,8 +117,8 @@ resource "pingone_branding_theme" "%[2]s" {
 }
 
 resource "pingone_branding_theme_default" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[2]s.id
 
   branding_theme_id = pingone_branding_theme.%[2]s.id
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
