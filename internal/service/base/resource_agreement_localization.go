@@ -263,14 +263,14 @@ func (r *AgreementLocalizationResource) Read(ctx context.Context, req resource.R
 	var language *management.Language
 	if data.LanguageId.IsNull() || data.LanguageId.IsUnknown() {
 		var d diag.Diagnostics
-		language, d = findLanguageByLocale_Framework(ctx, r.client, data.EnvironmentId.ValueString(), response.GetLocale())
+		language, d = findLanguageByLocale_Framework(ctx, r.Client, data.EnvironmentId.ValueString(), response.GetLocale())
 		resp.Diagnostics.Append(d...)
 	} else {
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.LanguagesApi.ReadOneLanguage(ctx, data.EnvironmentId.ValueString(), data.LanguageId.ValueString()).Execute()
+				return r.Client.LanguagesApi.ReadOneLanguage(ctx, data.EnvironmentId.ValueString(), data.LanguageId.ValueString()).Execute()
 			},
 			"ReadOneLanguage",
 			framework.CustomErrorResourceNotFoundWarning,
