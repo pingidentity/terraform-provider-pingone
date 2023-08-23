@@ -363,6 +363,7 @@ func (r *AgreementLocalizationEnableResource) ImportState(ctx context.Context, r
 
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("agreement_localization_id"), attributes["agreement_localization_id"])...)
 }
 
 func (p *AgreementLocalizationEnableResourceModel) expand(existingObject *management.AgreementLanguage) *management.AgreementLanguage {
