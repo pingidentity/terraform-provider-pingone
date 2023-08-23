@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -79,6 +81,10 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the issuer profile was created.",
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"updated_at": schema.StringAttribute{
@@ -164,11 +170,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 	}
 
 	// Build the model for the Create API call
-	CredentialIssuerProfile, d := plan.expand()
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	credentialIssuerProfile := plan.expand()
 
 	// Execute a Create or Update depending on existence of credential issuer profile
 	var response *credentials.CredentialIssuerProfile
@@ -178,7 +180,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+				return r.Client.CredentialIssuersApi.CreateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*credentialIssuerProfile).Execute()
 			},
 			"CreateCredentialIssuerProfile",
 			framework.DefaultCustomError,
@@ -194,7 +196,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*CredentialIssuerProfile).Execute()
+				return r.Client.CredentialIssuersApi.UpdateCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).CredentialIssuerProfile(*credentialIssuerProfile).Execute()
 			},
 			"UpdateCredentialIssuerProfile",
 			framework.DefaultCustomError,
@@ -279,11 +281,7 @@ func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resour
 	}
 
 	// Build the model for the API
-	CredentialIssuerProfile, d := plan.expand()
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	CredentialIssuerProfile := plan.expand()
 
 	// Run the API call
 	var response *credentials.CredentialIssuerProfile
@@ -349,8 +347,7 @@ func (r *CredentialIssuerProfileResource) ImportState(ctx context.Context, req r
 	}
 }
 
-func (p *CredentialIssuerProfileResourceModel) expand() (*credentials.CredentialIssuerProfile, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *CredentialIssuerProfileResourceModel) expand() *credentials.CredentialIssuerProfile {
 
 	data := credentials.NewCredentialIssuerProfile(p.Name.ValueString())
 
@@ -359,36 +356,7 @@ func (p *CredentialIssuerProfileResourceModel) expand() (*credentials.Credential
 
 	data.SetApplicationInstance(*applicationInstanceId)
 
-	if !p.CreatedAt.IsNull() && !p.CreatedAt.IsUnknown() {
-		createdAt, err := time.Parse(time.RFC3339, p.CreatedAt.ValueString())
-		if err != nil {
-			diags.AddWarning(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected createdAt value: %s.  Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetCreatedAt(createdAt)
-	}
-
-	if !p.UpdatedAt.IsNull() && !p.UpdatedAt.IsUnknown() {
-		updatedAt, err := time.Parse(time.RFC3339, p.UpdatedAt.ValueString())
-		if err != nil {
-			diags.AddWarning(
-				"Unexpected Value",
-				fmt.Sprintf("Unexpected updatedAt value: %s.  Please report this to the provider maintainers.", err.Error()),
-			)
-		}
-		data.SetUpdatedAt(updatedAt)
-
-		if data == nil {
-			diags.AddWarning(
-				"Unexpected Value",
-				"Credential Issuer Profile object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
-			)
-		}
-	}
-
-	return data, diags
+	return data
 }
 
 func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.CredentialIssuerProfile) diag.Diagnostics {
@@ -406,7 +374,7 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.ApplicationInstanceId = framework.StringToTF(*apiObject.GetApplicationInstance().Id)
-	p.CreatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 

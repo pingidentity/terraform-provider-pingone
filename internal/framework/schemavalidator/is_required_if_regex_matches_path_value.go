@@ -100,8 +100,9 @@ func (v IsRequiredIfRegexMatchesPathValueValidator) Validate(ctx context.Context
 			}
 
 			// Found a matched path.  Compare the matched path to the provided path.
-			// If a regex match, and the current argument has not been set, return an error.
-			if v.Regexp.MatchString(matchedPathValue.String()) && (req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown()) {
+			// If a regex match, and the current argument has not been set (is null),
+			// return an error.
+			if v.Regexp.MatchString(matchedPathValue.String()) && req.ConfigValue.IsNull() {
 				resp.Diagnostics.Append(validatordiag.InvalidAttributeValueMatchDiagnostic(
 					req.Path,
 					v.Description(ctx),
