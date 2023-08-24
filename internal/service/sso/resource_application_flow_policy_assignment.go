@@ -290,8 +290,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) ImportState(ctx context.Contex
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:     "flow_policy_id",
-			Regexp:    verify.P1DVResourceIDRegexp,
+			Label:     "flow_policy_assignment_id",
+			Regexp:    verify.P1ResourceIDRegexp,
 			PrimaryID: true,
 		},
 	}
