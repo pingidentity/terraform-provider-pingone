@@ -1,5 +1,9 @@
 ## 0.20.1 (Unreleased)
 
+BUG FIXES:
+
+* `resource/pingone_environment`: Fixed "Incompatible environment region for the organization tenant" error when the `region` parameter is defaulted from the client connection. ([#535](https://github.com/pingidentity/terraform-provider-pingone/issues/535))
+
 ## 0.20.0 (29 August 2023)
 
 NOTES:
