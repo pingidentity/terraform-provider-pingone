@@ -196,12 +196,15 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				Computed:            true,
 				Default: stringdefaultinternal.StaticStringUnknownable(func() basetypes.StringValue {
 
-					region := types.StringUnknown()
 					if v := os.Getenv("PINGONE_REGION"); v != "" {
-						region = framework.StringToTF(v)
+						return framework.StringToTF(v)
 					}
 
-					return region
+					if r.region.Region != "" {
+						return types.StringValue(r.region.Region)
+					}
+
+					return types.StringUnknown()
 				}()),
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -396,6 +399,25 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 	// Deprecated end
 	///////////////////
 
+	var regionPlan types.String
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("region"), &regionPlan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if regionPlan.IsUnknown() {
+
+		if r.region.Region == "" {
+			resp.Diagnostics.AddError(
+				"Cannot determine the default region",
+				"The PingOne region default value cannot be determined.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
+			)
+			return
+		}
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("region"), types.StringValue(r.region.Region))...)
+	}
+
 	var servicePlan []environmentServiceModel
 	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("service"), &servicePlan)...)
 	if resp.Diagnostics.HasError() {
@@ -455,6 +477,7 @@ func (r *EnvironmentResource) Configure(ctx context.Context, req resource.Config
 	}
 
 	r.client = preparedClient
+	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -484,7 +507,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// Build the model for the API
-	environment, population, d := plan.expand(ctx, r.region.APICode)
+	environment, population, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -674,7 +697,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// Build the model for the API
-	environment, population, d := plan.expand(ctx, r.region.APICode)
+	environment, population, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1011,7 +1034,7 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 	return diags
 }
 
-func (p *environmentResourceModel) expand(ctx context.Context, region management.EnumRegionCode) (*management.Environment, *management.Population, diag.Diagnostics) {
+func (p *environmentResourceModel) expand(ctx context.Context) (*management.Environment, *management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var environmentLicense management.EnvironmentLicense
@@ -1019,11 +1042,7 @@ func (p *environmentResourceModel) expand(ctx context.Context, region management
 		environmentLicense = *management.NewEnvironmentLicense(p.LicenseId.ValueString())
 	}
 
-	if !p.Region.IsNull() && !p.Region.IsUnknown() {
-		region = model.FindRegionByName(p.Region.ValueString()).APICode
-	}
-
-	environment := management.NewEnvironment(environmentLicense, p.Name.ValueString(), region, management.EnumEnvironmentType(p.Type.ValueString()))
+	environment := management.NewEnvironment(environmentLicense, p.Name.ValueString(), model.FindRegionByName(p.Region.ValueString()).APICode, management.EnumEnvironmentType(p.Type.ValueString()))
 
 	if !p.Description.IsNull() {
 		environment.SetDescription(p.Description.ValueString())
