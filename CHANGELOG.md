@@ -1,5 +1,15 @@
 ## 0.20.1 (Unreleased)
 
+NOTES:
+
+* bump `github.com/golangci/golangci-lint` v1.54.1 => v1.54.2 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/google/uuid` v1.3.0 => v1.3.1 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` v0.11.0 => v0.12.0 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.27.0 => v2.28.0 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.26.0 => v0.27.0 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.4 => v0.10.5 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/terraform-linters/tflint` v0.47.0 => v0.48.0 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+
 BUG FIXES:
 
 * `resource/pingone_environment`: Fixed "Incompatible environment region for the organization tenant" error when the `region` parameter is defaulted from the client connection. ([#535](https://github.com/pingidentity/terraform-provider-pingone/issues/535))
