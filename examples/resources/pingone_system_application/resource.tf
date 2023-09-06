@@ -14,4 +14,7 @@ resource "pingone_system_application" "pingone_self_service" {
 
   type    = "PING_ONE_SELF_SERVICE"
   enabled = true
+
+  apply_default_theme         = true
+  enable_default_theme_footer = true
 }
