@@ -316,6 +316,7 @@ Required:
 Optional:
 
 - `assertion_signed_enabled` (Boolean) A boolean that specifies whether the SAML assertion itself should be signed. Defaults to `true`.
+- `enable_requested_authn_context` (Boolean) A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
 - `idp_signing_key` (Block List, Max: 1) SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider. (see [below for nested schema](#nestedblock--saml_options--idp_signing_key))
 - `idp_signing_key_id` (String, Deprecated) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.

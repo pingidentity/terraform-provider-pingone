@@ -556,6 +556,11 @@ func ResourceApplication() *schema.Resource {
 								},
 							},
 						},
+						"enable_requested_authn_context": {
+							Description: "A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+						},
 						"nameid_format": {
 							Description: "A string that specifies the format of the Subject NameID attibute in the SAML assertion.",
 							Type:        schema.TypeString,
@@ -1509,6 +1514,10 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetIdpSigning(idpSigning)
 		}
 
+		if v1, ok := samlOptions["enable_requested_authn_context"].(bool); ok {
+			application.SetEnableRequestedAuthnContext(v1)
+		}
+
 		if v1, ok := samlOptions["nameid_format"].(string); ok && v1 != "" {
 			application.SetNameIdFormat(v1)
 		}
@@ -1982,6 +1991,12 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	} else {
 		item["idp_signing_key"] = nil
 		item["idp_signing_key_id"] = nil
+	}
+
+	if v, ok := application.GetEnableRequestedAuthnContextOk(); ok {
+		item["enable_requested_authn_context"] = v
+	} else {
+		item["enable_requested_authn_context"] = nil
 	}
 
 	if v, ok := application.GetNameIdFormatOk(); ok {
