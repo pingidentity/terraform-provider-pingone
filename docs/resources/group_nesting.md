@@ -40,9 +40,9 @@ resource "pingone_group_nesting" "my_group_nesting" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the group in.
-- `group_id` (String) The ID of the parent group to assign the nested group to.
-- `nested_group_id` (String) The ID of the group to configure as a nested group.
+- `environment_id` (String) The ID of the environment to manage the group nesting in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `group_id` (String) The ID of the parent group to assign the nested group to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `nested_group_id` (String) The ID of the group to configure as a nested group.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
