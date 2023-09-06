@@ -62,6 +62,8 @@ func TestAccSystemApplication_Portal(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ALL_GROUPS"),
+		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "enable_default_theme_footer"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -71,6 +73,8 @@ func TestAccSystemApplication_Portal(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "name", "PingOne Application Portal"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "access_control_role_type"),
+		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "false"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "enable_default_theme_footer"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -81,11 +85,11 @@ func TestAccSystemApplication_Portal(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccSystemApplicationConfig_Full(resourceName, applicationType, false),
+				Config: testAccSystemApplicationConfig_Portal_Full(resourceName, false),
 				Check:  fullCheck,
 			},
 			{
-				Config:  testAccSystemApplicationConfig_Full(resourceName, applicationType, false),
+				Config:  testAccSystemApplicationConfig_Portal_Full(resourceName, false),
 				Destroy: true,
 			},
 			// Minimal
@@ -99,7 +103,7 @@ func TestAccSystemApplication_Portal(t *testing.T) {
 			},
 			// Change
 			{
-				Config: testAccSystemApplicationConfig_Full(resourceName, applicationType, false),
+				Config: testAccSystemApplicationConfig_Portal_Full(resourceName, false),
 				Check:  fullCheck,
 			},
 			{
@@ -107,7 +111,7 @@ func TestAccSystemApplication_Portal(t *testing.T) {
 				Check:  minimalCheck,
 			},
 			{
-				Config: testAccSystemApplicationConfig_Full(resourceName, applicationType, false),
+				Config: testAccSystemApplicationConfig_Portal_Full(resourceName, false),
 				Check:  fullCheck,
 			},
 			// Test importing the resource
@@ -149,6 +153,8 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ALL_GROUPS"),
+		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "enable_default_theme_footer", "true"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -158,6 +164,8 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "name", "PingOne Self-Service - MyAccount"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "access_control_role_type"),
+		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "false"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "enable_default_theme_footer"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -168,11 +176,11 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccSystemApplicationConfig_Full(resourceName, applicationType, true),
+				Config: testAccSystemApplicationConfig_SelfService_Full(resourceName, true),
 				Check:  fullCheck,
 			},
 			{
-				Config:  testAccSystemApplicationConfig_Full(resourceName, applicationType, true),
+				Config:  testAccSystemApplicationConfig_SelfService_Full(resourceName, true),
 				Destroy: true,
 			},
 			// Minimal
@@ -186,7 +194,7 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 			},
 			// Change
 			{
-				Config: testAccSystemApplicationConfig_Full(resourceName, applicationType, true),
+				Config: testAccSystemApplicationConfig_SelfService_Full(resourceName, true),
 				Check:  fullCheck,
 			},
 			{
@@ -194,7 +202,7 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 				Check:  minimalCheck,
 			},
 			{
-				Config: testAccSystemApplicationConfig_Full(resourceName, applicationType, true),
+				Config: testAccSystemApplicationConfig_SelfService_Full(resourceName, true),
 				Check:  fullCheck,
 			},
 			// Test importing the resource
@@ -212,10 +220,6 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
-			},
-			{
-				Config:  testAccSystemApplicationConfig_Full(resourceName, applicationType, true),
-				Destroy: true,
 			},
 		},
 	})
@@ -275,7 +279,7 @@ resource "pingone_system_application" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-func testAccSystemApplicationConfig_Full(resourceName, applicationType string, enabled bool) string {
+func testAccSystemApplicationConfig_Portal_Full(resourceName string, enabled bool) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -294,8 +298,8 @@ resource "pingone_group" "%[2]s-2" {
 resource "pingone_system_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  type    = "%[3]s"
-  enabled = %[4]t
+  type    = "PING_ONE_PORTAL"
+  enabled = %[3]t
 
   access_control_role_type = "ADMIN_USERS_ONLY"
   access_control_group_options = {
@@ -306,7 +310,48 @@ resource "pingone_system_application" "%[2]s" {
 
     type = "ALL_GROUPS"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, applicationType, enabled)
+
+  apply_default_theme = true
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, enabled)
+}
+
+func testAccSystemApplicationConfig_SelfService_Full(resourceName string, enabled bool) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_group" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s-1"
+}
+
+resource "pingone_group" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s-2"
+}
+
+resource "pingone_system_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  type    = "PING_ONE_SELF_SERVICE"
+  enabled = %[3]t
+
+  access_control_role_type = "ADMIN_USERS_ONLY"
+  access_control_group_options = {
+    groups = [
+      pingone_group.%[2]s-2.id,
+      pingone_group.%[2]s-1.id,
+    ]
+
+    type = "ALL_GROUPS"
+  }
+
+  apply_default_theme         = true
+  enable_default_theme_footer = true
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, enabled)
 }
 
 func testAccSystemApplicationConfig_Minimal(resourceName, applicationType string) string {

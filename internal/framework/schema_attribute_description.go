@@ -49,8 +49,14 @@ func (r SchemaAttributeDescription) DefaultValue(defaultValue any) SchemaAttribu
 		defaultValueString = v
 	case int:
 		defaultValueString = strconv.Itoa(v)
+	case int32:
+		defaultValueString = strconv.Itoa(int(v))
+	case int64:
+		defaultValueString = strconv.FormatInt(v, 10)
+	case bool:
+		defaultValueString = strconv.FormatBool(v)
 	default:
-		defaultValueString = "DOC ERROR: Unknown default type"
+		defaultValueString = "DOC ERROR: Unknown default data type"
 	}
 	return r.AppendStringValue("Defaults to", defaultValueString)
 }

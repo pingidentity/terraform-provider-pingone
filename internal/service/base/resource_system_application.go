@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -40,6 +41,8 @@ type systemApplicationResourceModel struct {
 	Enabled                   types.Bool   `tfsdk:"enabled"`
 	AccessControlRoleType     types.String `tfsdk:"access_control_role_type"`
 	AccessControlGroupOptions types.Object `tfsdk:"access_control_group_options"`
+	ApplyDefaultTheme         types.Bool   `tfsdk:"apply_default_theme"`
+	EnableDefaultThemeFooter  types.Bool   `tfsdk:"enable_default_theme_footer"`
 }
 
 type applicationAccessControlGroupOptionsResourceModel struct {
@@ -100,6 +103,14 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 		"ALL_GROUPS": "the actor must belong to all groups listed in the `groups` property",
 	})
 
+	applyDefaultThemeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether to apply the default theme to the Self-Service or PingOne Portal application.",
+	).DefaultValue(false)
+
+	enableDefaultThemeFooterDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether to show the default theme footer on the self-service application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` and `apply_default_theme` is also `true`.",
+	)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to manage the built-in system applications (PingOne Self-Service and PingOne Portal) in PingOne.",
@@ -131,6 +142,10 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 			"name": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the system application.").Description,
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -182,6 +197,28 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 							),
 						},
 					},
+				},
+			},
+
+			"apply_default_theme": schema.BoolAttribute{
+				Description:         applyDefaultThemeDescription.Description,
+				MarkdownDescription: applyDefaultThemeDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+			},
+
+			"enable_default_theme_footer": schema.BoolAttribute{
+				Description:         enableDefaultThemeFooterDescription.Description,
+				MarkdownDescription: enableDefaultThemeFooterDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.Bool{
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL)),
+						path.MatchRoot("type"),
+					),
 				},
 			},
 		},
@@ -536,6 +573,10 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 			updateApplication.SetAccessControl(*accessControl)
 		}
 
+		if !p.ApplyDefaultTheme.IsNull() && !p.ApplyDefaultTheme.IsUnknown() {
+			updateApplication.SetApplyDefaultTheme(p.ApplyDefaultTheme.ValueBool())
+		}
+
 		data.ApplicationPingOnePortal = updateApplication
 
 		var ok bool
@@ -566,6 +607,14 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 
 		if setAccessControl {
 			updateApplication.SetAccessControl(*accessControl)
+		}
+
+		if !p.ApplyDefaultTheme.IsNull() && !p.ApplyDefaultTheme.IsUnknown() {
+			updateApplication.SetApplyDefaultTheme(p.ApplyDefaultTheme.ValueBool())
+		}
+
+		if !p.EnableDefaultThemeFooter.IsNull() && !p.EnableDefaultThemeFooter.IsUnknown() {
+			updateApplication.SetEnableDefaultThemeFooter(p.EnableDefaultThemeFooter.ValueBool())
 		}
 
 		data.ApplicationPingOneSelfService = updateApplication
@@ -608,6 +657,9 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 			Description:   apiObject.ApplicationPingOnePortal.Description,
 			AccessControl: apiObject.ApplicationPingOnePortal.AccessControl,
 		}
+
+		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOnePortal.GetApplyDefaultThemeOk())
+		p.EnableDefaultThemeFooter = types.BoolNull()
 	}
 
 	if apiObject.ApplicationPingOneSelfService != nil {
@@ -620,6 +672,9 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 			Description:   apiObject.ApplicationPingOneSelfService.Description,
 			AccessControl: apiObject.ApplicationPingOneSelfService.AccessControl,
 		}
+
+		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetApplyDefaultThemeOk())
+		p.EnableDefaultThemeFooter = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetEnableDefaultThemeFooterOk())
 	}
 
 	p.Id = framework.StringToTF(apiObjectCommon.GetId())
