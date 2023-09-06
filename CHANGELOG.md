@@ -1,7 +1,13 @@
 ## 0.21.0 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_group_nesting`: Migrated to plugin framework. ([#543](https://github.com/pingidentity/terraform-provider-pingone/issues/543))
+* `resource/pingone_group`: Migrated to plugin framework. ([#543](https://github.com/pingidentity/terraform-provider-pingone/issues/543))
+
 ENHANCEMENTS:
 
+* `resource/pingone_application`: Added support for whether `requestedAuthnContext` is taken into account in SAML application policy decision-making. ([#542](https://github.com/pingidentity/terraform-provider-pingone/issues/542))
 * `resource/pingone_system_application`: Support the ability to apply active theme configuration to the PingOne Portal and Self-Service applications. ([#541](https://github.com/pingidentity/terraform-provider-pingone/issues/541))
 
 ## 0.20.1 (05 September 2023)
