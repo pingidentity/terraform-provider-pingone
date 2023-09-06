@@ -104,12 +104,12 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 	})
 
 	applyDefaultThemeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether to apply the default theme to the Self-Service or PingOne Portal application.  When `type` is `PING_ONE_PORTAL`, the default is `false`.  When `type` is `PING_ONE_SELF_SERVICE`, the default is `true`.",
-	)
+		"A boolean that specifies whether to apply the default theme to the Self-Service or PingOne Portal application.",
+	).DefaultValue(false)
 
 	enableDefaultThemeFooterDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether to show the default theme footer on the self-service application. Applies only when the `type` is `PING_ONE_SELF_SERVICE` and `apply_default_theme` is also `true`.",
-	).DefaultValue(true)
+		"A boolean that specifies whether to show the default theme footer on the self-service application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` and `apply_default_theme` is also `true`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
