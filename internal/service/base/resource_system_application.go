@@ -142,6 +142,10 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 			"name": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the system application.").Description,
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"enabled": schema.BoolAttribute{
