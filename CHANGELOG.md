@@ -1,5 +1,9 @@
 ## 0.21.0 (Unreleased)
 
+ENHANCEMENTS:
+
+* `resource/pingone_system_application`: Support the ability to apply active theme configuration to the PingOne Portal and Self-Service applications. ([#541](https://github.com/pingidentity/terraform-provider-pingone/issues/541))
+
 ## 0.20.1 (05 September 2023)
 
 NOTES:
