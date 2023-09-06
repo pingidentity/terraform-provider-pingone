@@ -2592,6 +2592,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", ""),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.enable_requested_authn_context", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_REDIRECT"),
@@ -2659,6 +2660,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.enable_requested_authn_context", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_binding", "HTTP_POST"),
@@ -3934,14 +3936,15 @@ resource "pingone_application" "%[2]s" {
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
 
-    assertion_signed_enabled = false
-    idp_signing_key_id       = pingone_key.%[2]s.id
-    nameid_format            = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-    response_is_signed       = true
-    slo_binding              = "HTTP_REDIRECT"
-    slo_endpoint             = "https://www.pingidentity.com/sloendpoint"
-    slo_response_endpoint    = "https://www.pingidentity.com/sloresponseendpoint"
-    slo_window               = 3
+    assertion_signed_enabled       = false
+    idp_signing_key_id             = pingone_key.%[2]s.id
+    enable_requested_authn_context = true
+    nameid_format                  = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed             = true
+    slo_binding                    = "HTTP_REDIRECT"
+    slo_endpoint                   = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint          = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                     = 3
 
     // sp_verification_certificate_ids = []
 
