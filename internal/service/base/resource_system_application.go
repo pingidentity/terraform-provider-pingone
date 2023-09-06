@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -61,7 +62,6 @@ var (
 	_ resource.Resource                = &SystemApplicationResource{}
 	_ resource.ResourceWithConfigure   = &SystemApplicationResource{}
 	_ resource.ResourceWithImportState = &SystemApplicationResource{}
-	_ resource.ResourceWithModifyPlan  = &SystemApplicationResource{}
 )
 
 // New Object
@@ -205,13 +205,14 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 				MarkdownDescription: applyDefaultThemeDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
 			},
 
 			"enable_default_theme_footer": schema.BoolAttribute{
 				Description:         enableDefaultThemeFooterDescription.Description,
 				MarkdownDescription: enableDefaultThemeFooterDescription.MarkdownDescription,
 				Optional:            true,
-				Computed:            true,
 
 				Validators: []validator.Bool{
 					boolvalidatorinternal.ConflictsIfMatchesPathValue(
@@ -222,43 +223,6 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 			},
 		},
 	}
-}
-
-// ModifyPlan
-func (r *SystemApplicationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-
-	// Destruction plan
-	if req.Plan.Raw.IsNull() {
-		return
-	}
-
-	var typeConfig types.String
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("type"), &typeConfig)...)
-
-	var applyDefaultThemeConfig, enableDefaultThemeFooterConfig types.Bool
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("apply_default_theme"), &applyDefaultThemeConfig)...)
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("enable_default_theme_footer"), &enableDefaultThemeFooterConfig)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if applyDefaultThemeConfig.IsNull() {
-		if typeConfig.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE))) {
-			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("apply_default_theme"), types.BoolValue(true))...)
-		}
-
-		if typeConfig.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL))) {
-			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("apply_default_theme"), types.BoolValue(false))...)
-		}
-	}
-
-	if enableDefaultThemeFooterConfig.IsNull() {
-		if typeConfig.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE))) {
-			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("enable_default_theme_footer"), types.BoolValue(true))...)
-		}
-	}
-
 }
 
 func (r *SystemApplicationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {

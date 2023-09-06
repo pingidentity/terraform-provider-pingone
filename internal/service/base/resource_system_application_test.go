@@ -153,8 +153,8 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ALL_GROUPS"),
-		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "enable_default_theme_footer", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "enable_default_theme_footer", "true"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -164,8 +164,8 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "name", "PingOne Self-Service - MyAccount"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "access_control_role_type"),
-		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "enable_default_theme_footer", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "false"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "enable_default_theme_footer"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -348,8 +348,8 @@ resource "pingone_system_application" "%[2]s" {
     type = "ALL_GROUPS"
   }
 
-  apply_default_theme         = false
-  enable_default_theme_footer = false
+  apply_default_theme         = true
+  enable_default_theme_footer = true
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, enabled)
 }
