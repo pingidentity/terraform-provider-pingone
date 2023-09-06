@@ -21,6 +21,7 @@ func Resources() []func() resource.Resource {
 		NewApplicationFlowPolicyAssignmentResource,
 		NewApplicationResourceGrantResource,
 		NewGroupResource,
+		NewGroupNestingResource,
 		NewIdentityProviderAttributeResource,
 		NewPopulationResource,
 		NewResourceAttributeResource,
