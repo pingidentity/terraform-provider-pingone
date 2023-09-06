@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_group`: Migrated to plugin framework.
+```
+
+```release-note:note
+`resource/pingone_group_nesting`: Migrated to plugin framework.
+```
