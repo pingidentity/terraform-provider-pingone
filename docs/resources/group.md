@@ -2,12 +2,12 @@
 page_title: "pingone_group Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne groups
+  Resource to create and manage PingOne groups.
 ---
 
 # pingone_group (Resource)
 
-Resource to create and manage PingOne groups
+Resource to create and manage PingOne groups.
 
 ## Example Usage
 
@@ -29,14 +29,14 @@ resource "pingone_group" "my_awesome_group" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the group in.
+- `environment_id` (String) The ID of the environment to manage the group in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name of the group.
 
 ### Optional
 
 - `description` (String) A description to apply to the group.
 - `external_id` (String) A user defined ID that represents the counterpart group in an external system.
-- `population_id` (String) The ID of the population that the group should be assigned to.
+- `population_id` (String) The ID of the population that the group should be assigned to.  This field is immutable and will trigger a replace plan if changed.
 - `user_filter` (String) A SCIM filter to dynamically assign users to the group.  Examples are found in the [PingOne online documentation](https://docs.pingidentity.com/bundle/pingone/page/kti1564020489340.html).
 
 ### Read-Only

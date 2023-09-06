@@ -152,23 +152,62 @@ func TestAccGroup_Full(t *testing.T) {
 
 	name := resourceName
 
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
+		resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "user_filter", `email ew "@test.com"`),
+		resource.TestCheckResourceAttr(resourceFullName, "external_id", "external_1234"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "population_id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "user_filter"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "external_id"),
+	)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckGroupDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Full
 			{
 				Config: testAccGroupConfig_Full(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
-					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "user_filter", `email ew "@test.com"`),
-					resource.TestCheckResourceAttr(resourceFullName, "external_id", "external_1234"),
-				),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccGroupConfig_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccGroupConfig_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccGroupConfig_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccGroupConfig_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccGroupConfig_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccGroupConfig_Full(resourceName, name),
+				Check:  fullCheck,
 			},
 			// Test importing the resource
 			{
@@ -185,36 +224,6 @@ func TestAccGroup_Full(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
-func TestAccGroup_Minimal(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_group.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGroupDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccGroupConfig_Minimal(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "population_id", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "user_filter", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "external_id", ""),
-				),
 			},
 		},
 	})
@@ -242,19 +251,19 @@ func TestAccGroup_BadParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/group_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/group_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/group_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
