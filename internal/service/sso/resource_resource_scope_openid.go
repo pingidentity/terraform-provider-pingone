@@ -6,265 +6,382 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceResourceScopeOpenID() *schema.Resource {
-	return &schema.Resource{
+// Types
+type ResourceScopeOpenIDResource serviceClientType
 
+type ResourceScopeOpenIDResourceModel struct {
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	ResourceId    types.String `tfsdk:"resource_id"`
+	Name          types.String `tfsdk:"name"`
+	Description   types.String `tfsdk:"description"`
+	MappedClaims  types.Set    `tfsdk:"mapped_claims"`
+}
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &ResourceScopeOpenIDResource{}
+	_ resource.ResourceWithConfigure   = &ResourceScopeOpenIDResource{}
+	_ resource.ResourceWithImportState = &ResourceScopeOpenIDResource{}
+)
+
+// New Object
+func NewResourceScopeOpenIDResource() resource.Resource {
+	return &ResourceScopeOpenIDResource{}
+}
+
+// Metadata
+func (r *ResourceScopeOpenIDResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_resource_scope_openid"
+}
+
+// Schema
+func (r *ResourceScopeOpenIDResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The name of the resource scope.  Predefined scopes of `address`, `email`, `openid`, `phone` and `profile` can be overridden, and new scopes can be defined.  E.g. `myawesomescope`",
+	)
+
+	mappedClaimsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of custom resource attribute IDs.  This property does not control predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.",
+	)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage resource scopes for the OpenID Connect resource.  Predefined scopes can be overridden, and new scopes can be defined.",
 
-		CreateContext: resourceResourceScopeOpenIDCreate,
-		ReadContext:   resourceResourceScopeOpenIDRead,
-		UpdateContext: resourceResourceScopeOpenIDUpdate,
-		DeleteContext: resourceResourceScopeOpenIDDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceResourceScopeOpenIDImport,
-		},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the resource scope in."),
+			),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the resource scope in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
-			},
-			"name": {
-				Description:      "The name of the resource scope.  Predefined scopes of `address`, `email`, `openid`, `phone` and `profile` can be overridden, and new scopes can be defined.  E.g. `myawesomescope`",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"description": {
-				Description: "A description to apply to the resource scope.  The description can only be set when defining new scopes.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-			"mapped_claims": {
-				Description: "A list of custom resource attribute IDs.  This property does not control predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.",
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem: &schema.Schema{
-					Type:             schema.TypeString,
-					ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+			"name": schema.StringAttribute{
+				Description:         nameDescription.Description,
+				MarkdownDescription: nameDescription.MarkdownDescription,
+				Required:            true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
 				},
 			},
-			"resource_id": {
-				Description: "The ID of the OpenID Connect resource.",
-				Type:        schema.TypeString,
+
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A description to apply to the resource scope.  The description can only be set when defining new scopes.").Description,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"mapped_claims": schema.SetAttribute{
+				Description:         mappedClaimsDescription.Description,
+				MarkdownDescription: mappedClaimsDescription.MarkdownDescription,
+				Optional:            true,
+
+				ElementType: types.StringType,
+
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(
+						verify.P1ResourceIDValidator(),
+					),
+				},
+			},
+
+			"resource_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the OpenID Connect resource.").Description,
 				Computed:    true,
 			},
 		},
 	}
 }
 
-func resourceResourceScopeOpenIDCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-
-	var diags diag.Diagnostics
-
-	resource, diags := getOpenIDResource(ctx, apiClient, d.Get("environment_id").(string))
-	if diags.HasError() {
-		return diags
+func (r *ResourceScopeOpenIDResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
 
-	resourceScope, diags := expandResourceScopeOpenID(ctx, apiClient, d, resource.GetId())
-	if diags.HasError() {
-		return diags
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
 	}
 
-	var resp interface{}
+	preparedClient, err := PrepareClient(ctx, resourceConfig)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			err.Error(),
+		)
 
+		return
+	}
+
+	r.Client = preparedClient
+}
+
+func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state ResourceScopeOpenIDResourceModel
+
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resource, d := plan.getResource(ctx, r.Client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	resourceScope, d := plan.expand(ctx, r.Client, *resource)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var resourceScopeResponse *management.ResourceScope
 	if v, ok := resourceScope.GetIdOk(); ok {
 
-		resp, diags = sdk.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
+				return r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
 			},
 			"UpdateResourceScope-OpenID-Create",
-			sdk.DefaultCustomError,
-			nil,
-		)
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&resourceScopeResponse,
+		)...)
 
 	} else {
 
-		resp, diags = sdk.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.ResourceScopesApi.CreateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId()).ResourceScope(*resourceScope).Execute()
+				return r.Client.ResourceScopesApi.CreateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId()).ResourceScope(*resourceScope).Execute()
 			},
-			"CreateResourceScope-OpenID",
-			sdk.DefaultCustomError,
+			"CreateResourceScope-OpenID-Create",
+			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
+			&resourceScopeResponse,
+		)...)
+
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if diags.HasError() {
-		return diags
-	}
+	// Create the state to save
+	state = plan
 
-	respObject := resp.(*management.ResourceScope)
-
-	d.SetId(respObject.GetId())
-
-	return resourceResourceScopeOpenIDRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(resourceScopeResponse)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceResourceScopeOpenIDRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *ResourceScopeOpenIDResourceModel
 
-	var diags diag.Diagnostics
-
-	resource, diags := getOpenIDResource(ctx, apiClient, d.Get("environment_id").(string))
-	if diags.HasError() {
-		return diags
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resource, d := data.getResource(ctx, r.Client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var resourceScopeResponse *management.ResourceScope
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).Execute()
+			return r.Client.ResourceScopesApi.ReadOneResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneResourceScope-OpenID",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&resourceScopeResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if resourceScopeResponse == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.ResourceScope)
-
-	d.Set("name", respObject.GetName())
-
-	if v, ok := respObject.GetDescriptionOk(); ok {
-		d.Set("description", v)
-	} else {
-		d.Set("description", nil)
-	}
-
-	if v, ok := respObject.GetMappedClaimsOk(); ok {
-		d.Set("mapped_claims", v)
-	} else {
-		d.Set("mapped_claims", nil)
-	}
-
-	d.Set("resource_id", resource.GetId())
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(resourceScopeResponse)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceResourceScopeOpenIDUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state ResourceScopeOpenIDResourceModel
 
-	var diags diag.Diagnostics
-
-	resource, diags := getOpenIDResource(ctx, apiClient, d.Get("environment_id").(string))
-	if diags.HasError() {
-		return diags
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	resourceScope, diags := expandResourceScopeOpenID(ctx, apiClient, d, resource.GetId())
-	if diags.HasError() {
-		return diags
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	resource, d := plan.getResource(ctx, r.Client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	resourceScope, d := plan.expand(ctx, r.Client, *resource)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var resourceScopeResponse *management.ResourceScope
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).ResourceScope(*resourceScope).Execute()
+			return r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), plan.Id.ValueString()).ResourceScope(*resourceScope).Execute()
 		},
 		"UpdateResourceScope-OpenID",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
+		&resourceScopeResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceResourceScopeOpenIDRead(ctx, d, meta)
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(resourceScopeResponse)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceResourceScopeOpenIDDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *ResourceScopeOpenIDResourceModel
 
-	var diags diag.Diagnostics
-
-	resource, diags := getOpenIDResource(ctx, apiClient, d.Get("environment_id").(string))
-	if diags.HasError() {
-		return diags
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	if m, err := regexp.MatchString("^(address|email|openid|phone|profile)$", d.Get("name").(string)); err == nil && m {
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-		resourceScope, diags := fetchResourceScopeFromName(ctx, apiClient, d.Get("environment_id").(string), resource.GetId(), d.Get("name").(string))
-		if diags.HasError() {
-			return diags
+	resource, d := data.getResource(ctx, r.Client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if m, err := regexp.MatchString("^(address|email|openid|phone|profile)$", data.Name.ValueString()); err == nil && m {
+
+		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
 		resourceScope.SetMappedClaims([]string{})
 
-		_, diags = sdk.ParseResponse(
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.ResourceScopesApi.UpdateResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).ResourceScope(*resourceScope).Execute()
+				return r.Client.ResourceScopesApi.UpdateResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceScope(*resourceScope).Execute()
 			},
 			"UpdateResourceScope-OpenID-Delete",
-			sdk.DefaultCustomError,
+			framework.DefaultCustomError,
 			nil,
-		)
-		if diags.HasError() {
-			return diags
-		}
+			nil,
+		)...)
 
 	} else {
-		_, diags = sdk.ParseResponse(
+
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := apiClient.ResourceScopesApi.DeleteResourceScope(ctx, d.Get("environment_id").(string), resource.GetId(), d.Id()).Execute()
+				r, err := r.Client.ResourceScopesApi.DeleteResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
 				return nil, r, err
 			},
-			"DeleteResourceScope-OpenID",
-			sdk.CustomErrorResourceNotFoundWarning,
+			"DeleteResourceScope-OpenID-Delete",
+			framework.CustomErrorResourceNotFoundWarning,
 			nil,
-		)
-		if diags.HasError() {
-			return diags
-		}
-
+			nil,
+		)...)
 	}
 
-	return diags
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
-func resourceResourceScopeOpenIDImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *ResourceScopeOpenIDResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -272,67 +389,130 @@ func resourceResourceScopeOpenIDImport(ctx context.Context, d *schema.ResourceDa
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:  "resource_scope_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Label:     "resource_scope_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
-	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
 	}
 
-	d.Set("environment_id", attributes["environment_id"])
-	d.SetId(attributes["resource_scope_id"])
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	resourceResourceScopeOpenIDRead(ctx, d, meta)
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
 
-	return []*schema.ResourceData{d}, nil
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
-func expandResourceScopeOpenID(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData, resourceID string) (*management.ResourceScope, diag.Diagnostics) {
+func (p *ResourceScopeOpenIDResourceModel) getResource(ctx context.Context, apiClient *management.APIClient) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var resourceScope *management.ResourceScope
+	var d diag.Diagnostics
+
+	resource, d := fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), "openid")
+
+	diags.Append(d...)
+
+	if resource == nil {
+		diags.AddError(
+			"Invalid resource",
+			"Cannot manage OpenID scopes as the OpenID resource could not be found.",
+		)
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	p.ResourceId = framework.StringOkToTF(resource.GetIdOk())
+
+	return resource, diags
+}
+
+func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient *management.APIClient, resource management.Resource) (*management.ResourceScope, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var data *management.ResourceScope
 
 	newScope := true
-	if m, err := regexp.MatchString("^(address|email|openid|phone|profile)$", d.Get("name").(string)); err == nil && m {
+	if m, err := regexp.MatchString("^(address|email|openid|phone|profile)$", p.Name.ValueString()); err == nil && m {
 		newScope = false
 
-		resourceScope, diags = fetchResourceScopeFromName(ctx, apiClient, d.Get("environment_id").(string), resourceID, d.Get("name").(string))
+		data, diags = fetchResourceScopeFromName(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), p.Name.ValueString())
 		if diags.HasError() {
 			return nil, diags
 		}
 
 	} else {
-		resourceScope = management.NewResourceScope(d.Get("name").(string)) // ResourceScope |  (optional)
+		data = management.NewResourceScope(p.Name.ValueString())
 	}
 
-	if v, ok := d.GetOk("description"); ok {
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		if newScope {
-			resourceScope.SetDescription(v.(string))
+			data.SetDescription(p.Description.ValueString())
 		} else {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("The scope `%s` is an existing platform scope.  The description cannot be changed.", d.Get("name").(string)),
-			})
+			diags.AddError(
+				"Invalid attribute value",
+				"Cannot update the description of a predefined scope.",
+			)
+		}
+	}
+
+	if !p.MappedClaims.IsNull() && !p.MappedClaims.IsUnknown() {
+
+		var plan []string
+		diags.Append(p.MappedClaims.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
 			return nil, diags
 		}
+
+		data.SetMappedClaims(plan)
 	}
 
-	if v, ok := d.GetOk("mapped_claims"); ok {
+	return data, diags
+}
 
-		if v1, ok := v.(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
-			items := make([]string, 0)
+func (p *ResourceScopeOpenIDResourceModel) validate(ctx context.Context, resource management.Resource) diag.Diagnostics {
+	var diags diag.Diagnostics
 
-			for _, item := range v1.List() {
-				items = append(items, item.(string))
-			}
-
-			resourceScope.SetMappedClaims(items)
-		}
-
+	// Check that the `openid` scope from the `openid` resource is not in the list
+	if v, ok := resource.GetTypeOk(); ok && *v != management.ENUMRESOURCETYPE_OPENID_CONNECT {
+		diags.AddError(
+			"Invalid resource",
+			"This resource cannot control scopes for resources that are of type PingOne API or OpenID Connect.  Please ensure that the resource in the `resource_id` parameter is a custom resource or consider using the `pingone_resource_scope_openid` or `pingone_resource_scope_pingone_api` provider resources.",
+		)
 	}
 
-	return resourceScope, diags
+	return diags
+}
+
+func (p *ResourceScopeOpenIDResourceModel) toState(apiObject *management.ResourceScope) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
+		return diags
+	}
+
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.MappedClaims = framework.StringSetOkToTF(apiObject.GetMappedClaimsOk())
+
+	return diags
 }

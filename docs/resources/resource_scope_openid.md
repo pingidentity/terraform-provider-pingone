@@ -50,13 +50,13 @@ resource "pingone_resource_scope_openid" "my_new_resource_scope" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the resource scope in.
+- `environment_id` (String) The ID of the environment to create the resource scope in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name of the resource scope.  Predefined scopes of `address`, `email`, `openid`, `phone` and `profile` can be overridden, and new scopes can be defined.  E.g. `myawesomescope`
 
 ### Optional
 
 - `description` (String) A description to apply to the resource scope.  The description can only be set when defining new scopes.
-- `mapped_claims` (Set of String) A list of custom resource attribute IDs.  This property does not control predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.
+- `mapped_claims` (Set of String) A set of custom resource attribute IDs.  This property does not control predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.
 
 ### Read-Only
 

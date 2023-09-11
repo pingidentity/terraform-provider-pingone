@@ -211,7 +211,7 @@ func TestAccResourceScopeOpenID_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "0"),
 				),
 			},
@@ -254,7 +254,7 @@ func TestAccResourceScopeOpenID_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					//resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "0"),
 				),
 			},
@@ -341,7 +341,7 @@ func TestAccResourceScopeOpenID_InvalidParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccResourceScopeOpenIDConfig_Full(resourceName, name, "email"),
-				ExpectError: regexp.MustCompile("The scope `email` is an existing platform scope.  The description cannot be changed."),
+				ExpectError: regexp.MustCompile("Invalid attribute value"),
 			},
 			// Configure
 			{
@@ -351,19 +351,19 @@ func TestAccResourceScopeOpenID_InvalidParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_scope_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_scope_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_scope_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
