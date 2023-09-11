@@ -223,7 +223,7 @@ func TestAccResourceScopePingOneAPI_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", fmt.Sprintf("p1:read:user:%s", name)),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "schema_attributes.#", "0"),
 				),
 			},
@@ -234,7 +234,7 @@ func TestAccResourceScopePingOneAPI_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", fmt.Sprintf("p1:update:user:%s", name)),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "schema_attributes.#", "0"),
 				),
 			},
@@ -361,11 +361,11 @@ func TestAccResourceScopePingOneAPI_InvalidParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccResourceScopePingOneAPIConfig_Minimal(resourceName, "testscope"),
-				ExpectError: regexp.MustCompile("Resource scope name must be either `p1:read:user`, `p1:update:user`, `p1:read:user:{suffix}` or `p1:update:user:{suffix}`"),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
 			},
 			{
 				Config:      testAccResourceScopePingOneAPIConfig_Full(resourceName, "p1:read:user"),
-				ExpectError: regexp.MustCompile("The scope `p1:read:user` is an existing platform scope.  The description cannot be changed."),
+				ExpectError: regexp.MustCompile("Invalid attribute value"),
 			},
 			// Configure
 			{
@@ -375,19 +375,19 @@ func TestAccResourceScopePingOneAPI_InvalidParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_scope_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_scope_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_scope_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

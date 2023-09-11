@@ -25,6 +25,9 @@ func Resources() []func() resource.Resource {
 		NewIdentityProviderAttributeResource,
 		NewPopulationResource,
 		NewResourceAttributeResource,
+		NewResourceScopeResource,
+		NewResourceScopeOpenIDResource,
+		NewResourceScopePingOneAPIResource,
 		NewSchemaAttributeResource,
 		NewUserResource,
 	}
@@ -37,6 +40,7 @@ func DataSources() []func() datasource.DataSource {
 		NewPopulationDataSource,
 		NewPopulationsDataSource,
 		NewResourceDataSource,
+		NewResourceScopeDataSource,
 		NewSchemaDataSource,
 		NewUserDataSource,
 		NewUsersDataSource,

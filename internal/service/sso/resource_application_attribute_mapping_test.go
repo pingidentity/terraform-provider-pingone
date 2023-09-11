@@ -795,11 +795,11 @@ resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  resource_id = data.pingone_resource.%[2]s.id
+  resource_name = "openid"
 
-  scopes = [
-    pingone_resource_scope_openid.%[2]s_2.id,
-    pingone_resource_scope_openid.%[2]s.id,
+  scope_names = [
+    pingone_resource_scope_openid.%[2]s_2.name,
+    pingone_resource_scope_openid.%[2]s.name,
   ]
 }
 
@@ -874,11 +874,11 @@ resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  resource_id = data.pingone_resource.%[2]s.id
+  resource_name = "openid"
 
-  scopes = [
-    pingone_resource_scope_openid.%[2]s_2.id,
-    pingone_resource_scope_openid.%[2]s.id,
+  scope_names = [
+    pingone_resource_scope_openid.%[2]s_2.name,
+    pingone_resource_scope_openid.%[2]s.name,
   ]
 }
 

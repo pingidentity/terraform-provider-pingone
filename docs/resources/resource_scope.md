@@ -35,9 +35,9 @@ resource "pingone_resource_scope" "my_resource_scope" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the resource scope in.
+- `environment_id` (String) The ID of the environment to manage the resource scope in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name of the resource scope.
-- `resource_id` (String) The ID of the resource to assign the resource scope to.
+- `resource_id` (String) The ID of the resource to assign the resource scope to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 

@@ -167,7 +167,7 @@ func TestAccResourceScopeDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccResourceScopeDataSourceConfig_NotFoundByName(resourceName),
-				ExpectError: regexp.MustCompile("Cannot find resource scope doesnotexist"),
+				ExpectError: regexp.MustCompile("Cannot find resource scope"),
 			},
 			{
 				Config:      testAccResourceScopeDataSourceConfig_NotFoundByID(resourceName),
