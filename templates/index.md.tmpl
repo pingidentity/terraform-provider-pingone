@@ -21,8 +21,8 @@ For detailed instructions on how to prepare PingOne for Terraform access, see th
 
 For code examples showing how to configure the PingOne service using Terraform, the following resources are available:
 
-- Tutorials and use-case examples at the [Terraform at Ping Identity Documentation](https://terraform.pingidentity.com/examples/).
-- End-to-end solution deployment examples at the [Ping Identity Developers Experience Github](https://github.com/pingidentity-developers-experience?tab=repositories).
+- [Tutorials and use-case examples](https://terraform.pingidentity.com/examples/) at [terraform.pingidentity.com](https://terraform.pingidentity.com).
+- End-to-end solution deployment examples, complete with sample applications at the [Ping Identity Developers Experience Github](https://github.com/pingidentity-developers-experience?tab=repositories).
 
 ## Example Usage
 
