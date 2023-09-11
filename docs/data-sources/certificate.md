@@ -46,7 +46,7 @@ data "pingone_certificate" "example_by_id" {
 - `issuer_dn` (String) A string that specifies the distinguished name of the certificate issuer.
 - `key_length` (Number) An integer that specifies the key length. For RSA keys, options are `2048`, `3072`, `4096` and `7680`. For elliptical curve (EC) keys, options are `224`, `256`, `384` and `521`.
 - `serial_number` (String) An integer (in string data type) that specifies the serial number of the key or certificate.
-- `signature_algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA224withRSA`, `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA224withECDSA`, `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
+- `signature_algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
 - `starts_at` (String) The time the validity period starts.
 - `status` (String) A string that specifies the status of the key. Options are `VALID`, `EXPIRING`, `EXPIRED`, `NOT_YET_VALID`, and `REVOKED`.
 - `subject_dn` (String) A string that specifies the distinguished name of the subject being secured.
