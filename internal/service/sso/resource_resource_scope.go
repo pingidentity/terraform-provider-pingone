@@ -135,17 +135,13 @@ func (r *ResourceScopeResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Validate the plan
-	resp.Diagnostics.Append(plan.validate(ctx, *resource)...)
+	resp.Diagnostics.Append(plan.validate(*resource)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
-	resourceScope, d := plan.expand(ctx)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	resourceScope := plan.expand()
 
 	// Run the API call
 	var resourceScopeResponse *management.ResourceScope
@@ -195,7 +191,7 @@ func (r *ResourceScopeResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	// Validate the plan
-	resp.Diagnostics.Append(data.validate(ctx, *resource)...)
+	resp.Diagnostics.Append(data.validate(*resource)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -251,17 +247,13 @@ func (r *ResourceScopeResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Validate the plan
-	resp.Diagnostics.Append(plan.validate(ctx, *resource)...)
+	resp.Diagnostics.Append(plan.validate(*resource)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
-	resourceScope, d := plan.expand(ctx)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	resourceScope := plan.expand()
 
 	// Run the API call
 	var resourceScopeResponse *management.ResourceScope
@@ -384,19 +376,17 @@ func (p *ResourceScopeResourceModel) getResource(ctx context.Context, apiClient 
 	return resource, diags
 }
 
-func (p *ResourceScopeResourceModel) expand(ctx context.Context) (*management.ResourceScope, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
+func (p *ResourceScopeResourceModel) expand() *management.ResourceScope {
 	data := management.NewResourceScope(p.Name.ValueString())
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	return data, diags
+	return data
 }
 
-func (p *ResourceScopeResourceModel) validate(ctx context.Context, resource management.Resource) diag.Diagnostics {
+func (p *ResourceScopeResourceModel) validate(resource management.Resource) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Check that the `openid` scope from the `openid` resource is not in the list

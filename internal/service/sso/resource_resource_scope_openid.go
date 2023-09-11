@@ -483,7 +483,7 @@ func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient
 	return data, diags
 }
 
-func (p *ResourceScopeOpenIDResourceModel) validate(ctx context.Context, resource management.Resource) diag.Diagnostics {
+func (p *ResourceScopeOpenIDResourceModel) validate(resource management.Resource) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Check that the `openid` scope from the `openid` resource is not in the list

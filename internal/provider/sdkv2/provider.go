@@ -110,7 +110,6 @@ func New(version string) func() *schema.Provider {
 
 				"pingone_password_policy":    sso.DatasourcePasswordPolicy(),
 				"pingone_resource_attribute": sso.DatasourceResourceAttribute(),
-				"pingone_resource_scope":     sso.DatasourceResourceScope(),
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
@@ -134,9 +133,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_identity_provider":                     sso.ResourceIdentityProvider(),
 				"pingone_password_policy":                       sso.ResourcePasswordPolicy(),
 				"pingone_resource":                              sso.ResourceResource(),
-				"pingone_resource_scope":                        sso.ResourceResourceScope(),
-				"pingone_resource_scope_openid":                 sso.ResourceResourceScopeOpenID(),
-				"pingone_resource_scope_pingone_api":            sso.ResourceResourceScopePingOneAPI(),
 				"pingone_sign_on_policy":                        sso.ResourceSignOnPolicy(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
 
