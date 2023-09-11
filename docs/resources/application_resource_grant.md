@@ -22,7 +22,7 @@ resource "pingone_application" "my_awesome_spa" {
   # ...
 }
 
-resource "pingone_application_resource_grant" "my_awesome_spa_openid_resource_grants" {
+resource "pingone_application_resource_grant" "my_awesome_spa_standard_resource_grants" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_spa.id
 
