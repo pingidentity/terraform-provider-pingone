@@ -10,6 +10,8 @@ NOTES:
 * `resource/pingone_resource_scope_openid`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
 * `resource/pingone_resource_scope_pingone_api`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
 * `resource/pingone_resource_scope`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.27.0 => v0.28.0 ([#556](https://github.com/pingidentity/terraform-provider-pingone/issues/556))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.5 => v0.10.6 ([#556](https://github.com/pingidentity/terraform-provider-pingone/issues/556))
 
 ENHANCEMENTS:
 
