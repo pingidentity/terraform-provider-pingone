@@ -347,34 +347,14 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "openid"
-}
-
-data "pingone_resource_scope" "%[2]s-1" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
-
-  name = "email"
-}
-
-data "pingone_resource_scope" "%[2]s-2" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
-
-  name = "profile"
-}
-
 resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  resource_id = data.pingone_resource.%[2]s.id
-  scopes = [
-    data.pingone_resource_scope.%[2]s-1.id,
-    data.pingone_resource_scope.%[2]s-2.id,
+  resource_name = "openid"
+  scope_names = [
+    "email",
+    "profile",
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -398,42 +378,15 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "openid"
-}
-
-data "pingone_resource_scope" "%[2]s-1" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
-
-  name = "email"
-}
-
-data "pingone_resource_scope" "%[2]s-2" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
-
-  name = "profile"
-}
-
-data "pingone_resource_scope" "%[2]s-3" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
-
-  name = "openid"
-}
-
 resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  resource_id = data.pingone_resource.%[2]s.id
-  scopes = [
-    data.pingone_resource_scope.%[2]s-1.id,
-    data.pingone_resource_scope.%[2]s-2.id,
-    data.pingone_resource_scope.%[2]s-3.id,
+  resource_name = "openid"
+  scope_names = [
+    "email",
+    "profile",
+    "openid",
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -488,11 +441,11 @@ resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  resource_id = pingone_resource.%[2]s.id
-  scopes = [
-    pingone_resource_scope.%[2]s-1.id,
-    pingone_resource_scope.%[2]s-2.id,
-    pingone_resource_scope.%[2]s-3.id
+  resource_name = pingone_resource.%[2]s.name
+  scope_names = [
+    pingone_resource_scope.%[2]s-1.name,
+    pingone_resource_scope.%[2]s-2.name,
+    pingone_resource_scope.%[2]s-3.name
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
