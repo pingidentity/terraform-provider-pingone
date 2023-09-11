@@ -57,19 +57,6 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
-data "pingone_resource" "openid_resource" {
-  environment_id = var.environment_id
-
-  name = "openid"
-}
-
-data "pingone_resource_scope" "openid_profile" {
-  environment_id = var.environment_id
-  resource_id    = data.pingone_resource.openid_resource.id
-
-  name = "profile"
-}
-
 resource "pingone_application" "my_awesome_spa" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Single Page App"
@@ -89,10 +76,10 @@ resource "pingone_application_resource_grant" "oidc_grant" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_spa.id
 
-  resource_id = data.pingone_resource.openid_resource.id
+  resource_name = "openid"
 
-  scopes = [
-    data.pingone_resource_scope.openid_profile.id
+  scope_names = [
+    "profile"
   ]
 }
 
@@ -155,10 +142,10 @@ resource "pingone_application_resource_grant" "custom_grant" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_spa.id
 
-  resource_id = pingone_resource.my_resource.id
+  resource_name = pingone_resource.my_resource.name
 
-  scopes = [
-    pingone_resource_scope.my_resource_scope.id
+  scope_names = [
+    pingone_resource_scope.my_resource_scope.name
   ]
 }
 
