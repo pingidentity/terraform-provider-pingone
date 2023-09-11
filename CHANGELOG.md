@@ -2,8 +2,14 @@
 
 NOTES:
 
+* `data-source/pingone_resource_scope`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* `resource/pingone_application_resource_grant`: Deprecated the `resource_id` parameter in favour of the `resource_name` parameter to avoid dependency on the `pingone_resource` data-source. The `resource_id` parameter will be made read-only in a future release. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* `resource/pingone_application_resource_grant`: Deprecated the `scopes` parameter in favour of the `scope_names` parameter to avoid dependency on the `pingone_resource_scope` data-source. The `scopes` parameter will be made read-only in a future release. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
 * `resource/pingone_group_nesting`: Migrated to plugin framework. ([#543](https://github.com/pingidentity/terraform-provider-pingone/issues/543))
 * `resource/pingone_group`: Migrated to plugin framework. ([#543](https://github.com/pingidentity/terraform-provider-pingone/issues/543))
+* `resource/pingone_resource_scope_openid`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* `resource/pingone_resource_scope_pingone_api`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* `resource/pingone_resource_scope`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
 
 ENHANCEMENTS:
 
