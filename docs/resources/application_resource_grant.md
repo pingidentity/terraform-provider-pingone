@@ -11,7 +11,7 @@ Resource to create and manage a resource grant for administrator defined applica
 
 -> Resource grants can be mapped to administrator defined applications that are managed through the `pingone_application` resource, and built-in system applications that are managed through the `pingone_system_application` resource.
 
-## Example Usage
+## Example Usage - Standard Resources
 
 ```terraform
 resource "pingone_environment" "my_environment" {
@@ -22,27 +22,72 @@ resource "pingone_application" "my_awesome_spa" {
   # ...
 }
 
-data "pingone_resource" "openid_resource" {
-  environment_id = pingone_environment.my_environment.id
-
-  name = "openid"
-}
-
-data "pingone_resource_scope" "openid_email" {
-  environment_id = pingone_environment.my_environment.id
-  resource_id    = data.pingone_resource.openid_resource.id
-
-  name = "email"
-}
-
-resource "pingone_application_resource_grant" "foo" {
+resource "pingone_application_resource_grant" "my_awesome_spa_openid_resource_grants" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_spa.id
 
-  resource_id = data.pingone_resource.openid_resource.id
+  resource_name = "openid"
 
-  scopes = [
-    data.pingone_resource_scope.openid_email.id
+  scope_names = [
+    "email",
+    "profile",
+  ]
+}
+
+resource "pingone_application_resource_grant" "my_awesome_spa_pingone_api_resource_grants" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_awesome_spa.id
+
+  resource_name = "PingOne API"
+
+  scope_names = [
+    "p1:read:user",
+    "p1:update:user",
+    "p1:read:sessions",
+    "p1:delete:sessions",
+    "p1:create:device",
+    "p1:read:device",
+    "p1:update:device",
+    "p1:delete:device",
+    "p1:read:userPassword",
+    "p1:reset:userPassword",
+    "p1:validate:userPassword",
+  ]
+}
+```
+
+## Example Usage - Custom Resource
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ...
+}
+
+resource "pingone_application" "my_awesome_spa" {
+  # ...
+}
+
+resource "pingone_resource" "my_custom_resource" {
+  environment_id = pingone_environment.my_environment.id
+
+  name = "My custom resource"
+}
+
+resource "pingone_resource_scope" "my_custom_resource_scope" {
+  environment_id = pingone_environment.my_environment.id
+  resource_id    = pingone_resource.my_custom_resource.id
+
+  name = "example_scope"
+}
+
+resource "pingone_application_resource_grant" "my_awesome_spa_custom_resource_grants" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_awesome_spa.id
+
+  resource_name = pingone_resource.my_custom_resource.name
+
+  scope_names = [
+    pingone_resource_scope.my_custom_resource_scope.name,
   ]
 }
 ```
