@@ -293,6 +293,12 @@ func ResourceApplication() *schema.Resource {
 							Optional:    true,
 							Default:     false,
 						},
+						"require_signed_request_object": {
+							Description: "A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null (default), a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+						},
 						"mobile_app": {
 							Description: fmt.Sprintf("Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 							Type:        schema.TypeList,
@@ -1237,6 +1243,10 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			application.SetSupportUnsignedRequestObject(v1)
 		}
 
+		if v1, ok := oidcOptions["require_signed_request_object"].(bool); ok {
+			application.SetRequireSignedRequestObject(v1)
+		}
+
 		if v1, ok := oidcOptions["mobile_app"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
 			var mobile *management.ApplicationOIDCAllOfMobile
 			mobile, diags = expandMobile(v1[0].(map[string]interface{}))
@@ -1788,6 +1798,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["support_unsigned_request_object"] = v
 	} else {
 		item["support_unsigned_request_object"] = nil
+	}
+
+	if v, ok := application.GetRequireSignedRequestObjectOk(); ok {
+		item["require_signed_request_object"] = v
+	} else {
+		item["require_signed_request_object"] = nil
 	}
 
 	if v, ok := application.GetMobileOk(); ok {
