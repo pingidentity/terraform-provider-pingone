@@ -15,6 +15,7 @@ NOTES:
 
 ENHANCEMENTS:
 
+* `resource/pingone_application`: Added support ability to require a signed request object for OIDC applications. ([#559](https://github.com/pingidentity/terraform-provider-pingone/issues/559))
 * `resource/pingone_application`: Added support for whether `requestedAuthnContext` is taken into account in SAML application policy decision-making. ([#542](https://github.com/pingidentity/terraform-provider-pingone/issues/542))
 * `resource/pingone_system_application`: Support the ability to apply active theme configuration to the PingOne Portal and Self-Service applications. ([#541](https://github.com/pingidentity/terraform-provider-pingone/issues/541))
 
