@@ -463,6 +463,134 @@ func TestAccRiskPredictor_Anonymous_Network_OverwriteUndeletable(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictor_Bot_Detection(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "BOT"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.#", "0"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "BOT"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.#", "0"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Bot_Detection_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_Bot_Detection_OverwriteUndeletable(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+	compactName := "botDetection"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "botDetection"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "BOT"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.#", "0"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_OverwriteUndeletable(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccRiskPredictor_Geovelocity(t *testing.T) {
 	t.Parallel()
 
@@ -1946,6 +2074,104 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccRiskPredictorConfig_Anonymous_Network_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_anonymous_network = {}
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Anonymous_Network_OverwriteUndeletable(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_anonymous_network = {
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "The neighbours said their dog will retrieve sticks from 10 miles away.  Sounds far fetched to me."
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_bot_detection = {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Bot_Detection_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_bot_detection = {}
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Bot_Detection_OverwriteUndeletable(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_bot_detection = {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
 func testAccRiskPredictorConfig_Composite_Full_1(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -2060,47 +2286,6 @@ resource "pingone_risk_predictor" "%[2]s" {
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccRiskPredictorConfig_Anonymous_Network_Minimal(resourceName, name string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_risk_predictor" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name         = "%[3]s"
-  compact_name = "%[3]s1"
-
-  predictor_anonymous_network = {}
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccRiskPredictorConfig_Anonymous_Network_OverwriteUndeletable(resourceName, name, compactName string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_risk_predictor" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name         = "%[3]s"
-  compact_name = "%[4]s"
-
-  default = {
-    result = {
-      level = "MEDIUM"
-    }
-  }
-
-  predictor_anonymous_network = {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
-    ]
-  }
-
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
 func testAccRiskPredictorConfig_Geovelocity_Full(resourceName, name string) string {
@@ -2533,7 +2718,7 @@ resource "pingone_risk_predictor" "%[2]s" {
   }
 
   predictor_device = {
-    detect        = "SUSPICIOUS_DEVICE"
+    detect = "SUSPICIOUS_DEVICE"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -2549,8 +2734,8 @@ resource "pingone_risk_predictor" "%[2]s" {
   compact_name = "%[3]s1"
 
   predictor_device = {
-    detect        = "SUSPICIOUS_DEVICE"
-}
+    detect = "SUSPICIOUS_DEVICE"
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -2571,7 +2756,7 @@ resource "pingone_risk_predictor" "%[2]s" {
   }
 
   predictor_device = {
-    detect        = "SUSPICIOUS_DEVICE"
+    detect = "SUSPICIOUS_DEVICE"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }

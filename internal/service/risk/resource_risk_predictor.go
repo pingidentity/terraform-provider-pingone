@@ -55,11 +55,12 @@ type riskPredictorResourceModel struct {
 	Licensed                     types.Bool   `tfsdk:"licensed"`
 	Deletable                    types.Bool   `tfsdk:"deletable"`
 	PredictorAnonymousNetwork    types.Object `tfsdk:"predictor_anonymous_network"`
+	PredictorBotDetection        types.Object `tfsdk:"predictor_bot_detection"`
 	PredictorComposite           types.Object `tfsdk:"predictor_composite"`
 	PredictorCustomMap           types.Object `tfsdk:"predictor_custom_map"`
+	PredictorDevice              types.Object `tfsdk:"predictor_device"`
 	PredictorGeoVelocity         types.Object `tfsdk:"predictor_geovelocity"`
 	PredictorIPReputation        types.Object `tfsdk:"predictor_ip_reputation"`
-	PredictorDevice              types.Object `tfsdk:"predictor_device"`
 	PredictorUserLocationAnomaly types.Object `tfsdk:"predictor_user_location_anomaly"`
 	PredictorUserRiskBehavior    types.Object `tfsdk:"predictor_user_risk_behavior"`
 	PredictorVelocity            types.Object `tfsdk:"predictor_velocity"`
@@ -380,6 +381,11 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 		"A single nested object that specifies options for the Anonymous Network predictor.",
 	).ExactlyOneOf(descriptionPredictorObjectPaths)
 
+	// Bot Detection predictor
+	predictorBotDetectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single nested object that specifies options for the Bot Detection predictor.",
+	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
 	// Composite Predictor
 	predictorCompositeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single nested object that specifies options for the Composite predictor.",
@@ -628,6 +634,20 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 
+			"predictor_bot_detection": schema.SingleNestedAttribute{
+				Description:         predictorBotDetectionDescription.Description,
+				MarkdownDescription: predictorBotDetectionDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
+				},
+			},
+
 			"predictor_composite": schema.SingleNestedAttribute{
 				Description:         predictorCompositeDescription.Description,
 				MarkdownDescription: predictorCompositeDescription.MarkdownDescription,
@@ -814,6 +834,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumPredictorNewDeviceDetectTypeEnumValues)...),
+						},
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
 						},
 					},
 
@@ -1163,6 +1187,7 @@ var (
 	predictorObjectValidators = []validator.Object{
 		objectvalidator.ExactlyOneOf(
 			path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
+			path.MatchRelative().AtParent().AtName("predictor_bot_detection"),
 			path.MatchRelative().AtParent().AtName("predictor_composite"),
 			path.MatchRelative().AtParent().AtName("predictor_custom_map"),
 			path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
@@ -1176,11 +1201,12 @@ var (
 
 	descriptionPredictorObjectPaths = []string{
 		"predictor_anonymous_network",
+		"predictor_bot_detection",
 		"predictor_composite",
 		"predictor_custom_map",
+		"predictor_device",
 		"predictor_geovelocity",
 		"predictor_ip_reputation",
-		"predictor_device",
 		"predictor_user_location_anomaly",
 		"predictor_user_risk_behavior",
 		"predictor_velocity",
@@ -1280,20 +1306,6 @@ func customMapGenericValuesSchema(attributeDescription framework.SchemaAttribute
 func (r *RiskPredictorResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// Destruction plan
 	if req.Plan.Raw.IsNull() {
-
-		// var deletable *bool
-		// resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("deletable"), deletable)...)
-		// if resp.Diagnostics.HasError() {
-		// 	return
-		// }
-
-		// if deletable != nil && !*deletable {
-		// 	resp.Diagnostics.AddWarning(
-		// 		"Risk Predictor plan destruction considerations",
-		// 		fmt.Sprintf("The risk predictor cannot be deleted due to API limitations.  The risk predictor will been left in place but will no longer be managed by the provider."),
-		// 	)
-		// }
-
 		return
 	}
 
@@ -1658,6 +1670,10 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 				predictorId = t.GetId()
 				predictorCompactName = t.GetCompactName()
 				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorBotDetection:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
 			case *risk.RiskPredictorComposite:
 				predictorId = t.GetId()
 				predictorCompactName = t.GetCompactName()
@@ -1744,6 +1760,10 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 		riskPredictor.RiskPredictorAnonymousNetwork, d = p.expandPredictorAnonymousNetwork(ctx, riskPredictorCommonData)
 	}
 
+	if !p.PredictorBotDetection.IsNull() && !p.PredictorBotDetection.IsUnknown() {
+		riskPredictor.RiskPredictorBotDetection = p.expandPredictorBotDetection(riskPredictorCommonData)
+	}
+
 	if !p.PredictorComposite.IsNull() && !p.PredictorComposite.IsUnknown() {
 		riskPredictor.RiskPredictorComposite, d = p.expandPredictorComposite(ctx, riskPredictorCommonData)
 	}
@@ -1823,6 +1843,18 @@ func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context
 	}
 
 	return &data, diags
+}
+
+func (p *riskPredictorResourceModel) expandPredictorBotDetection(riskPredictorCommon *risk.RiskPredictorCommon) *risk.RiskPredictorBotDetection {
+	data := risk.RiskPredictorBotDetection{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        risk.ENUMPREDICTORTYPE_BOT,
+		Default:     riskPredictorCommon.Default,
+	}
+
+	return &data
 }
 
 func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorComposite, diag.Diagnostics) {
@@ -2723,6 +2755,19 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		}
 	}
 
+	if apiObject.RiskPredictorBotDetection != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorBotDetection.Id,
+			Name:        apiObject.RiskPredictorBotDetection.Name,
+			CompactName: apiObject.RiskPredictorBotDetection.CompactName,
+			Description: apiObject.RiskPredictorBotDetection.Description,
+			Type:        apiObject.RiskPredictorBotDetection.Type,
+			Default:     apiObject.RiskPredictorBotDetection.Default,
+			Licensed:    apiObject.RiskPredictorBotDetection.Licensed,
+			Deletable:   apiObject.RiskPredictorBotDetection.Deletable,
+		}
+	}
+
 	if apiObject.RiskPredictorComposite != nil {
 		apiObjectCommon = risk.RiskPredictorCommon{
 			Id:          apiObject.RiskPredictorComposite.Id,
@@ -2894,6 +2939,9 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.PredictorAnonymousNetwork, d = p.toStateRiskPredictorAnonymousNetwork(apiObject.RiskPredictorAnonymousNetwork)
 	diags.Append(d...)
 
+	p.PredictorBotDetection, d = p.toStateRiskPredictorBotDetection(apiObject.RiskPredictorBotDetection)
+	diags.Append(d...)
+
 	p.PredictorComposite, d = p.toStateRiskPredictorComposite(apiObject.RiskPredictorComposite, compositeConditionJSON)
 	diags.Append(d...)
 
@@ -2931,6 +2979,19 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorAnonymousNetwork(apiObj
 	objValue, d := types.ObjectValue(predictorGenericAllowedCIDRTFObjectTypes, map[string]attr.Value{
 		"allowed_cidr_list": framework.StringSetOkToTF(apiObject.GetWhiteListOk()),
 	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *riskPredictorResourceModel) toStateRiskPredictorBotDetection(apiObject *risk.RiskPredictorBotDetection) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObject.GetId() == "" {
+		return types.ObjectNull(map[string]attr.Type{}), diags
+	}
+
+	objValue, d := types.ObjectValue(map[string]attr.Type{}, map[string]attr.Value{})
 	diags.Append(d...)
 
 	return objValue, diags
