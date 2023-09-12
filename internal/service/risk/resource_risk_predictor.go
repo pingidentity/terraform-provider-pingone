@@ -427,10 +427,13 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 	predictorDeviceDetectDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that represents the type of device detection to use.",
-	).DefaultValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE))
+	).AllowedValuesComplex(map[string]string{
+		string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE):        "to configure a model based on new devices",
+		string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_SUSPICIOUS_DEVICE): "to configure a model based on detection of suspicious devices",
+	}).DefaultValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE))
 
 	predictorDeviceActivationAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that represents a date on which the learning process for the device predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.",
+		fmt.Sprintf("A string that represents a date on which the learning process for the device predictor should be restarted.  Can only be configured where the `detect` parameter is `%s`. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.", string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)),
 	)
 
 	// User location Predictor
@@ -820,6 +823,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Optional:            true,
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_SUSPICIOUS_DEVICE)),
+								path.MatchRelative().AtParent().AtName("detect"),
+							),
 						},
 					},
 				},

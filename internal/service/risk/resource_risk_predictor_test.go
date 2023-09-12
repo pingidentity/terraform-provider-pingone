@@ -1147,6 +1147,137 @@ func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictor_SuspiciousDevice(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "SUSPICIOUS_DEVICE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.activation_at"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "SUSPICIOUS_DEVICE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.activation_at"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_SuspiciousDevice_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_SuspiciousDevice_OverwriteUndeletable(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+	compactName := "suspiciousDevice"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "suspiciousDevice"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "SUSPICIOUS_DEVICE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.activation_at"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_OverwriteUndeletable(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
 	t.Parallel()
 
@@ -2382,6 +2513,67 @@ resource "pingone_risk_predictor" "%[2]s" {
     activation_at = "%[5]s"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName, activationAt)
+}
+
+func testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "The neighbours said their dog will retrieve sticks from 10 miles away.  Sounds far fetched to me."
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_device = {
+    detect        = "SUSPICIOUS_DEVICE"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_SuspiciousDevice_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_device = {
+    detect        = "SUSPICIOUS_DEVICE"
+}
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_SuspiciousDevice_OverwriteUndeletable(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_device = {
+    detect        = "SUSPICIOUS_DEVICE"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
 func testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name string) string {
