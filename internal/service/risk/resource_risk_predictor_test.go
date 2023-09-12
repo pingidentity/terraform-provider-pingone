@@ -1506,7 +1506,7 @@ func TestAccRiskPredictor_UserLocationAnomaly_OverwriteUndeletable(t *testing.T)
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.radius.distance", "100"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.radius.unit", "miles"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.days", "50"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.days", "90"),
 	)
 
 	resource.Test(t, resource.TestCase{
