@@ -260,6 +260,12 @@ func ResourceApplication() *schema.Resource {
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 86400)),
 						},
+						"additional_refresh_token_replay_protection_enabled": {
+							Description: "A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens. Setting this to null equates to a `false` setting.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+						},
 						"client_id": {
 							Description: "A string that specifies the application ID used to authenticate to the authorization server.",
 							Type:        schema.TypeString,
@@ -1182,36 +1188,19 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		}
 
 		if v1, ok := oidcOptions["refresh_token_duration"].(int); ok {
-			//if refreshTokenEnabled {
 			application.SetRefreshTokenDuration(int32(v1))
-			//} else {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity: diag.Warning,
-			//		Summary:  fmt.Sprintf("`refresh_token_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-			//	})
-			//}
 		}
 
 		if v1, ok := oidcOptions["refresh_token_rolling_duration"].(int); ok {
-			//if refreshTokenEnabled {
 			application.SetRefreshTokenRollingDuration(int32(v1))
-			//} else {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity: diag.Warning,
-			//		Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-			//	})
-			//}
 		}
 
 		if v1, ok := oidcOptions["refresh_token_rolling_grace_period_duration"].(int); ok {
-			//if refreshTokenEnabled {
 			application.SetRefreshTokenRollingGracePeriodDuration(int32(v1))
-			//} else {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity: diag.Warning,
-			//		Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-			//	})
-			//}
+		}
+
+		if v1, ok := oidcOptions["additional_refresh_token_replay_protection_enabled"].(bool); ok {
+			application.SetAdditionalRefreshTokenReplayProtectionEnabled(v1)
 		}
 
 		if v, ok := oidcOptions["tags"]; ok {
@@ -1780,6 +1769,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["refresh_token_rolling_grace_period_duration"] = v
 	} else {
 		item["refresh_token_rolling_grace_period_duration"] = nil
+	}
+
+	if v, ok := application.GetAdditionalRefreshTokenReplayProtectionEnabledOk(); ok {
+		item["additional_refresh_token_replay_protection_enabled"] = v
+	} else {
+		item["additional_refresh_token_replay_protection_enabled"] = nil
 	}
 
 	if v, ok := secret.GetSecretOk(); ok {
