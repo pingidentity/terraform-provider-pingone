@@ -3558,7 +3558,7 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "REQUIRED"
 
-	require_signed_request_object = true
+    require_signed_request_object = true
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
