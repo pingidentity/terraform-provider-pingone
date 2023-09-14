@@ -1048,7 +1048,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.CreateUser(ctx, plan.EnvironmentId.ValueString()).User(*user).Execute()
+			return r.client.UsersApi.CreateUser(ctx, plan.EnvironmentId.ValueString()).ContentType("application/vnd.pingidentity.user.import+json").User(*user).Execute()
 		},
 		"CreateUser",
 		framework.DefaultCustomError,
@@ -1237,7 +1237,6 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// Update the MFA enabled attribute
-	var updateUserMfaEnabledResponse *mfa.UserMFAEnabled
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -1247,7 +1246,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		"UpdateUserMFAEnabled",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&updateUserMfaEnabledResponse,
+		nil,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return

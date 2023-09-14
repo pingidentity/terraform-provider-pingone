@@ -187,7 +187,7 @@ func TestAccUser_All(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "name.honorific_suffix", "Jr."),
 			resource.TestCheckResourceAttr(resourceFullName, "nickname", "Homie"),
 			resource.TestCheckResourceAttr(resourceFullName, "password.force_change", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "password.initial_value", "SuperSecretDummyPassword"),
+			resource.TestCheckResourceAttr(resourceFullName, "password.initial_value", "SuperSecretDummyPassword1!"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "password.external"),
 			resource.TestCheckResourceAttr(resourceFullName, "photo.href", "https://www.pingidentity.com/homer-simpson.png"),
 			resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "en;q=0.7"),
@@ -333,7 +333,7 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "name.honorific_suffix", "Jr."),
 			resource.TestCheckResourceAttr(resourceFullName, "nickname", "Homie"),
 			resource.TestCheckResourceAttr(resourceFullName, "password.force_change", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "password.initial_value", "SuperSecretDummyPassword"),
+			resource.TestCheckResourceAttr(resourceFullName, "password.initial_value", "SuperSecretDummyPassword1!"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "password.external"),
 			resource.TestCheckResourceAttr(resourceFullName, "photo.href", "https://www.pingidentity.com/homer-simpson.png"),
 			resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "en;q=0.7"),
@@ -657,7 +657,7 @@ resource "pingone_user" "%[2]s" {
 
   password = {
     force_change  = true
-    initial_value = "SuperSecretDummyPassword"
+    initial_value = "SuperSecretDummyPassword1!"
   }
 
   photo = {
@@ -735,7 +735,7 @@ resource "pingone_user" "%[2]s" {
 
   password = {
     force_change  = true
-    initial_value = "SuperSecretDummyPassword"
+    initial_value = "SuperSecretDummyPassword1!"
   }
 
   photo = {
