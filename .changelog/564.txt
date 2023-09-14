@@ -1,0 +1,3 @@
+```release-note:note
+`data-source/pingone_organization`: Deprecated the calculated attributes `base_url_agreement_management`, `base_url_api`, `base_url_apps`, `base_url_auth`, `base_url_console`, `base_url_orchestrate`.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.
+```
