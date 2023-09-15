@@ -260,6 +260,12 @@ func ResourceApplication() *schema.Resource {
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 86400)),
 						},
+						"additional_refresh_token_replay_protection_enabled": {
+							Description: "A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens. Setting this to null equates to a `false` setting.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+						},
 						"client_id": {
 							Description: "A string that specifies the application ID used to authenticate to the authorization server.",
 							Type:        schema.TypeString,
@@ -289,6 +295,12 @@ func ResourceApplication() *schema.Resource {
 						},
 						"support_unsigned_request_object": {
 							Description: "A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If false or null (default), an unsigned request object is not allowed.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+						},
+						"require_signed_request_object": {
+							Description: "A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null (default), a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.",
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
@@ -1176,36 +1188,19 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		}
 
 		if v1, ok := oidcOptions["refresh_token_duration"].(int); ok {
-			//if refreshTokenEnabled {
 			application.SetRefreshTokenDuration(int32(v1))
-			//} else {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity: diag.Warning,
-			//		Summary:  fmt.Sprintf("`refresh_token_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-			//	})
-			//}
 		}
 
 		if v1, ok := oidcOptions["refresh_token_rolling_duration"].(int); ok {
-			//if refreshTokenEnabled {
 			application.SetRefreshTokenRollingDuration(int32(v1))
-			//} else {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity: diag.Warning,
-			//		Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-			//	})
-			//}
 		}
 
 		if v1, ok := oidcOptions["refresh_token_rolling_grace_period_duration"].(int); ok {
-			//if refreshTokenEnabled {
 			application.SetRefreshTokenRollingGracePeriodDuration(int32(v1))
-			//} else {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity: diag.Warning,
-			//		Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-			//	})
-			//}
+		}
+
+		if v1, ok := oidcOptions["additional_refresh_token_replay_protection_enabled"].(bool); ok {
+			application.SetAdditionalRefreshTokenReplayProtectionEnabled(v1)
 		}
 
 		if v, ok := oidcOptions["tags"]; ok {
@@ -1235,6 +1230,10 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 
 		if v1, ok := oidcOptions["support_unsigned_request_object"].(bool); ok {
 			application.SetSupportUnsignedRequestObject(v1)
+		}
+
+		if v1, ok := oidcOptions["require_signed_request_object"].(bool); ok {
+			application.SetRequireSignedRequestObject(v1)
 		}
 
 		if v1, ok := oidcOptions["mobile_app"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
@@ -1772,6 +1771,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["refresh_token_rolling_grace_period_duration"] = nil
 	}
 
+	if v, ok := application.GetAdditionalRefreshTokenReplayProtectionEnabledOk(); ok {
+		item["additional_refresh_token_replay_protection_enabled"] = v
+	} else {
+		item["additional_refresh_token_replay_protection_enabled"] = nil
+	}
+
 	if v, ok := secret.GetSecretOk(); ok {
 		item["client_secret"] = v
 	} else {
@@ -1788,6 +1793,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["support_unsigned_request_object"] = v
 	} else {
 		item["support_unsigned_request_object"] = nil
+	}
+
+	if v, ok := application.GetRequireSignedRequestObjectOk(); ok {
+		item["require_signed_request_object"] = v
+	} else {
+		item["require_signed_request_object"] = nil
 	}
 
 	if v, ok := application.GetMobileOk(); ok {

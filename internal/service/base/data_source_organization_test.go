@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -26,8 +25,6 @@ func TestAccOrganizationDataSource_Full(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 	organizationName := os.Getenv("PINGONE_ORGANIZATION_NAME")
 
-	domainTld := model.FindRegionByName(os.Getenv("PINGONE_REGION")).URLSuffix
-
 	testCheck := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(dataSourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
@@ -36,12 +33,6 @@ func TestAccOrganizationDataSource_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "type", "INTERNAL"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "billing_connection_ids.#", "1"),
 		resource.TestMatchResourceAttr(dataSourceFullName, "billing_connection_ids.0", regexp.MustCompile(`^[a-zA-Z0-9]*$`)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_api", fmt.Sprintf("api.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_auth", fmt.Sprintf("auth.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_orchestrate", fmt.Sprintf("orchestrate-api.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_agreement_management", fmt.Sprintf("agreement-mgmt.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_console", fmt.Sprintf("console.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_apps", fmt.Sprintf("apps.pingone.%s", domainTld)),
 	)
 
 	resource.Test(t, resource.TestCase{

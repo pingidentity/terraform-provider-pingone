@@ -2,6 +2,7 @@
 
 NOTES:
 
+* `data-source/pingone_organization`: Deprecated the calculated attributes `base_url_agreement_management`, `base_url_api`, `base_url_apps`, `base_url_auth`, `base_url_console`, `base_url_orchestrate`.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality. ([#564](https://github.com/pingidentity/terraform-provider-pingone/issues/564))
 * `data-source/pingone_resource_scope`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
 * `resource/pingone_application_resource_grant`: Deprecated the `resource_id` parameter in favour of the `resource_name` parameter to avoid dependency on the `pingone_resource` data-source. The `resource_id` parameter will be made read-only in a future release. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
 * `resource/pingone_application_resource_grant`: Deprecated the `scopes` parameter in favour of the `scope_names` parameter to avoid dependency on the `pingone_resource_scope` data-source. The `scopes` parameter will be made read-only in a future release. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
@@ -15,6 +16,8 @@ NOTES:
 
 ENHANCEMENTS:
 
+* `resource/pingone_application`: Added support ability to require a signed request object for OIDC applications. ([#559](https://github.com/pingidentity/terraform-provider-pingone/issues/559))
+* `resource/pingone_application`: Added support for additional refresh token replay protection configuration on OIDC applications. ([#560](https://github.com/pingidentity/terraform-provider-pingone/issues/560))
 * `resource/pingone_application`: Added support for whether `requestedAuthnContext` is taken into account in SAML application policy decision-making. ([#542](https://github.com/pingidentity/terraform-provider-pingone/issues/542))
 * `resource/pingone_system_application`: Support the ability to apply active theme configuration to the PingOne Portal and Self-Service applications. ([#541](https://github.com/pingidentity/terraform-provider-pingone/issues/541))
 

@@ -104,33 +104,39 @@ func (r *OrganizationDataSource) Schema(ctx context.Context, req datasource.Sche
 			},
 
 			"base_url_api": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the API endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the API endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_auth": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Authentication endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Authentication endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_orchestrate": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Orchestration endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Orchestration endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_agreement_management": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Agreement Management endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Agreement Management endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_console": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Console endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Console endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_apps": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Applications endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Applications endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 		},
 	}
