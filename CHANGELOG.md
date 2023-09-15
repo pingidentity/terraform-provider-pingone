@@ -11,8 +11,15 @@ NOTES:
 * `resource/pingone_resource_scope_openid`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
 * `resource/pingone_resource_scope_pingone_api`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
 * `resource/pingone_resource_scope`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.3.5 => v1.4.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/hashicorp/terraform-plugin-go` v0.18.0 => v0.19.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/hashicorp/terraform-plugin-mux` v0.11.2 => v0.12.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.28.0 => v2.29.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.27.0 => v0.28.0 ([#556](https://github.com/pingidentity/terraform-provider-pingone/issues/556))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.28.0 => v0.29.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.9.0 => v0.10.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.5 => v0.10.6 ([#556](https://github.com/pingidentity/terraform-provider-pingone/issues/556))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.6 => v0.10.7 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
 
 ENHANCEMENTS:
 
@@ -20,6 +27,10 @@ ENHANCEMENTS:
 * `resource/pingone_application`: Added support for additional refresh token replay protection configuration on OIDC applications. ([#560](https://github.com/pingidentity/terraform-provider-pingone/issues/560))
 * `resource/pingone_application`: Added support for whether `requestedAuthnContext` is taken into account in SAML application policy decision-making. ([#542](https://github.com/pingidentity/terraform-provider-pingone/issues/542))
 * `resource/pingone_system_application`: Support the ability to apply active theme configuration to the PingOne Portal and Self-Service applications. ([#541](https://github.com/pingidentity/terraform-provider-pingone/issues/541))
+
+BUG FIXES:
+
+* `resource/pingone_user`: Fixed ineffectual `initial_password` parameter. ([#566](https://github.com/pingidentity/terraform-provider-pingone/issues/566))
 
 ## 0.20.1 (05 September 2023)
 
