@@ -26,6 +26,7 @@ ENHANCEMENTS:
 * `resource/pingone_application`: Added support ability to require a signed request object for OIDC applications. ([#559](https://github.com/pingidentity/terraform-provider-pingone/issues/559))
 * `resource/pingone_application`: Added support for additional refresh token replay protection configuration on OIDC applications. ([#560](https://github.com/pingidentity/terraform-provider-pingone/issues/560))
 * `resource/pingone_application`: Added support for whether `requestedAuthnContext` is taken into account in SAML application policy decision-making. ([#542](https://github.com/pingidentity/terraform-provider-pingone/issues/542))
+* `resource/pingone_risk_predictor`: Added support for Bot detection and Suspicious device predictor types. ([#558](https://github.com/pingidentity/terraform-provider-pingone/issues/558))
 * `resource/pingone_system_application`: Support the ability to apply active theme configuration to the PingOne Portal and Self-Service applications. ([#541](https://github.com/pingidentity/terraform-provider-pingone/issues/541))
 
 BUG FIXES:
