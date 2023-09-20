@@ -1,5 +1,9 @@
 ## 0.21.1 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_certificate`: Adjusted documentation for PEM certificate import. ([#572](https://github.com/pingidentity/terraform-provider-pingone/issues/572))
+
 ## 0.21.0 (18 September 2023)
 
 NOTES:
