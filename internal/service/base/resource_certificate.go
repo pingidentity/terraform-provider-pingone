@@ -47,7 +47,7 @@ func ResourceCertificate() *schema.Resource {
 				ExactlyOneOf: []string{"pkcs7_file_base64", "pem_file"},
 			},
 			"pem_file": {
-				Description:  "A PEM encoded file to import.  Either `pkcs7_file_base64` or `pem_file` must be specified.",
+				Description:  "The contents of a PEM encoded file to import, which should be in plain text format and not base64 encoded.  The certificate should be properly formatted for the PEM format, that includes the correct header/footer lines.  Either `pkcs7_file_base64` or `pem_file` must be specified.",
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,

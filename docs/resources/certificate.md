@@ -27,7 +27,7 @@ resource "pingone_certificate" "my_certificate" {
   environment_id = pingone_environment.my_environment.id
 
   usage_type = "SSL/TLS"
-  pem_file   = var.pem_file
+  pem_file   = file("../path/to/certificate.pem")
 }
 ```
 
@@ -41,7 +41,7 @@ resource "pingone_certificate" "my_certificate" {
 
 ### Optional
 
-- `pem_file` (String) A PEM encoded file to import.  Either `pkcs7_file_base64` or `pem_file` must be specified.
+- `pem_file` (String) The contents of a PEM encoded file to import, which should be in plain text format and not base64 encoded.  The certificate should be properly formatted for the PEM format, that includes the correct header/footer lines.  Either `pkcs7_file_base64` or `pem_file` must be specified.
 - `pkcs7_file_base64` (String) A base64 encoded PKCS7 (DER) file to import.  Either `pkcs7_file_base64` or `pem_file` must be specified.
 
 ### Read-Only
