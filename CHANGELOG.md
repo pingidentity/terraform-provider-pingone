@@ -5,6 +5,7 @@ NOTES:
 * `data-source/pingone_population`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
 * `resource/pingone_certificate`: Adjusted documentation for PEM certificate import. ([#572](https://github.com/pingidentity/terraform-provider-pingone/issues/572))
 * `resource/pingone_environment`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
+* `resource/pingone_key`: Migrated to plugin framework. ([#575](https://github.com/pingidentity/terraform-provider-pingone/issues/575))
 * `resource/pingone_system_application`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
 
 BUG FIXES:
