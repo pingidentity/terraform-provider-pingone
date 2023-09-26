@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
@@ -771,7 +771,7 @@ func FetchApplicationsByType(ctx context.Context, apiClient *management.APIClien
 func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *management.APIClient, environmentID string, applicationType management.EnumApplicationType, expectAtLeastOneResult bool, timeout time.Duration) (*[]management.ReadOneApplication200Response, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	stateConf := &sdkv2resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending: []string{
 			"false",
 		},
@@ -840,7 +840,7 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 		MinTimeout:                2 * time.Second,
 		ContinuousTargetOccurence: 2,
 	}
-	applicationResponse, err := stateConf.WaitForState()
+	applicationResponse, err := stateConf.WaitForStateContext(ctx)
 
 	if err != nil {
 		diags.AddError(

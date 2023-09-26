@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -238,7 +238,7 @@ func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient
 func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *management.APIClient, environmentID string, timeout time.Duration) (*management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	stateConf := &sdkv2resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending: []string{
 			"false",
 		},
@@ -293,7 +293,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 		MinTimeout:                5 * time.Second,
 		ContinuousTargetOccurence: 2,
 	}
-	population, err := stateConf.WaitForState()
+	population, err := stateConf.WaitForStateContext(ctx)
 
 	if err != nil {
 		diags.AddWarning(

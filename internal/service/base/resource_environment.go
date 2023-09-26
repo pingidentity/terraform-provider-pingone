@@ -26,7 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -885,7 +885,7 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	deleteStateConf := &sdkv2resource.StateChangeConf{
+	deleteStateConf := &retry.StateChangeConf{
 		Pending: []string{
 			"200",
 			"403",
@@ -904,7 +904,7 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 		MinTimeout:                500 * time.Millisecond,
 		ContinuousTargetOccurence: 2,
 	}
-	_, err := deleteStateConf.WaitForState()
+	_, err := deleteStateConf.WaitForStateContext(ctx)
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Environment Delete Timeout",
