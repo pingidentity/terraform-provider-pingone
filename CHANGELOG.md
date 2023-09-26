@@ -2,7 +2,14 @@
 
 NOTES:
 
+* `data-source/pingone_population`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
 * `resource/pingone_certificate`: Adjusted documentation for PEM certificate import. ([#572](https://github.com/pingidentity/terraform-provider-pingone/issues/572))
+* `resource/pingone_environment`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
+* `resource/pingone_system_application`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
+
+BUG FIXES:
+
+* `resource/pingone_application_resource_grant`: Fixed inability to apply application grants to the Self-Service and Portal system applications. ([#573](https://github.com/pingidentity/terraform-provider-pingone/issues/573))
 
 ## 0.21.0 (18 September 2023)
 
