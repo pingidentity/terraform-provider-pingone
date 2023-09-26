@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_application_resource_grant`: Fixed inability to apply application grants to the Self-Service and Portal system applications.
+```
