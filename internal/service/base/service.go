@@ -29,6 +29,7 @@ func Resources() []func() resource.Resource {
 		NewCustomDomainSSLResource,
 		NewCustomDomainVerifyResource,
 		NewEnvironmentResource,
+		NewKeyResource,
 		NewKeyRotationPolicyResource,
 		NewNotificationPolicyResource,
 		NewNotificationSettingsResource,
