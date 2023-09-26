@@ -1,0 +1,11 @@
+```release-note:note
+`resource/pingone_environment`: Corrected deprecated retry method.
+```
+
+```release-note:note
+`resource/pingone_system_application`: Corrected deprecated retry method.
+```
+
+```release-note:note
+`data-source/pingone_population`: Corrected deprecated retry method.
+```
