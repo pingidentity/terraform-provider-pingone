@@ -220,6 +220,37 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 		return
 	}
 
+	// Get Application
+	application, d := plan.getApplication(ctx, r.Client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	systemApplication := false
+
+	if application.ApplicationPingOnePortal != nil || application.ApplicationPingOneSelfService != nil {
+		systemApplication = true
+	}
+
+	if application.ApplicationPingOneAdminConsole != nil {
+		resp.Diagnostics.AddError(
+			"Invalid application",
+			"Cannot create an application resource grant for the PingOne Admin Console application.",
+		)
+		return
+	}
+
+	// Get the resourceGrant if it exists
+	var replaceResourceGrant *management.ApplicationResourceGrant
+	if systemApplication {
+		replaceResourceGrant, d = plan.getResourceGrant(ctx, r.Client, resource.GetId())
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	// Validate the plan
 	resp.Diagnostics.Append(plan.validate(*resource, resourceScopes)...)
 	if resp.Diagnostics.HasError() {
@@ -227,21 +258,36 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 	}
 
 	// Build the model for the API
-	applicationResourceGrant := plan.expand(*resource, resourceScopes)
+	applicationResourceGrant := plan.expand(*resource, resourceScopes, replaceResourceGrant)
 
 	// Run the API call
 	var grantResponse *management.ApplicationResourceGrant
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
 
-		func() (any, *http.Response, error) {
-			return r.Client.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
-		},
-		"CreateApplicationGrant",
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&grantResponse,
-	)...)
+	if replaceResourceGrant != nil {
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				return r.Client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationResourceGrant.GetId()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+			},
+			"UpdateApplicationGrant-Create",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&grantResponse,
+		)...)
+	} else {
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				return r.Client.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+			},
+			"CreateApplicationGrant-Create",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&grantResponse,
+		)...)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -358,6 +404,37 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		return
 	}
 
+	// Get Application
+	application, d := plan.getApplication(ctx, r.Client)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	systemApplication := false
+
+	if application.ApplicationPingOnePortal != nil || application.ApplicationPingOneSelfService != nil {
+		systemApplication = true
+	}
+
+	if application.ApplicationPingOneAdminConsole != nil {
+		resp.Diagnostics.AddError(
+			"Invalid application",
+			"Cannot create an application resource grant for the PingOne Admin Console application.",
+		)
+		return
+	}
+
+	// Get the resourceGrant if it exists
+	var replaceResourceGrant *management.ApplicationResourceGrant
+	if systemApplication {
+		replaceResourceGrant, d = plan.getResourceGrant(ctx, r.Client, resource.GetId())
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	// Validate the plan
 	resp.Diagnostics.Append(plan.validate(*resource, resourceScopes)...)
 	if resp.Diagnostics.HasError() {
@@ -365,7 +442,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 	}
 
 	// Build the model for the API
-	applicationResourceGrant := plan.expand(*resource, resourceScopes)
+	applicationResourceGrant := plan.expand(*resource, resourceScopes, replaceResourceGrant)
 
 	// Run the API call
 	var grantResponse *management.ApplicationResourceGrant
@@ -544,7 +621,61 @@ func (p *ApplicationResourceGrantResourceModel) getResource(ctx context.Context,
 	return resource, resourceScopes, diags
 }
 
-func (p *ApplicationResourceGrantResourceModel) expand(resource management.Resource, resourceScopes []management.ResourceScope) *management.ApplicationResourceGrant {
+func (p *ApplicationResourceGrantResourceModel) getApplication(ctx context.Context, apiClient *management.APIClient) (*management.ReadOneApplication200Response, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var application *management.ReadOneApplication200Response
+	diags.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return apiClient.ApplicationsApi.ReadOneApplication(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+		},
+		"ReadOneApplication",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&application,
+	)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return application, diags
+}
+
+func (p *ApplicationResourceGrantResourceModel) getResourceGrant(ctx context.Context, apiClient *management.APIClient, resourceID string) (*management.ApplicationResourceGrant, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var applicationGrants *management.EntityArray
+	diags.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return apiClient.ApplicationResourceGrantsApi.ReadAllApplicationGrants(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+		},
+		"ReadAllApplicationGrants",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&applicationGrants,
+	)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	var applicationGrant *management.ApplicationResourceGrant
+
+	for _, grant := range applicationGrants.Embedded.GetGrants() {
+		if grant.Resource.GetId() == resourceID {
+			grant := grant // fix for exportloopref linting error
+			applicationGrant = &grant
+			break
+		}
+	}
+
+	return applicationGrant, diags
+}
+
+func (p *ApplicationResourceGrantResourceModel) expand(resource management.Resource, resourceScopes []management.ResourceScope, replaceResourceGrant *management.ApplicationResourceGrant) *management.ApplicationResourceGrant {
 
 	resourceObj := management.NewApplicationResourceGrantResource(resource.GetId())
 
@@ -555,7 +686,15 @@ func (p *ApplicationResourceGrantResourceModel) expand(resource management.Resou
 		})
 	}
 
-	data := management.NewApplicationResourceGrant(*resourceObj, scopes)
+	var data *management.ApplicationResourceGrant
+
+	if replaceResourceGrant != nil {
+		data = replaceResourceGrant
+		data.SetResource(*resourceObj)
+		data.SetScopes(scopes)
+	} else {
+		data = management.NewApplicationResourceGrant(*resourceObj, scopes)
+	}
 
 	return data
 }
