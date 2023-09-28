@@ -24,7 +24,11 @@ func TestAccCustomDomainSSL_Full(t *testing.T) {
 	privateKeyFile := os.Getenv("PINGONE_DOMAIN_KEY_PEM")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndCustomDomainSSL(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckCustomDomainSSL(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckCustomDomainDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

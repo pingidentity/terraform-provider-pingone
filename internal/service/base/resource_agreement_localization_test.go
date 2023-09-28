@@ -98,12 +98,16 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 	var resourceID, agreementID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckAgreementLocalizationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
 				Check:  testAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &resourceID),
@@ -127,6 +131,35 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 					_, err = apiClient.AgreementLanguagesResourcesApi.DeleteAgreementLanguage(ctx, environmentID, agreementID, resourceID).Execute()
 					if err != nil {
 						t.Fatalf("Failed to delete agreement localisation: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the agreement
+			{
+				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Check:  testAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || agreementID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, agreement ID or resource ID cannot be determined. Environment ID: %s, Agreement ID: %s, Resource ID: %s", environmentID, agreementID, resourceID)
+					}
+
+					_, err = apiClient.AgreementsResourcesApi.DeleteAgreement(ctx, environmentID, agreementID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete agreement: %v", err)
 					}
 				},
 				RefreshState:       true,
@@ -176,7 +209,11 @@ func TestAccAgreementLocalization_Full(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckAgreementLocalizationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -245,7 +282,11 @@ func TestAccAgreementLocalization_BadParameters(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckAgreementLocalizationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

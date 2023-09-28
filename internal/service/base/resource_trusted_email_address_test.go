@@ -95,12 +95,16 @@ func TestAccTrustedEmailAddress_RemovalDrift(t *testing.T) {
 	var resourceID, emailDomainID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckTrustedEmailAddressDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccTrustedEmailAddressConfig_New_DomainVerified(resourceName, verifiedDomain, emailAddress),
 				Check:  testAccGetTrustedEmailAddressIDs(resourceFullName, &environmentID, &emailDomainID, &resourceID),
@@ -129,6 +133,35 @@ func TestAccTrustedEmailAddress_RemovalDrift(t *testing.T) {
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
 			},
+			// Test removal of the email domain
+			{
+				Config: testAccTrustedEmailAddressConfig_New_DomainVerified(resourceName, verifiedDomain, emailAddress),
+				Check:  testAccGetTrustedEmailAddressIDs(resourceFullName, &environmentID, &emailDomainID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || emailDomainID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, email domain ID or resource ID cannot be determined. Environment ID: %s, Email Domain ID: %s, Resource ID: %s", environmentID, emailDomainID, resourceID)
+					}
+
+					_, err = apiClient.TrustedEmailDomainsApi.DeleteTrustedEmailDomain(ctx, environmentID, emailDomainID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete trusted email domain: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -151,7 +184,11 @@ func TestAccTrustedEmailAddress_Full(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckDomainVerification(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckTrustedEmailAddressDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -200,7 +237,11 @@ func TestAccTrustedEmailAddress_NotVerified(t *testing.T) {
 	unverifiedEmailAddress := fmt.Sprintf("noreply@%s", unverifiedDomain)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckTrustedEmailAddressDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -223,7 +264,11 @@ func TestAccTrustedEmailAddress_BadParameters(t *testing.T) {
 	emailAddress := fmt.Sprintf("%s@%s", resourceName, verifiedDomain)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckTrustedEmailAddressDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

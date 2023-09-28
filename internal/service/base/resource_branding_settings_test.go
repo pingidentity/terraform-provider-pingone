@@ -33,7 +33,11 @@ func TestAccBrandingSettings_Full(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -80,7 +84,11 @@ func TestAccBrandingSettings_Minimal1(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -111,7 +119,11 @@ func TestAccBrandingSettings_Minimal2(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -143,7 +155,11 @@ func TestAccBrandingSettings_Minimal3(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -179,7 +195,11 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -250,7 +270,11 @@ func TestAccBrandingSettings_BadParameters(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

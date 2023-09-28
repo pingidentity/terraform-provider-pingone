@@ -26,7 +26,13 @@ func TestAccCertificateExportDataSource_ByIDFull(t *testing.T) {
 	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS12WithCerts(t) },
+		PreCheck:                 func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckPKCS12Key(t)
+                        acctest.PreCheckPKCS7Cert(t)
+	PreCheckPEMCert(t)
+},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -47,7 +53,13 @@ func TestAccCertificateExportDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		// PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS12WithCerts(t) },
+		// PreCheck:                 func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckPKCS12Key(t)
+                        acctest.PreCheckPKCS7Cert(t)
+	PreCheckPEMCert(t)
+},
 		PreCheck:                 func() { t.Skipf("https://github.com/pingidentity/terraform-provider-pingone/issues/259") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),

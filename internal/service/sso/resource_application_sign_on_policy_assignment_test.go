@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -67,7 +68,7 @@ func testAccCheckApplicationSignOnPolicyAssignmentDestroy(s *terraform.State) er
 	return nil
 }
 
-func testAccGetApplicationSignOnPolicyAssignmentIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
+func testAccGetApplicationSignOnPolicyAssignmentIDs(resourceName string, environmentID, applicationID, signOnPolicyID, signOnPolicyAssignmentID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -75,11 +76,23 @@ func testAccGetApplicationSignOnPolicyAssignmentIDs(resourceName string, environ
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
+		*signOnPolicyAssignmentID = rs.Primary.ID
 		*applicationID = rs.Primary.Attributes["application_id"]
 		*environmentID = rs.Primary.Attributes["environment_id"]
+		*signOnPolicyID = rs.Primary.Attributes["sign_on_policy_id"]
 
 		return nil
+	}
+}
+
+func ApplicationSignOnPolicyAssignment_RemovalDrift_PreConfig(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentID, applicationID, signOnPolicyAssignmentID string) {
+	if environmentID == "" || applicationID == "" || signOnPolicyAssignmentID == "" {
+		t.Fatalf("One of environment ID, application ID or resource ID cannot be determined. Environment ID: %s, Application ID: %s, Sign On Policy Assignment ID: %s", environmentID, applicationID, signOnPolicyAssignmentID)
+	}
+
+	_, err := apiClient.ApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, environmentID, applicationID, signOnPolicyAssignmentID).Execute()
+	if err != nil {
+		t.Fatalf("Failed to delete application sign-on policy assignment: %v", err)
 	}
 }
 
@@ -89,41 +102,75 @@ func TestAccApplicationSignOnPolicyAssignment_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_sign_on_policy_assignment.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, applicationID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var signOnPolicyID, signOnPolicyAssignmentID, applicationID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationSignOnPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name),
-				Check:  testAccGetApplicationSignOnPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  testAccGetApplicationSignOnPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &signOnPolicyID, &signOnPolicyAssignmentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || applicationID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, application ID or resource ID cannot be determined. Environment ID: %s, Application ID: %s, Resource ID: %s", environmentID, applicationID, resourceID)
-					}
-
-					_, err = apiClient.ApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, environmentID, applicationID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete application sign-on policy assignment: %v", err)
-					}
+					ApplicationSignOnPolicyAssignment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID, signOnPolicyAssignmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the sign on policy
+			{
+				Config: testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name),
+				Check:  testAccGetApplicationSignOnPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &signOnPolicyID, &signOnPolicyAssignmentID),
+			},
+			{
+				PreConfig: func() {
+					ApplicationSignOnPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, signOnPolicyID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the application
+			{
+				Config: testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name),
+				Check:  testAccGetApplicationSignOnPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &signOnPolicyID, &signOnPolicyAssignmentID),
+			},
+			{
+				PreConfig: func() {
+					Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccApplicationSignOnPolicyAssignmentConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  testAccGetApplicationSignOnPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &signOnPolicyID, &signOnPolicyAssignmentID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -141,7 +188,11 @@ func TestAccApplicationSignOnPolicyAssignment_Single(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationSignOnPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -185,7 +236,11 @@ func TestAccApplicationSignOnPolicyAssignment_Multiple(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationSignOnPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -218,7 +273,11 @@ func TestAccApplicationSignOnPolicyAssignment_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationSignOnPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -275,7 +334,11 @@ func TestAccApplicationSignOnPolicyAssignment_SystemApplication(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationSignOnPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -319,7 +382,11 @@ func TestAccApplicationSignOnPolicyAssignment_BadParameters(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationSignOnPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -348,6 +415,40 @@ func TestAccApplicationSignOnPolicyAssignment_BadParameters(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccApplicationSignOnPolicyAssignmentConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_sign_on_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_application_sign_on_policy_assignment" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  application_id = pingone_application.%[3]s.id
+
+  sign_on_policy_id = pingone_sign_on_policy.%[3]s.id
+  priority          = 1
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccApplicationSignOnPolicyAssignmentConfig_Single(resourceName, name string) string {

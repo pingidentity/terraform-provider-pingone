@@ -21,7 +21,11 @@ func TestAccTrustedEmailDomainDataSource_ByNameFull(t *testing.T) {
 	verifiedDomain := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckDomainVerification(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -49,7 +53,11 @@ func TestAccTrustedEmailDomainDataSource_ByIDFull(t *testing.T) {
 	verifiedDomain := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckDomainVerification(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -73,7 +81,11 @@ func TestAccTrustedEmailDomainDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckDomainVerification(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
 		ErrorCheck:               acctest.ErrorCheck(t),

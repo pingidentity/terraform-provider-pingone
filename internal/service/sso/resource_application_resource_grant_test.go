@@ -94,12 +94,16 @@ func TestAccApplicationResourceGrant_RemovalDrift(t *testing.T) {
 	var resourceID, applicationID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
 				Check:  testAccGetApplicationResourceGrantIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
@@ -128,6 +132,35 @@ func TestAccApplicationResourceGrant_RemovalDrift(t *testing.T) {
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
 			},
+			// Test removal of the application
+			{
+				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
+				Check:  testAccGetApplicationResourceGrantIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || applicationID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, application ID or resource ID cannot be determined. Environment ID: %s, Application ID: %s, Resource ID: %s", environmentID, applicationID, resourceID)
+					}
+
+					_, err = apiClient.ApplicationsApi.DeleteApplication(ctx, environmentID, applicationID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete application: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -141,7 +174,11 @@ func TestAccApplicationResourceGrant_OpenIDResource(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -204,7 +241,11 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -257,7 +298,11 @@ func TestAccApplicationResourceGrant_SystemApplication(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -346,7 +391,11 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -411,7 +460,11 @@ func TestAccApplicationResourceGrant_BadParameters(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationResourceGrantDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

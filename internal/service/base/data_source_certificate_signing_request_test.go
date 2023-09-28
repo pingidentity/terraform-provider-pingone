@@ -26,7 +26,12 @@ func TestAccCertificateSigningRequestDataSource_ByIDFull(t *testing.T) {
 	pem_csr := os.Getenv("PINGONE_KEY_PEM_CSR")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS12WithCSR(t) },
+		PreCheck:                 func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckPKCS12Key(t)
+                        acctest.PreCheckPKCS12WithCSR(t)
+},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -47,7 +52,12 @@ func TestAccCertificateSigningRequestDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		// PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS12WithCSR(t) },
+		// PreCheck:                 func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckPKCS12Key(t)
+                        acctest.PreCheckPKCS12WithCSR(t)
+},
 		PreCheck:                 func() { t.Skipf("https://github.com/pingidentity/terraform-provider-pingone/issues/259") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),

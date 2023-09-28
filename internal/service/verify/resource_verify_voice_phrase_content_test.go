@@ -98,12 +98,16 @@ func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 	var resourceID, voicePhraseID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccVerifyVoicePhraseContent_Full(resourceName, name, locale, phrase),
 				Check:  testAccGetVerifyVoicePhraseContentIDs(resourceFullName, &environmentID, &voicePhraseID, &resourceID),
@@ -126,7 +130,36 @@ func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 
 					_, err = apiClient.VoicePhraseContentsApi.DeleteVoicePhraseContent(ctx, environmentID, voicePhraseID, resourceID).Execute()
 					if err != nil {
-						t.Fatalf("Failed to delete voice phrase contentt: %v", err)
+						t.Fatalf("Failed to delete voice phrase content: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the voice phrase ID
+			{
+				Config: testAccVerifyVoicePhraseContent_Full(resourceName, name, locale, phrase),
+				Check:  testAccGetVerifyVoicePhraseContentIDs(resourceFullName, &environmentID, &voicePhraseID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.VerifyAPIClient
+
+					if environmentID == "" || voicePhraseID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, voice phrase ID or resource ID cannot be determined. Environment ID: %s, Voice Phrase ID: %s, Resource ID: %s", environmentID, voicePhraseID, resourceID)
+					}
+
+					_, err = apiClient.VoicePhrasesApi.DeleteVoicePhrase(ctx, environmentID, voicePhraseID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete voice phrase: %v", err)
 					}
 				},
 				RefreshState:       true,
@@ -149,7 +182,11 @@ func TestAccVerifyVoicePhraseContent_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -199,7 +236,11 @@ func TestAccVerifyVoicePhraseContent_Full(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -270,7 +311,11 @@ func TestAccVerifyVoicePhraseContent_BadParameters(t *testing.T) {
 		"they become habits. Watch your habits; they become character. Watch your character; it becomes your destiny."
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

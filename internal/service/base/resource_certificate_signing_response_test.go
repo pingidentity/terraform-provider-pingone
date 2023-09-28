@@ -25,7 +25,12 @@ func TestAccCertificateSigningResponse_Full(t *testing.T) {
 	pemResponse := os.Getenv("PINGONE_KEY_PEM_CSR_RESPONSE")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS12WithCSRResponse(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckPKCS12Key(t)
+			acctest.PreCheckPKCS12CSRResponse(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

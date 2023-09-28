@@ -94,12 +94,16 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 	var resourceID, applicationID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
 				Check:  testAccGetApplicationAttributeMappingIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
@@ -123,6 +127,35 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 					_, err = apiClient.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, environmentID, applicationID, resourceID).Execute()
 					if err != nil {
 						t.Fatalf("Failed to delete Application attribute mapping: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the application
+			{
+				Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
+				Check:  testAccGetApplicationAttributeMappingIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || applicationID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, application ID or resource ID cannot be determined. Environment ID: %s, Application ID: %s, Resource ID: %s", environmentID, applicationID, resourceID)
+					}
+
+					_, err = apiClient.ApplicationsApi.DeleteApplication(ctx, environmentID, applicationID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete Application: %v", err)
 					}
 				},
 				RefreshState:       true,
@@ -183,7 +216,11 @@ func TestAccApplicationAttributeMapping_OIDC(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -255,7 +292,11 @@ func TestAccApplicationAttributeMapping_OIDC_UserInfo(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -303,7 +344,11 @@ func TestAccApplicationAttributeMapping_OIDC_ReservedAttributeName(t *testing.T)
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -364,7 +409,11 @@ func TestAccApplicationAttributeMapping_SAML(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -437,7 +486,11 @@ func TestAccApplicationAttributeMapping_BadApplication(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -485,7 +538,11 @@ func TestAccApplicationAttributeMapping_Core_OIDC(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -568,7 +625,11 @@ func TestAccApplicationAttributeMapping_Core_SAML(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -623,7 +684,11 @@ func TestAccApplicationAttributeMapping_Core_BadApplication(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -645,7 +710,11 @@ func TestAccApplicationAttributeMapping_Core_Expression(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -694,7 +763,11 @@ func TestAccApplicationAttributeMapping_SystemApplication(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -716,7 +789,11 @@ func TestAccApplicationAttributeMapping_BadParameters(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationAttributeMappingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

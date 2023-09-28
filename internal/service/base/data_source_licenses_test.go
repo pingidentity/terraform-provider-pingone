@@ -20,7 +20,11 @@ func TestAccLicensesDataSource_BySCIMFilter(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckOrganisationID(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckLicenseDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -48,7 +52,11 @@ func TestAccLicensesDataSource_ByDataFilter(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckOrganisationID(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckLicenseDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -93,7 +101,11 @@ func TestAccLicensesDataSource_NotFound(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndOrganisation(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckOrganisationID(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckLicenseDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

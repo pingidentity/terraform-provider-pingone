@@ -93,12 +93,16 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 	var resourceID, applicationID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
 				Check:  testAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
@@ -122,6 +126,35 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 					_, err = apiClient.ApplicationFlowPolicyAssignmentsApi.DeleteFlowPolicyAssignment(ctx, environmentID, applicationID, resourceID).Execute()
 					if err != nil {
 						t.Fatalf("Failed to delete Application flow policy assignment: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the application
+			{
+				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
+				Check:  testAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || applicationID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, application ID or resource ID cannot be determined. Environment ID: %s, Application ID: %s, Resource ID: %s", environmentID, applicationID, resourceID)
+					}
+
+					_, err = apiClient.ApplicationsApi.DeleteApplication(ctx, environmentID, applicationID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete Application: %v", err)
 					}
 				},
 				RefreshState:       true,
@@ -178,7 +211,11 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -229,7 +266,11 @@ func TestAccApplicationFlowPolicyAssignment_SystemApplication(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -273,7 +314,11 @@ func TestAccApplicationFlowPolicyAssignment_BadParameters(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

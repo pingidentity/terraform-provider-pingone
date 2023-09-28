@@ -91,18 +91,22 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 
 	name := resourceName
 
-	var resourceID, oidcResourceID, environmentID string
+	var resourceID, customResourceID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
-				Config: testAccResourceAttributeConfig_OIDC_Custom_Minimal(resourceName, name),
-				Check:  testAccGetResourceAttributeIDs(resourceFullName, &environmentID, &oidcResourceID, &resourceID),
+				Config: testAccResourceAttributeConfig_Custom_Full(resourceName, name),
+				Check:  testAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -116,13 +120,42 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 
 					apiClient := p1Client.API.ManagementAPIClient
 
-					if environmentID == "" || oidcResourceID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s,OIDC Resource ID: %s, Resource ID: %s", environmentID, oidcResourceID, resourceID)
+					if environmentID == "" || customResourceID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s,OIDC Resource ID: %s, Resource ID: %s", environmentID, customResourceID, resourceID)
 					}
 
-					_, err = apiClient.ResourceAttributesApi.DeleteResourceAttribute(ctx, environmentID, oidcResourceID, resourceID).Execute()
+					_, err = apiClient.ResourceAttributesApi.DeleteResourceAttribute(ctx, environmentID, customResourceID, resourceID).Execute()
 					if err != nil {
 						t.Fatalf("Failed to delete resource attribute: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the resource
+			{
+				Config: testAccResourceAttributeConfig_Custom_Full(resourceName, name),
+				Check:  testAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || customResourceID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, OIDC Resource ID: %s, Resource ID: %s", environmentID, customResourceID, resourceID)
+					}
+
+					_, err = apiClient.ResourcesApi.DeleteResource(ctx, environmentID, customResourceID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete resource: %v", err)
 					}
 				},
 				RefreshState:       true,
@@ -179,7 +212,11 @@ func TestAccResourceAttribute_OIDC_Custom(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -250,7 +287,11 @@ func TestAccResourceAttribute_OIDC_ReservedAttributeName(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -291,7 +332,11 @@ func TestAccResourceAttribute_OIDC_Predefined(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -353,7 +398,11 @@ func TestAccResourceAttribute_Custom(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -426,7 +475,11 @@ func TestAccResourceAttribute_Custom_CoreAttribute(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -475,7 +528,11 @@ func TestAccResourceAttribute_BadResource(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -497,7 +554,11 @@ func TestAccResourceAttribute_BadParameters(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckResourceAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

@@ -98,7 +98,11 @@ func TestAccPhoneDeliverySettings_RemovalDrift(t *testing.T) {
 	var resourceID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckPhoneDeliverySettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -149,7 +153,11 @@ func TestAccPhoneDeliverySettings_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckPhoneDeliverySettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -210,7 +218,11 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndTwilio(t, skipTwilio) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckTwilio(t, skipTwilio)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckPhoneDeliverySettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -303,7 +315,11 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndSyniverse(t, skipSyniverse) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckSyniverse(t, skipSyniverse)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckPhoneDeliverySettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -480,7 +496,11 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckPhoneDeliverySettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -551,7 +571,11 @@ func TestAccPhoneDeliverySettings_BadParameters(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckPhoneDeliverySettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

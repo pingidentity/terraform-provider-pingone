@@ -93,12 +93,16 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 	var resourceID, identityProviderID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
 				Check:  testAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &resourceID),
@@ -122,6 +126,35 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 					_, err = apiClient.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, environmentID, identityProviderID, resourceID).Execute()
 					if err != nil {
 						t.Fatalf("Failed to delete identity provider attribute mapping: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the IDP
+			{
+				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
+				Check:  testAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &resourceID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					var ctx = context.Background()
+					p1Client, err := acctest.TestClient(ctx)
+
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					apiClient := p1Client.API.ManagementAPIClient
+
+					if environmentID == "" || identityProviderID == "" || resourceID == "" {
+						t.Fatalf("One of environment ID, identity provider ID or resource ID cannot be determined. Environment ID: %s, Identity provider ID: %s, Resource ID: %s", environmentID, identityProviderID, resourceID)
+					}
+
+					_, err = apiClient.IdentityProvidersApi.DeleteIdentityProvider(ctx, environmentID, identityProviderID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to delete identity provider: %v", err)
 					}
 				},
 				RefreshState:       true,
@@ -175,7 +208,11 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -246,7 +283,11 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -307,7 +348,11 @@ func TestAccIdentityProviderAttribute_Core(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -363,7 +408,11 @@ func TestAccIdentityProviderAttribute_BadParameters(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

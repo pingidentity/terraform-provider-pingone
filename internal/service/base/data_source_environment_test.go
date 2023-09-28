@@ -38,7 +38,11 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 	serviceTwoBookmarkURLTwo := "https://my-bookmark-2"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -75,7 +79,11 @@ func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 	region := os.Getenv("PINGONE_REGION")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -126,7 +134,11 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 	serviceTwoBookmarkURLTwo := "https://my-bookmark-2"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -163,7 +175,11 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 	region := os.Getenv("PINGONE_REGION")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -193,7 +209,11 @@ func TestAccEnvironmentDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGenEnvironment()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

@@ -97,7 +97,11 @@ func TestAccCertificate_RemovalDrift(t *testing.T) {
 	var resourceID, environmentID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckCertificateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -148,7 +152,11 @@ func TestAccCertificate_PKCS7(t *testing.T) {
 	pkcs7_cert := os.Getenv("PINGONE_KEY_PKCS7_CERT")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS7(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckPKCS7Cert(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckCertificateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -210,7 +218,11 @@ func TestAccCertificate_PEM(t *testing.T) {
 	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPEM(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckPEMCert(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckCertificateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -272,7 +284,11 @@ func TestAccCertificate_BadParameters(t *testing.T) {
 	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckCertificateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
