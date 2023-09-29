@@ -29,7 +29,7 @@ func TestAccMFAPoliciesDataSource_ByAll(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

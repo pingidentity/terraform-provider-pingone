@@ -11,10 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckAgreementDestroy(s *terraform.State) error {
+func TestAccCheckAgreementDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +68,7 @@ func testAccCheckAgreementDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetAgreementIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetAgreementIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -95,17 +96,16 @@ func TestAccAgreement_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckAgreementDestroy,
+		CheckDestroy:             base.TestAccCheckAgreementDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccAgreementConfig_Minimal(resourceName, name),
-				Check:  testAccGetAgreementIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  base.TestAccGetAgreementIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -154,7 +154,7 @@ func TestAccAgreement_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckAgreementDestroy,
+		CheckDestroy:             base.TestAccCheckAgreementDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -196,11 +196,10 @@ func TestAccAgreement_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckAgreementDestroy,
+		CheckDestroy:             base.TestAccCheckAgreementDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -265,11 +264,10 @@ func TestAccAgreement_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckAgreementDestroy,
+		CheckDestroy:             base.TestAccCheckAgreementDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

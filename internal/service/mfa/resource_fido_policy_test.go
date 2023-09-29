@@ -13,7 +13,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckFIDOPolicyDestroy(s *terraform.State) error {
+func TestAccCheckFIDOPolicyDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -84,7 +84,7 @@ func TestAccFIDOPolicy_NewEnv(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFIDOPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckFIDOPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -111,7 +111,7 @@ func TestAccFIDOPolicy_Full(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFIDOPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckFIDOPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -141,7 +141,7 @@ func TestAccFIDOPolicy_Minimal(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFIDOPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckFIDOPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -171,7 +171,7 @@ func TestAccFIDOPolicy_Change(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFIDOPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckFIDOPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

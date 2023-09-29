@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -32,7 +33,7 @@ func TestAccCertificateSigningResponse_Full(t *testing.T) {
 			acctest.PreCheckPKCS12CSRResponse(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckEnvironmentDestroy,
+		CheckDestroy:             base.TestAccCheckEnvironmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

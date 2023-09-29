@@ -14,7 +14,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckFIDO2PolicyDestroy(s *terraform.State) error {
+func TestAccCheckFIDO2PolicyDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -69,7 +69,7 @@ func testAccCheckFIDO2PolicyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetFIDO2PolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetFIDO2PolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -97,17 +97,16 @@ func TestAccFIDO2Policy_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccFIDO2PolicyConfig_Minimal(resourceName, name),
-				Check:  testAccGetFIDO2PolicyIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  mfa.TestAccGetFIDO2PolicyIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -156,7 +155,7 @@ func TestAccFIDO2Policy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -230,11 +229,10 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -298,11 +296,10 @@ func TestAccFIDO2Policy_Errors(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -332,11 +329,10 @@ func TestAccFIDO2Policy_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

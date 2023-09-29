@@ -13,7 +13,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckCredentialIssuanceRuleDestroy(s *terraform.State) error {
+func TestAccCheckCredentialIssuanceRuleDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -68,7 +68,7 @@ func testAccCheckCredentialIssuanceRuleDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetCredentialIssuanceRuleIDs(resourceName string, environmentID, credentialTypeID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetCredentialIssuanceRuleIDs(resourceName string, environmentID, credentialTypeID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -97,17 +97,16 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccCredentialIssuanceRule_Minimal(resourceName, name),
-				Check:  testAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &resourceID),
+				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -136,7 +135,7 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 			// Test removal of the credential type
 			{
 				Config: testAccCredentialIssuanceRule_Minimal(resourceName, name),
-				Check:  testAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &resourceID),
+				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -231,11 +230,10 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// full
@@ -289,11 +287,10 @@ func TestAccCredentialIssuanceRule_InvalidConfigs(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -351,11 +348,10 @@ func TestAccCredentialIssuanceRule_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -7,81 +7,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckRoleAssignmentUserDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_role_assignment_user" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.UserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["user_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne User Role Assignment %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetRoleAssignmentUserIDs(resourceName string, environmentID, userID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*userID = rs.Primary.Attributes["user_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccRoleAssignmentUser_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -89,9 +20,20 @@ func TestAccRoleAssignmentUser_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_role_assignment_user.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, userID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var roleAssignmentID, userID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -100,34 +42,18 @@ func TestAccRoleAssignmentUser_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRoleAssignmentUserDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentUserDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccRoleAssignmentUserConfig_Population(resourceName, name, "Identity Data Admin"),
-				Check:  testAccGetRoleAssignmentUserIDs(resourceFullName, &environmentID, &userID, &resourceID),
+				Check:  base.TestAccGetRoleAssignmentUserIDs(resourceFullName, &environmentID, &userID, &roleAssignmentID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || userID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, user ID or resource ID cannot be determined. Environment ID: %s, User ID: %s, Resource ID: %s", environmentID, userID, resourceID)
-					}
-
-					_, err = apiClient.UserRoleAssignmentsApi.DeleteUserRoleAssignment(ctx, environmentID, userID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete user role assignment: %v", err)
-					}
+					base.RoleAssignmentUser_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, userID, roleAssignmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -135,28 +61,24 @@ func TestAccRoleAssignmentUser_RemovalDrift(t *testing.T) {
 			// Test removal of the user
 			{
 				Config: testAccRoleAssignmentUserConfig_Population(resourceName, name, "Identity Data Admin"),
-				Check:  testAccGetRoleAssignmentUserIDs(resourceFullName, &environmentID, &userID, &resourceID),
+				Check:  base.TestAccGetRoleAssignmentUserIDs(resourceFullName, &environmentID, &userID, &roleAssignmentID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || userID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, user ID or resource ID cannot be determined. Environment ID: %s, User ID: %s, Resource ID: %s", environmentID, userID, resourceID)
-					}
-
-					_, err = apiClient.UsersApi.DeleteUser(ctx, environmentID, userID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete user: %v", err)
-					}
+					sso.User_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, userID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccRoleAssignmentUserConfig_NewEnv(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
+				Check:  base.TestAccGetRoleAssignmentUserIDs(resourceFullName, &environmentID, &userID, &roleAssignmentID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -176,11 +98,10 @@ func TestAccRoleAssignmentUser_Population(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRoleAssignmentUserDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentUserDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -235,11 +156,10 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRoleAssignmentUserDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentUserDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -328,11 +248,10 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckOrganisationID(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRoleAssignmentUserDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentUserDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -421,11 +340,10 @@ func TestAccRoleAssignmentUser_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRoleAssignmentUserDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentUserDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
@@ -452,6 +370,37 @@ func TestAccRoleAssignmentUser_BadParameters(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccRoleAssignmentUserConfig_NewEnv(environmentName, licenseID, resourceName, name, roleName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_user" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+  population_id  = pingone_population.%[3]s.id
+
+  username = "%[4]s"
+  email    = "foouser@pingidentity.com"
+}
+
+data "pingone_role" "%[3]s" {
+  name = "%[5]s"
+}
+
+resource "pingone_role_assignment_user" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+  user_id        = pingone_user.%[3]s.id
+  role_id        = data.pingone_role.%[3]s.id
+
+  scope_population_id = pingone_population.%[3]s.id
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, roleName)
 }
 
 func testAccRoleAssignmentUserConfig_Population(resourceName, name, roleName string) string {

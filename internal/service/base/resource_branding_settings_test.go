@@ -10,10 +10,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckBrandingSettingsDestroy(s *terraform.State) error {
+func TestAccCheckBrandingSettingsDestroy(s *terraform.State) error {
 	return nil
 }
 
@@ -39,7 +40,7 @@ func TestAccBrandingSettings_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -90,7 +91,7 @@ func TestAccBrandingSettings_Minimal1(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -125,7 +126,7 @@ func TestAccBrandingSettings_Minimal2(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -161,7 +162,7 @@ func TestAccBrandingSettings_Minimal3(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -201,7 +202,7 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -276,7 +277,7 @@ func TestAccBrandingSettings_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

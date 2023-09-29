@@ -7,81 +7,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckKeyDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_key" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.CertificateManagementApi.GetKey(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Accept(management.ENUMGETKEYACCEPTHEADER_JSON).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Key Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetKeyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccKey_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -95,7 +26,14 @@ func TestAccKey_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var resourceID, environmentID string
+	var keyID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -104,34 +42,30 @@ func TestAccKey_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckKeyDestroy,
+		CheckDestroy:             base.TestAccCheckKeyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  testAccGetKeyIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  base.TestAccGetKeyIDs(resourceFullName, &environmentID, &keyID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
-					}
-
-					_, err = apiClient.CertificateManagementApi.DeleteKey(ctx, environmentID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete Key: %v", err)
-					}
+					base.Key_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, keyID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Check:  base.TestAccGetKeyIDs(resourceFullName, &environmentID, &keyID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -159,7 +93,7 @@ func TestAccKey_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckKeyDestroy,
+		CheckDestroy:             base.TestAccCheckKeyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -303,7 +237,7 @@ func TestAccKey_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckKeyDestroy,
+		CheckDestroy:             base.TestAccCheckKeyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -349,7 +283,7 @@ func TestAccKey_PKCS12(t *testing.T) {
 			acctest.PreCheckPKCS12Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckKeyDestroy,
+		CheckDestroy:             base.TestAccCheckKeyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -417,7 +351,7 @@ func TestAccKey_Change(t *testing.T) {
 			acctest.PreCheckPKCS12Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckKeyDestroy,
+		CheckDestroy:             base.TestAccCheckKeyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -529,7 +463,7 @@ func TestAccKey_CustomCRL(t *testing.T) {
 			acctest.PreCheckPKCS12Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckKeyDestroy,
+		CheckDestroy:             base.TestAccCheckKeyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -570,7 +504,7 @@ func TestAccKey_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckKeyDestroy,
+		CheckDestroy:             base.TestAccCheckKeyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

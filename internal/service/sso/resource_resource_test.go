@@ -14,7 +14,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckResourceDestroy(s *terraform.State) error {
+func TestAccCheckResourceDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +67,7 @@ func testAccCheckResourceDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetResourceIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetResourceIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -95,17 +95,16 @@ func TestAccResource_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccResourceConfig_Minimal(resourceName, name),
-				Check:  testAccGetResourceIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  sso.TestAccGetResourceIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -154,7 +153,7 @@ func TestAccResource_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -178,11 +177,10 @@ func TestAccResource_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -230,11 +228,10 @@ func TestAccResource_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -266,11 +263,10 @@ func TestAccResource_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -324,11 +320,10 @@ func TestAccResource_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

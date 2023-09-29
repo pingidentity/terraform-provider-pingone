@@ -11,10 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckCustomDomainDestroy(s *terraform.State) error {
+func TestAccCheckCustomDomainDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +68,7 @@ func testAccCheckCustomDomainDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetCustomDomainIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetCustomDomainIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -101,13 +102,13 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCustomDomainDestroy,
+		CheckDestroy:             base.TestAccCheckCustomDomainDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
-				Check:  testAccGetCustomDomainIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  base.TestAccGetCustomDomainIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -154,7 +155,7 @@ func TestAccCustomDomain_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCustomDomainDestroy,
+		CheckDestroy:             base.TestAccCheckCustomDomainDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -205,7 +206,7 @@ func TestAccCustomDomain_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCustomDomainDestroy,
+		CheckDestroy:             base.TestAccCheckCustomDomainDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

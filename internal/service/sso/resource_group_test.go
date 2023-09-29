@@ -14,7 +14,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckGroupDestroy(s *terraform.State) error {
+func TestAccCheckGroupDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -52,7 +52,7 @@ func testAccCheckGroupDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetGroupIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetGroupIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -80,17 +80,16 @@ func TestAccGroup_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGroupDestroy,
+		CheckDestroy:             sso.TestAccCheckGroupDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccGroupConfig_Minimal(resourceName, name),
-				Check:  testAccGetGroupIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  sso.TestAccGetGroupIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -139,7 +138,7 @@ func TestAccGroup_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGroupDestroy,
+		CheckDestroy:             sso.TestAccCheckGroupDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -183,11 +182,10 @@ func TestAccGroup_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGroupDestroy,
+		CheckDestroy:             sso.TestAccCheckGroupDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -252,11 +250,10 @@ func TestAccGroup_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGroupDestroy,
+		CheckDestroy:             sso.TestAccCheckGroupDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

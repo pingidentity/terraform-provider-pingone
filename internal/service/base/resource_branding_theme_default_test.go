@@ -9,10 +9,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckBrandingThemeDefaultDestroy(s *terraform.State) error {
+func TestAccCheckBrandingThemeDefaultDestroy(s *terraform.State) error {
 	return nil
 }
 
@@ -35,7 +36,7 @@ func TestAccBrandingThemeDefault_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingThemeDefaultDestroy,
+		CheckDestroy:             base.TestAccCheckBrandingThemeDefaultDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -86,7 +87,7 @@ func TestAccBrandingThemeDefault_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingThemeDefaultDestroy,
+		CheckDestroy:             base.TestAccCheckBrandingThemeDefaultDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

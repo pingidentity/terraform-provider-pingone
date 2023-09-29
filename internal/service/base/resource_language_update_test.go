@@ -1,6 +1,7 @@
 package base_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,8 +10,66 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
+
+func TestAccLanguageUpdate_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_language_update.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var languageID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test removal of the language
+			{
+				Config: testAccLanguageUpdateConfig_Full(environmentName, licenseID, resourceName, "de-DE", true),
+				Check:  base.TestAccGetLanguageUpdateIDs(resourceFullName, &environmentID, &languageID),
+			},
+			{
+				PreConfig: func() {
+					base.Language_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, languageID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccLanguageUpdateConfig_Full(environmentName, licenseID, resourceName, "de-DE", true),
+				Check:  base.TestAccGetLanguageUpdateIDs(resourceFullName, &environmentID, &languageID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
 
 func TestAccLanguageUpdate_Full(t *testing.T) {
 	t.Parallel()
@@ -29,7 +88,7 @@ func TestAccLanguageUpdate_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckLanguageDestroy,
+		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -81,7 +140,7 @@ func TestAccLanguageUpdate_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckLanguageDestroy,
+		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -117,7 +176,7 @@ func TestAccLanguageUpdate_SystemDefined(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckLanguageDestroy,
+		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -197,7 +256,7 @@ func TestAccLanguageUpdate_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckLanguageDestroy,
+		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -269,7 +328,7 @@ func TestAccLanguageUpdate_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckLanguageDestroy,
+		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

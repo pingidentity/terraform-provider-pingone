@@ -29,7 +29,7 @@ func TestAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(t *testing.T) 
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
-		//CheckDestroy:           testAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
+		//CheckDestroy:           credentials.TestAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
 		ErrorCheck: acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -68,7 +68,7 @@ func TestAccCredentialIssuerProfileDataSource_NotFound(t *testing.T) {
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
-		//CheckDestroy:           testAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
+		//CheckDestroy:           credentials.TestAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
 		ErrorCheck: acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

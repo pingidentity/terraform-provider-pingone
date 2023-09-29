@@ -19,7 +19,7 @@ func testAccCheckCredentialIssuerProfilePassthrough(s *terraform.State) error {
 	return nil
 }
 
-/*func testAccCheckCredentialIssuerProfileDestroy(s *terraform.State) error {
+/*func TestAccCheckCredentialIssuerProfileDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -120,7 +120,7 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
-		//CheckDestroy:           testAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
+		//CheckDestroy:           credentials.TestAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
 		ErrorCheck: acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// initial profile

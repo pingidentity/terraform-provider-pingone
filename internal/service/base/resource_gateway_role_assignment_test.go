@@ -11,10 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckRoleAssignmentGatewayDestroy(s *terraform.State) error {
+func TestAccCheckRoleAssignmentGatewayDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +68,7 @@ func testAccCheckRoleAssignmentGatewayDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetRoleAssignmentGatewayIDs(resourceName string, environmentID, gatewayID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetRoleAssignmentGatewayIDs(resourceName string, environmentID, gatewayID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -104,13 +105,13 @@ func TestAccRoleAssignmentGateway_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRoleAssignmentGatewayDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentGatewayDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
-				Check:  testAccGetRoleAssignmentGatewayIDs(resourceFullName, &environmentID, &gatewayID, &resourceID),
+				Check:  base.TestAccGetRoleAssignmentGatewayIDs(resourceFullName, &environmentID, &gatewayID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -139,7 +140,7 @@ func TestAccRoleAssignmentGateway_RemovalDrift(t *testing.T) {
 			// Test removal of the gateway
 			{
 				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
-				Check:  testAccGetRoleAssignmentGatewayIDs(resourceFullName, &environmentID, &gatewayID, &resourceID),
+				Check:  base.TestAccGetRoleAssignmentGatewayIDs(resourceFullName, &environmentID, &gatewayID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -188,7 +189,7 @@ func TestAccRoleAssignmentGateway_Population(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRoleAssignmentGatewayDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentGatewayDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -251,7 +252,7 @@ func TestAccRoleAssignmentGateway_Environment(t *testing.T) {
 			acctest.PreCheckOrganisationID(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRoleAssignmentGatewayDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentGatewayDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -323,7 +324,7 @@ func TestAccRoleAssignmentGateway_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRoleAssignmentGatewayDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentGatewayDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

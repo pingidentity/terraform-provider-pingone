@@ -10,26 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckNotificationSettingsDestroy(s *terraform.State) error {
-	return nil
-}
-
-func testAccGetNotificationSettingsIDs(resourceName string, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-
-		return nil
-	}
-}
 
 func TestAccNotificationSettings_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -43,7 +26,14 @@ func TestAccNotificationSettings_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var resourceID string
+	var notificationSettingsID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -52,34 +42,18 @@ func TestAccNotificationSettings_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccNotificationSettingsConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  testAccGetNotificationSettingsIDs(resourceFullName, &resourceID),
+				Check:  base.TestAccGetNotificationSettingsIDs(resourceFullName, &notificationSettingsID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if resourceID == "" {
-						t.Fatalf("Resource ID cannot be determined. Resource ID: %s", resourceID)
-					}
-
-					_, _, err = apiClient.NotificationsSettingsApi.DeleteNotificationsSettings(ctx, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete notification settings: %v", err)
-					}
+					base.NotificationSettings_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, notificationSettingsID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -144,7 +118,7 @@ func TestAccNotificationSettings_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full from scratch
@@ -240,7 +214,7 @@ func TestAccNotificationSettings_EmailSources(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			replyToMinimal,
@@ -298,7 +272,7 @@ func TestAccNotificationSettings_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationSettingsDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationSettingsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

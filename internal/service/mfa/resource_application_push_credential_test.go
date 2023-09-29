@@ -14,7 +14,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckApplicationPushCredentialDestroy(s *terraform.State) error {
+func TestAccCheckApplicationPushCredentialDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -69,7 +69,7 @@ func testAccCheckApplicationPushCredentialDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetApplicationPushCredentialIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetApplicationPushCredentialIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -98,17 +98,16 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
-				Check:  testAccGetApplicationPushCredentialIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  mfa.TestAccGetApplicationPushCredentialIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -137,7 +136,7 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 			// Test removal of the application
 			{
 				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
-				Check:  testAccGetApplicationPushCredentialIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  mfa.TestAccGetApplicationPushCredentialIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -189,11 +188,10 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// FCM (deprecated)
@@ -258,11 +256,10 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -325,11 +322,10 @@ func TestAccApplicationPushCredential_HMS(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -391,11 +387,10 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -446,11 +441,10 @@ func TestAccApplicationPushCredential_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

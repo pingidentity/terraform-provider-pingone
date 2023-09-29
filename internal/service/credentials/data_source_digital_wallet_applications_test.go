@@ -29,7 +29,7 @@ func TestAccDigitalWalletApplicationsDataSource_NoFilter(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.TestAccCheckDigitalWalletApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -70,7 +70,7 @@ func TestAccDigitalWalletApplicationsDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.TestAccCheckDigitalWalletApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

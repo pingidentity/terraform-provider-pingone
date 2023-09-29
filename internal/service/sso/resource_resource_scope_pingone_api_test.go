@@ -14,7 +14,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckResourceScopePingOneAPIDestroy(s *terraform.State) error {
+func TestAccCheckResourceScopePingOneAPIDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -77,7 +77,7 @@ func testAccCheckResourceScopePingOneAPIDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetResourceScopePingOneAPIIDs(resourceName string, environmentID, openidResourceID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetResourceScopePingOneAPIIDs(resourceName string, environmentID, openidResourceID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -106,17 +106,16 @@ func TestAccResourceScopePingOneAPI_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccResourceScopePingOneAPIConfig_Minimal(resourceName, fmt.Sprintf("p1:read:user:%s", name)),
-				Check:  testAccGetResourceScopePingOneAPIIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
+				Check:  sso.TestAccGetResourceScopePingOneAPIIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -157,11 +156,10 @@ func TestAccResourceScopePingOneAPI_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -221,11 +219,10 @@ func TestAccResourceScopePingOneAPI_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -265,11 +262,10 @@ func TestAccResourceScopePingOneAPI_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -330,7 +326,7 @@ func TestAccResourceScopePingOneAPI_OverridePredefined(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -376,11 +372,10 @@ func TestAccResourceScopePingOneAPI_InvalidParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

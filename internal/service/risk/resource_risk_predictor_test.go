@@ -15,7 +15,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckRiskPredictorDestroy(s *terraform.State) error {
+func TestAccCheckRiskPredictorDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -70,11 +70,11 @@ func testAccCheckRiskPredictorDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckRiskPredictorDestroyUndeletable(s *terraform.State) error {
+func TestAccCheckRiskPredictorDestroyUndeletable(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetRiskPredictorIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetRiskPredictorIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -102,17 +102,16 @@ func TestAccRiskPredictor_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccRiskPredictorConfig_Minimal(resourceName, name),
-				Check:  testAccGetRiskPredictorIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  risk.TestAccGetRiskPredictorIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -161,7 +160,7 @@ func TestAccRiskPredictor_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -209,11 +208,10 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -278,11 +276,10 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -373,11 +370,10 @@ func TestAccRiskPredictor_Anonymous_Network(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -455,11 +451,10 @@ func TestAccRiskPredictor_Anonymous_Network_OverwriteUndeletable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -512,11 +507,10 @@ func TestAccRiskPredictor_Bot_Detection(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -591,11 +585,10 @@ func TestAccRiskPredictor_Bot_Detection_OverwriteUndeletable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -651,11 +644,10 @@ func TestAccRiskPredictor_Geovelocity(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -733,11 +725,10 @@ func TestAccRiskPredictor_Geovelocity_OverwriteUndeletable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -793,11 +784,10 @@ func TestAccRiskPredictor_IP_Reputation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -875,11 +865,10 @@ func TestAccRiskPredictor_IP_Reputation_OverwriteUndeletable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -946,11 +935,10 @@ func TestAccRiskPredictor_CustomMap_BetweenRanges(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1043,11 +1031,10 @@ func TestAccRiskPredictor_CustomMap_IPRanges(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1140,11 +1127,10 @@ func TestAccRiskPredictor_CustomMap_StringList(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1228,11 +1214,10 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1311,11 +1296,10 @@ func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1370,11 +1354,10 @@ func TestAccRiskPredictor_SuspiciousDevice(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1450,11 +1433,10 @@ func TestAccRiskPredictor_SuspiciousDevice_OverwriteUndeletable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1511,11 +1493,10 @@ func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1592,11 +1573,10 @@ func TestAccRiskPredictor_UserLocationAnomaly_OverwriteUndeletable(t *testing.T)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1677,11 +1657,10 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
@@ -1809,11 +1788,10 @@ func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
@@ -1906,11 +1884,10 @@ func TestAccRiskPredictor_UserRiskBehavior(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
@@ -2009,11 +1986,10 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
@@ -2094,11 +2070,10 @@ func TestAccRiskPredictor_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.TestAccCheckRiskPredictorDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

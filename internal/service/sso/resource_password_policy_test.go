@@ -14,7 +14,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckPasswordPolicyDestroy(s *terraform.State) error {
+func TestAccCheckPasswordPolicyDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +67,7 @@ func testAccCheckPasswordPolicyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetPasswordPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetPasswordPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -95,17 +95,16 @@ func TestAccPasswordPolicy_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckPasswordPolicyDestroy,
+		CheckDestroy:             sso.TestAccCheckPasswordPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccPasswordPolicyConfig_Minimal(resourceName, name),
-				Check:  testAccGetPasswordPolicyIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  sso.TestAccGetPasswordPolicyIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -154,7 +153,7 @@ func TestAccPasswordPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckPasswordPolicyDestroy,
+		CheckDestroy:             sso.TestAccCheckPasswordPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -178,11 +177,10 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckPasswordPolicyDestroy,
+		CheckDestroy:             sso.TestAccCheckPasswordPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -251,11 +249,10 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckPasswordPolicyDestroy,
+		CheckDestroy:             sso.TestAccCheckPasswordPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -296,11 +293,10 @@ func TestAccPasswordPolicy_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckPasswordPolicyDestroy,
+		CheckDestroy:             sso.TestAccCheckPasswordPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

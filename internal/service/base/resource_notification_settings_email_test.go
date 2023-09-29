@@ -1,6 +1,7 @@
 package base_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,11 +10,53 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckNotificationSettingsEmailDestroy(s *terraform.State) error {
-	return nil
+func TestAccNotificationSettingsEmail_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_notification_settings_email.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.TestAccCheckNotificationSettingsEmailDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test removal of the environment
+			{
+				Config: testAccNotificationSettingsEmailConfig_Full(environmentName, licenseID, resourceName),
+				Check:  base.TestAccGetNotificationSettingsEmailIDs(resourceFullName, &environmentID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccNotificationSettingsEmail_Full(t *testing.T) {
@@ -48,7 +91,7 @@ func TestAccNotificationSettingsEmail_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationSettingsEmailDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationSettingsEmailDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full from scratch
@@ -137,7 +180,7 @@ func TestAccNotificationSettingsEmail_EmailSources(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationSettingsEmailDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationSettingsEmailDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			replyToMinimal,
@@ -193,7 +236,7 @@ func TestAccNotificationSettingsEmail_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationSettingsEmailDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationSettingsEmailDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

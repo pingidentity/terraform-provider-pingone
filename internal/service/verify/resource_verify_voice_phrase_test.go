@@ -14,7 +14,7 @@ import (
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckVerifyVoicePhraseDestroy(s *terraform.State) error {
+func TestAccCheckVerifyVoicePhraseDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -97,11 +97,10 @@ func TestAccVerifyVoicePhrase_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
@@ -156,7 +155,7 @@ func TestAccVerifyVoicePhrase_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -197,11 +196,10 @@ func TestAccVerifyVoicePhrase_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -264,11 +262,10 @@ func TestAccVerifyVoicePhrase_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

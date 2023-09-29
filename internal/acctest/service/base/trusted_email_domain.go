@@ -1,0 +1,92 @@
+package base
+
+import (
+	"context"
+	"fmt"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+)
+
+func TestAccCheckTrustedEmailDomainDestroy(s *terraform.State) error {
+	var ctx = context.Background()
+
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	apiClient := p1Client.API.ManagementAPIClient
+
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "pingone_trusted_email_domain" {
+			continue
+		}
+
+		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
+
+		if err != nil {
+
+			if rEnv == nil {
+				return fmt.Errorf("Response object does not exist and no error detected")
+			}
+
+			if rEnv.StatusCode == 404 {
+				continue
+			}
+
+			return err
+		}
+
+		body, r, err := apiClient.TrustedEmailDomainsApi.ReadOneTrustedEmailDomain(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+
+		if err != nil {
+
+			if r == nil {
+				return fmt.Errorf("Response object does not exist and no error detected")
+			}
+
+			if r.StatusCode == 404 {
+				continue
+			}
+
+			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
+			return err
+		}
+
+		return fmt.Errorf("PingOne Trusted Email Domain Instance %s still exists", rs.Primary.ID)
+	}
+
+	return nil
+}
+
+func TestAccGetTrustedEmailDomainIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", resourceName)
+		}
+
+		*resourceID = rs.Primary.ID
+		*environmentID = rs.Primary.Attributes["environment_id"]
+
+		return nil
+	}
+}
+
+func TrustedEmailDomain_RemovalDrift_PreConfig(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentID, trustedEmailDomainID string) {
+	if environmentID == "" || trustedEmailDomainID == "" {
+		t.Fatalf("One of environment ID or trusted email domain ID cannot be determined. Environment ID: %s, Trusted Email Domain ID: %s", environmentID, trustedEmailDomainID)
+	}
+
+	_, err := apiClient.TrustedEmailDomainsApi.DeleteTrustedEmailDomain(ctx, environmentID, trustedEmailDomainID).Execute()
+	if err != nil {
+		t.Fatalf("Failed to delete trusted email domain: %v", err)
+	}
+}

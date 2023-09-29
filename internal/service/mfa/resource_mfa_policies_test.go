@@ -11,7 +11,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckMFAPoliciesDestroy(s *terraform.State) error {
+func TestAccCheckMFAPoliciesDestroy(s *terraform.State) error {
 	return nil
 }
 
@@ -34,7 +34,7 @@ func TestAccMFAPolicies_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPoliciesDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPoliciesDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

@@ -29,7 +29,7 @@ func TestAccCredentialTypesDataSource_NoFilter(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -68,7 +68,7 @@ func TestAccCredentialTypesDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

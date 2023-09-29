@@ -11,10 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckAgreementLocalizationDestroy(s *terraform.State) error {
+func TestAccCheckAgreementLocalizationDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +68,7 @@ func testAccCheckAgreementLocalizationDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetAgreementLocalizationIDs(resourceName string, environmentID, agreementID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetAgreementLocalizationIDs(resourceName string, environmentID, agreementID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -104,13 +105,13 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckAgreementLocalizationDestroy,
+		CheckDestroy:             base.TestAccCheckAgreementLocalizationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  testAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &resourceID),
+				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -139,7 +140,7 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 			// Test removal of the agreement
 			{
 				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  testAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &resourceID),
+				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -215,7 +216,7 @@ func TestAccAgreementLocalization_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckAgreementLocalizationDestroy,
+		CheckDestroy:             base.TestAccCheckAgreementLocalizationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -288,7 +289,7 @@ func TestAccAgreementLocalization_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckAgreementLocalizationDestroy,
+		CheckDestroy:             base.TestAccCheckAgreementLocalizationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

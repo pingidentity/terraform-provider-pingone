@@ -39,7 +39,7 @@ func TestAccVerifyPoliciesDataSource_NoFilter(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

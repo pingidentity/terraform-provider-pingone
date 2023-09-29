@@ -13,7 +13,7 @@ import (
 
 // Data source TODO
 
-func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.APIClient, environmentID string, predictorCompactNames []string) ([]string, diag.Diagnostics) {
+func redictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.APIClient, environmentID string, predictorCompactNames []string) ([]string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var entityArray *risk.EntityArray

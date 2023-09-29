@@ -11,10 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckCertificateDestroy(s *terraform.State) error {
+func TestAccCheckCertificateDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +68,7 @@ func testAccCheckCertificateDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetCertificateIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetCertificateIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -103,13 +104,13 @@ func TestAccCertificate_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCertificateDestroy,
+		CheckDestroy:             base.TestAccCheckCertificateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccCertificateConfig_PEM(environmentName, licenseID, resourceName, pem_cert),
-				Check:  testAccGetCertificateIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  base.TestAccGetCertificateIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -158,7 +159,7 @@ func TestAccCertificate_PKCS7(t *testing.T) {
 			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCertificateDestroy,
+		CheckDestroy:             base.TestAccCheckCertificateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -224,7 +225,7 @@ func TestAccCertificate_PEM(t *testing.T) {
 			acctest.PreCheckPEMCert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCertificateDestroy,
+		CheckDestroy:             base.TestAccCheckCertificateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -290,7 +291,7 @@ func TestAccCertificate_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCertificateDestroy,
+		CheckDestroy:             base.TestAccCheckCertificateDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

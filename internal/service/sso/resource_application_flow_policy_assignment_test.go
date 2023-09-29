@@ -13,7 +13,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckApplicationFlowPolicyAssignmentDestroy(s *terraform.State) error {
+func TestAccCheckApplicationFlowPolicyAssignmentDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -66,7 +66,7 @@ func testAccCheckApplicationFlowPolicyAssignmentDestroy(s *terraform.State) erro
 	return nil
 }
 
-func testAccGetApplicationFlowPolicyAssignmentIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetApplicationFlowPolicyAssignmentIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -95,17 +95,16 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationFlowPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
-				Check:  testAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.TestAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -134,7 +133,7 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 			// Test removal of the application
 			{
 				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
-				Check:  testAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.TestAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -213,11 +212,10 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationFlowPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Single from new
@@ -268,11 +266,10 @@ func TestAccApplicationFlowPolicyAssignment_SystemApplication(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationFlowPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -316,11 +313,10 @@ func TestAccApplicationFlowPolicyAssignment_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationFlowPolicyAssignmentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -14,7 +14,7 @@ import (
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckVerifyVoicePhraseContentsDestroy(s *terraform.State) error {
+func TestAccCheckVerifyVoicePhraseContentsDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -100,11 +100,10 @@ func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
@@ -188,7 +187,7 @@ func TestAccVerifyVoicePhraseContent_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -238,11 +237,10 @@ func TestAccVerifyVoicePhraseContent_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -313,11 +311,10 @@ func TestAccVerifyVoicePhraseContent_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseContentsDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

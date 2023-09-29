@@ -14,7 +14,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckMFAPolicyDestroy(s *terraform.State) error {
+func TestAccCheckMFAPolicyDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -69,7 +69,7 @@ func testAccCheckMFAPolicyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetMFAPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -97,17 +97,16 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
-				Check:  testAccGetMFAPolicyIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  mfa.TestAccGetMFAPolicyIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -156,7 +155,7 @@ func TestAccMFAPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -182,11 +181,10 @@ func TestAccMFAPolicy_SMS_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -240,11 +238,10 @@ func TestAccMFAPolicy_SMS_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -282,11 +279,10 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -364,11 +360,10 @@ func TestAccMFAPolicy_Voice_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -422,11 +417,10 @@ func TestAccMFAPolicy_Voice_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -464,11 +458,10 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -546,11 +539,10 @@ func TestAccMFAPolicy_Email_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -604,11 +596,10 @@ func TestAccMFAPolicy_Email_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -646,11 +637,10 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -730,11 +720,10 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -840,11 +829,10 @@ func TestAccMFAPolicy_Mobile_IntegrityDetectionErrors(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -871,11 +859,10 @@ func TestAccMFAPolicy_Mobile_BadMFAPolicyErrors(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -909,11 +896,10 @@ func TestAccMFAPolicy_Mobile_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -950,11 +936,10 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1135,11 +1120,10 @@ func TestAccMFAPolicy_Totp_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1191,11 +1175,10 @@ func TestAccMFAPolicy_Totp_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1231,11 +1214,10 @@ func TestAccMFAPolicy_Totp_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1307,11 +1289,10 @@ func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1361,11 +1342,10 @@ func TestAccMFAPolicy_FIDO2_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1399,11 +1379,10 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1470,7 +1449,7 @@ func TestAccMFAPolicy_SecurityKey_Full(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1502,7 +1481,7 @@ func TestAccMFAPolicy_SecurityKey_Minimal(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1534,7 +1513,7 @@ func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1592,7 +1571,7 @@ func TestAccMFAPolicy_Platform_Full(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1624,7 +1603,7 @@ func TestAccMFAPolicy_Platform_Minimal(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1657,7 +1636,7 @@ func TestAccMFAPolicy_Platform_Change(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1714,11 +1693,10 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
@@ -1797,11 +1775,10 @@ func TestAccMFAPolicy_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.TestAccCheckMFAPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

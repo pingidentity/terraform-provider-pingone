@@ -1,6 +1,7 @@
 package base_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -10,11 +11,53 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckSystemApplicationDestroy(s *terraform.State) error {
-	return nil
+func TestAccSystemApplication_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_system_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var applicationID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test removal of the environment
+			{
+				Config: testAccSystemApplicationConfig_NewEnv(environmentName, licenseID, resourceName),
+				Check:  base.TestAccGetSystemApplicationIDs(resourceFullName, &environmentID, &applicationID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccSystemApplication_NewEnv(t *testing.T) {
@@ -34,7 +77,7 @@ func TestAccSystemApplication_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSystemApplicationDestroy,
+		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -84,11 +127,10 @@ func TestAccSystemApplication_Portal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSystemApplicationDestroy,
+		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -179,11 +221,10 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSystemApplicationDestroy,
+		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -254,7 +295,7 @@ func TestAccSystemApplication_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSystemApplicationDestroy,
+		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

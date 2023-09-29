@@ -14,7 +14,7 @@ import (
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckVerifyPolicyDestroy(s *terraform.State) error {
+func TestAccCheckVerifyPolicyDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -104,7 +104,7 @@ func TestAccVerifyPolicy_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
@@ -159,7 +159,7 @@ func TestAccVerifyPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -359,7 +359,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -432,7 +432,7 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -482,7 +482,7 @@ func TestAccVerifyPolicy_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

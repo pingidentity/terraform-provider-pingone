@@ -10,10 +10,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckGatewayCredentialDestroy(s *terraform.State) error {
+func TestAccCheckGatewayCredentialDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -66,7 +67,7 @@ func testAccCheckGatewayCredentialDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetGatewayCredentialIDs(resourceName string, environmentID, gatewayID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetGatewayCredentialIDs(resourceName string, environmentID, gatewayID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -95,17 +96,16 @@ func TestAccGatewayCredential_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayCredentialDestroy,
+		CheckDestroy:             base.TestAccCheckGatewayCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccGatewayCredentialConfig_Full(resourceName, name),
-				Check:  testAccGetGatewayCredentialIDs(resourceFullName, &environmentID, &gatewayID, &resourceID),
+				Check:  base.TestAccGetGatewayCredentialIDs(resourceFullName, &environmentID, &gatewayID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -134,7 +134,7 @@ func TestAccGatewayCredential_RemovalDrift(t *testing.T) {
 			// Test removal of the gateway
 			{
 				Config: testAccGatewayCredentialConfig_Full(resourceName, name),
-				Check:  testAccGetGatewayCredentialIDs(resourceFullName, &environmentID, &gatewayID, &resourceID),
+				Check:  base.TestAccGetGatewayCredentialIDs(resourceFullName, &environmentID, &gatewayID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -175,11 +175,10 @@ func TestAccGatewayCredential_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayCredentialDestroy,
+		CheckDestroy:             base.TestAccCheckGatewayCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -227,11 +226,10 @@ func TestAccGatewayCredential_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayCredentialDestroy,
+		CheckDestroy:             base.TestAccCheckGatewayCredentialDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

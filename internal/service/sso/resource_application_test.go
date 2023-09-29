@@ -8,92 +8,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckApplicationDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_application" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.ApplicationsApi.ReadOneApplication(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Application Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetApplicationIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
-
-func Application_RemovalDrift_PreConfig(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentID, applicationID string) {
-	if environmentID == "" || applicationID == "" {
-		t.Fatalf("One of environment ID or application ID cannot be determined. Environment ID: %s, Application ID: %s", environmentID, applicationID)
-	}
-
-	_, err := apiClient.ApplicationsApi.DeleteApplication(ctx, environmentID, applicationID).Execute()
-	if err != nil {
-		t.Fatalf("Failed to delete application: %v", err)
-	}
-}
 
 func TestAccApplication_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -123,17 +44,17 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
-				Check:  testAccGetApplicationIDs(resourceFullName, &environmentID, &applicationID),
+				Check:  sso.TestAccGetApplicationIDs(resourceFullName, &environmentID, &applicationID),
 			},
 			{
 				PreConfig: func() {
-					Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)
+					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -141,7 +62,7 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccApplicationConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  testAccGetApplicationIDs(resourceFullName, &environmentID, &applicationID),
+				Check:  sso.TestAccGetApplicationIDs(resourceFullName, &environmentID, &applicationID),
 			},
 			{
 				PreConfig: func() {
@@ -173,7 +94,7 @@ func TestAccApplication_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -200,11 +121,10 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -295,11 +215,10 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -363,11 +282,10 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -531,11 +449,10 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -637,11 +554,10 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -711,11 +627,10 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -933,11 +848,10 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckRegionSupportsWorkforce(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// With
@@ -1059,11 +973,10 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// With
@@ -1193,11 +1106,10 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckGoogleJSONKey(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// With
@@ -1254,11 +1166,10 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1353,11 +1264,10 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1418,11 +1328,10 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1605,11 +1514,10 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1704,11 +1612,10 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1772,11 +1679,10 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1962,11 +1868,10 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2056,11 +1961,10 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2123,11 +2027,10 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2288,11 +2191,10 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2378,11 +2280,10 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2445,11 +2346,10 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2604,11 +2504,10 @@ func TestAccApplication_OIDC_WildcardInRedirectURI(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2643,11 +2542,10 @@ func TestAccApplication_OIDC_LocalhostAddresses(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Localhost
@@ -2699,11 +2597,10 @@ func TestAccApplication_OIDC_NativeAppAddresses(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Localhost
@@ -2735,11 +2632,10 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2822,11 +2718,10 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2905,11 +2800,10 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Create
@@ -2950,11 +2844,10 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -3015,11 +2908,10 @@ func TestAccApplication_ExternalLinkMinimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -3053,11 +2945,10 @@ func TestAccApplication_Enabled(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -3093,11 +2984,10 @@ func TestAccApplication_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
@@ -3143,7 +3033,7 @@ resource "pingone_application" "%[3]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image string) string {
@@ -3210,7 +3100,7 @@ resource "pingone_application" "%[2]s" {
     support_unsigned_request_object = true
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name string) string {
@@ -3230,7 +3120,7 @@ resource "pingone_application" "%[2]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullNative(resourceName, name, image string) string {
@@ -3310,7 +3200,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalNative(resourceName, name string) string {
@@ -3328,7 +3218,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name string) string {
@@ -3362,7 +3252,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name string) string {
@@ -3396,7 +3286,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name string) string {
@@ -3430,7 +3320,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name string) string {
@@ -3476,7 +3366,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_Minimal(resourceName, name string) string {
@@ -3496,7 +3386,7 @@ resource "pingone_application" "%[2]s" {
     mobile_app {}
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Full(resourceName, name string) string {
@@ -3542,7 +3432,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Minimal(resourceName, name, googleJsonKey string) string {
@@ -3584,7 +3474,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, googleJsonKey)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, googleJsonKey)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeGoogle(resourceName, name string) string {
@@ -3623,7 +3513,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeIOS(resourceName, name string) string {
@@ -3668,7 +3558,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image string) string {
@@ -3743,7 +3633,7 @@ resource "pingone_application" "%[2]s" {
     require_signed_request_object = true
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalCustom(resourceName, name string) string {
@@ -3761,7 +3651,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullService(resourceName, name, image string) string {
@@ -3834,7 +3724,7 @@ resource "pingone_application" "%[2]s" {
     pkce_enforcement   = "REQUIRED"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalService(resourceName, name string) string {
@@ -3854,7 +3744,7 @@ resource "pingone_application" "%[2]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image string) string {
@@ -3915,7 +3805,7 @@ resource "pingone_application" "%[2]s" {
 
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name string) string {
@@ -3936,7 +3826,7 @@ resource "pingone_application" "%[2]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image string) string {
@@ -3992,7 +3882,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name string) string {
@@ -4010,7 +3900,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_WildcardInRedirect(resourceName, name string, wildcardInRedirect bool) string {
@@ -4032,7 +3922,7 @@ resource "pingone_application" "%[2]s" {
     allow_wildcards_in_redirect_uris = %[4]t
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, wildcardInRedirect)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, wildcardInRedirect)
 }
 
 func testAccApplicationConfig_OIDC_LocalhostAddresses(resourceName, name, hostname string) string {
@@ -4059,7 +3949,7 @@ resource "pingone_application" "%[2]s" {
     target_link_uri             = "http://%[4]s/link"       # either http or https
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, hostname)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, hostname)
 }
 
 func testAccApplicationConfig_OIDC_NativeAppAddresses(resourceName, name string) string {
@@ -4083,7 +3973,7 @@ resource "pingone_application" "%[2]s" {
     target_link_uri             = "com.myapp.app://target"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_SAML_Full(resourceName, name, image string) string {
@@ -4358,5 +4248,5 @@ resource "pingone_application" "%[2]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
 }

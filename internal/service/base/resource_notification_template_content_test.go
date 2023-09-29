@@ -7,81 +7,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckNotificationTemplateContentDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_notification_template_content" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["template_name"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne User Role Assignment %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetNotificationTemplateContentIDs(resourceName string, environmentID, templateName, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*templateName = rs.Primary.Attributes["template_name"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccNotificationTemplateContent_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -96,7 +27,14 @@ func TestAccNotificationTemplateContent_RemovalDrift(t *testing.T) {
 	name := "strong_authentication"
 	locale := "en-GB"
 
-	var resourceID, templateName, environmentID string
+	var notificationTemplateContentID, templateName, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -105,34 +43,30 @@ func TestAccNotificationTemplateContent_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccNotificationTemplateContentConfig_NewLocale_Minimal(environmentName, licenseID, resourceName, name, locale),
-				Check:  testAccGetNotificationTemplateContentIDs(resourceFullName, &environmentID, &templateName, &resourceID),
+				Check:  base.TestAccGetNotificationTemplateContentIDs(resourceFullName, &environmentID, &templateName, &notificationTemplateContentID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || templateName == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, template name or resource ID cannot be determined. Environment ID: %s, Template Name: %s, Resource ID: %s", environmentID, templateName, resourceID)
-					}
-
-					_, err = apiClient.NotificationsTemplatesApi.DeleteContent(ctx, environmentID, templateName, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete notification template contents: %v", err)
-					}
+					base.NotificationTemplateContent_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, templateName, notificationTemplateContentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccNotificationTemplateContentConfig_NewLocale_Minimal(environmentName, licenseID, resourceName, name, locale),
+				Check:  base.TestAccGetNotificationTemplateContentIDs(resourceFullName, &environmentID, &templateName, &notificationTemplateContentID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -174,7 +108,7 @@ func TestAccNotificationTemplateContent_OverrideDefaultLocale(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -243,7 +177,7 @@ func TestAccNotificationTemplateContent_NewLocale(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -322,7 +256,7 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -388,7 +322,7 @@ func TestAccNotificationTemplateContent_ChangeVariant(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Change defined variants
@@ -443,7 +377,7 @@ func TestAccNotificationTemplateContent_InvalidData(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -521,7 +455,7 @@ func TestAccNotificationTemplateContent_Email(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
@@ -608,7 +542,7 @@ func TestAccNotificationTemplateContent_Push(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
@@ -702,7 +636,7 @@ func TestAccNotificationTemplateContent_SMS(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
@@ -796,7 +730,7 @@ func TestAccNotificationTemplateContent_Voice(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
@@ -863,7 +797,7 @@ func TestAccNotificationTemplateContent_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

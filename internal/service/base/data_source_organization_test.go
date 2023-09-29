@@ -7,14 +7,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckOrganizationDestroy(s *terraform.State) error {
-	return nil
-}
 
 func TestAccOrganizationDataSource_Full(t *testing.T) {
 	t.Parallel()
@@ -39,11 +35,11 @@ func TestAccOrganizationDataSource_Full(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckOrganisationID(t)
-			PreCheckOrganisationName(t)
+			acctest.PreCheckOrganisationName(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckOrganizationDestroy,
+		CheckDestroy:             base.TestAccCheckOrganizationDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -66,7 +62,6 @@ func TestAccOrganizationDataSource_NotFound(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,

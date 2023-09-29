@@ -13,7 +13,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckIdentityProviderAttributeDestroy(s *terraform.State) error {
+func TestAccCheckIdentityProviderAttributeDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -66,7 +66,7 @@ func testAccCheckIdentityProviderAttributeDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetIdentityProviderAttributeIDs(resourceName string, environmentID, identityProviderID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetIdentityProviderAttributeIDs(resourceName string, environmentID, identityProviderID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -95,17 +95,16 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
-				Check:  testAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &resourceID),
+				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -134,7 +133,7 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the IDP
 			{
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
-				Check:  testAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &resourceID),
+				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -210,11 +209,10 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -285,11 +283,10 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -350,11 +347,10 @@ func TestAccIdentityProviderAttribute_Core(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -410,11 +406,10 @@ func TestAccIdentityProviderAttribute_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

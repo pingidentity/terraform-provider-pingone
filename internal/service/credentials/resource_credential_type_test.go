@@ -15,7 +15,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckCredentialTypeDestroy(s *terraform.State) error {
+func TestAccCheckCredentialTypeDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -79,7 +79,7 @@ func testAccCheckCredentialTypeDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetCredentialTypeIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetCredentialTypeIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -107,17 +107,16 @@ func TestAccCredentialType_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccCredentialTypeConfig_Minimal(resourceName, name),
-				Check:  testAccGetCredentialTypeIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  credentials.TestAccGetCredentialTypeIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -166,7 +165,7 @@ func TestAccCredentialType_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -275,11 +274,10 @@ func TestAccCredentialType_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil, //testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             nil, //credentials.TestAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// full - new
@@ -336,11 +334,10 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -394,11 +391,10 @@ func TestAccCredentialType_CardDesignTemplate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -446,11 +442,10 @@ func TestAccCredentialType_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -13,7 +13,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckGroupNestingDestroy(s *terraform.State) error {
+func TestAccCheckGroupNestingDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -51,7 +51,7 @@ func testAccCheckGroupNestingDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetGroupNestingIDs(resourceName string, environmentID, groupID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetGroupNestingIDs(resourceName string, environmentID, groupID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -80,17 +80,16 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGroupNestingDestroy,
+		CheckDestroy:             sso.TestAccCheckGroupNestingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccGroupNestingConfig_Full(resourceName, name),
-				Check:  testAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &resourceID),
+				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -119,7 +118,7 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 			// Test removal of the group
 			{
 				Config: testAccGroupNestingConfig_Full(resourceName, name),
-				Check:  testAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &resourceID),
+				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -160,11 +159,10 @@ func TestAccGroupNesting_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGroupNestingDestroy,
+		CheckDestroy:             sso.TestAccCheckGroupNestingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -208,11 +206,10 @@ func TestAccGroupNesting_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGroupNestingDestroy,
+		CheckDestroy:             sso.TestAccCheckGroupNestingDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

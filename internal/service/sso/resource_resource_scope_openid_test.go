@@ -14,7 +14,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckResourceScopeOpenIDDestroy(s *terraform.State) error {
+func TestAccCheckResourceScopeOpenIDDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -77,7 +77,7 @@ func testAccCheckResourceScopeOpenIDDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccGetResourceScopeOpenIDIDs(resourceName string, environmentID, openidResourceID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetResourceScopeOpenIDIDs(resourceName string, environmentID, openidResourceID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -106,17 +106,16 @@ func TestAccResourceScopeOpenID_RemovalDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccResourceScopeOpenIDConfig_Minimal(resourceName, name),
-				Check:  testAccGetResourceScopeOpenIDIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
+				Check:  sso.TestAccGetResourceScopeOpenIDIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -157,11 +156,10 @@ func TestAccResourceScopeOpenID_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -209,11 +207,10 @@ func TestAccResourceScopeOpenID_Minimal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -242,11 +239,10 @@ func TestAccResourceScopeOpenID_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -309,7 +305,7 @@ func TestAccResourceScopeOpenID_OverridePredefined(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -356,11 +352,10 @@ func TestAccResourceScopeOpenID_InvalidParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
