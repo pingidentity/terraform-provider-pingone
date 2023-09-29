@@ -47,12 +47,13 @@ type MetadataDataSourceModel struct {
 }
 
 type FieldsDataSourceModel struct {
-	Id        types.String `tfsdk:"id"`
-	Type      types.String `tfsdk:"type"`
-	Title     types.String `tfsdk:"title"`
-	IsVisible types.Bool   `tfsdk:"is_visible"`
-	Attribute types.String `tfsdk:"attribute"`
-	Value     types.String `tfsdk:"value"`
+	Id          types.String `tfsdk:"id"`
+	Type        types.String `tfsdk:"type"`
+	Title       types.String `tfsdk:"title"`
+	FileSupport types.String `tfsdk:"file_support"`
+	IsVisible   types.Bool   `tfsdk:"is_visible"`
+	Attribute   types.String `tfsdk:"attribute"`
+	Value       types.String `tfsdk:"value"`
 }
 
 var (
@@ -70,12 +71,13 @@ var (
 	}
 
 	innerFieldsDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"id":         types.StringType,
-		"type":       types.StringType,
-		"title":      types.StringType,
-		"is_visible": types.BoolType,
-		"attribute":  types.StringType,
-		"value":      types.StringType,
+		"id":           types.StringType,
+		"type":         types.StringType,
+		"title":        types.StringType,
+		"file_support": types.StringType,
+		"is_visible":   types.BoolType,
+		"attribute":    types.StringType,
+		"value":        types.StringType,
 	}
 )
 
@@ -207,16 +209,20 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 									Description: "Descriptive text when showing the field.",
 									Computed:    true,
 								},
+								"file_support": schema.StringAttribute{
+									Description: "Specifies how an image is stored in the credential field.",
+									Computed:    true,
+								},
+								"is_visible": schema.BoolAttribute{
+									Description: "Specifies whether the field should be visible to viewers of the credential.",
+									Computed:    true,
+								},
 								"attribute": schema.StringAttribute{
 									Description: "Name of the PingOne Directory attribute. Present if field.type is Directory Attribute.",
 									Computed:    true,
 								},
 								"value": schema.StringAttribute{
 									Description: "The text to appear on the credential for a field.type of Alphanumeric Text.",
-									Computed:    true,
-								},
-								"is_visible": schema.BoolAttribute{
-									Description: "Specifies whether the field should be visible to viewers of the credential.",
 									Computed:    true,
 								},
 							},
@@ -377,12 +383,13 @@ func toStateFieldsDataSource(innerFields []credentials.CredentialTypeMetaDataFie
 	for _, v := range innerFields {
 
 		fieldsMap := map[string]attr.Value{
-			"id":         framework.StringOkToTF(v.GetIdOk()),
-			"title":      framework.StringOkToTF(v.GetTitleOk()),
-			"attribute":  framework.StringOkToTF(v.GetAttributeOk()),
-			"value":      framework.StringOkToTF(v.GetValueOk()),
-			"is_visible": framework.BoolOkToTF(v.GetIsVisibleOk()),
-			"type":       framework.EnumOkToTF(v.GetTypeOk()),
+			"id":           framework.StringOkToTF(v.GetIdOk()),
+			"type":         framework.EnumOkToTF(v.GetTypeOk()),
+			"title":        framework.StringOkToTF(v.GetTitleOk()),
+			"file_support": framework.EnumOkToTF(v.GetFileSupportOk()),
+			"is_visible":   framework.BoolOkToTF(v.GetIsVisibleOk()),
+			"attribute":    framework.StringOkToTF(v.GetAttributeOk()),
+			"value":        framework.StringOkToTF(v.GetValueOk()),
 		}
 		innerflattenedObj, d := types.ObjectValue(innerFieldsDataSourceServiceTFObjectTypes, fieldsMap)
 		diags.Append(d...)

@@ -80,6 +80,13 @@ EOT
         is_visible = false
       },
       {
+        type         = "Directory Attribute"
+        title        = "photo"
+        attribute    = "photo"
+        file_support = "REFERENCE_FILE"
+        is_visible   = true
+      },
+      {
         type       = "Directory Attribute"
         title      = "id"
         attribute  = "id"

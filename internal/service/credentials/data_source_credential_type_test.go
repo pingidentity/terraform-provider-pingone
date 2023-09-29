@@ -2,6 +2,7 @@ package credentials_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -19,6 +20,9 @@ func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -26,7 +30,7 @@ func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCredentialTypeDataSource_ByIDFull(resourceName, name),
+				Config: testAccCredentialTypeDataSource_ByIDFull(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
@@ -44,7 +48,7 @@ func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
 				),
 			},
 			{
-				Config:  testAccCredentialTypeDataSource_ByIDFull(resourceName, name),
+				Config:  testAccCredentialTypeDataSource_ByIDFull(environmentName, licenseID, resourceName, name),
 				Destroy: true,
 			},
 		},
@@ -56,6 +60,9 @@ func TestAccCredentialTypeDataSource_NotFound(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -63,7 +70,7 @@ func TestAccCredentialTypeDataSource_NotFound(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialTypeDataSource_NotFoundByID(resourceName),
+				Config:      testAccCredentialTypeDataSource_NotFoundByID(environmentName, licenseID, resourceName),
 				ExpectError: regexp.MustCompile("Error: Error when calling `ReadOneCredentialType`: The request could not be completed. The requested resource was not found."),
 			},
 		},
@@ -75,6 +82,9 @@ func TestAccCredentialTypeDataSource_InvalidConfig(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -82,33 +92,33 @@ func TestAccCredentialTypeDataSource_InvalidConfig(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialTypeDataSource_NoEnvironmentID(resourceName),
+				Config:      testAccCredentialTypeDataSource_NoEnvironmentID(environmentName, licenseID, resourceName),
 				ExpectError: regexp.MustCompile("Error: Missing required argument"),
 			},
 			{
-				Config:      testAccCredentialTypeDataSource_NoCredentialTypeID(resourceName),
+				Config:      testAccCredentialTypeDataSource_NoCredentialTypeID(environmentName, licenseID, resourceName),
 				ExpectError: regexp.MustCompile("Error: Missing required argument"),
 			},
 		},
 	})
 }
 
-func testAccCredentialTypeDataSource_ByIDFull(resourceName, name string) string {
+func testAccCredentialTypeDataSource_ByIDFull(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "%[3]s"
+resource "pingone_credential_type" "%[3]s" {
+  environment_id       = pingone_environment.%[2]s.id
+  title                = "%[4]s"
+  description          = "%[4]s Example Description"
+  card_type            = "%[4]s"
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
   revoke_on_delete     = false
 
   metadata = {
-    name               = "%[3]s"
+    name               = "%[4]s"
     columns            = 2
-    description        = "%[3]s Example Description"
+    description        = "%[4]s Example Description"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -155,45 +165,52 @@ resource "pingone_credential_type" "%[2]s" {
         title      = "id"
         attribute  = "id"
         is_visible = false
+      },
+      {
+        type         = "Directory Attribute"
+        title        = "photo"
+        attribute    = "photo"
+        is_visible   = false
+        file_support = "REFERENCE_FILE"
       }
     ]
   }
 }
 
-data "pingone_credential_type" "%[2]s" {
-  environment_id     = data.pingone_environment.general_test.id
-  credential_type_id = resource.pingone_credential_type.%[2]s.id
+data "pingone_credential_type" "%[3]s" {
+  environment_id     = pingone_environment.%[2]s.id
+  credential_type_id = resource.pingone_credential_type.%[3]s.id
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccCredentialTypeDataSource_NotFoundByID(resourceName string) string {
+func testAccCredentialTypeDataSource_NotFoundByID(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-data "pingone_credential_type" "%[2]s" {
-  environment_id     = data.pingone_environment.general_test.id
+data "pingone_credential_type" "%[3]s" {
+  environment_id     = pingone_environment.%[2]s.id
   credential_type_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
-}`, acctest.GenericSandboxEnvironment(), resourceName)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-func testAccCredentialTypeDataSource_NoEnvironmentID(resourceName string) string {
+func testAccCredentialTypeDataSource_NoEnvironmentID(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-data "pingone_credential_type" "%[2]s" {
+data "pingone_credential_type" "%[3]s" {
   credential_type_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
-}`, acctest.GenericSandboxEnvironment(), resourceName)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-func testAccCredentialTypeDataSource_NoCredentialTypeID(resourceName string) string {
+func testAccCredentialTypeDataSource_NoCredentialTypeID(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-data "pingone_credential_type" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+data "pingone_credential_type" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-}`, acctest.GenericSandboxEnvironment(), resourceName)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
