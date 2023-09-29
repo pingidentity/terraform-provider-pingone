@@ -1,0 +1,15 @@
+```release-note:enhancement
+`resource/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration.
+```
+
+```release-note:enhancement
+`data_source/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration.
+```
+
+```release-note:note
+`resource/pingone_credential_type`: Improved test cases and migrated to dynamically-created test environments.
+```
+
+```release-note:note
+`data_source/pingone_credential_type`: Improved test cases and migrated to dynamically-created test environments.
+```
