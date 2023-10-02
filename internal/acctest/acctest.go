@@ -3,6 +3,7 @@ package acctest
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider/sdkv2"
@@ -342,4 +344,27 @@ func DaVinciFlowPolicySandboxEnvironment() string {
 		data "pingone_environment" "davinci_test" {
 			name = "tf-testacc-static-davinci-test"
 		}`
+}
+
+func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.APIClient, environmentID string) (bool, error) {
+	_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+
+	return CheckForResourceDestroy(r, err)
+}
+
+func CheckForResourceDestroy(r *http.Response, err error) (bool, error) {
+	if err != nil {
+
+		if r == nil {
+			return false, fmt.Errorf("Response object does not exist and no error detected")
+		}
+
+		if r.StatusCode == 404 {
+			return true, nil
+		}
+
+		return false, err
+	}
+
+	return false, nil
 }

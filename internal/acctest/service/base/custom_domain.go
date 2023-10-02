@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -28,35 +27,24 @@ func TestAccCheckCustomDomainDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
+		shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, apiClient, rs.Primary.Attributes["environment_id"])
 		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
 			return err
 		}
 
-		body, r, err := apiClient.CustomDomainsApi.ReadOneDomain(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+		if shouldContinue {
+			continue
+		}
 
+		_, r, err := apiClient.CustomDomainsApi.ReadOneDomain(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+
+		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
 			return err
+		}
+
+		if shouldContinue {
+			continue
 		}
 
 		return fmt.Errorf("PingOne Custom Domain Instance %s still exists", rs.Primary.ID)
