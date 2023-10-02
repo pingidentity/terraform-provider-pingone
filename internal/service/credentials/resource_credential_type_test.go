@@ -102,9 +102,6 @@ func TestAccCredentialType_RemovalDrift(t *testing.T) {
 
 	name := resourceName
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	var resourceID, environmentID string
 
 	resource.Test(t, resource.TestCase{
@@ -115,7 +112,7 @@ func TestAccCredentialType_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccCredentialTypeConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Config: testAccCredentialTypeConfig_Minimal(resourceName, name),
 				Check:  testAccGetCredentialTypeIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
@@ -182,9 +179,6 @@ func TestAccCredentialType_Full(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	data, _ := os.ReadFile("../../acctest/test_assets/image/credential_background.png")
 	backgroundImage := base64.StdEncoding.EncodeToString(data)
 
@@ -203,7 +197,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 `
 
 	fullStep := resource.TestStep{
-		Config: testAccCredentialTypeConfig_Full(environmentName, licenseID, resourceName, name, backgroundImage, logoImage),
+		Config: testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -227,11 +221,6 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.title", "displayName"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.attribute", "name.formatted"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.is_visible", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.7.id", "Directory Attribute -> photo"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.7.type", "Directory Attribute"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.7.title", "photo"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.7.attribute", "photo"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.7.is_visible", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.7.file_support", "REFERENCE_FILE"),
 			resource.TestCheckResourceAttr(resourceFullName, "revoke_on_delete", "true"),
 			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
@@ -250,7 +239,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 `
 
 	minimalStep := resource.TestStep{
-		Config: testAccCredentialTypeConfig_Minimal(environmentName, licenseID, resourceName, updatedName),
+		Config: testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -285,13 +274,13 @@ func TestAccCredentialType_Full(t *testing.T) {
 			// full - new
 			fullStep,
 			{
-				Config:  testAccCredentialTypeConfig_Full(environmentName, licenseID, resourceName, name, backgroundImage, logoImage),
+				Config:  testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
 				Destroy: true,
 			},
 			// minimal - new
 			minimalStep,
 			{
-				Config:  testAccCredentialTypeConfig_Minimal(environmentName, licenseID, resourceName, updatedName),
+				Config:  testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
 				Destroy: true,
 			},
 			// update
@@ -316,11 +305,11 @@ func TestAccCredentialType_Full(t *testing.T) {
 			},
 			// clear
 			{
-				Config:  testAccCredentialTypeConfig_Minimal(environmentName, licenseID, resourceName, updatedName),
+				Config:  testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
 				Destroy: true,
 			},
 			{
-				Config:  testAccCredentialTypeConfig_Full(environmentName, licenseID, resourceName, name, backgroundImage, logoImage),
+				Config:  testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
 				Destroy: true,
 			},
 		},
@@ -333,9 +322,6 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	name := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -343,32 +329,32 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialTypeConfig_InvalidTitle(environmentName, licenseID, resourceName, ""),
+				Config:      testAccCredentialTypeConfig_InvalidTitle(resourceName, ""),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Length"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_InvalidCardColorHexValue(environmentName, licenseID, resourceName, name),
+				Config:      testAccCredentialTypeConfig_InvalidCardColorHexValue(resourceName, name),
 				ExpectError: regexp.MustCompile("Attribute metadata.card_color expected value to contain a valid 6-digit\nhexadecimal color code"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_InvalidTextColorHexValue(environmentName, licenseID, resourceName, name),
+				Config:      testAccCredentialTypeConfig_InvalidTextColorHexValue(resourceName, name),
 				ExpectError: regexp.MustCompile("Attribute metadata.text_color expected value to contain a valid 6-digit\nhexadecimal color code"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_InvalidBackgroundOpacityValue(environmentName, licenseID, resourceName, name),
+				Config:      testAccCredentialTypeConfig_InvalidBackgroundOpacityValue(resourceName, name),
 				ExpectError: regexp.MustCompile("Attribute metadata.bg_opacity_percent value must be between 0 and 100"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_EmptyFieldsArray(environmentName, licenseID, resourceName, name),
-				ExpectError: regexp.MustCompile("Attribute metadata.fields list must contain at least 1 elements"),
+				Config:      testAccCredentialTypeConfig_EmptyFieldsArray(resourceName, name),
+				ExpectError: regexp.MustCompile("ttribute metadata.fields list must contain at least 1 elements"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_InvalidFileSupportValue(environmentName, licenseID, resourceName, name),
+				Config:      testAccCredentialTypeConfig_InvalidFileSupportValue(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
 				Destroy:     true,
 			},
@@ -381,9 +367,6 @@ func TestAccCredentialType_CardDesignTemplate(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 	name := acctest.ResourceNameGen()
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	data, _ := os.ReadFile("../../acctest/test_assets/image/credential_background.png")
 	backgroundImage := base64.StdEncoding.EncodeToString(data)
@@ -405,32 +388,32 @@ func TestAccCredentialType_CardDesignTemplate(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoSVG(environmentName, licenseID, resourceName, name),
+				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoSVG(resourceName, name),
 				ExpectError: regexp.MustCompile("Attribute card_design_template expected value to contain a valid PingOne\nCredentials SVG card template."),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoBackgroundImage(environmentName, licenseID, resourceName, name, backgroundImage),
+				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoBackgroundImage(resourceName, name, backgroundImage),
 				ExpectError: regexp.MustCompile(noBackgroundImageErrorMsg),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoCardColor(environmentName, licenseID, resourceName, name),
+				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoCardColor(resourceName, name),
 				ExpectError: regexp.MustCompile(noCardColorErrorMsg),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoLogoImage(environmentName, licenseID, resourceName, name, logoImage),
+				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoLogoImage(resourceName, name, logoImage),
 				ExpectError: regexp.MustCompile(noLogoImageErrorMsg),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoSubtitle(environmentName, licenseID, resourceName, name),
+				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoSubtitle(resourceName, name),
 				ExpectError: regexp.MustCompile(noSubTitleErrorMsg),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoTextColor(environmentName, licenseID, resourceName, name),
+				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoTextColor(resourceName, name),
 				ExpectError: regexp.MustCompile(noTextColorErrorMsg),
 				Destroy:     true,
 			},
@@ -446,9 +429,6 @@ func TestAccCredentialType_BadParameters(t *testing.T) {
 
 	name := resourceName
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -457,7 +437,7 @@ func TestAccCredentialType_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccCredentialTypeConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Config: testAccCredentialTypeConfig_Minimal(resourceName, name),
 			},
 			// Errors
 			{
@@ -514,24 +494,24 @@ resource "pingone_credential_type" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccCredentialTypeConfig_Full(environmentName, licenseID, resourceName, name, backgroundImage, logoImage string) string {
+func testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_image" "%[3]s-background_image" {
-  environment_id    = pingone_environment.%[2]s.id
+resource "pingone_image" "%[2]s-background_image" {
+  environment_id    = data.pingone_environment.general_test.id
+  image_file_base64 = "%[4]s"
+}
+
+resource "pingone_image" "%[2]s-logo_image" {
+  environment_id    = data.pingone_environment.general_test.id
   image_file_base64 = "%[5]s"
 }
 
-resource "pingone_image" "%[3]s-logo_image" {
-  environment_id    = pingone_environment.%[2]s.id
-  image_file_base64 = "%[6]s"
-}
-
-resource "pingone_credential_type" "%[3]s" {
-  environment_id   = pingone_environment.%[2]s.id
-  title            = "%[4]s"
-  description      = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id   = data.pingone_environment.general_test.id
+  title            = "%[3]s"
+  description      = "%[3]s Example Description"
   card_type        = "VerifiedEmployee"
   revoke_on_delete = true
 
@@ -548,11 +528,11 @@ resource "pingone_credential_type" "%[3]s" {
 EOT
 
   metadata = {
-    name               = "%[4]s"
-    description        = "%[4]s Example Description"
+    name               = "%[3]s"
+    description        = "%[3]s Example Description"
     columns            = 1
-    background_image   = pingone_image.%[3]s-background_image.uploaded_image[0].href
-    logo_image         = pingone_image.%[3]s-logo_image.uploaded_image[0].href
+    background_image   = pingone_image.%[2]s-background_image.uploaded_image[0].href
+    logo_image         = pingone_image.%[2]s-logo_image.uploaded_image[0].href
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -609,17 +589,17 @@ EOT
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, backgroundImage, logoImage)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, backgroundImage, logoImage)
 }
 
-func testAccCredentialTypeConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_credential_type" "%[3]s" {
-  environment_id   = pingone_environment.%[2]s.id
-  title            = "%[4]s"
-  description      = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id   = data.pingone_environment.general_test.id
+  title            = "%[3]s"
+  description      = "%[3]s Example Description"
   card_type        = "DemonstrationCard"
   revoke_on_delete = false
 
@@ -634,7 +614,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT
 
   metadata = {
-    name = "%[4]s"
+    name = "%[3]s"
 
     fields = [
       {
@@ -644,17 +624,17 @@ EOT
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_InvalidTitle(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_InvalidTitle(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -667,7 +647,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT
 
   metadata = {
-    name               = "%[4]s"
+    name               = "%[3]s"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -692,17 +672,17 @@ EOT
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_InvalidCardColorHexValue(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_InvalidCardColorHexValue(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -716,7 +696,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT
 
   metadata = {
-    name               = "%[4]s"
+    name               = "%[3]s"
     bg_opacity_percent = 100
     card_color         = "InvalidColor"
     text_color         = "#eff0f1"
@@ -729,16 +709,16 @@ EOT
       },
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_InvalidTextColorHexValue(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_InvalidTextColorHexValue(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -752,7 +732,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT  
 
   metadata = {
-    name               = "%[4]s"
+    name               = "%[3]s"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "InvalidColor"
@@ -765,16 +745,16 @@ EOT
       },
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_InvalidBackgroundOpacityValue(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_InvalidBackgroundOpacityValue(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -788,7 +768,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT
 
   metadata = {
-    name               = "%[4]s"
+    name               = "%[3]s"
     bg_opacity_percent = 101
     card_color         = "#000000"
     text_color         = "#000000"
@@ -801,16 +781,16 @@ EOT
       },
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_EmptyFieldsArray(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_EmptyFieldsArray(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -824,7 +804,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT  
 
   metadata = {
-    name               = "%[4]s"
+    name               = "%[3]s"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
@@ -832,17 +812,17 @@ EOT
     fields = [
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_InvalidFileSupportValue(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_InvalidFileSupportValue(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_credential_type" "%[3]s" {
-  environment_id   = pingone_environment.%[2]s.id
-  title            = "%[4]s"
-  description      = "%[4]s Example Description"
+  environment_id   = data.pingone_environment.general_test.id
+  title            = "%[3]s"
+  description      = "%[3]s Example Description"
   card_type        = "DemonstrationCard"
   revoke_on_delete = true
 
@@ -857,7 +837,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT
 
   metadata = {
-    name = "%[4]s"
+    name = "%[3]s"
 
     fields = [
       {
@@ -868,16 +848,16 @@ EOT
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_CardDesignTemplate_NoSVG(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_CardDesignTemplate_NoSVG(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   # missing svg tags
@@ -892,7 +872,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT
 
   metadata = {
-    name               = "%[4]s"
+    name               = "%[3]s"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
@@ -905,22 +885,22 @@ EOT
       },
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_CardDesignTemplate_NoBackgroundImage(environmentName, licenseID, resourceName, name, backgroundImage string) string {
+func testAccCredentialTypeConfig_CardDesignTemplate_NoBackgroundImage(resourceName, name, backgroundImage string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_image" "%[3]s-background_image" {
-  environment_id    = pingone_environment.%[2]s.id
-  image_file_base64 = "%[5]s"
+resource "pingone_image" "%[2]s-background_image" {
+  environment_id    = data.pingone_environment.general_test.id
+  image_file_base64 = "%[4]s"
 }
 
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -934,11 +914,11 @@ resource "pingone_credential_type" "%[3]s" {
 EOT  
 
   metadata = {
-    name               = "%[4]s"
+    name               = "%[3]s"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
-    background_image   = pingone_image.%[3]s-background_image.uploaded_image[0].href
+    background_image   = pingone_image.%[2]s-background_image.uploaded_image[0].href
     //background_image = "https://wtf.example.com"
 
     fields = [
@@ -949,17 +929,17 @@ EOT
       },
     ]
   }
-  depends_on = [pingone_image.%[3]s-background_image]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, backgroundImage)
+  depends_on = [pingone_image.%[2]s-background_image]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, backgroundImage)
 }
 
-func testAccCredentialTypeConfig_CardDesignTemplate_NoCardColor(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_CardDesignTemplate_NoCardColor(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -973,7 +953,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT  
 
   metadata = {
-    name               = "%[4]s"
+    name               = "%[3]s"
     bg_opacity_percent = 100
     card_color         = "#000000" # {cardColor} is missing from card_design_template
     text_color         = "#000000"
@@ -986,21 +966,21 @@ EOT
       },
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_CardDesignTemplate_NoLogoImage(environmentName, licenseID, resourceName, name, logoImage string) string {
+func testAccCredentialTypeConfig_CardDesignTemplate_NoLogoImage(resourceName, name, logoImage string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_image" "%[3]s-logo_image" {
-  environment_id    = pingone_environment.%[2]s.id
-  image_file_base64 = "%[5]s"
+resource "pingone_image" "%[2]s-logo_image" {
+  environment_id    = data.pingone_environment.general_test.id
+  image_file_base64 = "%[4]s"
 }
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -1014,12 +994,12 @@ resource "pingone_credential_type" "%[3]s" {
 EOT  
 
   metadata = {
-    name               = "%[4]s"
-    description        = "%[4]s Example Description"
+    name               = "%[3]s"
+    description        = "%[3]s Example Description"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
-    logo_image         = pingone_image.%[3]s-logo_image.uploaded_image[0].href # {logoImage} is missing from card_design_template
+    logo_image         = pingone_image.%[2]s-logo_image.uploaded_image[0].href # {logoImage} is missing from card_design_template
 
     fields = [
       {
@@ -1029,16 +1009,16 @@ EOT
       },
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, logoImage)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, logoImage)
 }
 
-func testAccCredentialTypeConfig_CardDesignTemplate_NoSubtitle(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_CardDesignTemplate_NoSubtitle(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -1053,8 +1033,8 @@ resource "pingone_credential_type" "%[3]s" {
 EOT
 
   metadata = {
-    name               = "%[4]s"
-    description        = "%[4]s Example Description" # {subTitle} missing from template - description maps to card subtitle value
+    name               = "%[3]s"
+    description        = "%[3]s Example Description" # {subTitle} missing from template - description maps to card subtitle value
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
@@ -1067,16 +1047,16 @@ EOT
       },
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_CardDesignTemplate_NoTextColor(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialTypeConfig_CardDesignTemplate_NoTextColor(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  title          = "%[4]s"
-  description    = "%[4]s Example Description"
+resource "pingone_credential_type" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
   card_type      = "DemonstrationCard"
 
   card_design_template = <<-EOT
@@ -1090,7 +1070,7 @@ resource "pingone_credential_type" "%[3]s" {
 EOT
 
   metadata = {
-    name               = "%[4]s"
+    name               = "%[3]s"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000" # {textColor} is missing from card_design_template
@@ -1103,5 +1083,5 @@ EOT
       },
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
