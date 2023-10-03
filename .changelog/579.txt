@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration.
+```
+
+```release-note:enhancement
+`data_source/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration.
+```

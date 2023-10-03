@@ -215,12 +215,13 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.bg_opacity_percent", "100"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.card_color", "#000000"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.text_color", "#eff0f1"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.#", "7"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.#", "8"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.id", "Directory Attribute -> displayName"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.type", "Directory Attribute"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.title", "displayName"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.attribute", "name.formatted"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.is_visible", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.7.file_support", "REFERENCE_FILE"),
 			resource.TestCheckResourceAttr(resourceFullName, "revoke_on_delete", "true"),
 			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
 			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
@@ -350,6 +351,11 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 			{
 				Config:      testAccCredentialTypeConfig_EmptyFieldsArray(resourceName, name),
 				ExpectError: regexp.MustCompile("ttribute metadata.fields list must contain at least 1 elements"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccCredentialTypeConfig_InvalidFileSupportValue(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
 				Destroy:     true,
 			},
 		},
@@ -573,6 +579,13 @@ EOT
         title      = "id"
         attribute  = "id"
         is_visible = false
+      },
+      {
+        type         = "Directory Attribute"
+        title        = "photo"
+        attribute    = "photo"
+        is_visible   = false
+        file_support = "REFERENCE_FILE"
       }
     ]
   }
@@ -797,6 +810,42 @@ EOT
     text_color         = "#000000"
 
     fields = [
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccCredentialTypeConfig_InvalidFileSupportValue(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_credential_type" "%[3]s" {
+  environment_id   = data.pingone_environment.general_test.id
+  title            = "%[3]s"
+  description      = "%[3]s Example Description"
+  card_type        = "DemonstrationCard"
+  revoke_on_delete = true
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT
+
+  metadata = {
+    name = "%[3]s"
+
+    fields = [
+      {
+        type         = "Issued Timestamp"
+        title        = "timestamp"
+        is_visible   = false
+        file_support = "REFERENCE_FILE"
+      }
     ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)

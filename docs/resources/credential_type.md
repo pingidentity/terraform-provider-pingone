@@ -97,6 +97,13 @@ EOT
         is_visible = false
       },
       {
+        type         = "Directory Attribute"
+        title        = "photo"
+        attribute    = "photo"
+        file_support = "REFERENCE_FILE"
+        is_visible   = true
+      },
+      {
         type       = "Directory Attribute"
         title      = "id"
         attribute  = "id"
@@ -158,11 +165,12 @@ Read-Only:
 
 Required:
 
-- `type` (String) Type of data in the credential field. The must contain one of the following types: `Directory Attribute`, `Alphanumeric Text`, or `Issued Timestamp`.
+- `type` (String) Specifies the type of data in the credential field.  Options are `Alphanumeric Text`, `Directory Attribute`, `Issued Timestamp`.
 
 Optional:
 
 - `attribute` (String) Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`.
+- `file_support` (String) Specifies how an image is stored in the credential field.  Options are `BASE64_STRING`, `INCLUDE_FILE`, `REFERENCE_FILE`.
 - `is_visible` (Boolean) Specifies whether the field should be visible to viewers of the credential.
 - `title` (String) Descriptive text when showing the field.
 - `value` (String) The text to appear on the credential for a `field.type` of `Alphanumeric Text`.

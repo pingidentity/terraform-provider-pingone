@@ -27,6 +27,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -61,12 +62,13 @@ type MetadataModel struct {
 }
 
 type FieldsModel struct {
-	Id        types.String `tfsdk:"id"`
-	Type      types.String `tfsdk:"type"`
-	Title     types.String `tfsdk:"title"`
-	IsVisible types.Bool   `tfsdk:"is_visible"`
-	Attribute types.String `tfsdk:"attribute"`
-	Value     types.String `tfsdk:"value"`
+	Id          types.String `tfsdk:"id"`
+	Type        types.String `tfsdk:"type"`
+	Title       types.String `tfsdk:"title"`
+	FileSupport types.String `tfsdk:"file_support"`
+	IsVisible   types.Bool   `tfsdk:"is_visible"`
+	Attribute   types.String `tfsdk:"attribute"`
+	Value       types.String `tfsdk:"value"`
 }
 
 var (
@@ -84,12 +86,13 @@ var (
 	}
 
 	innerFieldsServiceTFObjectTypes = map[string]attr.Type{
-		"id":         types.StringType,
-		"type":       types.StringType,
-		"title":      types.StringType,
-		"is_visible": types.BoolType,
-		"attribute":  types.StringType,
-		"value":      types.StringType,
+		"id":           types.StringType,
+		"type":         types.StringType,
+		"title":        types.StringType,
+		"file_support": types.StringType,
+		"is_visible":   types.BoolType,
+		"attribute":    types.StringType,
+		"value":        types.StringType,
 	}
 )
 
@@ -144,8 +147,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	)
 
 	fieldsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Type of data in the credential field. The must contain one of the following types: `Directory Attribute`, `Alphanumeric Text`, or `Issued Timestamp`.",
-	)
+		"Specifies the type of data in the credential field.",
+	).AllowedValuesEnum(credentials.AllowedEnumCredentialTypeMetaDataFieldsTypeEnumValues)
+
+	fieldsFileSupportDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Specifies how an image is stored in the credential field.",
+	).AllowedValuesEnum(credentials.AllowedEnumCredentialTypeMetaDataFieldsFileSupportEnumValues)
 
 	fieldsAttributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`.",
@@ -373,10 +380,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									MarkdownDescription: fieldsTypeDescription.MarkdownDescription,
 									Required:            true,
 									Validators: []validator.String{
-										stringvalidator.OneOf(
-											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT),
-											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE),
-											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ISSUED_TIMESTAMP)),
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(credentials.AllowedEnumCredentialTypeMetaDataFieldsTypeEnumValues)...),
 									},
 								},
 								"title": schema.StringAttribute{
@@ -385,6 +389,25 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 									},
+								},
+								"file_support": schema.StringAttribute{
+									Description:         fieldsFileSupportDescription.Description,
+									MarkdownDescription: fieldsFileSupportDescription.MarkdownDescription,
+									Optional:            true,
+									Validators: []validator.String{
+										stringvalidator.All(
+											customstringvalidator.RegexMatchesPathValue(
+												regexp.MustCompile(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)),
+												fmt.Sprintf("The fields.file_support argument is only applicable when fields.type has a value of %s.", string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)),
+												path.MatchRelative().AtParent().AtName("type"),
+											),
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(credentials.AllowedEnumCredentialTypeMetaDataFieldsFileSupportEnumValues)...),
+										),
+									},
+								},
+								"is_visible": schema.BoolAttribute{
+									Description: "Specifies whether the field should be visible to viewers of the credential.",
+									Optional:    true,
 								},
 								"attribute": schema.StringAttribute{
 									Description:         fieldsAttributeDescription.Description,
@@ -405,10 +428,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
 										customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
 									},
-								},
-								"is_visible": schema.BoolAttribute{
-									Description: "Specifies whether the field should be visible to viewers of the credential.",
-									Optional:    true,
 								},
 							},
 						},
@@ -788,7 +807,10 @@ func (p *FieldsModel) expandFields() (*credentials.CredentialTypeMetaDataFieldsI
 	innerFields := credentials.NewCredentialTypeMetaDataFieldsInnerWithDefaults()
 
 	attrType := credentials.EnumCredentialTypeMetaDataFieldsType(p.Type.ValueString())
+	innerFields.SetType(attrType)
+
 	attrId := p.Type.ValueString() + " -> " + p.Title.ValueString() // construct id per P1Creds API recommendations
+	innerFields.SetId(attrId)
 
 	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT {
 		innerFields.SetValue(p.Value.ValueString())
@@ -796,12 +818,20 @@ func (p *FieldsModel) expandFields() (*credentials.CredentialTypeMetaDataFieldsI
 
 	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE {
 		innerFields.SetAttribute(p.Attribute.ValueString())
+
+		if !p.FileSupport.IsNull() && !p.FileSupport.IsUnknown() {
+			innerFields.SetFileSupport(credentials.EnumCredentialTypeMetaDataFieldsFileSupport(p.FileSupport.ValueString()))
+		}
+
 	}
 
-	innerFields.SetId(attrId)
-	innerFields.SetType(attrType)
-	innerFields.SetTitle(p.Title.ValueString())
-	innerFields.SetIsVisible(p.IsVisible.ValueBool())
+	if !p.Title.IsNull() && !p.Title.IsUnknown() {
+		innerFields.SetTitle(p.Title.ValueString())
+	}
+
+	if !p.IsVisible.IsNull() && !p.IsVisible.IsUnknown() {
+		innerFields.SetIsVisible(p.IsVisible.ValueBool())
+	}
 
 	if innerFields == nil {
 		diags.AddWarning(
@@ -884,12 +914,13 @@ func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, 
 	for _, v := range innerFields {
 
 		fieldsMap := map[string]attr.Value{
-			"id":         framework.StringOkToTF(v.GetIdOk()),
-			"title":      framework.StringOkToTF(v.GetTitleOk()),
-			"attribute":  framework.StringOkToTF(v.GetAttributeOk()),
-			"value":      framework.StringOkToTF(v.GetValueOk()),
-			"is_visible": framework.BoolOkToTF(v.GetIsVisibleOk()),
-			"type":       framework.EnumOkToTF(v.GetTypeOk()),
+			"id":           framework.StringOkToTF(v.GetIdOk()),
+			"type":         framework.EnumOkToTF(v.GetTypeOk()),
+			"title":        framework.StringOkToTF(v.GetTitleOk()),
+			"file_support": framework.EnumOkToTF(v.GetFileSupportOk()),
+			"is_visible":   framework.BoolOkToTF(v.GetIsVisibleOk()),
+			"attribute":    framework.StringOkToTF(v.GetAttributeOk()),
+			"value":        framework.StringOkToTF(v.GetValueOk()),
 		}
 		innerflattenedObj, d := types.ObjectValue(innerFieldsServiceTFObjectTypes, fieldsMap)
 		diags.Append(d...)

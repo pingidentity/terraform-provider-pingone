@@ -155,6 +155,13 @@ resource "pingone_credential_type" "%[2]s" {
         title      = "id"
         attribute  = "id"
         is_visible = false
+      },
+      {
+        type         = "Directory Attribute"
+        title        = "photo"
+        attribute    = "photo"
+        is_visible   = false
+        file_support = "REFERENCE_FILE"
       }
     ]
   }

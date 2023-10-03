@@ -61,6 +61,7 @@ Read-Only:
 Read-Only:
 
 - `attribute` (String) Name of the PingOne Directory attribute. Present if field.type is Directory Attribute.
+- `file_support` (String) Specifies how an image is stored in the credential field.
 - `id` (String) Identifier of the field object.
 - `is_visible` (Boolean) Specifies whether the field should be visible to viewers of the credential.
 - `title` (String) Descriptive text when showing the field.
