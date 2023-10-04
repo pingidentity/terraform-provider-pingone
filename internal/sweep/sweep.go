@@ -114,6 +114,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_RISK))
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_AUTHORIZE))
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_CREDENTIALS))
+	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_VERIFY))
 
 	environment.SetBillOfMaterials(*management.NewBillOfMaterials(productBOMItems))
 
