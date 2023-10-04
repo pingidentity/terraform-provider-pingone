@@ -7,82 +7,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/verify"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckVerifyPolicyDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.VerifyAPIClient
-
-	mgmtApiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_verify_policy" {
-			continue
-		}
-
-		_, rEnv, err := mgmtApiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Verify Policy %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetVerifyPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccVerifyPolicy_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -90,12 +21,20 @@ func TestAccVerifyPolicy_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_verify_policy.%s", resourceName)
 
-	updatedName := acctest.ResourceNameGen()
-
 	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var resourceID, environmentID string
+	var verifyPolicyID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -109,29 +48,25 @@ func TestAccVerifyPolicy_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, updatedName),
-				Check:  testAccGetVerifyPolicyIDs(resourceFullName, &environmentID, &resourceID),
+				Config: testAccVerifyPolicy_Full(resourceName, name),
+				Check:  verify.TestAccGetVerifyPolicyIDs(resourceFullName, &environmentID, &verifyPolicyID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.VerifyAPIClient
-
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
-					}
-
-					_, err = apiClient.VerifyPoliciesApi.DeleteVerifyPolicy(ctx, environmentID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete Verify policy: %v", err)
-					}
+					verify.VerifyPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.VerifyAPIClient, t, environmentID, verifyPolicyID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccVerifyPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  verify.TestAccGetVerifyPolicyIDs(resourceFullName, &environmentID, &verifyPolicyID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -180,9 +115,6 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 	updatedName := acctest.ResourceNameGen()
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	fullPolicy := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexpFullString),
@@ -355,7 +287,6 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -363,36 +294,36 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccVerifyPolicy_Full(resourceName, name),
 				Check:  fullPolicy,
 			},
 			{
-				Config:  testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name),
+				Config:  testAccVerifyPolicy_Full(resourceName, name),
 				Destroy: true,
 			},
 			{
-				Config: testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, updatedName),
+				Config: testAccVerifyPolicy_Minimal(resourceName, updatedName),
 				Check:  minimalPolicy,
 			},
 			{
-				Config:  testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, updatedName),
+				Config:  testAccVerifyPolicy_Minimal(resourceName, updatedName),
 				Destroy: true,
 			},
 			// changes
 			{
-				Config: testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccVerifyPolicy_Full(resourceName, name),
 				Check:  fullPolicy,
 			},
 			{
-				Config: testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, updatedName),
+				Config: testAccVerifyPolicy_Minimal(resourceName, updatedName),
 				Check:  minimalPolicy,
 			},
 			{
-				Config: testAccVerifyPolicy_UpdateTimeUnits(environmentName, licenseID, resourceName, updatedName),
+				Config: testAccVerifyPolicy_UpdateTimeUnits(resourceName, updatedName),
 				Check:  updateTimeUnitsPolicy,
 			},
 			{
-				Config: testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccVerifyPolicy_Full(resourceName, name),
 				Check:  fullPolicy,
 			},
 			// Test importing the resource
@@ -422,13 +353,9 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -436,12 +363,12 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccVerifyPolicy_NoChecksDefined(environmentName, licenseID, resourceName, name),
+				Config:      testAccVerifyPolicy_NoChecksDefined(resourceName, name),
 				ExpectError: regexp.MustCompile(`(?s)(.*Error: Invalid Attribute Combination.*){5}`),
 				Destroy:     true,
 			},
 			{
-				Config: testAccVerifyPolicy_EmptyCheckDefinitions(environmentName, licenseID, resourceName, name),
+				Config: testAccVerifyPolicy_EmptyCheckDefinitions(resourceName, name),
 				ExpectError: regexp.MustCompile(`(?s)(.*Inappropriate value for attribute \"government_id\".*)` +
 					`(.*Inappropriate value for attribute \"facial_comparison\".*)` +
 					`(.*Inappropriate value for attribute \"liveness\".*)` +
@@ -451,12 +378,12 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 				Destroy: true,
 			},
 			{
-				Config:      testAccVerifyPolicy_IncorrectTransactionDurationRange(environmentName, licenseID, resourceName, name),
+				Config:      testAccVerifyPolicy_IncorrectTransactionDurationRange(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Provided value is not valid"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccVerifyPolicy_TransactionDataCollectionDurationBeyondTimeoutDuration(environmentName, licenseID, resourceName, name),
+				Config:      testAccVerifyPolicy_TransactionDataCollectionDurationBeyondTimeoutDuration(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Provided value is not valid"),
 				Destroy:     true,
 			},
@@ -472,13 +399,9 @@ func TestAccVerifyPolicy_BadParameters(t *testing.T) {
 
 	updatedName := acctest.ResourceNameGen()
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -487,7 +410,7 @@ func TestAccVerifyPolicy_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, updatedName),
+				Config: testAccVerifyPolicy_Minimal(resourceName, updatedName),
 			},
 			// Errors
 			{
@@ -526,23 +449,22 @@ resource "pingone_verify_policy" "%[3]s" {
     threshold = "LOW"
   }
 
-  depends_on = [pingone_environment.%[2]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccVerifyPolicy_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyPolicy_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_verify_voice_phrase" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  display_name   = "%[4]s"
+resource "pingone_verify_voice_phrase" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+  display_name   = "%[3]s"
 }
 
-resource "pingone_verify_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
-  description    = "Description for %[4]s"
+resource "pingone_verify_policy" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Description for %[3]s"
 
   government_id = {
     verify = "REQUIRED"
@@ -630,7 +552,7 @@ resource "pingone_verify_policy" "%[3]s" {
 
     text_dependent = {
       samples         = "4"
-      voice_phrase_id = pingone_verify_voice_phrase.%[3]s.id
+      voice_phrase_id = pingone_verify_voice_phrase.%[2]s.id
     }
 
     reference_data = {
@@ -640,35 +562,33 @@ resource "pingone_verify_policy" "%[3]s" {
     }
   }
 
-  depends_on = [pingone_environment.%[2]s]
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyPolicy_Minimal(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyPolicy_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_verify_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
-  description    = "Description for %[4]s"
+resource "pingone_verify_policy" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Description for %[3]s"
 
   government_id = {
     verify = "REQUIRED"
   }
 
-  depends_on = [pingone_environment.%[2]s]
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyPolicy_UpdateTimeUnits(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyPolicy_UpdateTimeUnits(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_verify_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
-  description    = "Timeunit Policy Update Description for %[4]s"
+resource "pingone_verify_policy" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Timeunit Policy Update Description for %[3]s"
 
   government_id = {
     verify = "DISABLED"
@@ -752,29 +672,28 @@ resource "pingone_verify_policy" "%[3]s" {
 
   }
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyPolicy_NoChecksDefined(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyPolicy_NoChecksDefined(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_verify_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
-  description    = "%[4]s"
+resource "pingone_verify_policy" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
 
-  depends_on = [pingone_environment.%[2]s]
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyPolicy_EmptyCheckDefinitions(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyPolicy_EmptyCheckDefinitions(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_verify_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
-  description    = "%[4]s"
+resource "pingone_verify_policy" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
 
   government_id = {}
 
@@ -788,16 +707,16 @@ resource "pingone_verify_policy" "%[3]s" {
 
   voice = {}
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyPolicy_IncorrectTransactionDurationRange(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyPolicy_IncorrectTransactionDurationRange(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_verify_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
-  description    = "%[4]s"
+resource "pingone_verify_policy" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
 
   facial_comparison = {
     verify    = "REQUIRED"
@@ -818,18 +737,17 @@ resource "pingone_verify_policy" "%[3]s" {
     }
   }
 
-  depends_on = [pingone_environment.%[2]s]
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyPolicy_TransactionDataCollectionDurationBeyondTimeoutDuration(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyPolicy_TransactionDataCollectionDurationBeyondTimeoutDuration(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_verify_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
-  description    = "%[4]s"
+resource "pingone_verify_policy" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
 
   facial_comparison = {
     verify    = "REQUIRED"
@@ -850,7 +768,6 @@ resource "pingone_verify_policy" "%[3]s" {
     }
   }
 
-  depends_on = [pingone_environment.%[2]s]
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
