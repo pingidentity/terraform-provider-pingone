@@ -358,7 +358,7 @@ resource "pingone_population" "%[3]s" {
 }
 
 resource "pingone_credential_type" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id       = pingone_environment.%[2]s.id
   title                = "%[4]s"
   description          = "%[4]s Example Description"
   card_type            = "%[4]s"
@@ -410,7 +410,7 @@ resource "pingone_digital_wallet_application" "%[3]s" {
 }
 
 resource "pingone_credential_issuance_rule" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id                = pingone_environment.%[2]s.id
   credential_type_id            = resource.pingone_credential_type.%[3]s.id
   digital_wallet_application_id = resource.pingone_digital_wallet_application.%[3]s.id
   status                        = "ACTIVE"

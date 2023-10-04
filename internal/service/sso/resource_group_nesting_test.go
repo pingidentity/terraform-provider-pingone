@@ -183,19 +183,19 @@ func testAccGroupNestingConfig_NewEnv(environmentName, licenseID, resourceName, 
 		%[1]s
 
 resource "pingone_group" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   name = "%[4]s"
 }
 
 resource "pingone_group" "%[3]s-nesting" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   name = "%[4]s-nesting"
 }
 
 resource "pingone_group_nesting" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id  = pingone_environment.%[2]s.id
   group_id        = pingone_group.%[3]s.id
   nested_group_id = pingone_group.%[3]s-nesting.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)

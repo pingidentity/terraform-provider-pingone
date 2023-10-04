@@ -368,7 +368,7 @@ func testAccIdentityProviderAttributeConfig_NewEnv(environmentName, licenseID, r
 		%[1]s
 
 resource "pingone_identity_provider" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 
   google {
@@ -378,7 +378,7 @@ resource "pingone_identity_provider" "%[3]s" {
 }
 
 resource "pingone_identity_provider_attribute" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id       = pingone_environment.%[2]s.id
   identity_provider_id = pingone_identity_provider.%[3]s.id
 
   name   = "email"

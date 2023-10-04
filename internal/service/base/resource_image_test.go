@@ -246,7 +246,7 @@ func testAccImageConfig_NewEnv(environmentName, licenseID, resourceName, image s
 	%[1]s
 
 resource "pingone_image" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   image_file_base64 = "%[4]s"
 

@@ -323,7 +323,7 @@ func testAccResourceScopeOpenIDConfig_NewEnv(environmentName, licenseID, resourc
 		%[1]s
 
 resource "pingone_resource_attribute" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   resource_name  = "openid"
 
   name  = "%[4]s"
@@ -331,7 +331,7 @@ resource "pingone_resource_attribute" "%[3]s" {
 }
 
 resource "pingone_resource_scope_openid" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   name        = "%[4]s"
   description = "My resource scope"

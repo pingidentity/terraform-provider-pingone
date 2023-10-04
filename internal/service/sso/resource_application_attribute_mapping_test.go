@@ -742,7 +742,7 @@ func testAccApplicationAttributeMappingConfig_OIDC_NewEnv(environmentName, licen
 		%[1]s
 
 resource "pingone_application" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
   enabled        = true
 
@@ -757,7 +757,7 @@ resource "pingone_application" "%[3]s" {
 }
 
 resource "pingone_application_attribute_mapping" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   application_id = pingone_application.%[3]s.id
 
   name  = "email"

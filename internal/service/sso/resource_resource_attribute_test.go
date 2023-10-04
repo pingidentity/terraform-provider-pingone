@@ -511,13 +511,13 @@ func testAccResourceAttributeConfig_NewEnv(environmentName, licenseID, resourceN
 		%[1]s
 
 resource "pingone_resource" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   name = "%[4]s"
 }
 
 resource "pingone_resource_attribute" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   resource_name  = pingone_resource.%[3]s.name
 
   name  = "%[4]s"

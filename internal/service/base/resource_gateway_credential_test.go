@@ -219,7 +219,7 @@ func testAccGatewayCredentialConfig_NewEnv(environmentName, licenseID, resourceN
 		%[1]s
 
 resource "pingone_gateway" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
   enabled        = true
 
@@ -227,7 +227,7 @@ resource "pingone_gateway" "%[3]s" {
 }
 
 resource "pingone_gateway_credential" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   gateway_id     = pingone_gateway.%[3]s.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

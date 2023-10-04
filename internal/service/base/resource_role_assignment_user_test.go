@@ -378,13 +378,13 @@ func testAccRoleAssignmentUserConfig_NewEnv(environmentName, licenseID, resource
 		%[1]s
 
 resource "pingone_population" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
 
   name = "%[4]s"
 }
 
 resource "pingone_user" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   population_id  = pingone_population.%[3]s.id
 
   username = "%[4]s"
@@ -396,7 +396,7 @@ data "pingone_role" "%[3]s" {
 }
 
 resource "pingone_role_assignment_user" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   user_id        = pingone_user.%[3]s.id
   role_id        = data.pingone_role.%[3]s.id
 

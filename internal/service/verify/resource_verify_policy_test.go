@@ -457,12 +457,12 @@ func testAccVerifyPolicy_Full(resourceName, name string) string {
 	%[1]s
 
 resource "pingone_verify_voice_phrase" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
   display_name   = "%[3]s"
 }
 
 resource "pingone_verify_policy" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Description for %[3]s"
 
@@ -570,7 +570,7 @@ func testAccVerifyPolicy_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_verify_policy" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Description for %[3]s"
 
@@ -586,7 +586,7 @@ func testAccVerifyPolicy_UpdateTimeUnits(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_verify_policy" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Timeunit Policy Update Description for %[3]s"
 
@@ -679,7 +679,7 @@ func testAccVerifyPolicy_NoChecksDefined(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_verify_policy" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "%[3]s"
 
@@ -691,7 +691,7 @@ func testAccVerifyPolicy_EmptyCheckDefinitions(resourceName, name string) string
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_verify_policy" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "%[3]s"
 
@@ -714,7 +714,7 @@ func testAccVerifyPolicy_IncorrectTransactionDurationRange(resourceName, name st
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_verify_policy" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "%[3]s"
 
@@ -745,7 +745,7 @@ func testAccVerifyPolicy_TransactionDataCollectionDurationBeyondTimeoutDuration(
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_verify_policy" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "%[3]s"
 

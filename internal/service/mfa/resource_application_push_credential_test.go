@@ -401,7 +401,7 @@ func testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, r
 		%[1]s
 
 resource "pingone_application" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
   description    = "My test OIDC app for MFA Policy"
   tags           = []
@@ -438,7 +438,7 @@ resource "pingone_application" "%[3]s" {
 }
 
 resource "pingone_mfa_application_push_credential" "%[3]s" {
-	environment_id = pingone_environment.%[2]s.id
+  environment_id = pingone_environment.%[2]s.id
   application_id = pingone_application.%[3]s.id
 
   fcm {
