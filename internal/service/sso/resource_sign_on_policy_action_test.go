@@ -3,85 +3,18 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckSignOnPolicyActionDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_sign_on_policy_action" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.SignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Sign on Policy Action %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func TestAccGetSignOnPolicyActionIDs(resourceName string, environmentID, signOnPolicyID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*signOnPolicyID = rs.Primary.Attributes["sign_on_policy_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -89,13 +22,25 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s-3", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, signOnPolicyID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var signOnPolicyActionID, signOnPolicyID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -105,28 +50,12 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
-				Check:  sso.TestAccGetSignOnPolicyActionIDs(resourceFullName, &environmentID, &signOnPolicyID, &resourceID),
+				Check:  sso.TestAccGetSignOnPolicyActionIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || signOnPolicyID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, sign-on policy ID or resource ID cannot be determined. Environment ID: %s, Sign-on policy ID: %s, Resource ID: %s", environmentID, signOnPolicyID, resourceID)
-					}
-
-					_, err = apiClient.SignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, environmentID, signOnPolicyID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete sign-on policy action: %v", err)
-					}
+					sso.SignOnPolicyAction_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, signOnPolicyID, signOnPolicyActionID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -134,28 +63,24 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 			// Test removal of the SOP
 			{
 				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
-				Check:  sso.TestAccGetSignOnPolicyActionIDs(resourceFullName, &environmentID, &signOnPolicyID, &resourceID),
+				Check:  sso.TestAccGetSignOnPolicyActionIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || signOnPolicyID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, sign-on policy ID or resource ID cannot be determined. Environment ID: %s, Sign-on policy ID: %s, Resource ID: %s", environmentID, signOnPolicyID, resourceID)
-					}
-
-					_, err = apiClient.SignOnPoliciesApi.DeleteSignOnPolicy(ctx, environmentID, signOnPolicyID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete sign-on policy: %v", err)
-					}
+					sso.SignOnPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, signOnPolicyID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccSignOnPolicyActionConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.TestAccGetSignOnPolicyActionIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -1777,6 +1702,35 @@ func TestAccSignOnPolicyAction_BadParameters(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccSignOnPolicyActionConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_sign_on_policy" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+  sign_on_policy_id = pingone_sign_on_policy.%[3]s.id
+
+  priority = 1
+
+  login {
+    recovery_enabled = false // we set this to false because the calculated default from the api is true
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccSignOnPolicyActionConfig_LoginFullNoExt(resourceName, name string) string {

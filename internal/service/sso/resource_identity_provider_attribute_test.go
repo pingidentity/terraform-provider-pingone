@@ -3,84 +3,17 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckIdentityProviderAttributeDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_identity_provider_attribute" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["identity_provider_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Identity Provider attribute %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func TestAccGetIdentityProviderAttributeIDs(resourceName string, environmentID, identityProviderID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*identityProviderID = rs.Primary.Attributes["identity_provider_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -88,13 +21,25 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider_attribute.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, identityProviderID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var identityProviderAttributeID, identityProviderID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -104,28 +49,12 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &resourceID),
+				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || identityProviderID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, identity provider ID or resource ID cannot be determined. Environment ID: %s, Identity provider ID: %s, Resource ID: %s", environmentID, identityProviderID, resourceID)
-					}
-
-					_, err = apiClient.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, environmentID, identityProviderID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete identity provider attribute mapping: %v", err)
-					}
+					sso.IdentityProviderAttribute_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, identityProviderID, identityProviderAttributeID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -133,28 +62,24 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the IDP
 			{
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &resourceID),
+				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || identityProviderID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, identity provider ID or resource ID cannot be determined. Environment ID: %s, Identity provider ID: %s, Resource ID: %s", environmentID, identityProviderID, resourceID)
-					}
-
-					_, err = apiClient.IdentityProvidersApi.DeleteIdentityProvider(ctx, environmentID, identityProviderID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete identity provider: %v", err)
-					}
+					sso.IdentityProvider_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, identityProviderID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccIdentityProviderAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -436,6 +361,30 @@ func TestAccIdentityProviderAttribute_BadParameters(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccIdentityProviderAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_identity_provider" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider_attribute" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+  identity_provider_id = pingone_identity_provider.%[3]s.id
+
+  name   = "email"
+  update = "ALWAYS"
+  value  = "$${providerAttributes.emailAddress.value}"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccIdentityProviderAttributeConfig_Full(resourceName, name string) string {

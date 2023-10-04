@@ -7,82 +7,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckResourceScopeDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_resource_scope" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.ResourcesApi.ReadOneResource(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Resource scope Instance %s still exists", rs.Primary.ID)
-
-	}
-
-	return nil
-}
-
-func TestAccGetResourceScopeIDs(resourceName string, environmentID, openidResourceID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*openidResourceID = rs.Primary.Attributes["resource_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccResourceScope_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -90,13 +21,25 @@ func TestAccResourceScope_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_resource_scope.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, customResourceID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var resourceScopeID, customResourceID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -106,28 +49,12 @@ func TestAccResourceScope_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccResourceScopeConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetResourceScopeIDs(resourceFullName, &environmentID, &customResourceID, &resourceID),
+				Check:  sso.TestAccGetResourceScopeIDs(resourceFullName, &environmentID, &customResourceID, &resourceScopeID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || customResourceID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, OpenID resource ID or resource ID cannot be determined. Environment ID: %s, OpenID resource ID: %s, Resource ID: %s", environmentID, customResourceID, resourceID)
-					}
-
-					_, err = apiClient.ResourceScopesApi.DeleteResourceScope(ctx, environmentID, customResourceID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete resource scope: %v", err)
-					}
+					sso.ResourceScope_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, customResourceID, resourceScopeID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -135,28 +62,24 @@ func TestAccResourceScope_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccResourceScopeConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetResourceScopeIDs(resourceFullName, &environmentID, &customResourceID, &resourceID),
+				Check:  sso.TestAccGetResourceScopeIDs(resourceFullName, &environmentID, &customResourceID, &resourceScopeID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || customResourceID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, OpenID resource ID or resource ID cannot be determined. Environment ID: %s, OpenID resource ID: %s, Resource ID: %s", environmentID, customResourceID, resourceID)
-					}
-
-					_, err = apiClient.ResourcesApi.DeleteResource(ctx, environmentID, customResourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete resource: %v", err)
-					}
+					sso.Resource_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, customResourceID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccResourceScopeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.TestAccGetResourceScopeIDs(resourceFullName, &environmentID, &customResourceID, &resourceScopeID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,

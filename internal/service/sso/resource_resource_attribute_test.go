@@ -7,81 +7,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckResourceAttributeDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_resource_attribute" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.ResourceAttributesApi.ReadOneResourceAttribute(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["resource_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Resource Mapping %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func TestAccGetResourceAttributeIDs(resourceName string, environmentID, oidcResourceID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*oidcResourceID = rs.Primary.Attributes["resource_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -89,13 +21,25 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_resource_attribute.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, customResourceID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var resourceAttributeID, customResourceID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -105,28 +49,12 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccResourceAttributeConfig_Custom_Full(resourceName, name),
-				Check:  sso.TestAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceID),
+				Check:  sso.TestAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || customResourceID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s,OIDC Resource ID: %s, Resource ID: %s", environmentID, customResourceID, resourceID)
-					}
-
-					_, err = apiClient.ResourceAttributesApi.DeleteResourceAttribute(ctx, environmentID, customResourceID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete resource attribute: %v", err)
-					}
+					sso.ResourceAttribute_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, customResourceID, resourceAttributeID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -134,28 +62,24 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccResourceAttributeConfig_Custom_Full(resourceName, name),
-				Check:  sso.TestAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceID),
+				Check:  sso.TestAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || customResourceID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, OIDC Resource ID: %s, Resource ID: %s", environmentID, customResourceID, resourceID)
-					}
-
-					_, err = apiClient.ResourcesApi.DeleteResource(ctx, environmentID, customResourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete resource: %v", err)
-					}
+					sso.Resource_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, customResourceID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccResourceAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.TestAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -580,6 +504,25 @@ func TestAccResourceAttribute_BadParameters(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccResourceAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_resource_attribute" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+  resource_name  = pingone_resource.%[3]s.name
+
+  name  = "%[4]s"
+  value = "$${user.email}"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccResourceAttributeConfig_OIDC_Custom_Full(resourceName, name string) string {

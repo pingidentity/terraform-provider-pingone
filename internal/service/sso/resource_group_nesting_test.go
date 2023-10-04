@@ -3,69 +3,17 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckGroupNestingDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_group_nesting" {
-			continue
-		}
-
-		body, r, err := apiClient.GroupsApi.ReadOneGroupNesting(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["group_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Group Nesting Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func TestAccGetGroupNestingIDs(resourceName string, environmentID, groupID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*groupID = rs.Primary.Attributes["group_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -73,13 +21,25 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_group_nesting.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, groupID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var groupNestingID, groupID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -89,28 +49,12 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccGroupNestingConfig_Full(resourceName, name),
-				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &resourceID),
+				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || groupID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, group ID or resource ID cannot be determined. Environment ID: %s, Group ID: %s, Resource ID: %s", environmentID, groupID, resourceID)
-					}
-
-					_, err = apiClient.GroupsApi.DeleteGroupNesting(ctx, environmentID, groupID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete group nesting: %v", err)
-					}
+					sso.GroupNesting_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, groupID, groupNestingID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -118,28 +62,24 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 			// Test removal of the group
 			{
 				Config: testAccGroupNestingConfig_Full(resourceName, name),
-				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &resourceID),
+				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || groupID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, group ID or resource ID cannot be determined. Environment ID: %s, Group ID: %s, Resource ID: %s", environmentID, groupID, resourceID)
-					}
-
-					_, err = apiClient.GroupsApi.DeleteGroup(ctx, environmentID, groupID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete group: %v", err)
-					}
+					sso.Group_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, groupID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccGroupNestingConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -236,6 +176,29 @@ func TestAccGroupNesting_BadParameters(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccGroupNestingConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_group" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_group" "%[3]s-nesting" {
+	environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s-nesting"
+}
+
+resource "pingone_group_nesting" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+  group_id        = pingone_group.%[3]s.id
+  nested_group_id = pingone_group.%[3]s-nesting.id
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccGroupNestingConfig_Full(resourceName, name string) string {
