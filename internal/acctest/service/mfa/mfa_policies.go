@@ -1,7 +1,7 @@
 package mfa
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccCheckMFAPoliciesDestroy(s *terraform.State) error {

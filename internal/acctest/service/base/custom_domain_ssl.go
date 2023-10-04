@@ -1,7 +1,7 @@
 package base
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccCheckCustomDomainSSLDestroy(s *terraform.State) error {
