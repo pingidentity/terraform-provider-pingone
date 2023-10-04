@@ -206,7 +206,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil, //credentials.TestAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// full - new

@@ -38,12 +38,13 @@ func Population_CheckDestroy(s *terraform.State) error {
 
 		_, r, err := apiClient.PopulationsApi.ReadOnePopulation(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
 
-		if r.StatusCode == 404 {
-			continue
-		}
-
+		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {
 			return err
+		}
+
+		if shouldContinue {
+			continue
 		}
 
 		return fmt.Errorf("PingOne Population Instance %s still exists", rs.Primary.ID)

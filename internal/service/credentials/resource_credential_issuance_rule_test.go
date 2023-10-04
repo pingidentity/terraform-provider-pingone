@@ -100,38 +100,6 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccCredentialIssuanceRule_NewEnv(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_credential_issuance_rule.%s", resourceName)
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCredentialIssuanceRuleConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-				),
-			},
-		},
-	})
-}
-
 func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	t.Parallel()
 
