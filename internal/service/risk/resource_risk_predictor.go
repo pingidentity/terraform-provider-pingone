@@ -1613,7 +1613,7 @@ func (r *RiskPredictorResource) ImportState(ctx context.Context, req resource.Im
 	}
 }
 
-func redictorCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+func riskPredictorCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Invalid composition

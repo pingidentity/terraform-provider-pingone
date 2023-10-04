@@ -643,7 +643,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	}
 }
 
-func olicyThresholdSchema(useScores bool, policyThresholdsDescription framework.SchemaAttributeDescription, validators []validator.Int64) schema.SingleNestedAttribute {
+func riskPolicyThresholdSchema(useScores bool, policyThresholdsDescription framework.SchemaAttributeDescription, validators []validator.Int64) schema.SingleNestedAttribute {
 
 	validators = append(validators, int64validator.AtLeast(1))
 
@@ -1117,7 +1117,7 @@ func (r *RiskPolicyResource) ImportState(ctx context.Context, req resource.Impor
 	}
 }
 
-func olicyCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+func riskPolicyCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Invalid composition
@@ -1669,19 +1669,19 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 	return objPolicyWeightsValue, objPolicyScoresValue, objOverridesValue, diags
 }
 
-func olicyScoresCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
+func riskPolicyScoresCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
 	return riskPolicyCompactNameFromReferenceOk(v, ok, true)
 }
 
-func olicyWeightsCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
+func riskPolicyWeightsCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
 	return riskPolicyCompactNameFromReferenceOk(v, ok, false)
 }
 
-func olicyOverrideCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
+func riskPolicyOverrideCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
 	return riskPolicyCompactNameFromReferenceOk(v, ok, true)
 }
 
-func olicyCompactNameFromReferenceOk(v *string, ok, useScores bool) basetypes.StringValue {
+func riskPolicyCompactNameFromReferenceOk(v *string, ok, useScores bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
 	}
