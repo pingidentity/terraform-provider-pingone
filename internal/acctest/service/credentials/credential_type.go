@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
@@ -23,42 +22,29 @@ func CredentialType_CheckDestroy(s *terraform.State) error {
 
 	apiClient := p1Client.API.CredentialsAPIClient
 
-	mgmtApiClient := p1Client.API.ManagementAPIClient
-
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_credential_type" {
 			continue
 		}
 
-		_, rEnv, err := mgmtApiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
+		shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, p1Client.API.ManagementAPIClient, rs.Primary.Attributes["environment_id"])
 		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
 			return err
+		}
+
+		if shouldContinue {
+			continue
 		}
 
 		body, r, err := apiClient.CredentialTypesApi.ReadOneCredentialType(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]).Execute()
 
+		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
 			return err
+		}
+
+		if shouldContinue {
+			continue
 		} else {
 
 			if body.DeletedAt != nil {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -28,20 +27,24 @@ func Group_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		body, r, err := apiClient.GroupsApi.ReadOneGroup(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
+		shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, p1Client.API.ManagementAPIClient, rs.Primary.Attributes["environment_id"])
 		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
 			return err
+		}
+
+		if shouldContinue {
+			continue
+		}
+
+		_, r, err := apiClient.GroupsApi.ReadOneGroup(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+
+		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
+		if err != nil {
+			return err
+		}
+
+		if shouldContinue {
+			continue
 		}
 
 		return fmt.Errorf("PingOne Group Instance %s still exists", rs.Primary.ID)
