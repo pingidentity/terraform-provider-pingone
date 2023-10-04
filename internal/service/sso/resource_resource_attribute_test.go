@@ -43,13 +43,13 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceAttributeDestroy,
+		CheckDestroy:             sso.ResourceAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccResourceAttributeConfig_Custom_Full(resourceName, name),
-				Check:  sso.TestAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
+				Check:  sso.ResourceAttribute_GetIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccResourceAttributeConfig_Custom_Full(resourceName, name),
-				Check:  sso.TestAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
+				Check:  sso.ResourceAttribute_GetIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
 			},
 			// Replan after removal preconfig
 			{
@@ -75,7 +75,7 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccResourceAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetResourceAttributeIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
+				Check:  sso.ResourceAttribute_GetIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
 			},
 			{
 				PreConfig: func() {
@@ -140,7 +140,7 @@ func TestAccResourceAttribute_OIDC_Custom(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceAttributeDestroy,
+		CheckDestroy:             sso.ResourceAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -214,7 +214,7 @@ func TestAccResourceAttribute_OIDC_ReservedAttributeName(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceAttributeDestroy,
+		CheckDestroy:             sso.ResourceAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -259,7 +259,7 @@ func TestAccResourceAttribute_OIDC_Predefined(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceAttributeDestroy,
+		CheckDestroy:             sso.ResourceAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -324,7 +324,7 @@ func TestAccResourceAttribute_Custom(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceAttributeDestroy,
+		CheckDestroy:             sso.ResourceAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -400,7 +400,7 @@ func TestAccResourceAttribute_Custom_CoreAttribute(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceAttributeDestroy,
+		CheckDestroy:             sso.ResourceAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -452,7 +452,7 @@ func TestAccResourceAttribute_BadResource(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceAttributeDestroy,
+		CheckDestroy:             sso.ResourceAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -477,7 +477,7 @@ func TestAccResourceAttribute_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceAttributeDestroy,
+		CheckDestroy:             sso.ResourceAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

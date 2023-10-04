@@ -10,11 +10,11 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 )
 
-func TestAccCheckNotificationSettingsDestroy(s *terraform.State) error {
+func NotificationSettings_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetNotificationSettingsIDs(resourceName string, resourceID *string) resource.TestCheckFunc {
+func NotificationSettings_GetIDs(resourceName string, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

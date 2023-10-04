@@ -44,13 +44,13 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
-				Check:  sso.TestAccGetApplicationIDs(resourceFullName, &environmentID, &applicationID),
+				Check:  sso.Application_GetIDs(resourceFullName, &environmentID, &applicationID),
 			},
 			{
 				PreConfig: func() {
@@ -62,7 +62,7 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccApplicationConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetApplicationIDs(resourceFullName, &environmentID, &applicationID),
+				Check:  sso.Application_GetIDs(resourceFullName, &environmentID, &applicationID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccApplication_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -124,7 +124,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -218,7 +218,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -285,7 +285,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -452,7 +452,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -557,7 +557,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -630,7 +630,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -851,7 +851,7 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 			acctest.PreCheckRegionSupportsWorkforce(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// With
@@ -976,7 +976,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// With
@@ -1109,7 +1109,7 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 			acctest.PreCheckGoogleJSONKey(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// With
@@ -1169,7 +1169,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1267,7 +1267,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1331,7 +1331,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1517,7 +1517,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1615,7 +1615,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1682,7 +1682,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1871,7 +1871,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1964,7 +1964,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2030,7 +2030,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2194,7 +2194,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2283,7 +2283,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2349,7 +2349,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2507,7 +2507,7 @@ func TestAccApplication_OIDC_WildcardInRedirectURI(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2545,7 +2545,7 @@ func TestAccApplication_OIDC_LocalhostAddresses(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Localhost
@@ -2600,7 +2600,7 @@ func TestAccApplication_OIDC_NativeAppAddresses(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Localhost
@@ -2635,7 +2635,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2721,7 +2721,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2803,7 +2803,7 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Create
@@ -2847,7 +2847,7 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2911,7 +2911,7 @@ func TestAccApplication_ExternalLinkMinimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2948,7 +2948,7 @@ func TestAccApplication_Enabled(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2987,7 +2987,7 @@ func TestAccApplication_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

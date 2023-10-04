@@ -42,13 +42,13 @@ func TestAccNotificationPolicy_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationPolicyDestroy,
+		CheckDestroy:             base.NotificationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccNotificationPolicyConfig_Minimal(resourceName, name),
-				Check:  base.TestAccGetNotificationPolicyIDs(resourceFullName, &environmentID, &notificationPolicyID),
+				Check:  base.NotificationPolicy_GetIDs(resourceFullName, &environmentID, &notificationPolicyID),
 			},
 			// Replan after removal preconfig
 			{
@@ -61,7 +61,7 @@ func TestAccNotificationPolicy_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccNotificationPolicy_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetNotificationPolicyIDs(resourceFullName, &environmentID, &notificationPolicyID),
+				Check:  base.NotificationPolicy_GetIDs(resourceFullName, &environmentID, &notificationPolicyID),
 			},
 			{
 				PreConfig: func() {
@@ -93,7 +93,7 @@ func TestAccNotificationPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationPolicyDestroy,
+		CheckDestroy:             base.NotificationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -156,7 +156,7 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationPolicyDestroy,
+		CheckDestroy:             base.NotificationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -251,7 +251,7 @@ func TestAccNotificationPolicy_Quotas(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationPolicyDestroy,
+		CheckDestroy:             base.NotificationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Variant 1 New
@@ -338,7 +338,7 @@ func TestAccNotificationPolicy_CountryLimit(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationPolicyDestroy,
+		CheckDestroy:             base.NotificationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Variant 1 New
@@ -399,7 +399,7 @@ func TestAccNotificationPolicy_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationPolicyDestroy,
+		CheckDestroy:             base.NotificationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

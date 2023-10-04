@@ -43,13 +43,13 @@ func TestAccNotificationTemplateContent_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccNotificationTemplateContentConfig_NewLocale_Minimal(environmentName, licenseID, resourceName, name, locale),
-				Check:  base.TestAccGetNotificationTemplateContentIDs(resourceFullName, &environmentID, &templateName, &notificationTemplateContentID),
+				Check:  base.NotificationTemplateContent_GetIDs(resourceFullName, &environmentID, &templateName, &notificationTemplateContentID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccNotificationTemplateContent_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccNotificationTemplateContentConfig_NewLocale_Minimal(environmentName, licenseID, resourceName, name, locale),
-				Check:  base.TestAccGetNotificationTemplateContentIDs(resourceFullName, &environmentID, &templateName, &notificationTemplateContentID),
+				Check:  base.NotificationTemplateContent_GetIDs(resourceFullName, &environmentID, &templateName, &notificationTemplateContentID),
 			},
 			{
 				PreConfig: func() {
@@ -108,7 +108,7 @@ func TestAccNotificationTemplateContent_OverrideDefaultLocale(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -177,7 +177,7 @@ func TestAccNotificationTemplateContent_NewLocale(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -256,7 +256,7 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -322,7 +322,7 @@ func TestAccNotificationTemplateContent_ChangeVariant(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Change defined variants
@@ -377,7 +377,7 @@ func TestAccNotificationTemplateContent_InvalidData(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -455,7 +455,7 @@ func TestAccNotificationTemplateContent_Email(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
@@ -542,7 +542,7 @@ func TestAccNotificationTemplateContent_Push(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
@@ -636,7 +636,7 @@ func TestAccNotificationTemplateContent_SMS(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
@@ -730,7 +730,7 @@ func TestAccNotificationTemplateContent_Voice(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
@@ -797,7 +797,7 @@ func TestAccNotificationTemplateContent_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationTemplateContentDestroy,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

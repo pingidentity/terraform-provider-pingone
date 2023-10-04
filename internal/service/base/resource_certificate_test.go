@@ -42,13 +42,13 @@ func TestAccCertificate_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckCertificateDestroy,
+		CheckDestroy:             base.Certificate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccCertificateConfig_PEM(environmentName, licenseID, resourceName, pem_cert),
-				Check:  base.TestAccGetCertificateIDs(resourceFullName, &environmentID, &certificateID),
+				Check:  base.Certificate_GetIDs(resourceFullName, &environmentID, &certificateID),
 			},
 			// Replan after removal preconfig
 			{
@@ -61,7 +61,7 @@ func TestAccCertificate_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccCertificateConfig_PEM(environmentName, licenseID, resourceName, pem_cert),
-				Check:  base.TestAccGetCertificateIDs(resourceFullName, &environmentID, &certificateID),
+				Check:  base.Certificate_GetIDs(resourceFullName, &environmentID, &certificateID),
 			},
 			{
 				PreConfig: func() {
@@ -93,7 +93,7 @@ func TestAccCertificate_PKCS7(t *testing.T) {
 			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckCertificateDestroy,
+		CheckDestroy:             base.Certificate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -159,7 +159,7 @@ func TestAccCertificate_PEM(t *testing.T) {
 			acctest.PreCheckPEMCert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckCertificateDestroy,
+		CheckDestroy:             base.Certificate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -225,7 +225,7 @@ func TestAccCertificate_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckCertificateDestroy,
+		CheckDestroy:             base.Certificate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -7,11 +7,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccCheckNotificationSettingsEmailDestroy(s *terraform.State) error {
+func NotificationSettingsEmail_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetNotificationSettingsEmailIDs(resourceName string, environmentID *string) resource.TestCheckFunc {
+func NotificationSettingsEmail_GetIDs(resourceName string, environmentID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

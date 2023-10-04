@@ -4,6 +4,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccCheckCustomDomainSSLDestroy(s *terraform.State) error {
+func CustomDomainSSL_CheckDestroy(s *terraform.State) error {
 	return nil
 }

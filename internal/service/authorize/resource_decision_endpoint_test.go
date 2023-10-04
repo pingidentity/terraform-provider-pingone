@@ -43,13 +43,13 @@ func TestAccDecisionEndpoint_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             authorize.TestAccCheckDecisionEndpointDestroy,
+		CheckDestroy:             authorize.DecisionEndpoint_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccDecisionEndpointConfig_Minimal(resourceName, name),
-				Check:  authorize.TestAccGetDecisionEndpointIDs(resourceFullName, &environmentID, &decisionEndpointID),
+				Check:  authorize.DecisionEndpoint_GetIDs(resourceFullName, &environmentID, &decisionEndpointID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccDecisionEndpoint_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccDecisionEndpointConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  authorize.TestAccGetDecisionEndpointIDs(resourceFullName, &environmentID, &decisionEndpointID),
+				Check:  authorize.DecisionEndpoint_GetIDs(resourceFullName, &environmentID, &decisionEndpointID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccDecisionEndpoint_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             authorize.TestAccCheckDecisionEndpointDestroy,
+		CheckDestroy:             authorize.DecisionEndpoint_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -121,7 +121,7 @@ func TestAccDecisionEndpoint_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             authorize.TestAccCheckDecisionEndpointDestroy,
+		CheckDestroy:             authorize.DecisionEndpoint_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -171,7 +171,7 @@ func TestAccDecisionEndpoint_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             authorize.TestAccCheckDecisionEndpointDestroy,
+		CheckDestroy:             authorize.DecisionEndpoint_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -205,7 +205,7 @@ func TestAccDecisionEndpoint_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             authorize.TestAccCheckDecisionEndpointDestroy,
+		CheckDestroy:             authorize.DecisionEndpoint_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -265,7 +265,7 @@ func TestAccDecisionEndpoint_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             authorize.TestAccCheckDecisionEndpointDestroy,
+		CheckDestroy:             authorize.DecisionEndpoint_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

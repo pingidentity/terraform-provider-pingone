@@ -43,13 +43,13 @@ func TestAccResourceScopePingOneAPI_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccResourceScopePingOneAPIConfig_Minimal(resourceName, fmt.Sprintf("p1:read:user:%s", name)),
-				Check:  sso.TestAccGetResourceScopePingOneAPIIDs(resourceFullName, &environmentID, &openidResourceID, &resourceScopeID),
+				Check:  sso.ResourceScopePingOneAPI_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceScopeID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccResourceScopePingOneAPI_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccResourceScopePingOneAPIConfig_NewEnv(environmentName, licenseID, resourceName, fmt.Sprintf("p1:read:user:%s", name)),
-				Check:  sso.TestAccGetResourceScopePingOneAPIIDs(resourceFullName, &environmentID, &openidResourceID, &resourceScopeID),
+				Check:  sso.ResourceScopePingOneAPI_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceScopeID),
 			},
 			{
 				PreConfig: func() {
@@ -89,7 +89,7 @@ func TestAccResourceScopePingOneAPI_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -152,7 +152,7 @@ func TestAccResourceScopePingOneAPI_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -195,7 +195,7 @@ func TestAccResourceScopePingOneAPI_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -256,7 +256,7 @@ func TestAccResourceScopePingOneAPI_OverridePredefined(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -305,7 +305,7 @@ func TestAccResourceScopePingOneAPI_InvalidParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopePingOneAPIDestroy,
+		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

@@ -46,13 +46,13 @@ func TestAccBrandingSettings_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.BrandingSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the environment
 			{
 				Config: testAccBrandingSettingsConfig_Full(environmentName, licenseID, resourceName, name, image),
-				Check:  base.TestAccGetBrandingSettingsIDs(resourceFullName, &environmentID, &brandingSettingsID),
+				Check:  base.BrandingSettings_GetIDs(resourceFullName, &environmentID, &brandingSettingsID),
 			},
 			{
 				PreConfig: func() {
@@ -87,7 +87,7 @@ func TestAccBrandingSettings_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.BrandingSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -138,7 +138,7 @@ func TestAccBrandingSettings_Minimal1(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.BrandingSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -173,7 +173,7 @@ func TestAccBrandingSettings_Minimal2(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.BrandingSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -209,7 +209,7 @@ func TestAccBrandingSettings_Minimal3(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.BrandingSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -249,7 +249,7 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.BrandingSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -324,7 +324,7 @@ func TestAccBrandingSettings_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
+		CheckDestroy:             base.BrandingSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

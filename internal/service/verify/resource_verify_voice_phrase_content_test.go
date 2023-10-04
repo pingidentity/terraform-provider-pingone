@@ -46,13 +46,13 @@ func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccVerifyVoicePhraseContent_Full(resourceName, name, locale, phrase),
-				Check:  verify.TestAccGetVerifyVoicePhraseContentIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
+				Check:  verify.VerifyVoicePhraseContent_GetIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
 			},
 			// Replan after removal preconfig
 			{
@@ -65,7 +65,7 @@ func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 			// Test removal of the voice phrase ID
 			{
 				Config: testAccVerifyVoicePhraseContent_Full(resourceName, name, locale, phrase),
-				Check:  verify.TestAccGetVerifyVoicePhraseContentIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
+				Check:  verify.VerifyVoicePhraseContent_GetIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
 			},
 			// Replan after removal preconfig
 			{
@@ -78,7 +78,7 @@ func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccVerifyVoicePhraseContentConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  verify.TestAccGetVerifyVoicePhraseContentIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
+				Check:  verify.VerifyVoicePhraseContent_GetIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
 			},
 			{
 				PreConfig: func() {
@@ -110,7 +110,7 @@ func TestAccVerifyVoicePhraseContent_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -163,7 +163,7 @@ func TestAccVerifyVoicePhraseContent_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -237,7 +237,7 @@ func TestAccVerifyVoicePhraseContent_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

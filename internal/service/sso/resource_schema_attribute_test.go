@@ -43,13 +43,13 @@ func TestAccSchemaAttribute_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
-				Check:  sso.TestAccGetSchemaAttributeIDs(resourceFullName, &environmentID, &schemaID, &schemaAttributeID),
+				Check:  sso.SchemaAttribute_GetIDs(resourceFullName, &environmentID, &schemaID, &schemaAttributeID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccSchemaAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccSchemaAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetSchemaAttributeIDs(resourceFullName, &environmentID, &schemaID, &schemaAttributeID),
+				Check:  sso.SchemaAttribute_GetIDs(resourceFullName, &environmentID, &schemaID, &schemaAttributeID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccSchemaAttribute_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -160,7 +160,7 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -254,7 +254,7 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -330,7 +330,7 @@ func TestAccSchemaAttribute_StringRegexValidation(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -383,7 +383,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Combos
@@ -480,7 +480,7 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -532,7 +532,7 @@ func TestAccSchemaAttribute_JSONInvalidAttrs(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -561,7 +561,7 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -608,7 +608,7 @@ func TestAccSchemaAttribute_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -42,13 +42,13 @@ func TestAccRoleAssignmentGateway_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckRoleAssignmentGatewayDestroy,
+		CheckDestroy:             base.RoleAssignmentGateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
-				Check:  base.TestAccGetRoleAssignmentGatewayIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
+				Check:  base.RoleAssignmentGateway_GetIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
 			},
 			// Replan after removal preconfig
 			{
@@ -61,7 +61,7 @@ func TestAccRoleAssignmentGateway_RemovalDrift(t *testing.T) {
 			// Test removal of the gateway
 			{
 				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
-				Check:  base.TestAccGetRoleAssignmentGatewayIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
+				Check:  base.RoleAssignmentGateway_GetIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
 			},
 			// Replan after removal preconfig
 			{
@@ -74,7 +74,7 @@ func TestAccRoleAssignmentGateway_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
-				Check:  base.TestAccGetRoleAssignmentGatewayIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
+				Check:  base.RoleAssignmentGateway_GetIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
 			},
 			{
 				PreConfig: func() {
@@ -106,7 +106,7 @@ func TestAccRoleAssignmentGateway_Population(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckRoleAssignmentGatewayDestroy,
+		CheckDestroy:             base.RoleAssignmentGateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -169,7 +169,7 @@ func TestAccRoleAssignmentGateway_Environment(t *testing.T) {
 			acctest.PreCheckOrganisationID(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckRoleAssignmentGatewayDestroy,
+		CheckDestroy:             base.RoleAssignmentGateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -241,7 +241,7 @@ func TestAccRoleAssignmentGateway_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckRoleAssignmentGatewayDestroy,
+		CheckDestroy:             base.RoleAssignmentGateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

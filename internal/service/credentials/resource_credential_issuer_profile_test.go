@@ -43,13 +43,13 @@ func TestAccCredentialIssuerProfile_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuerProfileDestroy,
+		CheckDestroy:             credentials.CredentialIssuerProfile_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
-				Check:  credentials.TestAccGetCredentialIssuerProfileIDs(resourceFullName, &environmentID, &credentialTypeID),
+				Check:  credentials.CredentialIssuerProfile_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccCredentialIssuerProfile_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
-				Check:  credentials.TestAccGetCredentialIssuerProfileIDs(resourceFullName, &environmentID, &credentialTypeID),
+				Check:  credentials.CredentialIssuerProfile_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
 			},
 			{
 				PreConfig: func() {
@@ -118,7 +118,7 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuerProfileDestroy,
+		CheckDestroy:             credentials.CredentialIssuerProfile_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// initial profile
@@ -181,7 +181,7 @@ func TestAccCredentialIssuerProfile_InvalidConfig(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuerProfileDestroy,
+		CheckDestroy:             credentials.CredentialIssuerProfile_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -210,7 +210,7 @@ func TestAccCredentialIssuerProfile_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuerProfileDestroy,
+		CheckDestroy:             credentials.CredentialIssuerProfile_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

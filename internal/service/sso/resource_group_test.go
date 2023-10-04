@@ -43,13 +43,13 @@ func TestAccGroup_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckGroupDestroy,
+		CheckDestroy:             sso.Group_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccGroupConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetGroupIDs(resourceFullName, &environmentID, &groupID),
+				Check:  sso.Group_GetIDs(resourceFullName, &environmentID, &groupID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccGroup_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccGroupConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetGroupIDs(resourceFullName, &environmentID, &groupID),
+				Check:  sso.Group_GetIDs(resourceFullName, &environmentID, &groupID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccGroup_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckGroupDestroy,
+		CheckDestroy:             sso.Group_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -141,7 +141,7 @@ func TestAccGroup_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckGroupDestroy,
+		CheckDestroy:             sso.Group_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -209,7 +209,7 @@ func TestAccGroup_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckGroupDestroy,
+		CheckDestroy:             sso.Group_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

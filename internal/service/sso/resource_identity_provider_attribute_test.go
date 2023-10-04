@@ -43,13 +43,13 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
+				Check:  sso.IdentityProviderAttribute_GetIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the IDP
 			{
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
+				Check:  sso.IdentityProviderAttribute_GetIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
 			},
 			// Replan after removal preconfig
 			{
@@ -75,7 +75,7 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccIdentityProviderAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
+				Check:  sso.IdentityProviderAttribute_GetIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
 			},
 			{
 				PreConfig: func() {
@@ -137,7 +137,7 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -211,7 +211,7 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -275,7 +275,7 @@ func TestAccIdentityProviderAttribute_Core(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -334,7 +334,7 @@ func TestAccIdentityProviderAttribute_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

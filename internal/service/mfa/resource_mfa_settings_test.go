@@ -41,13 +41,13 @@ func TestAccMFASettings_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckMFASettingsDestroy,
+		CheckDestroy:             mfa.MFASettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName),
-				Check:  mfa.TestAccGetMFASettingsIDs(resourceFullName, &environmentID),
+				Check:  mfa.MFASettings_GetIDs(resourceFullName, &environmentID),
 			},
 			// Replan after removal preconfig
 			{
@@ -60,7 +60,7 @@ func TestAccMFASettings_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName),
-				Check:  mfa.TestAccGetMFASettingsIDs(resourceFullName, &environmentID),
+				Check:  mfa.MFASettings_GetIDs(resourceFullName, &environmentID),
 			},
 			{
 				PreConfig: func() {
@@ -90,7 +90,7 @@ func TestAccMFASettings_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckMFASettingsDestroy,
+		CheckDestroy:             mfa.MFASettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -146,7 +146,7 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckMFASettingsDestroy,
+		CheckDestroy:             mfa.MFASettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -200,7 +200,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckMFASettingsDestroy,
+		CheckDestroy:             mfa.MFASettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -269,7 +269,7 @@ func TestAccMFASettings_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckMFASettingsDestroy,
+		CheckDestroy:             mfa.MFASettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

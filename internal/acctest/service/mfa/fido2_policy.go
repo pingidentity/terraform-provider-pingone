@@ -12,7 +12,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccCheckFIDO2PolicyDestroy(s *terraform.State) error {
+func FIDO2Policy_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +67,7 @@ func TestAccCheckFIDO2PolicyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetFIDO2PolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func FIDO2Policy_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

@@ -4,6 +4,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccCheckMFAPoliciesDestroy(s *terraform.State) error {
+func MFAPolicies_CheckDestroy(s *terraform.State) error {
 	return nil
 }

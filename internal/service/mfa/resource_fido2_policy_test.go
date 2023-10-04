@@ -43,13 +43,13 @@ func TestAccFIDO2Policy_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.FIDO2Policy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccFIDO2PolicyConfig_Minimal(resourceName, name),
-				Check:  mfa.TestAccGetFIDO2PolicyIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  mfa.FIDO2Policy_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccFIDO2Policy_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccFIDO2PolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  mfa.TestAccGetFIDO2PolicyIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  mfa.FIDO2Policy_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccFIDO2Policy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.FIDO2Policy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -171,7 +171,7 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.FIDO2Policy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -238,7 +238,7 @@ func TestAccFIDO2Policy_Errors(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.FIDO2Policy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -271,7 +271,7 @@ func TestAccFIDO2Policy_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckFIDO2PolicyDestroy,
+		CheckDestroy:             mfa.FIDO2Policy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

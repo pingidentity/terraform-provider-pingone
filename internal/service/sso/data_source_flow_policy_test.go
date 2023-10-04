@@ -24,7 +24,7 @@ func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckFlowPolicyDestroy,
+		CheckDestroy:             sso.FlowPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -57,7 +57,7 @@ func TestAccFlowPolicyDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckFlowPolicyDestroy,
+		CheckDestroy:             sso.FlowPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

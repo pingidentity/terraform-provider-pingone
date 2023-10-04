@@ -42,13 +42,13 @@ func TestAccKey_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyDestroy,
+		CheckDestroy:             base.Key_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetKeyIDs(resourceFullName, &environmentID, &keyID),
+				Check:  base.Key_GetIDs(resourceFullName, &environmentID, &keyID),
 			},
 			// Replan after removal preconfig
 			{
@@ -61,7 +61,7 @@ func TestAccKey_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetKeyIDs(resourceFullName, &environmentID, &keyID),
+				Check:  base.Key_GetIDs(resourceFullName, &environmentID, &keyID),
 			},
 			{
 				PreConfig: func() {
@@ -93,7 +93,7 @@ func TestAccKey_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyDestroy,
+		CheckDestroy:             base.Key_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -237,7 +237,7 @@ func TestAccKey_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyDestroy,
+		CheckDestroy:             base.Key_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -283,7 +283,7 @@ func TestAccKey_PKCS12(t *testing.T) {
 			acctest.PreCheckPKCS12Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyDestroy,
+		CheckDestroy:             base.Key_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -351,7 +351,7 @@ func TestAccKey_Change(t *testing.T) {
 			acctest.PreCheckPKCS12Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyDestroy,
+		CheckDestroy:             base.Key_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -463,7 +463,7 @@ func TestAccKey_CustomCRL(t *testing.T) {
 			acctest.PreCheckPKCS12Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyDestroy,
+		CheckDestroy:             base.Key_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -504,7 +504,7 @@ func TestAccKey_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyDestroy,
+		CheckDestroy:             base.Key_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

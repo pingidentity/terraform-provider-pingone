@@ -12,7 +12,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccCheckVerifyPolicyDestroy(s *terraform.State) error {
+func VerifyPolicy_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +67,7 @@ func TestAccCheckVerifyPolicyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetVerifyPolicyIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func VerifyPolicy_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

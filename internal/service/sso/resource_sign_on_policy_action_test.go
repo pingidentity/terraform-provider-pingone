@@ -44,13 +44,13 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
-				Check:  sso.TestAccGetSignOnPolicyActionIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
+				Check:  sso.SignOnPolicyAction_GetIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
 			},
 			// Replan after removal preconfig
 			{
@@ -63,7 +63,7 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 			// Test removal of the SOP
 			{
 				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
-				Check:  sso.TestAccGetSignOnPolicyActionIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
+				Check:  sso.SignOnPolicyAction_GetIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
 			},
 			// Replan after removal preconfig
 			{
@@ -76,7 +76,7 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccSignOnPolicyActionConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetSignOnPolicyActionIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
+				Check:  sso.SignOnPolicyAction_GetIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
 			},
 			{
 				PreConfig: func() {
@@ -103,7 +103,7 @@ func TestAccSignOnPolicyAction_LoginAction(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -228,7 +228,7 @@ func TestAccSignOnPolicyAction_LoginAction_Gateway(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			withGateway,
@@ -273,7 +273,7 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -376,7 +376,7 @@ func TestAccSignOnPolicyAction_MFAAction(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -401,7 +401,7 @@ func TestAccSignOnPolicyAction_IDPAction(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -504,7 +504,7 @@ func TestAccSignOnPolicyAction_AgreementAction(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -557,7 +557,7 @@ func TestAccSignOnPolicyAction_ProgressiveProfilingAction(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -665,7 +665,7 @@ func TestAccSignOnPolicyAction_PingIDAction(t *testing.T) {
 			acctest.PreCheckRegionSupportsWorkforce(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -711,7 +711,7 @@ func TestAccSignOnPolicyAction_PingIDWinLoginPasswordlessAction(t *testing.T) {
 			acctest.PreCheckRegionSupportsWorkforce(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -759,7 +759,7 @@ func TestAccSignOnPolicyAction_MultipleActionChange(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -811,7 +811,7 @@ func TestAccSignOnPolicyAction_ConditionsSignOnOlderThanSingle(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -868,7 +868,7 @@ func TestAccSignOnPolicyAction_ConditionsMemberOfPopulation(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -931,7 +931,7 @@ func TestAccSignOnPolicyAction_ConditionsMemberOfPopulations(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -985,7 +985,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleString(t *test
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1057,7 +1057,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleBool(t *testin
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1126,7 +1126,7 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1218,7 +1218,7 @@ func TestAccSignOnPolicyAction_ConditionsInvalidPriority1(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1244,7 +1244,7 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1304,7 +1304,7 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeMultiple(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1366,7 +1366,7 @@ func TestAccSignOnPolicyAction_ConditionsIPHighRisk(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1424,7 +1424,7 @@ func TestAccSignOnPolicyAction_ConditionsGeovelocity(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1482,7 +1482,7 @@ func TestAccSignOnPolicyAction_ConditionsAnonymousNetwork(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1542,7 +1542,7 @@ func TestAccSignOnPolicyAction_ConditionsAnonymousNetworkWithAllowed(t *testing.
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1609,7 +1609,7 @@ func TestAccSignOnPolicyAction_ConditionsCompound(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1675,7 +1675,7 @@ func TestAccSignOnPolicyAction_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckSignOnPolicyActionDestroy,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

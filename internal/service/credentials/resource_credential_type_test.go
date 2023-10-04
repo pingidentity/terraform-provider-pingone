@@ -44,13 +44,13 @@ func TestAccCredentialType_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccCredentialTypeConfig_Minimal(resourceName, name),
-				Check:  credentials.TestAccGetCredentialTypeIDs(resourceFullName, &environmentID, &credentialTypeID),
+				Check:  credentials.CredentialType_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
 			},
 			// Replan after removal preconfig
 			{
@@ -63,7 +63,7 @@ func TestAccCredentialType_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccCredentialTypeConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  credentials.TestAccGetCredentialTypeIDs(resourceFullName, &environmentID, &credentialTypeID),
+				Check:  credentials.CredentialType_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
 			},
 			{
 				PreConfig: func() {
@@ -95,7 +95,7 @@ func TestAccCredentialType_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -267,7 +267,7 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -324,7 +324,7 @@ func TestAccCredentialType_CardDesignTemplate(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -375,7 +375,7 @@ func TestAccCredentialType_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

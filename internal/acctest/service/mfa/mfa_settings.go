@@ -10,11 +10,11 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 )
 
-func TestAccCheckMFASettingsDestroy(s *terraform.State) error {
+func MFASettings_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetMFASettingsIDs(resourceName string, environmentID *string) resource.TestCheckFunc {
+func MFASettings_GetIDs(resourceName string, environmentID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

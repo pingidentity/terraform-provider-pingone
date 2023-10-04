@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccCheckCredentialIssuerProfileDestroy(s *terraform.State) error {
+func CredentialIssuerProfile_CheckDestroy(s *terraform.State) error {
 	return nil
 
 	// Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
@@ -67,7 +67,7 @@ func TestAccCheckCredentialIssuerProfileDestroy(s *terraform.State) error {
 	*/
 }
 
-func TestAccGetCredentialIssuerProfileIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func CredentialIssuerProfile_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

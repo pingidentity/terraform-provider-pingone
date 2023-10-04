@@ -12,7 +12,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccCheckApplicationFlowPolicyAssignmentDestroy(s *terraform.State) error {
+func ApplicationFlowPolicyAssignment_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -65,7 +65,7 @@ func TestAccCheckApplicationFlowPolicyAssignmentDestroy(s *terraform.State) erro
 	return nil
 }
 
-func TestAccGetApplicationFlowPolicyAssignmentIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
+func ApplicationFlowPolicyAssignment_GetIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

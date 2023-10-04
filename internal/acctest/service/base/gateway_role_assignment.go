@@ -11,7 +11,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccCheckRoleAssignmentGatewayDestroy(s *terraform.State) error {
+func RoleAssignmentGateway_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -53,7 +53,7 @@ func TestAccCheckRoleAssignmentGatewayDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetRoleAssignmentGatewayIDs(resourceName string, environmentID, gatewayID, resourceID *string) resource.TestCheckFunc {
+func RoleAssignmentGateway_GetIDs(resourceName string, environmentID, gatewayID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

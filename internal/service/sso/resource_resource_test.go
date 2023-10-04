@@ -43,13 +43,13 @@ func TestAccResource_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceDestroy,
+		CheckDestroy:             sso.Resource_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccResourceConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetResourceIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  sso.Resource_GetIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccResource_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccResourceConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetResourceIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  sso.Resource_GetIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccResource_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceDestroy,
+		CheckDestroy:             sso.Resource_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -121,7 +121,7 @@ func TestAccResource_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceDestroy,
+		CheckDestroy:             sso.Resource_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -172,7 +172,7 @@ func TestAccResource_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceDestroy,
+		CheckDestroy:             sso.Resource_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -207,7 +207,7 @@ func TestAccResource_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceDestroy,
+		CheckDestroy:             sso.Resource_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -264,7 +264,7 @@ func TestAccResource_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceDestroy,
+		CheckDestroy:             sso.Resource_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

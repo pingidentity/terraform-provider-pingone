@@ -12,7 +12,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccCheckResourceAttributeDestroy(s *terraform.State) error {
+func ResourceAttribute_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -65,7 +65,7 @@ func TestAccCheckResourceAttributeDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetResourceAttributeIDs(resourceName string, environmentID, oidcResourceID, resourceID *string) resource.TestCheckFunc {
+func ResourceAttribute_GetIDs(resourceName string, environmentID, oidcResourceID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

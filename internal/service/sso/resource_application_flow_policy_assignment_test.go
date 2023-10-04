@@ -41,13 +41,13 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
-				Check:  sso.TestAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
+				Check:  sso.ApplicationFlowPolicyAssignment_GetIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
 			},
 			// Replan after removal preconfig
 			{
@@ -60,7 +60,7 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 			// Test removal of the application
 			{
 				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
-				Check:  sso.TestAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
+				Check:  sso.ApplicationFlowPolicyAssignment_GetIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
 			},
 			// Replan after removal preconfig
 			{
@@ -138,7 +138,7 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Single from new
@@ -192,7 +192,7 @@ func TestAccApplicationFlowPolicyAssignment_SystemApplication(t *testing.T) {
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -239,7 +239,7 @@ func TestAccApplicationFlowPolicyAssignment_BadParameters(t *testing.T) {
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

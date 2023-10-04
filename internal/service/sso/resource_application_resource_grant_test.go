@@ -43,13 +43,13 @@ func TestAccApplicationResourceGrant_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationResourceGrantDestroy,
+		CheckDestroy:             sso.ApplicationResourceGrant_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
-				Check:  sso.TestAccGetApplicationResourceGrantIDs(resourceFullName, &environmentID, &applicationID, &applicationResourceGrantID),
+				Check:  sso.ApplicationResourceGrant_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationResourceGrantID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccApplicationResourceGrant_RemovalDrift(t *testing.T) {
 			// Test removal of the application
 			{
 				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
-				Check:  sso.TestAccGetApplicationResourceGrantIDs(resourceFullName, &environmentID, &applicationID, &applicationResourceGrantID),
+				Check:  sso.ApplicationResourceGrant_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationResourceGrantID),
 			},
 			// Replan after removal preconfig
 			{
@@ -75,7 +75,7 @@ func TestAccApplicationResourceGrant_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccApplicationResourceGrantConfig_SelfService(environmentName, licenseID, resourceName),
-				Check:  sso.TestAccGetApplicationResourceGrantIDs(resourceFullName, &environmentID, &applicationID, &applicationResourceGrantID),
+				Check:  sso.ApplicationResourceGrant_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationResourceGrantID),
 			},
 			{
 				PreConfig: func() {
@@ -102,7 +102,7 @@ func TestAccApplicationResourceGrant_OpenIDResource(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationResourceGrantDestroy,
+		CheckDestroy:             sso.ApplicationResourceGrant_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -168,7 +168,7 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationResourceGrantDestroy,
+		CheckDestroy:             sso.ApplicationResourceGrant_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -225,7 +225,7 @@ func TestAccApplicationResourceGrant_SystemApplication(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationResourceGrantDestroy,
+		CheckDestroy:             sso.ApplicationResourceGrant_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -317,7 +317,7 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationResourceGrantDestroy,
+		CheckDestroy:             sso.ApplicationResourceGrant_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -385,7 +385,7 @@ func TestAccApplicationResourceGrant_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationResourceGrantDestroy,
+		CheckDestroy:             sso.ApplicationResourceGrant_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

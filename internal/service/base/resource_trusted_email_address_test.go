@@ -38,13 +38,13 @@ func TestAccTrustedEmailAddress_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckTrustedEmailAddressDestroy,
+		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccTrustedEmailAddressConfig_New_DomainVerified(resourceName, verifiedDomain, emailAddress),
-				Check:  base.TestAccGetTrustedEmailAddressIDs(resourceFullName, &environmentID, &emailDomainID, &trustedEmailAddressID),
+				Check:  base.TrustedEmailAddress_GetIDs(resourceFullName, &environmentID, &emailDomainID, &trustedEmailAddressID),
 			},
 			// Replan after removal preconfig
 			{
@@ -106,7 +106,7 @@ func TestAccTrustedEmailAddress_Full(t *testing.T) {
 			acctest.PreCheckDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckTrustedEmailAddressDestroy,
+		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -159,7 +159,7 @@ func TestAccTrustedEmailAddress_NotVerified(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckTrustedEmailAddressDestroy,
+		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -185,7 +185,7 @@ func TestAccTrustedEmailAddress_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckTrustedEmailAddressDestroy,
+		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

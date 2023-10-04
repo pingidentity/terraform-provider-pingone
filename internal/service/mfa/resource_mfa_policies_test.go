@@ -30,7 +30,7 @@ func TestAccMFAPolicies_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckMFAPoliciesDestroy,
+		CheckDestroy:             mfa.MFAPolicies_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

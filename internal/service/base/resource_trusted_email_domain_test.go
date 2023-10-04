@@ -40,13 +40,13 @@ func TestAccTrustedEmailDomain_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckTrustedEmailDomainDestroy,
+		CheckDestroy:             base.TrustedEmailDomain_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName),
-				Check:  base.TestAccGetTrustedEmailDomainIDs(resourceFullName, &environmentID, &trustedEmailDomainID),
+				Check:  base.TrustedEmailDomain_GetIDs(resourceFullName, &environmentID, &trustedEmailDomainID),
 			},
 			// Replan after removal preconfig
 			{
@@ -59,7 +59,7 @@ func TestAccTrustedEmailDomain_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName),
-				Check:  base.TestAccGetTrustedEmailDomainIDs(resourceFullName, &environmentID, &trustedEmailDomainID),
+				Check:  base.TrustedEmailDomain_GetIDs(resourceFullName, &environmentID, &trustedEmailDomainID),
 			},
 			{
 				PreConfig: func() {
@@ -89,7 +89,7 @@ func TestAccTrustedEmailDomain_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckTrustedEmailDomainDestroy,
+		CheckDestroy:             base.TrustedEmailDomain_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -136,7 +136,7 @@ func TestAccTrustedEmailDomain_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckTrustedEmailDomainDestroy,
+		CheckDestroy:             base.TrustedEmailDomain_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

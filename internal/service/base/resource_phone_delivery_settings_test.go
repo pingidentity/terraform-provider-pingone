@@ -43,13 +43,13 @@ func TestAccPhoneDeliverySettings_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckPhoneDeliverySettingsDestroy,
+		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccPhoneDeliverySettingsConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetPhoneDeliverySettingsIDs(resourceFullName, &environmentID, &phoneDeliverySettingsID),
+				Check:  base.PhoneDeliverySettings_GetIDs(resourceFullName, &environmentID, &phoneDeliverySettingsID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccPhoneDeliverySettings_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccPhoneDeliverySettingsConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetPhoneDeliverySettingsIDs(resourceFullName, &environmentID, &phoneDeliverySettingsID),
+				Check:  base.PhoneDeliverySettings_GetIDs(resourceFullName, &environmentID, &phoneDeliverySettingsID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccPhoneDeliverySettings_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckPhoneDeliverySettingsDestroy,
+		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -159,7 +159,7 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 			acctest.PreCheckTwilio(t, skipTwilio)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckPhoneDeliverySettingsDestroy,
+		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -256,7 +256,7 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 			acctest.PreCheckSyniverse(t, skipSyniverse)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckPhoneDeliverySettingsDestroy,
+		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -437,7 +437,7 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckPhoneDeliverySettingsDestroy,
+		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -512,7 +512,7 @@ func TestAccPhoneDeliverySettings_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckPhoneDeliverySettingsDestroy,
+		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -43,12 +43,12 @@ func TestAccAgreementLocalizationRevision_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckAgreementLocalizationRevisionDestroy,
+		CheckDestroy:             base.AgreementLocalizationRevision_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementLocalizationRevisionIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
+				Check:  base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
 			},
 			{
 				PreConfig: func() {
@@ -60,7 +60,7 @@ func TestAccAgreementLocalizationRevision_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementLocalizationRevisionIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
+				Check:  base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
 			},
 			// Replan after removal preconfig
 			{
@@ -73,7 +73,7 @@ func TestAccAgreementLocalizationRevision_RemovalDrift(t *testing.T) {
 			// Test removal of the agreement
 			{
 				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementLocalizationRevisionIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
+				Check:  base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
 			},
 			// Replan after removal preconfig
 			{
@@ -86,7 +86,7 @@ func TestAccAgreementLocalizationRevision_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementLocalizationRevisionIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
+				Check:  base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
 			},
 			{
 				PreConfig: func() {
@@ -144,7 +144,7 @@ func TestAccAgreementLocalizationRevision_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckAgreementLocalizationRevisionDestroy,
+		CheckDestroy:             base.AgreementLocalizationRevision_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -213,7 +213,7 @@ func TestAccAgreementLocalizationRevision_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckAgreementLocalizationRevisionDestroy,
+		CheckDestroy:             base.AgreementLocalizationRevision_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

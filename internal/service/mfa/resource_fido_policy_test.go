@@ -27,7 +27,7 @@ func TestAccFIDOPolicy_NewEnv(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckFIDOPolicyDestroy,
+		CheckDestroy:             mfa.FIDOPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -54,7 +54,7 @@ func TestAccFIDOPolicy_Full(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckFIDOPolicyDestroy,
+		CheckDestroy:             mfa.FIDOPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -84,7 +84,7 @@ func TestAccFIDOPolicy_Minimal(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckFIDOPolicyDestroy,
+		CheckDestroy:             mfa.FIDOPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -114,7 +114,7 @@ func TestAccFIDOPolicy_Change(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Resource deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckFIDOPolicyDestroy,
+		CheckDestroy:             mfa.FIDOPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

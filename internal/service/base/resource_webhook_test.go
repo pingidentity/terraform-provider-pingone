@@ -42,13 +42,13 @@ func TestAccWebhook_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckWebhookDestroy,
+		CheckDestroy:             base.Webhook_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccWebhookConfig_Minimal(resourceName, name),
-				Check:  base.TestAccGetWebhookIDs(resourceFullName, &environmentID, &subscriptionID),
+				Check:  base.Webhook_GetIDs(resourceFullName, &environmentID, &subscriptionID),
 			},
 			// Replan after removal preconfig
 			{
@@ -61,7 +61,7 @@ func TestAccWebhook_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccWebhookConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetWebhookIDs(resourceFullName, &environmentID, &subscriptionID),
+				Check:  base.Webhook_GetIDs(resourceFullName, &environmentID, &subscriptionID),
 			},
 			{
 				PreConfig: func() {
@@ -93,7 +93,7 @@ func TestAccWebhook_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckWebhookDestroy,
+		CheckDestroy:             base.Webhook_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -121,7 +121,7 @@ func TestAccWebhook_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckWebhookDestroy,
+		CheckDestroy:             base.Webhook_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -188,7 +188,7 @@ func TestAccWebhook_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckWebhookDestroy,
+		CheckDestroy:             base.Webhook_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -231,7 +231,7 @@ func TestAccWebhook_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckWebhookDestroy,
+		CheckDestroy:             base.Webhook_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -336,7 +336,7 @@ func TestAccWebhook_Webhooks(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckWebhookDestroy,
+		CheckDestroy:             base.Webhook_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -374,7 +374,7 @@ func TestAccWebhook_Populations(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckWebhookDestroy,
+		CheckDestroy:             base.Webhook_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -412,7 +412,7 @@ func TestAccWebhook_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckWebhookDestroy,
+		CheckDestroy:             base.Webhook_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

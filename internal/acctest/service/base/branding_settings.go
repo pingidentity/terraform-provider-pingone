@@ -7,11 +7,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccCheckBrandingSettingsDestroy(s *terraform.State) error {
+func BrandingSettings_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetBrandingSettingsIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func BrandingSettings_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

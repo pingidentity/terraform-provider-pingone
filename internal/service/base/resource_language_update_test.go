@@ -40,13 +40,13 @@ func TestAccLanguageUpdate_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
+		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the language
 			{
 				Config: testAccLanguageUpdateConfig_Full(environmentName, licenseID, resourceName, "de-DE", true),
-				Check:  base.TestAccGetLanguageUpdateIDs(resourceFullName, &environmentID, &languageID),
+				Check:  base.LanguageUpdate_GetIDs(resourceFullName, &environmentID, &languageID),
 			},
 			{
 				PreConfig: func() {
@@ -58,7 +58,7 @@ func TestAccLanguageUpdate_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccLanguageUpdateConfig_Full(environmentName, licenseID, resourceName, "de-DE", true),
-				Check:  base.TestAccGetLanguageUpdateIDs(resourceFullName, &environmentID, &languageID),
+				Check:  base.LanguageUpdate_GetIDs(resourceFullName, &environmentID, &languageID),
 			},
 			{
 				PreConfig: func() {
@@ -88,7 +88,7 @@ func TestAccLanguageUpdate_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
+		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -140,7 +140,7 @@ func TestAccLanguageUpdate_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
+		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -176,7 +176,7 @@ func TestAccLanguageUpdate_SystemDefined(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
+		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -256,7 +256,7 @@ func TestAccLanguageUpdate_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
+		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -328,7 +328,7 @@ func TestAccLanguageUpdate_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageUpdateDestroy,
+		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

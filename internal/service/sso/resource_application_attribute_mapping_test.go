@@ -43,13 +43,13 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
-				Check:  sso.TestAccGetApplicationAttributeMappingIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.ApplicationAttributeMapping_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 			// Test removal of the application
 			{
 				Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
-				Check:  sso.TestAccGetApplicationAttributeMappingIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.ApplicationAttributeMapping_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -75,7 +75,7 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccApplicationAttributeMappingConfig_OIDC_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetApplicationAttributeMappingIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.ApplicationAttributeMapping_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			{
 				PreConfig: func() {
@@ -144,7 +144,7 @@ func TestAccApplicationAttributeMapping_OIDC(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -219,7 +219,7 @@ func TestAccApplicationAttributeMapping_OIDC_UserInfo(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -270,7 +270,7 @@ func TestAccApplicationAttributeMapping_OIDC_ReservedAttributeName(t *testing.T)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -334,7 +334,7 @@ func TestAccApplicationAttributeMapping_SAML(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -410,7 +410,7 @@ func TestAccApplicationAttributeMapping_BadApplication(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -461,7 +461,7 @@ func TestAccApplicationAttributeMapping_Core_OIDC(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -547,7 +547,7 @@ func TestAccApplicationAttributeMapping_Core_SAML(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -605,7 +605,7 @@ func TestAccApplicationAttributeMapping_Core_BadApplication(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -630,7 +630,7 @@ func TestAccApplicationAttributeMapping_Core_Expression(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -683,7 +683,7 @@ func TestAccApplicationAttributeMapping_SystemApplication(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -708,7 +708,7 @@ func TestAccApplicationAttributeMapping_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckApplicationAttributeMappingDestroy,
+		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

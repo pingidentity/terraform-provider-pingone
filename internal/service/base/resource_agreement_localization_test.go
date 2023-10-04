@@ -42,13 +42,13 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckAgreementLocalizationDestroy,
+		CheckDestroy:             base.AgreementLocalization_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
+				Check:  base.AgreementLocalization_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
 			},
 			// Replan after removal preconfig
 			{
@@ -61,7 +61,7 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 			// Test removal of the agreement
 			{
 				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
+				Check:  base.AgreementLocalization_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
 			},
 			// Replan after removal preconfig
 			{
@@ -74,7 +74,7 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
+				Check:  base.AgreementLocalization_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
 			},
 			{
 				PreConfig: func() {
@@ -133,7 +133,7 @@ func TestAccAgreementLocalization_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckAgreementLocalizationDestroy,
+		CheckDestroy:             base.AgreementLocalization_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -206,7 +206,7 @@ func TestAccAgreementLocalization_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckAgreementLocalizationDestroy,
+		CheckDestroy:             base.AgreementLocalization_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

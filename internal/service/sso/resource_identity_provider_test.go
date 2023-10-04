@@ -44,13 +44,13 @@ func TestAccIdentityProvider_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccIdentityProviderConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetIdentityProviderIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  sso.IdentityProvider_GetIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -63,7 +63,7 @@ func TestAccIdentityProvider_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccIdentityProviderConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetIdentityProviderIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  sso.IdentityProvider_GetIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			{
 				PreConfig: func() {
@@ -95,7 +95,7 @@ func TestAccIdentityProvider_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -125,7 +125,7 @@ func TestAccIdentityProvider_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -163,7 +163,7 @@ func TestAccIdentityProvider_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -200,7 +200,7 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -268,7 +268,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -345,7 +345,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -422,7 +422,7 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -499,7 +499,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -576,7 +576,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -653,7 +653,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -730,7 +730,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -811,7 +811,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -890,7 +890,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -967,7 +967,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1047,7 +1047,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1183,7 +1183,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // Needs redefinition
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1304,7 +1304,7 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1367,7 +1367,7 @@ func TestAccIdentityProvider_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckIdentityProviderDestroy,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

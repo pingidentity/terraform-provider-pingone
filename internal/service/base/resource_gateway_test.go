@@ -42,13 +42,13 @@ func TestAccGateway_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccGatewayConfig_Minimal(resourceName, name),
-				Check:  base.TestAccGetGatewayIDs(resourceFullName, &environmentID, &gatewayID),
+				Check:  base.Gateway_GetIDs(resourceFullName, &environmentID, &gatewayID),
 			},
 			// Replan after removal preconfig
 			{
@@ -61,7 +61,7 @@ func TestAccGateway_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccGatewayConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetGatewayIDs(resourceFullName, &environmentID, &gatewayID),
+				Check:  base.Gateway_GetIDs(resourceFullName, &environmentID, &gatewayID),
 			},
 			{
 				PreConfig: func() {
@@ -93,7 +93,7 @@ func TestAccGateway_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -120,7 +120,7 @@ func TestAccGateway_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -152,7 +152,7 @@ func TestAccGateway_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -184,7 +184,7 @@ func TestAccGateway_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -249,7 +249,7 @@ func TestAccGateway_PF(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -296,7 +296,7 @@ func TestAccGateway_APIG(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -343,7 +343,7 @@ func TestAccGateway_Intelligence(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -491,7 +491,7 @@ func TestAccGateway_LDAP(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -592,7 +592,7 @@ func TestAccGateway_RADIUS(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -675,7 +675,7 @@ func TestAccGateway_RADIUSSharedSecrets(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -717,7 +717,7 @@ func TestAccGateway_BadParameter(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

@@ -39,7 +39,7 @@ func TestAccVerifyVoicePhraseContentsDataSource_NoFilter(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

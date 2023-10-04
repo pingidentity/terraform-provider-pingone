@@ -7,11 +7,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccCheckLanguageUpdateDestroy(s *terraform.State) error {
+func LanguageUpdate_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetLanguageUpdateIDs(resourceName string, environmentID, languageID *string) resource.TestCheckFunc {
+func LanguageUpdate_GetIDs(resourceName string, environmentID, languageID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

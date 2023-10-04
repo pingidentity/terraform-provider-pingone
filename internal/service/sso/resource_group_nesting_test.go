@@ -43,13 +43,13 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckGroupNestingDestroy,
+		CheckDestroy:             sso.GroupNesting_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccGroupNestingConfig_Full(resourceName, name),
-				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
+				Check:  sso.GroupNesting_GetIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 			// Test removal of the group
 			{
 				Config: testAccGroupNestingConfig_Full(resourceName, name),
-				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
+				Check:  sso.GroupNesting_GetIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
 			},
 			// Replan after removal preconfig
 			{
@@ -75,7 +75,7 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccGroupNestingConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetGroupNestingIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
+				Check:  sso.GroupNesting_GetIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
 			},
 			{
 				PreConfig: func() {
@@ -102,7 +102,7 @@ func TestAccGroupNesting_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckGroupNestingDestroy,
+		CheckDestroy:             sso.GroupNesting_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -149,7 +149,7 @@ func TestAccGroupNesting_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckGroupNestingDestroy,
+		CheckDestroy:             sso.GroupNesting_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

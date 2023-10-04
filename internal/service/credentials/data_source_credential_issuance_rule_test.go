@@ -26,7 +26,7 @@ func TestAccCredentialIssuanceRuleDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -65,7 +65,7 @@ func TestAccCredentialIssuanceRuleDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -87,7 +87,7 @@ func TestAccCredentialIssuanceRuleDataSource_InvalidConfig(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

@@ -43,13 +43,13 @@ func TestAccResourceScopeOpenID_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.ResourceScopeOpenID_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccResourceScopeOpenIDConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetResourceScopeOpenIDIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
+				Check:  sso.ResourceScopeOpenID_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccResourceScopeOpenID_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccResourceScopeOpenIDConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetResourceScopeOpenIDIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
+				Check:  sso.ResourceScopeOpenID_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
 			},
 			{
 				PreConfig: func() {
@@ -89,7 +89,7 @@ func TestAccResourceScopeOpenID_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.ResourceScopeOpenID_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -140,7 +140,7 @@ func TestAccResourceScopeOpenID_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.ResourceScopeOpenID_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -172,7 +172,7 @@ func TestAccResourceScopeOpenID_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.ResourceScopeOpenID_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -235,7 +235,7 @@ func TestAccResourceScopeOpenID_OverridePredefined(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.ResourceScopeOpenID_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -285,7 +285,7 @@ func TestAccResourceScopeOpenID_InvalidParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckResourceScopeOpenIDDestroy,
+		CheckDestroy:             sso.ResourceScopeOpenID_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

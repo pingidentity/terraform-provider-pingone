@@ -43,13 +43,13 @@ func TestAccPopulation_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckPopulationDestroy,
+		CheckDestroy:             sso.Population_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccPopulationConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetPopulationIDs(resourceFullName, &environmentID, &populationID),
+				Check:  sso.Population_GetIDs(resourceFullName, &environmentID, &populationID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccPopulation_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccPopulationConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetPopulationIDs(resourceFullName, &environmentID, &populationID),
+				Check:  sso.Population_GetIDs(resourceFullName, &environmentID, &populationID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccPopulation_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckPopulationDestroy,
+		CheckDestroy:             sso.Population_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -121,7 +121,7 @@ func TestAccPopulation_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckPopulationDestroy,
+		CheckDestroy:             sso.Population_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -168,7 +168,7 @@ func TestAccPopulation_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckPopulationDestroy,
+		CheckDestroy:             sso.Population_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -199,7 +199,7 @@ func TestAccPopulation_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckPopulationDestroy,
+		CheckDestroy:             sso.Population_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

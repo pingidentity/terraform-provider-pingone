@@ -46,13 +46,13 @@ func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
-				Check:  credentials.TestAccGetDigitalWalletApplicationIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
+				Check:  credentials.DigitalWalletApplication_GetIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
 			},
 			// Replan after removal preconfig
 			{
@@ -65,7 +65,7 @@ func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
 			// Test removal of the application
 			{
 				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
-				Check:  credentials.TestAccGetDigitalWalletApplicationIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
+				Check:  credentials.DigitalWalletApplication_GetIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
 			},
 			// Replan after removal preconfig
 			{
@@ -78,7 +78,7 @@ func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccDigitalWalletApplication_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  credentials.TestAccGetDigitalWalletApplicationIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
+				Check:  credentials.DigitalWalletApplication_GetIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
 			},
 			{
 				PreConfig: func() {
@@ -110,7 +110,7 @@ func TestAccDigitalWalletApplication_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -163,7 +163,7 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -222,7 +222,7 @@ func TestAccDigitalWalletApplication_InvalidNativeApplication(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -259,7 +259,7 @@ func TestAccDigitalWalletApplication_InvalidAppOpenUrl(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -286,7 +286,7 @@ func TestAccDigitalWalletApplication_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -12,7 +12,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccCheckCredentialIssuanceRuleDestroy(s *terraform.State) error {
+func CredentialIssuanceRule_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +67,7 @@ func TestAccCheckCredentialIssuanceRuleDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetCredentialIssuanceRuleIDs(resourceName string, environmentID, credentialTypeID, digitalWalletApplicationID, resourceID *string) resource.TestCheckFunc {
+func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentialTypeID, digitalWalletApplicationID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

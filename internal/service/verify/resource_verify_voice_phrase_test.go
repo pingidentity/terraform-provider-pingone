@@ -43,13 +43,13 @@ func TestAccVerifyVoicePhrase_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseDestroy,
+		CheckDestroy:             verify.VerifyVoicePhrase_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccVerifyVoicePhrase_Full(resourceName, name),
-				Check:  verify.TestAccGetVerifyVoicePhraseIDs(resourceFullName, &environmentID, &voicePhraseID),
+				Check:  verify.VerifyVoicePhrase_GetIDs(resourceFullName, &environmentID, &voicePhraseID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccVerifyVoicePhrase_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccVerifyVoicePhraseConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  verify.TestAccGetVerifyVoicePhraseIDs(resourceFullName, &environmentID, &voicePhraseID),
+				Check:  verify.VerifyVoicePhrase_GetIDs(resourceFullName, &environmentID, &voicePhraseID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccVerifyVoicePhrase_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseDestroy,
+		CheckDestroy:             verify.VerifyVoicePhrase_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -138,7 +138,7 @@ func TestAccVerifyVoicePhrase_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseDestroy,
+		CheckDestroy:             verify.VerifyVoicePhrase_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -204,7 +204,7 @@ func TestAccVerifyVoicePhrase_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyVoicePhraseDestroy,
+		CheckDestroy:             verify.VerifyVoicePhrase_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

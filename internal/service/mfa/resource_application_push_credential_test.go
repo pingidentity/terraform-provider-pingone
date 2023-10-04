@@ -44,13 +44,13 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
-				Check:  mfa.TestAccGetApplicationPushCredentialIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
+				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
 			},
 			// Replan after removal preconfig
 			{
@@ -63,7 +63,7 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 			// Test removal of the application
 			{
 				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
-				Check:  mfa.TestAccGetApplicationPushCredentialIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
+				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
 			},
 			// Replan after removal preconfig
 			{
@@ -76,7 +76,7 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  mfa.TestAccGetApplicationPushCredentialIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
+				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
 			},
 			{
 				PreConfig: func() {
@@ -114,7 +114,7 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// FCM (deprecated)
@@ -182,7 +182,7 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -248,7 +248,7 @@ func TestAccApplicationPushCredential_HMS(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -313,7 +313,7 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -367,7 +367,7 @@ func TestAccApplicationPushCredential_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.TestAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -43,13 +43,13 @@ func TestAccVerifyPolicy_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccVerifyPolicy_Full(resourceName, name),
-				Check:  verify.TestAccGetVerifyPolicyIDs(resourceFullName, &environmentID, &verifyPolicyID),
+				Check:  verify.VerifyPolicy_GetIDs(resourceFullName, &environmentID, &verifyPolicyID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccVerifyPolicy_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccVerifyPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  verify.TestAccGetVerifyPolicyIDs(resourceFullName, &environmentID, &verifyPolicyID),
+				Check:  verify.VerifyPolicy_GetIDs(resourceFullName, &environmentID, &verifyPolicyID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccVerifyPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -290,7 +290,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -359,7 +359,7 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -405,7 +405,7 @@ func TestAccVerifyPolicy_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             verify.TestAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

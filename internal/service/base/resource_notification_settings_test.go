@@ -42,13 +42,13 @@ func TestAccNotificationSettings_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationSettingsDestroy,
+		CheckDestroy:             base.NotificationSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccNotificationSettingsConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetNotificationSettingsIDs(resourceFullName, &notificationSettingsID),
+				Check:  base.NotificationSettings_GetIDs(resourceFullName, &notificationSettingsID),
 			},
 			// Replan after removal preconfig
 			{
@@ -118,7 +118,7 @@ func TestAccNotificationSettings_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationSettingsDestroy,
+		CheckDestroy:             base.NotificationSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full from scratch
@@ -214,7 +214,7 @@ func TestAccNotificationSettings_EmailSources(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationSettingsDestroy,
+		CheckDestroy:             base.NotificationSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			replyToMinimal,
@@ -272,7 +272,7 @@ func TestAccNotificationSettings_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationSettingsDestroy,
+		CheckDestroy:             base.NotificationSettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -41,13 +41,13 @@ func TestAccSystemApplication_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
+		CheckDestroy:             base.SystemApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the environment
 			{
 				Config: testAccSystemApplicationConfig_NewEnv(environmentName, licenseID, resourceName),
-				Check:  base.TestAccGetSystemApplicationIDs(resourceFullName, &environmentID, &applicationID),
+				Check:  base.SystemApplication_GetIDs(resourceFullName, &environmentID, &applicationID),
 			},
 			{
 				PreConfig: func() {
@@ -77,7 +77,7 @@ func TestAccSystemApplication_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
+		CheckDestroy:             base.SystemApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -130,7 +130,7 @@ func TestAccSystemApplication_Portal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
+		CheckDestroy:             base.SystemApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -224,7 +224,7 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
+		CheckDestroy:             base.SystemApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -295,7 +295,7 @@ func TestAccSystemApplication_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckSystemApplicationDestroy,
+		CheckDestroy:             base.SystemApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -29,7 +29,7 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckOrganisationID(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLicenseDestroy,
+		CheckDestroy:             base.License_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

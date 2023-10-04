@@ -42,13 +42,13 @@ func TestAccAgreementEnable_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckAgreementEnableDestroy,
+		CheckDestroy:             base.AgreementEnable_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the agreement
 			{
 				Config: testAccAgreementEnableConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementEnableIDs(resourceFullName, &environmentID, &agreementID),
+				Check:  base.AgreementEnable_GetIDs(resourceFullName, &environmentID, &agreementID),
 			},
 			{
 				PreConfig: func() {
@@ -60,7 +60,7 @@ func TestAccAgreementEnable_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccAgreementEnableConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementEnableIDs(resourceFullName, &environmentID, &agreementID),
+				Check:  base.AgreementEnable_GetIDs(resourceFullName, &environmentID, &agreementID),
 			},
 			{
 				PreConfig: func() {
@@ -101,7 +101,7 @@ func TestAccAgreementEnable_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckAgreementEnableDestroy,
+		CheckDestroy:             base.AgreementEnable_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Enabled
@@ -169,7 +169,7 @@ func TestAccAgreementEnable_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckAgreementEnableDestroy,
+		CheckDestroy:             base.AgreementEnable_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

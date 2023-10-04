@@ -40,13 +40,13 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckCustomDomainDestroy,
+		CheckDestroy:             base.CustomDomain_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
-				Check:  base.TestAccGetCustomDomainIDs(resourceFullName, &environmentID, &customDomainID),
+				Check:  base.CustomDomain_GetIDs(resourceFullName, &environmentID, &customDomainID),
 			},
 			// Replan after removal preconfig
 			{
@@ -59,7 +59,7 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
-				Check:  base.TestAccGetCustomDomainIDs(resourceFullName, &environmentID, &customDomainID),
+				Check:  base.CustomDomain_GetIDs(resourceFullName, &environmentID, &customDomainID),
 			},
 			{
 				PreConfig: func() {
@@ -89,7 +89,7 @@ func TestAccCustomDomain_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckCustomDomainDestroy,
+		CheckDestroy:             base.CustomDomain_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -140,7 +140,7 @@ func TestAccCustomDomain_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckCustomDomainDestroy,
+		CheckDestroy:             base.CustomDomain_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

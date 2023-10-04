@@ -31,7 +31,7 @@ func TestAccCustomDomainSSL_Full(t *testing.T) {
 			acctest.PreCheckCustomDomainSSL(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckCustomDomainDestroy,
+		CheckDestroy:             base.CustomDomain_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

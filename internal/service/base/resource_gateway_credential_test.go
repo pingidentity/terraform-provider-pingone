@@ -42,13 +42,13 @@ func TestAccGatewayCredential_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayCredentialDestroy,
+		CheckDestroy:             base.GatewayCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccGatewayCredentialConfig_Full(resourceName, name),
-				Check:  base.TestAccGetGatewayCredentialIDs(resourceFullName, &environmentID, &gatewayID, &gatewayCredentialID),
+				Check:  base.GatewayCredential_GetIDs(resourceFullName, &environmentID, &gatewayID, &gatewayCredentialID),
 			},
 			// Replan after removal preconfig
 			{
@@ -61,7 +61,7 @@ func TestAccGatewayCredential_RemovalDrift(t *testing.T) {
 			// Test removal of the gateway
 			{
 				Config: testAccGatewayCredentialConfig_Full(resourceName, name),
-				Check:  base.TestAccGetGatewayCredentialIDs(resourceFullName, &environmentID, &gatewayID, &gatewayCredentialID),
+				Check:  base.GatewayCredential_GetIDs(resourceFullName, &environmentID, &gatewayID, &gatewayCredentialID),
 			},
 			// Replan after removal preconfig
 			{
@@ -74,7 +74,7 @@ func TestAccGatewayCredential_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccGatewayCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetGatewayCredentialIDs(resourceFullName, &environmentID, &gatewayID, &gatewayCredentialID),
+				Check:  base.GatewayCredential_GetIDs(resourceFullName, &environmentID, &gatewayID, &gatewayCredentialID),
 			},
 			// Replan after removal preconfig
 			{
@@ -107,7 +107,7 @@ func TestAccGatewayCredential_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayCredentialDestroy,
+		CheckDestroy:             base.GatewayCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -134,7 +134,7 @@ func TestAccGatewayCredential_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayCredentialDestroy,
+		CheckDestroy:             base.GatewayCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -185,7 +185,7 @@ func TestAccGatewayCredential_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckGatewayCredentialDestroy,
+		CheckDestroy:             base.GatewayCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

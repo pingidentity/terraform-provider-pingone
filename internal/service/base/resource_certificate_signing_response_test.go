@@ -33,7 +33,7 @@ func TestAccCertificateSigningResponse_Full(t *testing.T) {
 			acctest.PreCheckPKCS12CSRResponse(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckCertificateSigningResponseDestroy,
+		CheckDestroy:             base.CertificateSigningResponse_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

@@ -43,13 +43,13 @@ func TestAccBrandingTheme_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
-				Check:  base.TestAccGetBrandingThemeIDs(resourceFullName, &environmentID, &brandingThemeID),
+				Check:  base.BrandingTheme_GetIDs(resourceFullName, &environmentID, &brandingThemeID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccBrandingTheme_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccBrandingThemeConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetBrandingThemeIDs(resourceFullName, &environmentID, &brandingThemeID),
+				Check:  base.BrandingTheme_GetIDs(resourceFullName, &environmentID, &brandingThemeID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccBrandingTheme_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -127,7 +127,7 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -189,7 +189,7 @@ func TestAccBrandingTheme_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -237,7 +237,7 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -329,7 +329,7 @@ func TestAccBrandingTheme_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

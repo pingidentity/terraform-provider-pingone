@@ -9,7 +9,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccCheckAgreementEnableDestroy(s *terraform.State) error {
+func AgreementEnable_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -55,7 +55,7 @@ func TestAccCheckAgreementEnableDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetAgreementEnableIDs(resourceName string, environmentID, agreementID *string) resource.TestCheckFunc {
+func AgreementEnable_GetIDs(resourceName string, environmentID, agreementID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

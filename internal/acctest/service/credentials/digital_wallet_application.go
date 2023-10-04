@@ -12,7 +12,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccCheckDigitalWalletApplicationDestroy(s *terraform.State) error {
+func DigitalWalletApplication_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -67,7 +67,7 @@ func TestAccCheckDigitalWalletApplicationDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetDigitalWalletApplicationIDs(resourceName string, environmentID, resourceID, applicationID *string) resource.TestCheckFunc {
+func DigitalWalletApplication_GetIDs(resourceName string, environmentID, resourceID, applicationID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

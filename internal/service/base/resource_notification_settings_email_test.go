@@ -40,13 +40,13 @@ func TestAccNotificationSettingsEmail_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationSettingsEmailDestroy,
+		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the environment
 			{
 				Config: testAccNotificationSettingsEmailConfig_Full(environmentName, licenseID, resourceName),
-				Check:  base.TestAccGetNotificationSettingsEmailIDs(resourceFullName, &environmentID),
+				Check:  base.NotificationSettingsEmail_GetIDs(resourceFullName, &environmentID),
 			},
 			{
 				PreConfig: func() {
@@ -91,7 +91,7 @@ func TestAccNotificationSettingsEmail_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationSettingsEmailDestroy,
+		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full from scratch
@@ -180,7 +180,7 @@ func TestAccNotificationSettingsEmail_EmailSources(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationSettingsEmailDestroy,
+		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			replyToMinimal,
@@ -236,7 +236,7 @@ func TestAccNotificationSettingsEmail_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckNotificationSettingsEmailDestroy,
+		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

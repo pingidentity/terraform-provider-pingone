@@ -43,13 +43,13 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
-				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 			// Test removal of the credential type
 			{
 				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
-				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			// Replan after removal preconfig
 			{
@@ -75,7 +75,7 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 			// Test removal of the digital wallet application
 			{
 				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
-				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			// Replan after removal preconfig
 			{
@@ -88,7 +88,7 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccCredentialIssuanceRuleConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			{
 				PreConfig: func() {
@@ -120,7 +120,7 @@ func TestAccCredentialIssuanceRule_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -201,7 +201,7 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// full
@@ -258,7 +258,7 @@ func TestAccCredentialIssuanceRule_InvalidConfigs(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -319,7 +319,7 @@ func TestAccCredentialIssuanceRule_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

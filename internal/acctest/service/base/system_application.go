@@ -7,11 +7,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccCheckSystemApplicationDestroy(s *terraform.State) error {
+func SystemApplication_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetSystemApplicationIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func SystemApplication_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

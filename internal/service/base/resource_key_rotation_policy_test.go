@@ -42,13 +42,13 @@ func TestAccKeyRotationPolicy_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyRotationPolicyDestroy,
+		CheckDestroy:             base.KeyRotationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccKeyRotationPolicyConfig_Minimal(resourceName, name),
-				Check:  base.TestAccGetKeyRotationPolicyIDs(resourceFullName, &environmentID, &keyRotationPolicyID),
+				Check:  base.KeyRotationPolicy_GetIDs(resourceFullName, &environmentID, &keyRotationPolicyID),
 			},
 			// Replan after removal preconfig
 			{
@@ -61,7 +61,7 @@ func TestAccKeyRotationPolicy_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccKeyRotationPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetKeyRotationPolicyIDs(resourceFullName, &environmentID, &keyRotationPolicyID),
+				Check:  base.KeyRotationPolicy_GetIDs(resourceFullName, &environmentID, &keyRotationPolicyID),
 			},
 			{
 				PreConfig: func() {
@@ -93,7 +93,7 @@ func TestAccKeyRotationPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyRotationPolicyDestroy,
+		CheckDestroy:             base.KeyRotationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -159,7 +159,7 @@ func TestAccKeyRotationPolicy_All(t *testing.T) {
 			acctest.PreCheckPEMCert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyRotationPolicyDestroy,
+		CheckDestroy:             base.KeyRotationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -209,7 +209,7 @@ func TestAccKeyRotationPolicy_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckKeyRotationPolicyDestroy,
+		CheckDestroy:             base.KeyRotationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

@@ -43,13 +43,13 @@ func TestAccRoleAssignmentApplication_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckRoleAssignmentApplicationDestroy,
+		CheckDestroy:             sso.RoleAssignmentApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
 				Config: testAccRoleAssignmentApplicationConfig_Population(resourceName, name, "Identity Data Admin"),
-				Check:  sso.TestAccGetRoleAssignmentApplicationIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccRoleAssignmentApplication_RemovalDrift(t *testing.T) {
 			// Test removal of the application
 			{
 				Config: testAccRoleAssignmentApplicationConfig_Population(resourceName, name, "Identity Data Admin"),
-				Check:  sso.TestAccGetRoleAssignmentApplicationIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			// Replan after removal preconfig
 			{
@@ -75,7 +75,7 @@ func TestAccRoleAssignmentApplication_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccRoleAssignmentApplicationConfig_SystemApplication(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetRoleAssignmentApplicationIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
 			{
 				PreConfig: func() {
@@ -102,7 +102,7 @@ func TestAccRoleAssignmentApplication_Population(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckRoleAssignmentApplicationDestroy,
+		CheckDestroy:             sso.RoleAssignmentApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -161,7 +161,7 @@ func TestAccRoleAssignmentApplication_Organisation(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckRoleAssignmentApplicationDestroy,
+		CheckDestroy:             sso.RoleAssignmentApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -228,7 +228,7 @@ func TestAccRoleAssignmentApplication_Environment(t *testing.T) {
 			acctest.PreCheckOrganisationID(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckRoleAssignmentApplicationDestroy,
+		CheckDestroy:             sso.RoleAssignmentApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -297,7 +297,7 @@ func TestAccRoleAssignmentApplication_SystemApplication(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckRoleAssignmentApplicationDestroy,
+		CheckDestroy:             sso.RoleAssignmentApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -322,7 +322,7 @@ func TestAccRoleAssignmentApplication_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckRoleAssignmentApplicationDestroy,
+		CheckDestroy:             sso.RoleAssignmentApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

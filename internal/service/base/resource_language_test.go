@@ -40,13 +40,13 @@ func TestAccLanguage_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageDestroy,
+		CheckDestroy:             base.Language_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Test removal of the language
 			{
 				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "de-DE"),
-				Check:  base.TestAccGetLanguageIDs(resourceFullName, &environmentID, &languageID),
+				Check:  base.Language_GetIDs(resourceFullName, &environmentID, &languageID),
 			},
 			{
 				PreConfig: func() {
@@ -58,7 +58,7 @@ func TestAccLanguage_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccLanguageConfig_Full(environmentName, licenseID, resourceName, "de-DE"),
-				Check:  base.TestAccGetLanguageIDs(resourceFullName, &environmentID, &languageID),
+				Check:  base.Language_GetIDs(resourceFullName, &environmentID, &languageID),
 			},
 			{
 				PreConfig: func() {
@@ -88,7 +88,7 @@ func TestAccLanguage_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageDestroy,
+		CheckDestroy:             base.Language_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -164,7 +164,7 @@ func TestAccLanguage_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageDestroy,
+		CheckDestroy:             base.Language_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -224,7 +224,7 @@ func TestAccLanguage_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckLanguageDestroy,
+		CheckDestroy:             base.Language_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

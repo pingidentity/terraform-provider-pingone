@@ -11,7 +11,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccCheckTrustedEmailDomainDestroy(s *terraform.State) error {
+func TrustedEmailDomain_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -53,7 +53,7 @@ func TestAccCheckTrustedEmailDomainDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestAccGetTrustedEmailDomainIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func TrustedEmailDomain_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]

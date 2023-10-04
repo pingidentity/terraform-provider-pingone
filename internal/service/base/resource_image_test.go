@@ -44,13 +44,13 @@ func TestAccImage_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckImageDestroy,
+		CheckDestroy:             base.Image_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccImageConfig_Image(resourceName, image),
-				Check:  base.TestAccGetImageIDs(resourceFullName, &environmentID, &imageID),
+				Check:  base.Image_GetIDs(resourceFullName, &environmentID, &imageID),
 			},
 			// Replan after removal preconfig
 			{
@@ -63,7 +63,7 @@ func TestAccImage_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccImageConfig_NewEnv(environmentName, licenseID, resourceName, image),
-				Check:  base.TestAccGetImageIDs(resourceFullName, &environmentID, &imageID),
+				Check:  base.Image_GetIDs(resourceFullName, &environmentID, &imageID),
 			},
 			{
 				PreConfig: func() {
@@ -91,7 +91,7 @@ func TestAccImage_PNG(t *testing.T) {
 			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckImageDestroy,
+		CheckDestroy:             base.Image_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -144,7 +144,7 @@ func TestAccImage_JPG(t *testing.T) {
 			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckImageDestroy,
+		CheckDestroy:             base.Image_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -178,7 +178,7 @@ func TestAccImage_GIF(t *testing.T) {
 			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckImageDestroy,
+		CheckDestroy:             base.Image_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -212,7 +212,7 @@ func TestAccImage_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckImageDestroy,
+		CheckDestroy:             base.Image_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

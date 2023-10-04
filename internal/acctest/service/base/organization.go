@@ -2,6 +2,6 @@ package base
 
 import "github.com/hashicorp/terraform-plugin-testing/terraform"
 
-func TestAccCheckOrganizationDestroy(s *terraform.State) error {
+func Organization_CheckDestroy(s *terraform.State) error {
 	return nil
 }

@@ -43,13 +43,13 @@ func TestAccUser_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckUserDestroy,
+		CheckDestroy:             sso.User_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccUserConfig_Minimal(resourceName, name),
-				Check:  sso.TestAccGetUserIDs(resourceFullName, &environmentID, &userID),
+				Check:  sso.User_GetIDs(resourceFullName, &environmentID, &userID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccUser_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccUserConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.TestAccGetUserIDs(resourceFullName, &environmentID, &userID),
+				Check:  sso.User_GetIDs(resourceFullName, &environmentID, &userID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccUser_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckUserDestroy,
+		CheckDestroy:             sso.User_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -213,7 +213,7 @@ func TestAccUser_All(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckUserDestroy,
+		CheckDestroy:             sso.User_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full test
@@ -358,7 +358,7 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckUserDestroy,
+		CheckDestroy:             sso.User_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full test
@@ -395,7 +395,7 @@ func TestAccUser_ChangePopulation(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckUserDestroy,
+		CheckDestroy:             sso.User_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -452,7 +452,7 @@ func TestAccUser_ChangeMFA(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckUserDestroy,
+		CheckDestroy:             sso.User_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Change
@@ -494,7 +494,7 @@ func TestAccUser_ChangeUsernameAndEmail(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckUserDestroy,
+		CheckDestroy:             sso.User_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Change
@@ -519,7 +519,7 @@ func TestAccUser_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.TestAccCheckUserDestroy,
+		CheckDestroy:             sso.User_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure

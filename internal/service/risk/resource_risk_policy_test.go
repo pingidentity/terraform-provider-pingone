@@ -43,13 +43,13 @@ func TestAccRiskPolicy_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.TestAccCheckRiskPolicyDestroy,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccRiskPolicyConfig_Minimal(resourceName, name),
-				Check:  risk.TestAccGetRiskPolicyIDs(resourceFullName, &environmentID, &riskPolicyID),
+				Check:  risk.RiskPolicy_GetIDs(resourceFullName, &environmentID, &riskPolicyID),
 			},
 			// Replan after removal preconfig
 			{
@@ -62,7 +62,7 @@ func TestAccRiskPolicy_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccRiskPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  risk.TestAccGetRiskPolicyIDs(resourceFullName, &environmentID, &riskPolicyID),
+				Check:  risk.RiskPolicy_GetIDs(resourceFullName, &environmentID, &riskPolicyID),
 			},
 			{
 				PreConfig: func() {
@@ -94,7 +94,7 @@ func TestAccRiskPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.TestAccCheckRiskPolicyDestroy,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -146,7 +146,7 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.TestAccCheckRiskPolicyDestroy,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -229,7 +229,7 @@ func TestAccRiskPolicy_Scores(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.TestAccCheckRiskPolicyDestroy,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -341,7 +341,7 @@ func TestAccRiskPolicy_Weights(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.TestAccCheckRiskPolicyDestroy,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -458,7 +458,7 @@ func TestAccRiskPolicy_ChangeType(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.TestAccCheckRiskPolicyDestroy,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -541,7 +541,7 @@ func TestAccRiskPolicy_PolicyOverrides(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.TestAccCheckRiskPolicyDestroy,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -609,7 +609,7 @@ func TestAccRiskPolicy_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.TestAccCheckRiskPolicyDestroy,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
