@@ -6,14 +6,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckMFAPoliciesDestroy(s *terraform.State) error {
-	return nil
-}
 
 func TestAccMFAPolicies_NewEnv(t *testing.T) {
 	t.Parallel()

@@ -10,26 +10,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckMFASettingsDestroy(s *terraform.State) error {
-	return nil
-}
-
-func TestAccGetMFASettingsIDs(resourceName string, environmentID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccMFASettings_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -42,6 +26,13 @@ func TestAccMFASettings_RemovalDrift(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	var environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -61,23 +52,19 @@ func TestAccMFASettings_RemovalDrift(t *testing.T) {
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.MFAAPIClient
-
-					if environmentID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s", environmentID)
-					}
-
-					_, _, err = apiClient.MFASettingsApi.ResetMFASettings(ctx, environmentID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to reset MFA settings: %v", err)
-					}
+					mfa.MFASettings_RemovalDrift_PreConfig(ctx, p1Client.API.MFAAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName),
+				Check:  mfa.TestAccGetMFASettingsIDs(resourceFullName, &environmentID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
