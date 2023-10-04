@@ -3,86 +3,17 @@ package credentials_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckCredentialIssuanceRuleDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.CredentialsAPIClient
-
-	mgmtApiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_credential_issuance_rule" {
-			continue
-		}
-
-		_, rEnv, err := mgmtApiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.CredentialIssuanceRulesApi.ReadOneCredentialIssuanceRule(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["credential_type_id"], rs.Primary.Attributes["id"]).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Credential Issuance Rule ID %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func TestAccGetCredentialIssuanceRuleIDs(resourceName string, environmentID, credentialTypeID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*credentialTypeID = rs.Primary.Attributes["credential_type_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -90,13 +21,25 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_credential_issuance_rule.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, credentialTypeID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var credentialIssuanceRuleID, digitalWalletApplicationID, credentialTypeID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -105,61 +48,86 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
-				Config: testAccCredentialIssuanceRule_Minimal(resourceName, name),
-				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &resourceID),
+				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
+				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.CredentialsAPIClient
-
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, credential type ID or resource ID cannot be determined. Environment ID: %s, Credential Type ID: %s, Resource ID: %s", environmentID, credentialTypeID, resourceID)
-					}
-
-					_, err = apiClient.CredentialIssuanceRulesApi.DeleteCredentialIssuanceRule(ctx, environmentID, credentialTypeID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete Credential issuance rule: %v", err)
-					}
+					credentials.CredentialIssuanceRule_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID, credentialIssuanceRuleID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
 			},
 			// Test removal of the credential type
 			{
-				Config: testAccCredentialIssuanceRule_Minimal(resourceName, name),
-				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &resourceID),
+				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
+				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.CredentialsAPIClient
-
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, credential type ID or resource ID cannot be determined. Environment ID: %s, Credential Type ID: %s, Resource ID: %s", environmentID, credentialTypeID, resourceID)
-					}
-
-					_, err = apiClient.CredentialTypesApi.DeleteCredentialType(ctx, environmentID, credentialTypeID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete Credential type: %v", err)
-					}
+					credentials.CredentialType_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the digital wallet application
+			{
+				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
+				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					credentials.DigitalWalletApplication_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccCredentialIssuanceRuleConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  credentials.TestAccGetCredentialIssuanceRuleIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func TestAccCredentialIssuanceRule_NewEnv(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_credential_issuance_rule.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             credentials.TestAccCheckCredentialIssuanceRuleDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCredentialIssuanceRuleConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+				),
 			},
 		},
 	})
@@ -174,7 +142,7 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	name := acctest.ResourceNameGen()
 
 	fullStep := resource.TestStep{
-		Config: testAccCredentialIssuanceRule_Full(resourceName, name),
+		Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -194,7 +162,7 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	}
 
 	minimalStep := resource.TestStep{
-		Config: testAccCredentialIssuanceRule_Minimal(resourceName, name),
+		Config: testAccCredentialIssuanceRuleConfig_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -209,7 +177,7 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	}
 
 	disabledStep := resource.TestStep{
-		Config: testAccCredentialIssuanceRule_Disabled(resourceName, name),
+		Config: testAccCredentialIssuanceRuleConfig_Disabled(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -239,17 +207,17 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			// full
 			fullStep,
 			{
-				Config:  testAccCredentialIssuanceRule_Full(resourceName, name),
+				Config:  testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
 				Destroy: true,
 			},
 			//minimalStep,
 			{
-				Config:  testAccCredentialIssuanceRule_Minimal(resourceName, name),
+				Config:  testAccCredentialIssuanceRuleConfig_Minimal(resourceName, name),
 				Destroy: true,
 			},
 			disabledStep,
 			{
-				Config:  testAccCredentialIssuanceRule_Disabled(resourceName, name),
+				Config:  testAccCredentialIssuanceRuleConfig_Disabled(resourceName, name),
 				Destroy: true,
 			},
 			fullStep,
@@ -294,42 +262,42 @@ func TestAccCredentialIssuanceRule_InvalidConfigs(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCredentialIssuanceRule_InvalidCredentialTypeID(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleConfig_InvalidCredentialTypeID(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Missing required argument"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialIssuanceRule_InvalidGroupIdFilterAttribute(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleConfig_InvalidGroupIdFilterAttribute(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialIssuanceRule_InvalidPopulationIdFilterAttribute(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleConfig_InvalidPopulationIdFilterAttribute(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialIssuanceRule_InvalidFilterAttribute(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleConfig_InvalidFilterAttribute(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialIssuanceRule_InvalidAutomationAttribute(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleConfig_InvalidAutomationAttribute(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialIssuanceRule_InvalidNotificationAttribute(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleConfig_InvalidNotificationAttribute(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialIssuanceRule_InvalidNotificationMethodsAttribute(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleConfig_InvalidNotificationMethodsAttribute(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialIssuanceRule_InvalidNotificationTemplateAttribute(resourceName, name),
+				Config:      testAccCredentialIssuanceRuleConfig_InvalidNotificationTemplateAttribute(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
 				Destroy:     true,
 			},
@@ -356,7 +324,7 @@ func TestAccCredentialIssuanceRule_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccCredentialIssuanceRule_Minimal(resourceName, name),
+				Config: testAccCredentialIssuanceRuleConfig_Minimal(resourceName, name),
 			},
 			// Errors
 			{
@@ -380,7 +348,94 @@ func TestAccCredentialIssuanceRule_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccCredentialIssuanceRule_Full(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_population" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+}
+
+resource "pingone_credential_type" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  title                = "%[4]s"
+  description          = "%[4]s Example Description"
+  card_type            = "%[4]s"
+  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+
+  metadata = {
+    name               = "%[4]s"
+    description        = "%[4]s Example Description"
+    bg_opacity_percent = 100
+    card_color         = "#000000"
+    text_color         = "#eff0f1"
+
+    fields = [
+      {
+        type       = "Alphanumeric Text"
+        title      = "Example Field"
+        value      = "Demo"
+        is_visible = false
+      },
+    ]
+  }
+}
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      bundle_id                = "com.pingidentity.ios_%[4]s"
+      package_name             = "com.pingidentity.android_%[4]s"
+      passcode_refresh_seconds = 30
+    }
+  }
+}
+
+resource "pingone_digital_wallet_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  application_id = resource.pingone_application.%[3]s.id
+  name           = "%[4]s"
+  app_open_url   = "https://www.example.com"
+
+  depends_on = [resource.pingone_application.%[3]s]
+}
+
+resource "pingone_credential_issuance_rule" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  credential_type_id            = resource.pingone_credential_type.%[3]s.id
+  digital_wallet_application_id = resource.pingone_digital_wallet_application.%[3]s.id
+  status                        = "ACTIVE"
+
+  filter = {
+    population_ids = [resource.pingone_population.%[3]s.id]
+  }
+
+  automation = {
+    issue  = "ON_DEMAND"
+    revoke = "PERIODIC"
+    update = "ON_DEMAND"
+  }
+
+  notification = {
+    methods = ["EMAIL", "SMS"]
+    template = {
+      locale  = "en"
+      variant = "template_B"
+    }
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccCredentialIssuanceRuleConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -467,7 +522,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_Minimal(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -514,7 +569,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_Disabled(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_Disabled(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -557,7 +612,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_InvalidCredentialTypeID(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_InvalidCredentialTypeID(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -607,7 +662,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_InvalidGroupIdFilterAttribute(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_InvalidGroupIdFilterAttribute(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -694,7 +749,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_InvalidPopulationIdFilterAttribute(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_InvalidPopulationIdFilterAttribute(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -781,7 +836,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_InvalidFilterAttribute(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_InvalidFilterAttribute(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -866,7 +921,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_InvalidAutomationAttribute(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_InvalidAutomationAttribute(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -949,7 +1004,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_InvalidNotificationAttribute(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_InvalidNotificationAttribute(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -1030,7 +1085,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_InvalidNotificationMethodsAttribute(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_InvalidNotificationMethodsAttribute(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -1117,7 +1172,7 @@ resource "pingone_credential_issuance_rule" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialIssuanceRule_InvalidNotificationTemplateAttribute(resourceName, name string) string {
+func testAccCredentialIssuanceRuleConfig_InvalidNotificationTemplateAttribute(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 

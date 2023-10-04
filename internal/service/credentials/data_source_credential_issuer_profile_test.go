@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -28,9 +29,8 @@ func TestAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(t *testing.T) 
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
-		//CheckDestroy:           credentials.TestAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
-		ErrorCheck: acctest.ErrorCheck(t),
+		CheckDestroy:             credentials.TestAccCheckCredentialIssuerProfileDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCredentialIssuerProfileDataSource_ByEnvironmentIDFull(environmentName, licenseID, resourceName, name),
@@ -67,9 +67,8 @@ func TestAccCredentialIssuerProfileDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
-		//CheckDestroy:           credentials.TestAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
-		ErrorCheck: acctest.ErrorCheck(t),
+		CheckDestroy:             credentials.TestAccCheckCredentialIssuerProfileDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCredentialIssuerProfileDataSource_NotFound(environmentName, licenseID, resourceName),

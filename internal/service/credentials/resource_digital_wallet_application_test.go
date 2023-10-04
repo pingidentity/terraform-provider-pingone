@@ -7,82 +7,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func TestAccCheckDigitalWalletApplicationDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.CredentialsAPIClient
-
-	mgmtApiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_digital_wallet_application" {
-			continue
-		}
-
-		_, rEnv, err := mgmtApiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Digital Wallet Application ID e %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func TestAccGetDigitalWalletApplicationIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -90,15 +22,27 @@ func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_digital_wallet_application.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	appOpenUrl := "https://www.example.com/appopen"
 
-	var resourceID, environmentID string
+	var applicationID, digitalWalletAppID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -108,28 +52,37 @@ func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
-				Check:  credentials.TestAccGetDigitalWalletApplicationIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  credentials.TestAccGetDigitalWalletApplicationIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.CredentialsAPIClient
-
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
-					}
-
-					_, err = apiClient.DigitalWalletAppsApi.DeleteDigitalWalletApp(ctx, environmentID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete Digital wallet app: %v", err)
-					}
+					credentials.DigitalWalletApplication_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, digitalWalletAppID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the application
+			{
+				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
+				Check:  credentials.TestAccGetDigitalWalletApplicationIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccDigitalWalletApplication_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  credentials.TestAccGetDigitalWalletApplicationIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
