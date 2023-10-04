@@ -8,6 +8,11 @@ NOTES:
 * `resource/pingone_key`: Migrated to plugin framework. ([#575](https://github.com/pingidentity/terraform-provider-pingone/issues/575))
 * `resource/pingone_system_application`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
 
+ENHANCEMENTS:
+
+* `data_source/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration. ([#579](https://github.com/pingidentity/terraform-provider-pingone/issues/579))
+* `resource/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration. ([#579](https://github.com/pingidentity/terraform-provider-pingone/issues/579))
+
 BUG FIXES:
 
 * `resource/pingone_application_resource_grant`: Fixed inability to apply application grants to the Self-Service and Portal system applications. ([#573](https://github.com/pingidentity/terraform-provider-pingone/issues/573))
