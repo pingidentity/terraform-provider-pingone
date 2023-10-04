@@ -12,6 +12,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/mfa"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -27,18 +28,16 @@ func TestAccMFASettings_RemovalDrift(t *testing.T) {
 
 	var environmentID string
 
+	var p1Client *client.Client
 	var ctx = context.Background()
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		t.Fatalf("Failed to get API client: %v", err)
-	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.MFASettings_CheckDestroy,

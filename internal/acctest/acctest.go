@@ -285,6 +285,16 @@ func TestClient(ctx context.Context) (*client.Client, error) {
 
 }
 
+func PreCheckTestClient(ctx context.Context, t *testing.T) *client.Client {
+	p1Client, err := TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
+
+	return p1Client
+}
+
 func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
