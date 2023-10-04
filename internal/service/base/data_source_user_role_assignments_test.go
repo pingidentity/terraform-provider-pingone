@@ -29,7 +29,7 @@ func TestAccUserRoleAssignmentsDataSource_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckUserRoleAssignmentsDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentUserDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -81,7 +81,7 @@ func TestAccUserRoleAssignmentsDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.TestAccCheckUserRoleAssignmentsDestroy,
+		CheckDestroy:             base.TestAccCheckRoleAssignmentUserDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

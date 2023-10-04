@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
@@ -15,88 +14,26 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccCheckAgreementLocalizationDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_agreement_localization" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["agreement_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne agreement localization %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func TestAccGetAgreementLocalizationIDs(resourceName string, environmentID, agreementID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*agreementID = rs.Primary.Attributes["agreement_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
-
 func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_agreement_localization.%s", resourceName)
 
-	name := resourceName
-
 	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var resourceID, agreementID, environmentID string
+	var agreementLocalizationID, agreementID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -111,28 +48,12 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &resourceID),
+				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || agreementID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, agreement ID or resource ID cannot be determined. Environment ID: %s, Agreement ID: %s, Resource ID: %s", environmentID, agreementID, resourceID)
-					}
-
-					_, err = apiClient.AgreementLanguagesResourcesApi.DeleteAgreementLanguage(ctx, environmentID, agreementID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete agreement localisation: %v", err)
-					}
+					base.AgreementLocalization_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID, agreementLocalizationID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -140,28 +61,24 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 			// Test removal of the agreement
 			{
 				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &resourceID),
+				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
 			},
 			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || agreementID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, agreement ID or resource ID cannot be determined. Environment ID: %s, Agreement ID: %s, Resource ID: %s", environmentID, agreementID, resourceID)
-					}
-
-					_, err = apiClient.AgreementsResourcesApi.DeleteAgreement(ctx, environmentID, agreementID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete agreement: %v", err)
-					}
+					base.Agreement_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Check:  base.TestAccGetAgreementLocalizationIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,

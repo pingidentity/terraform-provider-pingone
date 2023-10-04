@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
@@ -16,57 +15,88 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccCheckAgreementLocalizationRevisionDestroy(s *terraform.State) error {
-	var ctx = context.Background()
+func TestAccAgreementLocalizationRevision_RemovalDrift(t *testing.T) {
+	t.Parallel()
 
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_agreement_localization_revision.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var agreementLocalizationRevisionID, agreementLocalizationID, agreementID, environmentID string
+
+	var ctx = context.Background()
 	p1Client, err := acctest.TestClient(ctx)
 
 	if err != nil {
-		return err
+		t.Fatalf("Failed to get API client: %v", err)
 	}
 
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_agreement_localization_revision" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["agreement_id"], rs.Primary.Attributes["agreement_localization_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne agreement localization revision %s still exists", rs.Primary.ID)
-	}
-
-	return nil
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.TestAccCheckAgreementLocalizationRevisionDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
+				Check:  base.TestAccGetAgreementLocalizationRevisionIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
+			},
+			{
+				PreConfig: func() {
+					base.AgreementLocalizationRevision_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID, agreementLocalizationID, agreementLocalizationRevisionID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the resource
+			{
+				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
+				Check:  base.TestAccGetAgreementLocalizationRevisionIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					base.AgreementLocalization_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID, agreementLocalizationID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the agreement
+			{
+				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
+				Check:  base.TestAccGetAgreementLocalizationRevisionIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					base.Agreement_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
+				Check:  base.TestAccGetAgreementLocalizationRevisionIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccAgreementLocalizationRevision_Full(t *testing.T) {

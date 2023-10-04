@@ -1,6 +1,7 @@
 package base_test
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -14,8 +15,54 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccCheckBrandingSettingsDestroy(s *terraform.State) error {
-	return nil
+func TestAccBrandingSettings_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_branding_settings.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	name := resourceName
+
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
+	var brandingSettingsID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.TestAccCheckBrandingSettingsDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test removal of the environment
+			{
+				Config: testAccBrandingSettingsConfig_Full(environmentName, licenseID, resourceName, name, image),
+				Check:  base.TestAccGetBrandingSettingsIDs(resourceFullName, &environmentID, &brandingSettingsID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccBrandingSettings_Full(t *testing.T) {

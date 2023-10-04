@@ -1,6 +1,7 @@
 package base_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -13,8 +14,64 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccCheckBrandingThemeDefaultDestroy(s *terraform.State) error {
-	return nil
+func TestAccBrandingThemeDefault_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_branding_theme_default.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var brandingThemeID, environmentID string
+
+	var ctx = context.Background()
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.TestAccCheckBrandingThemeDefaultDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
+				Check:  base.TestAccGetBrandingThemeIDs(resourceFullName, &environmentID, &brandingThemeID),
+			},
+			// Replan after removal preconfig
+			{
+				PreConfig: func() {
+					base.BrandingTheme_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, brandingThemeID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccBrandingThemeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  base.TestAccGetBrandingThemeIDs(resourceFullName, &environmentID, &brandingThemeID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccBrandingThemeDefault_Full(t *testing.T) {

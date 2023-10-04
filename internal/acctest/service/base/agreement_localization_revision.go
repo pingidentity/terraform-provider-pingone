@@ -53,7 +53,7 @@ func TestAccCheckAgreementLocalizationRevisionDestroy(s *terraform.State) error 
 	return nil
 }
 
-func TestAccGetAgreementLocalizationIDs(resourceName string, environmentID, agreementID, resourceID *string) resource.TestCheckFunc {
+func TestAccGetAgreementLocalizationRevisionIDs(resourceName string, environmentID, agreementID, agreementLocalizationID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -62,6 +62,7 @@ func TestAccGetAgreementLocalizationIDs(resourceName string, environmentID, agre
 		}
 
 		*resourceID = rs.Primary.ID
+		*agreementLocalizationID = rs.Primary.Attributes["agreement_localization_id"]
 		*agreementID = rs.Primary.Attributes["agreement_id"]
 		*environmentID = rs.Primary.Attributes["environment_id"]
 
@@ -69,13 +70,13 @@ func TestAccGetAgreementLocalizationIDs(resourceName string, environmentID, agre
 	}
 }
 
-func AgreementLocalization_RemovalDrift_PreConfig(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentID, agreementID, agreementLocalizationID string) {
-	if environmentID == "" || agreementID == "" || agreementLocalizationID == "" {
-		t.Fatalf("One of environment ID, agreement ID or agreement localization ID cannot be determined. Environment ID: %s, Agreement ID: %s, Agreement Localization ID: %s", environmentID, agreementID, agreementLocalizationID)
+func AgreementLocalizationRevision_RemovalDrift_PreConfig(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentID, agreementID, agreementLocalizationID, agreementLocalizationRevisionID string) {
+	if environmentID == "" || agreementID == "" || agreementLocalizationID == "" || agreementLocalizationRevisionID == "" {
+		t.Fatalf("One of environment ID, agreement ID, agreement localization ID or agreement localization revision ID cannot be determined. Environment ID: %s, Agreement ID: %s, Agreement Localization ID: %s, Agreement Localization Revision ID: %s", environmentID, agreementID, agreementLocalizationID, agreementLocalizationRevisionID)
 	}
 
-	_, err := apiClient.AgreementLanguagesResourcesApi.DeleteAgreementLanguage(ctx, environmentID, agreementID, agreementLocalizationID).Execute()
+	_, err := apiClient.AgreementRevisionsResourcesApi.DeleteAgreementLanguageRevision(ctx, environmentID, agreementID, agreementLocalizationID, agreementLocalizationRevisionID).Execute()
 	if err != nil {
-		t.Fatalf("Failed to delete agreement localisation: %v", err)
+		t.Fatalf("Failed to delete agreement localisation revision: %v", err)
 	}
 }
