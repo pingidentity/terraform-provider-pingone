@@ -28,7 +28,7 @@ func TestAccCredentialIssuerProfile_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var credentialTypeID, environmentID string
+	var resourceID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -45,22 +45,10 @@ func TestAccCredentialIssuerProfile_RemovalDrift(t *testing.T) {
 		CheckDestroy:             credentials.CredentialIssuerProfile_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
-				Check:  credentials.CredentialIssuerProfile_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
-			},
-			{
-				PreConfig: func() {
-					credentials.CredentialType_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID)
-				},
-				RefreshState:       true,
-				ExpectNonEmptyPlan: true,
-			},
 			// Test removal of the environment
 			{
 				Config: testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
-				Check:  credentials.CredentialIssuerProfile_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
+				Check:  credentials.CredentialIssuerProfile_GetIDs(resourceFullName, &environmentID, &resourceID),
 			},
 			{
 				PreConfig: func() {

@@ -59,10 +59,12 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the credential type
 			{
-				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
-				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21020") },
+				Config:   testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
+				Check:    credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21020") },
 				PreConfig: func() {
 					credentials.CredentialType_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID)
 				},

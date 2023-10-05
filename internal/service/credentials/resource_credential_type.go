@@ -539,7 +539,7 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 		},
 		"ReadOneCredentialType",
 		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
+		credentialTypeRetryConditions,
 		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
