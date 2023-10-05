@@ -48,7 +48,6 @@ func TestAccMFASettings_RemovalDrift(t *testing.T) {
 				Config: testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName),
 				Check:  mfa.MFASettings_GetIDs(resourceFullName, &environmentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					mfa.MFASettings_RemovalDrift_PreConfig(ctx, p1Client.API.MFAAPIClient, t, environmentID)

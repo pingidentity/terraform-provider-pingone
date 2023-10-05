@@ -49,7 +49,6 @@ func TestAccKey_RemovalDrift(t *testing.T) {
 				Config: testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name),
 				Check:  base.Key_GetIDs(resourceFullName, &environmentID, &keyID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Key_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, keyID)

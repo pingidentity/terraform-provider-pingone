@@ -50,7 +50,6 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 				Config: testAccResourceAttributeConfig_Custom_Full(resourceName, name),
 				Check:  sso.ResourceAttribute_GetIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.ResourceAttribute_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, customResourceID, resourceAttributeID)
@@ -63,7 +62,6 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 				Config: testAccResourceAttributeConfig_Custom_Full(resourceName, name),
 				Check:  sso.ResourceAttribute_GetIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Resource_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, customResourceID)

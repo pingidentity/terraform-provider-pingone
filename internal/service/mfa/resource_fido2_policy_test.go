@@ -50,7 +50,6 @@ func TestAccFIDO2Policy_RemovalDrift(t *testing.T) {
 				Config: testAccFIDO2PolicyConfig_Minimal(resourceName, name),
 				Check:  mfa.FIDO2Policy_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					mfa.FIDO2Policy_RemovalDrift_PreConfig(ctx, p1Client.API.MFAAPIClient, t, environmentID, fido2PolicyID)

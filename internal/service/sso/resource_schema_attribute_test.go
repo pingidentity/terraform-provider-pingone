@@ -50,7 +50,6 @@ func TestAccSchemaAttribute_RemovalDrift(t *testing.T) {
 				Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 				Check:  sso.SchemaAttribute_GetIDs(resourceFullName, &environmentID, &schemaID, &schemaAttributeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.SchemaAttribute_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, schemaID, schemaAttributeID)

@@ -50,7 +50,6 @@ func TestAccSignOnPolicy_RemovalDrift(t *testing.T) {
 				Config: testAccSignOnPolicyConfig_Full(resourceName, name),
 				Check:  sso.SignOnPolicy_GetIDs(resourceFullName, &environmentID, &signOnPolicyID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.SignOnPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, signOnPolicyID)

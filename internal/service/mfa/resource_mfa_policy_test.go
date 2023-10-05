@@ -50,7 +50,6 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
 				Check:  mfa.MFAPolicy_GetIDs(resourceFullName, &environmentID, &mfaDevicePolicyID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					mfa.MFAPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.MFAAPIClient, t, environmentID, mfaDevicePolicyID)

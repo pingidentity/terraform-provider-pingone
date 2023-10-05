@@ -50,7 +50,6 @@ func TestAccCredentialIssuerProfile_RemovalDrift(t *testing.T) {
 				Config: testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
 				Check:  credentials.CredentialIssuerProfile_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					credentials.CredentialType_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID)

@@ -53,7 +53,6 @@ func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
 				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
 				Check:  credentials.DigitalWalletApplication_GetIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					credentials.DigitalWalletApplication_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, digitalWalletAppID)
@@ -66,7 +65,6 @@ func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
 				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
 				Check:  credentials.DigitalWalletApplication_GetIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)

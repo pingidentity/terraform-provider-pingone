@@ -51,7 +51,6 @@ func TestAccRiskPredictor_RemovalDrift(t *testing.T) {
 				Config: testAccRiskPredictorConfig_Minimal(resourceName, name),
 				Check:  risk.RiskPredictor_GetIDs(resourceFullName, &environmentID, &riskPredictorID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					risk.RiskPredictor_RemovalDrift_PreConfig(ctx, p1Client.API.RiskAPIClient, t, environmentID, riskPredictorID)

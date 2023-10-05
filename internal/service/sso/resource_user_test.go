@@ -50,7 +50,6 @@ func TestAccUser_RemovalDrift(t *testing.T) {
 				Config: testAccUserConfig_Minimal(resourceName, name),
 				Check:  sso.User_GetIDs(resourceFullName, &environmentID, &userID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.User_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, userID)

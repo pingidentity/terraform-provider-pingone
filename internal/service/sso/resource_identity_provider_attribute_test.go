@@ -50,7 +50,6 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
 				Check:  sso.IdentityProviderAttribute_GetIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.IdentityProviderAttribute_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, identityProviderID, identityProviderAttributeID)
@@ -63,7 +62,6 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
 				Check:  sso.IdentityProviderAttribute_GetIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.IdentityProvider_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, identityProviderID)

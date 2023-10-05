@@ -49,7 +49,6 @@ func TestAccNotificationPolicy_RemovalDrift(t *testing.T) {
 				Config: testAccNotificationPolicyConfig_Minimal(resourceName, name),
 				Check:  base.NotificationPolicy_GetIDs(resourceFullName, &environmentID, &notificationPolicyID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.NotificationPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, notificationPolicyID)

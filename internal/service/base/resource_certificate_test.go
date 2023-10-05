@@ -49,7 +49,6 @@ func TestAccCertificate_RemovalDrift(t *testing.T) {
 				Config: testAccCertificateConfig_PEM(environmentName, licenseID, resourceName, pem_cert),
 				Check:  base.Certificate_GetIDs(resourceFullName, &environmentID, &certificateID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Certificate_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, certificateID)

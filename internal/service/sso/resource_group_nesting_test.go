@@ -50,7 +50,6 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 				Config: testAccGroupNestingConfig_Full(resourceName, name),
 				Check:  sso.GroupNesting_GetIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.GroupNesting_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, groupID, groupNestingID)
@@ -63,7 +62,6 @@ func TestAccGroupNesting_RemovalDrift(t *testing.T) {
 				Config: testAccGroupNestingConfig_Full(resourceName, name),
 				Check:  sso.GroupNesting_GetIDs(resourceFullName, &environmentID, &groupID, &groupNestingID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Group_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, groupID)

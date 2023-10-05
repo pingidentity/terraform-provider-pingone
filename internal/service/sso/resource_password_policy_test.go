@@ -50,7 +50,6 @@ func TestAccPasswordPolicy_RemovalDrift(t *testing.T) {
 				Config: testAccPasswordPolicyConfig_Minimal(resourceName, name),
 				Check:  sso.PasswordPolicy_GetIDs(resourceFullName, &environmentID, &passwordPolicyID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.PasswordPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, passwordPolicyID)

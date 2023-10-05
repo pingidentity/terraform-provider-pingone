@@ -49,7 +49,6 @@ func TestAccGateway_RemovalDrift(t *testing.T) {
 				Config: testAccGatewayConfig_Minimal(resourceName, name),
 				Check:  base.Gateway_GetIDs(resourceFullName, &environmentID, &gatewayID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Gateway_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, gatewayID)

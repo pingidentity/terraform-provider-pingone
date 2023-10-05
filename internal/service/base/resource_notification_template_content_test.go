@@ -50,7 +50,6 @@ func TestAccNotificationTemplateContent_RemovalDrift(t *testing.T) {
 				Config: testAccNotificationTemplateContentConfig_NewLocale_Minimal(environmentName, licenseID, resourceName, name, locale),
 				Check:  base.NotificationTemplateContent_GetIDs(resourceFullName, &environmentID, &templateName, &notificationTemplateContentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.NotificationTemplateContent_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, templateName, notificationTemplateContentID)

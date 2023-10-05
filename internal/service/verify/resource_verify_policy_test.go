@@ -50,7 +50,6 @@ func TestAccVerifyPolicy_RemovalDrift(t *testing.T) {
 				Config: testAccVerifyPolicy_Full(resourceName, name),
 				Check:  verify.VerifyPolicy_GetIDs(resourceFullName, &environmentID, &verifyPolicyID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					verify.VerifyPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.VerifyAPIClient, t, environmentID, verifyPolicyID)

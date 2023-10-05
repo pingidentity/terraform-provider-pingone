@@ -51,7 +51,6 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
 				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					mfa.ApplicationPushCredential_RemovalDrift_PreConfig(ctx, p1Client.API.MFAAPIClient, t, environmentID, applicationID, applicationPushCredentialID)
@@ -64,7 +63,6 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
 				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)

@@ -47,7 +47,6 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
 				Check:  base.CustomDomain_GetIDs(resourceFullName, &environmentID, &customDomainID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.CustomDomain_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, customDomainID)

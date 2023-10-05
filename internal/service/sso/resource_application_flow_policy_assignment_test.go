@@ -48,7 +48,6 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
 				Check:  sso.ApplicationFlowPolicyAssignment_GetIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.ApplicationFlowPolicyAssignment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID, flowPolicyAssignmentID)
@@ -61,7 +60,6 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
 				Check:  sso.ApplicationFlowPolicyAssignment_GetIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)

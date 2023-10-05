@@ -49,7 +49,6 @@ func TestAccGatewayCredential_RemovalDrift(t *testing.T) {
 				Config: testAccGatewayCredentialConfig_Full(resourceName, name),
 				Check:  base.GatewayCredential_GetIDs(resourceFullName, &environmentID, &gatewayID, &gatewayCredentialID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.GatewayCredential_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, gatewayID, gatewayCredentialID)
@@ -62,7 +61,6 @@ func TestAccGatewayCredential_RemovalDrift(t *testing.T) {
 				Config: testAccGatewayCredentialConfig_Full(resourceName, name),
 				Check:  base.GatewayCredential_GetIDs(resourceFullName, &environmentID, &gatewayID, &gatewayCredentialID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Gateway_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, gatewayID)
@@ -75,7 +73,6 @@ func TestAccGatewayCredential_RemovalDrift(t *testing.T) {
 				Config: testAccGatewayCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check:  base.GatewayCredential_GetIDs(resourceFullName, &environmentID, &gatewayID, &gatewayCredentialID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)

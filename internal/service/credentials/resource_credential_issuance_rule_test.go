@@ -50,7 +50,6 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
 				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					credentials.CredentialIssuanceRule_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID, credentialIssuanceRuleID)
@@ -63,7 +62,6 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
 				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					credentials.CredentialType_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID)
@@ -76,7 +74,6 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
 				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					credentials.DigitalWalletApplication_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID)

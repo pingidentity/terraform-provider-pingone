@@ -51,7 +51,6 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
 				Check:  sso.SignOnPolicyAction_GetIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.SignOnPolicyAction_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, signOnPolicyID, signOnPolicyActionID)
@@ -64,7 +63,6 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
 				Check:  sso.SignOnPolicyAction_GetIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.SignOnPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, signOnPolicyID)

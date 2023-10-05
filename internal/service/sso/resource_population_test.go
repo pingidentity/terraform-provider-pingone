@@ -50,7 +50,6 @@ func TestAccPopulation_RemovalDrift(t *testing.T) {
 				Config: testAccPopulationConfig_Minimal(resourceName, name),
 				Check:  sso.Population_GetIDs(resourceFullName, &environmentID, &populationID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Population_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, populationID)

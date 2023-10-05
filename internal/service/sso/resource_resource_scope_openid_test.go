@@ -50,7 +50,6 @@ func TestAccResourceScopeOpenID_RemovalDrift(t *testing.T) {
 				Config: testAccResourceScopeOpenIDConfig_Minimal(resourceName, name),
 				Check:  sso.ResourceScopeOpenID_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.ResourceScopeOpenID_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, openidResourceID, resourceID)

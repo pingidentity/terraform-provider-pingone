@@ -50,7 +50,6 @@ func TestAccRoleAssignmentApplication_RemovalDrift(t *testing.T) {
 				Config: testAccRoleAssignmentApplicationConfig_Population(resourceName, name, "Identity Data Admin"),
 				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.RoleAssignmentApplication_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID, resourceID)
@@ -63,7 +62,6 @@ func TestAccRoleAssignmentApplication_RemovalDrift(t *testing.T) {
 				Config: testAccRoleAssignmentApplicationConfig_Population(resourceName, name, "Identity Data Admin"),
 				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)

@@ -49,7 +49,6 @@ func TestAccRoleAssignmentGateway_RemovalDrift(t *testing.T) {
 				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
 				Check:  base.RoleAssignmentGateway_GetIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.RoleAssignmentGateway_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, gatewayID, roleAssignmentID)
@@ -62,7 +61,6 @@ func TestAccRoleAssignmentGateway_RemovalDrift(t *testing.T) {
 				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
 				Check:  base.RoleAssignmentGateway_GetIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Gateway_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, gatewayID)

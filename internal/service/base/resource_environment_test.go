@@ -49,7 +49,6 @@ func TestAccEnvironment_RemovalDrift(t *testing.T) {
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
 				Check:  base.Environment_GetIDs(resourceFullName, &environmentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)

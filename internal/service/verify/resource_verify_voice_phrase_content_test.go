@@ -53,7 +53,6 @@ func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 				Config: testAccVerifyVoicePhraseContent_Full(resourceName, name, locale, phrase),
 				Check:  verify.VerifyVoicePhraseContent_GetIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					verify.VerifyVoicePhraseContent_RemovalDrift_PreConfig(ctx, p1Client.API.VerifyAPIClient, t, environmentID, voicePhraseID, voicePhraseContentID)
@@ -66,7 +65,6 @@ func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 				Config: testAccVerifyVoicePhraseContent_Full(resourceName, name, locale, phrase),
 				Check:  verify.VerifyVoicePhraseContent_GetIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					verify.VerifyVoicePhrase_RemovalDrift_PreConfig(ctx, p1Client.API.VerifyAPIClient, t, environmentID, voicePhraseID)

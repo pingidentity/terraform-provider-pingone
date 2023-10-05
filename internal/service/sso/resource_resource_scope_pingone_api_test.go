@@ -50,7 +50,6 @@ func TestAccResourceScopePingOneAPI_RemovalDrift(t *testing.T) {
 				Config: testAccResourceScopePingOneAPIConfig_Minimal(resourceName, fmt.Sprintf("p1:read:user:%s", name)),
 				Check:  sso.ResourceScopePingOneAPI_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceScopeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.ResourceScopePingOneAPI_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, openidResourceID, resourceScopeID)

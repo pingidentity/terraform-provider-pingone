@@ -50,7 +50,6 @@ func TestAccResource_RemovalDrift(t *testing.T) {
 				Config: testAccResourceConfig_Minimal(resourceName, name),
 				Check:  sso.Resource_GetIDs(resourceFullName, &environmentID, &resourceID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Resource_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, resourceID)

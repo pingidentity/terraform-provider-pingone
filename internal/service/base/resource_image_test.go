@@ -51,7 +51,6 @@ func TestAccImage_RemovalDrift(t *testing.T) {
 				Config: testAccImageConfig_Image(resourceName, image),
 				Check:  base.Image_GetIDs(resourceFullName, &environmentID, &imageID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Image_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, imageID)

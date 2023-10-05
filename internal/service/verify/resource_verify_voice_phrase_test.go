@@ -50,7 +50,6 @@ func TestAccVerifyVoicePhrase_RemovalDrift(t *testing.T) {
 				Config: testAccVerifyVoicePhrase_Full(resourceName, name),
 				Check:  verify.VerifyVoicePhrase_GetIDs(resourceFullName, &environmentID, &voicePhraseID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					verify.VerifyVoicePhrase_RemovalDrift_PreConfig(ctx, p1Client.API.VerifyAPIClient, t, environmentID, voicePhraseID)

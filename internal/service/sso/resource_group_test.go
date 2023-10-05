@@ -50,7 +50,6 @@ func TestAccGroup_RemovalDrift(t *testing.T) {
 				Config: testAccGroupConfig_Minimal(resourceName, name),
 				Check:  sso.Group_GetIDs(resourceFullName, &environmentID, &groupID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Group_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, groupID)

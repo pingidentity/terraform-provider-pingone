@@ -49,7 +49,6 @@ func TestAccAgreement_RemovalDrift(t *testing.T) {
 				Config: testAccAgreementConfig_Minimal(resourceName, name),
 				Check:  base.Agreement_GetIDs(resourceFullName, &environmentID, &agreementID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Agreement_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID)

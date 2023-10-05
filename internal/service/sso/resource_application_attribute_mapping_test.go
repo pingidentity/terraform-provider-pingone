@@ -50,7 +50,6 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 				Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
 				Check:  sso.ApplicationAttributeMapping_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.ApplicationAttributeMapping_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID, resourceID)
@@ -63,7 +62,6 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 				Config: testAccApplicationAttributeMappingConfig_OIDC_Minimal(resourceName, name),
 				Check:  sso.ApplicationAttributeMapping_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)

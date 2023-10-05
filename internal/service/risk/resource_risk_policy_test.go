@@ -50,7 +50,6 @@ func TestAccRiskPolicy_RemovalDrift(t *testing.T) {
 				Config: testAccRiskPolicyConfig_Minimal(resourceName, name),
 				Check:  risk.RiskPolicy_GetIDs(resourceFullName, &environmentID, &riskPolicyID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					risk.RiskPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.RiskAPIClient, t, environmentID, riskPolicyID)

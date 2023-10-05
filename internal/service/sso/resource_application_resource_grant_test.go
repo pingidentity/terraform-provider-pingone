@@ -50,7 +50,6 @@ func TestAccApplicationResourceGrant_RemovalDrift(t *testing.T) {
 				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
 				Check:  sso.ApplicationResourceGrant_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationResourceGrantID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.ApplicationResourceGrant_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID, applicationResourceGrantID)
@@ -63,7 +62,6 @@ func TestAccApplicationResourceGrant_RemovalDrift(t *testing.T) {
 				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
 				Check:  sso.ApplicationResourceGrant_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationResourceGrantID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)

@@ -61,7 +61,6 @@ func TestAccAgreementLocalizationRevision_RemovalDrift(t *testing.T) {
 				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
 				Check:  base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.AgreementLocalization_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID, agreementLocalizationID)
@@ -74,7 +73,6 @@ func TestAccAgreementLocalizationRevision_RemovalDrift(t *testing.T) {
 				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
 				Check:  base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Agreement_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID)

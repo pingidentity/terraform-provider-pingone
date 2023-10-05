@@ -49,7 +49,6 @@ func TestAccWebhook_RemovalDrift(t *testing.T) {
 				Config: testAccWebhookConfig_Minimal(resourceName, name),
 				Check:  base.Webhook_GetIDs(resourceFullName, &environmentID, &subscriptionID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.Webhook_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, subscriptionID)

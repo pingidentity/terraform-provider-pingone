@@ -50,7 +50,6 @@ func TestAccResourceScope_RemovalDrift(t *testing.T) {
 				Config: testAccResourceScopeConfig_Minimal(resourceName, name),
 				Check:  sso.ResourceScope_GetIDs(resourceFullName, &environmentID, &customResourceID, &resourceScopeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.ResourceScope_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, customResourceID, resourceScopeID)
@@ -63,7 +62,6 @@ func TestAccResourceScope_RemovalDrift(t *testing.T) {
 				Config: testAccResourceScopeConfig_Minimal(resourceName, name),
 				Check:  sso.ResourceScope_GetIDs(resourceFullName, &environmentID, &customResourceID, &resourceScopeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					sso.Resource_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, customResourceID)

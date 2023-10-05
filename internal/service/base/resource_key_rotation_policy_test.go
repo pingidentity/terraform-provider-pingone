@@ -49,7 +49,6 @@ func TestAccKeyRotationPolicy_RemovalDrift(t *testing.T) {
 				Config: testAccKeyRotationPolicyConfig_Minimal(resourceName, name),
 				Check:  base.KeyRotationPolicy_GetIDs(resourceFullName, &environmentID, &keyRotationPolicyID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.KeyRotationPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, keyRotationPolicyID)

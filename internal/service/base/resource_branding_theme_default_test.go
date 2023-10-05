@@ -49,7 +49,6 @@ func TestAccBrandingThemeDefault_RemovalDrift(t *testing.T) {
 				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
 				Check:  base.BrandingTheme_GetIDs(resourceFullName, &environmentID, &brandingThemeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.BrandingTheme_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, brandingThemeID)

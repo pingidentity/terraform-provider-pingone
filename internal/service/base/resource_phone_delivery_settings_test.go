@@ -50,7 +50,6 @@ func TestAccPhoneDeliverySettings_RemovalDrift(t *testing.T) {
 				Config: testAccPhoneDeliverySettingsConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check:  base.PhoneDeliverySettings_GetIDs(resourceFullName, &environmentID, &phoneDeliverySettingsID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.PhoneDeliverySettings_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, phoneDeliverySettingsID)

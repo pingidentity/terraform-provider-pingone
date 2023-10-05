@@ -47,7 +47,6 @@ func TestAccTrustedEmailDomain_RemovalDrift(t *testing.T) {
 				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName),
 				Check:  base.TrustedEmailDomain_GetIDs(resourceFullName, &environmentID, &trustedEmailDomainID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					base.TrustedEmailDomain_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, trustedEmailDomainID)

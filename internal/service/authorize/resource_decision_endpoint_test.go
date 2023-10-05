@@ -50,7 +50,6 @@ func TestAccDecisionEndpoint_RemovalDrift(t *testing.T) {
 				Config: testAccDecisionEndpointConfig_Minimal(resourceName, name),
 				Check:  authorize.DecisionEndpoint_GetIDs(resourceFullName, &environmentID, &decisionEndpointID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
 					authorize.DecisionEndpoint_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, decisionEndpointID)
