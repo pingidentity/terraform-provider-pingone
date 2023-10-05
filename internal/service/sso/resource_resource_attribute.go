@@ -259,11 +259,22 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	resourceResponse, d := plan.getResource(ctx, r.Client, false)
+	var resourceResponse *management.Resource
+	var d diag.Diagnostics
+	if !plan.ResourceId.IsNull() && !plan.ResourceId.IsUnknown() {
+		resourceResponse, d = fetchResourceFromID(ctx, r.Client, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), false)
+	}
+
+	if !plan.ResourceName.IsNull() && !plan.ResourceName.IsUnknown() {
+		resourceResponse, d = fetchResourceFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
+	}
+
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	plan.ResourceId = framework.StringOkToTF(resourceResponse.GetIdOk())
 
 	_, isCoreAttribute := plan.isCoreAttribute(resourceResponse.GetType())
 	isOverriddenAttribute := plan.isOverriddenAttribute(resourceResponse.GetType())
@@ -335,7 +346,16 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	resourceResponse, d := data.getResource(ctx, r.Client, true)
+	var resourceResponse *management.Resource
+	var d diag.Diagnostics
+	if !data.ResourceId.IsNull() && !data.ResourceId.IsUnknown() {
+		resourceResponse, d = fetchResourceFromID(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), true)
+	}
+
+	if !data.ResourceName.IsNull() && !data.ResourceName.IsUnknown() {
+		resourceResponse, d = fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceName.ValueString(), true)
+	}
+
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -391,7 +411,16 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	resourceResponse, d := plan.getResource(ctx, r.Client, false)
+	var resourceResponse *management.Resource
+	var d diag.Diagnostics
+	if !plan.ResourceId.IsNull() && !plan.ResourceId.IsUnknown() {
+		resourceResponse, d = fetchResourceFromID(ctx, r.Client, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), false)
+	}
+
+	if !plan.ResourceName.IsNull() && !plan.ResourceName.IsUnknown() {
+		resourceResponse, d = fetchResourceFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
+	}
+
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -453,7 +482,16 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client, true)
+	var resource *management.Resource
+	var d diag.Diagnostics
+	if !data.ResourceId.IsNull() && !data.ResourceId.IsUnknown() {
+		resource, d = fetchResourceFromID(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), true)
+	}
+
+	if !data.ResourceName.IsNull() && !data.ResourceName.IsUnknown() {
+		resource, d = fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceName.ValueString(), true)
+	}
+
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -585,33 +623,6 @@ func (r *ResourceAttributeResource) ImportState(ctx context.Context, req resourc
 
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
-}
-
-func (p *ResourceAttributeResourceModel) getResource(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var resource *management.Resource
-	var d diag.Diagnostics
-	if !p.ResourceId.IsNull() && !p.ResourceId.IsUnknown() {
-		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString(), warnIfNotFound)
-	}
-
-	if !p.ResourceName.IsNull() && !p.ResourceName.IsUnknown() {
-		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString(), warnIfNotFound)
-	}
-
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	if resource == nil {
-		return nil, diags
-	}
-
-	p.ResourceId = framework.StringOkToTF(resource.GetIdOk())
-
-	return resource, diags
 }
 
 func (p *ResourceAttributeResourceModel) validate(resourceType management.EnumResourceType) diag.Diagnostics {

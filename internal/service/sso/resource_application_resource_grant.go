@@ -214,7 +214,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 		return
 	}
 
-	resource, resourceScopes, d := plan.getResource(ctx, r.Client, false)
+	resource, resourceScopes, d := plan.getResourceWithScopes(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -398,7 +398,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		return
 	}
 
-	resource, resourceScopes, d := plan.getResource(ctx, r.Client, false)
+	resource, resourceScopes, d := plan.getResourceWithScopes(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -561,7 +561,7 @@ func (r *ApplicationResourceGrantResource) ImportState(ctx context.Context, req 
 	}
 }
 
-func (p *ApplicationResourceGrantResourceModel) getResource(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, []management.ResourceScope, diag.Diagnostics) {
+func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, []management.ResourceScope, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var d diag.Diagnostics
@@ -573,6 +573,15 @@ func (p *ApplicationResourceGrantResourceModel) getResource(ctx context.Context,
 
 	if !p.ResourceName.IsNull() && !p.ResourceName.IsUnknown() {
 		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString(), warnIfNotFound)
+	}
+
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, nil, diags
+	}
+
+	if resource == nil {
+		return nil, nil, diags
 	}
 
 	resourceScopes := make([]management.ResourceScope, 0)
@@ -596,15 +605,6 @@ func (p *ApplicationResourceGrantResourceModel) getResource(ctx context.Context,
 		}
 
 		resourceScopes, d = fetchResourceScopesFromNames(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), scopeNames)
-	}
-
-	diags.Append(d...)
-
-	if resource == nil {
-		diags.AddError(
-			"Invalid resource",
-			"Cannot create an application resource grant as the resource could not be found.",
-		)
 	}
 
 	if len(resourceScopes) == 0 {

@@ -156,11 +156,13 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client, false)
+	resource, d := fetchResourceFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), "openid", false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	plan.ResourceId = framework.StringOkToTF(resource.GetIdOk())
 
 	// Build the model for the API
 	resourceScope, d := plan.expand(ctx, r.Client, *resource)
@@ -228,7 +230,7 @@ func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client, true)
+	resource, d := fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), "openid", true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -284,7 +286,7 @@ func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client, false)
+	resource, d := fetchResourceFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), "openid", false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -338,7 +340,7 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client, true)
+	resource, d := fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), "openid", true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -423,36 +425,6 @@ func (r *ResourceScopeOpenIDResource) ImportState(ctx context.Context, req resou
 
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
-}
-
-func (p *ResourceScopeOpenIDResourceModel) getResource(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var d diag.Diagnostics
-
-	resource, d := fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), "openid", warnIfNotFound)
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	if resource == nil {
-		if warnIfNotFound {
-			diags.AddWarning(
-				"Invalid resource",
-				"Cannot manage OpenID scopes as the OpenID resource could not be found.",
-			)
-		} else {
-			diags.AddError(
-				"Invalid resource",
-				"Cannot manage OpenID scopes as the OpenID resource could not be found.",
-			)
-		}
-	}
-
-	p.ResourceId = framework.StringOkToTF(resource.GetIdOk())
-
-	return resource, diags
 }
 
 func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient *management.APIClient, resource management.Resource) (*management.ResourceScope, diag.Diagnostics) {
