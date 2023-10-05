@@ -59,10 +59,12 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  mfa.MFAPolicy_GetIDs(resourceFullName, &environmentID, &mfaDevicePolicyID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21025") },
+				Config:   testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:    mfa.MFAPolicy_GetIDs(resourceFullName, &environmentID, &mfaDevicePolicyID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21025") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

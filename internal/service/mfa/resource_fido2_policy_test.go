@@ -59,10 +59,12 @@ func TestAccFIDO2Policy_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccFIDO2PolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  mfa.FIDO2Policy_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21026") },
+				Config:   testAccFIDO2PolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:    mfa.FIDO2Policy_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21026") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
