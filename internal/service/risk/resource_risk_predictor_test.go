@@ -60,10 +60,12 @@ func TestAccRiskPredictor_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccRiskPredictorConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  risk.RiskPredictor_GetIDs(resourceFullName, &environmentID, &riskPredictorID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21023") },
+				Config:   testAccRiskPredictorConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:    risk.RiskPredictor_GetIDs(resourceFullName, &environmentID, &riskPredictorID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21023") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
