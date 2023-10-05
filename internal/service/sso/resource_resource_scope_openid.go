@@ -156,7 +156,7 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client)
+	resource, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -228,9 +228,15 @@ func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client)
+	resource, d := data.getResource(ctx, r.Client, true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if resource == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -278,7 +284,7 @@ func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client)
+	resource, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -332,9 +338,13 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client)
+	resource, d := data.getResource(ctx, r.Client, true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if resource == nil {
 		return
 	}
 
@@ -415,24 +425,29 @@ func (r *ResourceScopeOpenIDResource) ImportState(ctx context.Context, req resou
 	}
 }
 
-func (p *ResourceScopeOpenIDResourceModel) getResource(ctx context.Context, apiClient *management.APIClient) (*management.Resource, diag.Diagnostics) {
+func (p *ResourceScopeOpenIDResourceModel) getResource(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var d diag.Diagnostics
 
-	resource, d := fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), "openid")
-
+	resource, d := fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), "openid", warnIfNotFound)
 	diags.Append(d...)
-
-	if resource == nil {
-		diags.AddError(
-			"Invalid resource",
-			"Cannot manage OpenID scopes as the OpenID resource could not be found.",
-		)
-	}
-
 	if diags.HasError() {
 		return nil, diags
+	}
+
+	if resource == nil {
+		if warnIfNotFound {
+			diags.AddWarning(
+				"Invalid resource",
+				"Cannot manage OpenID scopes as the OpenID resource could not be found.",
+			)
+		} else {
+			diags.AddError(
+				"Invalid resource",
+				"Cannot manage OpenID scopes as the OpenID resource could not be found.",
+			)
+		}
 	}
 
 	p.ResourceId = framework.StringOkToTF(resource.GetIdOk())

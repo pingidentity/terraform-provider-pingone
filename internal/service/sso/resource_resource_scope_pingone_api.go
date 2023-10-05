@@ -159,7 +159,7 @@ func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client)
+	resource, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -231,9 +231,15 @@ func (r *ResourceScopePingOneAPIResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client)
+	resource, d := data.getResource(ctx, r.Client, true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if resource == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -281,7 +287,7 @@ func (r *ResourceScopePingOneAPIResource) Update(ctx context.Context, req resour
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client)
+	resource, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -335,9 +341,13 @@ func (r *ResourceScopePingOneAPIResource) Delete(ctx context.Context, req resour
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client)
+	resource, d := data.getResource(ctx, r.Client, true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if resource == nil {
 		return
 	}
 
@@ -418,24 +428,30 @@ func (r *ResourceScopePingOneAPIResource) ImportState(ctx context.Context, req r
 	}
 }
 
-func (p *ResourceScopePingOneAPIResourceModel) getResource(ctx context.Context, apiClient *management.APIClient) (*management.Resource, diag.Diagnostics) {
+func (p *ResourceScopePingOneAPIResourceModel) getResource(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var d diag.Diagnostics
 
-	resource, d := fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), "PingOne API")
-
+	resource, d := fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), "PingOne API", warnIfNotFound)
 	diags.Append(d...)
-
-	if resource == nil {
-		diags.AddError(
-			"Invalid resource",
-			"Cannot manage PingOne API scopes as the PingOne API resource could not be found.",
-		)
-	}
 
 	if diags.HasError() {
 		return nil, diags
+	}
+
+	if resource == nil {
+		if warnIfNotFound {
+			diags.AddWarning(
+				"Invalid resource",
+				"Cannot manage PingOne API scopes as the PingOne API resource could not be found.",
+			)
+		} else {
+			diags.AddError(
+				"Invalid resource",
+				"Cannot manage PingOne API scopes as the PingOne API resource could not be found.",
+			)
+		}
 	}
 
 	p.ResourceId = framework.StringOkToTF(resource.GetIdOk())

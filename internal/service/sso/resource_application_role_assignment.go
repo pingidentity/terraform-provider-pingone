@@ -121,7 +121,7 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 	applicationRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
 	applicationRoleAssignment := *management.NewRoleAssignment(applicationRoleAssignmentRole, applicationRoleAssignmentScope) // ApplicationRoleAssignment |  (optional)
 
-	applicationOk, diags := checkApplicationTypeForRoleAssignment(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string))
+	applicationOk, diags := checkApplicationTypeForRoleAssignment(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string), false)
 	if diags.HasError() {
 		return diags
 	}
@@ -174,13 +174,13 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 
 	var diags diag.Diagnostics
 
-	applicationOk, diags := checkApplicationTypeForRoleAssignment(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string))
+	applicationOk, diags := checkApplicationTypeForRoleAssignment(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string), true)
 	if diags.HasError() {
 		return diags
 	}
 	if !applicationOk {
 		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
+			Severity: diag.Warning,
 			Summary:  "Invalid parameter value - Unmappable application type",
 			Detail:   fmt.Sprintf("The application ID provided (%s) relates to an application that is neither `OPENID_CONNECT` or `SAML` type.  Roles cannot be mapped to this application.", d.Get("application_id").(string)),
 		})
@@ -297,8 +297,13 @@ func resourcePingOneApplicationRoleAssignmentImport(ctx context.Context, d *sche
 	return []*schema.ResourceData{d}, nil
 }
 
-func checkApplicationTypeForRoleAssignment(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string) (bool, diag.Diagnostics) {
+func checkApplicationTypeForRoleAssignment(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string, warnIfNotFound bool) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	errorFunction := sdk.DefaultCustomError
+	if warnIfNotFound {
+		errorFunction = sdk.CustomErrorResourceNotFoundWarning
+	}
 
 	resp, d := sdk.ParseResponse(
 		ctx,
@@ -307,11 +312,15 @@ func checkApplicationTypeForRoleAssignment(ctx context.Context, apiClient *manag
 			return apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
 		},
 		"ReadOneApplication",
-		sdk.DefaultCustomError,
+		errorFunction,
 		sdk.DefaultCreateReadRetryable,
 	)
 	diags = append(diags, d...)
 	if diags.HasError() {
+		return false, diags
+	}
+
+	if resp == nil {
 		return false, diags
 	}
 

@@ -214,14 +214,14 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 		return
 	}
 
-	resource, resourceScopes, d := plan.getResource(ctx, r.Client)
+	resource, resourceScopes, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Get Application
-	application, d := plan.getApplication(ctx, r.Client)
+	application, d := plan.getApplication(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -293,7 +293,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 	}
 
 	// Get the resource response
-	resourceResponse, d := fetchResourceFromID(ctx, r.Client, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId())
+	resourceResponse, d := fetchResourceFromID(ctx, r.Client, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -359,7 +359,7 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 	}
 
 	// Get the resource response
-	resourceResponse, d := fetchResourceFromID(ctx, r.Client, data.EnvironmentId.ValueString(), grantResponse.Resource.GetId())
+	resourceResponse, d := fetchResourceFromID(ctx, r.Client, data.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -398,14 +398,14 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		return
 	}
 
-	resource, resourceScopes, d := plan.getResource(ctx, r.Client)
+	resource, resourceScopes, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Get Application
-	application, d := plan.getApplication(ctx, r.Client)
+	application, d := plan.getApplication(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -462,7 +462,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 	}
 
 	// Get the resource response
-	resourceResponse, d := fetchResourceFromID(ctx, r.Client, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId())
+	resourceResponse, d := fetchResourceFromID(ctx, r.Client, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -561,18 +561,18 @@ func (r *ApplicationResourceGrantResource) ImportState(ctx context.Context, req 
 	}
 }
 
-func (p *ApplicationResourceGrantResourceModel) getResource(ctx context.Context, apiClient *management.APIClient) (*management.Resource, []management.ResourceScope, diag.Diagnostics) {
+func (p *ApplicationResourceGrantResourceModel) getResource(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, []management.ResourceScope, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var d diag.Diagnostics
 
 	var resource *management.Resource
 	if !p.ResourceId.IsNull() && !p.ResourceId.IsUnknown() {
-		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString())
+		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString(), warnIfNotFound)
 	}
 
 	if !p.ResourceName.IsNull() && !p.ResourceName.IsUnknown() {
-		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString())
+		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString(), warnIfNotFound)
 	}
 
 	resourceScopes := make([]management.ResourceScope, 0)
@@ -621,8 +621,13 @@ func (p *ApplicationResourceGrantResourceModel) getResource(ctx context.Context,
 	return resource, resourceScopes, diags
 }
 
-func (p *ApplicationResourceGrantResourceModel) getApplication(ctx context.Context, apiClient *management.APIClient) (*management.ReadOneApplication200Response, diag.Diagnostics) {
+func (p *ApplicationResourceGrantResourceModel) getApplication(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.ReadOneApplication200Response, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	errorFunction := framework.DefaultCustomError
+	if warnIfNotFound {
+		errorFunction = framework.CustomErrorResourceNotFoundWarning
+	}
 
 	var application *management.ReadOneApplication200Response
 	diags.Append(framework.ParseResponse(
@@ -632,7 +637,7 @@ func (p *ApplicationResourceGrantResourceModel) getApplication(ctx context.Conte
 			return apiClient.ApplicationsApi.ReadOneApplication(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
 		},
 		"ReadOneApplication",
-		framework.DefaultCustomError,
+		errorFunction,
 		sdk.DefaultCreateReadRetryable,
 		&application,
 	)...)

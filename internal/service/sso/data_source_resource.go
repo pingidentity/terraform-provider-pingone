@@ -201,26 +201,24 @@ func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if !data.Name.IsNull() {
 
 		var d diag.Diagnostics
-		resource, d = fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), data.Name.ValueString())
+		resource, d = fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), data.Name.ValueString(), false)
 		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
 
 	} else if !data.ResourceId.IsNull() {
 
 		var d diag.Diagnostics
-		resource, d = fetchResourceFromID(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceId.ValueString())
+		resource, d = fetchResourceFromID(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), false)
 		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
 
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
 			"Cannot find the requested resource. resource_id or name must be set.",
 		)
+		return
+	}
+
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -301,8 +299,14 @@ func (p *ResourceDataSourceModel) toState(apiObject *management.Resource, apiObj
 	return diags
 }
 
-func fetchResourceFromID(ctx context.Context, apiClient *management.APIClient, environmentId, resourceId string) (*management.Resource, diag.Diagnostics) {
+func fetchResourceFromID(ctx context.Context, apiClient *management.APIClient, environmentId, resourceId string, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	errorFunction := framework.DefaultCustomError
+
+	if warnIfNotFound {
+		errorFunction = framework.CustomErrorResourceNotFoundWarning
+	}
 
 	var resource *management.Resource
 	diags.Append(framework.ParseResponse(
@@ -312,7 +316,7 @@ func fetchResourceFromID(ctx context.Context, apiClient *management.APIClient, e
 			return apiClient.ResourcesApi.ReadOneResource(ctx, environmentId, resourceId).Execute()
 		},
 		"ReadOneResource",
-		framework.DefaultCustomError,
+		errorFunction,
 		sdk.DefaultCreateReadRetryable,
 		&resource,
 	)...)
@@ -323,7 +327,7 @@ func fetchResourceFromID(ctx context.Context, apiClient *management.APIClient, e
 	return resource, diags
 }
 
-func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient, environmentId string, resourceName string) (*management.Resource, diag.Diagnostics) {
+func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient, environmentId string, resourceName string, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource management.Resource
@@ -358,10 +362,17 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 		}
 
 		if !found {
-			diags.AddError(
-				"Cannot find resource from name",
-				fmt.Sprintf("The resource %s for environment %s cannot be found", resourceName, environmentId),
-			)
+			if warnIfNotFound {
+				diags.AddWarning(
+					"Cannot find resource from name",
+					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceName, environmentId),
+				)
+			} else {
+				diags.AddError(
+					"Cannot find resource from name",
+					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceName, environmentId),
+				)
+			}
 			return nil, diags
 		}
 

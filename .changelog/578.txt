@@ -1,0 +1,35 @@
+```release-note:bug
+`resource/pingone_system_application`: Fixed blocking error on plan when the parent environment is removed outside of Terraform.
+```
+
+```release-note:bug
+`resource/pingone_application_role_assignment`: Fixed blocking error on plan when the parent application is removed outside of Terraform.
+```
+
+```release-note:bug
+`resource/pingone_resource_attribute`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform.
+```
+
+```release-note:bug
+`resource/pingone_resource_attribute`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform.
+```
+
+```release-note:bug
+`resource/pingone_resource_scope_openid`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform.
+```
+
+```release-note:bug
+`resource/pingone_resource_scope_openid`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform.
+```
+
+```release-note:bug
+`resource/pingone_resource_scope_pingone_api`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform.
+```
+
+```release-note:bug
+`resource/pingone_resource_scope_pingone_api`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform.
+```
+
+```release-note:bug
+`resource/pingone_resource_scope`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform.
+```

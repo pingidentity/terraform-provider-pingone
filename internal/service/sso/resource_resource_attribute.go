@@ -259,7 +259,7 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	resourceResponse, d := plan.getResource(ctx, r.Client)
+	resourceResponse, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -335,9 +335,15 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	resourceResponse, d := data.getResource(ctx, r.Client)
+	resourceResponse, d := data.getResource(ctx, r.Client, true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if resourceResponse == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -385,7 +391,7 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	resourceResponse, d := plan.getResource(ctx, r.Client)
+	resourceResponse, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -447,9 +453,13 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client)
+	resource, d := data.getResource(ctx, r.Client, true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if resource == nil {
 		return
 	}
 
@@ -577,21 +587,25 @@ func (r *ResourceAttributeResource) ImportState(ctx context.Context, req resourc
 	}
 }
 
-func (p *ResourceAttributeResourceModel) getResource(ctx context.Context, apiClient *management.APIClient) (*management.Resource, diag.Diagnostics) {
+func (p *ResourceAttributeResourceModel) getResource(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource *management.Resource
 	var d diag.Diagnostics
 	if !p.ResourceId.IsNull() && !p.ResourceId.IsUnknown() {
-		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString())
+		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString(), warnIfNotFound)
 	}
 
 	if !p.ResourceName.IsNull() && !p.ResourceName.IsUnknown() {
-		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString())
+		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString(), warnIfNotFound)
 	}
 
 	diags.Append(d...)
 	if diags.HasError() {
+		return nil, diags
+	}
+
+	if resource == nil {
 		return nil, diags
 	}
 

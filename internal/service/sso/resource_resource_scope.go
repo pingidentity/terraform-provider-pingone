@@ -128,7 +128,7 @@ func (r *ResourceScopeResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client)
+	resource, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -184,9 +184,15 @@ func (r *ResourceScopeResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client)
+	resource, d := data.getResource(ctx, r.Client, true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if resource == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -240,7 +246,7 @@ func (r *ResourceScopeResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client)
+	resource, d := plan.getResource(ctx, r.Client, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -353,24 +359,31 @@ func (r *ResourceScopeResource) ImportState(ctx context.Context, req resource.Im
 	}
 }
 
-func (p *ResourceScopeResourceModel) getResource(ctx context.Context, apiClient *management.APIClient) (*management.Resource, diag.Diagnostics) {
+func (p *ResourceScopeResourceModel) getResource(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var d diag.Diagnostics
 
-	resource, d := fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString())
-
+	resource, d := fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString(), warnIfNotFound)
 	diags.Append(d...)
-
-	if resource == nil {
-		diags.AddError(
-			"Invalid resource",
-			"Cannot manage resource scopes as the resource could not be found.",
-		)
-	}
-
 	if diags.HasError() {
 		return nil, diags
+	}
+
+	if resource == nil {
+		if warnIfNotFound {
+			diags.AddWarning(
+				"Invalid resource",
+				"Cannot manage resource scopes as the resource could not be found.",
+			)
+			return nil, diags
+		} else {
+			diags.AddError(
+				"Invalid resource",
+				"Cannot manage resource scopes as the resource could not be found.",
+			)
+			return nil, diags
+		}
 	}
 
 	return resource, diags

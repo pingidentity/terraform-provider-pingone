@@ -336,11 +336,17 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 			return r.Client.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
 		},
 		"ReadOneApplication",
-		framework.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -454,7 +460,7 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 			return r.Client.ApplicationsApi.UpdateApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
 		},
 		"UpdateApplication",
-		framework.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
