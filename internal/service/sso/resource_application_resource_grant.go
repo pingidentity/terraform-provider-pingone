@@ -607,6 +607,11 @@ func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx contex
 		resourceScopes, d = fetchResourceScopesFromNames(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), scopeNames)
 	}
 
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, nil, diags
+	}
+
 	if len(resourceScopes) == 0 {
 		diags.AddError(
 			"Invalid scopes",
