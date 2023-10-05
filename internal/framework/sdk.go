@@ -24,7 +24,7 @@ var (
 
 		// Deleted outside of TF
 		if error.GetCode() == "NOT_FOUND" {
-			diags.AddWarning("Resource not found", fmt.Sprintf("The requested resource object cannot be found.  Error returned: %s.", error.GetMessage()))
+			diags.AddWarning("Requested resource not found", fmt.Sprintf("The requested resource configuration cannot be found in the PingOne service.  If the requested resource is managed by Terraform, it may have been removed outside of Terraform.\nAPI error: %s", error.GetMessage()))
 
 			return diags
 		}
