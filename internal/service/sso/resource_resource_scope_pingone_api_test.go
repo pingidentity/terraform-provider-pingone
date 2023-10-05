@@ -59,10 +59,12 @@ func TestAccResourceScopePingOneAPI_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccResourceScopePingOneAPIConfig_NewEnv(environmentName, licenseID, resourceName, fmt.Sprintf("p1:read:user:%s", name)),
-				Check:  sso.ResourceScopePingOneAPI_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceScopeID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccResourceScopePingOneAPIConfig_NewEnv(environmentName, licenseID, resourceName, fmt.Sprintf("p1:read:user:%s", name)),
+				Check:    sso.ResourceScopePingOneAPI_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceScopeID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

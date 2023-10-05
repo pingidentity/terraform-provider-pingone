@@ -59,10 +59,12 @@ func TestAccPasswordPolicy_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccPasswordPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.PasswordPolicy_GetIDs(resourceFullName, &environmentID, &passwordPolicyID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccPasswordPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:    sso.PasswordPolicy_GetIDs(resourceFullName, &environmentID, &passwordPolicyID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

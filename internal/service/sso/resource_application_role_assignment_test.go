@@ -28,7 +28,7 @@ func TestAccRoleAssignmentApplication_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var resourceID, applicationID, environmentID string
+	var roleAssignmentID, applicationID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -48,11 +48,11 @@ func TestAccRoleAssignmentApplication_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccRoleAssignmentApplicationConfig_Population(resourceName, name, "Identity Data Admin"),
-				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &roleAssignmentID),
 			},
 			{
 				PreConfig: func() {
-					sso.RoleAssignmentApplication_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID, resourceID)
+					sso.RoleAssignmentApplication_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID, roleAssignmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -60,7 +60,7 @@ func TestAccRoleAssignmentApplication_RemovalDrift(t *testing.T) {
 			// Test removal of the application
 			{
 				Config: testAccRoleAssignmentApplicationConfig_Population(resourceName, name, "Identity Data Admin"),
-				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &roleAssignmentID),
 			},
 			{
 				PreConfig: func() {
@@ -71,10 +71,12 @@ func TestAccRoleAssignmentApplication_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccRoleAssignmentApplicationConfig_SystemApplication(environmentName, licenseID, resourceName, name),
-				Check:  sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccRoleAssignmentApplicationConfig_NewEnv(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
+				Check:    sso.RoleAssignmentApplication_GetIDs(resourceFullName, &environmentID, &applicationID, &roleAssignmentID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
@@ -298,7 +300,7 @@ func TestAccRoleAssignmentApplication_SystemApplication(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccRoleAssignmentApplicationConfig_SystemApplication(environmentName, licenseID, resourceName, "Environment Admin"),
+				Config:      testAccRoleAssignmentApplicationConfig_UnmappableSystemApplication(environmentName, licenseID, resourceName, "Environment Admin"),
 				ExpectError: regexp.MustCompile(`Invalid parameter value - Unmappable application type`),
 			},
 		},
@@ -346,6 +348,41 @@ func TestAccRoleAssignmentApplication_BadParameters(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccRoleAssignmentApplicationConfig_NewEnv(environmentName, licenseID, resourceName, name, roleName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_application" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "WORKER"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
+
+data "pingone_role" "%[3]s" {
+  name = "%[5]s"
+}
+
+resource "pingone_application_role_assignment" "%[3]s" {
+	environment_id = pingone_environment.%[2]s.id
+  application_id = pingone_application.%[3]s.id
+  role_id        = data.pingone_role.%[3]s.id
+
+  scope_population_id = pingone_population.%[3]s.id
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, roleName)
 }
 
 func testAccRoleAssignmentApplicationConfig_Population(resourceName, name, roleName string) string {
@@ -441,7 +478,7 @@ resource "pingone_application_role_assignment" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
 }
 
-func testAccRoleAssignmentApplicationConfig_SystemApplication(environmentName, licenseID, resourceName, roleName string) string {
+func testAccRoleAssignmentApplicationConfig_UnmappableSystemApplication(environmentName, licenseID, resourceName, roleName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 

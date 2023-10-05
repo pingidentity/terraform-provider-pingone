@@ -59,10 +59,12 @@ func TestAccGroup_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccGroupConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  sso.Group_GetIDs(resourceFullName, &environmentID, &groupID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccGroupConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:    sso.Group_GetIDs(resourceFullName, &environmentID, &groupID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

@@ -21,7 +21,7 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s-3", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -49,7 +49,7 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
-				Check:  sso.SignOnPolicyAction_GetIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
+				Check:  sso.SignOnPolicyAction_GetIDs(fmt.Sprintf("%s-3", resourceFullName), &environmentID, &signOnPolicyID, &signOnPolicyActionID),
 			},
 			{
 				PreConfig: func() {
@@ -60,7 +60,7 @@ func TestAccSignOnPolicyAction_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the SOP
 			{
-				Config: testAccSignOnPolicyActionConfig_Multiple1(resourceName, name),
+				Config: testAccSignOnPolicyActionConfig_LoginFullNoExt(resourceName, name),
 				Check:  sso.SignOnPolicyAction_GetIDs(resourceFullName, &environmentID, &signOnPolicyID, &signOnPolicyActionID),
 			},
 			{
@@ -1705,12 +1705,6 @@ func testAccSignOnPolicyActionConfig_NewEnv(environmentName, licenseID, resource
 
 	return fmt.Sprintf(`
 		%[1]s
-
-resource "pingone_population" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-
-  name = "%[4]s"
-}
 
 resource "pingone_sign_on_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
