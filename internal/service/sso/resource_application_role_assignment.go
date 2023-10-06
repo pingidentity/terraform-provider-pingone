@@ -132,6 +132,8 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 			Summary:  "Invalid parameter value - Application not found",
 			Detail:   fmt.Sprintf("The application ID provided (%s) does not exist in the environment.", d.Get("application_id").(string)),
 		})
+
+		return diags
 	}
 
 	if !checkApplicationTypeForRoleAssignment(*application) {
