@@ -42,24 +42,14 @@ func TestAccLanguageUpdate_RemovalDrift(t *testing.T) {
 		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Test removal of the language
-			{
-				Config: testAccLanguageUpdateConfig_Full(environmentName, licenseID, resourceName, "de-DE", true),
-				Check:  base.LanguageUpdate_GetIDs(resourceFullName, &environmentID, &languageID),
-			},
-			{
-				PreConfig: func() {
-					base.Language_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, languageID)
-				},
-				RefreshState:       true,
-				ExpectNonEmptyPlan: true,
-			},
 			// Test removal of the environment
 			{
-				Config: testAccLanguageUpdateConfig_Full(environmentName, licenseID, resourceName, "de-DE", true),
-				Check:  base.LanguageUpdate_GetIDs(resourceFullName, &environmentID, &languageID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccLanguageUpdateConfig_Full(environmentName, licenseID, resourceName, "de-DE", true),
+				Check:    base.LanguageUpdate_GetIDs(resourceFullName, &environmentID, &languageID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

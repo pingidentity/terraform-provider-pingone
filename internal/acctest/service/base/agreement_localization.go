@@ -74,7 +74,23 @@ func AgreementLocalization_RemovalDrift_PreConfig(ctx context.Context, apiClient
 		t.Fatalf("One of environment ID, agreement ID or agreement localization ID cannot be determined. Environment ID: %s, Agreement ID: %s, Agreement Localization ID: %s", environmentID, agreementID, agreementLocalizationID)
 	}
 
-	_, err := apiClient.AgreementLanguagesResourcesApi.DeleteAgreementLanguage(ctx, environmentID, agreementID, agreementLocalizationID).Execute()
+	agreementLanguage, r, err := apiClient.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, environmentID, agreementID, agreementLocalizationID).Execute()
+	if err != nil || r.StatusCode != 200 {
+		t.Fatalf("Failed to read agreement language to delete: status code: %d, error: %v", r.StatusCode, err)
+	}
+
+	if agreementLanguage == nil {
+		t.Fatalf("Agreement language not found.  Cannot disable before delete")
+	}
+
+	agreementLanguage.SetEnabled(false)
+
+	_, r, err = apiClient.AgreementLanguagesResourcesApi.UpdateAgreementLanguage(ctx, environmentID, agreementID, agreementLocalizationID).AgreementLanguage(*agreementLanguage).Execute()
+	if err != nil || r.StatusCode != 200 {
+		t.Fatalf("Failed to disable agreement language prior to delete: status code: %d, error: %v", r.StatusCode, err)
+	}
+
+	_, err = apiClient.AgreementLanguagesResourcesApi.DeleteAgreementLanguage(ctx, environmentID, agreementID, agreementLocalizationID).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete agreement localisation: %v", err)
 	}

@@ -73,7 +73,23 @@ func Agreement_RemovalDrift_PreConfig(ctx context.Context, apiClient *management
 		t.Fatalf("One of environment ID or agreement ID cannot be determined. Environment ID: %s, Agreement ID: %s", environmentID, agreementID)
 	}
 
-	_, err := apiClient.AgreementsResourcesApi.DeleteAgreement(ctx, environmentID, agreementID).Execute()
+	agreement, r, err := apiClient.AgreementsResourcesApi.ReadOneAgreement(ctx, environmentID, agreementID).Execute()
+	if err != nil || r.StatusCode != 200 {
+		t.Fatalf("Failed to read agreement to delete: status code: %d, error: %v", r.StatusCode, err)
+	}
+
+	if agreement == nil {
+		t.Fatalf("Agreement not found.  Cannot disable before delete")
+	}
+
+	agreement.SetEnabled(false)
+
+	_, r, err = apiClient.AgreementsResourcesApi.UpdateAgreement(ctx, environmentID, agreementID).Agreement(*agreement).Execute()
+	if err != nil || r.StatusCode != 200 {
+		t.Fatalf("Failed to disable agreement prior to delete: status code: %d, error: %v", r.StatusCode, err)
+	}
+
+	_, err = apiClient.AgreementsResourcesApi.DeleteAgreement(ctx, environmentID, agreementID).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete agreement: %v", err)
 	}

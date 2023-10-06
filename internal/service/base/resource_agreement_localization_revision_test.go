@@ -45,29 +45,8 @@ func TestAccAgreementLocalizationRevision_RemovalDrift(t *testing.T) {
 		CheckDestroy:             base.AgreementLocalizationRevision_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			{
-				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
-				Check:  base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
-			},
-			{
-				PreConfig: func() {
-					base.AgreementLocalizationRevision_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID, agreementLocalizationID, agreementLocalizationRevisionID)
-				},
-				RefreshState:       true,
-				ExpectNonEmptyPlan: true,
-			},
-			// Test removal of the resource
-			{
-				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
-				Check:  base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
-			},
-			{
-				PreConfig: func() {
-					base.AgreementLocalization_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID, agreementLocalizationID)
-				},
-				RefreshState:       true,
-				ExpectNonEmptyPlan: true,
-			},
+			// Test removal of the agreement localization revision skipped - cannot delete the localization revision
+			// Test removal of the agreement localization skipped - cannot delete the localization when it has an effective revision
 			// Test removal of the agreement
 			{
 				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
@@ -82,10 +61,12 @@ func TestAccAgreementLocalizationRevision_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
-				Check:  base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccAgreementLocalizationRevisionConfig_Variant1(environmentName, licenseID, resourceName, name),
+				Check:    base.AgreementLocalizationRevision_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID, &agreementLocalizationRevisionID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

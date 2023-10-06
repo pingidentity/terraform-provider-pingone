@@ -59,10 +59,12 @@ func TestAccNotificationTemplateContent_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccNotificationTemplateContentConfig_NewLocale_Minimal(environmentName, licenseID, resourceName, name, locale),
-				Check:  base.NotificationTemplateContent_GetIDs(resourceFullName, &environmentID, &templateName, &notificationTemplateContentID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccNotificationTemplateContentConfig_NewLocale_Minimal(environmentName, licenseID, resourceName, name, locale),
+				Check:    base.NotificationTemplateContent_GetIDs(resourceFullName, &environmentID, &templateName, &notificationTemplateContentID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

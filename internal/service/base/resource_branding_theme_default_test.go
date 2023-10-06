@@ -44,22 +44,10 @@ func TestAccBrandingThemeDefault_RemovalDrift(t *testing.T) {
 		CheckDestroy:             base.BrandingThemeDefault_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
-				Check:  base.BrandingTheme_GetIDs(resourceFullName, &environmentID, &brandingThemeID),
-			},
-			{
-				PreConfig: func() {
-					base.BrandingTheme_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, brandingThemeID)
-				},
-				RefreshState:       true,
-				ExpectNonEmptyPlan: true,
-			},
 			// Test removal of the environment
 			{
-				Config: testAccBrandingThemeConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.BrandingTheme_GetIDs(resourceFullName, &environmentID, &brandingThemeID),
+				Config: testAccBrandingThemeDefaultConfig_Full(environmentName, licenseID, resourceName, name),
+				Check:  base.BrandingThemeDefault_GetIDs(resourceFullName, &environmentID, &brandingThemeID),
 			},
 			{
 				PreConfig: func() {

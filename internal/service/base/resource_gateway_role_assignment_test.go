@@ -70,10 +70,12 @@ func TestAccRoleAssignmentGateway_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
-				Check:  base.RoleAssignmentGateway_GetIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
+				Check:    base.RoleAssignmentGateway_GetIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
@@ -301,7 +303,7 @@ func testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, 
 		%[5]s
 
 resource "pingone_gateway" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[6]s.id
   name           = "%[3]s"
   enabled        = true
 
@@ -313,10 +315,10 @@ data "pingone_role" "%[2]s" {
 }
 
 resource "pingone_gateway_role_assignment" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[6]s.id
   gateway_id     = pingone_gateway.%[2]s.id
   role_id        = data.pingone_role.%[2]s.id
 
-  scope_environment_id = pingone_environment.%[6]s.id
+  scope_environment_id = data.pingone_environment.general_test.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName)
 }

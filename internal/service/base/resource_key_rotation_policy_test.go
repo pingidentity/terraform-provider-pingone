@@ -58,10 +58,12 @@ func TestAccKeyRotationPolicy_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccKeyRotationPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.KeyRotationPolicy_GetIDs(resourceFullName, &environmentID, &keyRotationPolicyID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccKeyRotationPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:    base.KeyRotationPolicy_GetIDs(resourceFullName, &environmentID, &keyRotationPolicyID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

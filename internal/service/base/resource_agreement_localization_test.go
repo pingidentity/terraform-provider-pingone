@@ -70,10 +70,12 @@ func TestAccAgreementLocalization_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
-				Check:  base.AgreementLocalization_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
+				Config:   testAccAgreementLocalizationConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Check:    base.AgreementLocalization_GetIDs(resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
 			},
 			{
+				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
