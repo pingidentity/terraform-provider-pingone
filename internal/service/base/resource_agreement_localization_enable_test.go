@@ -216,46 +216,46 @@ func testAccAgreementLocalizationEnableConfig_NewEnv(environmentName, licenseID,
 	return fmt.Sprintf(`
 	%[1]s
 
-	data "pingone_language" "%[3]s" {
-		environment_id = pingone_environment.%[2]s.id
-	  
-		locale = "%[4]s"
-	  }
-	  
-	  resource "pingone_language_update" "%[3]s" {
-		environment_id = pingone_environment.%[2]s.id
-	  
-		language_id = data.pingone_language.%[3]s.id
-		default     = false
-		enabled     = true
-	  }
-	  
-	  resource "pingone_agreement" "%[3]s" {
-		environment_id = pingone_environment.%[2]s.id
-	  
-		name        = "%[3]s"
-		description = "An agreement for general Terms and Conditions"
-	  }
-	  
-	  resource "pingone_agreement_localization" "%[3]s" {
-		environment_id = pingone_environment.%[2]s.id
-		agreement_id   = pingone_agreement.%[3]s.id
-		language_id    = pingone_language_update.%[3]s.id
-	  
-		display_name = "%[3]s"
-	  }
-	  
-	  resource "time_static" "%[3]s" {}
-	  
-	  resource "pingone_agreement_localization_revision" "%[3]s" {
-		environment_id            = pingone_environment.%[2]s.id
-		agreement_id              = pingone_agreement.%[3]s.id
-		agreement_localization_id = pingone_agreement_localization.%[3]s.id
-	  
-		content_type      = "text/html"
-		effective_at      = time_static.%[3]s.id
-		require_reconsent = true
-		text              = <<EOT
+data "pingone_language" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  locale = "%[4]s"
+}
+
+resource "pingone_language_update" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  language_id = data.pingone_language.%[3]s.id
+  default     = false
+  enabled     = true
+}
+
+resource "pingone_agreement" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name        = "%[3]s"
+  description = "An agreement for general Terms and Conditions"
+}
+
+resource "pingone_agreement_localization" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  agreement_id   = pingone_agreement.%[3]s.id
+  language_id    = pingone_language_update.%[3]s.id
+
+  display_name = "%[3]s"
+}
+
+resource "time_static" "%[3]s" {}
+
+resource "pingone_agreement_localization_revision" "%[3]s" {
+  environment_id            = pingone_environment.%[2]s.id
+  agreement_id              = pingone_agreement.%[3]s.id
+  agreement_localization_id = pingone_agreement_localization.%[3]s.id
+
+  content_type      = "text/html"
+  effective_at      = time_static.%[3]s.id
+  require_reconsent = true
+  text              = <<EOT
 			<h1>Conditions de service</h1>
 			
 			Veuillez accepter les termes et conditions.
@@ -268,19 +268,19 @@ func testAccAgreementLocalizationEnableConfig_NewEnv(environmentName, licenseID,
 			
 			Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 			EOT
-	  }
-	  
-	  resource "pingone_agreement_localization_enable" "%[3]s" {
-		environment_id            = pingone_environment.%[2]s.id
-		agreement_id              = pingone_agreement.%[3]s.id
-		agreement_localization_id = pingone_agreement_localization.%[3]s.id
-	  
-		enabled = true
-	  
-		depends_on = [
-		  pingone_agreement_localization_revision.%[3]s
-		]
-	  }
+}
+
+resource "pingone_agreement_localization_enable" "%[3]s" {
+  environment_id            = pingone_environment.%[2]s.id
+  agreement_id              = pingone_agreement.%[3]s.id
+  agreement_localization_id = pingone_agreement_localization.%[3]s.id
+
+  enabled = true
+
+  depends_on = [
+    pingone_agreement_localization_revision.%[3]s
+  ]
+}
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
