@@ -50,7 +50,7 @@ func TestAccAgreementLocalizationEnable_RemovalDrift(t *testing.T) {
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.AgreementLocalizationEnable_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
-		ExternalProviders:        agreementEnableExternalProviders,
+		ExternalProviders:        agreementLocalizationEnableExternalProviders,
 		Steps: []resource.TestStep{
 			// Test removal of the agreement localization skipped - cannot delete the localization when it has an effective revision
 			// Test removal of the agreement
@@ -117,7 +117,7 @@ func TestAccAgreementLocalizationEnable_Full(t *testing.T) {
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.AgreementLocalizationEnable_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
-		ExternalProviders:        agreementEnableExternalProviders,
+		ExternalProviders:        agreementLocalizationEnableExternalProviders,
 		Steps: []resource.TestStep{
 			// Enabled
 			{
@@ -184,7 +184,7 @@ func TestAccAgreementLocalizationEnable_BadParameters(t *testing.T) {
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.AgreementLocalizationEnable_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
-		ExternalProviders:        agreementEnableExternalProviders,
+		ExternalProviders:        agreementLocalizationEnableExternalProviders,
 		Steps: []resource.TestStep{
 			// Configure
 			{
