@@ -121,11 +121,20 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 	applicationRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
 	applicationRoleAssignment := *management.NewRoleAssignment(applicationRoleAssignmentRole, applicationRoleAssignmentScope) // ApplicationRoleAssignment |  (optional)
 
-	applicationOk, diags := checkApplicationTypeForRoleAssignment(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string), false)
+	application, diags := fetchApplication(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string), false)
 	if diags.HasError() {
 		return diags
 	}
-	if !applicationOk {
+
+	if application == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Invalid parameter value - Application not found",
+			Detail:   fmt.Sprintf("The application ID provided (%s) does not exist in the environment.", d.Get("application_id").(string)),
+		})
+	}
+
+	if !checkApplicationTypeForRoleAssignment(*application) {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "Invalid parameter value - Unmappable application type",
@@ -174,11 +183,24 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 
 	var diags diag.Diagnostics
 
-	applicationOk, diags := checkApplicationTypeForRoleAssignment(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string), true)
+	application, diags := fetchApplication(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string), true)
 	if diags.HasError() {
 		return diags
 	}
-	if !applicationOk {
+
+	if application == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Invalid parameter value - Application not found",
+			Detail:   fmt.Sprintf("The application ID provided (%s) does not exist in the environment.", d.Get("application_id").(string)),
+		})
+
+		d.SetId("")
+
+		return diags
+	}
+
+	if !checkApplicationTypeForRoleAssignment(*application) {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Warning,
 			Summary:  "Invalid parameter value - Unmappable application type",
@@ -297,7 +319,7 @@ func resourcePingOneApplicationRoleAssignmentImport(ctx context.Context, d *sche
 	return []*schema.ResourceData{d}, nil
 }
 
-func checkApplicationTypeForRoleAssignment(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string, warnIfNotFound bool) (bool, diag.Diagnostics) {
+func fetchApplication(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string, warnIfNotFound bool) (*management.ReadOneApplication200Response, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	errorFunction := sdk.DefaultCustomError
@@ -317,22 +339,26 @@ func checkApplicationTypeForRoleAssignment(ctx context.Context, apiClient *manag
 	)
 	diags = append(diags, d...)
 	if diags.HasError() {
-		return false, diags
+		return nil, diags
 	}
 
 	if resp == nil {
-		return false, diags
+		return nil, diags
 	}
 
 	respObject := resp.(*management.ReadOneApplication200Response)
 
-	if respObject.ApplicationOIDC != nil && respObject.ApplicationOIDC.GetId() != "" {
-		return true, diags
+	return respObject, diags
+}
+
+func checkApplicationTypeForRoleAssignment(application management.ReadOneApplication200Response) bool {
+	if application.ApplicationOIDC != nil && application.ApplicationOIDC.GetId() != "" {
+		return true
 	}
 
-	if respObject.ApplicationSAML != nil && respObject.ApplicationSAML.GetId() != "" {
-		return true, diags
+	if application.ApplicationSAML != nil && application.ApplicationSAML.GetId() != "" {
+		return true
 	}
 
-	return false, diags
+	return false
 }
