@@ -150,7 +150,8 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneSchema",
 			framework.DefaultCustomError,
@@ -206,7 +207,8 @@ func fetchSchemaFromName(ctx context.Context, apiClient *management.APIClient, e
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SchemasApi.ReadAllSchemas(ctx, environmentId).Execute()
+			fO, fR, fErr := apiClient.SchemasApi.ReadAllSchemas(ctx, environmentId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 		},
 		"ReadAllSchemas",
 		framework.DefaultCustomError,

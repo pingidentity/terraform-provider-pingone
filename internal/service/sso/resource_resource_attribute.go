@@ -298,7 +298,8 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceAttributesApi.CreateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId()).ResourceAttribute(*resourceAttribute).Execute()
+				fO, fR, fErr := r.Client.ResourceAttributesApi.CreateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId()).ResourceAttribute(*resourceAttribute).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateResourceAttribute",
 			framework.DefaultCustomError,
@@ -310,7 +311,8 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), resourceAttribute.GetId()).ResourceAttribute(*resourceAttribute).Execute()
+				fO, fR, fErr := r.Client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), resourceAttribute.GetId()).ResourceAttribute(*resourceAttribute).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceAttribute",
 			framework.DefaultCustomError,
@@ -373,7 +375,8 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ResourceAttributesApi.ReadOneResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ResourceAttributesApi.ReadOneResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneResourceAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -447,7 +450,8 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), plan.Id.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
+			fO, fR, fErr := r.Client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), plan.Id.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateResourceAttribute",
 		framework.DefaultCustomError,
@@ -560,7 +564,8 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceAttributesApi.UpdateResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceAttribute(*resourceMapping).Execute()
+				fO, fR, fErr := r.Client.ResourceAttributesApi.UpdateResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceAttribute(*resourceMapping).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceAttribute",
 			framework.DefaultCustomError,
@@ -573,8 +578,8 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.Client.ResourceAttributesApi.DeleteResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
-				return nil, r, err
+				fR, fErr := r.Client.ResourceAttributesApi.DeleteResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteResourceAttribute",
 			framework.CustomErrorResourceNotFoundWarning,

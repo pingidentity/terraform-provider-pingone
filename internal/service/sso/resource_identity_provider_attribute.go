@@ -218,7 +218,8 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.IdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
+				fO, fR, fErr := r.Client.IdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateIdentityProviderAttribute",
 			framework.DefaultCustomError,
@@ -230,7 +231,8 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), identityProviderAttribute.GetId()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
+				fO, fR, fErr := r.Client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), identityProviderAttribute.GetId()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateIdentityProviderAttribute",
 			framework.DefaultCustomError,
@@ -272,7 +274,8 @@ func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneIdentityProviderAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -330,7 +333,8 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*identityProviderAttributeMapping).Execute()
+			fO, fR, fErr := r.Client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*identityProviderAttributeMapping).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateIdentityProviderAttribute",
 		framework.DefaultCustomError,
@@ -395,7 +399,8 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).IdentityProviderAttribute(*idpMapping).Execute()
+				fO, fR, fErr := r.Client.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).IdentityProviderAttribute(*idpMapping).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateIdentityProviderAttribute",
 			framework.DefaultCustomError,
@@ -409,8 +414,8 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.Client.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
-				return nil, r, err
+				fR, fErr := r.Client.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteIdentityProviderAttribute",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -471,7 +476,8 @@ func (p *IdentityProviderAttributeResourceModel) getIdentityProviderType(ctx con
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
+			fO, fR, fErr := apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneIdentityProvider",
 		framework.DefaultCustomError,
@@ -547,7 +553,8 @@ func (p *IdentityProviderAttributeResourceModel) expand(ctx context.Context, api
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.IdentityProviderAttributesApi.ReadAllIdentityProviderAttributes(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
+				fO, fR, fErr := apiClient.IdentityProviderAttributesApi.ReadAllIdentityProviderAttributes(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllIdentityProviderAttributes",
 			framework.DefaultCustomError,

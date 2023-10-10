@@ -239,7 +239,8 @@ func fetchResourceScopeFromID(ctx context.Context, apiClient *management.APIClie
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, environmentID, resourceID, resourceScopeID).Execute()
+			fO, fR, fErr := apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, environmentID, resourceID, resourceScopeID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadOneResourceScope",
 		framework.DefaultCustomError,
@@ -297,7 +298,8 @@ func fetchResourceScopesFromIDOrNameSlice(ctx context.Context, apiClient *manage
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, environmentID, resourceID).Execute()
+			fO, fR, fErr := apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, environmentID, resourceID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadAllResourceScopes",
 		framework.DefaultCustomError,

@@ -59,12 +59,10 @@ func TestAccResourceScopeOpenID_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
-				Config:   testAccResourceScopeOpenIDConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:    sso.ResourceScopeOpenID_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
+				Config: testAccResourceScopeOpenIDConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.ResourceScopeOpenID_GetIDs(resourceFullName, &environmentID, &openidResourceID, &resourceID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

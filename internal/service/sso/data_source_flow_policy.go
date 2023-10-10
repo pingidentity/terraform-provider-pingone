@@ -173,7 +173,8 @@ func (r *FlowPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.FlowPoliciesApi.ReadOneFlowPolicy(ctx, data.EnvironmentId.ValueString(), data.FlowPolicyId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.FlowPoliciesApi.ReadOneFlowPolicy(ctx, data.EnvironmentId.ValueString(), data.FlowPolicyId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneFlowPolicy",
 		framework.DefaultCustomError,

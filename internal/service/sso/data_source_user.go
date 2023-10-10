@@ -671,7 +671,8 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			fO, fR, fErr := r.Client.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllUsers",
 		framework.DefaultCustomError,
@@ -691,7 +692,8 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), user.GetId()).Execute()
+				fO, fR, fErr := r.Client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), user.GetId()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadUserEnabled",
 			framework.DefaultCustomError,

@@ -150,7 +150,8 @@ func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *sche
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
+			fO, fR, fErr := apiClient.ApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateApplicationRoleAssignment",
 		func(error model.P1Error) diag.Diagnostics {
@@ -218,7 +219,8 @@ func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.ApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneApplicationRoleAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -276,8 +278,8 @@ func resourcePingOneApplicationRoleAssignmentDelete(ctx context.Context, d *sche
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.ApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.ApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteApplicationRoleAssignment",
 		sdk.DefaultCustomError,
@@ -333,7 +335,8 @@ func fetchApplication(ctx context.Context, apiClient *management.APIClient, envi
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		errorFunction,

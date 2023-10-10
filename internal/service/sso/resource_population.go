@@ -174,7 +174,8 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOnePopulation",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -221,7 +222,8 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
+			fO, fR, fErr := r.Client.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePopulation",
 		framework.DefaultCustomError,
@@ -261,8 +263,8 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.PopulationsApi.DeletePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.PopulationsApi.DeletePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeletePopulation",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -360,7 +362,8 @@ func PingOnePopulationCreate(ctx context.Context, apiClient *management.APIClien
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
+			fO, fR, fErr := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"CreatePopulation",
 		framework.DefaultCustomError,

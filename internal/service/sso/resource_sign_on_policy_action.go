@@ -50,7 +50,8 @@ func resourceSignOnPolicyActionCreate(ctx context.Context, d *schema.ResourceDat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			fO, fR, fErr := apiClient.SignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateSignOnPolicyAction",
 		customErrorSignOnPolicyActionCreateUpdate,
@@ -77,7 +78,8 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.SignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneSignOnPolicyAction",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -313,7 +315,8 @@ func resourceSignOnPolicyActionUpdate(ctx context.Context, d *schema.ResourceDat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			fO, fR, fErr := apiClient.SignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateSignOnPolicyAction",
 		customErrorSignOnPolicyActionCreateUpdate,
@@ -336,8 +339,8 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.SignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.SignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteSignOnPolicyAction",
 		func(error model.P1Error) diag.Diagnostics {

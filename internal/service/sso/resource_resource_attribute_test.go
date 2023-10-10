@@ -71,12 +71,10 @@ func TestAccResourceAttribute_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
-				Config:   testAccResourceAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:    sso.ResourceAttribute_GetIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
+				Config: testAccResourceAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.ResourceAttribute_GetIDs(resourceFullName, &environmentID, &customResourceID, &resourceAttributeID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

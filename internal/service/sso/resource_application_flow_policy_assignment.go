@@ -137,7 +137,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) Create(ctx context.Context, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ApplicationFlowPolicyAssignmentsApi.CreateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			fO, fR, fErr := r.Client.ApplicationFlowPolicyAssignmentsApi.CreateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateFlowPolicyAssignment",
 		framework.DefaultCustomError,
@@ -178,7 +179,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) Read(ctx context.Context, req 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ApplicationFlowPolicyAssignmentsApi.ReadOneFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ApplicationFlowPolicyAssignmentsApi.ReadOneFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneFlowPolicyAssignment",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -225,7 +227,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) Update(ctx context.Context, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ApplicationFlowPolicyAssignmentsApi.UpdateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			fO, fR, fErr := r.Client.ApplicationFlowPolicyAssignmentsApi.UpdateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateFlowPolicyAssignment",
 		framework.DefaultCustomError,
@@ -265,8 +268,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) Delete(ctx context.Context, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.ApplicationFlowPolicyAssignmentsApi.DeleteFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ApplicationFlowPolicyAssignmentsApi.DeleteFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteFlowPolicyAssignment",
 		framework.CustomErrorResourceNotFoundWarning,

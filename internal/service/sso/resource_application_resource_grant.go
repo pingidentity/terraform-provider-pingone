@@ -268,7 +268,8 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationResourceGrant.GetId()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+				fO, fR, fErr := r.Client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationResourceGrant.GetId()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateApplicationGrant-Create",
 			framework.DefaultCustomError,
@@ -280,7 +281,8 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+				fO, fR, fErr := r.Client.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateApplicationGrant-Create",
 			framework.DefaultCustomError,
@@ -341,7 +343,8 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplicationGrant",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -450,7 +453,8 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+			fO, fR, fErr := r.Client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplicationGrant",
 		framework.DefaultCustomError,
@@ -509,8 +513,8 @@ func (r *ApplicationResourceGrantResource) Delete(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.ApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteApplicationGrant",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -639,7 +643,8 @@ func (p *ApplicationResourceGrantResourceModel) getApplication(ctx context.Conte
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.ReadOneApplication(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		errorFunction,
@@ -661,7 +666,8 @@ func (p *ApplicationResourceGrantResourceModel) getResourceGrant(ctx context.Con
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationResourceGrantsApi.ReadAllApplicationGrants(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+			fO, fR, fErr := apiClient.ApplicationResourceGrantsApi.ReadAllApplicationGrants(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllApplicationGrants",
 		framework.DefaultCustomError,

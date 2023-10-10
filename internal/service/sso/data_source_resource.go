@@ -227,7 +227,8 @@ func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceClientSecretApi.ReadResourceSecret(ctx, data.EnvironmentId.ValueString(), resource.GetId()).Execute()
+				fO, fR, fErr := r.Client.ResourceClientSecretApi.ReadResourceSecret(ctx, data.EnvironmentId.ValueString(), resource.GetId()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadResourceSecret",
 			framework.CustomErrorResourceNotFoundWarning,

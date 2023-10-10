@@ -176,7 +176,8 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			fO, fR, fErr := r.Client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllPopulations",
 		framework.DefaultCustomError,
@@ -254,7 +255,8 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 				ctx,
 
 				func() (any, *http.Response, error) {
-					return apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+					fO, fR, fErr := apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 				},
 				"ReadAllPopulations-FetchDefaultPopulation",
 				framework.DefaultCustomError,

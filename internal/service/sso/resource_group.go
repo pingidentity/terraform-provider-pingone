@@ -170,7 +170,8 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.GroupsApi.CreateGroup(ctx, plan.EnvironmentId.ValueString()).Group(*group).Execute()
+			fO, fR, fErr := r.Client.GroupsApi.CreateGroup(ctx, plan.EnvironmentId.ValueString()).Group(*group).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateGroup",
 		framework.DefaultCustomError,
@@ -211,7 +212,8 @@ func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.GroupsApi.ReadOneGroup(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.GroupsApi.ReadOneGroup(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneGroup",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -258,7 +260,8 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.GroupsApi.UpdateGroup(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Group(*group).Execute()
+			fO, fR, fErr := r.Client.GroupsApi.UpdateGroup(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Group(*group).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateGroup",
 		framework.DefaultCustomError,
@@ -298,8 +301,8 @@ func (r *GroupResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.GroupsApi.DeleteGroup(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.GroupsApi.DeleteGroup(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteGroup",
 		framework.CustomErrorResourceNotFoundWarning,

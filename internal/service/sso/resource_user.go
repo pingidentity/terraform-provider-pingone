@@ -33,7 +33,7 @@ import (
 
 // Types
 type UserResource struct {
-	client    *management.APIClient
+	Client    *management.APIClient
 	mfaClient *mfa.APIClient
 }
 
@@ -1014,14 +1014,14 @@ func (r *UserResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	r.client = preparedClient
+	r.Client = preparedClient
 	r.mfaClient = preparedMFAClient
 }
 
 func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state UserResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1048,7 +1048,8 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.CreateUser(ctx, plan.EnvironmentId.ValueString()).ContentType("application/vnd.pingidentity.user.import+json").User(*user).Execute()
+			fO, fR, fErr := r.Client.UsersApi.CreateUser(ctx, plan.EnvironmentId.ValueString()).ContentType("application/vnd.pingidentity.user.import+json").User(*user).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateUser",
 		framework.DefaultCustomError,
@@ -1065,7 +1066,8 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).UserEnabled(*userEnabled).Execute()
+			fO, fR, fErr := r.Client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).UserEnabled(*userEnabled).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateUserEnabled",
 		framework.DefaultCustomError,
@@ -1082,7 +1084,8 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.mfaClient.EnableUsersMFAApi.UpdateUserMFAEnabled(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).UserMFAEnabled(*userMFAEnabled).Execute()
+			fO, fR, fErr := r.mfaClient.EnableUsersMFAApi.UpdateUserMFAEnabled(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).UserMFAEnabled(*userMFAEnabled).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateUserMFAEnabled",
 		framework.DefaultCustomError,
@@ -1099,7 +1102,8 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.ReadUser(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).Execute()
+			fO, fR, fErr := r.Client.UsersApi.ReadUser(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadUser",
 		framework.DefaultCustomError,
@@ -1121,7 +1125,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *UserResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1140,7 +1144,8 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.ReadUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.UsersApi.ReadUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadUser",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1162,7 +1167,8 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadUserEnabled",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1184,7 +1190,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state UserResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1209,7 +1215,8 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.UpdateUserPut(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).User(*user).Execute()
+			fO, fR, fErr := r.Client.UsersApi.UpdateUserPut(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).User(*user).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateUserPut",
 		framework.DefaultCustomError,
@@ -1225,7 +1232,8 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserEnabled(*userEnabled).Execute()
+			fO, fR, fErr := r.Client.EnableUsersApi.UpdateUserEnabled(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserEnabled(*userEnabled).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateUserEnabled",
 		framework.DefaultCustomError,
@@ -1241,7 +1249,8 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.mfaClient.EnableUsersMFAApi.UpdateUserMFAEnabled(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserMFAEnabled(*userMFAEnabled).Execute()
+			fO, fR, fErr := r.mfaClient.EnableUsersMFAApi.UpdateUserMFAEnabled(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserMFAEnabled(*userMFAEnabled).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateUserMFAEnabled",
 		framework.DefaultCustomError,
@@ -1257,7 +1266,8 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.UsersApi.ReadUser(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.UsersApi.ReadUser(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadUser",
 		framework.DefaultCustomError,
@@ -1279,7 +1289,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *UserResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1297,8 +1307,8 @@ func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.UsersApi.DeleteUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.UsersApi.DeleteUser(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteUser",
 		framework.CustomErrorResourceNotFoundWarning,

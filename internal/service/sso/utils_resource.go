@@ -25,7 +25,8 @@ func fetchResourceFromID(ctx context.Context, apiClient *management.APIClient, e
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadOneResource(ctx, environmentId, resourceId).Execute()
+			fO, fR, fErr := apiClient.ResourcesApi.ReadOneResource(ctx, environmentId, resourceId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 		},
 		"ReadOneResource",
 		errorFunction,
@@ -44,20 +45,41 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 
 	var resource management.Resource
 
+	errorFunction := framework.DefaultCustomError
+	if warnIfNotFound {
+		errorFunction = framework.CustomErrorResourceNotFoundWarning
+	}
+
 	// Run the API call
 	var entityArray *management.EntityArray
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadAllResources(ctx, environmentId).Execute()
+			fO, fR, fErr := apiClient.ResourcesApi.ReadAllResources(ctx, environmentId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 		},
 		"ReadAllResources",
-		framework.DefaultCustomError,
+		errorFunction,
 		sdk.DefaultCreateReadRetryable,
 		&entityArray,
 	)...)
 	if diags.HasError() {
+		return nil, diags
+	}
+
+	if entityArray == nil {
+		if warnIfNotFound {
+			diags.AddWarning(
+				"Environment cannot be found",
+				fmt.Sprintf("The environment %s cannot be found when finding resource %s by name", environmentId, resourceName),
+			)
+		} else {
+			diags.AddError(
+				"Environment cannot be found",
+				fmt.Sprintf("The environment %s cannot be found when finding resource %s by name", environmentId, resourceName),
+			)
+		}
 		return nil, diags
 	}
 

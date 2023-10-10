@@ -130,7 +130,8 @@ func (r *GroupNestingResource) Create(ctx context.Context, req resource.CreateRe
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.GroupsApi.CreateGroupNesting(ctx, plan.EnvironmentId.ValueString(), plan.GroupId.ValueString()).GroupNesting(*group).Execute()
+			fO, fR, fErr := r.Client.GroupsApi.CreateGroupNesting(ctx, plan.EnvironmentId.ValueString(), plan.GroupId.ValueString()).GroupNesting(*group).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateGroupNesting",
 		framework.DefaultCustomError,
@@ -171,7 +172,8 @@ func (r *GroupNestingResource) Read(ctx context.Context, req resource.ReadReques
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.GroupsApi.ReadOneGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.GroupsApi.ReadOneGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneGroupNesting",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -217,8 +219,8 @@ func (r *GroupNestingResource) Delete(ctx context.Context, req resource.DeleteRe
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.GroupsApi.DeleteGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.GroupsApi.DeleteGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteGroupNesting",
 		framework.CustomErrorResourceNotFoundWarning,

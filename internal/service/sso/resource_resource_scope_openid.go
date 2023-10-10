@@ -179,7 +179,8 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
+				fO, fR, fErr := r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceScope-OpenID-Create",
 			framework.DefaultCustomError,
@@ -193,7 +194,8 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceScopesApi.CreateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId()).ResourceScope(*resourceScope).Execute()
+				fO, fR, fErr := r.Client.ResourceScopesApi.CreateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId()).ResourceScope(*resourceScope).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateResourceScope-OpenID-Create",
 			framework.DefaultCustomError,
@@ -248,7 +250,8 @@ func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.Rea
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ResourceScopesApi.ReadOneResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ResourceScopesApi.ReadOneResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneResourceScope-OpenID",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -305,7 +308,8 @@ func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.U
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), plan.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+			fO, fR, fErr := r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), plan.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateResourceScope-OpenID",
 		framework.DefaultCustomError,
@@ -364,7 +368,8 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceScopesApi.UpdateResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+				fO, fR, fErr := r.Client.ResourceScopesApi.UpdateResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceScope-OpenID-Delete",
 			framework.DefaultCustomError,
@@ -378,8 +383,8 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.Client.ResourceScopesApi.DeleteResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
-				return nil, r, err
+				fR, fErr := r.Client.ResourceScopesApi.DeleteResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteResourceScope-OpenID-Delete",
 			framework.CustomErrorResourceNotFoundWarning,

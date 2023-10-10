@@ -59,12 +59,10 @@ func TestAccPopulation_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
-				Config:   testAccPopulationConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:    sso.Population_GetIDs(resourceFullName, &environmentID, &populationID),
+				Config: testAccPopulationConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.Population_GetIDs(resourceFullName, &environmentID, &populationID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
