@@ -2355,8 +2355,6 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
