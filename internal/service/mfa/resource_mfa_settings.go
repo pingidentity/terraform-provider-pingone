@@ -168,7 +168,7 @@ func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta i
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadMFASettings",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
