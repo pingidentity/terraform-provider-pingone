@@ -33,3 +33,7 @@
 ```release-note:bug
 `resource/pingone_resource_scope`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform.
 ```
+
+```release-note:bug
+Fixed blocking error on plan on multiple resources when the parent PingOne environment is removed outside of Terraform.
+```
