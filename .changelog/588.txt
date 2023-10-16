@@ -1,0 +1,35 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.7 => v0.10.8
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.2.1 => v0.2.2
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.3.0 => v0.3.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.4.0 => v0.4.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.29.0 => v0.30.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.16.0 => v0.17.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.10.0 => v0.11.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.3.0 => v0.3.1
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework` v1.4.0 => v1.4.1
+```
