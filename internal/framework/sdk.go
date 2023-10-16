@@ -51,11 +51,11 @@ var (
 )
 
 func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, managementClient *management.APIClient, environmentID string, fO any, fR *http.Response, fErr error) (any, *http.Response, error) {
-	if fR.StatusCode == http.StatusUnauthorized || fR.StatusCode == http.StatusForbidden {
+	if fR.StatusCode == http.StatusUnauthorized || fR.StatusCode == http.StatusForbidden || fR.StatusCode == http.StatusBadRequest {
 		_, fER, fEErr := managementClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
 
 		if fER.StatusCode == http.StatusNotFound {
-			tflog.Warn(ctx, "API responded with 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
+			tflog.Warn(ctx, "API responded with 400, 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
 			return fO, fER, fEErr
 		}
 	}
