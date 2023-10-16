@@ -17,15 +17,11 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type DigitalWalletApplicationResource struct {
-	client     *credentials.APIClient
-	mgmtClient *management.APIClient
-}
+type DigitalWalletApplicationResource serviceClientType
 
 type DigitalWalletApplicationResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -115,35 +111,20 @@ func (r *DigitalWalletApplicationResource) Configure(ctx context.Context, req re
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	// management client is used to perform checks for the prerequisite native application
-	preparedMgmtClient, err := sso.PrepareClient(ctx, resourceConfig)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
-		)
-
-		return
-	}
-
-	r.mgmtClient = preparedMgmtClient
-	r.client = preparedClient
 }
 
 func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state DigitalWalletApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -169,7 +150,8 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.DigitalWalletAppsApi.CreateDigitalWalletApp(ctx, plan.EnvironmentId.ValueString()).DigitalWalletApplication(*digitalWalletApplication).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.CreateDigitalWalletApp(ctx, plan.EnvironmentId.ValueString()).DigitalWalletApplication(*digitalWalletApplication).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateDigitalWalletApplication",
 		framework.DefaultCustomError,
@@ -191,7 +173,7 @@ func (r *DigitalWalletApplicationResource) Create(ctx context.Context, req resou
 func (r *DigitalWalletApplicationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *DigitalWalletApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -210,7 +192,8 @@ func (r *DigitalWalletApplicationResource) Read(ctx context.Context, req resourc
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneDigitalWalletApplication",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -235,7 +218,7 @@ func (r *DigitalWalletApplicationResource) Read(ctx context.Context, req resourc
 func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state DigitalWalletApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -261,7 +244,8 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.DigitalWalletAppsApi.UpdateDigitalWalletApp(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).DigitalWalletApplication(*digitalWalletApplication).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.UpdateDigitalWalletApp(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).DigitalWalletApplication(*digitalWalletApplication).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateDigitalWalletApplication",
 		framework.DefaultCustomError,
@@ -283,7 +267,7 @@ func (r *DigitalWalletApplicationResource) Update(ctx context.Context, req resou
 func (r *DigitalWalletApplicationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *DigitalWalletApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -301,8 +285,8 @@ func (r *DigitalWalletApplicationResource) Delete(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.DigitalWalletAppsApi.DeleteDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.DeleteDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteDigitalWalletApplication",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -390,7 +374,8 @@ func confirmParentAppExistsAndIsNative(ctx context.Context, r *DigitalWalletAppl
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.mgmtClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentId, fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		framework.DefaultCustomError,

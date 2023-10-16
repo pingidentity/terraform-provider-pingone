@@ -245,7 +245,8 @@ func resourceNotificationTemplateContentCreate(ctx context.Context, d *schema.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.NotificationsTemplatesApi.CreateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string)).TemplateContent(*templateContent).Execute()
+			fO, fR, fErr := apiClient.NotificationsTemplatesApi.CreateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string)).TemplateContent(*templateContent).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateContent",
 		notificationTemplateCustomWriteError,
@@ -287,7 +288,8 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneContent",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -431,7 +433,8 @@ func resourceNotificationTemplateContentUpdate(ctx context.Context, d *schema.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.NotificationsTemplatesApi.UpdateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).TemplateContent(*templateContent).Execute()
+			fO, fR, fErr := apiClient.NotificationsTemplatesApi.UpdateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).TemplateContent(*templateContent).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateContent",
 		notificationTemplateCustomWriteError,
@@ -454,8 +457,8 @@ func resourceNotificationTemplateContentDelete(ctx context.Context, d *schema.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteContent",
 		sdk.CustomErrorResourceNotFoundWarning,

@@ -124,7 +124,8 @@ func resourceResourceCreate(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
+			fO, fR, fErr := apiClient.ResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateResource",
 		sdk.DefaultCustomError,
@@ -151,7 +152,8 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneResource",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -184,7 +186,8 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 				ctx,
 
 				func() (any, *http.Response, error) {
-					return apiClient.ResourceClientSecretApi.ReadResourceSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+					fO, fR, fErr := apiClient.ResourceClientSecretApi.ReadResourceSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 				},
 				"ReadResourceSecret",
 				sdk.CustomErrorResourceNotFoundWarning,
@@ -288,7 +291,8 @@ func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
+			fO, fR, fErr := apiClient.ResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateResource",
 		sdk.DefaultCustomError,
@@ -311,8 +315,8 @@ func resourceResourceDelete(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.ResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.ResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteResource",
 		sdk.CustomErrorResourceNotFoundWarning,

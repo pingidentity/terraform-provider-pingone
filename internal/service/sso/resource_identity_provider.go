@@ -462,7 +462,8 @@ func resourceIdentityProviderCreate(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.IdentityProvidersApi.CreateIdentityProvider(ctx, d.Get("environment_id").(string)).IdentityProvider(*idpRequest).Execute()
+			fO, fR, fErr := apiClient.IdentityProvidersApi.CreateIdentityProvider(ctx, d.Get("environment_id").(string)).IdentityProvider(*idpRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateIdentityProvider",
 		sdk.DefaultCustomError,
@@ -509,7 +510,8 @@ func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneIdentityProvider",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -763,7 +765,8 @@ func resourceIdentityProviderUpdate(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.IdentityProvidersApi.UpdateIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).IdentityProvider(*idpRequest).Execute()
+			fO, fR, fErr := apiClient.IdentityProvidersApi.UpdateIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).IdentityProvider(*idpRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateIdentityProvider",
 		sdk.DefaultCustomError,
@@ -786,8 +789,8 @@ func resourceIdentityProviderDelete(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.IdentityProvidersApi.DeleteIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.IdentityProvidersApi.DeleteIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteIdentityProvider",
 		sdk.CustomErrorResourceNotFoundWarning,

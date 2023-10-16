@@ -468,23 +468,20 @@ func (r *CredentialTypeResource) Configure(ctx context.Context, req resource.Con
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *CredentialTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CredentialTypeResourceModel
 
-	if r.Client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -512,7 +509,8 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.CredentialTypesApi.CreateCredentialType(ctx, plan.EnvironmentId.ValueString()).CredentialType(*credentialType).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.CreateCredentialType(ctx, plan.EnvironmentId.ValueString()).CredentialType(*credentialType).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateCredentialType",
 		framework.DefaultCustomError,
@@ -535,7 +533,7 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CredentialTypeResourceModel
 
-	if r.Client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -554,19 +552,20 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.CredentialTypesApi.ReadOneCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.ReadOneCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneCredentialType",
 		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
+		credentialTypeRetryConditions,
 		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Remove from state if resource is not found
-	if response == nil {
+	// Remove from state if resource is not found or soft deleted
+	if response == nil || response.DeletedAt != nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -579,7 +578,7 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 func (r *CredentialTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state CredentialTypeResourceModel
 
-	if r.Client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -605,7 +604,8 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.CredentialTypesApi.UpdateCredentialType(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CredentialType(*credentialType).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.UpdateCredentialType(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CredentialType(*credentialType).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateCredentialType",
 		framework.DefaultCustomError,
@@ -627,7 +627,7 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *CredentialTypeResourceModel
 
-	if r.Client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -645,8 +645,8 @@ func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.Delete
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.CredentialTypesApi.DeleteCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.DeleteCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteCredentialType",
 		framework.CustomErrorResourceNotFoundWarning,

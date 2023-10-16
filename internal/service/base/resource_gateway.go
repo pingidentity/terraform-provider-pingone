@@ -279,7 +279,8 @@ func resourceGatewayCreate(ctx context.Context, d *schema.ResourceData, meta int
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewaysApi.CreateGateway(ctx, d.Get("environment_id").(string)).CreateGatewayRequest(*gatewayRequest).Execute()
+			fO, fR, fErr := apiClient.GatewaysApi.CreateGateway(ctx, d.Get("environment_id").(string)).CreateGatewayRequest(*gatewayRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateGateway",
 		gatewayWriteErrors,
@@ -312,7 +313,8 @@ func resourceGatewayRead(ctx context.Context, d *schema.ResourceData, meta inter
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewaysApi.ReadOneGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.GatewaysApi.ReadOneGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneGateway",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -442,7 +444,8 @@ func resourceGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewaysApi.UpdateGateway(ctx, d.Get("environment_id").(string), d.Id()).CreateGatewayRequest(*gatewayRequest).Execute()
+			fO, fR, fErr := apiClient.GatewaysApi.UpdateGateway(ctx, d.Get("environment_id").(string), d.Id()).CreateGatewayRequest(*gatewayRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateGateway",
 		gatewayWriteErrors,
@@ -465,8 +468,8 @@ func resourceGatewayDelete(ctx context.Context, d *schema.ResourceData, meta int
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.GatewaysApi.DeleteGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.GatewaysApi.DeleteGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteGateway",
 		sdk.CustomErrorResourceNotFoundWarning,

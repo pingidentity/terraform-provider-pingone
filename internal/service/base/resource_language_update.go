@@ -92,7 +92,8 @@ func resourceLanguageUpdateRead(ctx context.Context, d *schema.ResourceData, met
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage-Read",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -135,7 +136,8 @@ func resourceLanguageUpdateUpdate(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage-Update",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -147,7 +149,7 @@ func resourceLanguageUpdateUpdate(ctx context.Context, d *schema.ResourceData, m
 
 	language := resp.(*management.Language)
 
-	diags = updateLanguageEnabledDefaultSequence(ctx, apiClient, d.Get("environment_id").(string), d.Id(), *language, d.Get("enabled").(bool), d.Get("default").(bool))
+	diags = updateLanguageEnabledDefaultSequence(ctx, apiClient, d.Get("environment_id").(string), d.Id(), *language, d.Get("enabled").(bool), d.Get("default").(bool), false)
 	if diags.HasError() {
 		return diags
 	}
@@ -166,13 +168,18 @@ func resourceLanguageUpdateDelete(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage-Delete",
 		sdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
+		return diags
+	}
+
+	if resp == nil {
 		return diags
 	}
 
@@ -187,7 +194,7 @@ func resourceLanguageUpdateDelete(ctx context.Context, d *schema.ResourceData, m
 	if language.GetDefault() {
 
 		// Need to reset default back to en here
-		diags = resetDefaultLanguage(ctx, apiClient, d.Get("environment_id").(string))
+		diags = resetDefaultLanguage(ctx, apiClient, d.Get("environment_id").(string), true)
 		if diags.HasError() {
 			return diags
 		}
@@ -199,10 +206,11 @@ func resourceLanguageUpdateDelete(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.UpdateLanguage(ctx, d.Get("environment_id").(string), d.Id()).Language(*language).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.UpdateLanguage(ctx, d.Get("environment_id").(string), d.Id()).Language(*language).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateLanguage-Delete",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		nil,
 	)
 	if diags.HasError() {
@@ -238,7 +246,7 @@ func resourceLanguageUpdateImport(ctx context.Context, d *schema.ResourceData, m
 	return []*schema.ResourceData{d}, nil
 }
 
-func resetDefaultLanguage(ctx context.Context, apiClient *management.APIClient, environmentID string) diag.Diagnostics {
+func resetDefaultLanguage(ctx context.Context, apiClient *management.APIClient, environmentID string, warnOnNotFound bool) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	enLanguage, diags := findLanguageByLocale(ctx, apiClient, environmentID, "en")
@@ -246,7 +254,7 @@ func resetDefaultLanguage(ctx context.Context, apiClient *management.APIClient, 
 		return diags
 	}
 
-	diags = updateLanguageEnabledDefaultSequence(ctx, apiClient, environmentID, enLanguage.GetId(), *enLanguage, true, true)
+	diags = updateLanguageEnabledDefaultSequence(ctx, apiClient, environmentID, enLanguage.GetId(), *enLanguage, true, true, warnOnNotFound)
 	if diags.HasError() {
 		return diags
 	}
@@ -254,7 +262,7 @@ func resetDefaultLanguage(ctx context.Context, apiClient *management.APIClient, 
 	return diags
 }
 
-func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *management.APIClient, environmentID, languageID string, language management.Language, enabled, defaultValue bool) diag.Diagnostics {
+func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *management.APIClient, environmentID, languageID string, language management.Language, enabled, defaultValue bool, warnOnNotFound bool) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if !enabled && defaultValue {
@@ -268,7 +276,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 
 	if language.GetDefault() && !defaultValue {
 		// Need to reset default back to en here
-		diags = resetDefaultLanguage(ctx, apiClient, environmentID)
+		diags = resetDefaultLanguage(ctx, apiClient, environmentID, warnOnNotFound)
 		if diags.HasError() {
 			return diags
 		}
@@ -277,17 +285,28 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 	language.SetEnabled(enabled)
 	language.SetDefault(false)
 
-	_, diags = sdk.ParseResponse(
+	errorFunction := sdk.DefaultCustomError
+	if warnOnNotFound {
+		errorFunction = sdk.CustomErrorResourceNotFoundWarning
+	}
+
+	response, d := sdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"UpdateLanguage-UpdateSequence1",
-		sdk.DefaultCustomError,
+		errorFunction,
 		nil,
 	)
+	diags = append(diags, d...)
 	if diags.HasError() {
+		return diags
+	}
+
+	if response == nil {
 		return diags
 	}
 
@@ -299,10 +318,11 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
+				fO, fR, fErr := apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 			},
 			"UpdateLanguage-UpdateSequence2",
-			sdk.DefaultCustomError,
+			errorFunction,
 			nil,
 		)
 		if diags.HasError() {

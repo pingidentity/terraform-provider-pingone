@@ -90,23 +90,20 @@ func (r *BrandingThemeDefaultResource) Configure(ctx context.Context, req resour
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *BrandingThemeDefaultResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state brandingThemeDefaultResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -128,7 +125,8 @@ func (r *BrandingThemeDefaultResource) Create(ctx context.Context, req resource.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, plan.EnvironmentId.ValueString(), plan.BrandingThemeId.ValueString()).BrandingThemeDefault(*brandingThemeDefault).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, plan.EnvironmentId.ValueString(), plan.BrandingThemeId.ValueString()).BrandingThemeDefault(*brandingThemeDefault).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateBrandingThemeDefault",
 		framework.DefaultCustomError,
@@ -150,7 +148,7 @@ func (r *BrandingThemeDefaultResource) Create(ctx context.Context, req resource.
 func (r *BrandingThemeDefaultResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *brandingThemeDefaultResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -169,7 +167,8 @@ func (r *BrandingThemeDefaultResource) Read(ctx context.Context, req resource.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.BrandingThemesApi.ReadBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingThemesApi.ReadBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadBrandingThemeDefault",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -197,7 +196,7 @@ func (r *BrandingThemeDefaultResource) Update(ctx context.Context, req resource.
 func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *brandingThemeDefaultResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -210,7 +209,7 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 		return
 	}
 
-	bootstrapDefaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, r.Client, data.EnvironmentId.ValueString())
+	bootstrapDefaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -243,7 +242,8 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.BrandingThemesApi.CreateBrandingTheme(ctx, data.EnvironmentId.ValueString()).BrandingTheme(*defaultTheme).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.BrandingThemesApi.CreateBrandingTheme(ctx, data.EnvironmentId.ValueString()).BrandingTheme(*defaultTheme).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateBrandingTheme",
 			framework.DefaultCustomError,
@@ -260,7 +260,8 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), *bootstrapDefaultThemeId).BrandingThemeDefault(*brandingThemeDefault).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingThemesApi.UpdateBrandingThemeDefault(ctx, data.EnvironmentId.ValueString(), *bootstrapDefaultThemeId).BrandingThemeDefault(*brandingThemeDefault).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateBrandingThemeDefault",
 		framework.DefaultCustomError,
@@ -292,7 +293,7 @@ func (r *BrandingThemeDefaultResource) ImportState(ctx context.Context, req reso
 		return
 	}
 
-	defaultThemeId, d := r.fetchDefaultThemeId(ctx, r.Client, attributes["environment_id"])
+	defaultThemeId, d := r.fetchDefaultThemeId(ctx, r.Client.ManagementAPIClient, attributes["environment_id"])
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -327,7 +328,8 @@ func (r *BrandingThemeDefaultResource) fetchThemeId(ctx context.Context, apiClie
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.BrandingThemesApi.ReadBrandingThemes(ctx, environmentID).Execute()
+			fO, fR, fErr := apiClient.BrandingThemesApi.ReadBrandingThemes(ctx, environmentID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadBrandingThemes",
 		framework.DefaultCustomError,

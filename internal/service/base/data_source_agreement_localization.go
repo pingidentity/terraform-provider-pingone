@@ -156,23 +156,20 @@ func (r *AgreementLocalizationDataSource) Configure(ctx context.Context, req dat
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *AgreementLocalizationDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -195,7 +192,8 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.AgreementLanguagesResourcesApi.ReadAllAgreementLanguages(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.AgreementLanguagesResourcesApi.ReadAllAgreementLanguages(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllAgreementLanguages",
 			framework.DefaultCustomError,
@@ -244,7 +242,8 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneAgreementLanguage",
 			framework.DefaultCustomError,
@@ -264,7 +263,7 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 		return
 	}
 
-	languageResponse, _ := findLanguageByLocale(ctx, r.Client, data.EnvironmentId.ValueString(), agreementLocalization.GetLocale())
+	languageResponse, _ := findLanguageByLocale(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), agreementLocalization.GetLocale())
 
 	if languageResponse == nil {
 		resp.Diagnostics.AddError(

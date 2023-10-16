@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -22,7 +23,7 @@ import (
 
 // Types
 type OrganizationDataSource struct {
-	client *management.APIClient
+	Client *pingone.Client
 	region model.RegionMapping
 }
 
@@ -158,24 +159,21 @@ func (r *OrganizationDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
 	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *OrganizationDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -198,7 +196,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.OrganizationsApi.ReadAllOrganizations(ctx).Execute()
+				return r.Client.ManagementAPIClient.OrganizationsApi.ReadAllOrganizations(ctx).Execute()
 			},
 			"ReadAllOrganizations",
 			framework.DefaultCustomError,
@@ -239,7 +237,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.OrganizationsApi.ReadOneOrganization(ctx, data.OrganizationId.ValueString()).Execute()
+				return r.Client.ManagementAPIClient.OrganizationsApi.ReadOneOrganization(ctx, data.OrganizationId.ValueString()).Execute()
 			},
 			"ReadOneOrganization",
 			framework.DefaultCustomError,

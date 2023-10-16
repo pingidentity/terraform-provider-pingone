@@ -125,7 +125,8 @@ func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.Reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.UserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string)).RoleAssignment(userRoleAssignment).Execute()
+			fO, fR, fErr := apiClient.UserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string)).RoleAssignment(userRoleAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateUserRoleAssignment",
 		func(error model.P1Error) diag.Diagnostics {
@@ -164,7 +165,8 @@ func resourcePingOneRoleAssignmentUserRead(ctx context.Context, d *schema.Resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.UserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.UserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneUserRoleAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -222,8 +224,8 @@ func resourcePingOneRoleAssignmentUserDelete(ctx context.Context, d *schema.Reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.UserRoleAssignmentsApi.DeleteUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.UserRoleAssignmentsApi.DeleteUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteUserRoleAssignment",
 		sdk.DefaultCustomError,

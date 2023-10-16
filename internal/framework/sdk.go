@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"reflect"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
@@ -24,7 +26,7 @@ var (
 
 		// Deleted outside of TF
 		if error.GetCode() == "NOT_FOUND" {
-			diags.AddWarning("Resource not found", fmt.Sprintf("The requested resource object cannot be found.  Error returned: %s.", error.GetMessage()))
+			diags.AddWarning("Requested resource not found", fmt.Sprintf("The requested resource configuration cannot be found in the PingOne service.  If the requested resource is managed in Terraform's state, it may have been removed outside of Terraform.\nAPI error: %s", error.GetMessage()))
 
 			return diags
 		}
@@ -47,6 +49,19 @@ var (
 		return nil
 	}
 )
+
+func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, managementClient *management.APIClient, environmentID string, fO any, fR *http.Response, fErr error) (any, *http.Response, error) {
+	if fR.StatusCode == http.StatusUnauthorized || fR.StatusCode == http.StatusForbidden || fR.StatusCode == http.StatusBadRequest {
+		_, fER, fEErr := managementClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+
+		if fER.StatusCode == http.StatusNotFound {
+			tflog.Warn(ctx, "API responded with 400, 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
+			return fO, fER, fEErr
+		}
+	}
+
+	return fO, fR, fErr
+}
 
 func ParseResponse(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable, targetObject any) diag.Diagnostics {
 	defaultTimeout := 10

@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -127,7 +128,8 @@ func resourceCertificateSigningResponseCreate(ctx context.Context, d *schema.Res
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.CertificateManagementApi.ImportCSRResponse(ctx, d.Get("environment_id").(string), d.Get("key_id").(string)).File(&archive).Execute()
+			fO, fR, fErr := apiClient.CertificateManagementApi.ImportCSRResponse(ctx, d.Get("environment_id").(string), d.Get("key_id").(string)).File(&archive).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ImportCSRResponse",
 		sdk.DefaultCustomError,
@@ -154,7 +156,8 @@ func resourceCertificateSigningResponseRead(ctx context.Context, d *schema.Resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.CertificateManagementApi.GetKey(ctx, d.Get("environment_id").(string), d.Id()).Accept(management.ENUMGETKEYACCEPTHEADER_JSON).Execute()
+			fO, fR, fErr := apiClient.CertificateManagementApi.GetKey(ctx, d.Get("environment_id").(string), d.Id()).Accept(management.ENUMGETKEYACCEPTHEADER_JSON).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"GetKey",
 		sdk.CustomErrorResourceNotFoundWarning,

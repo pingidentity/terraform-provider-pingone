@@ -135,7 +135,8 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ImagesApi.CreateImage(ctx, d.Get("environment_id").(string)).ContentType(contentType).ContentDisposition(fmt.Sprintf("attachment; filename=%s", fileName)).File(&archive).Execute()
+			fO, fR, fErr := apiClient.ImagesApi.CreateImage(ctx, d.Get("environment_id").(string)).ContentType(contentType).ContentDisposition(fmt.Sprintf("attachment; filename=%s", fileName)).File(&archive).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateImage",
 		sdk.DefaultCustomError,
@@ -162,7 +163,8 @@ func resourceImageRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ImagesApi.ReadImage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.ImagesApi.ReadImage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadImage",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -194,8 +196,8 @@ func resourceImageDelete(ctx context.Context, d *schema.ResourceData, meta inter
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.ImagesApi.DeleteImage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.ImagesApi.DeleteImage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteImage",
 		sdk.CustomErrorResourceNotFoundWarning,

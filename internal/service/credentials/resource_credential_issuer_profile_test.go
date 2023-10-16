@@ -1,80 +1,65 @@
 package credentials_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
+	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-// Note: Issuer Profiles aren't deleted once created [No API]. Deleted only via deletion of the environment.
-// Destroy is a placeholder if this changes. Defined a passthrough for linter purposes.
-func testAccCheckCredentialIssuerProfilePassthrough(s *terraform.State) error {
+func TestAccCredentialIssuerProfile_RemovalDrift(t *testing.T) {
+	t.Parallel()
 
-	return nil
-}
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_credential_issuer_profile.%s", resourceName)
 
-/*func testAccCheckCredentialIssuerProfileDestroy(s *terraform.State) error {
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var resourceID, environmentID string
+
+	var p1Client *client.Client
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
 
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.CredentialsAPIClient
-
-
-	mgmtApiClient := p1Client.API.ManagementAPIClient
-
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_credential_issuer_profile" {
-			continue
-		}
-
-		_, rEnv, err := mgmtApiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Credential Issuer Profile %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}*/
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             credentials.CredentialIssuerProfile_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test removal of the environment
+			{
+				Config: testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
+				Check:  credentials.CredentialIssuerProfile_GetIDs(resourceFullName, &environmentID, &resourceID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
 
 func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 	t.Parallel()
@@ -89,7 +74,7 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	initialProfile := resource.TestStep{
-		Config: testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
+		Config: testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -101,7 +86,7 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 	}
 
 	updatedProfile := resource.TestStep{
-		Config: testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, updatedName),
+		Config: testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, updatedName),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -113,22 +98,25 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
-		//CheckDestroy:           testAccCheckCredentialIssuerProfileDestroy  // Note: Issuer Profiles aren't deleted once created. Uncomment and replace Passthrough if this changes.
-		ErrorCheck: acctest.ErrorCheck(t),
+		CheckDestroy:             credentials.CredentialIssuerProfile_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// initial profile
 			initialProfile,
 			{
-				Config:  testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
+				Config:  testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
 				Destroy: true,
 			},
 			// update profile
 			updatedProfile,
 			{
-				Config:  testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, updatedName),
+				Config:  testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, updatedName),
 				Destroy: true,
 			},
 			// changes
@@ -152,11 +140,11 @@ func TestAccCredentialIssuerProfile_Full(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config:  testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
+				Config:  testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
 				Destroy: true,
 			},
 			{
-				Config:  testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, updatedName),
+				Config:  testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, updatedName),
 				Destroy: true,
 			},
 		},
@@ -173,9 +161,13 @@ func TestAccCredentialIssuerProfile_InvalidConfig(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil, //testAccCheckCredentialIssuerProfilePassthrough,
+		CheckDestroy:             credentials.CredentialIssuerProfile_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -198,14 +190,18 @@ func TestAccCredentialIssuerProfile_BadParameters(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialIssuerProfilePassthrough,
+		CheckDestroy:             credentials.CredentialIssuerProfile_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name),
 			},
 			// Errors
 			{
@@ -229,7 +225,7 @@ func TestAccCredentialIssuerProfile_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccCredentialIssuerProfile_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccCredentialIssuerProfileConfig_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_issuer_profile" "%[3]s" {

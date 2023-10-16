@@ -17,7 +17,6 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -167,23 +166,20 @@ func (r *ResourceDataSource) Configure(ctx context.Context, req datasource.Confi
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *ResourceDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -201,20 +197,14 @@ func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if !data.Name.IsNull() {
 
 		var d diag.Diagnostics
-		resource, d = fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), data.Name.ValueString())
+		resource, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.Name.ValueString(), false)
 		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
 
 	} else if !data.ResourceId.IsNull() {
 
 		var d diag.Diagnostics
-		resource, d = fetchResourceFromID(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceId.ValueString())
+		resource, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), false)
 		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
 
 	} else {
 		resp.Diagnostics.AddError(
@@ -224,13 +214,18 @@ func (r *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var resourceClientSecret *management.ResourceSecret
 	if resource.GetType() == management.ENUMRESOURCETYPE_CUSTOM {
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceClientSecretApi.ReadResourceSecret(ctx, data.EnvironmentId.ValueString(), resource.GetId()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceClientSecretApi.ReadResourceSecret(ctx, data.EnvironmentId.ValueString(), resource.GetId()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadResourceSecret",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -299,73 +294,4 @@ func (p *ResourceDataSourceModel) toState(apiObject *management.Resource, apiObj
 	}
 
 	return diags
-}
-
-func fetchResourceFromID(ctx context.Context, apiClient *management.APIClient, environmentId, resourceId string) (*management.Resource, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var resource *management.Resource
-	diags.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadOneResource(ctx, environmentId, resourceId).Execute()
-		},
-		"ReadOneResource",
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&resource,
-	)...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return resource, diags
-}
-
-func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient, environmentId string, resourceName string) (*management.Resource, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var resource management.Resource
-
-	// Run the API call
-	var entityArray *management.EntityArray
-	diags.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadAllResources(ctx, environmentId).Execute()
-		},
-		"ReadAllResources",
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&entityArray,
-	)...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	if resources, ok := entityArray.Embedded.GetResourcesOk(); ok {
-
-		found := false
-		for _, resourceItem := range resources {
-
-			if resourceItem.GetName() == resourceName {
-				resource = resourceItem
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			diags.AddError(
-				"Cannot find resource from name",
-				fmt.Sprintf("The resource %s for environment %s cannot be found", resourceName, environmentId),
-			)
-			return nil, diags
-		}
-
-	}
-
-	return &resource, diags
 }
