@@ -99,7 +99,8 @@ func resourceDecisionEndpointCreate(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PolicyDecisionManagementApi.CreateDecisionEndpoint(ctx, d.Get("environment_id").(string)).DecisionEndpoint(decisionEndpoint).Execute()
+			fO, fR, fErr := apiClient.PolicyDecisionManagementApi.CreateDecisionEndpoint(ctx, d.Get("environment_id").(string)).DecisionEndpoint(decisionEndpoint).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateDecisionEndpoint",
 		sdk.DefaultCustomError,
@@ -126,7 +127,8 @@ func resourceDecisionEndpointRead(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PolicyDecisionManagementApi.ReadOneDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.PolicyDecisionManagementApi.ReadOneDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneDecisionEndpoint",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -201,7 +203,8 @@ func resourceDecisionEndpointUpdate(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PolicyDecisionManagementApi.UpdateDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).DecisionEndpoint(decisionEndpoint).Execute()
+			fO, fR, fErr := apiClient.PolicyDecisionManagementApi.UpdateDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).DecisionEndpoint(decisionEndpoint).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateDecisionEndpoint",
 		sdk.DefaultCustomError,
@@ -224,8 +227,8 @@ func resourceDecisionEndpointDelete(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.PolicyDecisionManagementApi.DeleteDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.PolicyDecisionManagementApi.DeleteDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteDecisionEndpoint",
 		sdk.CustomErrorResourceNotFoundWarning,

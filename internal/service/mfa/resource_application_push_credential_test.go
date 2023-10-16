@@ -72,12 +72,10 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21027") },
-				Config:   testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:    mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
+				Config: testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21027") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

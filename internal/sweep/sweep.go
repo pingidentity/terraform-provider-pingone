@@ -12,6 +12,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -158,7 +159,8 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
+			fO, fR, fErr := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"CreatePopulation",
 		sdk.DefaultCustomError,

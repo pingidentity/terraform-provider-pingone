@@ -418,23 +418,20 @@ func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state SchemaAttributeResourceModelV1
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -448,7 +445,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Get the schema ID
-	schema, d := fetchSchemaFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
+	schema, d := fetchSchemaFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -467,8 +464,8 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), schema.GetId()).SchemaAttribute(*schemaAttribute).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), schema.GetId()).SchemaAttribute(*schemaAttribute).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateAttribute",
 		framework.DefaultCustomError,
@@ -491,7 +488,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *SchemaAttributeResourceModelV1
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -510,8 +507,8 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.SchemasApi.ReadOneAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.ReadOneAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -533,8 +530,8 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneSchema",
 		framework.DefaultCustomError,
@@ -553,7 +550,7 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state SchemaAttributeResourceModelV1
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -567,7 +564,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Get the schema ID
-	schema, d := fetchSchemaFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
+	schema, d := fetchSchemaFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -586,8 +583,8 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), schema.GetId(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), schema.GetId(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateAttributePut",
 		framework.DefaultCustomError,
@@ -609,7 +606,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *SchemaAttributeResourceModelV1
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -627,8 +624,8 @@ func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.Delet
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.SchemasApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.SchemasApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteAttribute",
 		framework.CustomErrorResourceNotFoundWarning,

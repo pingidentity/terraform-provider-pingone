@@ -58,12 +58,10 @@ func TestAccNotificationPolicy_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
-				Config:   testAccNotificationPolicy_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:    base.NotificationPolicy_GetIDs(resourceFullName, &environmentID, &notificationPolicyID),
+				Config: testAccNotificationPolicy_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  base.NotificationPolicy_GetIDs(resourceFullName, &environmentID, &notificationPolicyID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

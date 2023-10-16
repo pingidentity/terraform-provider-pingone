@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -13,7 +14,7 @@ import (
 
 // Data source TODO
 
-func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.APIClient, environmentID string, predictorCompactNames []string) ([]string, diag.Diagnostics) {
+func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.APIClient, managementApiClient *management.APIClient, environmentID string, predictorCompactNames []string) ([]string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var entityArray *risk.EntityArray
@@ -21,7 +22,8 @@ func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, environmentID).Execute()
+			fO, fR, fErr := apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, environmentID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadAllRiskPredictors",
 		framework.DefaultCustomError,

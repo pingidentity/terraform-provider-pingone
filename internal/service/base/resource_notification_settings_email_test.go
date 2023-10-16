@@ -44,12 +44,10 @@ func TestAccNotificationSettingsEmail_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Test removal of the environment
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
-				Config:   testAccNotificationSettingsEmailConfig_Full(environmentName, licenseID, resourceName),
-				Check:    base.NotificationSettingsEmail_GetIDs(resourceFullName, &environmentID),
+				Config: testAccNotificationSettingsEmailConfig_Full(environmentName, licenseID, resourceName),
+				Check:  base.NotificationSettingsEmail_GetIDs(resourceFullName, &environmentID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

@@ -97,23 +97,20 @@ func (r *FlowPoliciesDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *FlowPoliciesDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -131,7 +128,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 	if !data.ScimFilter.IsNull() {
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
+			return r.Client.ManagementAPIClient.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
 	} else if !data.DataFilter.IsNull() {
@@ -165,7 +162,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		})
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return r.Client.ManagementAPIClient.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		}
 
 	} else {

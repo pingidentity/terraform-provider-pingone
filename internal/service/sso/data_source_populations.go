@@ -97,23 +97,20 @@ func (r *PopulationsDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *PopulationsDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -131,7 +128,7 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if !data.ScimFilter.IsNull() {
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
+			return r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
 	} else if !data.DataFilter.IsNull() {
@@ -165,7 +162,7 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		})
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		}
 
 	} else {

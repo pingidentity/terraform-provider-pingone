@@ -241,23 +241,20 @@ func (r *SystemApplicationResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *SystemApplicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state systemApplicationResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -280,7 +277,7 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// Build the model for the API
-	updateSystemApplication, applicationId, d := plan.expand(ctx, r.Client)
+	updateSystemApplication, applicationId, d := plan.expand(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -292,7 +289,8 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), *applicationId).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), *applicationId).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,
@@ -314,7 +312,7 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *systemApplicationResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -333,7 +331,8 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -370,7 +369,7 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 func (r *SystemApplicationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state systemApplicationResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -395,7 +394,7 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Build the model for the API
-	updateSystemApplication, _, d := plan.expand(ctx, r.Client)
+	updateSystemApplication, _, d := plan.expand(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -407,7 +406,8 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,
@@ -429,7 +429,7 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *systemApplicationResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -446,7 +446,7 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 	data.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
 	data.AccessControlRoleType = types.StringNull()
 
-	updateSystemApplication, _, d := data.expand(ctx, r.Client)
+	updateSystemApplication, _, d := data.expand(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -457,7 +457,8 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ApplicationsApi.UpdateApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.UpdateApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplication",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -793,7 +794,8 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 				ctx,
 
 				func() (any, *http.Response, error) {
-					return apiClient.ApplicationsApi.ReadAllApplications(ctx, environmentID).Execute()
+					fO, fR, fErr := apiClient.ApplicationsApi.ReadAllApplications(ctx, environmentID).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 				},
 				"ReadAllApplications",
 				framework.DefaultCustomError,

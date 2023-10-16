@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"reflect"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
@@ -47,6 +49,19 @@ var (
 		return nil
 	}
 )
+
+func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, managementClient *management.APIClient, environmentID string, fO any, fR *http.Response, fErr error) (any, *http.Response, error) {
+	if fR.StatusCode == http.StatusUnauthorized || fR.StatusCode == http.StatusForbidden {
+		_, fER, fEErr := managementClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+
+		if fER.StatusCode == http.StatusNotFound {
+			tflog.Warn(ctx, "API responded with 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
+			return fO, fER, fEErr
+		}
+	}
+
+	return fO, fR, fErr
+}
 
 func ParseResponse(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable, targetObject any) diag.Diagnostics {
 	defaultTimeout := 10

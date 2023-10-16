@@ -48,12 +48,10 @@ func TestAccCredentialType_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21020") },
-				Config:   testAccCredentialTypeConfig_Minimal(resourceName, name),
-				Check:    credentials.CredentialType_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
+				Config: testAccCredentialTypeConfig_Minimal(resourceName, name),
+				Check:  credentials.CredentialType_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21020") },
 				PreConfig: func() {
 					credentials.CredentialType_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID)
 				},
@@ -62,12 +60,10 @@ func TestAccCredentialType_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21021") },
-				Config:   testAccCredentialTypeConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:    credentials.CredentialType_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
+				Config: testAccCredentialTypeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  credentials.CredentialType_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("STAGING-21021") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

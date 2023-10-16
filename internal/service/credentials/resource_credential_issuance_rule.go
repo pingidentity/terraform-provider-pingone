@@ -311,23 +311,20 @@ func (r *CredentialIssuanceRuleResource) Configure(ctx context.Context, req reso
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *CredentialIssuanceRuleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CredentialIssuanceRuleResourceModel
 
-	if r.Client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -353,7 +350,8 @@ func (r *CredentialIssuanceRuleResource) Create(ctx context.Context, req resourc
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.CredentialIssuanceRulesApi.CreateCredentialIssuanceRule(ctx, plan.EnvironmentId.ValueString(), plan.CredentialTypeId.ValueString()).CredentialIssuanceRule(*CredentialIssuanceRule).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialIssuanceRulesApi.CreateCredentialIssuanceRule(ctx, plan.EnvironmentId.ValueString(), plan.CredentialTypeId.ValueString()).CredentialIssuanceRule(*CredentialIssuanceRule).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateCredentialIssuanceRule",
 		framework.DefaultCustomError,
@@ -375,7 +373,7 @@ func (r *CredentialIssuanceRuleResource) Create(ctx context.Context, req resourc
 func (r *CredentialIssuanceRuleResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CredentialIssuanceRuleResourceModel
 
-	if r.Client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -394,7 +392,8 @@ func (r *CredentialIssuanceRuleResource) Read(ctx context.Context, req resource.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.CredentialIssuanceRulesApi.ReadOneCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialIssuanceRulesApi.ReadOneCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneCredentialIssuanceRule",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -419,7 +418,7 @@ func (r *CredentialIssuanceRuleResource) Read(ctx context.Context, req resource.
 func (r *CredentialIssuanceRuleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state CredentialIssuanceRuleResourceModel
 
-	if r.Client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -445,7 +444,8 @@ func (r *CredentialIssuanceRuleResource) Update(ctx context.Context, req resourc
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.CredentialIssuanceRulesApi.UpdateCredentialIssuanceRule(ctx, plan.EnvironmentId.ValueString(), plan.CredentialTypeId.ValueString(), plan.Id.ValueString()).CredentialIssuanceRule(*CredentialIssuanceRule).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialIssuanceRulesApi.UpdateCredentialIssuanceRule(ctx, plan.EnvironmentId.ValueString(), plan.CredentialTypeId.ValueString(), plan.Id.ValueString()).CredentialIssuanceRule(*CredentialIssuanceRule).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateCredentialIssuanceRule",
 		framework.DefaultCustomError,
@@ -468,7 +468,7 @@ func (r *CredentialIssuanceRuleResource) Update(ctx context.Context, req resourc
 func (r *CredentialIssuanceRuleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *CredentialIssuanceRuleResourceModel
 
-	if r.Client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -486,8 +486,8 @@ func (r *CredentialIssuanceRuleResource) Delete(ctx context.Context, req resourc
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.CredentialIssuanceRulesApi.DeleteCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.CredentialsAPIClient.CredentialIssuanceRulesApi.DeleteCredentialIssuanceRule(ctx, data.EnvironmentId.ValueString(), data.CredentialTypeId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteCredentialIssuanceRule",
 		framework.CustomErrorResourceNotFoundWarning,

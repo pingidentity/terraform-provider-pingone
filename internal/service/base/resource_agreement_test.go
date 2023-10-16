@@ -58,12 +58,10 @@ func TestAccAgreement_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
-				Config:   testAccAgreementConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:    base.Agreement_GetIDs(resourceFullName, &environmentID, &agreementID),
+				Config: testAccAgreementConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  base.Agreement_GetIDs(resourceFullName, &environmentID, &agreementID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

@@ -233,23 +233,20 @@ func (r *KeyRotationPolicyResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *KeyRotationPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state keyRotationPolicyResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -271,7 +268,8 @@ func (r *KeyRotationPolicyResource) Create(ctx context.Context, req resource.Cre
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.KeyRotationPoliciesApi.CreateKeyRotationPolicy(ctx, plan.EnvironmentId.ValueString()).KeyRotationPolicy(*keyRotationPolicy).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.KeyRotationPoliciesApi.CreateKeyRotationPolicy(ctx, plan.EnvironmentId.ValueString()).KeyRotationPolicy(*keyRotationPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateKeyRotationPolicy",
 		framework.DefaultCustomError,
@@ -293,7 +291,7 @@ func (r *KeyRotationPolicyResource) Create(ctx context.Context, req resource.Cre
 func (r *KeyRotationPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *keyRotationPolicyResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -312,7 +310,8 @@ func (r *KeyRotationPolicyResource) Read(ctx context.Context, req resource.ReadR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.KeyRotationPoliciesApi.GetKeyRotationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.KeyRotationPoliciesApi.GetKeyRotationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetKeyRotationPolicy",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -337,7 +336,7 @@ func (r *KeyRotationPolicyResource) Read(ctx context.Context, req resource.ReadR
 func (r *KeyRotationPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state keyRotationPolicyResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -359,7 +358,8 @@ func (r *KeyRotationPolicyResource) Update(ctx context.Context, req resource.Upd
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.KeyRotationPoliciesApi.UpdateKeyRotationPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).KeyRotationPolicy(*keyRotationPolicy).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.KeyRotationPoliciesApi.UpdateKeyRotationPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).KeyRotationPolicy(*keyRotationPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateKeyRotationPolicy",
 		framework.DefaultCustomError,
@@ -381,7 +381,7 @@ func (r *KeyRotationPolicyResource) Update(ctx context.Context, req resource.Upd
 func (r *KeyRotationPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *keyRotationPolicyResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -399,8 +399,8 @@ func (r *KeyRotationPolicyResource) Delete(ctx context.Context, req resource.Del
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.KeyRotationPoliciesApi.DeleteKeyRotationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.KeyRotationPoliciesApi.DeleteKeyRotationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteKeyRotationPolicy",
 		framework.CustomErrorResourceNotFoundWarning,

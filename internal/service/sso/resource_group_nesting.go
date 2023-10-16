@@ -92,23 +92,20 @@ func (r *GroupNestingResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *GroupNestingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state GroupNestingResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -130,8 +127,8 @@ func (r *GroupNestingResource) Create(ctx context.Context, req resource.CreateRe
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.GroupsApi.CreateGroupNesting(ctx, plan.EnvironmentId.ValueString(), plan.GroupId.ValueString()).GroupNesting(*group).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.CreateGroupNesting(ctx, plan.EnvironmentId.ValueString(), plan.GroupId.ValueString()).GroupNesting(*group).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateGroupNesting",
 		framework.DefaultCustomError,
@@ -153,7 +150,7 @@ func (r *GroupNestingResource) Create(ctx context.Context, req resource.CreateRe
 func (r *GroupNestingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *GroupNestingResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -172,8 +169,8 @@ func (r *GroupNestingResource) Read(ctx context.Context, req resource.ReadReques
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.GroupsApi.ReadOneGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.ReadOneGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneGroupNesting",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -201,7 +198,7 @@ func (r *GroupNestingResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *GroupNestingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *GroupNestingResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -219,8 +216,8 @@ func (r *GroupNestingResource) Delete(ctx context.Context, req resource.DeleteRe
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.GroupsApi.DeleteGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.GroupsApi.DeleteGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteGroupNesting",
 		framework.CustomErrorResourceNotFoundWarning,

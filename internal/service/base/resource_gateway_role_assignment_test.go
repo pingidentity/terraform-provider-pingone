@@ -70,12 +70,10 @@ func TestAccRoleAssignmentGateway_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
-				Config:   testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
-				Check:    base.RoleAssignmentGateway_GetIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
+				Config: testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Identity Data Admin"),
+				Check:  base.RoleAssignmentGateway_GetIDs(resourceFullName, &environmentID, &gatewayID, &roleAssignmentID),
 			},
 			{
-				SkipFunc: func() (bool, error) { return true, fmt.Errorf("TBC") },
 				PreConfig: func() {
 					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},

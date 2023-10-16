@@ -146,23 +146,20 @@ func (r *ResourceScopeDataSource) Configure(ctx context.Context, req datasource.
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *ResourceScopeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *ResourceScopeDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -180,7 +177,7 @@ func (r *ResourceScopeDataSource) Read(ctx context.Context, req datasource.ReadR
 	if !data.Name.IsNull() {
 
 		var d diag.Diagnostics
-		resourceScope, d = fetchResourceScopeFromName(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Name.ValueString())
+		resourceScope, d = fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Name.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -189,7 +186,7 @@ func (r *ResourceScopeDataSource) Read(ctx context.Context, req datasource.ReadR
 	} else if !data.ResourceScopeId.IsNull() {
 
 		var d diag.Diagnostics
-		resourceScope, d = fetchResourceScopeFromID(ctx, r.Client, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.ResourceScopeId.ValueString())
+		resourceScope, d = fetchResourceScopeFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.ResourceScopeId.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return

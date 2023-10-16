@@ -127,23 +127,20 @@ func (r *ResourceScopeOpenIDResource) Configure(ctx context.Context, req resourc
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ResourceScopeOpenIDResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -156,7 +153,7 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	resource, d := fetchResourceFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), "openid", false)
+	resource, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), "openid", false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -165,7 +162,7 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 	plan.ResourceId = framework.StringOkToTF(resource.GetIdOk())
 
 	// Build the model for the API
-	resourceScope, d := plan.expand(ctx, r.Client, *resource)
+	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient, *resource)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -179,8 +176,8 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceScope-OpenID-Create",
 			framework.DefaultCustomError,
@@ -194,8 +191,8 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ResourceScopesApi.CreateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId()).ResourceScope(*resourceScope).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.CreateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId()).ResourceScope(*resourceScope).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateResourceScope-OpenID-Create",
 			framework.DefaultCustomError,
@@ -219,7 +216,7 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ResourceScopeOpenIDResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -232,7 +229,7 @@ func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	resource, d := fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), "openid", true)
+	resource, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), "openid", true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -250,8 +247,8 @@ func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.Rea
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ResourceScopesApi.ReadOneResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.ReadOneResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneResourceScope-OpenID",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -276,7 +273,7 @@ func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.Rea
 func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ResourceScopeOpenIDResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -289,14 +286,14 @@ func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	resource, d := fetchResourceFromName(ctx, r.Client, plan.EnvironmentId.ValueString(), "openid", false)
+	resource, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), "openid", false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build the model for the API
-	resourceScope, d := plan.expand(ctx, r.Client, *resource)
+	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient, *resource)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -308,8 +305,8 @@ func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.U
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), plan.Id.ValueString()).ResourceScope(*resourceScope).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), plan.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateResourceScope-OpenID",
 		framework.DefaultCustomError,
@@ -331,7 +328,7 @@ func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.U
 func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ResourceScopeOpenIDResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -344,7 +341,7 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
-	resource, d := fetchResourceFromName(ctx, r.Client, data.EnvironmentId.ValueString(), "openid", true)
+	resource, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), "openid", true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -356,7 +353,7 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 
 	if m, err := regexp.MatchString("^(address|email|openid|phone|profile)$", data.Name.ValueString()); err == nil && m {
 
-		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
+		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -368,8 +365,8 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ResourceScopesApi.UpdateResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceScope(*resourceScope).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.UpdateResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceScope-OpenID-Delete",
 			framework.DefaultCustomError,
@@ -383,8 +380,8 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fR, fErr := r.Client.ResourceScopesApi.DeleteResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
+				fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.DeleteResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteResourceScope-OpenID-Delete",
 			framework.CustomErrorResourceNotFoundWarning,

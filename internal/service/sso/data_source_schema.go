@@ -102,23 +102,20 @@ func (r *SchemaDataSource) Configure(ctx context.Context, req datasource.Configu
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *SchemaDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -136,7 +133,7 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if !data.Name.IsNull() {
 
 		var d diag.Diagnostics
-		schema, d = fetchSchemaFromName(ctx, r.Client, data.EnvironmentId.ValueString(), data.Name.ValueString())
+		schema, d = fetchSchemaFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.Name.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -150,8 +147,8 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneSchema",
 			framework.DefaultCustomError,

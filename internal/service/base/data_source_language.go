@@ -89,7 +89,8 @@ func datasourcePingOneLanguageRead(ctx context.Context, d *schema.ResourceData, 
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+				fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"ReadOneLanguage",
 			sdk.DefaultCustomError,
@@ -137,7 +138,8 @@ func findLanguageByLocale(ctx context.Context, apiClient *management.APIClient, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadAllLanguages",
 		sdk.DefaultCustomError,
@@ -184,9 +186,10 @@ func findLanguageByLocale_Framework(ctx context.Context, apiClient *management.A
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
-		"ReadAllLanguages",
+		"ReadAllLanguages-F",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&respObject,

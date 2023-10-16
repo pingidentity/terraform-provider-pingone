@@ -956,23 +956,20 @@ func (r *PhoneDeliverySettingsResource) Configure(ctx context.Context, req resou
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -998,7 +995,8 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.PhoneDeliverySettingsApi.CreatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.CreatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreatePhoneDeliverySettings",
 		phoneDeliverySettingsCreateUpdateCustomErrorHandler,
@@ -1031,7 +1029,8 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettingsUpdate).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettingsUpdate).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdatePhoneDeliverySettings",
 			phoneDeliverySettingsCreateUpdateCustomErrorHandler,
@@ -1057,7 +1056,7 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *PhoneDeliverySettingsResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1076,7 +1075,8 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOnePhoneDeliverySettings",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1101,7 +1101,7 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1127,7 +1127,8 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.UpdatePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsSettingsPhoneDeliverySettings(*phoneDeliverySettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePhoneDeliverySettings",
 		phoneDeliverySettingsCreateUpdateCustomErrorHandler,
@@ -1149,7 +1150,7 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 func (r *PhoneDeliverySettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *PhoneDeliverySettingsResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1167,8 +1168,8 @@ func (r *PhoneDeliverySettingsResource) Delete(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.PhoneDeliverySettingsApi.DeletePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.DeletePhoneDeliverySettings(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeletePhoneDeliverySettings",
 		framework.CustomErrorResourceNotFoundWarning,

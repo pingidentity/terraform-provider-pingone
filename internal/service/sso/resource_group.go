@@ -132,23 +132,20 @@ func (r *GroupResource) Configure(ctx context.Context, req resource.ConfigureReq
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state GroupResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -170,8 +167,8 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.GroupsApi.CreateGroup(ctx, plan.EnvironmentId.ValueString()).Group(*group).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.CreateGroup(ctx, plan.EnvironmentId.ValueString()).Group(*group).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateGroup",
 		framework.DefaultCustomError,
@@ -193,7 +190,7 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *GroupResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -212,8 +209,8 @@ func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.GroupsApi.ReadOneGroup(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.ReadOneGroup(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneGroup",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -238,7 +235,7 @@ func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp
 func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state GroupResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -260,8 +257,8 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.GroupsApi.UpdateGroup(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Group(*group).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.UpdateGroup(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Group(*group).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateGroup",
 		framework.DefaultCustomError,
@@ -283,7 +280,7 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 func (r *GroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *GroupResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -301,8 +298,8 @@ func (r *GroupResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.GroupsApi.DeleteGroup(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.GroupsApi.DeleteGroup(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteGroup",
 		framework.CustomErrorResourceNotFoundWarning,

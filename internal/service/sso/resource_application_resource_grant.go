@@ -185,23 +185,20 @@ func (r *ApplicationResourceGrantResource) Configure(ctx context.Context, req re
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationResourceGrantResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -214,14 +211,14 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 		return
 	}
 
-	resource, resourceScopes, d := plan.getResourceWithScopes(ctx, r.Client, false)
+	resource, resourceScopes, d := plan.getResourceWithScopes(ctx, r.Client.ManagementAPIClient, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Get Application
-	application, d := plan.getApplication(ctx, r.Client, false)
+	application, d := plan.getApplication(ctx, r.Client.ManagementAPIClient, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -244,7 +241,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 	// Get the resourceGrant if it exists
 	var replaceResourceGrant *management.ApplicationResourceGrant
 	if systemApplication {
-		replaceResourceGrant, d = plan.getResourceGrant(ctx, r.Client, resource.GetId())
+		replaceResourceGrant, d = plan.getResourceGrant(ctx, r.Client.ManagementAPIClient, resource.GetId())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -268,8 +265,8 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationResourceGrant.GetId()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationResourceGrant.GetId()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateApplicationGrant-Create",
 			framework.DefaultCustomError,
@@ -281,8 +278,8 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationResourceGrantsApi.CreateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateApplicationGrant-Create",
 			framework.DefaultCustomError,
@@ -295,7 +292,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 	}
 
 	// Get the resource response
-	resourceResponse, d := fetchResourceFromID(ctx, r.Client, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), false)
+	resourceResponse, d := fetchResourceFromID(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -307,7 +304,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 		scopeIds = append(scopeIds, scope.GetId())
 	}
 
-	resourceScopesResponse, d := fetchResourceScopesFromIDs(ctx, r.Client, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), scopeIds)
+	resourceScopesResponse, d := fetchResourceScopesFromIDs(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), scopeIds)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -324,7 +321,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationResourceGrantResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -343,8 +340,8 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationResourceGrantsApi.ReadOneApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplicationGrant",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -362,7 +359,7 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 	}
 
 	// Get the resource response
-	resourceResponse, d := fetchResourceFromID(ctx, r.Client, data.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), false)
+	resourceResponse, d := fetchResourceFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -374,7 +371,7 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 		scopeIds = append(scopeIds, scope.GetId())
 	}
 
-	resourceScopesResponse, d := fetchResourceScopesFromIDs(ctx, r.Client, data.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), scopeIds)
+	resourceScopesResponse, d := fetchResourceScopesFromIDs(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), scopeIds)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -388,7 +385,7 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ApplicationResourceGrantResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -401,14 +398,14 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		return
 	}
 
-	resource, resourceScopes, d := plan.getResourceWithScopes(ctx, r.Client, false)
+	resource, resourceScopes, d := plan.getResourceWithScopes(ctx, r.Client.ManagementAPIClient, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Get Application
-	application, d := plan.getApplication(ctx, r.Client, false)
+	application, d := plan.getApplication(ctx, r.Client.ManagementAPIClient, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -431,7 +428,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 	// Get the resourceGrant if it exists
 	var replaceResourceGrant *management.ApplicationResourceGrant
 	if systemApplication {
-		replaceResourceGrant, d = plan.getResourceGrant(ctx, r.Client, resource.GetId())
+		replaceResourceGrant, d = plan.getResourceGrant(ctx, r.Client.ManagementAPIClient, resource.GetId())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -453,8 +450,8 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationResourceGrantsApi.UpdateApplicationGrant(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationResourceGrant(*applicationResourceGrant).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplicationGrant",
 		framework.DefaultCustomError,
@@ -466,7 +463,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 	}
 
 	// Get the resource response
-	resourceResponse, d := fetchResourceFromID(ctx, r.Client, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), false)
+	resourceResponse, d := fetchResourceFromID(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -478,7 +475,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		scopeIds = append(scopeIds, scope.GetId())
 	}
 
-	resourceScopesResponse, d := fetchResourceScopesFromIDs(ctx, r.Client, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), scopeIds)
+	resourceScopesResponse, d := fetchResourceScopesFromIDs(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), scopeIds)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -495,7 +492,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 func (r *ApplicationResourceGrantResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationResourceGrantResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -513,8 +510,8 @@ func (r *ApplicationResourceGrantResource) Delete(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.ApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.ApplicationResourceGrantsApi.DeleteApplicationGrant(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteApplicationGrant",
 		framework.CustomErrorResourceNotFoundWarning,
