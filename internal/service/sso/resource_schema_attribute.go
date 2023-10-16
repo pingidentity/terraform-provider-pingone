@@ -534,11 +534,17 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneSchema",
-		framework.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&schemaResponse,
 	)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if schemaResponse == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
