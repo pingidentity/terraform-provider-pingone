@@ -504,6 +504,13 @@ func (p *ResourceScopePingOneAPIResourceModel) toState(apiObject *management.Res
 	}
 
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+
+	if v, ok := apiObject.GetResourceOk(); ok {
+		p.ResourceId = framework.StringOkToTF(v.GetIdOk())
+	} else {
+		p.ResourceId = types.StringNull()
+	}
+
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.SchemaAttributes = framework.StringSetOkToTF(apiObject.GetSchemaAttributesOk())
