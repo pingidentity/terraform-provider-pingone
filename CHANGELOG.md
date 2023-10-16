@@ -33,8 +33,10 @@ BUG FIXES:
 * `resource/pingone_resource_attribute`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 * `resource/pingone_resource_scope_openid`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 * `resource/pingone_resource_scope_openid`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_openid`: Fixed missing `resource_id` on import. ([#585](https://github.com/pingidentity/terraform-provider-pingone/issues/585))
 * `resource/pingone_resource_scope_pingone_api`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 * `resource/pingone_resource_scope_pingone_api`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_pingone_api`: Fixed missing `resource_id` on import. ([#585](https://github.com/pingidentity/terraform-provider-pingone/issues/585))
 * `resource/pingone_resource_scope`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 * `resource/pingone_system_application`: Fixed blocking error on plan when the parent environment is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 
