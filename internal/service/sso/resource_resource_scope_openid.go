@@ -259,7 +259,7 @@ func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	// Remove from state if resource is not found
+	// Remove from state if resource scope is not found
 	if resourceScopeResponse == nil {
 		resp.State.RemoveResource(ctx)
 		return
@@ -499,6 +499,13 @@ func (p *ResourceScopeOpenIDResourceModel) toState(apiObject *management.Resourc
 	}
 
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+
+	if v, ok := apiObject.GetResourceOk(); ok {
+		p.ResourceId = framework.StringOkToTF(v.GetIdOk())
+	} else {
+		p.ResourceId = types.StringNull()
+	}
+
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.MappedClaims = framework.StringSetOkToTF(apiObject.GetMappedClaimsOk())
