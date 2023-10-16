@@ -18,6 +18,7 @@ BUG FIXES:
 * Fixed blocking error on plan on multiple resources when the parent PingOne environment is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 * `resource/pingone_application_resource_grant`: Fixed inability to apply application grants to the Self-Service and Portal system applications. ([#573](https://github.com/pingidentity/terraform-provider-pingone/issues/573))
 * `resource/pingone_application_role_assignment`: Fixed blocking error on plan when the parent application is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_gateway`: Fixed incorrect unchanged plan when updating the `user_type` parameter. ([#586](https://github.com/pingidentity/terraform-provider-pingone/issues/586))
 * `resource/pingone_resource_attribute`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 * `resource/pingone_resource_attribute`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 * `resource/pingone_resource_scope_openid`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
