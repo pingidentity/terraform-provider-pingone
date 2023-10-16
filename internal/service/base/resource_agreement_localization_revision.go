@@ -274,7 +274,7 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
+				fO, fR, fErr := r.Client.AgreementManagementAPIClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
 				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneAgreementLanguageRevision",
