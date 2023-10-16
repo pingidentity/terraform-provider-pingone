@@ -11,6 +11,7 @@ NOTES:
 ENHANCEMENTS:
 
 * `data_source/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration. ([#579](https://github.com/pingidentity/terraform-provider-pingone/issues/579))
+* `resource/pingone_application`: Added pushed authorization request (PAR) support for OIDC configurations. ([#583](https://github.com/pingidentity/terraform-provider-pingone/issues/583))
 * `resource/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration. ([#579](https://github.com/pingidentity/terraform-provider-pingone/issues/579))
 
 BUG FIXES:
