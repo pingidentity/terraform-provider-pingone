@@ -27,6 +27,7 @@ func TestAccCertificateDataSource_ByNameFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPEMCert(t)
 		},
@@ -73,6 +74,7 @@ func TestAccCertificateDataSource_ByIDFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPEMCert(t)
 		},
@@ -111,6 +113,7 @@ func TestAccCertificateDataSource_NotFound(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckPEMCert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,

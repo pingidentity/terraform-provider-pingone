@@ -153,6 +153,7 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckTwilio(t, skipTwilio)
 		},
@@ -250,6 +251,7 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckSyniverse(t, skipSyniverse)
 		},

@@ -86,6 +86,7 @@ func TestAccImage_PNG(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -139,6 +140,7 @@ func TestAccImage_JPG(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -173,6 +175,7 @@ func TestAccImage_GIF(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,

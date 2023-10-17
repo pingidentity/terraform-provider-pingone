@@ -277,6 +277,7 @@ func TestAccKey_PKCS12(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 		},
@@ -345,6 +346,7 @@ func TestAccKey_Change(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 		},
@@ -457,6 +459,7 @@ func TestAccKey_CustomCRL(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 		},

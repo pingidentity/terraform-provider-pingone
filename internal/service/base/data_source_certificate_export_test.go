@@ -28,6 +28,7 @@ func TestAccCertificateExportDataSource_ByIDFull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 			acctest.PreCheckPKCS7Cert(t)
