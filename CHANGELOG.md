@@ -6,6 +6,7 @@ NOTES:
 * `resource/pingone_certificate`: Adjusted documentation for PEM certificate import. ([#572](https://github.com/pingidentity/terraform-provider-pingone/issues/572))
 * `resource/pingone_environment`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
 * `resource/pingone_key`: Migrated to plugin framework. ([#575](https://github.com/pingidentity/terraform-provider-pingone/issues/575))
+* `resource/pingone_risk_predictor`: Adjust code to no longer use deprecated API parameter `composition`.  Full support of multiple risk composition policies is planned for a future release. ([#590](https://github.com/pingidentity/terraform-provider-pingone/issues/590))
 * `resource/pingone_system_application`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
 * bump `github.com/hashicorp/terraform-plugin-framework` v1.4.0 => v1.4.1 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.2.1 => v0.2.2 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
