@@ -107,7 +107,7 @@ func TestAccRoleDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccRoleDataSourceConfig_NotFoundByName(resourceName),
-				ExpectError: regexp.MustCompile("Cannot find role doesnotexist"),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
 			},
 			// {
 			// 	Config:      testAccRoleDataSourceConfig_NotFoundByID(resourceName),
