@@ -34,6 +34,7 @@ func TestAccOrganizationDataSource_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckOrganisationID(t)
 			acctest.PreCheckOrganisationName(t)
 			acctest.PreCheckNoFeatureFlag(t)

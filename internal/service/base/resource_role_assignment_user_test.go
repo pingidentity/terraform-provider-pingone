@@ -246,6 +246,7 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckOrganisationID(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
