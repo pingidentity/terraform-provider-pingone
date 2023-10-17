@@ -1,5 +1,9 @@
 ## 0.23.0 (Unreleased)
 
+NOTES:
+
+* `data-source/pingone_role`: Migrated to plugin framework. ([#592](https://github.com/pingidentity/terraform-provider-pingone/issues/592))
+
 ## 0.22.0 (17 October 2023)
 
 NOTES:
