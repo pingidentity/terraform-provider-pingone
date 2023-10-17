@@ -1,0 +1,3 @@
+```release-note:note
+`resource/pingone_risk_predictor`: Adjust code to no longer use deprecated API parameter `composition`.  Full support of multiple risk composition policies is planned for a future release.
+```
