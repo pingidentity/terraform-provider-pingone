@@ -1913,11 +1913,14 @@ func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Contex
 
 		}
 
-		dataComposition := risk.NewRiskPredictorCompositeAllOfComposition(
+		dataCompositons := make([]risk.RiskPredictorCompositeAllOfCompositionsInner, 0)
+
+		dataComposition := risk.NewRiskPredictorCompositeAllOfCompositionsInner(
 			condition,
 			level,
 		)
-		data.SetComposition(*dataComposition)
+
+		data.SetCompositions(append(dataCompositons, *dataComposition))
 	}
 
 	return &data, diags
@@ -3009,14 +3012,14 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 
 	compositionObject := types.ObjectNull(predictorCompositionTFObjectTypes)
 
-	if v, ok := apiObject.GetCompositionOk(); ok {
+	if v, ok := apiObject.GetCompositionsOk(); ok && len(v) > 0 {
 
 		o := map[string]attr.Value{
-			"level":          framework.EnumOkToTF(v.GetLevelOk()),
+			"level":          framework.EnumOkToTF(v[0].GetLevelOk()),
 			"condition_json": compositeConditionJSON,
 		}
 
-		if v1, ok := v.GetConditionOk(); ok {
+		if v1, ok := v[0].GetConditionOk(); ok {
 			jsonString, err := json.Marshal(v1)
 			if err != nil {
 				diags.AddError(
