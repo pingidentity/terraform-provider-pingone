@@ -14,6 +14,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 // Types
@@ -45,6 +46,10 @@ func (r *RoleDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 
 	const minAttrLength = 1
 
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The name of the role to look up.",
+	).AllowedValuesEnum(management.AllowedEnumRoleNameEnumValues)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Datasource to read PingOne admin role data for a tenant.",
@@ -53,10 +58,11 @@ func (r *RoleDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 			"id": framework.Attr_ID(),
 
 			"name": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The name of the role to look up.").Description,
-				Required:    true,
+				MarkdownDescription: nameDescription.MarkdownDescription,
+				Description:         nameDescription.Description,
+				Required:            true,
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(minAttrLength),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumRoleNameEnumValues)...),
 				},
 			},
 
