@@ -2309,7 +2309,7 @@ func (p *verifyPolicyResourceModel) toStateVoice(apiObject *verify.VoiceConfigur
 	comparisonThreshold := types.StringNull()
 	if v, ok := apiObject.GetComparisonOk(); ok {
 		if t, ok := v.GetThresholdOk(); ok {
-			comparisonThreshold = types.StringValue(utils.EnumToString(t))
+			comparisonThreshold = framework.EnumToTF(t)
 		}
 
 	}
@@ -2317,7 +2317,7 @@ func (p *verifyPolicyResourceModel) toStateVoice(apiObject *verify.VoiceConfigur
 	livenessThreshold := types.StringNull()
 	if v, ok := apiObject.GetLivenessOk(); ok {
 		if t, ok := v.GetThresholdOk(); ok {
-			livenessThreshold = types.StringValue(utils.EnumToString(t))
+			livenessThreshold = framework.EnumToTF(t)
 		}
 
 	}

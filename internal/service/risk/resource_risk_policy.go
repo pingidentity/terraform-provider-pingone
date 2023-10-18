@@ -816,7 +816,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 			}
 
 			if !conditionPlan.CompactName.IsNull() && !conditionPlan.CompactName.IsUnknown() {
-				predictorReferenceValue = types.StringValue(fmt.Sprintf(referenceValueFmt, conditionPlan.CompactName.ValueString()))
+				predictorReferenceValue = framework.StringToTF(fmt.Sprintf(referenceValueFmt, conditionPlan.CompactName.ValueString()))
 				predictorReferenceContains = types.StringNull()
 
 				if setOverrideName {
@@ -825,7 +825,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 			}
 
 			if !conditionPlan.IPRange.IsNull() && !conditionPlan.IPRange.IsUnknown() {
-				predictorReferenceContains = types.StringValue("${transaction.ip}")
+				predictorReferenceContains = framework.StringToTF("${transaction.ip}")
 				predictorReferenceValue = types.StringNull()
 
 				if setOverrideName {
@@ -1614,7 +1614,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 
 				var equalsString basetypes.StringValue
 				if s := condition.GetEquals().String; s != nil {
-					equalsString = types.StringValue(*s)
+					equalsString = framework.StringToTF(*s)
 				} else {
 					equalsString = types.StringNull()
 				}

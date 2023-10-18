@@ -58,9 +58,9 @@ func (r *EnvironmentsDataSource) Schema(ctx context.Context, req datasource.Sche
 				Required:            true,
 			},
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of environments that have been successfully retrieved and filtered.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of environments that have been successfully retrieved and filtered.",
+			)),
 		},
 	}
 }

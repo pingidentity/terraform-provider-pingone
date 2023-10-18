@@ -15,6 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
@@ -45,11 +46,15 @@ func (r *TrustedEmailDomainDataSource) Metadata(ctx context.Context, req datasou
 // Schema
 func (r *TrustedEmailDomainDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
-	domainDescriptionFmt := "A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, %s)."
-	domainDescription := framework.SchemaAttributeDescription{
-		MarkdownDescription: fmt.Sprintf(domainDescriptionFmt, "`demo.bxretail.org`"),
-		Description:         fmt.Sprintf(domainDescriptionFmt, "\"demo.bxretail.org\""),
-	}
+	primaryLookupFieldExactlyOneOf := []string{"trusted_email_domain_id", "domain_name"}
+
+	trustedEmailDomainIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the trusted email domain.  Must be a valid PingOne resource ID.",
+	).ExactlyOneOf(primaryLookupFieldExactlyOneOf)
+
+	domainDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).",
+	).ExactlyOneOf(primaryLookupFieldExactlyOneOf)
 
 	const emailAddressMaxLength = 5
 
@@ -65,10 +70,12 @@ func (r *TrustedEmailDomainDataSource) Schema(ctx context.Context, req datasourc
 			),
 
 			"trusted_email_domain_id": schema.StringAttribute{
-				MarkdownDescription: domainDescription.MarkdownDescription,
-				Description:         domainDescription.Description,
+				MarkdownDescription: trustedEmailDomainIdDescription.MarkdownDescription,
+				Description:         trustedEmailDomainIdDescription.Description,
 				Optional:            true,
+
 				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("domain_name")),
 				},
 			},
@@ -77,6 +84,7 @@ func (r *TrustedEmailDomainDataSource) Schema(ctx context.Context, req datasourc
 				MarkdownDescription: domainDescription.MarkdownDescription,
 				Description:         domainDescription.Description,
 				Optional:            true,
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("trusted_email_domain_id")),
 				},
@@ -217,10 +225,16 @@ func (p *TrustedEmailDomainDataSourceModel) toState(v *management.EmailDomain) d
 		return diags
 	}
 
-	p.Id = types.StringValue(v.GetId())
-	p.EnvironmentId = types.StringValue(*v.GetEnvironment().Id)
-	p.EmailDomainId = types.StringValue(v.GetId())
-	p.DomainName = types.StringValue(v.GetDomainName())
+	p.Id = framework.StringOkToTF(v.GetIdOk())
+
+	if e, ok := v.GetEnvironmentOk(); ok {
+		p.EnvironmentId = framework.StringOkToTF(e.GetIdOk())
+	} else {
+		p.EnvironmentId = types.StringNull()
+	}
+
+	p.EmailDomainId = framework.StringOkToTF(v.GetIdOk())
+	p.DomainName = framework.StringOkToTF(v.GetDomainNameOk())
 
 	return diags
 }

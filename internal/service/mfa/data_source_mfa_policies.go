@@ -52,9 +52,9 @@ func (r *MFAPoliciesDataSource) Schema(ctx context.Context, req datasource.Schem
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to select MFA device policies from."),
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of MFA Device Policies that have been successfully retrieved and filtered.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of MFA Device Policies that have been successfully retrieved and filtered.",
+			)),
 		},
 	}
 }

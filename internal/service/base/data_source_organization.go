@@ -281,12 +281,12 @@ func (p *OrganizationDataSourceModel) toState(v *management.Organization, region
 	p.Type = organzationTypeEnumOkToTF(v.GetTypeOk())
 	p.BillingConnectionIds = organizationBillingConnectionIdsOkToTF(v.GetBillingConnectionsOk())
 
-	p.BaseUrlAPI = types.StringValue(fmt.Sprintf("api.pingone.%s", region.URLSuffix))
-	p.BaseUrlAuth = types.StringValue(fmt.Sprintf("auth.pingone.%s", region.URLSuffix))
-	p.BaseUrlOrchestrate = types.StringValue(fmt.Sprintf("orchestrate-api.pingone.%s", region.URLSuffix))
-	p.BaseUrlAgreementMgmt = types.StringValue(fmt.Sprintf("agreement-mgmt.pingone.%s", region.URLSuffix))
-	p.BaseUrlConsole = types.StringValue(fmt.Sprintf("console.pingone.%s", region.URLSuffix))
-	p.BaseUrlApps = types.StringValue(fmt.Sprintf("apps.pingone.%s", region.URLSuffix))
+	p.BaseUrlAPI = framework.StringToTF(fmt.Sprintf("api.pingone.%s", region.URLSuffix))
+	p.BaseUrlAuth = framework.StringToTF(fmt.Sprintf("auth.pingone.%s", region.URLSuffix))
+	p.BaseUrlOrchestrate = framework.StringToTF(fmt.Sprintf("orchestrate-api.pingone.%s", region.URLSuffix))
+	p.BaseUrlAgreementMgmt = framework.StringToTF(fmt.Sprintf("agreement-mgmt.pingone.%s", region.URLSuffix))
+	p.BaseUrlConsole = framework.StringToTF(fmt.Sprintf("console.pingone.%s", region.URLSuffix))
+	p.BaseUrlApps = framework.StringToTF(fmt.Sprintf("apps.pingone.%s", region.URLSuffix))
 
 	return diags
 }

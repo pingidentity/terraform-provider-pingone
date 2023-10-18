@@ -47,13 +47,13 @@ func (r *PhoneDeliverySettingsListDataSource) Schema(ctx context.Context, req da
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaAttributeDescription{
-				Description: "The ID of the environment to filter phone delivery settings senders from.",
-			}),
+			"environment_id": framework.Attr_LinkID(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The ID of the environment to filter phone delivery settings senders from.",
+			)),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of phone delivery settings senders that have been successfully retrieved.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of phone delivery settings senders that have been successfully retrieved.",
+			)),
 		},
 	}
 }

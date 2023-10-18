@@ -52,23 +52,17 @@ func (r *TrustedEmailAddressResource) Metadata(ctx context.Context, req resource
 // Schema
 func (r *TrustedEmailAddressResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
-	resourceDescriptionFmt := "Resource to create and manage trusted email addresses in PingOne.  PingOne supports the ability to configure up to 10 trusted email addresses for an existing trusted email domain. See %s.  Once configured and if the email address has not been previously verified, a verification email is sent."
-	providerDescription := framework.SchemaAttributeDescription{
-		MarkdownDescription: fmt.Sprintf(resourceDescriptionFmt, "[Trusted email domains](https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains)"),
-		Description:         fmt.Sprintf(resourceDescriptionFmt, "Trusted email domains (https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains)"),
-	}
+	providerDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Resource to create and manage trusted email addresses in PingOne.  PingOne supports the ability to configure up to 10 trusted email addresses for an existing trusted email domain. See [Trusted email domains](https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains).  Once configured and if the email address has not been previously verified, a verification email is sent.",
+	)
 
-	emailAddressDescriptionFmt := "The trusted email address, for example %s."
-	emailAddressDescription := framework.SchemaAttributeDescription{
-		MarkdownDescription: fmt.Sprintf(emailAddressDescriptionFmt, "`john.smith@bxretail.org`"),
-		Description:         fmt.Sprintf(emailAddressDescriptionFmt, "\"john.smith@bxretail.org\""),
-	}
+	emailAddressDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The trusted email address, for example `john.smith@bxretail.org`.",
+	)
 
-	statusDescriptionFmt := "The status of the trusted email address.  Possible values are %s."
-	statusDescription := framework.SchemaAttributeDescription{
-		MarkdownDescription: fmt.Sprintf(statusDescriptionFmt, "`ACTIVE` and `VERIFICATION_REQUIRED`"),
-		Description:         fmt.Sprintf(statusDescriptionFmt, "\"ACTIVE\" and \"VERIFICATION_REQUIRED\""),
-	}
+	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The status of the trusted email address.  Possible values are `ACTIVE` and `VERIFICATION_REQUIRED`.",
+	)
 
 	const emailAddressMaxLength = 5
 
