@@ -1243,17 +1243,14 @@ func customMapBetweenRangesBoundSchema(riskResult string) schema.SingleNestedAtt
 
 func customMapIpRangesBoundSchema(riskResult string) schema.SingleNestedAttribute {
 
-	attributeDescription := fmt.Sprintf("A single nested object that describes the IP CIDR ranges that map to a %s risk result.", riskResult)
+	attributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single nested object that describes the IP CIDR ranges that map to a %s risk result.", riskResult))
 
 	predictorCustomMapIPRangeValuesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of strings, in CIDR format, that describe the CIDR ranges that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.",
 	)
 
 	return customMapGenericValuesSchema(
-		framework.SchemaAttributeDescription{
-			Description:         attributeDescription,
-			MarkdownDescription: attributeDescription,
-		},
+		attributeDescription,
 		predictorCustomMapIPRangeValuesDescription,
 		hmlValidators,
 		[]validator.String{
@@ -1264,17 +1261,14 @@ func customMapIpRangesBoundSchema(riskResult string) schema.SingleNestedAttribut
 
 func customMapStringValuesSchema(riskResult string) schema.SingleNestedAttribute {
 
-	attributeDescription := fmt.Sprintf("A single nested object that describes the string values that map to a %s risk result.", riskResult)
+	attributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single nested object that describes the string values that map to a %s risk result.", riskResult))
 
 	predictorCustomMapStringValuesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of strings that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.",
 	)
 
 	return customMapGenericValuesSchema(
-		framework.SchemaAttributeDescription{
-			Description:         attributeDescription,
-			MarkdownDescription: attributeDescription,
-		},
+		attributeDescription,
 		predictorCustomMapStringValuesDescription,
 		hmlValidators,
 		[]validator.String{},
@@ -2404,7 +2398,7 @@ func (p *riskPredictorResourceModel) expandPredictorDevice(ctx context.Context, 
 	}
 
 	if predictorPlan.Detect.IsNull() || predictorPlan.Detect.IsUnknown() {
-		predictorPlan.Detect = types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE))
+		predictorPlan.Detect = framework.EnumToTF(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)
 	}
 
 	data.SetDetect(risk.EnumPredictorNewDeviceDetectType(predictorPlan.Detect.ValueString()))
@@ -3030,7 +3024,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 				return types.ObjectNull(predictorCompositeTFObjectTypes), diags
 			}
 
-			o["condition"] = types.StringValue(string(jsonString))
+			o["condition"] = framework.StringToTF(string(jsonString))
 
 			if compositeConditionJSON.IsNull() || compositeConditionJSON.IsUnknown() {
 				o["condition_json"] = o["condition"]

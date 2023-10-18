@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -131,26 +130,17 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 		"A string to specify whether the limit defined is per-user or per environment.",
 	).AllowedValuesEnum(management.AllowedEnumNotificationsPolicyQuotaItemTypeEnumValues)
 
-	quotaTotalDescriptionFmt := "The maximum number of notifications allowed per day.  Cannot be set with `used` and `unused`."
-	quotaTotalDescription := framework.SchemaAttributeDescription{
+	quotaTotalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The maximum number of notifications allowed per day.  Cannot be set with `used` and `unused`.",
+	)
 
-		MarkdownDescription: quotaTotalDescriptionFmt,
-		Description:         strings.ReplaceAll(quotaTotalDescriptionFmt, "`", "\""),
-	}
+	quotaUsedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The maximum number of notifications that can be received and responded to each day. Must be configured with `unused` and cannot be configured with `total`.",
+	)
 
-	quotaUsedDescriptionFmt := "The maximum number of notifications that can be received and responded to each day. Must be configured with `unused` and cannot be configured with `total`."
-	quotaUsedDescription := framework.SchemaAttributeDescription{
-
-		MarkdownDescription: quotaUsedDescriptionFmt,
-		Description:         strings.ReplaceAll(quotaUsedDescriptionFmt, "`", "\""),
-	}
-
-	quotaUnusedDescriptionFmt := "The maximum number of notifications that can be received and not responded to each day. Must be configured with `used` and cannot be configured with `total`."
-	quotaUnusedDescription := framework.SchemaAttributeDescription{
-
-		MarkdownDescription: quotaUnusedDescriptionFmt,
-		Description:         strings.ReplaceAll(quotaUnusedDescriptionFmt, "`", "\""),
-	}
+	quotaUnusedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The maximum number of notifications that can be received and not responded to each day. Must be configured with `used` and cannot be configured with `total`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

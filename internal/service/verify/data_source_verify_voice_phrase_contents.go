@@ -71,9 +71,9 @@ func (r *VoicePhraseContentsDataSource) Schema(ctx context.Context, req datasour
 				},
 			},
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting voice phrase content IDs that have been successfully retrieved.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting voice phrase content IDs that have been successfully retrieved.",
+			)),
 		},
 	}
 }

@@ -52,9 +52,9 @@ func (r *DigitalWalletApplicationsDataSource) Schema(ctx context.Context, req da
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential digital wallet app exists."),
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of digital walliet applications that have been successfully retrieved.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of digital wallet applications that have been successfully retrieved.",
+			)),
 		},
 	}
 }

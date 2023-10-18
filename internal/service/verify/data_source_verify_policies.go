@@ -51,9 +51,9 @@ func (r *VerifyPoliciesDataSource) Schema(ctx context.Context, req datasource.Sc
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the verify policy exists."),
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of verify policies that have been successfully retrieved.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of verify policies that have been successfully retrieved.",
+			)),
 		},
 	}
 }
