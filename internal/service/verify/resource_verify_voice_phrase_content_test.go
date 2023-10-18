@@ -148,6 +148,7 @@ func TestAccVerifyVoicePhraseContent_Full(t *testing.T) {
 	updatedVoicePhraseContent := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "voice_phrase_id", validation.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "content", updatedPhrase),
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
@@ -189,7 +190,7 @@ func TestAccVerifyVoicePhraseContent_Full(t *testing.T) {
 				Check:  updatedVoicePhraseContent,
 			},
 			{
-				Config: testAccVerifyVoicePhraseContent_UpdateVoicePhraseTestReplace(resourceName, updatedName, locale, updatedPhrase),
+				Config: testAccVerifyVoicePhraseContent_ReplaceVoicePhrase(resourceName, updatedName, locale, updatedPhrase),
 				Check:  updatedVoicePhraseContent,
 			},
 			{
@@ -299,13 +300,13 @@ resource "pingone_verify_voice_phrase_content" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, locale, phrase)
 }
 
-func testAccVerifyVoicePhraseContent_UpdateVoicePhraseTestReplace(resourceName, name, locale, phrase string) string {
+func testAccVerifyVoicePhraseContent_ReplaceVoicePhrase(resourceName, name, locale, phrase string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_verify_voice_phrase" "%[2]s-replace" {
   environment_id = data.pingone_environment.general_test.id
-  display_name   = "%[3]s"
+  display_name   = "%[3]s-replace"
 }
 
 resource "pingone_verify_voice_phrase_content" "%[2]s" {
