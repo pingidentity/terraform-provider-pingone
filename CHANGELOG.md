@@ -3,6 +3,7 @@
 NOTES:
 
 * `data-source/pingone_role`: Migrated to plugin framework. ([#592](https://github.com/pingidentity/terraform-provider-pingone/issues/592))
+* `data-source/pingone_trusted_email_domain`: Corrected documentation descriptions. ([#593](https://github.com/pingidentity/terraform-provider-pingone/issues/593))
 
 ## 0.22.0 (17 October 2023)
 
