@@ -23,7 +23,6 @@ import (
 // Types
 type ApplicationDataSource serviceClientType
 
-// todo review - will i need to update set/list to objects; double check
 type applicationDataSourceModel struct {
 	Id                        types.String `tfsdk:"id"`
 	EnvironmentId             types.String `tfsdk:"environment_id"`
@@ -43,19 +42,6 @@ type applicationDataSourceModel struct {
 }
 
 var (
-	applicationOIDCTFObjectTypes = map[string]attr.Type{
-		"name":                         types.StringType,
-		"enabled":                      types.StringType,
-		"description":                  types.StringType,
-		"tags":                         types.SetType{ElemType: types.StringType},
-		"login_page_url":               types.StringType,
-		"icon":                         types.ListType{ElemType: types.ObjectType{AttrTypes: iconTFObjectTypes}},
-		"access_control_role_type":     types.StringType,
-		"access_control_group_options": types.ListType{ElemType: types.ObjectType{AttrTypes: accessControlGroupOptionsTFObjectTypes}},
-		"hidden_from_app_portal":       types.BoolType,
-		"oidc_options":                 types.ListType{ElemType: types.ObjectType{AttrTypes: oidcOptionsTFObjectTypes}},
-	}
-
 	oidcOptionsTFObjectTypes = map[string]attr.Type{
 		"type":                                        types.StringType,
 		"home_page_url":                               types.StringType,
@@ -96,7 +82,7 @@ var (
 
 	integrityDetectionTFObjectTypes = map[string]attr.Type{
 		"enabled":            types.BoolType,
-		"excluded_platforms": types.ListType{ElemType: types.StringType},
+		"excluded_platforms": types.SetType{ElemType: types.StringType},
 		"cache_duration":     types.ListType{ElemType: types.ObjectType{AttrTypes: cacheDurationTFObjectTypes}},
 		"google_play":        types.ListType{ElemType: types.ObjectType{AttrTypes: googlePlayTFObjectTypes}},
 	}
@@ -115,18 +101,6 @@ var (
 
 	certificateAuthenticationTFObjectTypes = map[string]attr.Type{
 		"key_id": types.StringType,
-	}
-
-	applicationSAMLTFObjectTypes = map[string]attr.Type{
-		"name":                         types.StringType,
-		"enabled":                      types.StringType,
-		"description":                  types.StringType,
-		"login_page_url":               types.StringType,
-		"icon":                         types.ListType{ElemType: types.ObjectType{AttrTypes: iconTFObjectTypes}},
-		"access_control_role_type":     types.StringType,
-		"access_control_group_options": types.ListType{ElemType: types.ObjectType{AttrTypes: accessControlGroupOptionsTFObjectTypes}},
-		"hidden_from_app_portal":       types.BoolType,
-		"saml_options":                 types.ListType{ElemType: types.ObjectType{AttrTypes: samlOptionsTFObjectTypes}},
 	}
 
 	samlOptionsTFObjectTypes = map[string]attr.Type{
@@ -151,17 +125,6 @@ var (
 	idpSigningKeyTFObjectTypes = map[string]attr.Type{
 		"algorithm": types.StringType,
 		"key_id":    types.StringType,
-	}
-
-	applicationExternalLinkTFObjectTypes = map[string]attr.Type{
-		"name":                         types.StringType,
-		"enabled":                      types.StringType,
-		"description":                  types.StringType,
-		"login_page_url":               types.StringType,
-		"icon":                         types.ListType{ElemType: types.ObjectType{AttrTypes: iconTFObjectTypes}},
-		"access_control_group_options": types.ListType{ElemType: types.ObjectType{AttrTypes: accessControlGroupOptionsTFObjectTypes}},
-		"hidden_from_app_portal":       types.BoolType,
-		"external_link_options":        types.ListType{ElemType: types.ObjectType{AttrTypes: externalLinkOptionsTFObjectTypes}},
 	}
 
 	externalLinkOptionsTFObjectTypes = map[string]attr.Type{
@@ -440,46 +403,48 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 													Description: "A boolean that specifies whether device integrity detection takes place on mobile devices.",
 													Computed:    true,
 												},
-												"excluded_platforms": schema.ListAttribute{
+												"excluded_platforms": schema.SetAttribute{
 													Description: "Indicates OS excluded from device integrity checking.",
 													ElementType: types.StringType,
 													Computed:    true,
 												},
-												"cache_duration": schema.SingleNestedAttribute{
+												"cache_duration": schema.ListNestedAttribute{
 													Description: "Indicates the caching duration of successful integrity detection calls.",
 													Computed:    true,
-
-													Attributes: map[string]schema.Attribute{
-														"amount": schema.Int64Attribute{
-															Description: "An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.",
-															Computed:    true,
-														},
-														"units": schema.StringAttribute{
-															Description: "A string that specifies the cache duration time units.",
-															Computed:    true,
+													NestedObject: schema.NestedAttributeObject{
+														Attributes: map[string]schema.Attribute{
+															"amount": schema.Int64Attribute{
+																Description: "An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.",
+																Computed:    true,
+															},
+															"units": schema.StringAttribute{
+																Description: "A string that specifies the cache duration time units.",
+																Computed:    true,
+															},
 														},
 													},
 												},
-												"google_play": schema.SingleNestedAttribute{
+												"google_play": schema.ListNestedAttribute{
 													Description: "A single block that describes Google Play Integrity API credential settings for Android device integrity detection.",
 													Computed:    true,
-
-													Attributes: map[string]schema.Attribute{
-														"decryption_key": schema.StringAttribute{
-															Description: "Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.",
-															Computed:    true,
-														},
-														"service_account_credentials_json": schema.StringAttribute{
-															Description: "Contents of the JSON file that represents your Service Account Credentials.",
-															Computed:    true,
-														},
-														"verification_key": schema.StringAttribute{
-															Description: "Play Integrity verdict signature verification key from your Google Play Services account.",
-															Computed:    true,
-														},
-														"verification_type": schema.StringAttribute{
-															Description: "The type of verification.",
-															Computed:    true,
+													NestedObject: schema.NestedAttributeObject{
+														Attributes: map[string]schema.Attribute{
+															"decryption_key": schema.StringAttribute{
+																Description: "Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.",
+																Computed:    true,
+															},
+															"service_account_credentials_json": schema.StringAttribute{
+																Description: "Contents of the JSON file that represents your Service Account Credentials.",
+																Computed:    true,
+															},
+															"verification_key": schema.StringAttribute{
+																Description: "Play Integrity verdict signature verification key from your Google Play Services account.",
+																Computed:    true,
+															},
+															"verification_type": schema.StringAttribute{
+																Description: "The type of verification.",
+																Computed:    true,
+															},
 														},
 													},
 												},
@@ -530,18 +495,19 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							Description: "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.",
 							Computed:    true,
 						},
-						"idp_signing_key": schema.SingleNestedAttribute{
+						"idp_signing_key": schema.ListNestedAttribute{
 							Description: "SAML application assertion/response signing key settings.",
 							Computed:    true,
-
-							Attributes: map[string]schema.Attribute{
-								"algorithm": schema.StringAttribute{
-									Description: "A string that specifies the signature algorithm of the key.",
-									Computed:    true,
-								},
-								"key_id": schema.StringAttribute{
-									Description: "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.",
-									Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"algorithm": schema.StringAttribute{
+										Description: "A string that specifies the signature algorithm of the key.",
+										Computed:    true,
+									},
+									"key_id": schema.StringAttribute{
+										Description: "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.",
+										Computed:    true,
+									},
 								},
 							},
 						},
@@ -693,6 +659,7 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 				case *management.ApplicationSAML:
 					applicationName = v.GetName()
 				}
+
 				if applicationName == data.Name.ValueString() {
 					application = applicationObject
 					found = true
@@ -718,9 +685,9 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	// todo: Talk to Patrick about this secondary call for the secret if don't find in api docs what/why
-	if application.ApplicationOIDC != nil && application.ApplicationOIDC.GetId() != "" {
+	// if application.ApplicationOIDC != nil && application.ApplicationOIDC.GetId() != "" {
 
-	}
+	// }
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(&application)...)
@@ -746,6 +713,7 @@ func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplic
 		p.ApplicationId = framework.StringOkToTF(v.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
+		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
 
 		var d diag.Diagnostics
@@ -799,7 +767,8 @@ func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplic
 		p.AccessControlRoleType, p.AccessControlGroupOptions, d = p.toStateAccessControl(v.GetAccessControlOk())
 		diags.Append(d...)
 
-		//toStateSAMLOptions
+		p.SAMLOptions, d = p.toStateSAMLOptions(v)
+		diags.Append(d...)
 	}
 
 	return diags
@@ -851,7 +820,7 @@ func (p *applicationDataSourceModel) toStateIcon(apiObject *management.Applicati
 func (p *applicationDataSourceModel) toStateAccessControl(apiObject *management.ApplicationAccessControl, ok bool) (basetypes.StringValue, basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	objAccessControlGroupOptions := types.ListUnknown(types.ObjectType{AttrTypes: accessControlGroupOptionsTFObjectTypes})
+	objAccessControlGroupOptions := types.ListNull(types.ObjectType{AttrTypes: accessControlGroupOptionsTFObjectTypes})
 	accessControlRoleType := types.StringNull()
 	accessControlGroupOption := []attr.Value{}
 
@@ -886,27 +855,268 @@ func (p *applicationDataSourceModel) toStateAccessControl(apiObject *management.
 
 }
 
-// todo - fix this
 func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.ApplicationOIDC) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	objOIDCOptions := []attr.Value{}
 
-	// todo - need to ensure nested objects are also null
 	if apiObject == nil {
-		return types.ListUnknown(types.ObjectType{AttrTypes: oidcOptionsTFObjectTypes}), diags
+		return types.ListNull(types.ObjectType{AttrTypes: oidcOptionsTFObjectTypes}), diags
 	}
 
+	kerberoObj, d := p.toStateKerberos(apiObject.GetKerberosOk())
+	diags.Append(d...)
+
+	mobileObj, d := p.toStateMobile(apiObject.GetMobileOk())
+	diags.Append(d...)
+
+	// Build OIDC Options
 	oidcOptions := map[string]attr.Value{
-		"client_id": framework.StringOkToTF(apiObject.GetIdOk()),
-		"type":      framework.EnumOkToTF(apiObject.GetTypeOk()),
-		//"grant_types":                 // toStateGrantTypes
-		"token_endpoint_authn_method": framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
+		"client_id":                        framework.StringOkToTF(apiObject.GetIdOk()),
+		"type":                             framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"grant_types":                      framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
+		"token_endpoint_authn_method":      framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
+		"par_requirement":                  framework.EnumOkToTF(apiObject.GetParRequirementOk()),
+		"par_timeout":                      framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
+		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"initiate_login_uri":               framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
+		"target_link_uri":                  framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
+		"response_types":                   framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
+		"pkce_enforcement":                 framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
+		"redirect_uris":                    framework.StringSetOkToTF(apiObject.GetRedirectUrisOk()),
+		"allow_wildcards_in_redirect_uris": framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
+		"post_logout_redirect_uris":        framework.StringSetOkToTF(apiObject.GetPostLogoutRedirectUrisOk()),
+		"refresh_token_duration":           framework.Int32OkToTF(apiObject.GetRefreshTokenDurationOk()),
+		"refresh_token_rolling_duration":   framework.Int32OkToTF(apiObject.GetRefreshTokenRollingDurationOk()),
+		"refresh_token_rolling_grace_period_duration":        framework.Int32OkToTF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
+		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
+		"client_secret":                    types.StringNull(), //framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"certificate_based_authentication": kerberoObj,
+		"support_unsigned_request_object":  framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
+		"require_signed_request_object":    framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
+		"mobile_app":                       mobileObj,
+		"bundle_id":                        framework.StringOkToTF(apiObject.GetBundleIdOk()),
+		"package_name":                     framework.StringOkToTF(apiObject.GetPackageNameOk()),
 	}
 
-	oidcObject, d := types.ObjectValue(accessControlGroupOptionsTFObjectTypes, oidcOptions)
-	objOIDCOptions = append(objOIDCOptions, oidcObject)
-	returnVar, d := types.ListValue(types.ObjectType{AttrTypes: oidcOptionsTFObjectTypes}, objOIDCOptions)
+	oidcObject, d := types.ObjectValue(oidcOptionsTFObjectTypes, oidcOptions)
+	diags.Append(d...)
 
+	objOIDCOptions = append(objOIDCOptions, oidcObject)
+
+	returnVar, d := types.ListValue(types.ObjectType{AttrTypes: oidcOptionsTFObjectTypes}, objOIDCOptions)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func (p *applicationDataSourceModel) toStateKerberos(apiObject *management.ApplicationOIDCAllOfKerberos, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: certificateAuthenticationTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.ListNull(tfObjType), diags
+	}
+
+	kerberos := map[string]attr.Value{}
+	if v, ok := apiObject.GetKeyOk(); ok {
+		kerberos["key_id"] = framework.StringOkToTF(v.GetIdOk())
+	} else {
+		kerberos["key_id"] = types.StringNull()
+	}
+
+	flattenedObj, d := types.ObjectValue(certificateAuthenticationTFObjectTypes, kerberos)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func (p *applicationDataSourceModel) toStateMobile(apiObject *management.ApplicationOIDCAllOfMobile, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: mobileAppTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.ListNull(tfObjType), diags
+	}
+
+	passcodeRefreshSeconds := types.Int64Null()
+	if v, ok := apiObject.GetPasscodeRefreshDurationOk(); ok {
+		passcodeRefreshSeconds = framework.Int32OkToTF(v.GetDurationOk())
+
+		if j, okJ := v.GetTimeUnitOk(); okJ && *j != management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS {
+			diags.AddError(
+				"Invalid time unit",
+				fmt.Sprintf("Expecting time unit of %s for attribute `passcode_refresh_seconds`, got %v", management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS, j),
+			)
+
+			return types.ListNull(tfObjType), diags
+		}
+	}
+
+	integrityDetection, d := p.toStateMobileIntegrityDetection(apiObject.GetIntegrityDetectionOk())
+	diags.Append(d...)
+
+	mobileApp := map[string]attr.Value{
+		"bundle_id":                framework.StringOkToTF(apiObject.GetBundleIdOk()),
+		"package_name":             framework.StringOkToTF(apiObject.GetPackageNameOk()),
+		"huawei_app_id":            framework.StringOkToTF(apiObject.GetHuaweiAppIdOk()),
+		"huawei_package_name":      framework.StringOkToTF(apiObject.GetHuaweiPackageNameOk()),
+		"passcode_refresh_seconds": passcodeRefreshSeconds,
+		"universal_app_link":       framework.StringOkToTF(apiObject.GetUriPrefixOk()),
+		"integrity_detection":      integrityDetection,
+	}
+
+	flattenedObj, d := types.ObjectValue(mobileAppTFObjectTypes, mobileApp)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func (p *applicationDataSourceModel) toStateMobileIntegrityDetection(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetection, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: integrityDetectionTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.ListNull(tfObjType), diags
+	}
+
+	// Cache Duration
+	cacheDuration := map[string]attr.Value{}
+	if v, ok := apiObject.GetCacheDurationOk(); ok {
+		cacheDuration = map[string]attr.Value{
+			"amount": framework.Int32OkToTF(v.GetAmountOk()),
+			"units":  framework.EnumOkToTF(v.GetUnitsOk()),
+		}
+	}
+	flattenedObj, d := types.ObjectValue(cacheDurationTFObjectTypes, cacheDuration)
+	diags.Append(d...)
+
+	cacheDurationObj, d := types.ListValue(
+		types.ObjectType{AttrTypes: cacheDurationTFObjectTypes},
+		append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	// Google Play
+	dummySuppressValue := "DUMMY_SUPPRESS_VALUE"
+	googlePlay := map[string]attr.Value{}
+	if v, ok := apiObject.GetGooglePlayOk(); ok {
+		googlePlay["verification_type"] = framework.EnumOkToTF(v.GetVerificationTypeOk())
+
+		if v.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_INTERNAL {
+			googlePlay["decryption_key"] = framework.StringToTF(dummySuppressValue)
+			googlePlay["verification_key"] = framework.StringToTF(dummySuppressValue)
+		} else {
+			googlePlay["decryption_key"] = types.StringNull()
+			googlePlay["verification_key"] = types.StringNull()
+		}
+
+		if v.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_GOOGLE {
+			googlePlay["service_account_credentials_json"] = framework.StringToTF(dummySuppressValue)
+		} else {
+			googlePlay["service_account_credentials_json"] = types.StringNull()
+		}
+	}
+
+	flattenedObj, d = types.ObjectValue(googlePlayTFObjectTypes, googlePlay)
+	diags.Append(d...)
+
+	googlePlayObj, d := types.ListValue(
+		types.ObjectType{AttrTypes: googlePlayTFObjectTypes},
+		append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	// Enabled
+	enabledBool := false
+	if v, ok := apiObject.GetModeOk(); ok {
+		if *v == management.ENUMENABLEDSTATUS_ENABLED {
+			enabledBool = true
+		}
+	}
+
+	// Build Main Object
+	integrityDetection := map[string]attr.Value{
+		"enabled":            framework.BoolOkToTF(&enabledBool, ok),
+		"excluded_platforms": framework.EnumSetOkToTF(apiObject.GetExcludedPlatformsOk()),
+		"cache_duration":     cacheDurationObj,
+		"google_play":        googlePlayObj,
+	}
+
+	flattenedObj, d = types.ObjectValue(integrityDetectionTFObjectTypes, integrityDetection)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.ApplicationSAML) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	objSAMLOptions := []attr.Value{}
+
+	if apiObject == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: samlOptionsTFObjectTypes}), diags
+	}
+
+	// IdP Signing Key
+	idpSigningKey := map[string]attr.Value{}
+	if v, ok := apiObject.GetIdpSigningOk(); ok {
+		idpSigningKey["algorithm"] = framework.EnumOkToTF(v.GetAlgorithmOk())
+
+		if j, ok := v.GetKeyOk(); ok {
+			idpSigningKey["key_id"] = framework.StringOkToTF(j.GetIdOk())
+		}
+	} else {
+		idpSigningKey["algorithm"] = types.StringNull()
+		idpSigningKey["key_id"] = types.StringNull()
+	}
+	flattenedObj, d := types.ObjectValue(idpSigningKeyTFObjectTypes, idpSigningKey)
+	diags.Append(d...)
+
+	idpSigningKeyObj, d := types.ListValue(types.ObjectType{AttrTypes: idpSigningKeyTFObjectTypes}, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	// SP Verification Certificate Ids
+	var idList []string
+	if v, ok := apiObject.SpVerification.GetCertificatesOk(); ok {
+
+		idList = make([]string, 0)
+		for _, j := range v {
+			idList = append(idList, j.GetId())
+		}
+	}
+
+	// Build Main Object
+	samlOptions := map[string]attr.Value{
+		"type":                            framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"acs_urls":                        framework.EnumSetOkToTF(apiObject.GetAcsUrlsOk()),
+		"assertion_duration":              framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
+		"sp_entity_id":                    framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
+		"home_page_url":                   framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"assertion_signed_enabled":        framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
+		"idp_signing_key":                 idpSigningKeyObj,
+		"idp_signing_key_id":              idpSigningKey["key_id"], //todo - review
+		"enable_requested_authn_context":  framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
+		"nameid_format":                   framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
+		"response_is_signed":              framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
+		"slo_binding":                     framework.EnumOkToTF(apiObject.GetSloBindingOk()),
+		"slo_endpoint":                    framework.StringOkToTF(apiObject.GetSloEndpointOk()),
+		"slo_response_endpoint":           framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
+		"slo_window":                      framework.Int32OkToTF(apiObject.GetSloWindowOk()),
+		"sp_verification_certificate_ids": framework.StringSetToTF(idList),
+	}
+
+	samlObject, d := types.ObjectValue(samlOptionsTFObjectTypes, samlOptions)
+	diags.Append(d...)
+
+	objSAMLOptions = append(objSAMLOptions, samlObject)
+
+	returnVar, d := types.ListValue(types.ObjectType{AttrTypes: samlOptionsTFObjectTypes}, objSAMLOptions)
 	diags.Append(d...)
 
 	return returnVar, diags
