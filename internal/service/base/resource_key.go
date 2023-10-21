@@ -483,23 +483,20 @@ func (r *KeyResource) Configure(ctx context.Context, req resource.ConfigureReque
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state keyResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -530,7 +527,8 @@ func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.CertificateManagementApi.CreateKey(ctx, plan.EnvironmentId.ValueString()).ContentType("multipart/form-data").UsageType(plan.UsageType.ValueString()).File(&archive).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.CertificateManagementApi.CreateKey(ctx, plan.EnvironmentId.ValueString()).ContentType("multipart/form-data").UsageType(plan.UsageType.ValueString()).File(&archive).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateKey",
 			framework.DefaultCustomError,
@@ -552,7 +550,8 @@ func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.CertificateManagementApi.CreateKey(ctx, plan.EnvironmentId.ValueString()).Certificate(*certificateKey).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.CertificateManagementApi.CreateKey(ctx, plan.EnvironmentId.ValueString()).Certificate(*certificateKey).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateKey",
 			framework.DefaultCustomError,
@@ -575,7 +574,7 @@ func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, re
 func (r *KeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *keyResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -594,7 +593,8 @@ func (r *KeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.CertificateManagementApi.GetKey(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.CertificateManagementApi.GetKey(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetKey",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -619,7 +619,7 @@ func (r *KeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state keyResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -647,7 +647,8 @@ func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.CertificateManagementApi.UpdateKey(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CertificateKeyUpdate(*certificateKey).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.CertificateManagementApi.UpdateKey(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CertificateKeyUpdate(*certificateKey).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateKey",
 		framework.DefaultCustomError,
@@ -669,7 +670,7 @@ func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *keyResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -687,8 +688,8 @@ func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.CertificateManagementApi.DeleteKey(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.CertificateManagementApi.DeleteKey(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteKey",
 		framework.CustomErrorResourceNotFoundWarning,

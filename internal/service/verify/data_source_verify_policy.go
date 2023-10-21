@@ -735,23 +735,20 @@ func (r *VerifyPolicyDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *verifyPolicyDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -773,7 +770,8 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.VerifyPolicyId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.VerifyPolicyId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneVerifyPolicy",
 			framework.DefaultCustomError,
@@ -793,7 +791,8 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllVerifyPolicies",
 			framework.DefaultCustomError,
@@ -832,7 +831,8 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllVerifyPolicies",
 			framework.DefaultCustomError,

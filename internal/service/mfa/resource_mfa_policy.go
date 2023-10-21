@@ -421,7 +421,8 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, d.Get("environment_id").(string)).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
+			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, d.Get("environment_id").(string)).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateDeviceAuthenticationPolicies",
 		mfaPolicyCreateUpdateCustomErrorHandler,
@@ -448,7 +449,8 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneDeviceAuthenticationPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -547,7 +549,8 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).DeviceAuthenticationPolicy(*mfaPolicy).Execute()
+			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).DeviceAuthenticationPolicy(*mfaPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateMFAPolicy",
 		mfaPolicyCreateUpdateCustomErrorHandler,
@@ -570,8 +573,8 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteDeviceAuthenticationPolicy",
 		sdk.DefaultCustomError,
@@ -838,7 +841,8 @@ func checkApplicationForMobileApp(ctx context.Context, apiClient *management.API
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentID, appID).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentID, appID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		sdk.CustomErrorResourceNotFoundWarning,

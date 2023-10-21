@@ -147,23 +147,20 @@ func (r *BrandingSettingsResource) Configure(ctx context.Context, req resource.C
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *BrandingSettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state brandingSettingsResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -189,7 +186,8 @@ func (r *BrandingSettingsResource) Create(ctx context.Context, req resource.Crea
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.BrandingSettingsApi.UpdateBrandingSettings(ctx, plan.EnvironmentId.ValueString()).BrandingSettings(*brandingSettings).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingSettingsApi.UpdateBrandingSettings(ctx, plan.EnvironmentId.ValueString()).BrandingSettings(*brandingSettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"Create::UpdateBrandingSettings",
 		framework.DefaultCustomError,
@@ -211,7 +209,7 @@ func (r *BrandingSettingsResource) Create(ctx context.Context, req resource.Crea
 func (r *BrandingSettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *brandingSettingsResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -230,10 +228,11 @@ func (r *BrandingSettingsResource) Read(ctx context.Context, req resource.ReadRe
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.BrandingSettingsApi.ReadBrandingSettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingSettingsApi.ReadBrandingSettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadBrandingSettings",
-		framework.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -255,7 +254,7 @@ func (r *BrandingSettingsResource) Read(ctx context.Context, req resource.ReadRe
 func (r *BrandingSettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state brandingSettingsResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -281,7 +280,8 @@ func (r *BrandingSettingsResource) Update(ctx context.Context, req resource.Upda
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.BrandingSettingsApi.UpdateBrandingSettings(ctx, plan.EnvironmentId.ValueString()).BrandingSettings(*brandingSettings).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingSettingsApi.UpdateBrandingSettings(ctx, plan.EnvironmentId.ValueString()).BrandingSettings(*brandingSettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"Update::UpdateBrandingSettings",
 		framework.DefaultCustomError,
@@ -303,7 +303,7 @@ func (r *BrandingSettingsResource) Update(ctx context.Context, req resource.Upda
 func (r *BrandingSettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *brandingSettingsResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -324,10 +324,11 @@ func (r *BrandingSettingsResource) Delete(ctx context.Context, req resource.Dele
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.BrandingSettingsApi.UpdateBrandingSettings(ctx, data.EnvironmentId.ValueString()).BrandingSettings(*brandingSettings).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingSettingsApi.UpdateBrandingSettings(ctx, data.EnvironmentId.ValueString()).BrandingSettings(*brandingSettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"Update::UpdateBrandingSettings",
-		framework.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)

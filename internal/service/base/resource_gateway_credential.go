@@ -74,7 +74,8 @@ func resourceGatewayCredentialCreate(ctx context.Context, d *schema.ResourceData
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewayCredentialsApi.CreateGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).Execute()
+			fO, fR, fErr := apiClient.GatewayCredentialsApi.CreateGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateGatewayCredential",
 		sdk.DefaultCustomError,
@@ -102,7 +103,8 @@ func resourceGatewayCredentialRead(ctx context.Context, d *schema.ResourceData, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewayCredentialsApi.ReadOneGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.GatewayCredentialsApi.ReadOneGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneGatewayCredential",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -144,8 +146,8 @@ func resourceGatewayCredentialDelete(ctx context.Context, d *schema.ResourceData
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.GatewayCredentialsApi.DeleteGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.GatewayCredentialsApi.DeleteGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteGatewayCredential",
 		sdk.CustomErrorResourceNotFoundWarning,

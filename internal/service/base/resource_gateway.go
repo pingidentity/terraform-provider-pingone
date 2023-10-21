@@ -3,7 +3,6 @@ package base
 import (
 	"context"
 	"fmt"
-	"hash/crc32"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -136,7 +135,6 @@ func ResourceGateway() *schema.Resource {
 				Description: "For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory.",
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Set:         userItemsHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -279,7 +277,8 @@ func resourceGatewayCreate(ctx context.Context, d *schema.ResourceData, meta int
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewaysApi.CreateGateway(ctx, d.Get("environment_id").(string)).CreateGatewayRequest(*gatewayRequest).Execute()
+			fO, fR, fErr := apiClient.GatewaysApi.CreateGateway(ctx, d.Get("environment_id").(string)).CreateGatewayRequest(*gatewayRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateGateway",
 		gatewayWriteErrors,
@@ -312,7 +311,8 @@ func resourceGatewayRead(ctx context.Context, d *schema.ResourceData, meta inter
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewaysApi.ReadOneGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.GatewaysApi.ReadOneGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneGateway",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -442,7 +442,8 @@ func resourceGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewaysApi.UpdateGateway(ctx, d.Get("environment_id").(string), d.Id()).CreateGatewayRequest(*gatewayRequest).Execute()
+			fO, fR, fErr := apiClient.GatewaysApi.UpdateGateway(ctx, d.Get("environment_id").(string), d.Id()).CreateGatewayRequest(*gatewayRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateGateway",
 		gatewayWriteErrors,
@@ -465,8 +466,8 @@ func resourceGatewayDelete(ctx context.Context, d *schema.ResourceData, meta int
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.GatewaysApi.DeleteGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.GatewaysApi.DeleteGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteGateway",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -766,22 +767,9 @@ func expandLDAPUserLookupAttributeMappings(c []interface{}) []management.Gateway
 	return mappings
 }
 
-func userItemsHash(v interface{}) int {
+func flattenUserType(c []management.GatewayTypeLDAPAllOfUserTypes) []map[string]interface{} {
 
-	c := int(crc32.ChecksumIEEE([]byte(v.(map[string]interface{})["name"].(string))))
-	if c >= 0 {
-		return c
-	}
-	if -c >= 0 {
-		return -c
-	}
-	// v == MinInt
-	return 0
-}
-
-func flattenUserType(c []management.GatewayTypeLDAPAllOfUserTypes) *schema.Set {
-
-	items := schema.NewSet(userItemsHash, nil)
+	items := make([]map[string]interface{}, 0)
 
 	for _, v := range c {
 		// Required
@@ -816,8 +804,7 @@ func flattenUserType(c []management.GatewayTypeLDAPAllOfUserTypes) *schema.Set {
 			item["user_migration"] = nil
 		}
 
-		items.Add(item)
-
+		items = append(items, item)
 	}
 
 	return items

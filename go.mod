@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/go-changelog v0.0.0-20220419201213-5edfc0d651d8
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
-	github.com/hashicorp/terraform-plugin-framework v1.4.0
+	github.com/hashicorp/terraform-plugin-framework v1.4.1
 	github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.12.0
 	github.com/hashicorp/terraform-plugin-go v0.19.0
@@ -16,17 +16,17 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.12.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.29.0
 	github.com/katbyte/terrafmt v0.5.2
-	github.com/patrickcping/pingone-go-sdk-v2 v0.10.7
-	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.2.1
-	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.3.0
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.4.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.29.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.16.0
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.10.0
-	github.com/patrickcping/pingone-go-sdk-v2/verify v0.3.0
+	github.com/patrickcping/pingone-go-sdk-v2 v0.10.8
+	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.2.2
+	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.3.1
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.4.1
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.30.0
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.17.0
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.11.0
+	github.com/patrickcping/pingone-go-sdk-v2/verify v0.3.1
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.48.0
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 )
 
 require github.com/rivo/uniseg v0.2.0 // indirect
@@ -148,6 +148,7 @@ require (
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-exec v0.19.0 // indirect
 	github.com/hashicorp/terraform-json v0.17.1 // indirect
+	github.com/hashicorp/terraform-plugin-testing v1.5.1
 	github.com/hashicorp/terraform-registry-address v0.2.2 // indirect
 	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
@@ -221,7 +222,7 @@ require (
 	github.com/sanposhiho/wastedassign/v2 v2.0.7 // indirect
 	github.com/sashamelentyev/interfacebloat v1.1.0 // indirect
 	github.com/sashamelentyev/usestdlibvars v1.24.0 // indirect
-	github.com/securego/gosec/v2 v2.17.0 // indirect
+	github.com/securego/gosec/v2 v2.18.1 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shazow/go-diff v0.0.0-20160112020656-b6b7b6733b8c // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
@@ -275,15 +276,15 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
-	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.15.0 // indirect
-	golang.org/x/oauth2 v0.12.0 // indirect
-	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/mod v0.13.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/oauth2 v0.13.0 // indirect
+	golang.org/x/sync v0.4.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	golang.org/x/tools v0.13.0 // indirect
+	golang.org/x/tools v0.14.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.126.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

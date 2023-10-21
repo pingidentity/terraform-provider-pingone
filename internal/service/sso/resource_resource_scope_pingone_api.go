@@ -130,23 +130,20 @@ func (r *ResourceScopePingOneAPIResource) Configure(ctx context.Context, req res
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ResourceScopePingOneAPIResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -159,14 +156,16 @@ func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client)
+	resource, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), "PingOne API", false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	plan.ResourceId = framework.StringOkToTF(resource.GetIdOk())
+
 	// Build the model for the API
-	resourceScope, d := plan.expand(ctx, r.Client, *resource)
+	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient, *resource)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -180,7 +179,8 @@ func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), *v).ResourceScope(*resourceScope).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceScope-PingOneAPI-Create",
 			framework.DefaultCustomError,
@@ -194,7 +194,8 @@ func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceScopesApi.CreateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId()).ResourceScope(*resourceScope).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.CreateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId()).ResourceScope(*resourceScope).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateResourceScope-PingOneAPI-Create",
 			framework.DefaultCustomError,
@@ -218,7 +219,7 @@ func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resour
 func (r *ResourceScopePingOneAPIResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ResourceScopePingOneAPIResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -231,9 +232,15 @@ func (r *ResourceScopePingOneAPIResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client)
+	resource, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), "PingOne API", true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if resource == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -243,7 +250,8 @@ func (r *ResourceScopePingOneAPIResource) Read(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ResourceScopesApi.ReadOneResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.ReadOneResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneResourceScope-PingOneAPI",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -268,7 +276,7 @@ func (r *ResourceScopePingOneAPIResource) Read(ctx context.Context, req resource
 func (r *ResourceScopePingOneAPIResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ResourceScopePingOneAPIResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -281,14 +289,16 @@ func (r *ResourceScopePingOneAPIResource) Update(ctx context.Context, req resour
 		return
 	}
 
-	resource, d := plan.getResource(ctx, r.Client)
+	resource, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), "PingOne API", false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	plan.ResourceId = framework.StringOkToTF(resource.GetIdOk())
+
 	// Build the model for the API
-	resourceScope, d := plan.expand(ctx, r.Client, *resource)
+	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient, *resource)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -300,7 +310,8 @@ func (r *ResourceScopePingOneAPIResource) Update(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), plan.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.UpdateResourceScope(ctx, plan.EnvironmentId.ValueString(), resource.GetId(), plan.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateResourceScope-PingOneAPI",
 		framework.DefaultCustomError,
@@ -322,7 +333,7 @@ func (r *ResourceScopePingOneAPIResource) Update(ctx context.Context, req resour
 func (r *ResourceScopePingOneAPIResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ResourceScopePingOneAPIResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -335,15 +346,19 @@ func (r *ResourceScopePingOneAPIResource) Delete(ctx context.Context, req resour
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client)
+	resource, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), "PingOne API", true)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	if resource == nil {
+		return
+	}
+
 	if m, err := regexp.MatchString("^p1:(read|update):user$", data.Name.ValueString()); err == nil && m {
 
-		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
+		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -355,7 +370,8 @@ func (r *ResourceScopePingOneAPIResource) Delete(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceScopesApi.UpdateResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.UpdateResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceScope(*resourceScope).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceScope-PingOneAPI-Delete",
 			framework.DefaultCustomError,
@@ -369,8 +385,8 @@ func (r *ResourceScopePingOneAPIResource) Delete(ctx context.Context, req resour
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.Client.ResourceScopesApi.DeleteResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
-				return nil, r, err
+				fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.DeleteResourceScope(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteResourceScope-PingOneAPI-Delete",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -416,31 +432,6 @@ func (r *ResourceScopePingOneAPIResource) ImportState(ctx context.Context, req r
 
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
-}
-
-func (p *ResourceScopePingOneAPIResourceModel) getResource(ctx context.Context, apiClient *management.APIClient) (*management.Resource, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var d diag.Diagnostics
-
-	resource, d := fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), "PingOne API")
-
-	diags.Append(d...)
-
-	if resource == nil {
-		diags.AddError(
-			"Invalid resource",
-			"Cannot manage PingOne API scopes as the PingOne API resource could not be found.",
-		)
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	p.ResourceId = framework.StringOkToTF(resource.GetIdOk())
-
-	return resource, diags
 }
 
 func (p *ResourceScopePingOneAPIResourceModel) expand(ctx context.Context, apiClient *management.APIClient, resource management.Resource) (*management.ResourceScope, diag.Diagnostics) {
@@ -513,6 +504,13 @@ func (p *ResourceScopePingOneAPIResourceModel) toState(apiObject *management.Res
 	}
 
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+
+	if v, ok := apiObject.GetResourceOk(); ok {
+		p.ResourceId = framework.StringOkToTF(v.GetIdOk())
+	} else {
+		p.ResourceId = types.StringNull()
+	}
+
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.SchemaAttributes = framework.StringSetOkToTF(apiObject.GetSchemaAttributesOk())

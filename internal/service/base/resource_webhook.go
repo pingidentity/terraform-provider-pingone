@@ -26,9 +26,7 @@ import (
 )
 
 // Types
-type WebhookResource struct {
-	client *management.APIClient
-}
+type WebhookResource serviceClientType
 
 type WebhookResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
@@ -307,23 +305,20 @@ func (r *WebhookResource) Configure(ctx context.Context, req resource.ConfigureR
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
 }
 
 func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state WebhookResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -349,7 +344,8 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SubscriptionsWebhooksApi.CreateSubscription(ctx, plan.EnvironmentId.ValueString()).Subscription(*subscription).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.SubscriptionsWebhooksApi.CreateSubscription(ctx, plan.EnvironmentId.ValueString()).Subscription(*subscription).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateSubscription",
 		framework.DefaultCustomError,
@@ -371,7 +367,7 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *WebhookResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -390,7 +386,8 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SubscriptionsWebhooksApi.ReadOneSubscription(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.SubscriptionsWebhooksApi.ReadOneSubscription(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneSubscription",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -415,7 +412,7 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state WebhookResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -441,7 +438,8 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SubscriptionsWebhooksApi.UpdateSubscription(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Subscription(*subscription).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.SubscriptionsWebhooksApi.UpdateSubscription(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Subscription(*subscription).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateSubscription",
 		framework.DefaultCustomError,
@@ -463,7 +461,7 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 func (r *WebhookResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *WebhookResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -481,8 +479,8 @@ func (r *WebhookResource) Delete(ctx context.Context, req resource.DeleteRequest
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.SubscriptionsWebhooksApi.DeleteSubscription(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.SubscriptionsWebhooksApi.DeleteSubscription(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteSubscription",
 		framework.CustomErrorResourceNotFoundWarning,

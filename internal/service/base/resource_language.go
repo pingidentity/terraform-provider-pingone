@@ -83,7 +83,8 @@ func resourceLanguageCreate(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.CreateLanguage(ctx, d.Get("environment_id").(string)).Language(language).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.CreateLanguage(ctx, d.Get("environment_id").(string)).Language(language).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateLanguage",
 		sdk.DefaultCustomError,
@@ -110,7 +111,8 @@ func resourceLanguageRead(ctx context.Context, d *schema.ResourceData, meta inte
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -162,8 +164,8 @@ func resourceLanguageDelete(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.LanguagesApi.DeleteLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.LanguagesApi.DeleteLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteLanguage",
 		sdk.CustomErrorResourceNotFoundWarning,

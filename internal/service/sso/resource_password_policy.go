@@ -239,7 +239,8 @@ func resourcePasswordPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PasswordPoliciesApi.CreatePasswordPolicy(ctx, d.Get("environment_id").(string)).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+			fO, fR, fErr := apiClient.PasswordPoliciesApi.CreatePasswordPolicy(ctx, d.Get("environment_id").(string)).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreatePasswordPolicy",
 		sdk.DefaultCustomError,
@@ -266,7 +267,8 @@ func resourcePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, met
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOnePasswordPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -398,7 +400,8 @@ func resourcePasswordPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+			fO, fR, fErr := apiClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdatePasswordPolicy",
 		sdk.DefaultCustomError,
@@ -421,8 +424,8 @@ func resourcePasswordPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.PasswordPoliciesApi.DeletePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.PasswordPoliciesApi.DeletePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeletePasswordPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,

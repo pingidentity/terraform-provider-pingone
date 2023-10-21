@@ -3,71 +3,85 @@ package base_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckAgreementEnableDestroy(s *terraform.State) error {
+var (
+	agreementEnableExternalProviders = map[string]resource.ExternalProvider{
+		"time": {
+			Source:            "hashicorp/time",
+			VersionConstraint: "0.9.1",
+		},
+	}
+)
+
+func TestAccAgreementEnable_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_agreement_enable.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var agreementID, environmentID string
+
+	var p1Client *client.Client
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
 
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_agreement_enable" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.AgreementsResourcesApi.ReadOneAgreement(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		if !body.GetEnabled() {
-			continue
-		}
-
-		return fmt.Errorf("PingOne agreement %s still exists", rs.Primary.ID)
-	}
-
-	return nil
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.AgreementEnable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		ExternalProviders:        agreementEnableExternalProviders,
+		Steps: []resource.TestStep{
+			// Test removal of the agreement
+			{
+				Config: testAccAgreementEnableConfig_NewEnv(environmentName, licenseID, resourceName, "fr"),
+				Check:  base.AgreementEnable_GetIDs(resourceFullName, &environmentID, &agreementID),
+			},
+			{
+				PreConfig: func() {
+					base.Agreement_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config:  testAccAgreementEnableConfig_NewEnv(environmentName, licenseID, resourceName, "fr"),
+				Destroy: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccAgreementEnableConfig_NewEnv(environmentName, licenseID, resourceName, "fr"),
+				Check:  base.AgreementEnable_GetIDs(resourceFullName, &environmentID, &agreementID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccAgreementEnable_Full(t *testing.T) {
@@ -75,8 +89,6 @@ func TestAccAgreementEnable_Full(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_agreement_enable.%s", resourceName)
-
-	name := resourceName
 
 	enabledCheck := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
@@ -93,40 +105,44 @@ func TestAccAgreementEnable_Full(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckAgreementEnableDestroy,
+		CheckDestroy:             base.AgreementEnable_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
+		ExternalProviders:        agreementEnableExternalProviders,
 		Steps: []resource.TestStep{
 			// Enabled
 			{
-				Config: testAccAgreementEnableConfig_Enable(resourceName, name),
+				Config: testAccAgreementEnableConfig_Enable(resourceName),
 				Check:  enabledCheck,
 			},
 			{
-				Config:  testAccAgreementEnableConfig_Enable(resourceName, name),
+				Config:  testAccAgreementEnableConfig_Enable(resourceName),
 				Destroy: true,
 			},
 			// Disabled
 			{
-				Config: testAccAgreementEnableConfig_Disable(resourceName, name),
+				Config: testAccAgreementEnableConfig_Disable(resourceName),
 				Check:  disabledCheck,
 			},
 			{
-				Config:  testAccAgreementEnableConfig_Disable(resourceName, name),
+				Config:  testAccAgreementEnableConfig_Disable(resourceName),
 				Destroy: true,
 			},
 			// Change
 			{
-				Config: testAccAgreementEnableConfig_Enable(resourceName, name),
+				Config: testAccAgreementEnableConfig_Enable(resourceName),
 				Check:  enabledCheck,
 			},
 			{
-				Config: testAccAgreementEnableConfig_Disable(resourceName, name),
+				Config: testAccAgreementEnableConfig_Disable(resourceName),
 				Check:  disabledCheck,
 			},
 			{
-				Config: testAccAgreementEnableConfig_Enable(resourceName, name),
+				Config: testAccAgreementEnableConfig_Enable(resourceName),
 				Check:  enabledCheck,
 			},
 			// Test importing the resource
@@ -155,17 +171,19 @@ func TestAccAgreementEnable_BadParameters(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_agreement_enable.%s", resourceName)
 
-	name := resourceName
-
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckAgreementEnableDestroy,
+		CheckDestroy:             base.AgreementEnable_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
+		ExternalProviders:        agreementEnableExternalProviders,
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccAgreementEnableConfig_Enable(resourceName, name),
+				Config: testAccAgreementEnableConfig_Enable(resourceName),
 			},
 			// Errors
 			{
@@ -189,7 +207,90 @@ func TestAccAgreementEnable_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccAgreementEnableConfig_Enable(resourceName, name string) string {
+func testAccAgreementEnableConfig_NewEnv(environmentName, licenseID, resourceName, locale string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_language" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  locale = "%[4]s"
+}
+
+resource "pingone_language_update" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  language_id = data.pingone_language.%[3]s.id
+  default     = true
+  enabled     = true
+}
+
+resource "pingone_agreement" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name        = "%[3]s"
+  description = "An agreement for general Terms and Conditions"
+}
+
+resource "pingone_agreement_localization" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  agreement_id   = pingone_agreement.%[3]s.id
+  language_id    = pingone_language_update.%[3]s.id
+
+  display_name = "%[3]s"
+}
+
+resource "time_static" "%[3]s" {}
+
+resource "pingone_agreement_localization_revision" "%[3]s" {
+  environment_id            = pingone_environment.%[2]s.id
+  agreement_id              = pingone_agreement.%[3]s.id
+  agreement_localization_id = pingone_agreement_localization.%[3]s.id
+
+  content_type      = "text/html"
+  effective_at      = time_static.%[3]s.id
+  require_reconsent = true
+  text              = <<EOT
+	  <h1>Conditions de service</h1>
+	  
+	  Veuillez accepter les termes et conditions.
+	  
+	  <h2>Utilisation des données</h2>
+	  
+	  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+	  
+	  <h2>Soutien</h2>
+	  
+	  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+	  EOT
+}
+
+resource "pingone_agreement_localization_enable" "%[3]s" {
+  environment_id            = pingone_environment.%[2]s.id
+  agreement_id              = pingone_agreement.%[3]s.id
+  agreement_localization_id = pingone_agreement_localization.%[3]s.id
+
+  enabled = true
+
+  depends_on = [
+    pingone_agreement_localization_revision.%[3]s
+  ]
+}
+
+resource "pingone_agreement_enable" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  agreement_id   = pingone_agreement.%[3]s.id
+
+  enabled = true
+
+  depends_on = [
+    pingone_agreement_localization_enable.%[3]s
+  ]
+}
+`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+}
+
+func testAccAgreementEnableConfig_Enable(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -205,12 +306,10 @@ resource "pingone_agreement_enable" "%[2]s" {
 
   enabled = "true"
 }
-
-
-`, acctest.AgreementSandboxEnvironment(), resourceName, name)
+`, acctest.AgreementSandboxEnvironment(), resourceName)
 }
 
-func testAccAgreementEnableConfig_Disable(resourceName, name string) string {
+func testAccAgreementEnableConfig_Disable(resourceName string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -226,5 +325,5 @@ resource "pingone_agreement_enable" "%[2]s" {
 
   enabled = "false"
 }
-`, acctest.AgreementSandboxEnvironment(), resourceName, name)
+`, acctest.AgreementSandboxEnvironment(), resourceName)
 }

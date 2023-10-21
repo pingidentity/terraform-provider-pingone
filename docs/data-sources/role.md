@@ -2,12 +2,12 @@
 page_title: "pingone_role Data Source - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Datasource to read PingOne admin role data
+  Datasource to read PingOne admin role data for a tenant.
 ---
 
 # pingone_role (Data Source)
 
-Datasource to read PingOne admin role data
+Datasource to read PingOne admin role data for a tenant.
 
 ## Example Usage
 
@@ -46,9 +46,9 @@ data "pingone_role" "davinci_admin_ro" {
 
 ### Required
 
-- `name` (String) The name of the role.
+- `name` (String) The name of the role to look up.  Options are `Client Application Developer`, `Configuration Read Only`, `DaVinci Admin`, `DaVinci Admin Read Only`, `Environment Admin`, `Identity Data Admin`, `Identity Data Read Only`, `Organization Admin`, `PingFederate Administrator`, `PingFederate Auditor`, `PingFederate Crypto Administrator`, `PingFederate Expression Administrator`, `PingFederate User Administrator`.
 
 ### Read-Only
 
-- `description` (String) A description of the role.
+- `description` (String) The description of the role.
 - `id` (String) The ID of this resource.

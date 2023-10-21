@@ -7,83 +7,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/verify"
+	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckVerifyVoicePhraseContentsDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.VerifyAPIClient
-
-	mgmtApiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_verify_voice_phrase_content" {
-			continue
-		}
-
-		_, rEnv, err := mgmtApiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.VoicePhraseContentsApi.ReadOneVoicePhraseContent(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["voice_phrase_id"], rs.Primary.Attributes["id"]).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Voice Phrase Content %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetVerifyVoicePhraseContentIDs(resourceName string, environmentID, voicePhraseID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*voicePhraseID = rs.Primary.Attributes["voice_phrase_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -91,43 +22,64 @@ func TestAccVerifyVoicePhraseContent_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_verify_voice_phrase_content.%s", resourceName)
 
-	name := resourceName
 	locale := "en"
 	phrase := "Experience a better experience."
 
-	var resourceID, voicePhraseID, environmentID string
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var voicePhraseContentID, voicePhraseID, environmentID string
+
+	var p1Client *client.Client
+	var ctx = context.Background()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccVerifyVoicePhraseContent_Full(resourceName, name, locale, phrase),
-				Check:  testAccGetVerifyVoicePhraseContentIDs(resourceFullName, &environmentID, &voicePhraseID, &resourceID),
+				Check:  verify.VerifyVoicePhraseContent_GetIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.VerifyAPIClient
-
-					if environmentID == "" || voicePhraseID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, voice phrase ID or resource ID cannot be determined. Environment ID: %s, Voice Phrase ID: %s, Resource ID: %s", environmentID, voicePhraseID, resourceID)
-					}
-
-					_, err = apiClient.VoicePhraseContentsApi.DeleteVoicePhraseContent(ctx, environmentID, voicePhraseID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete voice phrase contentt: %v", err)
-					}
+					verify.VerifyVoicePhraseContent_RemovalDrift_PreConfig(ctx, p1Client.API.VerifyAPIClient, t, environmentID, voicePhraseID, voicePhraseContentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the voice phrase ID
+			{
+				Config: testAccVerifyVoicePhraseContent_Full(resourceName, name, locale, phrase),
+				Check:  verify.VerifyVoicePhraseContent_GetIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
+			},
+			{
+				PreConfig: func() {
+					verify.VerifyVoicePhrase_RemovalDrift_PreConfig(ctx, p1Client.API.VerifyAPIClient, t, environmentID, voicePhraseID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccVerifyVoicePhraseContentConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  verify.VerifyVoicePhraseContent_GetIDs(resourceFullName, &environmentID, &voicePhraseID, &voicePhraseContentID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -149,9 +101,13 @@ func TestAccVerifyVoicePhraseContent_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -192,6 +148,7 @@ func TestAccVerifyVoicePhraseContent_Full(t *testing.T) {
 	updatedVoicePhraseContent := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", validation.P1ResourceIDRegexp),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "voice_phrase_id", validation.P1ResourceIDRegexp),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "content", updatedPhrase),
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
@@ -199,9 +156,12 @@ func TestAccVerifyVoicePhraseContent_Full(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -230,7 +190,7 @@ func TestAccVerifyVoicePhraseContent_Full(t *testing.T) {
 				Check:  updatedVoicePhraseContent,
 			},
 			{
-				Config: testAccVerifyVoicePhraseContent_UpdateVoicePhraseTestReplace(resourceName, updatedName, locale, updatedPhrase),
+				Config: testAccVerifyVoicePhraseContent_ReplaceVoicePhrase(resourceName, updatedName, locale, updatedPhrase),
 				Check:  updatedVoicePhraseContent,
 			},
 			{
@@ -270,9 +230,12 @@ func TestAccVerifyVoicePhraseContent_BadParameters(t *testing.T) {
 		"they become habits. Watch your habits; they become character. Watch your character; it becomes your destiny."
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyVoicePhraseContentsDestroy,
+		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
@@ -337,13 +300,13 @@ resource "pingone_verify_voice_phrase_content" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, locale, phrase)
 }
 
-func testAccVerifyVoicePhraseContent_UpdateVoicePhraseTestReplace(resourceName, name, locale, phrase string) string {
+func testAccVerifyVoicePhraseContent_ReplaceVoicePhrase(resourceName, name, locale, phrase string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_verify_voice_phrase" "%[2]s-replace" {
   environment_id = data.pingone_environment.general_test.id
-  display_name   = "%[3]s"
+  display_name   = "%[3]s-replace"
 }
 
 resource "pingone_verify_voice_phrase_content" "%[2]s" {

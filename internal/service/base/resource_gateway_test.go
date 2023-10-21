@@ -7,80 +7,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckGatewayDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_gateway" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.GatewaysApi.ReadOneGateway(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Gateway Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetGatewayIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccGateway_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -88,41 +21,49 @@ func TestAccGateway_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_gateway.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var gatewayID, environmentID string
+
+	var p1Client *client.Client
+	var ctx = context.Background()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccGatewayConfig_Minimal(resourceName, name),
-				Check:  testAccGetGatewayIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  base.Gateway_GetIDs(resourceFullName, &environmentID, &gatewayID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
-					}
-
-					_, err = apiClient.GatewaysApi.DeleteGateway(ctx, environmentID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete Gateway: %v", err)
-					}
+					base.Gateway_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, gatewayID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccGatewayConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  base.Gateway_GetIDs(resourceFullName, &environmentID, &gatewayID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -144,9 +85,13 @@ func TestAccGateway_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -168,9 +113,12 @@ func TestAccGateway_Full(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -197,9 +145,12 @@ func TestAccGateway_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -226,9 +177,12 @@ func TestAccGateway_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -288,9 +242,12 @@ func TestAccGateway_PF(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -332,9 +289,12 @@ func TestAccGateway_APIG(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -376,9 +336,12 @@ func TestAccGateway_Intelligence(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -419,17 +382,17 @@ func TestAccGateway_LDAP(t *testing.T) {
 
 	name := resourceName
 
-	fullStep := resource.TestStep{
-		Config: testAccGatewayConfig_LDAPFull(resourceName, name),
+	fullStep1 := resource.TestStep{
+		Config: testAccGatewayConfig_LDAPFull1(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
-			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
-			resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test,dc=example,dc=com"),
-			resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue"),
+			resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test1,dc=example,dc=com"),
+			resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue1"),
 			resource.TestCheckResourceAttr(resourceFullName, "connection_security", "TLS"),
 			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", "username@domainname"),
 			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", "dummyKerberosPasswordValue"),
@@ -455,21 +418,6 @@ func TestAccGateway_LDAP(t *testing.T) {
 				"user_migration.0.attribute_mapping.#":   "3",
 				"push_password_changes_to_ldap":          "true",
 			}),
-
-			/*
-				resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
-					"name":  "username",
-					"value": "${ldapAttributes.uid}",
-				}),
-				resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
-					"name":  "email",
-					"value": "${ldapAttributes.mail}",
-				}),
-				resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.0.user_migration.0.attribute_mapping.*", map[string]string{
-					"name":  "name.family",
-					"value": "${ldapAttributes.sn}",
-				}),
-			*/
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
 				"name":                                   "User Set 1",
 				"password_authority":                     "LDAP",
@@ -482,16 +430,55 @@ func TestAccGateway_LDAP(t *testing.T) {
 				"user_migration.0.attribute_mapping.#":   "2",
 				"push_password_changes_to_ldap":          "true",
 			}),
-			/*
-				resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.1.user_migration.0.attribute_mapping.*", map[string]string{
-					"name":  "username",
-					"value": "${ldapAttributes.uid}",
-				}),
-				resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.1.user_migration.0.attribute_mapping.*", map[string]string{
-					"name":  "email",
-					"value": "${ldapAttributes.mail}",
-				}),
-			*/
+		),
+	}
+
+	fullStep2 := resource.TestStep{
+		Config: testAccGatewayConfig_LDAPFull2(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "name", name),
+			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
+			resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test1,dc=example,dc=com"),
+			resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue1"),
+			resource.TestCheckResourceAttr(resourceFullName, "connection_security", "TLS"),
+			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", "username@domainname"),
+			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", "dummyKerberosPasswordValue"),
+			resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "20"),
+			resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:636"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:636"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:636"),
+			resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "vendor", "Microsoft Active Directory"),
+			resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "2"),
+
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
+				"name":                                   "User Set 2",
+				"password_authority":                     "PING_ONE",
+				"search_base_dn":                         "ou=users,dc=example,dc=com",
+				"user_link_attributes.#":                 "3",
+				"user_link_attributes.0":                 "objectGUID",
+				"user_link_attributes.1":                 "dn",
+				"user_link_attributes.2":                 "objectSid",
+				"user_migration.#":                       "1",
+				"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
+				"user_migration.0.attribute_mapping.#":   "3",
+				"push_password_changes_to_ldap":          "true",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
+				"name":                          "User Set 1",
+				"password_authority":            "LDAP",
+				"search_base_dn":                "ou=users1,dc=example,dc=com",
+				"user_link_attributes.#":        "2",
+				"user_link_attributes.0":        "objectGUID",
+				"user_link_attributes.1":        "objectSid",
+				"user_migration.#":              "0",
+				"push_password_changes_to_ldap": "true",
+			}),
 		),
 	}
 
@@ -515,21 +502,24 @@ func TestAccGateway_LDAP(t *testing.T) {
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:389"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:389"),
 			resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "vendor", "PingDirectory"),
+			resource.TestCheckResourceAttr(resourceFullName, "vendor", "Microsoft Active Directory"),
 			resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "0"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
-			fullStep,
+			fullStep1,
 			{
-				Config:  testAccGatewayConfig_LDAPFull(resourceName, name),
+				Config:  testAccGatewayConfig_LDAPFull1(resourceName, name),
 				Destroy: true,
 			},
 			// Minimal
@@ -538,10 +528,14 @@ func TestAccGateway_LDAP(t *testing.T) {
 				Config:  testAccGatewayConfig_LDAPMinimal(resourceName, name),
 				Destroy: true,
 			},
+			// Full Change
+			fullStep1,
+			fullStep2,
+			fullStep1,
 			// Change
-			fullStep,
+			fullStep1,
 			minimalStep,
-			fullStep,
+			fullStep1,
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -619,9 +613,12 @@ func TestAccGateway_RADIUS(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -699,9 +696,12 @@ func TestAccGateway_RADIUSSharedSecrets(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -738,9 +738,12 @@ func TestAccGateway_BadParameter(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckGatewayDestroy,
+		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -852,7 +855,7 @@ resource "pingone_gateway" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccGatewayConfig_LDAPFull(resourceName, name string) string {
+func testAccGatewayConfig_LDAPFull1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -865,11 +868,11 @@ resource "pingone_population" "%[2]s" {
 resource "pingone_gateway" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  enabled        = false
+  enabled        = true
   type           = "LDAP"
 
-  bind_dn       = "ou=test,dc=example,dc=com"
-  bind_password = "dummyPasswordValue"
+  bind_dn       = "ou=test1,dc=example,dc=com"
+  bind_password = "dummyPasswordValue1"
 
   connection_security = "TLS"
   vendor              = "Microsoft Active Directory"
@@ -887,7 +890,6 @@ resource "pingone_gateway" "%[2]s" {
   validate_tls_certificates = false
 
   user_type {
-    // id = "59e24997-f829-4206-b1b7-9b6a8a25c0b4"
     name               = "User Set 1"
     password_authority = "LDAP"
     search_base_dn     = "ou=users1,dc=example,dc=com"
@@ -914,7 +916,85 @@ resource "pingone_gateway" "%[2]s" {
   }
 
   user_type {
-    // id = "59e24997-f829-4206-b1b7-9b6a8a25c0b3"
+    name               = "User Set 2"
+    password_authority = "PING_ONE"
+    search_base_dn     = "ou=users,dc=example,dc=com"
+
+    user_link_attributes = ["objectGUID", "dn", "objectSid"]
+
+    user_migration {
+      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+
+      population_id = pingone_population.%[2]s.id
+
+      attribute_mapping {
+        name  = "username"
+        value = "$${ldapAttributes.uid}"
+      }
+
+      attribute_mapping {
+        name  = "email"
+        value = "$${ldapAttributes.mail}"
+      }
+
+      attribute_mapping {
+        name  = "name.family"
+        value = "$${ldapAttributes.sn}"
+      }
+    }
+
+    push_password_changes_to_ldap = true
+  }
+
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccGatewayConfig_LDAPFull2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_gateway" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+  type           = "LDAP"
+
+  bind_dn       = "ou=test1,dc=example,dc=com"
+  bind_password = "dummyPasswordValue1"
+
+  connection_security = "TLS"
+  vendor              = "Microsoft Active Directory"
+
+  kerberos_service_account_upn              = "username@domainname"
+  kerberos_service_account_password         = "dummyKerberosPasswordValue"
+  kerberos_retain_previous_credentials_mins = 20
+
+  servers = [
+    "ds1.dummyldapservice.com:636",
+    "ds3.dummyldapservice.com:636",
+    "ds2.dummyldapservice.com:636",
+  ]
+
+  validate_tls_certificates = false
+
+  user_type {
+    name               = "User Set 1"
+    password_authority = "LDAP"
+    search_base_dn     = "ou=users1,dc=example,dc=com"
+
+    user_link_attributes = ["objectGUID", "objectSid"]
+
+    push_password_changes_to_ldap = true
+  }
+
+  user_type {
     name               = "User Set 2"
     password_authority = "PING_ONE"
     search_base_dn     = "ou=users,dc=example,dc=com"
@@ -963,7 +1043,7 @@ resource "pingone_gateway" "%[2]s" {
   bind_dn       = "ou=test,dc=example,dc=com"
   bind_password = "dummyPasswordValue"
 
-  vendor = "PingDirectory"
+  vendor = "Microsoft Active Directory"
 
   servers = [
     "ds1.dummyldapservice.com:389",

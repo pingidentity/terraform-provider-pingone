@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_resource_scope_openid`: Fixed missing `resource_id` on import.
+```
+
+```release-note:bug
+`resource/pingone_resource_scope_pingone_api`: Fixed missing `resource_id` on import.
+```

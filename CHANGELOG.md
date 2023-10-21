@@ -1,4 +1,11 @@
-## 0.22.0 (Unreleased)
+## 0.23.0 (Unreleased)
+
+NOTES:
+
+* `data-source/pingone_role`: Migrated to plugin framework. ([#592](https://github.com/pingidentity/terraform-provider-pingone/issues/592))
+* `data-source/pingone_trusted_email_domain`: Corrected documentation descriptions. ([#593](https://github.com/pingidentity/terraform-provider-pingone/issues/593))
+
+## 0.22.0 (17 October 2023)
 
 NOTES:
 
@@ -6,16 +13,40 @@ NOTES:
 * `resource/pingone_certificate`: Adjusted documentation for PEM certificate import. ([#572](https://github.com/pingidentity/terraform-provider-pingone/issues/572))
 * `resource/pingone_environment`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
 * `resource/pingone_key`: Migrated to plugin framework. ([#575](https://github.com/pingidentity/terraform-provider-pingone/issues/575))
+* `resource/pingone_risk_predictor`: Adjust code to no longer use deprecated API parameter `composition`.  Full support of multiple risk composition policies is planned for a future release. ([#590](https://github.com/pingidentity/terraform-provider-pingone/issues/590))
 * `resource/pingone_system_application`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.4.0 => v1.4.1 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.2.1 => v0.2.2 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.3.0 => v0.3.1 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.4.0 => v0.4.1 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.29.0 => v0.30.0 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.16.0 => v0.17.0 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.10.0 => v0.11.0 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.3.0 => v0.3.1 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.7 => v0.10.8 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
 
 ENHANCEMENTS:
 
 * `data_source/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration. ([#579](https://github.com/pingidentity/terraform-provider-pingone/issues/579))
+* `resource/pingone_application`: Added pushed authorization request (PAR) support for OIDC configurations. ([#583](https://github.com/pingidentity/terraform-provider-pingone/issues/583))
 * `resource/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration. ([#579](https://github.com/pingidentity/terraform-provider-pingone/issues/579))
 
 BUG FIXES:
 
+* Fixed blocking error on plan on multiple resources when the parent PingOne environment is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 * `resource/pingone_application_resource_grant`: Fixed inability to apply application grants to the Self-Service and Portal system applications. ([#573](https://github.com/pingidentity/terraform-provider-pingone/issues/573))
+* `resource/pingone_application_role_assignment`: Fixed blocking error on plan when the parent application is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_gateway`: Fixed incorrect unchanged plan when updating the `user_type` parameter. ([#586](https://github.com/pingidentity/terraform-provider-pingone/issues/586))
+* `resource/pingone_resource_attribute`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_attribute`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_openid`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_openid`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_openid`: Fixed missing `resource_id` on import. ([#585](https://github.com/pingidentity/terraform-provider-pingone/issues/585))
+* `resource/pingone_resource_scope_pingone_api`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_pingone_api`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_pingone_api`: Fixed missing `resource_id` on import. ([#585](https://github.com/pingidentity/terraform-provider-pingone/issues/585))
+* `resource/pingone_resource_scope`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_system_application`: Fixed blocking error on plan when the parent environment is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
 
 ## 0.21.0 (18 September 2023)
 

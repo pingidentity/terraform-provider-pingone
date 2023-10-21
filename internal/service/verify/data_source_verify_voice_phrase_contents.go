@@ -71,9 +71,9 @@ func (r *VoicePhraseContentsDataSource) Schema(ctx context.Context, req datasour
 				},
 			},
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting voice phrase content IDs that have been successfully retrieved.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting voice phrase content IDs that have been successfully retrieved.",
+			)),
 		},
 	}
 }
@@ -94,23 +94,20 @@ func (r *VoicePhraseContentsDataSource) Configure(ctx context.Context, req datas
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *VoicePhraseContentsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *voicePhraseContentsDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -129,7 +126,8 @@ func (r *VoicePhraseContentsDataSource) Read(ctx context.Context, req datasource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.VoicePhraseContentsApi.ReadAllVoicePhraseContents(ctx, data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.VerifyAPIClient.VoicePhraseContentsApi.ReadAllVoicePhraseContents(ctx, data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllVoicePhraseContents",
 		framework.DefaultCustomError,

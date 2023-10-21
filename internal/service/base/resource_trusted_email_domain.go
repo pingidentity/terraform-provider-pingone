@@ -21,9 +21,7 @@ import (
 )
 
 // Types
-type TrustedEmailDomainResource struct {
-	client *management.APIClient
-}
+type TrustedEmailDomainResource serviceClientType
 
 type TrustedEmailDomainResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -102,23 +100,20 @@ func (r *TrustedEmailDomainResource) Configure(ctx context.Context, req resource
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
 }
 
 func (r *TrustedEmailDomainResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state TrustedEmailDomainResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -140,7 +135,8 @@ func (r *TrustedEmailDomainResource) Create(ctx context.Context, req resource.Cr
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.TrustedEmailDomainsApi.CreateTrustedEmailDomain(ctx, plan.EnvironmentId.ValueString()).EmailDomain(*emailDomain).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.TrustedEmailDomainsApi.CreateTrustedEmailDomain(ctx, plan.EnvironmentId.ValueString()).EmailDomain(*emailDomain).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateTrustedEmailDomain",
 		framework.DefaultCustomError,
@@ -162,7 +158,7 @@ func (r *TrustedEmailDomainResource) Create(ctx context.Context, req resource.Cr
 func (r *TrustedEmailDomainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *TrustedEmailDomainResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -181,7 +177,8 @@ func (r *TrustedEmailDomainResource) Read(ctx context.Context, req resource.Read
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.TrustedEmailDomainsApi.ReadOneTrustedEmailDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.TrustedEmailDomainsApi.ReadOneTrustedEmailDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneTrustedEmailDomain",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -209,7 +206,7 @@ func (r *TrustedEmailDomainResource) Update(ctx context.Context, req resource.Up
 func (r *TrustedEmailDomainResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *TrustedEmailDomainResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -227,8 +224,8 @@ func (r *TrustedEmailDomainResource) Delete(ctx context.Context, req resource.De
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.TrustedEmailDomainsApi.DeleteTrustedEmailDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.TrustedEmailDomainsApi.DeleteTrustedEmailDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteTrustedEmailDomain",
 		framework.CustomErrorResourceNotFoundWarning,

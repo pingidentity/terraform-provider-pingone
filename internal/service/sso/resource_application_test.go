@@ -8,80 +8,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckApplicationDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_application" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.ApplicationsApi.ReadOneApplication(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Application Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetApplicationIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccApplication_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -89,41 +23,49 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var applicationID, environmentID string
+
+	var p1Client *client.Client
+	var ctx = context.Background()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
-				Check:  testAccGetApplicationIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  sso.Application_GetIDs(resourceFullName, &environmentID, &applicationID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
-					}
-
-					_, err = apiClient.ApplicationsApi.DeleteApplication(ctx, environmentID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete Application: %v", err)
-					}
+					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccApplicationConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.Application_GetIDs(resourceFullName, &environmentID, &applicationID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -145,9 +87,13 @@ func TestAccApplication_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -172,9 +118,12 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -210,6 +159,8 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -263,9 +214,12 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -290,6 +244,8 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
@@ -327,9 +283,12 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -354,6 +313,8 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
@@ -408,6 +369,8 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -454,6 +417,8 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
@@ -491,9 +456,12 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -527,6 +495,8 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "true"),
@@ -593,9 +563,12 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -618,6 +591,8 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
@@ -663,9 +638,12 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -699,6 +677,8 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "true"),
@@ -756,6 +736,8 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
@@ -816,6 +798,8 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "true"),
@@ -881,9 +865,13 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckWorkforceEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// With
@@ -1003,9 +991,12 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// With
@@ -1133,9 +1124,13 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndGoogleJSONKey(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckGoogleJSONKey(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// With
@@ -1190,9 +1185,12 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1232,6 +1230,8 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "ID_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "REQUIRED"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "180"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -1285,9 +1285,12 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1310,6 +1313,8 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
@@ -1346,9 +1351,12 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1388,6 +1396,8 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "ID_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "REQUIRED"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "180"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -1432,6 +1442,8 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
@@ -1489,6 +1501,8 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "ID_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "REQUIRED"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "180"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -1529,9 +1543,12 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1571,6 +1588,8 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "ID_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -1624,9 +1643,12 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1651,6 +1673,8 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
@@ -1688,9 +1712,12 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1730,6 +1757,8 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "ID_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -1776,6 +1805,8 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
@@ -1834,6 +1865,8 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "ID_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -1874,9 +1907,12 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1911,6 +1947,8 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -1964,9 +2002,12 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1990,6 +2031,8 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
@@ -2027,9 +2070,12 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2053,6 +2099,8 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
@@ -2106,6 +2154,8 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://pingidentity.com"),
@@ -2151,6 +2201,8 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.response_types.*", "CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.redirect_uris.*", "https://www.pingidentity.com"),
@@ -2188,9 +2240,12 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2225,6 +2280,8 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
@@ -2274,9 +2331,12 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2301,6 +2361,8 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
@@ -2337,9 +2399,12 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2364,6 +2429,8 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
@@ -2416,6 +2483,8 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
@@ -2458,6 +2527,8 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_requirement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.allow_wildcards_in_redirect_uris", "false"),
@@ -2492,9 +2563,12 @@ func TestAccApplication_OIDC_WildcardInRedirectURI(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2527,9 +2601,12 @@ func TestAccApplication_OIDC_LocalhostAddresses(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Localhost
@@ -2579,9 +2656,12 @@ func TestAccApplication_OIDC_NativeAppAddresses(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Localhost
@@ -2611,9 +2691,12 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2694,9 +2777,12 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2773,9 +2859,12 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Create
@@ -2814,9 +2903,12 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2875,9 +2967,12 @@ func TestAccApplication_ExternalLinkMinimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2909,9 +3004,12 @@ func TestAccApplication_Enabled(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -2945,9 +3043,12 @@ func TestAccApplication_BadParameters(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationDestroy,
+		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
@@ -2993,7 +3094,7 @@ resource "pingone_application" "%[3]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image string) string {
@@ -3057,10 +3158,13 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "OPTIONAL"
 
+    par_requirement = "OPTIONAL"
+    par_timeout     = 60
+
     support_unsigned_request_object = true
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name string) string {
@@ -3080,7 +3184,7 @@ resource "pingone_application" "%[2]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullNative(resourceName, name, image string) string {
@@ -3160,7 +3264,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalNative(resourceName, name string) string {
@@ -3178,7 +3282,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name string) string {
@@ -3212,7 +3316,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name string) string {
@@ -3246,7 +3350,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name string) string {
@@ -3280,7 +3384,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name string) string {
@@ -3326,7 +3430,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_Minimal(resourceName, name string) string {
@@ -3346,7 +3450,7 @@ resource "pingone_application" "%[2]s" {
     mobile_app {}
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Full(resourceName, name string) string {
@@ -3392,7 +3496,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Minimal(resourceName, name, googleJsonKey string) string {
@@ -3434,7 +3538,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, googleJsonKey)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, googleJsonKey)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeGoogle(resourceName, name string) string {
@@ -3473,7 +3577,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeIOS(resourceName, name string) string {
@@ -3518,7 +3622,7 @@ resource "pingone_application" "%[2]s" {
     }
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullCustom(resourceName, name, image string) string {
@@ -3590,10 +3694,13 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "REQUIRED"
 
+    par_requirement = "REQUIRED"
+    par_timeout     = 180
+
     require_signed_request_object = true
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalCustom(resourceName, name string) string {
@@ -3611,7 +3718,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullService(resourceName, name, image string) string {
@@ -3684,7 +3791,7 @@ resource "pingone_application" "%[2]s" {
     pkce_enforcement   = "REQUIRED"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalService(resourceName, name string) string {
@@ -3704,7 +3811,7 @@ resource "pingone_application" "%[2]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullSPA(resourceName, name, image string) string {
@@ -3765,7 +3872,7 @@ resource "pingone_application" "%[2]s" {
 
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalSPA(resourceName, name string) string {
@@ -3786,7 +3893,7 @@ resource "pingone_application" "%[2]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullWorker(resourceName, name, image string) string {
@@ -3842,7 +3949,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
 func testAccApplicationConfig_OIDC_MinimalWorker(resourceName, name string) string {
@@ -3860,7 +3967,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_WildcardInRedirect(resourceName, name string, wildcardInRedirect bool) string {
@@ -3882,7 +3989,7 @@ resource "pingone_application" "%[2]s" {
     allow_wildcards_in_redirect_uris = %[4]t
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, wildcardInRedirect)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, wildcardInRedirect)
 }
 
 func testAccApplicationConfig_OIDC_LocalhostAddresses(resourceName, name, hostname string) string {
@@ -3909,7 +4016,7 @@ resource "pingone_application" "%[2]s" {
     target_link_uri             = "http://%[4]s/link"       # either http or https
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, hostname)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, hostname)
 }
 
 func testAccApplicationConfig_OIDC_NativeAppAddresses(resourceName, name string) string {
@@ -3933,7 +4040,7 @@ resource "pingone_application" "%[2]s" {
     target_link_uri             = "com.myapp.app://target"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_SAML_Full(resourceName, name, image string) string {
@@ -4208,5 +4315,5 @@ resource "pingone_application" "%[2]s" {
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
 }

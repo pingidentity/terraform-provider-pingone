@@ -26,6 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -815,7 +816,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 			}
 
 			if !conditionPlan.CompactName.IsNull() && !conditionPlan.CompactName.IsUnknown() {
-				predictorReferenceValue = types.StringValue(fmt.Sprintf(referenceValueFmt, conditionPlan.CompactName.ValueString()))
+				predictorReferenceValue = framework.StringToTF(fmt.Sprintf(referenceValueFmt, conditionPlan.CompactName.ValueString()))
 				predictorReferenceContains = types.StringNull()
 
 				if setOverrideName {
@@ -824,7 +825,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 			}
 
 			if !conditionPlan.IPRange.IsNull() && !conditionPlan.IPRange.IsUnknown() {
-				predictorReferenceContains = types.StringValue("${transaction.ip}")
+				predictorReferenceContains = framework.StringToTF("${transaction.ip}")
 				predictorReferenceValue = types.StringNull()
 
 				if setOverrideName {
@@ -879,23 +880,20 @@ func (r *RiskPolicyResource) Configure(ctx context.Context, req resource.Configu
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state riskPolicyResourceModel
 
-	if r.Client == nil {
+	if r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -909,7 +907,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Build the model for the API
-	riskPolicy, d := plan.expand(ctx, r.Client)
+	riskPolicy, d := plan.expand(ctx, r.Client.RiskAPIClient, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -921,7 +919,8 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.RiskPoliciesApi.CreateRiskPolicySet(ctx, plan.EnvironmentId.ValueString()).RiskPolicySet(*riskPolicy).Execute()
+			fO, fR, fErr := r.Client.RiskAPIClient.RiskPoliciesApi.CreateRiskPolicySet(ctx, plan.EnvironmentId.ValueString()).RiskPolicySet(*riskPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateRiskPolicySet",
 		riskPolicyCreateUpdateCustomErrorHandler,
@@ -938,7 +937,8 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), createResponse.GetId()).Execute()
+			fO, fR, fErr := r.Client.RiskAPIClient.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), createResponse.GetId()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneRiskPolicySet",
 		framework.DefaultCustomError,
@@ -960,7 +960,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *riskPolicyResourceModel
 
-	if r.Client == nil {
+	if r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -979,7 +979,8 @@ func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.RiskAPIClient.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneRiskPolicySet",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1004,7 +1005,7 @@ func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state riskPolicyResourceModel
 
-	if r.Client == nil {
+	if r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1018,7 +1019,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Build the model for the API
-	riskPolicy, d := plan.expand(ctx, r.Client)
+	riskPolicy, d := plan.expand(ctx, r.Client.RiskAPIClient, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1030,7 +1031,8 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.RiskPoliciesApi.UpdateRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPolicySet(*riskPolicy).Execute()
+			fO, fR, fErr := r.Client.RiskAPIClient.RiskPoliciesApi.UpdateRiskPolicySet(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPolicySet(*riskPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateRiskPolicySet",
 		riskPolicyCreateUpdateCustomErrorHandler,
@@ -1052,7 +1054,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *riskPolicyResourceModel
 
-	if r.Client == nil {
+	if r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1070,8 +1072,8 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.RiskPoliciesApi.DeleteRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.RiskAPIClient.RiskPoliciesApi.DeleteRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteRiskPolicySet",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1135,7 +1137,7 @@ func riskPolicyCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnost
 	return nil
 }
 
-func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.APIClient) (*risk.RiskPolicySet, diag.Diagnostics) {
+func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.APIClient, managementApiClient *management.APIClient) (*risk.RiskPolicySet, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := risk.NewRiskPolicySet(p.Name.ValueString())
@@ -1299,7 +1301,7 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 	// Set the risk policies
 	data.SetRiskPolicies(riskPolicies)
 
-	riskPolicyPredictorsIDs, d := riskPredictorFetchIDsFromCompactNames(ctx, apiClient, p.EnvironmentId.ValueString(), predictorCompactNames)
+	riskPolicyPredictorsIDs, d := riskPredictorFetchIDsFromCompactNames(ctx, apiClient, managementApiClient, p.EnvironmentId.ValueString(), predictorCompactNames)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -1612,7 +1614,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 
 				var equalsString basetypes.StringValue
 				if s := condition.GetEquals().String; s != nil {
-					equalsString = types.StringValue(*s)
+					equalsString = framework.StringToTF(*s)
 				} else {
 					equalsString = types.StringNull()
 				}

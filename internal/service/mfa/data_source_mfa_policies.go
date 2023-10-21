@@ -52,9 +52,9 @@ func (r *MFAPoliciesDataSource) Schema(ctx context.Context, req datasource.Schem
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to select MFA device policies from."),
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of MFA Device Policies that have been successfully retrieved and filtered.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of MFA Device Policies that have been successfully retrieved and filtered.",
+			)),
 		},
 	}
 }
@@ -75,23 +75,20 @@ func (r *MFAPoliciesDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *MFAPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *MFAPoliciesDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -105,7 +102,7 @@ func (r *MFAPoliciesDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	filterFunction := func() (any, *http.Response, error) {
-		return r.Client.DeviceAuthenticationPolicyApi.ReadDeviceAuthenticationPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+		return r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadDeviceAuthenticationPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
 	}
 
 	var entityArray *mfa.EntityArray

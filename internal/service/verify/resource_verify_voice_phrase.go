@@ -106,23 +106,20 @@ func (r *VoicePhraseResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *VoicePhraseResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state voicePhraseResourceModel
 
-	if r.Client == nil {
+	if r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -148,7 +145,8 @@ func (r *VoicePhraseResource) Create(ctx context.Context, req resource.CreateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.VoicePhrasesApi.CreateVoicePhrase(ctx, plan.EnvironmentId.ValueString()).VoicePhrase(*voicePhrase).Execute()
+			fO, fR, fErr := r.Client.VerifyAPIClient.VoicePhrasesApi.CreateVoicePhrase(ctx, plan.EnvironmentId.ValueString()).VoicePhrase(*voicePhrase).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateVoicePhrase",
 		framework.DefaultCustomError,
@@ -170,7 +168,7 @@ func (r *VoicePhraseResource) Create(ctx context.Context, req resource.CreateReq
 func (r *VoicePhraseResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *voicePhraseResourceModel
 
-	if r.Client == nil {
+	if r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -189,7 +187,8 @@ func (r *VoicePhraseResource) Read(ctx context.Context, req resource.ReadRequest
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.VoicePhrasesApi.ReadOneVoicePhrase(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.VerifyAPIClient.VoicePhrasesApi.ReadOneVoicePhrase(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneVoicePhrase",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -214,7 +213,7 @@ func (r *VoicePhraseResource) Read(ctx context.Context, req resource.ReadRequest
 func (r *VoicePhraseResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state voicePhraseResourceModel
 
-	if r.Client == nil {
+	if r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -240,7 +239,8 @@ func (r *VoicePhraseResource) Update(ctx context.Context, req resource.UpdateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.VoicePhrasesApi.UpdateVoicePhrase(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).VoicePhrase(*voicePhrase).Execute()
+			fO, fR, fErr := r.Client.VerifyAPIClient.VoicePhrasesApi.UpdateVoicePhrase(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).VoicePhrase(*voicePhrase).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateVoicePhrase",
 		framework.DefaultCustomError,
@@ -263,7 +263,7 @@ func (r *VoicePhraseResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *VoicePhraseResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *voicePhraseResourceModel
 
-	if r.Client == nil {
+	if r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -281,8 +281,8 @@ func (r *VoicePhraseResource) Delete(ctx context.Context, req resource.DeleteReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.Client.VoicePhrasesApi.DeleteVoicePhrase(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.VerifyAPIClient.VoicePhrasesApi.DeleteVoicePhrase(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteVoicePhrase",
 		framework.CustomErrorResourceNotFoundWarning,

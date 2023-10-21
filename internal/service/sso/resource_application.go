@@ -209,6 +209,20 @@ func ResourceApplication() *schema.Resource {
 							Required:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_NONE), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST)}, false)),
 						},
+						"par_requirement": {
+							Description:      fmt.Sprintf("A string that specifies whether pushed authorization requests (PAR) are required.  Options are `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_REQUIRED)),
+							Type:             schema.TypeString,
+							Optional:         true,
+							Default:          string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_REQUIRED)}, false)),
+						},
+						"par_timeout": {
+							Description:      "An integer that specifies the pushed authorization request (PAR) timeout in seconds.  If a value is not provided, the default value is `60`.  Valid values are between `1` and `600`.",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Default:          60,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 600)),
+						},
 						"pkce_enforcement": {
 							Description:      fmt.Sprintf("A string that specifies how `PKCE` request parameters are handled on the authorize request.  Options are `%s`, `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_REQUIRED), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_S256_REQUIRED)),
 							Type:             schema.TypeString,
@@ -669,7 +683,8 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateApplication",
 		applicationWriteCustomError,
@@ -710,7 +725,8 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.ReadOneApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -733,7 +749,8 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.ApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+				fO, fR, fErr := apiClient.ApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"ReadApplicationSecret",
 			sdk.CustomErrorResourceNotFoundWarning,
@@ -1011,7 +1028,8 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateApplication",
 		applicationWriteCustomError,
@@ -1034,8 +1052,8 @@ func resourceApplicationDelete(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.ApplicationsApi.DeleteApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.ApplicationsApi.DeleteApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteApplication",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -1161,6 +1179,14 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 				obj = append(obj, management.EnumApplicationOIDCResponseType(j.(string)))
 			}
 			application.SetResponseTypes(obj)
+		}
+
+		if v1, ok := oidcOptions["par_requirement"].(string); ok && v1 != "" {
+			application.SetParRequirement(management.EnumApplicationOIDCPARRequirement(v1))
+		}
+
+		if v1, ok := oidcOptions["par_timeout"].(int); ok {
+			application.SetParTimeout(int32(v1))
 		}
 
 		if v1, ok := oidcOptions["pkce_enforcement"].(string); ok && v1 != "" {
@@ -1727,6 +1753,18 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["response_types"] = v
 	} else {
 		item["response_types"] = nil
+	}
+
+	if v, ok := application.GetParRequirementOk(); ok {
+		item["par_requirement"] = v
+	} else {
+		item["par_requirement"] = nil
+	}
+
+	if v, ok := application.GetParTimeoutOk(); ok {
+		item["par_timeout"] = v
+	} else {
+		item["par_timeout"] = nil
 	}
 
 	if v, ok := application.GetPkceEnforcementOk(); ok {

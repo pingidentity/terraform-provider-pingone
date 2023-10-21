@@ -230,23 +230,20 @@ func (r *ResourceAttributeResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ResourceAttributeResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -259,11 +256,22 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	resourceResponse, d := plan.getResource(ctx, r.Client)
+	var resourceResponse *management.Resource
+	var d diag.Diagnostics
+	if !plan.ResourceId.IsNull() && !plan.ResourceId.IsUnknown() {
+		resourceResponse, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), false)
+	}
+
+	if !plan.ResourceName.IsNull() && !plan.ResourceName.IsUnknown() {
+		resourceResponse, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
+	}
+
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	plan.ResourceId = framework.StringOkToTF(resourceResponse.GetIdOk())
 
 	_, isCoreAttribute := plan.isCoreAttribute(resourceResponse.GetType())
 	isOverriddenAttribute := plan.isOverriddenAttribute(resourceResponse.GetType())
@@ -274,7 +282,7 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// Build the model for the API
-	resourceAttribute, d := plan.expand(ctx, r.Client, resourceResponse.GetType(), isCoreAttribute || isOverriddenAttribute)
+	resourceAttribute, d := plan.expand(ctx, r.Client.ManagementAPIClient, resourceResponse.GetType(), isCoreAttribute || isOverriddenAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -287,7 +295,8 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceAttributesApi.CreateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId()).ResourceAttribute(*resourceAttribute).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceAttributesApi.CreateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId()).ResourceAttribute(*resourceAttribute).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateResourceAttribute",
 			framework.DefaultCustomError,
@@ -299,7 +308,8 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), resourceAttribute.GetId()).ResourceAttribute(*resourceAttribute).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), resourceAttribute.GetId()).ResourceAttribute(*resourceAttribute).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceAttribute",
 			framework.DefaultCustomError,
@@ -322,7 +332,7 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ResourceAttributeResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -335,9 +345,24 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	resourceResponse, d := data.getResource(ctx, r.Client)
+	var resourceResponse *management.Resource
+	var d diag.Diagnostics
+	if !data.ResourceId.IsNull() && !data.ResourceId.IsUnknown() {
+		resourceResponse, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), true)
+	}
+
+	if !data.ResourceName.IsNull() && !data.ResourceName.IsUnknown() {
+		resourceResponse, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceName.ValueString(), true)
+	}
+
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if resourceResponse == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -347,7 +372,8 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ResourceAttributesApi.ReadOneResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceAttributesApi.ReadOneResourceAttribute(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneResourceAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -372,7 +398,7 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ResourceAttributeResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -385,7 +411,16 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	resourceResponse, d := plan.getResource(ctx, r.Client)
+	var resourceResponse *management.Resource
+	var d diag.Diagnostics
+	if !plan.ResourceId.IsNull() && !plan.ResourceId.IsUnknown() {
+		resourceResponse, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), false)
+	}
+
+	if !plan.ResourceName.IsNull() && !plan.ResourceName.IsUnknown() {
+		resourceResponse, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
+	}
+
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -400,7 +435,7 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Build the model for the API
-	resourceAttribute, d := plan.expand(ctx, r.Client, resourceResponse.GetType(), isCoreAttribute || isOverriddenAttribute)
+	resourceAttribute, d := plan.expand(ctx, r.Client.ManagementAPIClient, resourceResponse.GetType(), isCoreAttribute || isOverriddenAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -412,7 +447,8 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), plan.Id.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceAttributesApi.UpdateResourceAttribute(ctx, plan.EnvironmentId.ValueString(), resourceResponse.GetId(), plan.Id.ValueString()).ResourceAttribute(*resourceAttribute).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateResourceAttribute",
 		framework.DefaultCustomError,
@@ -434,7 +470,7 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ResourceAttributeResourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -447,9 +483,22 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	resource, d := data.getResource(ctx, r.Client)
+	var resource *management.Resource
+	var d diag.Diagnostics
+	if !data.ResourceId.IsNull() && !data.ResourceId.IsUnknown() {
+		resource, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), true)
+	}
+
+	if !data.ResourceName.IsNull() && !data.ResourceName.IsUnknown() {
+		resource, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceName.ValueString(), true)
+	}
+
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if resource == nil {
 		return
 	}
 
@@ -502,7 +551,7 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			data.Value = framework.StringToTF(coreAttributeData.defaultValue)
 		}
 
-		resourceMapping, d = data.expand(ctx, r.Client, resource.GetType(), true)
+		resourceMapping, d = data.expand(ctx, r.Client.ManagementAPIClient, resource.GetType(), true)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -512,7 +561,8 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ResourceAttributesApi.UpdateResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceAttribute(*resourceMapping).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceAttributesApi.UpdateResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).ResourceAttribute(*resourceMapping).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateResourceAttribute",
 			framework.DefaultCustomError,
@@ -525,8 +575,8 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.Client.ResourceAttributesApi.DeleteResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
-				return nil, r, err
+				fR, fErr := r.Client.ManagementAPIClient.ResourceAttributesApi.DeleteResourceAttribute(ctx, data.EnvironmentId.ValueString(), resource.GetId(), data.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteResourceAttribute",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -575,29 +625,6 @@ func (r *ResourceAttributeResource) ImportState(ctx context.Context, req resourc
 
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
-}
-
-func (p *ResourceAttributeResourceModel) getResource(ctx context.Context, apiClient *management.APIClient) (*management.Resource, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var resource *management.Resource
-	var d diag.Diagnostics
-	if !p.ResourceId.IsNull() && !p.ResourceId.IsUnknown() {
-		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString())
-	}
-
-	if !p.ResourceName.IsNull() && !p.ResourceName.IsUnknown() {
-		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString())
-	}
-
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	p.ResourceId = framework.StringOkToTF(resource.GetIdOk())
-
-	return resource, diags
 }
 
 func (p *ResourceAttributeResourceModel) validate(resourceType management.EnumResourceType) diag.Diagnostics {

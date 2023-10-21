@@ -114,23 +114,20 @@ func (r *PopulationDataSource) Configure(ctx context.Context, req datasource.Con
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *PopulationDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -176,7 +173,8 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllPopulations",
 		framework.DefaultCustomError,
@@ -254,7 +252,8 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 				ctx,
 
 				func() (any, *http.Response, error) {
-					return apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+					fO, fR, fErr := apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 				},
 				"ReadAllPopulations-FetchDefaultPopulation",
 				framework.DefaultCustomError,

@@ -142,23 +142,20 @@ func (r *AgreementDataSource) Configure(ctx context.Context, req datasource.Conf
 		return
 	}
 
-	preparedClient, err := PrepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.Client = preparedClient
 }
 
 func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *AgreementDataSourceModel
 
-	if r.Client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -181,7 +178,8 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.AgreementsResourcesApi.ReadAllAgreements(ctx, data.EnvironmentId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.AgreementsResourcesApi.ReadAllAgreements(ctx, data.EnvironmentId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllAgreements",
 			framework.DefaultCustomError,
@@ -222,7 +220,8 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneAgreement",
 			framework.DefaultCustomError,

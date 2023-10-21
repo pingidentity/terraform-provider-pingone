@@ -125,7 +125,8 @@ func resourcePingOneGatewayRoleAssignmentCreate(ctx context.Context, d *schema.R
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewayRoleAssignmentsApi.CreateGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).RoleAssignment(gatewayRoleAssignment).Execute()
+			fO, fR, fErr := apiClient.GatewayRoleAssignmentsApi.CreateGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).RoleAssignment(gatewayRoleAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateGatewayRoleAssignment",
 		func(error model.P1Error) diag.Diagnostics {
@@ -164,7 +165,8 @@ func resourcePingOneGatewayRoleAssignmentRead(ctx context.Context, d *schema.Res
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewayRoleAssignmentsApi.ReadOneGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.GatewayRoleAssignmentsApi.ReadOneGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneGatewayRoleAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -222,11 +224,11 @@ func resourcePingOneGatewayRoleAssignmentDelete(ctx context.Context, d *schema.R
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.GatewayRoleAssignmentsApi.DeleteGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.GatewayRoleAssignmentsApi.DeleteGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteGatewayRoleAssignment",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		nil,
 	)
 	if diags.HasError() {

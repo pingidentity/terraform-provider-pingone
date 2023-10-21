@@ -103,7 +103,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_language":                       base.DatasourceLanguage(),
 				"pingone_license":                        base.DatasourceLicense(),
 				"pingone_licenses":                       base.DatasourceLicenses(),
-				"pingone_role":                           base.DatasourceRole(),
 				"pingone_trusted_email_domain_dkim":      base.DatasourceTrustedEmailDomainDKIM(),
 				"pingone_trusted_email_domain_ownership": base.DatasourceTrustedEmailDomainOwnership(),
 				"pingone_trusted_email_domain_spf":       base.DatasourceTrustedEmailDomainSPF(),

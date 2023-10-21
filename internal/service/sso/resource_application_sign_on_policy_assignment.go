@@ -74,7 +74,8 @@ func resourcePingOneApplicationSignOnPolicyAssignmentCreate(ctx context.Context,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			fO, fR, fErr := apiClient.ApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateSignOnPolicyAssignment",
 		sdk.DefaultCustomError,
@@ -101,7 +102,8 @@ func resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx context.Context, d
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.ApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneSignOnPolicyAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -142,7 +144,8 @@ func resourcePingOneApplicationSignOnPolicyAssignmentUpdate(ctx context.Context,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			fO, fR, fErr := apiClient.ApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateSignOnPolicyAssignment",
 		sdk.DefaultCustomError,
@@ -165,8 +168,8 @@ func resourcePingOneApplicationSignOnPolicyAssignmentDelete(ctx context.Context,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.ApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.ApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteSignOnPolicyAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
