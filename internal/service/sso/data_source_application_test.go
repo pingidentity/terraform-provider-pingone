@@ -75,7 +75,7 @@ func TestAccApplicationDataSource_OIDCAppByID(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "80000"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "false"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
-					//resource.TestMatchResourceAttr(dataSourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.#", "0"),
@@ -149,9 +149,7 @@ func TestAccApplicationDataSource_OIDCAppByName(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
-
-					//resource.TestMatchResourceAttr(dataSourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
-
+					resource.TestMatchResourceAttr(dataSourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.#", "1"),

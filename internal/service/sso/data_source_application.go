@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -14,7 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -685,33 +688,33 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	// Secondary call required to obtain kerberos secret for OIDC applications
-	// if application.ApplicationOIDC != nil && application.ApplicationOIDC.GetId() != "" {
-	// 	var respSecret interface{}
-	// 	resp.Diagnostics.Append(framework.ParseResponse(
-	// 		ctx,
+	var secret *management.ApplicationSecret
+	if application.ApplicationOIDC != nil && application.ApplicationOIDC.GetId() != "" {
+		var respSecret interface{}
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
 
-	// 		func() (any, *http.Response, error) {
-	// 			return r.Client.ApplicationSecretApi.ReadApplicationSecret(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString()).Execute()
-	// 		},
-	// 		"ReadApplicationSecret",
-	// 		framework.DefaultCustomError,
-	// 		sdk.DefaultCreateReadRetryable,
-	// 		&respSecret,
-	// 	)...)
-	// 	if resp.Diagnostics.HasError() {
-	// 		return
-	// 	}
+			func() (any, *http.Response, error) {
+				return r.Client.ApplicationSecretApi.ReadApplicationSecret(ctx, *application.ApplicationOIDC.GetEnvironment().Id, application.ApplicationOIDC.GetId()).Execute()
+			},
+			"ReadApplicationSecret",
+			framework.DefaultCustomError,
+			applicationOIDCSecretDataSourceRetryConditions,
+			&respSecret,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
-	// this isn't right and unsure of best way to handle
-	// 	secret := respSecret.(*management.ApplicationSecret)
-	//}
+		secret = respSecret.(*management.ApplicationSecret)
+	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&application)...)
+	resp.Diagnostics.Append(data.toState(&application, secret)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplication200Response) diag.Diagnostics {
+func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplication200Response, secret *management.ApplicationSecret) diag.Diagnostics {
 	var diags diag.Diagnostics
 	if apiObject == nil {
 		diags.AddError(
@@ -763,7 +766,7 @@ func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplic
 		p.AccessControlRoleType, p.AccessControlGroupOptions, d = p.toStateAccessControl(v.GetAccessControlOk())
 		diags.Append(d...)
 
-		p.OIDCOptions, d = p.toStateOIDCOptions(v)
+		p.OIDCOptions, d = p.toStateOIDCOptions(v, secret)
 		diags.Append(d...)
 
 	case *management.ApplicationSAML:
@@ -872,7 +875,7 @@ func (p *applicationDataSourceModel) toStateAccessControl(apiObject *management.
 
 }
 
-func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.ApplicationOIDC) (basetypes.ListValue, diag.Diagnostics) {
+func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.ApplicationOIDC, secret *management.ApplicationSecret) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	objOIDCOptions := []attr.Value{}
 
@@ -906,7 +909,7 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 		"refresh_token_rolling_duration":   framework.Int32OkToTF(apiObject.GetRefreshTokenRollingDurationOk()),
 		"refresh_token_rolling_grace_period_duration":        framework.Int32OkToTF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
-		"client_secret":                    types.StringNull(), //framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"client_secret":                    framework.StringOkToTF(secret.GetSecretOk()),
 		"certificate_based_authentication": kerberoObj,
 		"support_unsigned_request_object":  framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
 		"require_signed_request_object":    framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
@@ -1137,4 +1140,30 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 	diags.Append(d...)
 
 	return returnVar, diags
+}
+
+func applicationOIDCSecretDataSourceRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+	var err error
+
+	// The secret may take a short time to propagate
+	if r.StatusCode == 404 {
+		tflog.Warn(ctx, "Application secret not found, available for retry")
+		return true
+	}
+
+	if p1error != nil {
+
+		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			return true
+		}
+		if err != nil {
+			tflog.Warn(ctx, "Cannot match error string for retry")
+			return false
+		}
+
+	}
+
+	return false
 }
