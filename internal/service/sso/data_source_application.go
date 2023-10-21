@@ -684,10 +684,27 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	// todo: Talk to Patrick about this secondary call for the secret if don't find in api docs what/why
+	// Secondary call required to obtain kerberos secret for OIDC applications
 	// if application.ApplicationOIDC != nil && application.ApplicationOIDC.GetId() != "" {
+	// 	var respSecret interface{}
+	// 	resp.Diagnostics.Append(framework.ParseResponse(
+	// 		ctx,
 
-	// }
+	// 		func() (any, *http.Response, error) {
+	// 			return r.Client.ApplicationSecretApi.ReadApplicationSecret(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString()).Execute()
+	// 		},
+	// 		"ReadApplicationSecret",
+	// 		framework.DefaultCustomError,
+	// 		sdk.DefaultCreateReadRetryable,
+	// 		&respSecret,
+	// 	)...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
+
+	// this isn't right and unsure of best way to handle
+	// 	secret := respSecret.(*management.ApplicationSecret)
+	//}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(&application)...)
@@ -1100,7 +1117,7 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 		"home_page_url":                   framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"assertion_signed_enabled":        framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
 		"idp_signing_key":                 idpSigningKeyObj,
-		"idp_signing_key_id":              idpSigningKey["key_id"], //todo - review
+		"idp_signing_key_id":              idpSigningKey["key_id"],
 		"enable_requested_authn_context":  framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
 		"nameid_format":                   framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
 		"response_is_signed":              framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
