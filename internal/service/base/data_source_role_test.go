@@ -30,6 +30,8 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Organization Admin"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "applicable_to.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "permissions.#", regexp.MustCompile(`^[1-9]\d*$`)),
 				),
 			},
 			{
@@ -38,6 +40,8 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Environment Admin"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "applicable_to.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "permissions.#", regexp.MustCompile(`^[1-9]\d*$`)),
 				),
 			},
 			{
@@ -46,6 +50,8 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Identity Data Admin"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "applicable_to.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "permissions.#", regexp.MustCompile(`^[1-9]\d*$`)),
 				),
 			},
 			{
@@ -54,6 +60,8 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Client Application Developer"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "applicable_to.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "permissions.#", regexp.MustCompile(`^[1-9]\d*$`)),
 				),
 			},
 			{
@@ -62,6 +70,13 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Identity Data Read Only"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "applicable_to.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "permissions.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchTypeSetElemNestedAttrs(dataSourceFullName, "permissions.*", map[string]*regexp.Regexp{
+						"id":          regexp.MustCompile(`.+`),
+						"classifier":  regexp.MustCompile(`.+`),
+						"description": regexp.MustCompile(`.+`),
+					}),
 				),
 			},
 			{
@@ -70,6 +85,13 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Configuration Read Only"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "applicable_to.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "permissions.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchTypeSetElemNestedAttrs(dataSourceFullName, "permissions.*", map[string]*regexp.Regexp{
+						"id":          regexp.MustCompile(`.+`),
+						"classifier":  regexp.MustCompile(`.+`),
+						"description": regexp.MustCompile(`.+`),
+					}),
 				),
 			},
 			{
@@ -78,6 +100,13 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "DaVinci Admin"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "applicable_to.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "permissions.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchTypeSetElemNestedAttrs(dataSourceFullName, "permissions.*", map[string]*regexp.Regexp{
+						"id":          regexp.MustCompile(`.+`),
+						"classifier":  regexp.MustCompile(`.+`),
+						"description": regexp.MustCompile(`.+`),
+					}),
 				),
 			},
 			{
@@ -86,6 +115,42 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "DaVinci Admin Read Only"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "applicable_to.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "permissions.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchTypeSetElemNestedAttrs(dataSourceFullName, "permissions.*", map[string]*regexp.Regexp{
+						"id":          regexp.MustCompile(`.+`),
+						"classifier":  regexp.MustCompile(`.+`),
+						"description": regexp.MustCompile(`.+`),
+					}),
+				),
+			},
+		},
+	})
+}
+
+func TestAccRoleDataSource_ByIdFull(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_role.%s", resourceName)
+	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "Organization Admin"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Organization Admin"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "applicable_to.#", regexp.MustCompile(`^[1-9]\d*$`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "permissions.#", regexp.MustCompile(`^[1-9]\d*$`)),
 				),
 			},
 		},
@@ -123,6 +188,19 @@ func testAccRoleDataSourceConfig_ByNameFull(resourceName, name string) string {
 
 data "pingone_role" "%[2]s" {
   name = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRoleDataSourceConfig_ByIdFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_role" "%[2]s-lookup" {
+  name = "%[3]s"
+}
+
+data "pingone_role" "%[2]s" {
+  role_id = pingone_role.%[2]s-lookup.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
