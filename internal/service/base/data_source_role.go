@@ -69,8 +69,8 @@ func (r *RoleDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 	).AllowedValuesEnum(management.AllowedEnumRoleNameEnumValues).ExactlyOneOf([]string{"name", "role_id"})
 
 	applicableToDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A set of strings that specifies the applicable scopes that the role can be assigned to.  Possible values are `ORGANIZATION`, `ENVIRONMENT`, `POPULATION` and `USER`.",
-	)
+		"A set of strings that specifies the applicable scopes that the role can be assigned to.",
+	).AllowedValuesEnum(management.AllowedEnumRoleAssignmentScopeTypeEnumValues)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

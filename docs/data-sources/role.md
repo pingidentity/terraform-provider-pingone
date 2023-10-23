@@ -55,7 +55,7 @@ data "pingone_role" "role_by_id" {
 
 ### Read-Only
 
-- `applicable_to` (Set of String) A set of strings that specifies the applicable scopes that the role can be assigned to.  Possible values are `ORGANIZATION`, `ENVIRONMENT`, `POPULATION` and `USER`.
+- `applicable_to` (Set of String) A set of strings that specifies the applicable scopes that the role can be assigned to.  Options are `ENVIRONMENT`, `ORGANIZATION`, `POPULATION`.
 - `description` (String) The description of the role.
 - `id` (String) The ID of this resource.
 - `permissions` (Attributes Set) A set of strings that represent permissions that have been assigned to the role. (see [below for nested schema](#nestedatt--permissions))
