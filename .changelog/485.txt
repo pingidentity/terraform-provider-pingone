@@ -1,3 +1,7 @@
 ```release-note:note
 `resource/pingone_environment`: Deprecated the `default_population` block and `default_population_id` attribute in favour of the new `pingone_population_default` resource.
 ```
+
+```release-note:note
+`resource/pingone_environment`: Removed the ability to import the resource including a default population.  Default populations are now managed with the `pingone_population_default` resource.
+```

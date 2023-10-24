@@ -139,11 +139,11 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	defaultPopulationIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Message** The `default_population_id` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population.",
+		"**Deprecation Message** The `default_population_id` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population, but will not be populated when importing the resource using `terraform import`.",
 	)
 
 	defaultPopulationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Message** The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The environment's default population.",
+		"**Deprecation Message** The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  To preserve user data, removal of this block from HCL will not delete the population from the service.  The default population configuration cannot be added after the environment has already been created, but will not trigger a replacement of the resource.  The environment's default population.  The values for this block will not be populated when importing the resource using `terraform import`.",
 	)
 
 	defaultPopulationNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -171,7 +171,9 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 			"name": schema.StringAttribute{
 				Description: "The name of the environment.",
-				Required:    true,
+
+				Required: true,
+
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
@@ -179,15 +181,18 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 			"description": schema.StringAttribute{
 				Description: "A description of the environment.",
-				Optional:    true,
+
+				Optional: true,
 			},
 
 			"type": schema.StringAttribute{
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString(string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
+
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString(string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
+
 				Validators: []validator.String{
 					stringvalidator.OneOf(func() []string {
 						strings := make([]string, 0)
@@ -202,8 +207,10 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			"region": schema.StringAttribute{
 				Description:         regionDescription.Description,
 				MarkdownDescription: regionDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
+
+				Optional: true,
+				Computed: true,
+
 				Default: stringdefaultinternal.StaticStringUnknownable(func() basetypes.StringValue {
 
 					if v := os.Getenv("PINGONE_REGION"); v != "" {
@@ -216,10 +223,12 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 					return types.StringUnknown()
 				}()),
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
+
 				Validators: []validator.String{
 					stringvalidator.OneOf(model.RegionsAvailableList()...),
 				},
@@ -227,7 +236,9 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 			"license_id": schema.StringAttribute{
 				Description: "An ID of a valid license to apply to the environment.  Must be a valid PingOne resource ID.",
-				Required:    true,
+
+				Required: true,
+
 				Validators: []validator.String{
 					verify.P1ResourceIDValidator(),
 				},
@@ -235,7 +246,9 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 			"organization_id": schema.StringAttribute{
 				Description: "The ID of the PingOne organization tenant to which the environment belongs.",
-				Computed:    true,
+
+				Computed: true,
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -244,7 +257,9 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			"solution": schema.StringAttribute{
 				Description:         solutionDescription.Description,
 				MarkdownDescription: solutionDescription.MarkdownDescription,
-				Optional:            true,
+
+				Optional: true,
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -255,8 +270,10 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			"default_population_id": schema.StringAttribute{
 				Description:         defaultPopulationIdDescription.Description,
 				MarkdownDescription: defaultPopulationIdDescription.MarkdownDescription,
-				Computed:            true,
 				DeprecationMessage:  "The `default_population_id` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
+
+				Computed: true,
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -271,7 +288,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			"default_population": schema.ListNestedBlock{
 				Description:         defaultPopulationDescription.Description,
 				MarkdownDescription: defaultPopulationDescription.MarkdownDescription,
-				DeprecationMessage:  "The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This block will be removed in the next major version of the provider.",
+				DeprecationMessage:  "The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This block will be removed in the next major version of the provider.  To preserve user data, removal of this block from HCL will not delete the population from the service.",
 
 				NestedObject: schema.NestedBlockObject{
 
@@ -279,15 +296,16 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 						"name": schema.StringAttribute{
 							Description:         defaultPopulationNameDescription.Description,
 							MarkdownDescription: defaultPopulationNameDescription.MarkdownDescription,
-							// DeprecationMessage: "The `default_population.name` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This parameter will be removed in the next major version of the provider.",
+
 							Optional: true,
 							Computed: true,
-							Default:  stringdefault.StaticString("Default"),
+							Default:  stringdefault.StaticString("Default1"),
 						},
 
 						"description": schema.StringAttribute{
 							Description: "A description to apply to the environment's default population.",
-							Optional:    true,
+
+							Optional: true,
 						},
 					},
 				},
@@ -309,9 +327,11 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 						"type": schema.StringAttribute{
 							Description:         serviceTypeDescription.Description,
 							MarkdownDescription: serviceTypeDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-							Default:             stringdefault.StaticString("SSO"),
+
+							Optional: true,
+							Computed: true,
+							Default:  stringdefault.StaticString("SSO"),
+
 							Validators: []validator.String{
 								stringvalidator.OneOf(model.ProductsSelectableList()...),
 							},
@@ -320,7 +340,8 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 						"console_url": schema.StringAttribute{
 							Description:         serviceConsoleUrlDescription.Description,
 							MarkdownDescription: serviceConsoleUrlDescription.MarkdownDescription,
-							Optional:            true,
+
+							Optional: true,
 						},
 					},
 
@@ -333,7 +354,9 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
 										Description: "Bookmark name.",
-										Required:    true,
+
+										Required: true,
+
 										Validators: []validator.String{
 											stringvalidator.LengthAtLeast(attrMinLength),
 										},
@@ -341,7 +364,9 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 									"url": schema.StringAttribute{
 										Description: "Bookmark URL.",
-										Required:    true,
+
+										Required: true,
+
 										Validators: []validator.String{
 											stringvalidator.LengthAtLeast(attrMinLength),
 										},
@@ -378,6 +403,12 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 
 	///////////////////
 	// Deprecated start
+	var environmentID types.String
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("id"), &environmentID)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var plan []environmentDefaultPopulationModel
 	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("default_population"), &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -394,14 +425,23 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		resp.Diagnostics.AddAttributeWarning(
 			path.Root("default_population"),
 			"State change warning",
-			"The default population configuration on the \"pingone_environment\" resource will be removed from state, but will not be removed from the platform.",
+			"The default population in the \"default_population\" block will be removed from state, but will not be removed from the platform to preserve user data.  Please use the `pingone_population_default` resource to manage the default population going forward.",
 		)
 
 		resp.Diagnostics.AddAttributeWarning(
 			path.Root("default_population_id"),
 			"State change warning",
-			"The default population configuration on the \"pingone_environment\" resource will be removed from state, the \"default_population_id\" will no longer carry the default population's ID.",
+			"The default population in the \"default_population_id\" attribute will be removed from state, the \"default_population_id\" will no longer carry the default population's ID value.  Please use the `pingone_population_default` resource to manage the default population going forward.",
 		)
+	}
+
+	if len(plan) > 0 && len(state) == 0 && !environmentID.IsNull() && !environmentID.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("default_population"),
+			"Invalid configuration",
+			"The default population configuration (the \"default_population\" block) cannot be added after the environment has already been created.  Please use the \"pingone_population_default\" resource to manage the default population.",
+		)
+		return
 	}
 
 	if len(plan) == 0 {
@@ -545,12 +585,11 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 
 	///////////////////
 	// Deprecated start
-	var populationResponse *management.Population = nil
-	if population != nil {
-		// Seed a default population.  The platform does this implicitly but we see latencies.  This ensures we have a quick environment provision.
-		defaultPopulationObj := *management.NewPopulation("Default")
-		defaultPopulationObj.SetDescription("Automatically created population.")
-		defaultPopulationObj.SetDefault(true)
+	//if population != nil {
+	// Seed a default population.  The platform does this implicitly but we see latencies.  This ensures we have a quick environment provision.
+	defaultPopulationObj := *management.NewPopulation("Default")
+	defaultPopulationObj.SetDescription("Automatically created population.")
+	defaultPopulationObj.SetDefault(true)
 
 	defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), defaultPopulationObj)
 	if defaultPopulationResponse == nil {
@@ -564,7 +603,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	// Deprecated start
 	// Population
 
-		var defaultPopulation *management.Population
+	var defaultPopulation *management.Population
 
 	// Save some processing if we already seeded our population
 	if defaultPopulationResponse != nil {
@@ -576,16 +615,16 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 
 	var populationResponse *management.Population = nil
 
-		if population != nil {
+	if population != nil {
 
-			if defaultPopulation == nil {
-				resp.Diagnostics.AddError(
-					"Default population not found.",
-					"A default population was expected to be found in the environment after creation, but none was found.  Please report this issue to the provider maintainers.")
-			}
+		if defaultPopulation == nil {
+			resp.Diagnostics.AddError(
+				"Default population not found.",
+				"A default population was expected to be found in the environment after creation, but none was found.  Please report this issue to the provider maintainers.")
+		}
 
-			resp.Diagnostics.Append(framework.ParseResponse(
-				ctx,
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
@@ -670,7 +709,7 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 	// Deprecated start
 	// The default population
 	var populationResponse *management.Population = nil
-	if !data.DefaultPopulationId.IsNull() {
+	if !data.DefaultPopulation.IsNull() {
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -821,7 +860,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	if plan.DefaultPopulation.IsNull() && !state.DefaultPopulation.IsNull() && population == nil {
 		resp.Diagnostics.AddWarning(
 			"Default population removed from state",
-			"The default population has been removed from state, but has not been removed from the platform.  Please use the `pingone_population_default` resource to manage the default population going forward.",
+			"The default population has been removed from state, but has not been removed from the platform to preserve user data.  Please use the `pingone_population_default` resource to manage the default population going forward.",
 		)
 	}
 
@@ -941,64 +980,32 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 
 func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
-	compiledRegexString := fmt.Sprintf(`%s|^%s\/%s$`, verify.P1ResourceIDRegexpFullString.String(), verify.P1ResourceIDRegexp.String(), verify.P1ResourceIDRegexp.String())
-	m, err := regexp.MatchString(compiledRegexString, req.ID)
+	idComponents := []framework.ImportComponent{
+		{
+			Label:     "environment_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("Cannot verify import ID regex: %s", err),
+			err.Error(),
 		)
 		return
 	}
 
-	if !m {
-		resp.Diagnostics.AddError(
-			"Unexpected Import Identifier",
-			fmt.Sprintf("Invalid import ID specified (\"%s\").  The ID should be in the format \"environment_id\" or the deprecated form \"environment_id/population_id\" and must match regex: %s", req.ID, compiledRegexString),
-		)
-		return
-	}
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	maxSplitLength := 2 // deprecated
-	minSplitLength := 1
-	attributes := strings.SplitN(req.ID, "/", maxSplitLength)
-
-	if len(attributes) < minSplitLength || len(attributes) > maxSplitLength {
-		resp.Diagnostics.AddError(
-			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id\" where the import should find and import the population marked as Default in the environment, or \"environment_id/population_id\" where the user specifies a population as the environment default.", req.ID),
-		)
-		return
-	}
-
-	///////////////////
-	// Deprecated start
-	if len(attributes) == 2 {
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("default_population_id"), attributes[1])...)
-	}
-
-	if len(attributes) == 1 {
-		population, d := sso.FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, attributes[0])
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
+		if idComponent.PrimaryID {
+			pathKey = "id"
 		}
 
-		if population == nil {
-			resp.Diagnostics.AddError(
-				"Default population not found",
-				"The Default population is not found in the environment.  Either ensure a population is configured to be the default, or you use the \"environment_id/population_id\" import ID pattern.",
-			)
-			return
-		}
-
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("default_population_id"), population.GetId())...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
-
-	// Deprecated end
-	///////////////////
-
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[0])...)
 }
 
 func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, environmentId string, forceDelete bool) diag.Diagnostics {
