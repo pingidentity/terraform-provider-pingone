@@ -267,10 +267,6 @@ func ResourceNameGenEnvironment() string {
 	return fmt.Sprintf("tf-testacc-dynamic-%s", ResourceNameGen())
 }
 
-func ResourceNameGenDefaultPopulation() string {
-	return fmt.Sprintf("default-%s", ResourceNameGen())
-}
-
 func TestClient(ctx context.Context) (*client.Client, error) {
 
 	config := &client.Config{
