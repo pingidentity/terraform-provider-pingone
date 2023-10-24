@@ -299,7 +299,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 							Optional: true,
 							Computed: true,
-							Default:  stringdefault.StaticString("Default1"),
+							Default:  stringdefault.StaticString("Default"),
 						},
 
 						"description": schema.StringAttribute{
