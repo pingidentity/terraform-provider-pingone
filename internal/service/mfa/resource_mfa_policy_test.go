@@ -7,66 +7,70 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/mfa"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckMFAPolicyDestroy(s *terraform.State) error {
+func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var mfaDevicePolicyID, environmentID string
+
+	var p1Client *client.Client
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
 
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.MFAAPIClient
-
-	apiClientManagement := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_mfa_policy" {
-			continue
-		}
-
-		_, rEnv, err := apiClientManagement.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne MFA Policy Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
+				Check:  mfa.MFAPolicy_GetIDs(resourceFullName, &environmentID, &mfaDevicePolicyID),
+			},
+			{
+				PreConfig: func() {
+					mfa.MFAPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.MFAAPIClient, t, environmentID, mfaDevicePolicyID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  mfa.MFAPolicy_GetIDs(resourceFullName, &environmentID, &mfaDevicePolicyID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccMFAPolicy_NewEnv(t *testing.T) {
@@ -82,16 +86,20 @@ func TestAccMFAPolicy_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 				),
 			},
@@ -108,9 +116,12 @@ func TestAccMFAPolicy_SMS_Full(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -133,6 +144,22 @@ func TestAccMFAPolicy_SMS_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -146,9 +173,12 @@ func TestAccMFAPolicy_SMS_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -184,9 +214,12 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -262,9 +295,12 @@ func TestAccMFAPolicy_Voice_Full(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -287,6 +323,22 @@ func TestAccMFAPolicy_Voice_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -300,9 +352,12 @@ func TestAccMFAPolicy_Voice_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -338,9 +393,12 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -416,9 +474,12 @@ func TestAccMFAPolicy_Email_Full(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -441,6 +502,22 @@ func TestAccMFAPolicy_Email_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -454,9 +531,12 @@ func TestAccMFAPolicy_Email_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -492,9 +572,12 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -572,9 +655,13 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndGoogleFirebaseCredentials(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckGoogleFirebaseCredentials(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -589,7 +676,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.otp_failure_cooldown_timeunit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^true$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^100$`),
@@ -608,7 +695,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^false$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -625,7 +712,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -650,6 +737,22 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -662,26 +765,29 @@ func TestAccMFAPolicy_Mobile_IntegrityDetectionErrors(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name),
-				// Integrity detection (`mobile.application.integrity_detection`) has no effect when the Application resource has integrity detection disabled
+				// Integrity detection (`mobile.application.integrity_detection`) has no effect when the MFAPolicy resource has integrity detection disabled
 				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) has no effect when the Application resource has integrity detection disabled"),
 			},
 			{
 				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name),
-				// Integrity detection (`mobile.application.integrity_detection`) must be set when the Application resource has integrity detection enabled
+				// Integrity detection (`mobile.application.integrity_detection`) must be set when the MFAPolicy resource has integrity detection enabled
 				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) must be set when the Application resource has integrity detection enabled"),
 			},
 		},
 	})
 }
 
-func TestAccMFAPolicy_Mobile_BadApplicationErrors(t *testing.T) {
+func TestAccMFAPolicy_Mobile_BadMFAPolicyErrors(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -689,9 +795,12 @@ func TestAccMFAPolicy_Mobile_BadApplicationErrors(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -723,9 +832,12 @@ func TestAccMFAPolicy_Mobile_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -760,9 +872,13 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndGoogleFirebaseCredentials(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckGoogleFirebaseCredentials(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -777,7 +893,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.otp_failure_cooldown_timeunit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^true$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^100$`),
@@ -796,7 +912,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^false$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -813,7 +929,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -867,7 +983,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.otp_failure_cooldown_timeunit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.application.#", "3"),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^true$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^100$`),
@@ -886,7 +1002,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^false$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -903,7 +1019,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 						"integrity_detection":                     regexp.MustCompile(`^permissive$`),
 					}),
 					resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "mobile.0.application.*", map[string]*regexp.Regexp{
-						"id":                                      verify.P1ResourceIDRegexp,
+						"id":                                      verify.P1ResourceIDRegexpFullString,
 						"pairing_disabled":                        regexp.MustCompile(`^false$`),
 						"push_enabled":                            regexp.MustCompile(`^true$`),
 						"push_timeout_duration":                   regexp.MustCompile(`^40$`),
@@ -941,9 +1057,12 @@ func TestAccMFAPolicy_Totp_Full(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -964,6 +1083,22 @@ func TestAccMFAPolicy_Totp_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -977,9 +1112,12 @@ func TestAccMFAPolicy_Totp_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1013,9 +1151,12 @@ func TestAccMFAPolicy_Totp_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1085,9 +1226,12 @@ func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1100,11 +1244,27 @@ func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1119,9 +1279,12 @@ func TestAccMFAPolicy_FIDO2_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1153,9 +1316,12 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1168,7 +1334,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1200,7 +1366,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.0.pairing_disabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.0.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1222,7 +1388,7 @@ func TestAccMFAPolicy_SecurityKey_Full(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1234,7 +1400,7 @@ func TestAccMFAPolicy_SecurityKey_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1254,7 +1420,7 @@ func TestAccMFAPolicy_SecurityKey_Minimal(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1286,7 +1452,7 @@ func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1298,7 +1464,7 @@ func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1324,7 +1490,7 @@ func TestAccMFAPolicy_SecurityKey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "security_key.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "false"),
 				),
 			},
@@ -1344,7 +1510,7 @@ func TestAccMFAPolicy_Platform_Full(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1357,7 +1523,7 @@ func TestAccMFAPolicy_Platform_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -1376,7 +1542,7 @@ func TestAccMFAPolicy_Platform_Minimal(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1409,7 +1575,7 @@ func TestAccMFAPolicy_Platform_Change(t *testing.T) {
 		//PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
 		PreCheck:                 func() { t.Skipf("Device method deprecated for new environments") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -1422,7 +1588,7 @@ func TestAccMFAPolicy_Platform_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
@@ -1448,7 +1614,7 @@ func TestAccMFAPolicy_Platform_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "security_key.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "platform.0.enabled", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "platform.0.fido_policy_id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -1464,17 +1630,20 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckMFAPolicyDestroy,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
 			{
 				Config: testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
@@ -1488,8 +1657,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1503,8 +1672,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1513,8 +1682,8 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
@@ -1523,12 +1692,55 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccMFAPolicy_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/mfa_device_policy_id" and must match regex: .*`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/mfa_device_policy_id" and must match regex: .*`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/mfa_device_policy_id" and must match regex: .*`),
 			},
 		},
 	})

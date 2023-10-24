@@ -12,17 +12,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type FlowPolicyDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type FlowPolicyDataSource serviceClientType
 
 type FlowPolicyDataSourceModel struct {
 	Id                 types.String `tfsdk:"id"`
@@ -142,24 +138,20 @@ func (r *FlowPolicyDataSource) Configure(ctx context.Context, req datasource.Con
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *FlowPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *FlowPolicyDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -178,7 +170,8 @@ func (r *FlowPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.FlowPoliciesApi.ReadOneFlowPolicy(ctx, data.EnvironmentId.ValueString(), data.FlowPolicyId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.FlowPoliciesApi.ReadOneFlowPolicy(ctx, data.EnvironmentId.ValueString(), data.FlowPolicyId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneFlowPolicy",
 		framework.DefaultCustomError,

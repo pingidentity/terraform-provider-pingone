@@ -4,162 +4,292 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceGroupNesting() *schema.Resource {
-	return &schema.Resource{
+// Types
+type GroupNestingResource serviceClientType
 
+type GroupNestingResourceModel struct {
+	Id            types.String `tfsdk:"id"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	GroupId       types.String `tfsdk:"group_id"`
+	NestedGroupId types.String `tfsdk:"nested_group_id"`
+	Type          types.String `tfsdk:"type"`
+}
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &GroupNestingResource{}
+	_ resource.ResourceWithConfigure   = &GroupNestingResource{}
+	_ resource.ResourceWithImportState = &GroupNestingResource{}
+)
+
+// New Object
+func NewGroupNestingResource() resource.Resource {
+	return &GroupNestingResource{}
+}
+
+// Metadata
+func (r *GroupNestingResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_group_nesting"
+}
+
+// Schema.
+func (r *GroupNestingResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne group nesting.",
 
-		CreateContext: resourceGroupNestingCreate,
-		ReadContext:   resourceGroupNestingRead,
-		DeleteContext: resourceGroupNestingDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceGroupNestingImport,
-		},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to manage the group nesting in."),
+			),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the group in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
-			},
-			"group_id": {
-				Description:      "The ID of the parent group to assign the nested group to.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
-			},
-			"nested_group_id": {
-				Description:      "The ID of the group to configure as a nested group.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
-			},
-			"type": {
-				Description: "The type of the group nesting.",
-				Type:        schema.TypeString,
+			"group_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the parent group to assign the nested group to."),
+			),
+
+			"nested_group_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the group to configure as a nested group."),
+			),
+
+			"type": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The type of the group nesting.").Description,
 				Computed:    true,
 			},
 		},
 	}
 }
 
-func resourceGroupNestingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *GroupNestingResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
 
-	var diags diag.Diagnostics
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
 
-	groupNesting := *management.NewGroupNesting(d.Get("nested_group_id").(string)) // GroupNesting |  (optional)
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+}
+
+func (r *GroupNestingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state GroupNestingResourceModel
+
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	group := plan.expand()
+
+	// Run the API call
+	var response *management.GroupNesting
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GroupsApi.CreateGroupNesting(ctx, d.Get("environment_id").(string), d.Get("group_id").(string)).GroupNesting(groupNesting).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.CreateGroupNesting(ctx, plan.EnvironmentId.ValueString(), plan.GroupId.ValueString()).GroupNesting(*group).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateGroupNesting",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.GroupNesting)
+	// Create the state to save
+	state = plan
 
-	d.SetId(respObject.GetId())
-
-	return resourceGroupNestingRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceGroupNestingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *GroupNestingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *GroupNestingResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.GroupNesting
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GroupsApi.ReadOneGroupNesting(ctx, d.Get("environment_id").(string), d.Get("group_id").(string), d.Id()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.ReadOneGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneGroupNesting",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.GroupNesting)
-
-	d.Set("type", respObject.GetType())
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceGroupNestingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *GroupNestingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+}
 
-	var diags diag.Diagnostics
+func (r *GroupNestingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *GroupNestingResourceModel
 
-	_, diags = sdk.ParseResponse(
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.GroupsApi.DeleteGroupNesting(ctx, d.Get("environment_id").(string), d.Get("group_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.GroupsApi.DeleteGroupNesting(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteGroupNesting",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	if diags.HasError() {
+		nil,
+	)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func (r *GroupNestingResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "group_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "group_nesting_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
+	}
+
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
+}
+
+func (p *GroupNestingResourceModel) expand() *management.GroupNesting {
+
+	data := management.NewGroupNesting(p.NestedGroupId.ValueString())
+
+	return data
+}
+
+func (p *GroupNestingResourceModel) toState(apiObject *management.GroupNesting) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
 		return diags
 	}
 
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.Type = framework.StringOkToTF(apiObject.GetTypeOk())
+	p.NestedGroupId = framework.StringOkToTF(apiObject.GetIdOk())
+
 	return diags
-}
-
-func resourceGroupNestingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 3
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
-
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/groupID/groupNestingID\"", d.Id())
-	}
-
-	environmentID, groupID, groupNestingID := attributes[0], attributes[1], attributes[2]
-
-	d.Set("environment_id", environmentID)
-	d.Set("group_id", groupID)
-	d.SetId(groupNestingID)
-
-	resourceGroupNestingRead(ctx, d, meta)
-
-	return []*schema.ResourceData{d}, nil
 }

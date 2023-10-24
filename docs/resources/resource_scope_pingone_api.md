@@ -44,7 +44,7 @@ resource "pingone_resource_scope_pingone_api" "my_new_resource_scope" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the resource scope in.
+- `environment_id` (String) The ID of the environment to create the resource scope in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name of the resource scope.  Predefined scopes of `p1:read:user` and `p1:update:user` can be overridden, and new scopes can be defined as subscopes in the format `p1:read:user:{suffix}` or `p1:update:user:{suffix}`.  E.g. `p1:read:user:newscope` or `p1:update:user:newscope`
 
 ### Optional

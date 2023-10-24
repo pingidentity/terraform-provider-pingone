@@ -4,68 +4,86 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/mfa"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckApplicationPushCredentialDestroy(s *terraform.State) error {
+func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_application_push_credential.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var applicationPushCredentialID, applicationID, environmentID string
+
+	var p1Client *client.Client
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
 
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.MFAAPIClient
-
-	apiClientManagement := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_mfa_application_push_credential" {
-			continue
-		}
-
-		_, rEnv, err := apiClientManagement.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.ApplicationsApplicationMFAPushCredentialsApi.ReadOneMFAPushCredential(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Application MFA Push Credential %s still exists", rs.Primary.ID)
-	}
-
-	return nil
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test removal of the resource
+			{
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
+				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
+			},
+			{
+				PreConfig: func() {
+					mfa.ApplicationPushCredential_RemovalDrift_PreConfig(ctx, p1Client.API.MFAAPIClient, t, environmentID, applicationID, applicationPushCredentialID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the application
+			{
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
+				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
+			},
+			{
+				PreConfig: func() {
+					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccApplicationPushCredential_FCM(t *testing.T) {
@@ -79,18 +97,22 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
 
 	fullFCMCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
 		resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
 		resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndGoogleFirebaseCredentials(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckGoogleFirebaseCredentials(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// FCM (deprecated)
@@ -119,6 +141,27 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 				Config: testAccApplicationPushCredentialConfig_FCMHTTPV1(resourceName, name, firebaseCredentials),
 				Check:  fullFCMCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"fcm.#",
+					"fcm.0.%",
+					"fcm.0.google_service_account_credentials",
+				},
+			},
 		},
 	})
 }
@@ -132,17 +175,20 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationPushCredentialConfig_APNS(resourceName, name, fmt.Sprintf("%s1", name)),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
@@ -151,13 +197,36 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 			{
 				Config: testAccApplicationPushCredentialConfig_APNS(resourceName, name, fmt.Sprintf("%s2", name)),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"apns.#",
+					"apns.0.%",
+					"apns.0.key",
+					"apns.0.team_id",
+					"apns.0.token_signing_key",
+				},
 			},
 		},
 	})
@@ -172,17 +241,20 @@ func TestAccApplicationPushCredential_HMS(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationPushCredentialConfig_HMS(resourceName, name, fmt.Sprintf("%s1", name)),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
@@ -191,13 +263,35 @@ func TestAccApplicationPushCredential_HMS(t *testing.T) {
 			{
 				Config: testAccApplicationPushCredentialConfig_HMS(resourceName, name, fmt.Sprintf("%s2", name)),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"hms.#",
+					"hms.0.%",
+					"hms.0.client_id",
+					"hms.0.client_secret",
+				},
 			},
 		},
 	})
@@ -212,17 +306,20 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationPushCredentialDestroy,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
@@ -231,9 +328,9 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 			{
 				Config: testAccApplicationPushCredentialConfig_APNS(resourceName, name, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
@@ -242,9 +339,9 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 			{
 				Config: testAccApplicationPushCredentialConfig_HMS(resourceName, name, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
@@ -252,6 +349,100 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccApplicationPushCredential_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_application_push_credential.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+		},
+	})
+}
+
+func testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "My test OIDC app for MFA Policy"
+  tags           = []
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options {
+    type                        = "NATIVE_APP"
+    grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app {
+      package_name = "com.%[4]s.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection {
+        enabled = true
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = "dummykeydoesnotexist"
+          verification_key  = "dummykeydoesnotexist"
+        }
+      }
+    }
+
+    package_name = "com.%[3]s.package"
+  }
+}
+
+resource "pingone_mfa_application_push_credential" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  application_id = pingone_application.%[3]s.id
+
+  fcm {
+    key = "%[4]s"
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccApplicationPushCredentialConfig_FCM(resourceName, name, key string) string {

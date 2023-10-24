@@ -10,15 +10,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
 // Types
-type PhoneDeliverySettingsListDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type PhoneDeliverySettingsListDataSource serviceClientType
 
 type PhoneDeliverySettingsListDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -51,13 +47,13 @@ func (r *PhoneDeliverySettingsListDataSource) Schema(ctx context.Context, req da
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaAttributeDescription{
-				Description: "The ID of the environment to filter phone delivery settings senders from.",
-			}),
+			"environment_id": framework.Attr_LinkID(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The ID of the environment to filter phone delivery settings senders from.",
+			)),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of phone delivery settings senders that have been successfully retrieved.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of phone delivery settings senders that have been successfully retrieved.",
+			)),
 		},
 	}
 }
@@ -78,24 +74,20 @@ func (r *PhoneDeliverySettingsListDataSource) Configure(ctx context.Context, req
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *PhoneDeliverySettingsListDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *PhoneDeliverySettingsListDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -113,7 +105,8 @@ func (r *PhoneDeliverySettingsListDataSource) Read(ctx context.Context, req data
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.PhoneDeliverySettingsApi.ReadAllPhoneDeliverySettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadAllPhoneDeliverySettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllPhoneDeliverySettings",
 		framework.DefaultCustomError,

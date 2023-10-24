@@ -4,68 +4,74 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckImageDestroy(s *terraform.State) error {
+func TestAccImage_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_image.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.png")
+	image := base64.StdEncoding.EncodeToString(data)
+
+	var imageID, environmentID string
+
+	var p1Client *client.Client
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
 
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_image" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.ImagesApi.ReadImage(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Image Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Image_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccImageConfig_Image(resourceName, image),
+				Check:  base.Image_GetIDs(resourceFullName, &environmentID, &imageID),
+			},
+			{
+				PreConfig: func() {
+					base.Image_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, imageID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccImageConfig_NewEnv(environmentName, licenseID, resourceName, image),
+				Check:  base.Image_GetIDs(resourceFullName, &environmentID, &imageID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccImage_PNG(t *testing.T) {
@@ -74,26 +80,49 @@ func TestAccImage_PNG(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_image.%s", resourceName)
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.png")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.png")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS7(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckPKCS7Cert(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckImageDestroy,
+		CheckDestroy:             base.Image_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccImageConfig_Image(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.width", "901"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.height", "901"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.type", "png"),
 					resource.TestMatchResourceAttr(resourceFullName, "uploaded_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"image_file_base64",
+				},
 			},
 		},
 	})
@@ -105,20 +134,24 @@ func TestAccImage_JPG(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_image.%s", resourceName)
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.jpg")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.jpg")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS7(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckPKCS7Cert(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckImageDestroy,
+		CheckDestroy:             base.Image_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccImageConfig_Image(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.width", "901"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.height", "901"),
@@ -136,20 +169,24 @@ func TestAccImage_GIF(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_image.%s", resourceName)
 
-	data, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentAndPKCS7(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckPKCS7Cert(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckImageDestroy,
+		CheckDestroy:             base.Image_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccImageConfig_Image(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.width", "901"),
 					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.height", "901"),
@@ -159,6 +196,62 @@ func TestAccImage_GIF(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccImage_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_image.%s", resourceName)
+
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.png")
+	image := base64.StdEncoding.EncodeToString(data)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Image_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccImageConfig_Image(resourceName, image),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/image_id" and must match regex: .*`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/image_id" and must match regex: .*`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/image_id" and must match regex: .*`),
+			},
+		},
+	})
+}
+
+func testAccImageConfig_NewEnv(environmentName, licenseID, resourceName, image string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_image" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  image_file_base64 = "%[4]s"
+
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, image)
 }
 
 func testAccImageConfig_Image(resourceName, image string) string {

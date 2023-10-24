@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -12,6 +12,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -244,7 +245,8 @@ func resourceNotificationTemplateContentCreate(ctx context.Context, d *schema.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.NotificationsTemplatesApi.CreateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string)).TemplateContent(*templateContent).Execute()
+			fO, fR, fErr := apiClient.NotificationsTemplatesApi.CreateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string)).TemplateContent(*templateContent).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateContent",
 		notificationTemplateCustomWriteError,
@@ -286,7 +288,8 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneContent",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -304,6 +307,12 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 	respObject := resp.(*management.TemplateContent)
 
 	if respObject.TemplateContentEmail != nil && respObject.TemplateContentEmail.GetId() != "" {
+
+		if v, ok := respObject.TemplateContentEmail.GetLocaleOk(); ok {
+			d.Set("locale", v)
+		} else {
+			d.Set("locale", nil)
+		}
 
 		if v, ok := respObject.TemplateContentEmail.GetDefaultOk(); ok {
 			d.Set("default", v)
@@ -324,6 +333,12 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 
 	} else if respObject.TemplateContentPush != nil && respObject.TemplateContentPush.GetId() != "" {
 
+		if v, ok := respObject.TemplateContentPush.GetLocaleOk(); ok {
+			d.Set("locale", v)
+		} else {
+			d.Set("locale", nil)
+		}
+
 		if v, ok := respObject.TemplateContentPush.GetDefaultOk(); ok {
 			d.Set("default", v)
 		} else {
@@ -343,6 +358,12 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 
 	} else if respObject.TemplateContentSMS != nil && respObject.TemplateContentSMS.GetId() != "" {
 
+		if v, ok := respObject.TemplateContentSMS.GetLocaleOk(); ok {
+			d.Set("locale", v)
+		} else {
+			d.Set("locale", nil)
+		}
+
 		if v, ok := respObject.TemplateContentSMS.GetDefaultOk(); ok {
 			d.Set("default", v)
 		} else {
@@ -361,6 +382,12 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 		d.Set("voice", nil)
 
 	} else if respObject.TemplateContentVoice != nil && respObject.TemplateContentVoice.GetId() != "" {
+
+		if v, ok := respObject.TemplateContentVoice.GetLocaleOk(); ok {
+			d.Set("locale", v)
+		} else {
+			d.Set("locale", nil)
+		}
 
 		if v, ok := respObject.TemplateContentVoice.GetDefaultOk(); ok {
 			d.Set("default", v)
@@ -406,7 +433,8 @@ func resourceNotificationTemplateContentUpdate(ctx context.Context, d *schema.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.NotificationsTemplatesApi.UpdateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).TemplateContent(*templateContent).Execute()
+			fO, fR, fErr := apiClient.NotificationsTemplatesApi.UpdateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).TemplateContent(*templateContent).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateContent",
 		notificationTemplateCustomWriteError,
@@ -429,8 +457,8 @@ func resourceNotificationTemplateContentDelete(ctx context.Context, d *schema.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteContent",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -444,18 +472,30 @@ func resourceNotificationTemplateContentDelete(ctx context.Context, d *schema.Re
 }
 
 func resourceNotificationTemplateContentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 3
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/templateName/notificationTemplateContentID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "template_name",
+			Regexp: regexp.MustCompile(`email_verification_admin|email_verification_user|general|transaction|verification_code_template|recovery_code_template|device_pairing|strong_authentication|email_phone_verification|id_verification|credential_issued|credential_updated|digital_wallet_pairing|credential_revoked`),
+		},
+		{
+			Label:  "notification_template_content_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, templateName, notificationTemplateContentID := attributes[0], attributes[1], attributes[2]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.Set("template_name", templateName)
-	d.SetId(notificationTemplateContentID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.Set("template_name", attributes["template_name"])
+	d.SetId(attributes["notification_template_content_id"])
 
 	resourceNotificationTemplateContentRead(ctx, d, meta)
 

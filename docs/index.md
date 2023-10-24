@@ -17,6 +17,13 @@ To get started using the PingOne Terraform provider, first you'll need an active
 
 For detailed instructions on how to prepare PingOne for Terraform access, see the [PingOne getting started guide](https://terraform.pingidentity.com/getting-started/pingone/#configure-pingone-for-terraform-access) at [terraform.pingidentity.com](https://terraform.pingidentity.com).
 
+### Ping Identity Developer Experiences
+
+For code examples showing how to configure the PingOne service using Terraform, the following resources are available:
+
+- [Tutorials and use-case examples](https://terraform.pingidentity.com/examples/) at [terraform.pingidentity.com](https://terraform.pingidentity.com).
+- End-to-end solution deployment examples, complete with sample applications at the [Ping Identity Developers Experience Github](https://github.com/pingidentity-developers-experience?tab=repositories).
+
 ## Example Usage
 
 ### Authenticate using static worker client credentials
@@ -26,7 +33,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.19"
+      version = "~> 0.23"
     }
   }
 }
@@ -52,7 +59,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.19"
+      version = "~> 0.23"
     }
   }
 }
@@ -80,7 +87,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 0.19"
+      version = "~> 0.23"
     }
   }
 }

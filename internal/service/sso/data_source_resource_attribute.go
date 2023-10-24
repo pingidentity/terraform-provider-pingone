@@ -95,7 +95,8 @@ func datasourcePingOneResourceAttributeRead(ctx context.Context, d *schema.Resou
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.ResourceAttributesApi.ReadOneResourceAttribute(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), v.(string)).Execute()
+				fO, fR, fErr := apiClient.ResourceAttributesApi.ReadOneResourceAttribute(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), v.(string)).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"ReadOneResourceAttribute",
 			sdk.DefaultCustomError,
@@ -146,7 +147,8 @@ func fetchResourceAttributeFromName(ctx context.Context, apiClient *management.A
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
+			fO, fR, fErr := apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadAllResourceAttributes",
 		sdk.DefaultCustomError,
@@ -192,7 +194,8 @@ func fetchResourceAttributeFromName_Framework(ctx context.Context, apiClient *ma
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
+			fO, fR, fErr := apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadAllResourceAttributes",
 		framework.DefaultCustomError,

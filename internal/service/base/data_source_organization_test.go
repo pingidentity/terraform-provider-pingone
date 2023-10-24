@@ -6,16 +6,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckOrganizationDestroy(s *terraform.State) error {
-	return nil
-}
 
 func TestAccOrganizationDataSource_Full(t *testing.T) {
 	t.Parallel()
@@ -26,28 +21,26 @@ func TestAccOrganizationDataSource_Full(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 	organizationName := os.Getenv("PINGONE_ORGANIZATION_NAME")
 
-	domainTld := model.FindRegionByName(os.Getenv("PINGONE_REGION")).URLSuffix
-
 	testCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "organization_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "name", organizationName),
 		resource.TestMatchResourceAttr(dataSourceFullName, "description", regexp.MustCompile(`^[a-zA-Z0-9 -_\\.]*$`)),
 		resource.TestCheckResourceAttr(dataSourceFullName, "type", "INTERNAL"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "billing_connection_ids.#", "1"),
 		resource.TestMatchResourceAttr(dataSourceFullName, "billing_connection_ids.0", regexp.MustCompile(`^[a-zA-Z0-9]*$`)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_api", fmt.Sprintf("api.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_auth", fmt.Sprintf("auth.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_orchestrate", fmt.Sprintf("orchestrate-api.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_agreement_management", fmt.Sprintf("agreement-mgmt.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_console", fmt.Sprintf("console.pingone.%s", domainTld)),
-		resource.TestCheckResourceAttr(dataSourceFullName, "base_url_apps", fmt.Sprintf("apps.pingone.%s", domainTld)),
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckOrganisation(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckOrganisationID(t)
+			acctest.PreCheckOrganisationName(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckOrganizationDestroy,
+		CheckDestroy:             base.Organization_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -68,7 +61,10 @@ func TestAccOrganizationDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{

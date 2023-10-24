@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
+	diagframework "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -87,7 +89,8 @@ func datasourcePingOneLanguageRead(ctx context.Context, d *schema.ResourceData, 
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+				fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"ReadOneLanguage",
 			sdk.DefaultCustomError,
@@ -135,7 +138,8 @@ func findLanguageByLocale(ctx context.Context, apiClient *management.APIClient, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadAllLanguages",
 		sdk.DefaultCustomError,
@@ -165,6 +169,53 @@ func findLanguageByLocale(ctx context.Context, apiClient *management.APIClient, 
 				Severity: diag.Error,
 				Summary:  fmt.Sprintf("Cannot find language by locale %s", locale),
 			})
+
+			return nil, diags
+		}
+
+	}
+
+	return resp, diags
+}
+
+func findLanguageByLocale_Framework(ctx context.Context, apiClient *management.APIClient, environmentID, locale string) (*management.Language, diagframework.Diagnostics) {
+	var diags diagframework.Diagnostics
+
+	var respObject *management.EntityArray
+	diags.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+		},
+		"ReadAllLanguages-F",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&respObject,
+	)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	var resp *management.Language
+	if languages, ok := respObject.Embedded.GetLanguagesOk(); ok {
+
+		found := false
+		for _, language := range languages {
+
+			if language.Language.GetLocale() == locale {
+				resp = language.Language
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			diags.AddError(
+				fmt.Sprintf("Cannot find language by locale %s", locale),
+				"The language was not found in the list of languages from the locale provided.",
+			)
 
 			return nil, diags
 		}

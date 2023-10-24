@@ -28,4 +28,4 @@ data "pingone_verify_policies" "find_all_verify_policies_example" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `ids` (List of String) The list of resulting IDs of credential types that have been successfully retrieved.
+- `ids` (List of String) The list of resulting IDs of verify policies that have been successfully retrieved.

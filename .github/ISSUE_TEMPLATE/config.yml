@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Terraform at Ping Identity FAQ
+    url: https://terraform.pingidentity.com/faq/pingone/
+    about: Review Frequently Asked Questions about the PingOne provider and published modules.
   - name: PingOne DevOps Community
     url: https://support.pingidentity.com/s/topic/0TO1W000000IF30WAG/pingdevops
     about: Ask a question or start a discussion with the DevOps community.

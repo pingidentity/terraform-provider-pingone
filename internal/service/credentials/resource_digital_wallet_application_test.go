@@ -7,66 +7,85 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
+	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckDigitalWalletApplicationDestroy(s *terraform.State) error {
+func TestAccDigitalWalletApplication_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_digital_wallet_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	appOpenUrl := "https://www.example.com/appopen"
+
+	var applicationID, digitalWalletAppID, environmentID string
+
+	var p1Client *client.Client
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
 
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.CredentialsAPIClient
-
-	mgmtApiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_digital_wallet_application" {
-			continue
-		}
-
-		_, rEnv, err := mgmtApiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Digital Wallet Application ID e %s still exists", rs.Primary.ID)
-	}
-
-	return nil
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test removal of the resource
+			{
+				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
+				Check:  credentials.DigitalWalletApplication_GetIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
+			},
+			{
+				PreConfig: func() {
+					credentials.DigitalWalletApplication_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, digitalWalletAppID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the application
+			{
+				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
+				Check:  credentials.DigitalWalletApplication_GetIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
+			},
+			{
+				PreConfig: func() {
+					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccDigitalWalletApplication_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  credentials.DigitalWalletApplication_GetIDs(resourceFullName, &environmentID, &digitalWalletAppID, &applicationID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccDigitalWalletApplication_NewEnv(t *testing.T) {
@@ -82,9 +101,13 @@ func TestAccDigitalWalletApplication_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -109,9 +132,9 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "app_open_url", appOpenUrl),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		),
@@ -123,18 +146,21 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 	updateStep := resource.TestStep{
 		Config: testAccDigitalWalletApplication_Full(resourceName, updatedName, updatedAppOpenUrl),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "app_open_url", updatedAppOpenUrl),
 			resource.TestCheckResourceAttr(resourceFullName, "name", updatedName),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -151,6 +177,22 @@ func TestAccDigitalWalletApplication_Full(t *testing.T) {
 			// changes
 			fullStep,
 			updateStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
 				Destroy: true,
@@ -172,9 +214,12 @@ func TestAccDigitalWalletApplication_InvalidNativeApplication(t *testing.T) {
 	name := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -206,14 +251,62 @@ func TestAccDigitalWalletApplication_InvalidAppOpenUrl(t *testing.T) {
 	name := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckDigitalWalletApplicationDestroy,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDigitalWalletApplication_InvalidAppOpenUrl(resourceName, name, appOpenUrl),
 				ExpectError: regexp.MustCompile("Error: Error when calling `CreateDigitalWalletApplication`: Validation Error : \\[appOpenUrl must be a valid URL\\]"),
+			},
+		},
+	})
+}
+
+func TestAccDigitalWalletApplication_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_digital_wallet_application.%s", resourceName)
+
+	name := resourceName
+
+	appOpenUrl := "https://www.example.com/appopen"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccDigitalWalletApplication_Full(resourceName, name, appOpenUrl),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

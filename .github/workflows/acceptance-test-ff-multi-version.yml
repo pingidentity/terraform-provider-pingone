@@ -19,7 +19,7 @@ jobs:
     steps:
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -57,14 +57,14 @@ jobs:
       fail-fast: false
       matrix:
         # list whatever Terraform versions here you would like to support
-        terraform: # We test the earliest supported (v1.1), and the latest supported (v1.5)
+        terraform: # We test the earliest supported (v1.1), and the latest supported (v1.6)
           - '1.1.*'
-          - '1.5.*'
+          - '1.6.*'
       max-parallel: 1
     steps:
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v4

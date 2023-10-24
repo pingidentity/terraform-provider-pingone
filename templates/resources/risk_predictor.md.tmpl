@@ -13,6 +13,10 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-anonymous-network.tf") }}
 
+## Example Usage - Bot Detection Predictor
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-bot-detection.tf") }}
+
 ## Example Usage - Composite Predictor
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-composite.tf") }}
@@ -32,6 +36,10 @@ description: |-
 ## Example Usage - New Device Predictor
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-new-device.tf") }}
+
+## Example Usage - Suspicious Device Predictor
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-suspicious-device.tf") }}
 
 ## Example Usage - User Location Predictor
 

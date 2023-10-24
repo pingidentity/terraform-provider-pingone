@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func ResourceSignOnPolicyAction() *schema.Resource {
@@ -49,7 +50,8 @@ func resourceSignOnPolicyActionCreate(ctx context.Context, d *schema.ResourceDat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			fO, fR, fErr := apiClient.SignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateSignOnPolicyAction",
 		customErrorSignOnPolicyActionCreateUpdate,
@@ -76,7 +78,8 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.SignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneSignOnPolicyAction",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -312,7 +315,8 @@ func resourceSignOnPolicyActionUpdate(ctx context.Context, d *schema.ResourceDat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			fO, fR, fErr := apiClient.SignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateSignOnPolicyAction",
 		customErrorSignOnPolicyActionCreateUpdate,
@@ -335,8 +339,8 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.SignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.SignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteSignOnPolicyAction",
 		func(error model.P1Error) diag.Diagnostics {
@@ -379,19 +383,30 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceSignOnPolicyActionImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 3
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/signOnPolicyID/policyActionID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "sign_on_policy_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "sign_on_policy_action_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, signOnPolicyID, policyActionID := attributes[0], attributes[1], attributes[2]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.Set("sign_on_policy_id", signOnPolicyID)
-
-	d.SetId(policyActionID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.Set("sign_on_policy_id", attributes["sign_on_policy_id"])
+	d.SetId(attributes["sign_on_policy_action_id"])
 
 	resourceSignOnPolicyActionRead(ctx, d, meta)
 
@@ -1048,9 +1063,9 @@ func buildAttributeEqualsCondition(v []attributeEquality, tfSchemaAttribute stri
 				SignOnPolicyActionCommonConditionOr: &management.SignOnPolicyActionCommonConditionOr{
 					Or: conditionList,
 				},
-			}, nil
+			}, diags
 
-		} else {
+		} else if len(v) == 1 {
 
 			return &management.SignOnPolicyActionCommonConditionOrOrInner{
 				SignOnPolicyActionCommonConditionAggregate: &management.SignOnPolicyActionCommonConditionAggregate{
@@ -1059,7 +1074,9 @@ func buildAttributeEqualsCondition(v []attributeEquality, tfSchemaAttribute stri
 						String: v[0].attributeValueString,
 					}),
 				},
-			}, nil
+			}, diags
+		} else {
+			return nil, diags
 		}
 	}
 

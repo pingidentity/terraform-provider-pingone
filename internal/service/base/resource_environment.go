@@ -26,8 +26,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	stringdefaultinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringdefaultinternal"
@@ -38,7 +39,7 @@ import (
 
 // Types
 type EnvironmentResource struct {
-	client      *management.APIClient
+	Client      *pingone.Client
 	region      model.RegionMapping
 	forceDelete bool
 }
@@ -205,12 +206,15 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				Computed:            true,
 				Default: stringdefaultinternal.StaticStringUnknownable(func() basetypes.StringValue {
 
-					region := types.StringUnknown()
 					if v := os.Getenv("PINGONE_REGION"); v != "" {
-						region = framework.StringToTF(v)
+						return framework.StringToTF(v)
 					}
 
-					return region
+					if r.region.Region != "" {
+						return types.StringValue(r.region.Region)
+					}
+
+					return types.StringUnknown()
 				}()),
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -406,6 +410,25 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 	// Deprecated end
 	///////////////////
 
+	var regionPlan types.String
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("region"), &regionPlan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if regionPlan.IsUnknown() {
+
+		if r.region.Region == "" {
+			resp.Diagnostics.AddError(
+				"Cannot determine the default region",
+				"The PingOne region default value cannot be determined.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
+			)
+			return
+		}
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("region"), types.StringValue(r.region.Region))...)
+	}
+
 	var servicePlan []environmentServiceModel
 	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("service"), &servicePlan)...)
 	if resp.Diagnostics.HasError() {
@@ -454,24 +477,21 @@ func (r *EnvironmentResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
 	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state environmentResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -495,7 +515,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// Build the model for the API
-	environment, population, d := plan.expand(ctx, r.region.APICode)
+	environment, population, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -507,7 +527,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(*environment).Execute()
+			return r.Client.ManagementAPIClient.EnvironmentsApi.CreateEnvironmentActiveLicense(ctx).Environment(*environment).Execute()
 		},
 		"CreateEnvironmentActiveLicense",
 		environmentCreateCustomErrorHandler,
@@ -532,23 +552,29 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		defaultPopulationObj.SetDescription("Automatically created population.")
 		defaultPopulationObj.SetDefault(true)
 
-		defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.client, environmentResponse.GetId(), defaultPopulationObj)
-		if defaultPopulationResponse == nil {
-			resp.Diagnostics.AddWarning(
-				"Cannot seed the default population",
-				"The default population cannot be seeded explicitly by the provider.  Relying on the implicit environment bootstrapping service for creation.",
-			)
-		}
+	defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), defaultPopulationObj)
+	if defaultPopulationResponse == nil {
+		resp.Diagnostics.AddWarning(
+			"Cannot seed the default population",
+			"The default population cannot be seeded explicitly by the provider.  Relying on the implicit environment bootstrapping service for creation.",
+		)
+	}
+
+	///////////////////
+	// Deprecated start
+	// Population
 
 		var defaultPopulation *management.Population
 
-		// Save some processing if we already seeded our population
-		if defaultPopulationResponse != nil {
-			defaultPopulation = defaultPopulationResponse
-		} else {
-			defaultPopulation, d = sso.FetchDefaultPopulationWithTimeout(ctx, r.client, environmentResponse.GetId(), createTimeout)
-			resp.Diagnostics.Append(d...)
-		}
+	// Save some processing if we already seeded our population
+	if defaultPopulationResponse != nil {
+		defaultPopulation = defaultPopulationResponse
+	} else {
+		defaultPopulation, d = sso.FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), createTimeout)
+		resp.Diagnostics.Append(d...)
+	}
+
+	var populationResponse *management.Population = nil
 
 		if population != nil {
 
@@ -561,15 +587,15 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 			resp.Diagnostics.Append(framework.ParseResponse(
 				ctx,
 
-				func() (any, *http.Response, error) {
-					return r.client.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
-				},
-				"UpdatePopulation",
-				framework.DefaultCustomError,
-				sdk.DefaultCreateReadRetryable,
-				&populationResponse,
-			)...)
-		}
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), fO, fR, fErr)
+			},
+			"UpdatePopulation",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&populationResponse,
+		)...)
 	}
 	// Deprecated end
 	///////////////////
@@ -585,7 +611,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *environmentResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -604,7 +630,8 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.EnvironmentsApi.ReadOneEnvironment(ctx, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneEnvironment",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -627,7 +654,8 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneBillOfMaterials",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -647,7 +675,8 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.PopulationsApi.ReadOnePopulation(ctx, data.Id.ValueString(), data.DefaultPopulationId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadOnePopulation(ctx, data.Id.ValueString(), data.DefaultPopulationId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), fO, fR, fErr)
 			},
 			"ReadOnePopulation",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -669,7 +698,7 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state environmentResourceModel
 
-	if r.client == nil {
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -684,7 +713,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// Build the model for the API
-	environment, population, d := plan.expand(ctx, r.region.APICode)
+	environment, population, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -698,7 +727,8 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 			func() (any, *http.Response, error) {
-				return r.client.EnvironmentsApi.UpdateEnvironmentType(ctx, plan.Id.ValueString()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.UpdateEnvironmentType(ctx, plan.Id.ValueString()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"UpdateEnvironmentType",
 			framework.DefaultCustomError,
@@ -720,7 +750,8 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.EnvironmentsApi.UpdateEnvironment(ctx, plan.Id.ValueString()).Environment(*environment).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.UpdateEnvironment(ctx, plan.Id.ValueString()).Environment(*environment).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"UpdateEnvironment",
 			environmentCreateCustomErrorHandler,
@@ -733,7 +764,8 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.EnvironmentsApi.ReadOneEnvironment(ctx, plan.Id.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, plan.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneEnvironment",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -753,7 +785,8 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.BillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, plan.Id.ValueString()).BillOfMaterials(*environment.BillOfMaterials).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, plan.Id.ValueString()).BillOfMaterials(*environment.BillOfMaterials).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"UpdateBillOfMaterials",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -767,7 +800,8 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, plan.Id.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, plan.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneBillOfMaterials",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -795,7 +829,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 
 		var populationId string
 		if state.DefaultPopulationId.IsNull() {
-			defaultPopulation, d := sso.FetchDefaultPopulation(ctx, r.client, plan.Id.ValueString())
+			defaultPopulation, d := sso.FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString())
 			resp.Diagnostics.Append(d...)
 
 			if defaultPopulation == nil {
@@ -814,7 +848,8 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.PopulationsApi.UpdatePopulation(ctx, plan.Id.ValueString(), populationId).Population(*population).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.Id.ValueString(), populationId).Population(*population).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"UpdatePopulation",
 			framework.DefaultCustomError,
@@ -831,7 +866,8 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.PopulationsApi.ReadOnePopulation(ctx, state.Id.ValueString(), state.DefaultPopulationId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadOnePopulation(ctx, state.Id.ValueString(), state.DefaultPopulationId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"ReadOnePopulation",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -853,7 +889,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *environmentResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -867,12 +903,12 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(deleteEnvironment(ctx, r.client, data.Id.ValueString(), r.forceDelete)...)
+	resp.Diagnostics.Append(deleteEnvironment(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), r.forceDelete)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	deleteStateConf := &sdkv2resource.StateChangeConf{
+	deleteStateConf := &retry.StateChangeConf{
 		Pending: []string{
 			"200",
 			"403",
@@ -881,7 +917,7 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 			"404",
 		},
 		Refresh: func() (interface{}, string, error) {
-			resp, r, _ := r.client.EnvironmentsApi.ReadOneEnvironment(ctx, data.Id.ValueString()).Execute()
+			resp, r, _ := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, data.Id.ValueString()).Execute()
 
 			base := 10
 			return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
@@ -891,7 +927,7 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 		MinTimeout:                500 * time.Millisecond,
 		ContinuousTargetOccurence: 2,
 	}
-	_, err := deleteStateConf.WaitForState()
+	_, err := deleteStateConf.WaitForStateContext(ctx)
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Environment Delete Timeout",
@@ -904,6 +940,25 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+
+	compiledRegexString := fmt.Sprintf(`%s|^%s\/%s$`, verify.P1ResourceIDRegexpFullString.String(), verify.P1ResourceIDRegexp.String(), verify.P1ResourceIDRegexp.String())
+	m, err := regexp.MatchString(compiledRegexString, req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Cannot verify import ID regex: %s", err),
+		)
+		return
+	}
+
+	if !m {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Invalid import ID specified (\"%s\").  The ID should be in the format \"environment_id\" or the deprecated form \"environment_id/population_id\" and must match regex: %s", req.ID, compiledRegexString),
+		)
+		return
+	}
+
 	maxSplitLength := 2 // deprecated
 	minSplitLength := 1
 	attributes := strings.SplitN(req.ID, "/", maxSplitLength)
@@ -921,6 +976,25 @@ func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.Impo
 	if len(attributes) == 2 {
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("default_population_id"), attributes[1])...)
 	}
+
+	if len(attributes) == 1 {
+		population, d := sso.FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, attributes[0])
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if population == nil {
+			resp.Diagnostics.AddError(
+				"Default population not found",
+				"The Default population is not found in the environment.  Either ensure a population is configured to be the default, or you use the \"environment_id/population_id\" import ID pattern.",
+			)
+			return
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("default_population_id"), population.GetId())...)
+	}
+
 	// Deprecated end
 	///////////////////
 
@@ -935,7 +1009,8 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentId).Execute()
+			fO, fR, fErr := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 		},
 		"ReadOneEnvironment-Delete",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -954,7 +1029,8 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 		diags.Append(framework.ParseResponse(
 			ctx,
 			func() (any, *http.Response, error) {
-				return apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environmentId).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
+				fO, fR, fErr := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environmentId).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 			},
 			"UpdateEnvironmentType",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -971,8 +1047,8 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environmentId).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environmentId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, fR, fErr)
 		},
 		"DeleteEnvironment",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -983,7 +1059,7 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 	return diags
 }
 
-func (p *environmentResourceModel) expand(ctx context.Context, region management.EnumRegionCode) (*management.Environment, *management.Population, diag.Diagnostics) {
+func (p *environmentResourceModel) expand(ctx context.Context) (*management.Environment, *management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var environmentLicense management.EnvironmentLicense
@@ -991,11 +1067,7 @@ func (p *environmentResourceModel) expand(ctx context.Context, region management
 		environmentLicense = *management.NewEnvironmentLicense(p.LicenseId.ValueString())
 	}
 
-	if !p.Region.IsNull() && !p.Region.IsUnknown() {
-		region = model.FindRegionByName(p.Region.ValueString()).APICode
-	}
-
-	environment := management.NewEnvironment(environmentLicense, p.Name.ValueString(), region, management.EnumEnvironmentType(p.Type.ValueString()))
+	environment := management.NewEnvironment(environmentLicense, p.Name.ValueString(), model.FindRegionByName(p.Region.ValueString()).APICode, management.EnumEnvironmentType(p.Type.ValueString()))
 
 	if !p.Description.IsNull() {
 		environment.SetDescription(p.Description.ValueString())

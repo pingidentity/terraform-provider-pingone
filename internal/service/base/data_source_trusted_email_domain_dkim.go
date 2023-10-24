@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -92,7 +93,8 @@ func datasourcePingOneTrustedEmailDomainDKIMRead(ctx context.Context, d *schema.
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.TrustedEmailDomainsApi.ReadTrustedEmailDomainDKIMStatus(ctx, d.Get("environment_id").(string), d.Get("trusted_email_domain_id").(string)).Execute()
+			fO, fR, fErr := apiClient.TrustedEmailDomainsApi.ReadTrustedEmailDomainDKIMStatus(ctx, d.Get("environment_id").(string), d.Get("trusted_email_domain_id").(string)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadTrustedEmailDomainDKIMStatus",
 		sdk.DefaultCustomError,

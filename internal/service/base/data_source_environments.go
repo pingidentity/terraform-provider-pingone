@@ -11,15 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
 // Types
-type EnvironmentsDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type EnvironmentsDataSource serviceClientType
 
 type EnvironmentsDataSourceModel struct {
 	Id         types.String `tfsdk:"id"`
@@ -62,9 +58,9 @@ func (r *EnvironmentsDataSource) Schema(ctx context.Context, req datasource.Sche
 				Required:            true,
 			},
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of environments that have been successfully retrieved and filtered.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of environments that have been successfully retrieved and filtered.",
+			)),
 		},
 	}
 }
@@ -85,24 +81,20 @@ func (r *EnvironmentsDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *EnvironmentsDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -116,7 +108,7 @@ func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	filterFunction := func() (any, *http.Response, error) {
-		return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(data.ScimFilter.ValueString()).Execute()
+		return r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(data.ScimFilter.ValueString()).Execute()
 	}
 
 	var entityArray *management.EntityArray

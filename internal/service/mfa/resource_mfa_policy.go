@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,6 +13,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -421,7 +421,8 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, d.Get("environment_id").(string)).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
+			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, d.Get("environment_id").(string)).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateDeviceAuthenticationPolicies",
 		mfaPolicyCreateUpdateCustomErrorHandler,
@@ -448,10 +449,11 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneDeviceAuthenticationPolicy",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
@@ -547,7 +549,8 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).DeviceAuthenticationPolicy(*mfaPolicy).Execute()
+			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).DeviceAuthenticationPolicy(*mfaPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateMFAPolicy",
 		mfaPolicyCreateUpdateCustomErrorHandler,
@@ -570,8 +573,8 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteDeviceAuthenticationPolicy",
 		sdk.DefaultCustomError,
@@ -585,17 +588,25 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceMFAPolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/mfaPolicyID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "mfa_device_policy_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, mfaPolicyID := attributes[0], attributes[1]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.SetId(mfaPolicyID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["mfa_device_policy_id"])
 
 	resourceMFAPolicyRead(ctx, d, meta)
 
@@ -830,7 +841,8 @@ func checkApplicationForMobileApp(ctx context.Context, apiClient *management.API
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentID, appID).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentID, appID).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		sdk.CustomErrorResourceNotFoundWarning,

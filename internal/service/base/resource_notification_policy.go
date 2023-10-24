@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -22,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -31,10 +29,7 @@ import (
 )
 
 // Types
-type NotificationPolicyResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type NotificationPolicyResource serviceClientType
 
 type NotificationPolicyResourceModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
@@ -135,26 +130,17 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 		"A string to specify whether the limit defined is per-user or per environment.",
 	).AllowedValuesEnum(management.AllowedEnumNotificationsPolicyQuotaItemTypeEnumValues)
 
-	quotaTotalDescriptionFmt := "The maximum number of notifications allowed per day.  Cannot be set with `used` and `unused`."
-	quotaTotalDescription := framework.SchemaAttributeDescription{
+	quotaTotalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The maximum number of notifications allowed per day.  Cannot be set with `used` and `unused`.",
+	)
 
-		MarkdownDescription: quotaTotalDescriptionFmt,
-		Description:         strings.ReplaceAll(quotaTotalDescriptionFmt, "`", "\""),
-	}
+	quotaUsedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The maximum number of notifications that can be received and responded to each day. Must be configured with `unused` and cannot be configured with `total`.",
+	)
 
-	quotaUsedDescriptionFmt := "The maximum number of notifications that can be received and responded to each day. Must be configured with `unused` and cannot be configured with `total`."
-	quotaUsedDescription := framework.SchemaAttributeDescription{
-
-		MarkdownDescription: quotaUsedDescriptionFmt,
-		Description:         strings.ReplaceAll(quotaUsedDescriptionFmt, "`", "\""),
-	}
-
-	quotaUnusedDescriptionFmt := "The maximum number of notifications that can be received and not responded to each day. Must be configured with `used` and cannot be configured with `total`."
-	quotaUnusedDescription := framework.SchemaAttributeDescription{
-
-		MarkdownDescription: quotaUnusedDescriptionFmt,
-		Description:         strings.ReplaceAll(quotaUnusedDescriptionFmt, "`", "\""),
-	}
+	quotaUnusedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The maximum number of notifications that can be received and not responded to each day. Must be configured with `used` and cannot be configured with `total`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -358,24 +344,20 @@ func (r *NotificationPolicyResource) Configure(ctx context.Context, req resource
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state NotificationPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -401,7 +383,8 @@ func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.Cr
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsPoliciesApi.CreateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.NotificationsPoliciesApi.CreateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateNotificationsPolicy",
 		framework.DefaultCustomError,
@@ -423,7 +406,7 @@ func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.Cr
 func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *NotificationPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -442,7 +425,8 @@ func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.Read
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsPoliciesApi.ReadOneNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.NotificationsPoliciesApi.ReadOneNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneNotificationsPolicy",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -467,7 +451,7 @@ func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.Read
 func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state NotificationPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -493,7 +477,8 @@ func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.Up
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.NotificationsPoliciesApi.UpdateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.NotificationsPoliciesApi.UpdateNotificationsPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).NotificationsPolicy(*notificationPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateNotificationsPolicy",
 		framework.DefaultCustomError,
@@ -515,7 +500,7 @@ func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.Up
 func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *NotificationPolicyResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -533,8 +518,8 @@ func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.De
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.NotificationsPoliciesApi.DeleteNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.NotificationsPoliciesApi.DeleteNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteNotificationsPolicy",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -547,19 +532,37 @@ func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.De
 }
 
 func (r *NotificationPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "notification_policy_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/notification_policy_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*management.NotificationsPolicy, diag.Diagnostics) {

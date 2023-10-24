@@ -16,19 +16,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type PopulationDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type PopulationDataSource serviceClientType
 
 type PopulationDataSourceModel struct {
 	Description      types.String `tfsdk:"description"`
@@ -117,24 +114,20 @@ func (r *PopulationDataSource) Configure(ctx context.Context, req datasource.Con
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *PopulationDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -148,72 +141,58 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	var population management.Population
+	var scimFilter string
 
 	if !data.Name.IsNull() {
 
-		// Run the API call
-		var entityArray *management.EntityArray
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				return r.client.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Execute()
-			},
-			"ReadAllPopulations",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&entityArray,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
-
-			found := false
-			for _, populationItem := range populations {
-
-				if populationItem.GetName() == data.Name.ValueString() {
-					population = populationItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find population from name",
-					fmt.Sprintf("The population %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
-		}
+		scimFilter = filter.BuildScimFilter(
+			append(make([]interface{}, 0), map[string]interface{}{
+				"name":   "name",
+				"values": []string{data.Name.ValueString()},
+			}), map[string]string{})
 
 	} else if !data.PopulationId.IsNull() {
 
-		// Run the API call
-		var response *management.Population
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
+		scimFilter = filter.BuildScimFilter(
+			append(make([]interface{}, 0), map[string]interface{}{
+				"name":   "id",
+				"values": []string{data.PopulationId.ValueString()},
+			}), map[string]string{})
 
-			func() (any, *http.Response, error) {
-				return r.client.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.PopulationId.ValueString()).Execute()
-			},
-			"ReadOnePopulation",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&response,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		population = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
 			"Cannot find the requested population. population_id or name must be set.",
+		)
+		return
+	}
+
+	// Run the API call
+	var entityArray *management.EntityArray
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"ReadAllPopulations",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&entityArray,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok && len(populations) > 0 && populations[0].Id != nil {
+
+		population = populations[0]
+
+	} else {
+		resp.Diagnostics.AddError(
+			"Population not found",
+			fmt.Sprintf("The population with the specified population_id or name cannot be found in environment %s.", data.EnvironmentId.String()),
 		)
 		return
 	}
@@ -257,7 +236,7 @@ func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient
 func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *management.APIClient, environmentID string, timeout time.Duration) (*management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	stateConf := &sdkv2resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending: []string{
 			"false",
 		},
@@ -273,7 +252,8 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 				ctx,
 
 				func() (any, *http.Response, error) {
-					return apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+					fO, fR, fErr := apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 				},
 				"ReadAllPopulations-FetchDefaultPopulation",
 				framework.DefaultCustomError,
@@ -312,7 +292,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 		MinTimeout:                5 * time.Second,
 		ContinuousTargetOccurence: 2,
 	}
-	population, err := stateConf.WaitForState()
+	population, err := stateConf.WaitForStateContext(ctx)
 
 	if err != nil {
 		diags.AddWarning(

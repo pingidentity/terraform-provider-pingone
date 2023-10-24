@@ -5,8 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
@@ -19,23 +21,30 @@ func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
 	name := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCredentialTypeDataSource_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "credential_type_id"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "title", resourceFullName, "title"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "card_type", resourceFullName, "card_type"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "issuer_id", verify.P1ResourceIDRegexp),
+					resource.TestCheckResourceAttr(dataSourceFullName, "title", name),
+					resource.TestCheckResourceAttr(dataSourceFullName, "description", fmt.Sprintf("%s Example Description", name)),
+					resource.TestCheckResourceAttr(dataSourceFullName, "card_type", name),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "card_design_template", resourceFullName, "card_design_template"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "metadata.%", resourceFullName, "metadata.%"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "metadata.fields.%", resourceFullName, "metadata.fields.%"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "revoke_on_delete", "false"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "created_at", verify.RFC3339Regexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "updated_at", verify.RFC3339Regexp),
 				),
 			},
 			{
@@ -52,9 +61,12 @@ func TestAccCredentialTypeDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -71,9 +83,12 @@ func TestAccCredentialTypeDataSource_InvalidConfig(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -98,6 +113,7 @@ resource "pingone_credential_type" "%[2]s" {
   description          = "%[3]s Example Description"
   card_type            = "%[3]s"
   card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+  revoke_on_delete     = false
 
   metadata = {
     name               = "%[3]s"
@@ -149,6 +165,13 @@ resource "pingone_credential_type" "%[2]s" {
         title      = "id"
         attribute  = "id"
         is_visible = false
+      },
+      {
+        type         = "Directory Attribute"
+        title        = "photo"
+        attribute    = "photo"
+        is_visible   = false
+        file_support = "REFERENCE_FILE"
       }
     ]
   }

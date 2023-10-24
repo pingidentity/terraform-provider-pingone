@@ -8,75 +8,70 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
+	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckCredentialTypeDestroy(s *terraform.State) error {
+func TestAccCredentialType_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_credential_type.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var credentialTypeID, environmentID string
+
+	var p1Client *client.Client
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
 
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.CredentialsAPIClient
-
-	mgmtApiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_credential_type" {
-			continue
-		}
-
-		_, rEnv, err := mgmtApiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.CredentialTypesApi.ReadOneCredentialType(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		} else {
-
-			if body.DeletedAt != nil {
-
-				// Note: Credential Types are "soft delted" and may be returned via the ReadOneCredentialType call.
-				// If the DeletedAt attribute exists, it is considered deleted, handle similar to a 404.
-				return err
-			}
-
-		}
-
-		return fmt.Errorf("PingOne Credential Type ID %s still exists", rs.Primary.ID)
-	}
-
-	return nil
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccCredentialTypeConfig_Minimal(resourceName, name),
+				Check:  credentials.CredentialType_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
+			},
+			{
+				PreConfig: func() {
+					credentials.CredentialType_RemovalDrift_PreConfig(ctx, p1Client.API.CredentialsAPIClient, t, environmentID, credentialTypeID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccCredentialTypeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  credentials.CredentialType_GetIDs(resourceFullName, &environmentID, &credentialTypeID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccCredentialType_NewEnv(t *testing.T) {
@@ -92,9 +87,13 @@ func TestAccCredentialType_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -115,22 +114,29 @@ func TestAccCredentialType_Full(t *testing.T) {
 
 	name := acctest.ResourceNameGen()
 
-	data, _ := os.ReadFile("../../acctest/test_assets/image/credential_background_base64.png")
-	backgroundImage := "data:image/png;base64," + base64.StdEncoding.EncodeToString(data)
+	data, _ := os.ReadFile("../../acctest/test_assets/image/credential_background.png")
+	backgroundImage := base64.StdEncoding.EncodeToString(data)
 
-	data, _ = os.ReadFile("../../acctest/test_assets/image/credential_logo_base64.png")
-	logoImage := "data:image/png;base64," + base64.StdEncoding.EncodeToString(data)
+	data, _ = os.ReadFile("../../acctest/test_assets/image/credential_logo.png")
+	logoImage := base64.StdEncoding.EncodeToString(data)
 
-	// Note: If template is defined directly in HCL, the ${variableName} variables are escaped with $$, such as $${variableName}.
-	// The HCL in the test case has the escaped variable name.  The test value does not ensuring it is saved to, and returned from, state properly.
-	// Future: Move the design template to a test asset file.
-	cardDesignTemplate := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"${bgOpacityPercent}\"></rect><image href=\"${backgroundImage}\" opacity=\"${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><image href=\"${logoImage}\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"${textColor}\"></line><text fill=\"${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">${cardTitle}</text><text fill=\"${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">${cardSubtitle}</text></svg>"
+	cardDesignTemplate := `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="${bgOpacityPercent}"></rect>
+<image href="${backgroundImage}" opacity="${bgOpacityPercent}" height="476" rx="10" ry="10" width="736" x="2" y="2"></image>
+<image href="${logoImage}" x="42" y="43" height="90px" width="90px"></image>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke="${textColor}"></line>
+<text fill="${textColor}" font-weight="450" font-size="30" x="160" y="90">${cardTitle}</text>
+<text fill="${textColor}" font-size="25" font-weight="300" x="160" y="130">${cardSubtitle}</text>
+</svg>
+`
 
 	fullStep := resource.TestStep{
 		Config: testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "issuer_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "title", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "VerifiedEmployee"),
@@ -139,32 +145,40 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"), // ensures calculated default is 5
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.columns", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.background_image", backgroundImage),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.logo_image", logoImage),
+			resource.TestMatchResourceAttr(resourceFullName, "metadata.background_image", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "metadata.logo_image", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.bg_opacity_percent", "100"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.card_color", "#000000"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.text_color", "#eff0f1"),
-			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.#", "7"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.#", "8"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.id", "Directory Attribute -> displayName"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.type", "Directory Attribute"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.title", "displayName"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.attribute", "name.formatted"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.is_visible", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.7.file_support", "REFERENCE_FILE"),
+			resource.TestCheckResourceAttr(resourceFullName, "revoke_on_delete", "true"),
+			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
+			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
 	updatedName := acctest.ResourceNameGen()
-
-	// Note: If template is defined directly in HCL, the ${variableName} variables are escaped with $$, such as $${variableName}.
-	// The HCL in the test case has the escaped variable name.  The test value does not ensuring it is saved to, and returned from, state properly.
-	// Future: Move the design template to a test asset file.
-	updatedCardDesignTemplate := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">${cardTitle}</text><text font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">${cardSubtitle}</text></svg>"
+	updatedCardDesignTemplate := `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="" font-weight="450" font-size="30" x="160" y="90">${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">${cardSubtitle}</text>
+</svg>
+`
 
 	minimalStep := resource.TestStep{
 		Config: testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "issuer_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "title", updatedName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", updatedName)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "DemonstrationCard"),
@@ -176,25 +190,30 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.type", "Issued Timestamp"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.title", "timestamp"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.is_visible", "false"),
-
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.columns"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.bg_opacity_percent"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.card_color"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.text_color"),
+			resource.TestCheckResourceAttr(resourceFullName, "revoke_on_delete", "false"),
+			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
+			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             nil, //testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// full - new
 			fullStep,
 			{
-				Config: testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
-				//Destroy: true,
+				Config:  testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoImage),
+				Destroy: true,
 			},
 			// minimal - new
 			minimalStep,
@@ -206,6 +225,22 @@ func TestAccCredentialType_Full(t *testing.T) {
 			fullStep,
 			minimalStep,
 			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			// clear
 			{
 				Config:  testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
@@ -225,16 +260,13 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	name := acctest.ResourceNameGen()
 
-	data, _ := os.ReadFile("../../acctest/test_assets/image/image-background.jpg") // >90kb
-	backgroundImage := "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(data)
-
-	data, _ = os.ReadFile("../../acctest/test_assets/image/image-logo.gif") // >50kb
-	logoImage := "data:image/gif;base64," + base64.StdEncoding.EncodeToString(data)
-
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -244,32 +276,27 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 			},
 			{
 				Config:      testAccCredentialTypeConfig_InvalidCardColorHexValue(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				ExpectError: regexp.MustCompile("Attribute metadata.card_color expected value to contain a valid 6-digit\nhexadecimal color code"),
 				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_InvalidTextColorHexValue(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				ExpectError: regexp.MustCompile("Attribute metadata.text_color expected value to contain a valid 6-digit\nhexadecimal color code"),
 				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_InvalidBackgroundOpacityValue(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
-				Destroy:     true,
-			},
-			{
-				Config:      testAccCredentialTypeConfig_InvalidVersion(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Configuration for Read-Only Attribute"),
+				ExpectError: regexp.MustCompile("Attribute metadata.bg_opacity_percent value must be between 0 and 100"),
 				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_EmptyFieldsArray(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				ExpectError: regexp.MustCompile("ttribute metadata.fields list must contain at least 1 elements"),
 				Destroy:     true,
 			},
 			{
-				Config:      testAccCredentialTypeConfig_ImageSizeExceeded(resourceName, name, backgroundImage, logoImage),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Length"),
+				Config:      testAccCredentialTypeConfig_InvalidFileSupportValue(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
 				Destroy:     true,
 			},
 		},
@@ -282,47 +309,100 @@ func TestAccCredentialType_CardDesignTemplate(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	name := acctest.ResourceNameGen()
 
-	data, _ := os.ReadFile("../../acctest/test_assets/image/credential_background_base64.png")
-	backgroundImage := "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(data)
+	data, _ := os.ReadFile("../../acctest/test_assets/image/credential_background.png")
+	backgroundImage := base64.StdEncoding.EncodeToString(data)
 
 	data, _ = os.ReadFile("../../acctest/test_assets/image/image-logo.gif") // >50kb
-	logoImage := "data:image/gif;base64," + base64.StdEncoding.EncodeToString(data)
+	logoImage := base64.StdEncoding.EncodeToString(data)
+
+	// escape certain messages to test
+	noCardColorErrorMsg := regexp.QuoteMeta("Attribute metadata.card_color The metadata.card_color argument is defined but\nthe card_design_template does not have a ${cardColor} element.")
+	noSubTitleErrorMsg := regexp.QuoteMeta("Attribute description The description argument is defined but the\ncard_design_template does not have a ${cardSubtitle} element.")
+	noTextColorErrorMsg := regexp.QuoteMeta("Attribute metadata.text_color The metadata.text_color argument is defined but\nthe card_design_template does not have a ${textColor} element.")
+	noBackgroundImageErrorMsg := regexp.QuoteMeta("Attribute metadata.background_image The metadata.background_image argument is\ndefined but the card_design_template does not have a ${backgroundImage}\nelement.")
+	noLogoImageErrorMsg := regexp.QuoteMeta("Attribute metadata.logo_image The metadata.logo_image argument is defined but\nthe card_design_template does not have a ${logoImage} element.")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentialTypeDestroy,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoSVG(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				ExpectError: regexp.MustCompile("Attribute card_design_template expected value to contain a valid PingOne\nCredentials SVG card template."),
 				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoBackgroundImage(resourceName, name, backgroundImage),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				ExpectError: regexp.MustCompile(noBackgroundImageErrorMsg),
 				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoCardColor(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				ExpectError: regexp.MustCompile(noCardColorErrorMsg),
 				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoLogoImage(resourceName, name, logoImage),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				ExpectError: regexp.MustCompile(noLogoImageErrorMsg),
 				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoSubtitle(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				ExpectError: regexp.MustCompile(noSubTitleErrorMsg),
 				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_CardDesignTemplate_NoTextColor(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				ExpectError: regexp.MustCompile(noTextColorErrorMsg),
 				Destroy:     true,
+			},
+		},
+	})
+}
+
+func TestAccCredentialType_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_credential_type.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             credentials.CredentialType_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccCredentialTypeConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -337,7 +417,16 @@ resource "pingone_credential_type" "%[3]s" {
   title                = "%[4]s"
   description          = "%[4]s"
   card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+  card_design_template = <<-EOT
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+  <rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+  <rect fill="" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+  <line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+  <text fill="" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+  <text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+  </svg>
+  EOT
+
   metadata = {
     name = "%[4]s"
 
@@ -349,8 +438,6 @@ resource "pingone_credential_type" "%[3]s" {
       }
     ]
   }
-
-  depends_on = [pingone_environment.%[2]s]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -358,19 +445,41 @@ func testAccCredentialTypeConfig_Full(resourceName, name, backgroundImage, logoI
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_image" "%[2]s-background_image" {
+  environment_id    = data.pingone_environment.general_test.id
+  image_file_base64 = "%[4]s"
+}
+
+resource "pingone_image" "%[2]s-logo_image" {
+  environment_id    = data.pingone_environment.general_test.id
+  image_file_base64 = "%[5]s"
+}
+
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "VerifiedEmployee"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><image href=\"$${backgroundImage}\" opacity=\"$${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><image href=\"$${logoImage}\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+  environment_id   = data.pingone_environment.general_test.id
+  title            = "%[3]s"
+  description      = "%[3]s Example Description"
+  card_type        = "VerifiedEmployee"
+  revoke_on_delete = true
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="$${bgOpacityPercent}"></rect>
+<image href="$${backgroundImage}" opacity="$${bgOpacityPercent}" height="476" rx="10" ry="10" width="736" x="2" y="2"></image>
+<image href="$${logoImage}" x="42" y="43" height="90px" width="90px"></image>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke="$${textColor}"></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text fill="$${textColor}" font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT
 
   metadata = {
     name               = "%[3]s"
     description        = "%[3]s Example Description"
     columns            = 1
-    background_image   = "%[4]s"
-    logo_image         = "%[5]s"
+    background_image   = pingone_image.%[2]s-background_image.uploaded_image[0].href
+    logo_image         = pingone_image.%[2]s-logo_image.uploaded_image[0].href
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -417,6 +526,13 @@ resource "pingone_credential_type" "%[2]s" {
         title      = "id"
         attribute  = "id"
         is_visible = false
+      },
+      {
+        type         = "Directory Attribute"
+        title        = "photo"
+        attribute    = "photo"
+        is_visible   = false
+        file_support = "REFERENCE_FILE"
       }
     ]
   }
@@ -428,11 +544,21 @@ func testAccCredentialTypeConfig_Minimal(resourceName, name string) string {
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+  environment_id   = data.pingone_environment.general_test.id
+  title            = "%[3]s"
+  description      = "%[3]s Example Description"
+  card_type        = "DemonstrationCard"
+  revoke_on_delete = false
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT
 
   metadata = {
     name = "%[3]s"
@@ -448,84 +574,24 @@ resource "pingone_credential_type" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_ImageSizeExceeded(resourceName, name, backgroundImage, logoImage string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "VerifiedEmployee"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><image href=\"$${backgroundImage}\" opacity=\"$${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><image href=\"$${logoImage}\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
-
-  metadata = {
-    name               = "%[3]s"
-    description        = "%[3]s Example Description"
-    background_image   = "%[4]s"
-    logo_image         = "%[5]s"
-    bg_opacity_percent = 100
-    card_color         = "#000000"
-    text_color         = "#eff0f1"
-
-    fields = [
-      {
-        type       = "Directory Attribute"
-        title      = "givenName"
-        attribute  = "name.given"
-        is_visible = false
-      },
-      {
-        type       = "Directory Attribute"
-        title      = "surname"
-        attribute  = "name.family"
-        is_visible = false
-      },
-      {
-        type       = "Directory Attribute"
-        title      = "jobTitle"
-        attribute  = "title"
-        is_visible = false
-      },
-      {
-        type       = "Directory Attribute"
-        title      = "displayName"
-        attribute  = "name.formatted"
-        is_visible = false
-      },
-      {
-        type       = "Directory Attribute"
-        title      = "mail"
-        attribute  = "email"
-        is_visible = false
-      },
-      {
-        type       = "Directory Attribute"
-        title      = "preferredLanguage"
-        attribute  = "preferredLanguage"
-        is_visible = false
-      },
-      {
-        type       = "Directory Attribute"
-        title      = "id"
-        attribute  = "id"
-        is_visible = false
-      }
-    ]
-  }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, backgroundImage, logoImage)
-}
-
 func testAccCredentialTypeConfig_InvalidTitle(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="$${bgOpacityPercent}"></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke="$${textColor}"></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+</svg>
+EOT
 
   metadata = {
     name               = "%[3]s"
@@ -561,11 +627,20 @@ func testAccCredentialTypeConfig_InvalidCardColorHexValue(resourceName, name str
 	%[1]s
 
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT
 
   metadata = {
     name               = "%[3]s"
@@ -588,11 +663,20 @@ func testAccCredentialTypeConfig_InvalidTextColorHexValue(resourceName, name str
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT  
 
   metadata = {
     name               = "%[3]s"
@@ -615,11 +699,20 @@ func testAccCredentialTypeConfig_InvalidBackgroundOpacityValue(resourceName, nam
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT
 
   metadata = {
     name               = "%[3]s"
@@ -638,51 +731,68 @@ resource "pingone_credential_type" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_InvalidVersion(resourceName, name string) string {
+func testAccCredentialTypeConfig_EmptyFieldsArray(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT  
 
   metadata = {
     name               = "%[3]s"
-    version            = 4
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
 
     fields = [
-      {
-        type       = "Issued Timestamp"
-        title      = "timestamp"
-        is_visible = false
-      },
     ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccCredentialTypeConfig_EmptyFieldsArray(resourceName, name string) string {
+func testAccCredentialTypeConfig_InvalidFileSupportValue(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
-resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+
+resource "pingone_credential_type" "%[3]s" {
+  environment_id   = data.pingone_environment.general_test.id
+  title            = "%[3]s"
+  description      = "%[3]s Example Description"
+  card_type        = "DemonstrationCard"
+  revoke_on_delete = true
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT
 
   metadata = {
-    name               = "%[3]s"
-    bg_opacity_percent = 100
-    card_color         = "#000000"
-    text_color         = "#000000"
+    name = "%[3]s"
 
     fields = [
+      {
+        type         = "Issued Timestamp"
+        title        = "timestamp"
+        is_visible   = false
+        file_support = "REFERENCE_FILE"
+      }
     ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -698,7 +808,15 @@ resource "pingone_credential_type" "%[2]s" {
   card_type      = "DemonstrationCard"
 
   # missing svg tags
-  card_design_template = "<rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text>"
+  card_design_template = <<-EOT
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="$${bgOpacityPercent}"></rect>
+<image href="$${backgroundImage}" opacity="$${bgOpacityPercent}" height="476" rx="10" ry="10" width="736" x="2" y="2"></image>
+<image href="$${logoImage}" x="42" y="43" height="90px" width="90px"></image>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke="$${textColor}"></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text fill="$${textColor}" font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+EOT
 
   metadata = {
     name               = "%[3]s"
@@ -720,19 +838,35 @@ resource "pingone_credential_type" "%[2]s" {
 func testAccCredentialTypeConfig_CardDesignTemplate_NoBackgroundImage(resourceName, name, backgroundImage string) string {
 	return fmt.Sprintf(`
 	%[1]s
+
+resource "pingone_image" "%[2]s-background_image" {
+  environment_id    = data.pingone_environment.general_test.id
+  image_file_base64 = "%[4]s"
+}
+
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="$${bgOpacityPercent}"></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke="$${textColor}"></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text fill="$${textColor}" font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT  
 
   metadata = {
     name               = "%[3]s"
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
-    background_image   = "%[4]s" # {backgroundImage} is missing from card_design_template
+    background_image   = pingone_image.%[2]s-background_image.uploaded_image[0].href
+    //background_image = "https://wtf.example.com"
 
     fields = [
       {
@@ -742,6 +876,7 @@ resource "pingone_credential_type" "%[2]s" {
       },
     ]
   }
+  depends_on = [pingone_image.%[2]s-background_image]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, backgroundImage)
 }
 
@@ -749,11 +884,20 @@ func testAccCredentialTypeConfig_CardDesignTemplate_NoCardColor(resourceName, na
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="$${bgOpacityPercent}"></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke="$${textColor}"></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text fill="$${textColor}" font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT  
 
   metadata = {
     name               = "%[3]s"
@@ -775,12 +919,26 @@ resource "pingone_credential_type" "%[2]s" {
 func testAccCredentialTypeConfig_CardDesignTemplate_NoLogoImage(resourceName, name, logoImage string) string {
 	return fmt.Sprintf(`
 	%[1]s
+
+resource "pingone_image" "%[2]s-logo_image" {
+  environment_id    = data.pingone_environment.general_test.id
+  image_file_base64 = "%[4]s"
+}
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><image href=\"\" opacity=\"$${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><image href=\"\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\">$${cardSubtitle}</text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="$${bgOpacityPercent}"></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke="$${textColor}"></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text fill="$${textColor}" font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT  
 
   metadata = {
     name               = "%[3]s"
@@ -788,7 +946,7 @@ resource "pingone_credential_type" "%[2]s" {
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
-    logo_image         = "%[4]s" # {logoImage} is missing from card_design_template
+    logo_image         = pingone_image.%[2]s-logo_image.uploaded_image[0].href # {logoImage} is missing from card_design_template
 
     fields = [
       {
@@ -805,11 +963,21 @@ func testAccCredentialTypeConfig_CardDesignTemplate_NoSubtitle(resourceName, nam
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><image href=\"\" opacity=\"$${bgOpacityPercent}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\"></image><image href=\"\" x=\"42\" y=\"43\" height=\"90px\" width=\"90px\"></image><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"$${textColor}\"></line><text fill=\"$${textColor}\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text><text fill=\"$${textColor}\" font-size=\"25\" font-weight=\"300\" x=\"160\" y=\"130\"></text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="$${bgOpacityPercent}"></rect>
+<image href="" opacity="$${bgOpacityPercent}" height="476" rx="10" ry="10" width="736" x="2" y="2"></image>
+<image href="" x="42" y="43" height="90px" width="90px"></image><line y2="160" x2="695" y1="160" x1="42.5" stroke="$${textColor}"></line>
+<text fill="$${textColor}" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text fill="$${textColor}" font-size="25" font-weight="300" x="160" y="130"></text>
+</svg>
+EOT
 
   metadata = {
     name               = "%[3]s"
@@ -833,11 +1001,20 @@ func testAccCredentialTypeConfig_CardDesignTemplate_NoTextColor(resourceName, na
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_credential_type" "%[2]s" {
-  environment_id       = data.pingone_environment.general_test.id
-  title                = "%[3]s"
-  description          = "%[3]s Example Description"
-  card_type            = "DemonstrationCard"
-  card_design_template = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 740 480\"><rect fill=\"none\" width=\"736\" height=\"476\" stroke=\"#CACED3\" stroke-width=\"3\" rx=\"10\" ry=\"10\" x=\"2\" y=\"2\"></rect><rect fill=\"$${cardColor}\" height=\"476\" rx=\"10\" ry=\"10\" width=\"736\" x=\"2\" y=\"2\" opacity=\"$${bgOpacityPercent}\"></rect><line y2=\"160\" x2=\"695\" y1=\"160\" x1=\"42.5\" stroke=\"\"></line><text fill=\"\" font-weight=\"450\" font-size=\"30\" x=\"160\" y=\"90\">$${cardTitle}</text></svg>"
+  environment_id = data.pingone_environment.general_test.id
+  title          = "%[3]s"
+  description    = "%[3]s Example Description"
+  card_type      = "DemonstrationCard"
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="$${cardColor}" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity="$${bgOpacityPercent}"></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text fill="" font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT
 
   metadata = {
     name               = "%[3]s"

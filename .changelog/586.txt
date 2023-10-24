@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_gateway`: Fixed incorrect unchanged plan when updating the `user_type` parameter.
+```

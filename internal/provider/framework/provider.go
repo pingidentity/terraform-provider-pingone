@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/agreementmanagement"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/credentials"
@@ -50,9 +51,8 @@ type pingOneProviderModel struct {
 }
 
 type pingOneProviderServiceEndpointsModel struct {
-	AuthHostname          types.String `tfsdk:"auth_hostname"`
-	APIHostname           types.String `tfsdk:"api_hostname"`
-	AgreementMgmtHostname types.String `tfsdk:"agreement_management_hostname"`
+	AuthHostname types.String `tfsdk:"auth_hostname"`
+	APIHostname  types.String `tfsdk:"api_hostname"`
 }
 
 func (p *pingOneProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -219,20 +219,22 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	if !data.ServiceEndpoints.IsNull() {
 
-		var serviceEndpointsData pingOneProviderServiceEndpointsModel
+		var serviceEndpointsData []pingOneProviderServiceEndpointsModel
 		resp.Diagnostics.Append(data.ServiceEndpoints.ElementsAs(ctx, &serviceEndpointsData, false)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if !serviceEndpointsData.AuthHostname.IsNull() {
-			v := serviceEndpointsData.AuthHostname.ValueString()
-			config.AuthHostnameOverride = &v
-		}
+		if len(serviceEndpointsData) > 0 {
+			if !serviceEndpointsData[0].AuthHostname.IsNull() {
+				v := serviceEndpointsData[0].AuthHostname.ValueString()
+				config.AuthHostnameOverride = &v
+			}
 
-		if !serviceEndpointsData.APIHostname.IsNull() {
-			v := serviceEndpointsData.APIHostname.ValueString()
-			config.APIHostnameOverride = &v
+			if !serviceEndpointsData[0].APIHostname.IsNull() {
+				v := serviceEndpointsData[0].APIHostname.ValueString()
+				config.APIHostnameOverride = &v
+			}
 		}
 
 	}
@@ -257,6 +259,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resource {
 	v := make([]func() resource.Resource, 0)
+	v = append(v, agreementmanagement.Resources()...)
 	v = append(v, authorize.Resources()...)
 	v = append(v, base.Resources()...)
 	v = append(v, mfa.Resources()...)
@@ -269,6 +272,7 @@ func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resou
 
 func (p *pingOneProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	v := make([]func() datasource.DataSource, 0)
+	v = append(v, agreementmanagement.DataSources()...)
 	v = append(v, authorize.DataSources()...)
 	v = append(v, base.DataSources()...)
 	v = append(v, mfa.DataSources()...)

@@ -7,64 +7,70 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckSchemaAttributeDestroy(s *terraform.State) error {
+func TestAccSchemaAttribute_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_schema_attribute.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var schemaAttributeID, schemaID, environmentID string
+
+	var p1Client *client.Client
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
 
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_schema_attribute" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.SchemasApi.ReadOneAttribute(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["schema_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Schema Attribute Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
+				Check:  sso.SchemaAttribute_GetIDs(resourceFullName, &environmentID, &schemaID, &schemaAttributeID),
+			},
+			{
+				PreConfig: func() {
+					sso.SchemaAttribute_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, schemaID, schemaAttributeID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccSchemaAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.SchemaAttribute_GetIDs(resourceFullName, &environmentID, &schemaID, &schemaAttributeID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccSchemaAttribute_NewEnv(t *testing.T) {
@@ -80,9 +86,13 @@ func TestAccSchemaAttribute_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -109,9 +119,10 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", description),
@@ -126,9 +137,10 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
@@ -141,9 +153,12 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -162,6 +177,22 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 			fullCheck,
 			minimalCheck,
 			fullCheck,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["schema_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -177,7 +208,7 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_EnumeratedValues(resourceName, name, "STRING"),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enumerated_values.#", "6"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
 				"value":       "value1",
@@ -210,15 +241,18 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "enumerated_values"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -237,6 +271,22 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 			fullCheck,
 			minimalCheck,
 			fullCheck,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["schema_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -252,7 +302,7 @@ func TestAccSchemaAttribute_StringRegexValidation(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_RegexValidation(resourceName, name, "STRING"),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "regex_validation.pattern", "^[a-zA-Z0-9]*$"),
 			resource.TestCheckResourceAttr(resourceFullName, "regex_validation.requirements", "Did you hear about the cow that aced all her tests?  She was outstanding in her field."),
 			resource.TestCheckResourceAttr(resourceFullName, "regex_validation.values_pattern_should_match.#", "2"),
@@ -267,15 +317,18 @@ func TestAccSchemaAttribute_StringRegexValidation(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckNoResourceAttr(resourceFullName, "regex_validation"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -294,6 +347,22 @@ func TestAccSchemaAttribute_StringRegexValidation(t *testing.T) {
 			fullCheck,
 			minimalCheck,
 			fullCheck,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["schema_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -307,16 +376,19 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Combos
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
@@ -325,7 +397,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
@@ -334,7 +406,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
@@ -343,7 +415,7 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
@@ -367,9 +439,10 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 	fullCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, true),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", description),
@@ -384,9 +457,10 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 	minimalCheck := resource.TestStep{
 		Config: testAccSchemaAttributeConfig_JSONMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
@@ -399,9 +473,12 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -420,6 +497,22 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 			fullCheck,
 			minimalCheck,
 			fullCheck,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["schema_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -432,9 +525,12 @@ func TestAccSchemaAttribute_JSONInvalidAttrs(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -458,9 +554,12 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckSchemaAttributeDestroy,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -474,7 +573,7 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
@@ -483,7 +582,7 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
@@ -493,19 +592,55 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 	})
 }
 
+func TestAccSchemaAttribute_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_schema_attribute.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+		},
+	})
+}
+
 func testAccSchemaAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  schema_id      = data.pingone_schema.%[4]s.id
 
   name = "%[4]s"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -515,15 +650,9 @@ func testAccSchemaAttributeConfig_StringFull(resourceName, name string, unique, 
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
+  schema_name    = "User"
 
   name         = "%[3]s"
   display_name = "Attribute %[3]s"
@@ -539,15 +668,8 @@ func testAccSchemaAttributeConfig_StringMinimal(resourceName, name string) strin
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
 
   name = "%[3]s"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -557,15 +679,9 @@ func testAccSchemaAttributeConfig_JSONFull(resourceName, name string, unique, mu
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
+  schema_name    = "User"
 
   name         = "%[3]s"
   display_name = "Attribute %[3]s"
@@ -581,15 +697,8 @@ func testAccSchemaAttributeConfig_JSONMinimal(resourceName, name string) string 
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
 
   name = "%[3]s"
   type = "JSON"
@@ -600,15 +709,8 @@ func testAccSchemaAttributeConfig_EnumeratedValues(resourceName, name, attrType 
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
 
   name = "%[3]s"
   type = "%[4]s"
@@ -647,15 +749,8 @@ func testAccSchemaAttributeConfig_RegexValidation(resourceName, name, attrType s
 	return fmt.Sprintf(`
 		%[1]s
 
-data "pingone_schema" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "User"
-}
-
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_id      = data.pingone_schema.%[2]s.id
 
   name = "%[3]s"
   type = "%[4]s"

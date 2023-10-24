@@ -5,8 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -20,19 +21,22 @@ func TestAccCredentialIssuanceRuleDataSource_ByIDFull(t *testing.T) {
 	name := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentiaIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCredentialIssuanceRuleDataSource_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "credential_type_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "credential_issuance_rule_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "credential_type_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "credential_issuance_rule_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "automation.%", resourceFullName, "automation.%"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "filter.%", resourceFullName, "filter.%"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "filter.scim", "accountId eq \"12345\" or accountId eq \"98765\" or (address.countryCode eq \"US\")"),
@@ -56,9 +60,12 @@ func TestAccCredentialIssuanceRuleDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentiaIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -75,9 +82,12 @@ func TestAccCredentialIssuanceRuleDataSource_InvalidConfig(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckCredentiaIssuanceRuleDestroy,
+		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -168,8 +178,8 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
     mobile_app {
-      bundle_id                = "com.pingidentity.ios_wallet_byname"
-      package_name             = "com.pingidentity.android_wallet_byname"
+      bundle_id                = "com.pingidentity.ios_wallet_%[2]s"
+      package_name             = "com.pingidentity.android_wallet_%[2]s"
       passcode_refresh_seconds = 30
     }
   }

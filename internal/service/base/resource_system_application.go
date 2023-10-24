@@ -15,25 +15,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	sdkv2resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type SystemApplicationResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type SystemApplicationResource serviceClientType
 
 type systemApplicationResourceModel struct {
 	Id                        types.String `tfsdk:"id"`
@@ -43,6 +41,8 @@ type systemApplicationResourceModel struct {
 	Enabled                   types.Bool   `tfsdk:"enabled"`
 	AccessControlRoleType     types.String `tfsdk:"access_control_role_type"`
 	AccessControlGroupOptions types.Object `tfsdk:"access_control_group_options"`
+	ApplyDefaultTheme         types.Bool   `tfsdk:"apply_default_theme"`
+	EnableDefaultThemeFooter  types.Bool   `tfsdk:"enable_default_theme_footer"`
 }
 
 type applicationAccessControlGroupOptionsResourceModel struct {
@@ -103,6 +103,14 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 		"ALL_GROUPS": "the actor must belong to all groups listed in the `groups` property",
 	})
 
+	applyDefaultThemeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether to apply the default theme to the Self-Service or PingOne Portal application.",
+	).DefaultValue(false)
+
+	enableDefaultThemeFooterDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether to show the default theme footer on the self-service application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` and `apply_default_theme` is also `true`.",
+	)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to manage the built-in system applications (PingOne Self-Service and PingOne Portal) in PingOne.",
@@ -134,6 +142,10 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 			"name": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the system application.").Description,
 				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -187,6 +199,28 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 					},
 				},
 			},
+
+			"apply_default_theme": schema.BoolAttribute{
+				Description:         applyDefaultThemeDescription.Description,
+				MarkdownDescription: applyDefaultThemeDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+			},
+
+			"enable_default_theme_footer": schema.BoolAttribute{
+				Description:         enableDefaultThemeFooterDescription.Description,
+				MarkdownDescription: enableDefaultThemeFooterDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.Bool{
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL)),
+						path.MatchRoot("type"),
+					),
+				},
+			},
 		},
 	}
 }
@@ -207,24 +241,20 @@ func (r *SystemApplicationResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *SystemApplicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state systemApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -247,7 +277,7 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// Build the model for the API
-	updateSystemApplication, applicationId, d := plan.expand(ctx, r.client)
+	updateSystemApplication, applicationId, d := plan.expand(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -259,7 +289,8 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), *applicationId).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), *applicationId).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,
@@ -281,7 +312,7 @@ func (r *SystemApplicationResource) Create(ctx context.Context, req resource.Cre
 func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *systemApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -294,6 +325,33 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
+	// Run the API call
+	var response *management.ReadOneApplication200Response
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"ReadOneApplication",
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+
 	if !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL))) && !data.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE))) {
 		resp.Diagnostics.AddError(
 			"Invalid application type",
@@ -305,32 +363,13 @@ func (r *SystemApplicationResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	// Run the API call
-	var response *management.ReadOneApplication200Response
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-		},
-		"ReadOneApplication",
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&response,
-	)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *SystemApplicationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state systemApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -355,7 +394,7 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Build the model for the API
-	updateSystemApplication, _, d := plan.expand(ctx, r.client)
+	updateSystemApplication, _, d := plan.expand(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -367,7 +406,8 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.UpdateApplication(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplication",
 		framework.DefaultCustomError,
@@ -389,7 +429,7 @@ func (r *SystemApplicationResource) Update(ctx context.Context, req resource.Upd
 func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *systemApplicationResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -406,7 +446,7 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 	data.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
 	data.AccessControlRoleType = types.StringNull()
 
-	updateSystemApplication, _, d := data.expand(ctx, r.client)
+	updateSystemApplication, _, d := data.expand(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -417,10 +457,11 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApi.UpdateApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.UpdateApplication(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).UpdateApplicationRequest(*updateSystemApplication).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplication",
-		framework.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
@@ -430,19 +471,37 @@ func (r *SystemApplicationResource) Delete(ctx context.Context, req resource.Del
 }
 
 func (r *SystemApplicationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "application_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/application_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *management.APIClient) (*management.UpdateApplicationRequest, *string, diag.Diagnostics) {
@@ -521,6 +580,10 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 			updateApplication.SetAccessControl(*accessControl)
 		}
 
+		if !p.ApplyDefaultTheme.IsNull() && !p.ApplyDefaultTheme.IsUnknown() {
+			updateApplication.SetApplyDefaultTheme(p.ApplyDefaultTheme.ValueBool())
+		}
+
 		data.ApplicationPingOnePortal = updateApplication
 
 		var ok bool
@@ -551,6 +614,14 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 
 		if setAccessControl {
 			updateApplication.SetAccessControl(*accessControl)
+		}
+
+		if !p.ApplyDefaultTheme.IsNull() && !p.ApplyDefaultTheme.IsUnknown() {
+			updateApplication.SetApplyDefaultTheme(p.ApplyDefaultTheme.ValueBool())
+		}
+
+		if !p.EnableDefaultThemeFooter.IsNull() && !p.EnableDefaultThemeFooter.IsUnknown() {
+			updateApplication.SetEnableDefaultThemeFooter(p.EnableDefaultThemeFooter.ValueBool())
 		}
 
 		data.ApplicationPingOneSelfService = updateApplication
@@ -593,6 +664,9 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 			Description:   apiObject.ApplicationPingOnePortal.Description,
 			AccessControl: apiObject.ApplicationPingOnePortal.AccessControl,
 		}
+
+		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOnePortal.GetApplyDefaultThemeOk())
+		p.EnableDefaultThemeFooter = types.BoolNull()
 	}
 
 	if apiObject.ApplicationPingOneSelfService != nil {
@@ -605,6 +679,9 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 			Description:   apiObject.ApplicationPingOneSelfService.Description,
 			AccessControl: apiObject.ApplicationPingOneSelfService.AccessControl,
 		}
+
+		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetApplyDefaultThemeOk())
+		p.EnableDefaultThemeFooter = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetEnableDefaultThemeFooterOk())
 	}
 
 	p.Id = framework.StringToTF(apiObjectCommon.GetId())
@@ -701,7 +778,7 @@ func FetchApplicationsByType(ctx context.Context, apiClient *management.APIClien
 func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *management.APIClient, environmentID string, applicationType management.EnumApplicationType, expectAtLeastOneResult bool, timeout time.Duration) (*[]management.ReadOneApplication200Response, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	stateConf := &sdkv2resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending: []string{
 			"false",
 		},
@@ -717,7 +794,8 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 				ctx,
 
 				func() (any, *http.Response, error) {
-					return apiClient.ApplicationsApi.ReadAllApplications(ctx, environmentID).Execute()
+					fO, fR, fErr := apiClient.ApplicationsApi.ReadAllApplications(ctx, environmentID).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 				},
 				"ReadAllApplications",
 				framework.DefaultCustomError,
@@ -770,7 +848,7 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 		MinTimeout:                2 * time.Second,
 		ContinuousTargetOccurence: 2,
 	}
-	applicationResponse, err := stateConf.WaitForState()
+	applicationResponse, err := stateConf.WaitForStateContext(ctx)
 
 	if err != nil {
 		diags.AddError(

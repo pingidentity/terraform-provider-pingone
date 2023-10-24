@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
@@ -17,7 +17,10 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -69,6 +72,22 @@ func TestAccRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 				),
 			},
+			{
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "DaVinci Admin"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", "DaVinci Admin"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+				),
+			},
+			{
+				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "DaVinci Admin Read Only"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", "DaVinci Admin Read Only"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+				),
+			},
 		},
 	})
 }
@@ -79,13 +98,16 @@ func TestAccRoleDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccRoleDataSourceConfig_NotFoundByName(resourceName),
-				ExpectError: regexp.MustCompile("Cannot find role doesnotexist"),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
 			},
 			// {
 			// 	Config:      testAccRoleDataSourceConfig_NotFoundByID(resourceName),

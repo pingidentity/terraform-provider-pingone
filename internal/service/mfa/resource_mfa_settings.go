@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -37,6 +37,12 @@ func ResourceMFASettings() *schema.Resource {
 				Required:         true,
 				ForceNew:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+			},
+			"phone_extensions_enabled": {
+				Description: "A boolean when set to `true` allows one-time passwords to be delivered via voice to phone numbers that include extensions. Set to `false` to disable support for extensions.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
 			},
 			"pairing": {
 				Description: "An object that contains pairing settings.",
@@ -122,11 +128,16 @@ func resourceMFASettingsCreate(ctx context.Context, d *schema.ResourceData, meta
 		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
 	}
 
+	if v, ok := d.GetOk("phone_extensions_enabled"); ok {
+		mfaSettings.SetPhoneExtensions(expandMFASettingsPhoneExtensions(v))
+	}
+
 	resp, diags := sdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
+			fO, fR, fErr := apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateMFASettings",
 		sdk.DefaultCustomError,
@@ -153,10 +164,11 @@ func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.MFASettingsApi.ReadMFASettings(ctx, d.Get("environment_id").(string)).Execute()
+			fO, fR, fErr := apiClient.MFASettingsApi.ReadMFASettings(ctx, d.Get("environment_id").(string)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadMFASettings",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
@@ -176,6 +188,12 @@ func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta i
 		d.Set("lockout", flattenMFASettingLockout(*v))
 	} else {
 		d.Set("lockout", nil)
+	}
+
+	if v, ok := respObject.GetPhoneExtensionsOk(); ok {
+		d.Set("phone_extensions_enabled", v.GetEnabled())
+	} else {
+		d.Set("phone_extensions_enabled", nil)
 	}
 
 	if v, ok := respObject.GetAuthenticationOk(); ok {
@@ -203,11 +221,16 @@ func resourceMFASettingsUpdate(ctx context.Context, d *schema.ResourceData, meta
 		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
 	}
 
+	if v, ok := d.GetOk("phone_extensions_enabled"); ok {
+		mfaSettings.SetPhoneExtensions(expandMFASettingsPhoneExtensions(v))
+	}
+
 	_, diags = sdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
+			fO, fR, fErr := apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateMFASettings",
 		sdk.DefaultCustomError,
@@ -230,10 +253,11 @@ func resourceMFASettingsDelete(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.MFASettingsApi.ResetMFASettings(ctx, d.Get("environment_id").(string)).Execute()
+			fO, fR, fErr := apiClient.MFASettingsApi.ResetMFASettings(ctx, d.Get("environment_id").(string)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ResetMFASettings",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		nil,
 	)
 	if diags.HasError() {
@@ -244,16 +268,21 @@ func resourceMFASettingsDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceMFASettingsImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 1
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID := attributes[0]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.SetId(environmentID)
+	d.SetId(attributes["environment_id"])
+	d.Set("environment_id", attributes["environment_id"])
 
 	resourceMFASettingsRead(ctx, d, meta)
 
@@ -274,6 +303,13 @@ func expandMFASettingsLockout(v []interface{}) mfa.MFASettingsLockout {
 	if v, ok := obj["duration_seconds"].(int); ok && v > 0 {
 		mfa.SetDurationSeconds(int32(v))
 	}
+
+	return mfa
+}
+
+func expandMFASettingsPhoneExtensions(v interface{}) mfa.MFASettingsPhoneExtensions {
+	mfa := *mfa.NewMFASettingsPhoneExtensions()
+	mfa.SetEnabled(v.(bool))
 
 	return mfa
 }

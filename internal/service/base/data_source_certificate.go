@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -75,7 +76,7 @@ func DatasourceCertificate() *schema.Resource {
 			},
 			"signature_algorithm": {
 				Type:        schema.TypeString,
-				Description: fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
+				Description: fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
 				Computed:    true,
 			},
 			"starts_at": {
@@ -121,7 +122,8 @@ func datasourcePingOneCertificateRead(ctx context.Context, d *schema.ResourceDat
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.CertificateManagementApi.GetCertificates(ctx, d.Get("environment_id").(string)).Execute()
+				fO, fR, fErr := apiClient.CertificateManagementApi.GetCertificates(ctx, d.Get("environment_id").(string)).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"GetCertificates",
 			sdk.DefaultCustomError,
@@ -162,7 +164,8 @@ func datasourcePingOneCertificateRead(ctx context.Context, d *schema.ResourceDat
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.CertificateManagementApi.GetCertificate(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+				fO, fR, fErr := apiClient.CertificateManagementApi.GetCertificate(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"GetCertificate",
 			sdk.DefaultCustomError,

@@ -28,6 +28,9 @@ resource "pingone_system_application" "pingone_self_service" {
 
   type    = "PING_ONE_SELF_SERVICE"
   enabled = true
+
+  apply_default_theme         = true
+  enable_default_theme_footer = true
 }
 ```
 
@@ -44,6 +47,8 @@ resource "pingone_system_application" "pingone_self_service" {
 
 - `access_control_group_options` (Attributes) Group access control settings. (see [below for nested schema](#nestedatt--access_control_group_options))
 - `access_control_role_type` (String) A string that specifies the user role required to access the application. A user is an admin user if they have one or more of the following roles assigned: `Organization Admin`, `Environment Admin`, `Identity Data Admin`, or `Client Application Developer`.  Options are `ADMIN_USERS_ONLY`.
+- `apply_default_theme` (Boolean) A boolean that specifies whether to apply the default theme to the Self-Service or PingOne Portal application.  Defaults to `false`.
+- `enable_default_theme_footer` (Boolean) A boolean that specifies whether to show the default theme footer on the self-service application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` and `apply_default_theme` is also `true`.
 
 ### Read-Only
 

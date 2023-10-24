@@ -4,69 +4,73 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckBrandingThemeDestroy(s *terraform.State) error {
+func TestAccBrandingTheme_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_branding_theme.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var brandingThemeID, environmentID string
+
+	var p1Client *client.Client
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
 
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_branding_theme" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.BrandingThemesApi.ReadOneBrandingTheme(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Branding Theme Instance %s still exists", rs.Primary.ID)
-	}
-
-	return nil
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
+				Check:  base.BrandingTheme_GetIDs(resourceFullName, &environmentID, &brandingThemeID),
+			},
+			{
+				PreConfig: func() {
+					base.BrandingTheme_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, brandingThemeID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccBrandingThemeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  base.BrandingTheme_GetIDs(resourceFullName, &environmentID, &brandingThemeID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccBrandingTheme_NewEnv(t *testing.T) {
@@ -82,9 +86,13 @@ func TestAccBrandingTheme_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -105,31 +113,34 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 
 	name := resourceName
 
-	logoData, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	logoData, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	logo := base64.StdEncoding.EncodeToString(logoData)
 
-	backgroundData, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-background.jpg")
+	backgroundData, _ := os.ReadFile("../../acctest/test_assets/image/image-background.jpg")
 	background := base64.StdEncoding.EncodeToString(backgroundData)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccBrandingThemeConfig_Full(resourceName, name, logo, background),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "logo.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckNoResourceAttr(resourceFullName, "background_color"),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
@@ -141,6 +152,22 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "heading_text_color", "#FF0005"),
 					resource.TestCheckResourceAttr(resourceFullName, "link_text_color", "#8A7F06"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -155,16 +182,19 @@ func TestAccBrandingTheme_Minimal(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -193,31 +223,34 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 
 	name := resourceName
 
-	logoData, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	logoData, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	logo := base64.StdEncoding.EncodeToString(logoData)
 
-	backgroundData, _ := ioutil.ReadFile("../../acctest/test_assets/image/image-background.jpg")
+	backgroundData, _ := os.ReadFile("../../acctest/test_assets/image/image-background.jpg")
 	background := base64.StdEncoding.EncodeToString(backgroundData)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingThemeDestroy,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccBrandingThemeConfig_Full(resourceName, name, logo, background),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "logo.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckNoResourceAttr(resourceFullName, "background_color"),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
@@ -233,8 +266,8 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 			{
 				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
@@ -254,16 +287,16 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 			{
 				Config: testAccBrandingThemeConfig_Full(resourceName, name, logo, background),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "logo.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckNoResourceAttr(resourceFullName, "background_color"),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
@@ -275,6 +308,49 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "heading_text_color", "#FF0005"),
 					resource.TestCheckResourceAttr(resourceFullName, "link_text_color", "#8A7F06"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccBrandingTheme_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_branding_theme.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

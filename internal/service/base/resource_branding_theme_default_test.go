@@ -1,17 +1,63 @@
 package base_test
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func testAccCheckBrandingThemeDefaultDestroy(s *terraform.State) error {
-	return nil
+func TestAccBrandingThemeDefault_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_branding_theme_default.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var brandingThemeID, environmentID string
+
+	var p1Client *client.Client
+	var ctx = context.Background()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.BrandingThemeDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test removal of the environment
+			{
+				Config: testAccBrandingThemeDefaultConfig_Full(environmentName, licenseID, resourceName, name),
+				Check:  base.BrandingThemeDefault_GetIDs(resourceFullName, &environmentID, &brandingThemeID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
 
 func TestAccBrandingThemeDefault_Full(t *testing.T) {
@@ -22,33 +68,94 @@ func TestAccBrandingThemeDefault_Full(t *testing.T) {
 
 	name := resourceName
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckBrandingThemeDefaultDestroy,
+		CheckDestroy:             base.BrandingThemeDefault_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBrandingThemeDefaultConfig_Full(resourceName, name),
+				Config: testAccBrandingThemeDefaultConfig_Full(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "branding_theme_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "branding_theme_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "true"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return rs.Primary.Attributes["environment_id"], nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func testAccBrandingThemeDefaultConfig_Full(resourceName, name string) string {
+func TestAccBrandingThemeDefault_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_branding_theme_default.%s", resourceName)
+
+	name := resourceName
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.BrandingThemeDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccBrandingThemeDefaultConfig_Full(environmentName, licenseID, resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+		},
+	})
+}
+
+func testAccBrandingThemeDefaultConfig_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_branding_theme" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_branding_theme" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-  name     = "%[2]s"
+  name     = "%[4]s"
   template = "split"
 
   background_color   = "#FF00F0"
@@ -61,9 +168,9 @@ resource "pingone_branding_theme" "%[2]s" {
 
 }
 
-resource "pingone_branding_theme_default" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_branding_theme_default" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-  branding_theme_id = pingone_branding_theme.%[2]s.id
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  branding_theme_id = pingone_branding_theme.%[3]s.id
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

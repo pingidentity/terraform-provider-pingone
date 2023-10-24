@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -18,19 +17,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	listplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listplanmodifier"
 	stringplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringplanmodifier"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type ApplicationPushCredentialResource struct {
-	client *mfa.APIClient
-	region model.RegionMapping
-}
+type ApplicationPushCredentialResource serviceClientType
 
 type applicationPushCredentialResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -304,24 +300,20 @@ func (r *ApplicationPushCredentialResource) Configure(ctx context.Context, req r
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *ApplicationPushCredentialResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state applicationPushCredentialResourceModel
 
-	if r.client == nil {
+	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -347,7 +339,8 @@ func (r *ApplicationPushCredentialResource) Create(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApplicationMFAPushCredentialsApi.CreateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
+			fO, fR, fErr := r.Client.MFAAPIClient.ApplicationsApplicationMFAPushCredentialsApi.CreateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateMFAPushCredential",
 		framework.DefaultCustomError,
@@ -369,7 +362,7 @@ func (r *ApplicationPushCredentialResource) Create(ctx context.Context, req reso
 func (r *ApplicationPushCredentialResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *applicationPushCredentialResourceModel
 
-	if r.client == nil {
+	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -388,7 +381,8 @@ func (r *ApplicationPushCredentialResource) Read(ctx context.Context, req resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApplicationMFAPushCredentialsApi.ReadOneMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.MFAAPIClient.ApplicationsApplicationMFAPushCredentialsApi.ReadOneMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneMFAPushCredential",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -413,7 +407,7 @@ func (r *ApplicationPushCredentialResource) Read(ctx context.Context, req resour
 func (r *ApplicationPushCredentialResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state applicationPushCredentialResourceModel
 
-	if r.client == nil {
+	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -439,7 +433,8 @@ func (r *ApplicationPushCredentialResource) Update(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationsApplicationMFAPushCredentialsApi.UpdateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
+			fO, fR, fErr := r.Client.MFAAPIClient.ApplicationsApplicationMFAPushCredentialsApi.UpdateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateMFAPushCredential",
 		framework.DefaultCustomError,
@@ -461,7 +456,7 @@ func (r *ApplicationPushCredentialResource) Update(ctx context.Context, req reso
 func (r *ApplicationPushCredentialResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *applicationPushCredentialResourceModel
 
-	if r.client == nil {
+	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -479,8 +474,8 @@ func (r *ApplicationPushCredentialResource) Delete(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.ApplicationsApplicationMFAPushCredentialsApi.DeleteMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.MFAAPIClient.ApplicationsApplicationMFAPushCredentialsApi.DeleteMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteMFAPushCredential",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -493,20 +488,41 @@ func (r *ApplicationPushCredentialResource) Delete(ctx context.Context, req reso
 }
 
 func (r *ApplicationPushCredentialResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 3
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "application_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "push_credential_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/application_id/push_credential_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("application_id"), attributes[1])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *applicationPushCredentialResourceModel) expand(ctx context.Context) (*mfa.MFAPushCredentialRequest, diag.Diagnostics) {

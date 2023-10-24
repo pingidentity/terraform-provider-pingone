@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -18,19 +19,22 @@ func TestAccFlowPoliciesDataSource_BySCIMFilter(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFlowPolicyDestroy,
+		CheckDestroy:             sso.FlowPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccFlowPoliciesDataSourceConfig_BySCIMFilter(resourceName, `(trigger.type eq \"AUTHENTICATION\")`, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "2"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1DVResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1DVResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1DVResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1DVResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -46,19 +50,22 @@ func TestAccFlowPoliciesDataSource_ByDataFilter(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFlowPolicyDestroy,
+		CheckDestroy:             sso.FlowPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccFlowPoliciesDataSourceConfig_ByDataFilter1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "2"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1DVResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1DVResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1DVResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1DVResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -72,16 +79,19 @@ func TestAccFlowPoliciesDataSource_NotFound(t *testing.T) {
 	dataSourceFullName := fmt.Sprintf("data.pingone_flow_policies.%s", resourceName)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFlowPolicyDestroy,
+		CheckDestroy:             sso.FlowPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccFlowPoliciesDataSourceConfig_NotFound(resourceName, `(trigger.type eq \"NOTAUTHENTICATION\")`),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "0"),
 				),
 			},

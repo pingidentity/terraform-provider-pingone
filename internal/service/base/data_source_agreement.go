@@ -13,17 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type AgreementDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type AgreementDataSource serviceClientType
 
 type AgreementDataSourceModel struct {
 	Id                    types.String  `tfsdk:"id"`
@@ -146,24 +142,20 @@ func (r *AgreementDataSource) Configure(ctx context.Context, req datasource.Conf
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *AgreementDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -186,7 +178,8 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.AgreementsResourcesApi.ReadAllAgreements(ctx, data.EnvironmentId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.AgreementsResourcesApi.ReadAllAgreements(ctx, data.EnvironmentId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllAgreements",
 			framework.DefaultCustomError,
@@ -227,7 +220,8 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneAgreement",
 			framework.DefaultCustomError,

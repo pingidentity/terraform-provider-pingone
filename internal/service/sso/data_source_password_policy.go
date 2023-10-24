@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -160,7 +161,7 @@ func DatasourcePasswordPolicy() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"max": {
-							Description: "The maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of minAgeDays (if set) + 21 (the expiration warning interval for passwords).",
+							Description: "The maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).",
 							Type:        schema.TypeInt,
 							Computed:    true,
 						},
@@ -215,7 +216,8 @@ func datasourcePingOnePasswordPolicyRead(ctx context.Context, d *schema.Resource
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.PasswordPoliciesApi.ReadAllPasswordPolicies(ctx, d.Get("environment_id").(string)).Execute()
+				fO, fR, fErr := apiClient.PasswordPoliciesApi.ReadAllPasswordPolicies(ctx, d.Get("environment_id").(string)).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"ReadAllPasswordPolicies",
 			sdk.DefaultCustomError,
@@ -254,7 +256,8 @@ func datasourcePingOnePasswordPolicyRead(ctx context.Context, d *schema.Resource
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+				fO, fR, fErr := apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), v.(string)).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"ReadOnePasswordPolicy",
 			sdk.DefaultCustomError,

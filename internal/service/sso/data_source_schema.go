@@ -13,17 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type SchemaDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type SchemaDataSource serviceClientType
 
 type SchemaDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -106,24 +102,20 @@ func (r *SchemaDataSource) Configure(ctx context.Context, req datasource.Configu
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *SchemaDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -136,47 +128,15 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	var schema management.Schema
+	var schema *management.Schema
 
 	if !data.Name.IsNull() {
 
-		// Run the API call
-		var entityArray *management.EntityArray
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				return r.client.SchemasApi.ReadAllSchemas(ctx, data.EnvironmentId.ValueString()).Execute()
-			},
-			"ReadAllSchemas",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&entityArray,
-		)...)
+		var d diag.Diagnostics
+		schema, d = fetchSchemaFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.Name.ValueString())
+		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
-		}
-
-		if schemas, ok := entityArray.Embedded.GetSchemasOk(); ok {
-
-			found := false
-			for _, schemaItem := range schemas {
-
-				if schemaItem.GetName() == data.Name.ValueString() {
-					schema = schemaItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find schema from name",
-					fmt.Sprintf("The schema %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
 		}
 
 	} else if !data.SchemaId.IsNull() {
@@ -187,7 +147,8 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneSchema",
 			framework.DefaultCustomError,
@@ -198,7 +159,7 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			return
 		}
 
-		schema = *response
+		schema = response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -208,7 +169,7 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&schema)...)
+	resp.Diagnostics.Append(data.toState(schema)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -230,4 +191,52 @@ func (p *SchemaDataSourceModel) toState(apiObject *management.Schema) diag.Diagn
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	return diags
+}
+
+func fetchSchemaFromName(ctx context.Context, apiClient *management.APIClient, environmentId string, schemaName string) (*management.Schema, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var schema management.Schema
+
+	// Run the API call
+	var entityArray *management.EntityArray
+	diags.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := apiClient.SchemasApi.ReadAllSchemas(ctx, environmentId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+		},
+		"ReadAllSchemas",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&entityArray,
+	)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if schemas, ok := entityArray.Embedded.GetSchemasOk(); ok {
+
+		found := false
+		for _, schemaItem := range schemas {
+
+			if schemaItem.GetName() == schemaName {
+				schema = schemaItem
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			diags.AddError(
+				"Cannot find schema from name",
+				fmt.Sprintf("The schema %s for environment %s cannot be found", schemaName, environmentId),
+			)
+			return nil, diags
+		}
+
+	}
+
+	return &schema, diags
 }
