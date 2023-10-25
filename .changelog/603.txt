@@ -1,0 +1,4 @@
+```release-note:note
+Updated documentation examples to remove reference to deprecated parameters/attributes.
+```
+
